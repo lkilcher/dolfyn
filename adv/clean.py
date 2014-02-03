@@ -1,6 +1,7 @@
-import tools as tbx
 import numpy as np
 import warnings
+from ..tools.misc import fillgaps
+#import tools.timer as tmr
 
 warnings.filterwarnings('ignore',category=np.RankWarning)
 
@@ -11,7 +12,7 @@ def cleanFill(u,bd):
     Then fill the gaps by linear interpolation.
     """
     u[bd]=np.NaN
-    tbx.fillgaps(u)
+    fillgaps(u)
 
 def fillpoly(indat,deg,npt):
     """
@@ -23,38 +24,33 @@ def fillpoly(indat,deg,npt):
     that the fit occurs over.
 
     """
-    pos=npt
-    shft=np.arange(-npt,0)
-    im=[]
-    ie=[]
-    bds=[]
     searching=True
-    while pos<len(indat)-npt:
+    bds=np.isnan(indat)
+    pos=0
+    i=np.arange(len(indat),dtype=np.uint32)
+    ntail=0
+    #count=0
+    while pos<len(indat):
         if searching:
-            if np.isnan(indat[pos]):
-                ib=pos+shft
-                bds+=[pos]
+            if bds[pos]:
+                start=max(pos-npt,0)
                 searching=False
         else:
-            if np.isnan(indat[pos]):
-                bds+=[pos]
-                im+=ie
-                ie=[]
+            if bds[pos]:
+                ntail=0
             else:
-                ie+=[pos]
-        if len(ie)==npt:
-            searching=True
-            inds=np.concatenate((ib,im,ie))
-            ie=[]
-            im=[]
-            #print inds,bds
-            fits=np.polyval(np.polyfit(inds,indat[inds],deg),bds)
-            for i,f in zip(bds,fits):
-                indat[i]=f
-            bds=[]
-                
+                ntail+=1
         pos+=1
-        
+        if (not searching) and (ntail==npt or pos==len(indat)):
+            #count+=1
+            itmp=i[start:pos]
+            btmp=bds[start:pos]
+            igd=itmp[~btmp]
+            ibd=itmp[btmp]
+            indat[ibd]=np.polyval(np.polyfit(igd,indat[igd],deg),ibd).astype(indat.dtype)
+            #print '%d bad points fixed at %d (fix# %d).' % (sum(btmp),pos-npt,count)
+            searching=True
+            ntail=0
             
 def spikeThresh(u,thresh):
     """
@@ -74,7 +70,7 @@ def rangeLimit(u,range):
     Returns a logical vector that is True where the
     values of *u* are outside of *range*.
     """
-    return ~tbx.within(u,range)
+    return ~((range[0]<u) & (u<range[1]))
     
 
 def calcab(al,Lu_std_u,Lu_std_d2u):
@@ -136,10 +132,9 @@ def GN2002(u,npt=5000):
         bds[:nbins*npt]=phaseSpaceThresh(np.array(np.reshape(u[:(nbins*npt)],(npt,nbins),order='F')))
         bds[-npt:]=phaseSpaceThresh(u[-npt:])
         u[bds]=np.NaN
-        #tbx.fillgaps(u)
+        #fillgaps(u)
         fillpoly(u,3,12)
-        print c,bds.sum()
-        #print c,np.nonzero(bds)
+        print 'GN2002: found %d bad points on loop %d' % (bds.sum(),c)
         c+=1
         if c>=100:
             error
@@ -244,7 +239,7 @@ if __name__=='__main__':
         #bds=rangeLimit(dat.v,[-1.5,1])# | spikeThresh(dat.u,0.5)
         #bds=rangeLimit(dat.w,[-2.5,1])# | spikeThresh(dat.u,0.5)
         dat.u[bds]=np.NaN
-        tbx.fillgaps(dat.u)
+        fillgaps(dat.u)
         rng=slice(610000,5886900)
         newd=dat.subset(rng)
     inds=slice(2150000,2160000,1)
