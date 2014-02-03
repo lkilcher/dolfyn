@@ -13,7 +13,7 @@ def calcAccelVel(accel,samp_freq,filt_freq):
     *filt_freq* is the frequency to filter at.
     """
     # 8th order butterworth filter.
-    print float(filt_freq)/(samp_freq/2)
+    #print float(filt_freq)/(samp_freq/2)
     filt=sig.butter(2,float(filt_freq)/(samp_freq/2))
     #hp=np.empty_like(accel)
     #for idx in range(accel.shape[0]):
@@ -58,7 +58,8 @@ def orient2euler(obj):
     elif np.ndarray in obj.__class__.__mro__ and obj.shape[:2]==(3,3):
         omat=obj
     # I'm pretty sure the 'yaw' is the angle from the east axis, so we correct this for 'deg_true':
-    return 180/np.pi*np.arcsin(-omat[0,2]),180/np.pi*np.arctan2(omat[1,2],omat[2,2]),(np.pi/2-np.arctan2(omat[0,1],omat[0,0]))*180/np.pi
+    ## return 180/np.pi*np.arcsin(-omat[0,2]),180/np.pi*np.arctan2(omat[1,2],omat[2,2]),(np.pi/2-np.arctan2(omat[0,1],omat[0,0]))*180/np.pi
+    return 180/np.pi*np.arcsin(omat[0,2]),180/np.pi*np.arctan2(omat[1,2],omat[2,2]),180/np.pi*np.arctan2(omat[0,1],omat[0,0])
 
 def cat4rot(tpl):
     tmp=[]

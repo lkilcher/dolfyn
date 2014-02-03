@@ -1,6 +1,6 @@
 import numpy as np
-import adv
-import adcp
+import base as adv
+import dolfyn.adcp as adcp
 import tools as tbx
 from struct import unpack
 from struct import error as str_err
@@ -173,10 +173,8 @@ class vec_reader(object):
     def sci_vec_data(self,):
         self.data._u*=0.001
         self.data._u=ma.marray(self.data._u,ma.varMeta('u',ma.unitsDict({'m':1,'s':-1}),['xyz','time']))
-        #self.data.u=ma.marray(self.data.u.astype('float32')/1000,ma.varMeta('u',ma.unitsDict({'m':1,'s':-1}),['time']))
-        #self.data.v=ma.marray(self.data.v.astype('float32')/1000,ma.varMeta('v',ma.unitsDict({'m':1,'s':-1}),['time']))
-        #self.data.w=ma.marray(self.data.w.astype('float32')/1000,ma.varMeta('w',ma.unitsDict({'m':1,'s':-1}),['time']))
-        self.data.add_data('pressure',ma.marray((self.data.PressureMSB.astype('float32')*65536+self.data.PressureLSW.astype('float32'))/1000.,ma.varMeta('P',ma.unitsDict({'dbar':1}),['time'])),'env')
+        self.data.add_data('pressure',(self.data.PressureMSB.astype('float32')*65536+self.data.PressureLSW.astype('float32'))/1000.,None,'env')
+        self.data.pressure=ma.marray(self.data.pressure,ma.varMeta('P',ma.unitsDict({'dbar':1}),['time']))
         self.data.del_data('PressureMSB','PressureLSW')
         self.data.props['fs']=self.config.fs
         self.data.props['coord_sys']={'XYZ':'inst','ENU':'earth','BEAM':'beam'}[self.config.user.CoordSystem]
@@ -255,7 +253,7 @@ class vec_reader(object):
             self._dtypes+=['vec_sysdata']
         byts=self.read(24)
         self.data.mpltime[c]=self.rd_time(byts[2:8]) # The first two are size (skip them).
-        self.data.batt[c],self.data.c_sound[c],self.data.heading[c],self.data.pitch[c],self.data.roll[c],self.data.temp[c],self.data.error[c],self.data.status[c],self.data.AnaIn[c]=unpack(self.endian+'HHHHHHBBH',byts[8:]) # The first 2 are size, the next six are time.
+        self.data.batt[c],self.data.c_sound[c],self.data.heading[c],self.data.pitch[c],self.data.roll[c],self.data.temp[c],self.data.error[c],self.data.status[c],self.data.AnaIn[c]=unpack(self.endian+'2H3hH2BH',byts[8:])
         self.checksum(byts)
 
     def sci_microstrain(self,):
@@ -272,7 +270,7 @@ class vec_reader(object):
             ## self.data[nm][2]=self.data[nm][0]
             ## self.data[nm][0]=tmp
             #self.data[nm][2]*=-1
-            #self.data[nm]=np.roll(self.data[nm],-1,axis=0) # Jim Thomson thought this was the right way to do this, but I think he was wrong.
+            #self.data[nm]=np.roll(self.data[nm],-1,axis=0) # I think this is wrong.
         if 'orientmat' in self._orient_dnames:
             # MS coordinate system is in North-East-Down (NED), we want East-North-Up (ENU)
             # Need to verify this with MS.  I can not find how they define the 'earth fixed frame' in their documentation.
@@ -406,6 +404,9 @@ class vec_reader(object):
         self.data=adv.adv_raw()
         self.data.add_data('config',self.config,'config')
         self.data.props={}
+        self.data.props['inst_make']='Nortek'
+        self.data.props['inst_model']='VECTOR'
+        self.data.props['inst_type']='ADV'
         # Question to Nortek: How do they determine how many samples are in a file, in order to initialize arrays?
         dlta=self.code_spacing('0x11')
         self.config.add_data('fs',512/self.config.user.AvgInterval)
@@ -417,6 +418,9 @@ class vec_reader(object):
         self.data=adcp.adcp_raw()
         self.data.add_data('config',self.config,'config')
         self.data.props={}
+        self.data.props['inst_make']='Nortek'
+        self.data.props['inst_model']='AWAC'
+        self.data.props['inst_type']='ADP'
         self.n_samp_guess=self.filesize/self.code_spacing('0x20')+1
         #self.n_samp_guess=1000
         #self.n_samp_guess*=self.config.fs
@@ -465,11 +469,11 @@ class vec_reader(object):
             self.read_user_cfg()
         else:
             raise Exception("I/O error: The file does not appear to be a Nortek data file.")
-        # Initialize the instrument type:
         if self.config.hardware.serialNum[0:3].upper()=='WPR':
             self.config.config_type='AWAC'
         elif self.config.hardware.serialNum[0:3].upper()=='VEC':
             self.config.config_type='ADV'
+        # Initialize the instrument type:
         self._inst=self.config.config_type
         pnow=self.pos # This is the position after reading the 'hardware', 'head', and 'user' configuration.
         getattr(self,'init_'+self._inst)() # Run the appropriate initialization routine (e.g. init_ADV).

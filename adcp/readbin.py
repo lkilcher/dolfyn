@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 from matplotlib.dates import date2num
 from os.path import getsize
-from adcp import adcp_header,adcp_config,adcp_raw
+from base import adcp_header,adcp_config,adcp_raw
 from data.read_bin import eofException,bin_reader
 
 # Four pound symbols ("####"), indicate a duplication of a comment from Rich Pawlawicz' rdadcp routines.
