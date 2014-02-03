@@ -95,7 +95,7 @@ class velocity(time_based,saveable):
         if not hasattr(self,nm):
             self.add_data(nm,np.empty(shape,dtype=dtype),group,meta=meta)
         if clear_fromGrp:
-            self.rem_nmFromGrps(clear_fromGrp)
+            self.groups.remove(nm)
 
     @property
     def u(self,):

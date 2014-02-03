@@ -14,7 +14,9 @@ class time_bindat(time_based):
     @property
     def freq(self,):
         return self.omega/rad_hz
-
+    @freq.setter
+    def freq(self,val):
+        self.omega=val*rad_hz
 
 class time_binner(object):
     

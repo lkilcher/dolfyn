@@ -347,20 +347,20 @@ class loader(data_factory):
                 continue
             if hasattr(nd,'read_direct'):
                 nm=self.get_name(nd)
-                try:
-                    out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
-                except AttributeError:
-                    newnm=self._fix_name(nd)
-                    if newnm is None:
-                        continue
-                    elif newnm.__class__ is str:
-                        out.groups.remove(nm)
-                        nm=newnm
-                        out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
-                    elif newnm.__class__ is nd.__class__:
-                        nd=newnm
-                        nm=self.get_name(nd)
-                        out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
+                #try:
+                out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
+                ## except AttributeError:
+                ##     newnm=self._fix_name(nd)
+                ##     if newnm is None:
+                ##         continue
+                ##     elif newnm.__class__ is str:
+                ##         out.groups.remove(nm)
+                ##         nm=newnm
+                ##         out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
+                ##     elif newnm.__class__ is nd.__class__:
+                ##         nd=newnm
+                ##         nm=self.get_name(nd)
+                ##         out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
                         
                 nd.read_direct(getattr(out,nm)) # This puts the data in the output object.
                 if ma.valid and self.ver==0:

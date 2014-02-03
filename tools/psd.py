@@ -35,14 +35,14 @@ def _stepsize(l,nfft,nens=None,step=None):
     if l<nfft:
         nfft=l
     if nens is None and step is None:
-        nens=np.fix(2.*l/nfft)
-        return np.fix((l-nfft)/(nens-1)),nens,nfft
+        nens=int(2.*l/nfft)
+        return int((l-nfft)/(nens-1)),nens,nfft
     elif nens is None:
-        return step,(l-nfft)/step+1,nfft
+        return int(step),int((l-nfft)/step+1),nfft
     else:
         if nens==1:
             return 0,1,nfft
-        return np.fix((l-nfft)/(nens-1)),nens,nfft
+        return int((l-nfft)/(nens-1)),nens,nfft
 
 
 def cohere(a,b,nfft,window='hann',debias=True,noise=(0,0)):
@@ -193,8 +193,9 @@ def cpsd(a,b,nfft,fs,window='hann',step=None):
         auto_psd=True
     l=len(a)
     step,nens,nfft=_stepsize(l,nfft,step=step)
+    print step,nens,nfft
     fs=np.float64(fs)
-    if window=='hann':
+    if window.__class__ is str and window.startswith('hann'):
         window=np.hanning(nfft)
     elif window is None or window==1:
         window=np.ones(nfft)
