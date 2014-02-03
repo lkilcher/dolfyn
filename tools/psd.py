@@ -143,7 +143,7 @@ def cpsd_quasisync(a,b,nfft,fs,window='hann'):
     wght=2./(window**2).sum()
     pwr=fft(detrend(a[0:nfft])*window)[fft_inds]*np.conj(fft(detrend(b[0:nfft])*window)[fft_inds])
     if nens-1:
-        for i1,i2 in zip(range(step[0],l[0]-nfft,step[0]),range(step[1],l[1]-nfft,step[1])):
+        for i1,i2 in zip(range(step[0],l[0]-nfft+1,step[0]),range(step[1],l[1]-nfft+1,step[1])):
             pwr+=fft(detrend(a[i1:(i1+nfft)])*window)[fft_inds]*np.conj(fft(detrend(b[i2:(i2+nfft)])*window)[fft_inds])
     pwr*=wght/nens/fs
     return np.abs(pwr)
@@ -155,7 +155,7 @@ def cpsd(a,b,nfft,fs,window='hann',step=None):
 
     This performs:
     fft(a)*conj(fft(b))
-    Note that this is consistent with *np.correlate*'s definition of correlation.
+    Note that this is consistent with the numpy.correlate definition of correlation.
     (The conjugate of D.B. Chelton's definition of correlation.)
 
     The two signals should be the same length, and should both be real.
@@ -207,14 +207,14 @@ def cpsd(a,b,nfft,fs,window='hann',step=None):
         pwr=s1*np.conj(fft(detrend(b[0:nfft])*window)[fft_inds])
     if nens-1:
         for i in range(step,l-nfft+1,step):
-            print (i)
+            #print (i)
             s1=fft(detrend(a[i:(i+nfft)])*window)[fft_inds]
             if auto_psd:
                 pwr+=np.abs(s1)**2
             else:
                 pwr+=s1*np.conj(fft(detrend(b[i:(i+nfft)])*window)[fft_inds])
     pwr*=wght/nens/fs
-    print 1,step,nens,l,nfft,wght,fs
+    #print 1,step,nens,l,nfft,wght,fs
     #error
     if auto_psd:# No need to take the abs again.
         return pwr

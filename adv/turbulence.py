@@ -25,7 +25,7 @@ class turb_binner(vel_binner_spec):
         out.add_data('stress',self.calc_stress(advr._u),'main')
         out.add_data('sigma_Uh',np.std(self.reshape(advr.U_mag),-1,dtype=np.float64)-(advr.noise[0]+advr.noise[1])/2,'main')
         out.props['Itke_thresh']=Itke_thresh
-        out.add_data('Spec',self.calc_vel_psd(advr._u,advr.fs,noise=advr.noise,n_pad=0),'spec')
+        out.add_data('Spec',self.calc_vel_psd(advr._u,advr.fs,noise=advr.noise),'spec')
         out.add_data('omega',self.calc_omega(advr.fs),'_essential')
         self.set_bindata(advr,out)
         
