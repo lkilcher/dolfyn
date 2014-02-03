@@ -262,7 +262,7 @@ class time_binner(object):
         return out
         
         
-    def psd(self,dat,fs,window='hann',noise=0,n_bin=None,n_fft=None,step=None):
+    def psd(self,dat,fs,window='hann',noise=0,n_bin=None,n_fft=None,step=None,n_pad=None):
         """
         Calculate 'power spectral density' of *dat*.
 
@@ -275,8 +275,9 @@ class time_binner(object):
         """
         n_bin=self._parse_nbin(n_bin)
         n_fft=self._parse_nfft(n_fft)
+        n_pad=self._parse_nfft(n_pad)
         out=np.empty(self._outshape_fft(dat.shape,n_fft=n_fft,n_bin=n_bin))
-        dat=self.reshape(dat,n_pad=n_fft) # The data is detrended in psd, so we don't need to do it here.
+        dat=self.reshape(dat,n_pad=n_pad) # The data is detrended in psd, so we don't need to do it here.
         for slc in slice1d_along_axis(dat.shape,-1):
             out[slc]=psd(dat[slc],n_fft,2*np.pi*fs,window=window,step=step) # PSD's are computed in radian units
         if ma.valid and ma.marray in dat.__class__.__mro__:

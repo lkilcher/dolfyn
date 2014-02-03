@@ -308,7 +308,7 @@ class vel_bindat_spec(vel_bindat_tke):
     
 class vel_binner_spec(vel_binner_tke):
 
-    def calc_vel_psd(self,veldat,fs,rotate_u=False,noise=[0,0,0]):
+    def calc_vel_psd(self,veldat,fs,rotate_u=False,noise=[0,0,0],n_pad=None):
         """
         Calculate the psd of *veldat*'s velocity and place it in *outdat*.
 
@@ -327,12 +327,12 @@ class vel_binner_spec(vel_binner_tke):
             if noise[0]!=noise[1]:
                 print 'Warning: noise levels different for u,v. This means noise-correction cannot be done here when rotating velocity.'
                 noise[0]=noise[1]=0
-            datu=self.psd(tmpdat.real,fs,noise=noise[0])
-            datv=self.psd(tmpdat.imag,fs,noise=noise[1])
+            datu=self.psd(tmpdat.real,fs,noise=noise[0],n_pad=n_pad)
+            datv=self.psd(tmpdat.imag,fs,noise=noise[1],n_pad=n_pad)
         else:
-            datu=self.psd(veldat[0],fs,noise=noise[0])
-            datv=self.psd(veldat[1],fs,noise=noise[1])
-        datw=self.psd(veldat[2],fs,noise=noise[2])
+            datu=self.psd(veldat[0],fs,noise=noise[0],n_pad=n_pad)
+            datv=self.psd(veldat[1],fs,noise=noise[1],n_pad=n_pad)
+        datw=self.psd(veldat[2],fs,noise=noise[2],n_pad=n_pad)
         out=np.empty([3]+list(datw.shape),dtype=np.float32)
         if ma.valid:
             if self.hz:
@@ -342,6 +342,4 @@ class vel_binner_spec(vel_binner_tke):
             out=ma.marray(out,ma.varMeta('S_{%s%s}',units,veldat.meta.dim_names+['freq']))
         out[:]=datu,datv,datw
         return out
-
-                
-
+    

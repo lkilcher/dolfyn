@@ -193,13 +193,12 @@ def cpsd(a,b,nfft,fs,window='hann',step=None):
         auto_psd=True
     l=len(a)
     step,nens,nfft=_stepsize(l,nfft,step=step)
-    print step,nens,nfft
     fs=np.float64(fs)
     if window.__class__ is str and window.startswith('hann'):
         window=np.hanning(nfft)
     elif window is None or window==1:
         window=np.ones(nfft)
-    fft_inds=slice(1,np.floor(nfft/2.+1))
+    fft_inds=slice(1,int(nfft/2.+1))
     wght=2./(window**2).sum()
     s1=fft(detrend(a[0:nfft])*window)[fft_inds]
     if auto_psd:
@@ -208,12 +207,15 @@ def cpsd(a,b,nfft,fs,window='hann',step=None):
         pwr=s1*np.conj(fft(detrend(b[0:nfft])*window)[fft_inds])
     if nens-1:
         for i in range(step,l-nfft,step):
+            print (i)
             s1=fft(detrend(a[i:(i+nfft)])*window)[fft_inds]
             if auto_psd:
                 pwr+=np.abs(s1)**2
             else:
                 pwr+=s1*np.conj(fft(detrend(b[i:(i+nfft)])*window)[fft_inds])
     pwr*=wght/nens/fs
+    print 1,step,nens,l,nfft,wght,fs
+    error
     if auto_psd:# No need to take the abs again.
         return pwr
     return np.abs(pwr)
