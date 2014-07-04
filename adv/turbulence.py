@@ -6,7 +6,7 @@ kappa=0.41
 
 class turb_binner(vel_binner_spec):
 
-    def __call__(self,advr,omega_range_epsilon=[6.28,12.57],Itke_thresh=0):
+    def __call__(self,advr,out_type=adv_binned,omega_range_epsilon=[6.28,12.57],Itke_thresh=0):
         """
         Compute a suite of turbulence statistics for the input data advr, and
         return a 'binned' data object.
@@ -20,18 +20,18 @@ class turb_binner(vel_binner_spec):
                                 the turbulence intensity. Values of Itke where
                                 U_mag < Itke_thresh are set to NaN.  (default: 0).
         """
-        out=vel_binner_spec.__call__(self,advr,adv_binned)
+        out=vel_binner_spec.__call__(self,advr,out_type=out_type)
+        self.do_avg(advr,out)
         out.add_data('tke',self.calc_tke(advr._u,noise=advr.noise),'main')
         out.add_data('stress',self.calc_stress(advr._u),'main')
         out.add_data('sigma_Uh',np.std(self.reshape(advr.U_mag),-1,dtype=np.float64)-(advr.noise[0]+advr.noise[1])/2,'main')
         out.props['Itke_thresh']=Itke_thresh
-        out.add_data('Spec',self.calc_vel_psd(advr._u,advr.fs,noise=advr.noise),'spec')
-        out.add_data('omega',self.calc_omega(advr.fs),'_essential')
-        self.set_bindata(advr,out)
+        out.add_data('Spec',self.calc_vel_psd(advr._u,noise=advr.noise),'spec')
+        out.add_data('omega',self.calc_omega(),'_essential')
         
-        out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,out.U_mag,omega_range=omega_range_epsilon),'main')
-        #out.add_data('Cov_u',self.calc_acov(advr._u),'corr')
-        #out.add_data('Lint',self.calc_Lint(out.Cov_u,out.U_mag,out.fs),'main')
+        #out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,out.U_mag,omega_range=omega_range_epsilon),'main')
+        #out.add_data('Acov',self.calc_acov(advr._u),'corr')
+        #out.add_data('Lint',self.calc_Lint(out.Acov,out.U_mag),'main')
         return out
         
     def calc_epsilon_LT83(self,spec,omega,U_mag,omega_range=[6.28,12.57]):
@@ -45,7 +45,7 @@ class turb_binner(vel_binner_spec):
         # !!!CHECKTHIS... should U_mag be inside the ()**5/3?
         return np.mean(spec[...,inds]*(omega[inds].reshape(f_shp))**(5./3.)/a,-1,dtype=np.float64)**(3./2.)/U_mag
 
-    def calc_epsilon_SF(self,veldat,umag,fs,freq_rng=[.5,5.]):
+    def calc_epsilon_SF(self,veldat,umag,fs=None,freq_rng=[.5,5.]):
         """
         Calculate epsilon using the "structure function" (SF) method.
 
@@ -57,6 +57,7 @@ class turb_binner(vel_binner_spec):
         *fs*       : The sample rate of *veldat* (hz).
         *freq_rng* : The frequency range over which to compute the SF (hz).
         """
+        fs=self._parse_fs(fs)
         dt=self.reshape(veldat)
         out=np.empty(dt.shape[:-1],dtype=dt.dtype)
         for slc in slice1d_along_axis(dt.shape,-1):
@@ -123,7 +124,7 @@ class turb_binner(vel_binner_spec):
             out[i]=np.trapz(cbrt(x**2-2/b*np.cos(t)*x+b**(-2))*np.exp(-0.5*x**2),x)
         return out.reshape(beta.shape)*(2.*np.pi)**(-.5)*beta**(2./3.)
 
-    def calc_Lint(self,corr_vel,U_mag,fs):
+    def calc_Lint(self,corr_vel,U_mag,fs=None):
         """
         Calculate integral length scales.
 
@@ -141,12 +142,9 @@ class turb_binner(vel_binner_spec):
         The integral time scale (Tint) is the lag-time at which the auto-covariance
         falls to 1/e.
         """
-        corr_vel=(corr_vel/corr_vel[...,n][...,None])<(1./np.e) # corr_vel is now logical.
-        out=(corr_vel[...,:n].sum(-1)+corr_vel[...,-n:].sum(-1))/2 # Sum the number of points to get the 'lag time' (this may be slightly different than finding the last non-zero from the middle.
-        out[...,0]=corr_vel[...,-n:].sum(-1) # The corr_vel of the first and last bin are contaminated by zero padding in the reshape function.
-        out[...,-1]=corr_vel[...,:n].sum(-1)
-        out*=U_mag/fs
-        return out
+        fs=self._parse_fs(fs)
+        return U_mag/fs*np.argmin((corr_vel/corr_vel[...,0][...,None])>(1./np.e),axis=-1)
+
 
 
     

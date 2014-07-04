@@ -1,5 +1,31 @@
 import numpy as np
 
+class delta(object):
+    """
+    delta objects are for creating boolean 'index' arrays. For an input data.
+    """
+
+    @property
+    def shape(self,):
+        return self.data.shape
+    
+    def __init__(self,data,delta):
+        """
+        Creat a delta object for *data* with delta *delta*.
+        """
+        self.data=data
+        self.delta=delta
+
+    def __call__(self,val):
+        """
+        Return the indices of *data* that fall within *val*-delta to *val*+delta.
+        """
+        return (val-self.delta<self.data) & (self.data<val+self.delta)
+
+    def abs(self,val):
+        return (val-self.delta<np.abs(self.data)) & (np.abs(self.data)<val+self.delta)
+        
+
 def slice1d_along_axis(arr_shape,axis=0):
     """
     Return an iterator object for looping over 1-D slices, along *axis*, of

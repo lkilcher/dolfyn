@@ -24,16 +24,14 @@ def fullyear(year):
     year+=1900+100*(year<90)
     return year
 
-def read_nortek(filename,**kwargs):
+def read_nortek(filename,do_checksum=False,**kwargs):
     """
     
     Arguments:
     - `filename`: Name of Nortek formatted file to read.
     - `**kwargs`: keyword arguments to vec_reader class
     """
-    if not kwargs.has_key('do_checksum'):
-        kwargs['do_checksum']=False
-    with vec_reader(filename,**kwargs) as rdr:
+    with vec_reader(filename,do_checksum=do_checksum,**kwargs) as rdr:
         rdr.readfile()
     rdr.dat2sci()
     return rdr.data
@@ -51,6 +49,9 @@ class vec_reader(object):
              }
 
     def read_id(self,):
+        """
+        Read the next 'ID' from the file.
+        """
         self._thisid_bytes=bts=self.read(2)
         tmp=unpack(self.endian+'BB',bts)
         if tmp[0]!=165: # This catches a corrupted data block.
@@ -129,6 +130,7 @@ class vec_reader(object):
         self.config.head.add_data('type',tmp[2])
         self.config.head.add_data('serialNum',tmp[3])
         self.config.head.add_data('system',tmp[4])
+        self.config.head.add_data('TransMatrix',np.array(unpack(self.endian+'9h',tmp[4][8:26])).reshape(3,3)/4096.)
         self.config.head.add_data('NBeams',tmp[5])
         self.checksum(byts)
 
@@ -512,7 +514,11 @@ class vec_reader(object):
             func=np.uint8
             func2=bitshift8
         while True:
-            val=unpack(self.endian+'H',self.read(2))[0]
+            try:
+                val=unpack(self.endian+'H',self.read(2))[0]
+            except:
+                if not len(self.read(2))==2:
+                    break
             if func(val)==165 and (not do_cs or cs==np.uint16(sum)):
                 self.f.seek(-2,1)
                 return hex(func2(val))

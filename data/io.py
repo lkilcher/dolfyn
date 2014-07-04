@@ -4,12 +4,13 @@ import sys,inspect # These are for get_typemap
 from scipy import io as spio
 from base import Dgroups,np,ma,config
 from os.path import expanduser
+from mat_io import saver as mat_saver
 
 class saveable(Dgroups):
     """
     An abstract base class for objects that should be 'saveable'.
     """
-    def save_mat(self,outfile,appendmat=True,groups=None,format='5',do_compression=True,oned_as='column',mat_time=[None]):
+    def save_mat(self,outfile,appendmat=True,groups=None,format='5',do_compression=True,oned_as='column',mat_time=None):
         """
         Save data in the object, to a matlab file.
         #### THIS NEEDS TO BE UPDATED! ####
@@ -20,16 +21,15 @@ class saveable(Dgroups):
         outdict={}
         for ky,dat in self.iter(groups=groups):
             outdict[ky]=dat
-        for nm in mat_time:
-            if nm is not None:
-                outdict[nm]=outdict[nm].copy()+366
+        if mat_time is not None:
+            outdict['datenum']=outdict.pop(mat_time)+366
         if hasattr(self,'_pre_mat_save'):
             self._pre_mat_save(outdict)
         spio.savemat(outfile,outdict,appendmat=appendmat,format=format,do_compression=do_compression,oned_as=oned_as)
 
     def save(self,filename,mode='w',where='/'):
         """
-        Save the data in this object to file *filename* in the pyBODT hdf5 format.
+        Save the data in this object to file *filename* in the DOLfyn hdf5 format.
 
         Arguments:
         - `filename` : The filename in which to save the data.

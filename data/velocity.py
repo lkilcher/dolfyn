@@ -1,5 +1,6 @@
 from base import np,Dprops,time_based,ma
-from io import saveable,h5
+from ..io.main import saveable
+import h5py as h5
 from binned import time_bindat,time_binner,rad_hz
 from base import DataError
 from matplotlib.dates import date2num,num2date
@@ -20,13 +21,13 @@ class velocity(time_based,saveable):
         return "%0.2fh %s %s (%s) record, started: %s%s" % ((tm[-1]-tm[0])*24,self.props.get('inst_make','*unknown*'),self.props.get('inst_model','*unknown*'),self.props.get('inst_type','*unknown*'),dt.strftime('%b %d, %Y %H:%M'),mmstr,)
 
     def _pre_mat_save(self,outdict):
-        outdict['u']=self.u
-        outdict['v']=self.v
-        outdict['w']=self.w
-        outdict['datenum']=self.mpltime+366
-        outdict.pop('mpltime')
-        outdict['ranges']=self.ranges.reshape([-1,1])
+        outdict['u']=self._u
         outdict.pop('_u')
+        if not outdict.has_key('datenum') and outdict.has_key('mpltime'):
+            outdict['datenum']=self.mpltime.reshape((1,-1))+366
+            outdict.pop('mpltime')
+        if hasattr(self,'ranges'):
+            outdict['ranges']=self.ranges.reshape([-1,1])
 
     @property
     def shape(self,):
@@ -87,6 +88,7 @@ class velocity(time_based,saveable):
         sang=np.sin(-self.principal_angle)
         cang=np.cos(-self.principal_angle)
         dat[:2]=np.tensordot(np.array([[cang,-sang],[sang,cang]],dtype='float32'),np.array(dat[:2]),([1],[0])) # Rotate the data using a rotation matrix.
+        self.props['coord_sys']='principal'
 
     def _init(self,nm,shape,dtype='float32',meta=None,clear_fromGrp=None,group='main'):
         """
@@ -95,7 +97,7 @@ class velocity(time_based,saveable):
         if not hasattr(self,nm):
             self.add_data(nm,np.empty(shape,dtype=dtype),group,meta=meta)
         if clear_fromGrp:
-            self.groups.remove(nm)
+            self.groups.remove(clear_fromGrp)
 
     @property
     def u(self,):
@@ -308,7 +310,7 @@ class vel_bindat_spec(vel_bindat_tke):
     
 class vel_binner_spec(vel_binner_tke):
 
-    def calc_vel_psd(self,veldat,fs,rotate_u=False,noise=[0,0,0],n_pad=None):
+    def calc_vel_psd(self,veldat,fs=None,rotate_u=False,noise=[0,0,0],n_pad=None):
         """
         Calculate the psd of *veldat*'s velocity and place it in *outdat*.
 
@@ -321,6 +323,7 @@ class vel_binner_spec(vel_binner_tke):
                      (default: False).
         *noise*    : Noise level of each component's velocity measurement (default to 0).
         """
+        fs=self._parse_fs(fs)
         if rotate_u:
             tmpdat=self.reshape(veldat[0]+1j*veldat[1])
             tmpdat*=np.exp(-1j*np.angle(tmpdat.mean(-1)))
