@@ -6,11 +6,10 @@ DOLfYN includes a data abstraction layer that enables saving and loading of data
 
 Installation
 ============
-
 To install DOLfYN, simply download the repository from http://github.com/lkilcher/dolfyn . If you have git installed, you may simply do::
   $ git clone http://github.com/lkilcher/dolfyn <your-preferred-download-location>
 
-To install dolfyn, run the setup script::
+Then run the setup script::
   $ cd <your-preferred-download-location>
   $ sudo python setup.py install
 
