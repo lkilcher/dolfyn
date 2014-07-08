@@ -42,6 +42,6 @@ setup(name='dolfyn',
       packages=['dolfyn','dolfyn.adv','dolfyn.io','dolfyn.data','dolfyn.meta','dolfyn.tools','dolfyn.adcp',],
       install_requires=['numpy'],
       provides=['dolfyn',],
-      scripts=['scripts/motcorrect_vector.py'],
+      scripts=['scripts/motcorrect_vector.py','scripts/motcorrect_vector.py'],
       cmdclass={'install_data':chmod_install_data,'install':chmod_install,},
       )
