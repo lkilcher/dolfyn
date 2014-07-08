@@ -21,4 +21,4 @@ Then run the setup script::
 Dependencies
 ============
 
-DOLfYN depends on `Python <http://www.python.org>`_ and `NumPy <http://www.numpy.org>`_.
+DOLfYN depends on `Python <http://www.python.org>`_, `NumPy <http://www.numpy.org>`_, `SciPy <http://www.scipy.org>`_ and `matplotlib <http://matplotlib.org>`_.
