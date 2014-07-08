@@ -1,85 +1,11 @@
 import h5py as h5
 import cPickle
-import sys,inspect # These are for get_typemap
-from scipy import io as spio
-from base import Dgroups,np,ma,config
-from os.path import expanduser
-
-class saveable(Dgroups):
-    """
-    An abstract base class for objects that should be 'saveable'.
-    """
-    def save_mat(self,outfile,appendmat=True,groups=None,format='5',do_compression=True,oned_as='column',mat_time=[None]):
-        """
-        Save data in the object, to a matlab file.
-        #### THIS NEEDS TO BE UPDATED! ####
-        - for meta arrays
-        - for properties
-        - does it even work at all anymore?
-        """
-        outdict={}
-        for ky,dat in self.iter(groups=groups):
-            outdict[ky]=dat
-        for nm in mat_time:
-            if nm is not None:
-                outdict[nm]=outdict[nm].copy()+366
-        if hasattr(self,'_pre_mat_save'):
-            self._pre_mat_save(outdict)
-        spio.savemat(outfile,outdict,appendmat=appendmat,format=format,do_compression=do_compression,oned_as=oned_as)
-
-    def save(self,filename,mode='w',where='/'):
-        """
-        Save the data in this object to file *filename* in the pyBODT hdf5 format.
-
-        Arguments:
-        - `filename` : The filename in which to save the data.
-        - `mode`     : The write mode of the file (default to overwrite the existing file).  See File.open for more info.
-        - `where`    : The location in the hdf5 file to store the data.  (defaults to the root of the file, i.e. '/'.)
-
-        See Also:
-          the 'File' module
-          the 'h5py' module
-        """
-        with saver(filename,mode=mode) as svr:
-            svr.write_data(self,where=where)
-
-    def load(self,groups,where='/',filename=None,):
-        """
-        Add data from *groups* in the file *filename*.
-
-        - `groups`     : specifies the data 'groups' to load from the file.
-        - `where`      : specifies where in the data the groups are loaded (defaults to '/').
-        - `filename`   : specifies a file to load data from (default: load data from the file this object was loaded from).
-        """
-        if filename is None:
-            filename=self._filename
-        with loader(filename,None) as ldr:# Don't need a typemap, because we are using the current object.
-            ldr.load(groups=groups,where=where,out=self)
-
-class data_factory(object):
-    """
-    A base class for data factory objects.  data_factory objects save or load data from files.
-    """
-    closefile=True
-    def __enter__(self,):
-        """
-        Allow data_factory objects to use python's 'with' statement.
-        """
-        return self
-
-    def __exit__(self,type,value,trace):
-        """
-        Close the file at the end of the with statement.
-        """
-        if self.closefile:
-            self.close()
-            if hasattr(self,'_extrafiles'):
-                for fl in self._extrafiles:
-                    fl.close()
+from base import data_factory
+from ..data.base import Dgroups,np,ma,config
 
 class saver(data_factory):
     """
-    A save data_factory object.  This class saves data in pyBODT classes into pyBODT format hdf5 files.
+    A save data_factory object.  This class saves data in DOLFYN classes into DOLFYN format hdf5 files.
     """
     ver=1.1 # The version number of the save format.
     # Version 1.0: underscore ('_') handled inconsistently.
@@ -108,12 +34,13 @@ class saver(data_factory):
          - h5py
         """
         self.file_mode=mode
+        self.filename=filename # This does an 'expanduser' on the filename (i.e. '~/' replaced with '/home/<username>/').
         kwargs={}
         if max_file_size_mb is not None:
             kwargs['driver']='family'
             kwargs['memb_size']=max_file_size_mb*(2**20)
             # Need to modify the filename to include a %d character.
-        self.fd=h5.File(expanduser(filename),mode=self.file_mode,**kwargs)
+        self.fd=h5.File(self.filename,mode=self.file_mode,**kwargs)
         self.close=self.fd.close
         self.node=self.fd.get(where)
         self.node.attrs.create('DataSaveVersion',cPickle.dumps(self.ver))
@@ -189,7 +116,7 @@ class saver(data_factory):
         for ky,val in dct.iteritems():
             tmp.attrs.create(ky,cPickle.dumps(val))
     
-    def write_data(self,obj,where='/',nosplit_file=False):
+    def write(self,obj,where='/',nosplit_file=False):
         """
         Write data in object *obj* to the file at location *where*.  *obj* should be a pyBODT type object; a subclass of
         the Dgroups class.
@@ -211,7 +138,7 @@ class saver(data_factory):
                     continue
                 val=getattr(obj,ky) # The data
                 if Dgroups in val.__class__.__mro__: # If the data is another Dgro
-                    self.write_data(val,where+'/'+grp_nm+'/_'+ky,nosplit_file=True)
+                    self.write(val,where+'/'+grp_nm+'/_'+ky,nosplit_file=True)
                 elif ((val.__class__ is np.ndarray) or (ma and val.__class__ is ma.marray)) and val.__len__()>0:
                     grp.create_dataset(str(ky),data=val,compression=self.complib,shuffle=self.shuffle,fletcher32=self.fletcher32,)
                     if ma.valid and val.__class__ is ma.marray:
@@ -240,8 +167,8 @@ class loader(data_factory):
         return nd.name.split('/')[-1]
     
     def __init__(self,filename,type_map,):
-        self.fd=h5.File(expanduser(filename),mode='r+') # Open the file r+ so that we can modify it on the fly if necessary (e.g. _fix_name)
-        self._filename=filename
+        self.filename=filename
+        self.fd=h5.File(self.filename,mode='r+') # Open the file r+ so that we can modify it on the fly if necessary (e.g. _fix_name)
         self.close=self.fd.close
         self.type_map=type_map
         self.ver=cPickle.loads(self.fd.attrs.get('DataSaveVersion','I0\n.'))
@@ -323,7 +250,7 @@ class loader(data_factory):
         out.__preload__()
         self.read_props(out,where=where)
         if add_closemethod:
-            out._filename=self._filename
+            out._filename=self.filename
             out._fileobject=self.fd
             out.close=self.fd.close
         for nd in self.iter_data(groups=groups,where=where):
@@ -465,39 +392,6 @@ class loader(data_factory):
                 elif gnm in groups or (gnm[0]=='_' and not no_essential):
                     yield grp
 
-
-def get_typemap(space):
-    """
-    Find the classes in the namespace *space* that have the saveable class in there
-    heirarchy.  These are data objects that should be able to be loaded.
-    """
-    type_map={}
-    for name, obj in inspect.getmembers(sys.modules[space]):
-        if hasattr(obj,'__mro__') and saveable in obj.__mro__:
-            type_map[str(obj)]=obj
-    return type_map
-
-
-def load(fname,type,data_groups=None,):
-    with loader(fname,type) as ldr:
-        return ldr.load(data_groups)
-
-def mmload(fname,type,data_groups=None,):
-    with loader(fname,type_map) as ldr:
-        return ldr.mmload(data_groups)
-
-def probeFile(fname):
-    out={}
-    with loader(fname,None) as ldr:
-        for nd,grp in ldr.iter('ALL'):
-            grpnm=ldr.get_name(grp)
-            if out.has_key(grpnm):
-                out[grpnm]+=[ldr.get_name(nd)]
-            else:
-                out[grpnm]=[ldr.get_name(nd)]
-        tp=ldr.read_type()
-        print 'Object type: %s' % tp
-    return tp,out
         
 
 

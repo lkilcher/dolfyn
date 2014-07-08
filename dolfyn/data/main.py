@@ -1,6 +1,6 @@
-from io import saveable,get_typemap
+from ..io import saveable,get_typemap,loader
 from base import Dprops
-from binned import bindat
+#from binned import bindat
 
 class basic(saveable,Dprops):
     @property

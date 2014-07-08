@@ -44,13 +44,18 @@ class Dprops(Dbase):
     @props.setter
     def props(self,val):
         self.__props__=props(val).copy()
+
+    def __getattr__(self,nm):
+        if nm in self.__getattribute__('__props__').keys():
+            return self.props[nm]
+        return self.__getattribute__(nm)
     
-    @property
-    def fs(self,):
-        return self.props['fs']
-    @fs.setter
-    def fs(self,val):
-        self.props['fs']=val
+    ## @property
+    ## def fs(self,):
+    ##     return self.props['fs']
+    ## @fs.setter
+    ## def fs(self,val):
+    ##     self.props['fs']=val
 
     ## def _update_props(self,obj=None,**kwargs):
     ##     #self.groups=self._get_props('groups')
@@ -62,14 +67,14 @@ class Dprops(Dbase):
     ##     for ky,val in kwargs.iteritems():
     ##         self.props[ky]=val
 
-    @property
-    def toff(self,):
-        if self.props.has_key('toff'):
-            return self.props['toff']
-        return 0
-    @toff.setter
-    def toff(self,val):
-        self.props['toff']=val
+    ## @property
+    ## def toff(self,):
+    ##     if self.props.has_key('toff'):
+    ##         return self.props['toff']
+    ##     return 0
+    ## @toff.setter
+    ## def toff(self,val):
+    ##     self.props['toff']=val
 
     ## def _get_props(self,attr_nm):
     ##     # For now all attributes I will deal with in this way will be dicts.
@@ -175,7 +180,7 @@ class groups(dict):
 class Dgroups(Dbase):
     """
     This class implements 'data groups' which are used to organize datasets.
-    (also, the io.py module uses them for loading and saving subsets of a data object).
+    (also, the io package uses them for loading and saving subsets of a data object).
 
     The critical attribute is the 'data_groups' property.
     """
@@ -333,7 +338,10 @@ class Dgroups(Dbase):
     def copy(self,):
         out=self.__class__()
         for dnm,dat,gnm in self.iter_wg():
-            out.add_data(dnm,dat.copy(),gnm)
+            if hasattr(dat,'copy'):
+                out.add_data(dnm,dat.copy(),gnm)
+            else:
+                out.add_data(dnm,copy.deepcopy(dat),gnm)
         if hasattr(self,'props'):
             out.props=self.props # implicit copy()
         out.groups=self.groups # implicit copy()
@@ -428,10 +436,21 @@ class config(Dgroups,dict):
     A config object
     """
     _lvl_spaces=3
-    config_type='*UNKNOWN*'
 
     def __init__(self,config_type='*UNKNOWN*'):
         self['config_type']=config_type
+
+    def __getitem__(self,indx):
+        return dict.__getitem__(self,indx)
+
+    def __setitem__(self,indx,dat):
+        dict.__setitem__(self,indx,dat)
+
+    def __setattr__(self,nm,val):
+        self[nm]=val
+
+    def __getattr__(self,nm):
+        return self[nm]
 
     ## @property
     ## def groups(self,):

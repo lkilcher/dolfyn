@@ -1,0 +1,511 @@
+import h5py as h5
+import cPickle
+import sys,inspect # These are for get_typemap
+from scipy import io as spio
+from base import Dgroups,np,ma,config
+from os.path import expanduser
+from mat_io import saver as mat_saver
+
+class saveable(Dgroups):
+    """
+    An abstract base class for objects that should be 'saveable'.
+    """
+    def save_mat(self,outfile,appendmat=True,groups=None,format='5',do_compression=True,oned_as='column',mat_time=None):
+        """
+        Save data in the object, to a matlab file.
+        #### THIS NEEDS TO BE UPDATED! ####
+        - for meta arrays
+        - for properties
+        - does it even work at all anymore?
+        """
+        outdict={}
+        for ky,dat in self.iter(groups=groups):
+            outdict[ky]=dat
+        if mat_time is not None:
+            outdict['datenum']=outdict.pop(mat_time)+366
+        if hasattr(self,'_pre_mat_save'):
+            self._pre_mat_save(outdict)
+        spio.savemat(outfile,outdict,appendmat=appendmat,format=format,do_compression=do_compression,oned_as=oned_as)
+
+    def save(self,filename,mode='w',where='/'):
+        """
+        Save the data in this object to file *filename* in the DOLfyn hdf5 format.
+
+        Arguments:
+        - `filename` : The filename in which to save the data.
+        - `mode`     : The write mode of the file (default to overwrite the existing file).  See File.open for more info.
+        - `where`    : The location in the hdf5 file to store the data.  (defaults to the root of the file, i.e. '/'.)
+
+        See Also:
+          the 'File' module
+          the 'h5py' module
+        """
+        with saver(filename,mode=mode) as svr:
+            svr.write_data(self,where=where)
+
+    def load(self,groups,where='/',filename=None,):
+        """
+        Add data from *groups* in the file *filename*.
+
+        - `groups`     : specifies the data 'groups' to load from the file.
+        - `where`      : specifies where in the data the groups are loaded (defaults to '/').
+        - `filename`   : specifies a file to load data from (default: load data from the file this object was loaded from).
+        """
+        if filename is None:
+            filename=self._filename
+        with loader(filename,None) as ldr:# Don't need a typemap, because we are using the current object.
+            ldr.load(groups=groups,where=where,out=self)
+
+class data_factory(object):
+    """
+    A base class for data factory objects.  data_factory objects save or load data from files.
+    """
+    closefile=True
+    def __enter__(self,):
+        """
+        Allow data_factory objects to use python's 'with' statement.
+        """
+        return self
+
+    def __exit__(self,type,value,trace):
+        """
+        Close the file at the end of the with statement.
+        """
+        if self.closefile:
+            self.close()
+            if hasattr(self,'_extrafiles'):
+                for fl in self._extrafiles:
+                    fl.close()
+
+class saver(data_factory):
+    """
+    A save data_factory object.  This class saves data in pyBODT classes into pyBODT format hdf5 files.
+    """
+    ver=1.1 # The version number of the save format.
+    # Version 1.0: underscore ('_') handled inconsistently.
+    # Version 1.1: '_' and '#' handled consistently in group naming:
+    #         '_' is for essential groups.
+    #         '#' is for groups that should be excluded, unless listed explicitly.
+    #         '##' and ending with '##' is for specially handled groups.
+    fletcher32=True
+    complib='lzf'
+    complevel=1
+    shuffle=True
+    split_groups_into_files=False # Right now, this isn't working, I think it is a bug in h5py.
+                                  # Perhaps later this will work, and it should be pretty transparent.
+    
+    def __init__(self,filename,mode='w',where='/',max_file_size_mb=None):
+        """
+        Initialize the saver object.  Open a file and write configuration parameters to it.
+
+        `filename` - Name of fale to save to.
+        `mode`     - File access mode.  Should be 'w' (default) or 'a'.  See also: file
+        `where`    - Location in hdf5 file to save the data (default: '/')
+        `max_file_size` option does not currently work.
+
+        See also:
+         - file
+         - h5py
+        """
+        self.file_mode=mode
+        kwargs={}
+        if max_file_size_mb is not None:
+            kwargs['driver']='family'
+            kwargs['memb_size']=max_file_size_mb*(2**20)
+            # Need to modify the filename to include a %d character.
+        self.fd=h5.File(expanduser(filename),mode=self.file_mode,**kwargs)
+        self.close=self.fd.close
+        self.node=self.fd.get(where)
+        self.node.attrs.create('DataSaveVersion',cPickle.dumps(self.ver))
+        self._extrafiles=[]
+
+    def getGroup(self,where=None,nosplit=False):
+        """
+        An internal function for returning the current, or a specified node in the hdf5 file.
+        
+        Return the h5py node at location `where`.
+        `where` can be:
+          - a string indicating a location in the hdf5 file,
+          - a node in the hdf5 file (returns this node)
+          - None, in which case, the current value of self.node is returned.
+        
+        """
+        if where is None:
+            return self.node
+        elif where.__class__ is h5.Group:
+            return where
+        elif where.__class__ in [str,unicode]:
+            if self.split_groups_into_files and where!='/' and not nosplit:
+                if self.fd.get(where,None) is None:
+                    fname=copy.copy(self.fd.filename)
+                    grpname=where.split('/')[-1]
+                    if fname.endswith('.h5'):
+                        fname=fname[:-2]+grpname+'.h5'
+                    else:
+                        fname+='.'+grpname
+                    thisgroup_file=h5.File(fname,mode=self.file_mode)
+                    thisgroup_file.create_group('data')
+                    thisgroup_file.close()
+                    self.fd[where]=h5.ExternalLink(fname,'/data')
+                    return self.fd.get(where)
+                else:
+                    return self.fd.get(where)
+            else:
+                return self.fd.require_group(where)
+        else:
+            error_not_valid_group_specification
+
+    def write_type(self,obj,where=None):
+        """
+        Write the type of the object being saved to the hdf5 file.
+        This allows for automatic loading of a file into a specific pyBODT class.
+
+        When a file is loaded, a dict of string:class (key:val) pairs should be provided to the 'loader' data_factory.
+        The string (key) that matches the value of the file's '_object_type' attribute is chosen.  The corresponding
+        class (value) is then instanced and data is loaded into it according to the pyBODT specification.
+
+        This function writes the '_object_type' from the current pyBODT instance to the file so that it can be loaded
+        later.
+
+        See also:
+            - loader.read_type
+            - get_typemap
+        """
+        self.getGroup(where).attrs.create('_object_type',str(obj.__class__))
+
+    def write_dict(self,name,dct,where='/'):
+        """
+        This is a method for writing simple dictionaries.
+        
+        It writes the dictionary as attributes in a group.  The keys are written as attribute names (only string keys
+        are allowed).  The values are pickled and written to the attribute value.
+
+        `name`   - name of the dictionary to be written (hdf5 group to create).
+        `dct`    - The dictionary who's data should be saved.
+        `where`  - The location to write *dct* (a Group named *name* will be created at this location).
+
+        """
+        tmp=self.getGroup(where).require_group(name)
+        for ky,val in dct.iteritems():
+            tmp.attrs.create(ky,cPickle.dumps(val))
+    
+    def write_data(self,obj,where='/',nosplit_file=False):
+        """
+        Write data in object *obj* to the file at location *where*.  *obj* should be a pyBODT type object; a subclass of
+        the Dgroups class.
+        
+        `obj`    - The object to write to the file.
+        `where`  - The location in the file to write the data in the object (default: '/')
+        `nosplit_file`  - Currently non-functional, for writing data to multiple files.
+        """
+        nd=self.getGroup(where)
+        self.write_type(obj,nd) # Write the data type.
+        if hasattr(obj,'props'):
+            self.write_dict('##properties##',obj.props,nd) # Write the 'props' attribute, if the data has one.
+        if hasattr(obj,'_units'):
+            self.write_dict('##units##',obj._units,nd) # Write the 'units' property if the data has it (this has been deprecated in the pyBODT standard, in favor of meta arrays).
+        for grp_nm,dat_nms in obj.groups.iteritems(): # iterate over the group names.
+            grp=self.getGroup(where+'/'+grp_nm,nosplit=nosplit_file) # Create or get the group specified.
+            for ky in dat_nms: # Iterate over the data names in the group.
+                if not hasattr(obj,ky):
+                    continue
+                val=getattr(obj,ky) # The data
+                if Dgroups in val.__class__.__mro__: # If the data is another Dgro
+                    self.write_data(val,where+'/'+grp_nm+'/_'+ky,nosplit_file=True)
+                elif ((val.__class__ is np.ndarray) or (ma and val.__class__ is ma.marray)) and val.__len__()>0:
+                    grp.create_dataset(str(ky),data=val,compression=self.complib,shuffle=self.shuffle,fletcher32=self.fletcher32,)
+                    if ma.valid and val.__class__ is ma.marray:
+                        nd=grp.get(str(ky))
+                        #print 'writing meta data for %s' % ky
+                        for nm,val in val.meta.__dict__.iteritems():
+                            if nm not in ['xformat','yformat']:
+                                #print nm,val
+                                nd.attrs.create(nm,cPickle.dumps(val))
+                elif val.__class__ is dict:
+                    grp.attrs.create(ky,cPickle.dumps(val))
+                else:
+                    grp.attrs.create(ky,val)
+
+class loader(data_factory):
+    
+    def getGroup(self,where=None):
+        if where is None:
+            return self.node
+        elif where.__class__ in [str,unicode]:
+            return self.fd.get(where,None)
+        else:
+            return where
+
+    def get_name(self,nd):
+        return nd.name.split('/')[-1]
+    
+    def __init__(self,filename,type_map,):
+        self.fd=h5.File(expanduser(filename),mode='r+') # Open the file r+ so that we can modify it on the fly if necessary (e.g. _fix_name)
+        self._filename=filename
+        self.close=self.fd.close
+        self.type_map=type_map
+        self.ver=cPickle.loads(self.fd.attrs.get('DataSaveVersion','I0\n.'))
+
+    def iter_data(self,groups=None,where='/'):
+        """
+        Iterate over data nodes in *groups*.
+
+        See iter_groups for more info on how to specify groups.
+        """
+        for grp in self.iter_groups(groups=groups,where=where):
+            for nd in grp.itervalues():
+                yield nd
+
+    def iter(self,groups=None,where='/'):
+        """
+        Iterate over data nodes in *groups*, with the group name returned.
+
+        See iter_groups for more info on how to specify groups.
+        """
+        for grp in self.iter_groups(groups=groups,where=where):
+            for nd in grp.itervalues():
+                yield nd,grp
+
+    __iter__=iter
+    
+    def iter_attrs(self,groups=None,where='/'):
+        for grp in self.iter_groups(groups=groups,where=where):
+            for attnm in grp.attrs.iterkeys():
+                if not ((self.ver<=1.0 and attnm in ['_properties','_units']) or (attnm.startswith('##') and attnm.endswith('##'))):
+                    # Skip the "_properties" attribute, if it exists.
+                    yield grp,attnm
+
+    def read_attrs(self,out,groups=None,where='/'):
+        for grp,attnm in self.iter_attrs(groups=groups,where=where):
+            dat=grp.attrs[attnm]
+            try:
+                dat=cPickle.loads(dat)
+            except:
+                pass
+            out.add_data(attnm,dat,self.get_name(grp))
+
+    def read_props(self,out,where):
+        if self.ver>=1.1:
+            propsstr='##properties##'
+            unitsstr='##units##'
+        else:
+            propsstr='_properties'
+            unitsstr='_units'
+        if propsstr in self.getGroup(where).keys():
+            out.props=self.read_dict(where+"/"+propsstr)
+        ## if unitsstr in self.getGroup(where).keys():
+        ##     print 1
+        ##     out._units=self.read_dict(where+"/"+unitsstr)
+
+    def _fix_name(self,nd):
+        var = raw_input(
+        """The name '%s' cannot be written to the input.  Do you wish to:
+        a) move the data in the file?
+        b) specify a different attribute to assign the data to?
+        c) skip the attribute (default)?
+        """ % (nd.name.rsplit('/',1)[-1]))
+        if var=='a':
+            newnm=raw_input("What name shall the data be reassigned to?")
+            grpnm,name=nd.name.rsplit('/',1)
+            grp=self.fd.get(grpnm)
+            grp.copy(nd.name,grpnm+'/'+newnm)
+            del nd
+            return self.fd.get(grpnm+'/'+newnm)
+        elif var=='b':
+            return raw_input("What shall the attribute be called?")
+        else:
+            return None
+
+
+    def mmload(self,groups=None,where='/',out=None,add_closemethod=True):
+        self.closefile=False
+        out=self.init_object(out,where=where)
+        out.__preload__()
+        self.read_props(out,where=where)
+        if add_closemethod:
+            out._filename=self._filename
+            out._fileobject=self.fd
+            out.close=self.fd.close
+        for nd in self.iter_data(groups=groups,where=where):
+            if '_object_type' in nd.attrs.keys():
+                out.add_data(self.get_name(nd)[1:],self.mmload(where=nd.name,add_closemethod=False),self.get_name(nd.parent))
+                continue
+            if hasattr(nd,'read_direct'):
+                out.add_data(self.get_name(nd),nd,self.get_name(nd.parent))
+        self.read_attrs(out,groups=groups,where=where)
+        return out
+        
+        
+    def load(self,groups=None,where='/',out=None):
+        self.closefile=True
+        out=self.init_object(out,where=where)
+        out.__preload__()
+        self.read_props(out,where=where)
+        for nd in self.iter_data(groups=groups,where=where):
+            if '_object_type' in nd.attrs.keys():
+                out.add_data(self.get_name(nd)[1:],self.load(where=nd.name),self.get_name(nd.parent))
+                continue
+            if hasattr(nd,'read_direct'):
+                nm=self.get_name(nd)
+                #try:
+                out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
+                ## except AttributeError:
+                ##     newnm=self._fix_name(nd)
+                ##     if newnm is None:
+                ##         continue
+                ##     elif newnm.__class__ is str:
+                ##         out.groups.remove(nm)
+                ##         nm=newnm
+                ##         out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
+                ##     elif newnm.__class__ is nd.__class__:
+                ##         nd=newnm
+                ##         nm=self.get_name(nd)
+                ##         out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
+                        
+                nd.read_direct(getattr(out,nm)) # This puts the data in the output object.
+                if ma.valid and self.ver==0:
+                    if '_label' in nd.attrs.keys():
+                        # This is a deprecated file structure.
+                        setattr(out,nm,ma.marray(getattr(out,nm),meta=ma.varMeta(nd.attrs.get('_label'),cPickle.loads(nd.attrs.get('_units')))))
+                    if 'label' in nd.attrs.keys():
+                        s=nd.attrs.get('units')
+                        try:
+                            u=cPickle.loads(s)
+                        except ImportError:
+                             # This is to catch a redefinition of data objects.
+                             try:
+                                 u=cPickle.loads(s.replace('cdata_base','cdata').replace('unitsDict','dict'))
+                             except:
+                                 u=cPickle.loads(s.replace('cdata_base','cdata.marray'))
+                        setattr(out,nm,ma.marray(getattr(out,nm),meta=ma.varMeta(nd.attrs.get('label'),u,cPickle.loads(nd.attrs.get('dim_names')))))
+                elif ma.valid:
+                    if '_name' in nd.attrs.keys():# This checks that this is a meta array
+                        s=nd.attrs.get('_units')
+                        try:
+                            u=cPickle.loads(s)
+                        except ImportError:
+                             # This is to catch a redefinition of data objects.
+                            u=cPickle.loads(s.replace('cdata_base','cdata'))
+                        meta=ma.varMeta(cPickle.loads(nd.attrs.get('_name')),u,cPickle.loads(nd.attrs.get('dim_names')))
+                        for atnm in nd.attrs.keys():
+                            if atnm not in ['_name','_units','dim_names']:
+                                setattr(meta,atnm,cPickle.loads(nd.attrs.get(atnm)))
+                        setattr(out,nm,ma.marray(getattr(out,nm),meta=meta))
+        self.read_attrs(out,groups=groups,where=where)
+        out.__postload__()
+        return out
+
+    def read_dict(self,where):
+        out={}
+        nd=self.getGroup(where)
+        for prpnm,prp in nd.attrs.iteritems():
+            try:
+                out[prpnm]=cPickle.loads(prp)
+            except TypeError:
+                out[prpnm]=prp
+        return out
+
+    def read_type(self,where='/'):
+        try:
+            return self.getGroup(where).attrs['_object_type']
+        except KeyError:
+            print 'Old style data file, trying to load...'
+            return self.getGroup(where).attrs['object_type']
+            
+        
+    def init_object(self,out,where='/'):
+        """
+        Look at the 'object_type' attribute in the node at *where*.
+
+        Return an attribute of the data type based on type_map.
+
+        If the type_map does not have a key of the type found in the file,
+        the basic type is used.
+        """
+        if out is None:
+            if self.type_map.__class__ is dict:
+                typestr=self.read_type(where=where)
+                if typestr in self.type_map:
+                    out=self.type_map[typestr]()
+                else:
+                    if typestr.endswith("config'>"):
+                        # This is a catch for deleted module-specific config objects
+                        out=config()
+                    else:
+                        for ky in self.type_map:
+                            if ky.endswith(typestr.split('.')[-1]):
+                                out=self.type_map[ky]()
+            else: # Then it is a type itself.
+                out=self.type_map()
+        return out
+        
+        
+    def iter_groups(self,groups=None,where='/',no_essential=False):
+        """
+        Returns an iterator of the groups in *groups*.
+        Here is how *groups* specification works:
+           *groups* value  |   Result
+           ----------------+------------------------------------
+           None            |   (default) Return iterator for 'default' groups (those not starting with '#' or '/'.
+           [<a list>]      |   Iterates over the groups in the list (plus the data in 'essential' groups, ie those starting with '_'***).
+           'ALL'           |   Iterates over all the data in the file.
+           
+        ***: Unless no_essential=True
+        """
+        for grp in self.getGroup(where).itervalues():
+            if grp.__class__ is h5.highlevel.Group:
+                gnm=self.get_name(grp)
+                if groups is None:
+                    if not (gnm[0] in ['#','/'] or (self.ver<=1 and gnm in ['_properties','_units'])) :
+                        #print gnm,grp
+                        yield grp
+                elif groups=='ALL':
+                    if not ((gnm.startswith('##') and gnm.endswith('##')) or (self.ver<=1 and gnm in ['_properties','_units'])):
+                        yield grp
+                elif gnm in groups or (gnm[0]=='_' and not no_essential):
+                    yield grp
+
+
+def get_typemap(space):
+    """
+    Find the classes in the namespace *space* that have the saveable class in there
+    heirarchy.  These are data objects that should be able to be loaded.
+    """
+    type_map={}
+    for name, obj in inspect.getmembers(sys.modules[space]):
+        if hasattr(obj,'__mro__') and saveable in obj.__mro__:
+            type_map[str(obj)]=obj
+    return type_map
+
+
+def load(fname,type,data_groups=None,):
+    with loader(fname,type) as ldr:
+        return ldr.load(data_groups)
+
+def mmload(fname,type,data_groups=None,):
+    with loader(fname,type_map) as ldr:
+        return ldr.mmload(data_groups)
+
+def probeFile(fname):
+    out={}
+    with loader(fname,None) as ldr:
+        for nd,grp in ldr.iter('ALL'):
+            grpnm=ldr.get_name(grp)
+            if out.has_key(grpnm):
+                out[grpnm]+=[ldr.get_name(nd)]
+            else:
+                out[grpnm]=[ldr.get_name(nd)]
+        tp=ldr.read_type()
+        print 'Object type: %s' % tp
+    return tp,out
+        
+
+
+
+if __name__=='__main__':
+    #filename='/home/lkilcher/data/eastriver/advb_10m_6_09.h5'
+    filename='/home/lkilcher/data/ttm_dem_june2012/TTM_Vectors/TTM_NRELvector_Jun2012_b5m.h5'
+    import adv
+    ldr=loader(filename,adv.type_map)
+    dat=ldr.load()
+    

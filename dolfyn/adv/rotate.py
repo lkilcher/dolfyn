@@ -28,8 +28,7 @@ def calcAccelVel(accel,samp_freq,filt_freq):
     #       i.e. when the head moves one way in stationary flow, it measures a velocity in the other direction.
     return -dat
 
-
-def calcRotationVel(AngRt,vec_imu2sample):
+def calcRotationVel(AngRt,vec_imu2sample,transMat=None):
     """
     Calculate the induced velocity due to rotations of the ADV.
 
@@ -43,7 +42,89 @@ def calcRotationVel(AngRt,vec_imu2sample):
     # where vec_imu2sample=[dx,dy,dz], and AngRt=[omegaX,omegaY,omegaZ]
     # NOTE: The minus sign is because the measured-induced velocities are in the opposite direction of the head motion.
     #       i.e. when the head moves one way in stationary flow, it measures a velocity in the opposite direction.
-    return -np.array([vec_imu2sample[2]*AngRt[1]-vec_imu2sample[1]*AngRt[2],vec_imu2sample[0]*AngRt[2]-vec_imu2sample[2]*AngRt[0],vec_imu2sample[1]*AngRt[0]-vec_imu2sample[0]*AngRt[1]])
+    if vec_imu2sample.ndim==1:
+        vec_imu2sample=vec_imu2sample.copy().reshape((3,1))
+    uerr=-np.array([vec_imu2sample[2][:,None]*AngRt[1]-vec_imu2sample[1][:,None]*AngRt[2],vec_imu2sample[0][:,None]*AngRt[2]-vec_imu2sample[2][:,None]*AngRt[0],vec_imu2sample[1][:,None]*AngRt[0]-vec_imu2sample[0][:,None]*AngRt[1]])
+    if uerr.shape[:2]==(3,3) and transMat is not None:
+        # The columns of vec_imu2sample are the positions of *each* probe, so we can calculate the velocity of each probe separately and recompute the 'error' velocity.
+        # np.diagonal returns a matrix with colums that contain diagonal elements (thus the ij,kj->ik in einsum).
+        return np.einsum('ij,kj->ik',transMat,np.diagonal(np.einsum('ij,jkl->ikl',np.linalg.inv(transMat),uerr)))
+    else:
+        # Here we drop a dimension because we added one with the 'None's above. 
+        return uerr[:,0,:]
+
+class rotate_msadv(object):
+
+    order=['beam','head','inst','earth','pax']
+
+    #def rot_beam (self,obj,inv=False):
+        
+    
+    #def rotate(self,obj,to_frame='earth'):
+        
+        
+
+class correct_motion(object):
+
+    def __init__(self,accel_filtfreq=1./30,vel_filtfreq=1./100,separate_probes=False):
+        self.accelvel_filtfreq=vel_filtfreq
+        self.accel_filtfreq=accel_filtfreq
+        self.separate_probes=separate_probes
+
+    def _rotateVel2body(self,advo):
+        advo._u=np.dot(advo.props['body2head_rotmat'].T,advo._u) # The transpose should do head to body.
+
+    def _calcRotVel(self,advo):
+        pos=self._calcProbePos(advo)
+        if self.separate_probes:
+            advo.urot=np.dot(advo.props['body2head_rotmat'].T ,calcRotationVel(np.dot(advo.props['body2head_rotmat'],advo.AngRt),np.dot(advo.props['body2head_rotmat'],pos),advo.config.head.get('TransMatrix',None)))
+        else:
+            advo.urot=calcRotationVel(advo.AngRt,pos)
+        advo.groups['orient'].add('urot')
+
+    def _calcAccelStable(self,advo):
+        # Ordering does inst->earth:
+        acctmp=np.einsum('ijk,ik->jk',advo.orientmat,advo.Accel)
+        flt=sig.butter(1,self.accel_filtfreq/(advo.fs/2))
+        for idx in range(3):
+            acctmp[idx]=sig.filtfilt(flt[0],flt[1],acctmp[idx])
+        # Ordering does earth-inst:
+        advo.AccelStable=np.einsum('ijk,jk->ik',advo.orientmat,acctmp)
+        advo.groups['orient'].add('AccelStable')
+
+    def _calcProbePos(self,advo):
+        """
+        !!!Currently this only works for Nortek Vectors!
+
+        In the future, we could use the transformation matrix (and a probe-length lookup-table?)
+        """
+        # According to the ADV_DataSheet, the probe-length radius is 8.6cm @ 120deg from probe-stem axis.
+        # If I subtract 1cm (!!!checkthis) to get acoustic receiver center, this is 7.6cm.
+        # In the coordinate sys of the center of the probe then, the positions of the centers of the receivers is:
+        if advo.props.get('inst_make',None)=='Nortek' and advo.props.get('inst_model',None)=='VECTOR' and self.separate_probes:
+            r=0.076
+            phi=-30.*np.pi/180. # The angle between the x-y plane and the probes
+            theta=np.array([0.,120.,240.])*np.pi/180. # The angles of the probes from the x-axis.
+            return np.dot(advo.props['body2head_rotmat'].T,np.array([r*np.cos(theta),r*np.sin(theta),r*np.tan(phi)*np.ones(3)]))+advo.props['body2head_vec'][:,None]
+        else:
+            return advo.props['body2head_vec']
+        
+
+    def _calcAccelVel(self,advo):
+        advo.uacc=calcAccelVel(advo.Accel-advo.AccelStable,advo.fs,self.accelvel_filtfreq)
+        advo.groups['orient'].add('uacc')
+    
+    def __call__(self,advo):
+        if not advo.props.has_key('rotate_vars'):
+            advo.props['rotate_vars']=['_u','urot','uacc','Accel','AccelStable','AngRt','Mag']
+        else:
+            advo.props['rotate_vars']+=['urot','uacc','AccelStable']
+        self._rotateVel2body(advo)
+        self._calcRotVel(advo)
+        self._calcAccelStable(advo)
+        self._calcAccelVel(advo)
+        advo._u-=(advo.urot+advo.uacc)
+        
 
 def orient2euler(obj):
     """

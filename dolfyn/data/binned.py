@@ -3,8 +3,8 @@ from ..tools.psd import psd_freq,cohere,psd,cpsd_quasisync
 from ..tools.misc import slice1d_along_axis
 from scipy.signal import detrend
 from base import Dprops,ma,rad_hz,time_based,Dgroups
-from io import saveable
 import copy
+from h5py._hl.dataset import Dataset
 
 class time_bindat(time_based):
     """
@@ -13,14 +13,14 @@ class time_bindat(time_based):
     """
     @property
     def freq(self,):
-        return self.omega/rad_hz
+        return self.omega[:]/rad_hz
     @freq.setter
     def freq(self,val):
         self.omega=val*rad_hz
 
 class time_binner(object):
     
-    def calc_omega(self,fs,coh=False):
+    def calc_omega(self,fs=None,coh=False):
         """
         Calculate the radial-frequency vector for the psd's.
 
@@ -31,6 +31,7 @@ class time_binner(object):
         """
         n_fft=self.n_fft
         freq_dim='freq'
+        fs=self._parse_fs(fs)
         if coh:
             n_fft=self.n_fft_coh
             freq_dim='coh_freq'
@@ -51,6 +52,11 @@ class time_binner(object):
         n_fft=self._parse_nfft(n_fft)
         n_bin=self._parse_nbin(n_bin)
         return list(inshape[:-1])+[inshape[-1]/n_bin,n_fft/2]
+
+    def _parse_fs(self,fs=None):
+        if fs is not None:
+            return fs
+        return self.fs
 
     def _parse_nbin(self,n_bin=None):
         if n_bin is None:
@@ -139,17 +145,24 @@ class time_binner(object):
         dt1=dt1-dt1[...,:,n_bin/4:-n_bin/4].mean(-1)[...,None]
         dt2=self.demean(indat) # Don't pad the second variable.
         dt2=dt2-dt2.mean(-1)[...,None]
+        #if np.mod(int(n_bin/4),2)==0: # n_bin/4 is even, this works for n_bin=10322.59
+        #    se=slice(int(n_bin/4),None,1)
+            #sb=slice(int(n_bin/4)-1,None,-1)
+        #    sb=slice(int(n_bin/4),None,-1)
+        #else:
+        se=slice(int(n_bin/4)-1,None,1)
+        sb=slice(int(n_bin/4)-1,None,-1)
         for slc in slice1d_along_axis(dt1.shape,-1):
             tmp=np.correlate(dt1[slc],dt2[slc],'valid')
             # The zero-padding in reshape means we compute coherence
             # from one-sided time-series for first and last points.
             if slc[-2]==0:
-                out[slc]=tmp[n_bin/4-1:]
+                out[slc]=tmp[se]
             elif slc[-2]==dt2.shape[-2]-1:
-                out[slc]=tmp[n_bin/4-1::-1]
+                out[slc]=tmp[sb]
             else:
                 # For the others we take the average of the two sides.
-                out[slc]=(tmp[n_bin/4-1:]+tmp[n_bin/4-1::-1])/2
+                out[slc]=(tmp[se]+tmp[sb])/2
         return out
 
     def calc_lag(self,npt=None,one_sided=False):
@@ -180,7 +193,22 @@ class time_binner(object):
             out/=(self.std(indt1,n_bin=n_bin1)[...,:shp[-2]]*self.std(indt2,n_bin=n_bin2)[...,:shp[-2]]*n_bin2)[...,None]
         return out
 
-    def set_bindata(self,rawdat,outdat,names=None):
+    def do_avg(self,rawdat,outdat,names=None):
+        """
+        
+        Parameters
+        ----------
+         *rawdat*: The raw data structure to be binned (if None, a basic time_bindat class is created).
+         *outdat*: The bin'd (output) data object to which averaged data is added.
+         *names* : The names of variables to be averaged.  If *names* is None, all data in *rawdat* will be binned.
+        
+        """
+        n=len(rawdat)
+        for nm,dat,grp in rawdat.iter_wg():
+            if ((names is None) or (nm in names)) and ((np.ndarray in dat.__class__.__mro__) or (Dataset in dat.__class__.__mro__) ) and (dat.shape[-1]==n):
+                outdat.add_data(nm,self.reshape(dat).mean(-1),grp)
+
+    def do_var(self,rawdat,outdat,names=None,suffix='_var'):
         """
         
         Parameters
@@ -193,9 +221,9 @@ class time_binner(object):
         n=len(rawdat)
         for nm,dat,grp in rawdat.iter_wg():
             if ((names is None) or (nm in names)) and (np.ndarray in dat.__class__.__mro__) and (dat.shape[-1]==n):
-                outdat.add_data(nm,self.reshape(dat).mean(-1),grp)
+                outdat.add_data(nm+suffix,self.reshape(dat).var(-1),grp)
 
-    def __init__(self,n_bin,n_fft=None,n_fft_coh=None):
+    def __init__(self,n_bin,fs,n_fft=None,n_fft_coh=None):
         """
         Initialize an averaging object.
 
@@ -208,6 +236,7 @@ class time_binner(object):
                        (*n_fft_coh*<=*n_bin*). Default: *n_fft_coh*=*n_bin*/6
         """
         self.n_bin=n_bin
+        self.fs=fs
         self.n_fft=n_fft
         self.n_fft_coh=n_fft_coh
         if n_fft is None:
@@ -247,7 +276,8 @@ class time_binner(object):
             out[slc]=cohere(dat1[slc],dat2[slc],n_fft,debias=debias,noise=noise)
         return out
 
-    def cpsd(self,dat1,dat2,fs,window='hann',n_fft=None,n_bin1=None,n_bin2=None,):
+    def cpsd(self,dat1,dat2,fs=None,window='hann',n_fft=None,n_bin1=None,n_bin2=None,):
+        fs=self._parse_fs(fs)
         if n_fft is None:
             n_fft=self.n_fft_coh
         n_bin1=self._parse_nbin(n_bin1)
@@ -262,7 +292,7 @@ class time_binner(object):
         return out
         
         
-    def psd(self,dat,fs,window='hann',noise=0,n_bin=None,n_fft=None,step=None,n_pad=None):
+    def psd(self,dat,fs=None,window='hann',noise=0,n_bin=None,n_fft=None,step=None,n_pad=None):
         """
         Calculate 'power spectral density' of *dat*.
 
@@ -273,6 +303,7 @@ class time_binner(object):
         *noise*  : The white-noise level of the measurement (in the same units as *dat*).
         
         """
+        fs=self._parse_fs(fs)
         n_bin=self._parse_nbin(n_bin)
         n_fft=self._parse_nfft(n_fft)
         n_pad=self._parse_nfft(n_pad)

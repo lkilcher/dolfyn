@@ -1,10 +1,13 @@
 from ..data import base as db
+from ..io import main as dio
 from ..data import velocity as dbvel
 from pylab import date2num,num2date
 import numpy as np
 from scipy.stats.stats import nanmean,nanstd
+
 import pylab as plb
 #from pylab import plot,show
+
 import rotate
 from scipy.signal import detrend
 
@@ -110,7 +113,7 @@ class adcp_raw(dbvel.velocity):
     
     def __repr__(self,):
         mmstr=''
-        if self.mpltime.__class__ is db.h5._hl.dataset.Dataset:
+        if self.mpltime.__class__ is dio.h5._hl.dataset.Dataset:
             mmstr='mm'
         if (not hasattr(self,'mpltime')) or self.mpltime[0]<1:
             print 'Warning: no time information!'
@@ -122,12 +125,6 @@ class adcp_raw(dbvel.velocity):
         return "%0.2f hour %sADCP record (%s bins, %s pings), started: %s" % ((tm[-1]-tm[0])*24,mmstr,self.shape[0],self.shape[1],dt.strftime('%b %d, %Y %H:%M'))
 
 
-## class adcp_binned_meta(db.velocity_meta):
-##    def __init__(self,*args,**kwargs):
-##        self.update({'Etke':db.varMeta('Etke',{2:'m',-2:'s'}),
-##            })
-##        super(adcp_binned_meta,self).__init__(*args,**kwargs)
-
 class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
     #meta=adcp_binned_meta()
     inds=slice(None)
@@ -136,7 +133,16 @@ class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
     def Etke(self,):
         return self.upup_[:]+self.vpvp_[:]+self.wpwp_[:]
     
-    def calc_avar(self,advr):
+
+class binner(dbvel.vel_binner_tke):
+    def __call__(self,indat,out_type=adcp_binned):
+        out=dbvel.vel_binner_tke.__call__(self,indat,out_type=out_type)
+        self.set_bindata(indat,out)
+        out.add_data('tke',self.calc_tke(indat._u,noise=indat.noise),'main')
+        out.add_data('sigma_Uh',np.std(self.reshape(indat.U_mag),-1,dtype=np.float64)-(indat.noise[0]+indat.noise[1])/2,'main')
+        return out
+
+    def calc_tke(self,advr):
         """
         Calculate the variance of 'u','v' and 'w'.
         """
@@ -159,6 +165,7 @@ class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
         #self.meta['upup_']=db.varMeta("u'u'",{2:'m',-2:'s'})
         #self.meta['vpvp_']=db.varMeta("v'v'",{2:'m',-2:'s'})
         #self.meta['wpwp_']=db.varMeta("w'w'",{2:'m',-2:'s'})
+
         
     def calc_eps_sfz(self,adpr):
         """
@@ -181,6 +188,7 @@ class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
                 if ind==10:
                     error
 
+
     def calc_ustar_fitstress(self,dinds=slice(None),H=None):
         if H is None:
             H=self.depth_m[:][None,:]
@@ -190,45 +198,11 @@ class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
         #self.ustar=p[1]**(0.5)
         #self.hbl_fit=p[0]/p[1]
 
-    def calc_tke(self,apdr,aniso_ratios=[.5,.3],dnoise=None):
+    def calc_stresses(self,beamvel,beamAng):
         """
-        Compute the tke.  An assumption about the fraction of energy in the <w'w'> component must be made.
-
-        aniso_ratios specifies the anisotropy ratios, v'v'/u'u' and w'w'/u'u', to use, respectively.
-        """
-        #*wpwp_frac* specifies the fraction of tke assumed to be in the <w'w'> component.
-        #*wpwp_frac* was defaulted to 0.12 when implemented.
-        # Because of the need to make an assumption, I wonder if this is not a
-        # better way to estimate tke than simply from transformed velocities?
-        bmang=apdr.config.beam_angle*deg2rad
-        fac=(1+np.sum(aniso_ratios))
-        if dnoise is None:
-            if not apdr.props.has_key('doppler_noise'):
-                raise db.DataError('An estimate of doppler noise is required to estimate TKE.')
-            dnoise=apdr.props['doppler_noise']
-        # This involves some funny ellipse trig...
-        # define the "unit" ellipse as having a
-        theta=self.props['principal_angle']+self.heading_deg[:]*deg2rad
-        rx=aniso_ratios[0]/np.sqrt(aniso_ratios[0]*np.cos(theta)**2+np.sin(theta)**2)
-        ry=aniso_ratios[0]/np.sqrt(aniso_ratios[0]*np.cos(theta+np.pi/2)**2+np.sin(theta+np.pi/2)**2)
-        dx2=(nanvar(self.reshape(apdr.beam1vel),axis=-1)+nanvar(self.reshape(apdr.beam2vel),axis=-1))/2-dnoise**2
-        dy2=(nanvar(self.reshape(apdr.beam3vel),axis=-1)+nanvar(self.reshape(apdr.beam4vel),axis=-1))/2-dnoise**2
-        dx2*=1./rx # Scale by the 'unit' ellipse radius that the instrument was at, to get the magnitude of the x-direction u'u'.
-        dy2*=1./ry # Do the same for the direction the instruments y-axis was at.
-        dx2*=1/(np.sin(bmang)**2+aniso_ratios[1]*np.cos(bmang)**2)*fac
-        dy2*=1/(np.sin(bmang)**2+aniso_ratios[1]*np.cos(bmang)**2)*fac
-        dx2[dx2<0]=0
-        dy2[dy2<0]=0
-        self.add_data('q2u',dx2,'stress')
-        self.add_data('q2v',dy2,'stress')
-        return self.Etke_indir
         
-    @property
-    def Etke_indir(self,):
-        return (self.q2u[:]+self.q2v[:])/2.
-
-    def calc_stresses(self,apdr):
-        """
+        
+        
         Calculate the stresses from, the difference in the beam variances.
         Reference: Stacey, Monosmith and Burau; (1999) JGR [104] "Measurements of Reynolds stress profiles in unstratified tidal flow"
         """
@@ -238,7 +212,7 @@ class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
         #                        x-axis points from beam 1 to 2, and
         #                        y-axis points from beam 4 to 3.
         #       Therefore:
-        stress=((nanvar(self.reshape(apdr.beam1vel),axis=-1)-nanvar(self.reshape(apdr.beam2vel),axis=-1))+1j*(nanvar(self.reshape(apdr.beam4vel),axis=-1)-nanvar(self.reshape(apdr.beam3vel),axis=-1)))/fac
+        stress=((nanvar(self.reshape(beamvel[0]),axis=-1)-nanvar(self.reshape(beamvel[1]),axis=-1))+1j*(nanvar(self.reshape(beamvel[2]),axis=-1)-nanvar(self.reshape(beamvel[3]),axis=-1)))/fac
         if self.config.orientation=='up':
             # This comes about because, when the ADCP is 'up', the u and w velocities need to be multiplied by -1
             # (equivalent to adding pi to the roll).  See the coordinate transformation documentation for more info.
@@ -247,40 +221,11 @@ class adcp_binned(dbvel.vel_bindat_tke,adcp_raw):
         stress*=rotate.inst2earth_heading(self)
         if self.props['coord_sys']=='principal':
             stress*=np.exp(-1j*self.props['principal_angle'])
-        self.add_data('upwp_',stress.real,'stress')
-        self.add_data('vpwp_',stress.imag,'stress')
+        return stress.real,stress.imag
+        #self.add_data('upwp_',stress.real,'stress')
+        #self.add_data('vpwp_',stress.imag,'stress')
         #self.meta['upwp_']=db.varMeta("u'w'",{2:'m',-2:'s'})
         #self.meta['vpwp_']=db.varMeta("v'w'",{2:'m',-2:'s'})
 
 
-
-def bin_adcp(apdo,n_bin):
-    out=adcp_binned()
-    apdo._copy_props(out)
-    out.props['n_bin']=n_bin
-    l=len(apdo.time)
-    out.props['n']=np.floor(l/n_bin)
-    
-    for nm,dat,grpnm in apdo.iter_wg():
-        print nm
-        if hasattr(dat,'shape') and dat.shape[-1]==l:
-            out.add_data(nm,
-                         nanmean(out.reshape(apdo.get_data(nm)),axis=-1).astype(dat.dtype),
-                         group=grpnm)
-        else:
-            out.add_data(nm,apdo.get_data(nm),group=grpnm)
-    if hasattr(apdo.config,'beam_angle') and hasattr(apdo,'beam1vel'): # This means it is a workhorse, created with adcp.readbin.  Need to generalize this...
-        out.calc_stresses(apdo)
-        out.calc_tke(apdo)
-    out.calc_avar(apdo)
-    return out
-
-type_map=db.get_typemap(__name__)
-def load(fname,data_groups=None):
-    with db.loader(fname,type_map) as ldr:
-        return ldr.load(data_groups)
-
-def mmload(fname,data_groups=None):
-    with db.loader(fname,type_map) as ldr:
-        return ldr.mmload(data_groups)
-
+type_map=dio.get_typemap(__name__)

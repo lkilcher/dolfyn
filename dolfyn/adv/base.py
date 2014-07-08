@@ -1,6 +1,6 @@
 import numpy as np
 from ..data import base as db
-from ..data import io as dio
+from ..io import main as dio
 from ..data import velocity as dbvel
 from ..tools.psd import psd_freq
 from scipy.special import cbrt
@@ -10,10 +10,12 @@ from OrderedSet import OrderedSet as oset
 ma=db.ma
 
 class adv_config(db.config):
-    def __init__(self,config_type='ADV'):
-        self.config_type=config_type
+    pass
 
 class adv_raw(dbvel.velocity):
+
+    def has_imu(self,):
+        return hasattr(self,'Accel') | hasattr(self,'Veloc')
 
     pass
     ## @property
