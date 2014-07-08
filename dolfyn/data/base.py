@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-from OrderedSet import OrderedSet as oset
+from ..OrderedSet import OrderedSet as oset
 from pylab import num2date
 from ..meta import api_dumb as ma
 

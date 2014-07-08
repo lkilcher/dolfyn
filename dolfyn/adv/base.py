@@ -5,7 +5,7 @@ from ..data import velocity as dbvel
 from ..tools.psd import psd_freq
 from scipy.special import cbrt
 import copy
-from OrderedSet import OrderedSet as oset
+from ..OrderedSet import OrderedSet as oset
 #import turbulence as turb
 ma=db.ma
 

@@ -1,4 +1,6 @@
 import numpy as np
+from pylab import date2num,num2date
+from datetime import datetime
 
 class delta(object):
     """
@@ -90,12 +92,10 @@ def fillgaps(a,maxgap=np.inf,dim=0,extrapFlg=False):
     DIM defaults to 0."""
     
     # If this is a multi-dimensional array, operate along axis dim.
-
-    if a.ndim>1:
+    if a.ndim > 1:
         for inds in slice1d_along_axis(a.shape,dim):
             fillgaps(a[inds],maxgap,0,extrapFlg)
         return
-    #
     
     a = np.asarray(a)
     nd = a.ndim
@@ -104,28 +104,28 @@ def fillgaps(a,maxgap=np.inf,dim=0,extrapFlg=False):
     if (dim >= nd):
         raise ValueError("dim must be less than a.ndim; dim=%d, rank=%d."
             % (dim,nd))
-    ind = [0]*(nd-1)
+    ind = [0]*(nd - 1)
     i = np.zeros(nd,'O')
     indlist = range(nd)
     indlist.remove(dim)
     i[dim] = slice(None,None)
     outshape = np.asarray(a.shape).take(indlist)
-    Ntot=np.product(outshape)
+    Ntot = np.product(outshape)
     i.put(indlist, ind)
     k = 0
 
-    gd=find(~np.isnan(a))
+    gd = np.nonzero(~np.isnan(a))[0]
     
     # Here we extrapolate the ends, if necessary:
-    if extrapFlg and gd.__len__()>0:
-        if gd[0]!=0 and gd[0]<=maxgap:
-            a[:gd[0]]=a[gd[0]]
-        if gd[-1]!=a.__len__() and (a.__len__()-(gd[-1]+1))<=maxgap:
-            a[gd[-1]:]=a[gd[-1]]
+    if extrapFlg and gd.__len__() > 0:
+        if gd[0] != 0 and gd[0] <= maxgap:
+            a[:gd[0]] = a[gd[0]]
+        if gd[-1] != a.__len__() and (a.__len__() - (gd[-1]+1)) <= maxgap:
+            a[gd[-1]:] = a[gd[-1]]
     
     # Here is the main loop
     if gd.__len__()>1:
-        inds=find(np.logical_and(1<np.diff(gd),np.diff(gd)<=maxgap+1))
+        inds=np.nonzero((1 < np.diff(gd)) & (np.diff(gd) <= maxgap + 1))[0]
         for i2 in range(0,inds.__len__()):
-            ii=range(gd[inds[i2]]+1,gd[inds[i2]+1])
-            a[ii]=(np.diff(a[gd[[inds[i2],inds[i2]+1]]])*(np.arange(0,ii.__len__())+1)/(ii.__len__()+1)+a[gd[inds[i2]]]).astype(a.dtype)
+            ii=range( gd[inds[i2]] + 1, gd[inds[i2] + 1] )
+            a[ii]=( np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) * (np.arange(0,ii.__len__()) + 1) / (ii.__len__() + 1) + a[gd[inds[i2]]] ).astype(a.dtype)

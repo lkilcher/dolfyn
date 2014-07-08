@@ -1,7 +1,7 @@
 import numpy as np
 import base as adv
 import dolfyn.adcp as adcp
-import tools as tbx
+from ..tools import misc as tbx
 from struct import unpack
 from struct import error as str_err
 ma=adv.db.ma
