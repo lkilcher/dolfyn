@@ -56,7 +56,7 @@ class adv_binned(dbvel.vel_bindat_spec,adv_raw):
 
 type_map=dio.get_typemap(__name__) # Get the data classes in the current namespace.
 
-def load(fname,data_groups=None):
+def load(fname,data_groups=None,type_map=type_map):
     """
     A function for loading ADV objects.
 
@@ -68,6 +68,6 @@ def load(fname,data_groups=None):
     with dio.loader(fname,type_map) as ldr:
         return ldr.load(data_groups)
 
-def mmload(fname,data_groups=None):
+def mmload(fname,data_groups=None,type_map=type_map):
     with dio.loader(fname,type_map) as ldr:
         return ldr.mmload(data_groups)
