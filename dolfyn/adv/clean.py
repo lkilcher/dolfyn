@@ -48,7 +48,7 @@ def fillpoly(indat,deg,npt):
             igd=itmp[~btmp]
             ibd=itmp[btmp]
             indat[ibd]=np.polyval(np.polyfit(igd,indat[igd],deg),ibd).astype(indat.dtype)
-            #print '%d bad points fixed at %d (fix# %d).' % (sum(btmp),pos-npt,count)
+            #print( '%d bad points fixed at %d (fix# %d).' % (sum(btmp),pos-npt,count) )
             searching=True
             ntail=0
             
@@ -106,11 +106,11 @@ def phaseSpaceThresh(u):
     a=np.empty_like(alpha)
     b=np.empty_like(alpha)
     for idx,al in enumerate(alpha):
-        #print al,std_u[idx],std_d2u[idx],Lu
+        #print( al,std_u[idx],std_d2u[idx],Lu )
         a[idx],b[idx]=calcab(al,Lu*std_u[idx],Lu*std_d2u[idx])
-        #print a[idx],b[idx]
+        #print( a[idx],b[idx] )
     if np.any(np.isnan(a)) or np.any(np.isnan(a[idx])):
-        print 'Coefficient calculation error'
+        print( 'Coefficient calculation error' )
     theta=np.arctan2(du,u)
     phi=np.arctan2((du**2+u**2)**0.5,d2u)
     pe=(((np.sin(phi)*np.cos(theta)*np.cos(alpha)+np.cos(phi)*np.sin(alpha))**2)/a+((np.sin(phi)*np.cos(theta)*np.sin(alpha)-np.cos(phi)*np.cos(alpha))**2)/b+((np.sin(phi)*np.sin(theta))**2)/(Lu*std_du)**2)**-1
@@ -134,7 +134,7 @@ def GN2002(u,npt=5000):
         u[bds]=np.NaN
         #fillgaps(u)
         fillpoly(u,3,12)
-        print 'GN2002: found %d bad points on loop %d' % (bds.sum(),c)
+        print( 'GN2002: found %d bad points on loop %d' % (bds.sum(),c) )
         c+=1
         if c>=100:
             error

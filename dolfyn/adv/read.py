@@ -1,6 +1,6 @@
 import numpy as np
-import base as adv
-import dolfyn.adcp as adcp
+from . import base as adv
+from .. import adcp
 from ..tools import misc as tbx
 from struct import unpack
 from struct import error as str_err
@@ -55,12 +55,12 @@ class vec_reader(object):
         self._thisid_bytes=bts=self.read(2)
         tmp=unpack(self.endian+'BB',bts)
         if tmp[0]!=165: # This catches a corrupted data block.
-            print 'Corrupted data block sync code.  Searching for next valid code...'
+            print( 'Corrupted data block sync code.  Searching for next valid code...' )
             val=int(self.findnext(do_cs=False),0)
             self.f.seek(2,1)
             return val
         #if self.debug:
-        #    print tmp[1]
+        #    print( tmp[1] )
         return tmp[1]
 
     def checksum(self,byts):
@@ -73,7 +73,7 @@ class vec_reader(object):
     def read_user_cfg(self,):
         # ID: '0x00
         if self.debug:
-            print 'Reading user configuration (0x00)...'
+            print( 'Reading user configuration (0x00)...' )
         self.config.add_data('user',adv.adv_config('USER'))
         byts=self.read(508)
         tmp=unpack(self.endian+'2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H',byts) # the first two are the size.
@@ -121,7 +121,7 @@ class vec_reader(object):
     def read_head_cfg(self,):
         # ID: '0x04
         if self.debug:
-            print 'Reading head configuration (0x04)...'
+            print( 'Reading head configuration (0x04)...' )
         self.config.add_data('head',adv.adv_config('HEAD'))
         byts=self.read(220)
         tmp=unpack(self.endian+'2x3H12s176s22xH',byts)
@@ -137,7 +137,7 @@ class vec_reader(object):
     def read_hw_cfg(self,):
         # ID 0x05
         if self.debug:
-            print 'Reading hardware configuration (0x05)...'
+            print( 'Reading hardware configuration (0x05)...' )
         self.config.add_data('hardware',adv.adv_config('HARDWARE'))
         byts=self.read(44)
         tmp=unpack(self.endian+'2x14s6H12xI',byts)
@@ -156,7 +156,7 @@ class vec_reader(object):
     def read_vec_checkdata(self,):
         # ID: '0x07
         if self.debug:
-            print 'Reading vector check data (0x07)...'
+            print( 'Reading vector check data (0x07)...' )
         byts0=self.read(6)
         tmp=unpack(self.endian+'2x2H',byts0) # The first two are size.
         self.config.add_data('checkdata',adv.adv_config('CHECKDATA'))
@@ -192,7 +192,7 @@ class vec_reader(object):
             self.c+=1
         c=self.c
         if self.debug:
-            print 'Reading vector data (0x10)...'
+            print( 'Reading vector data (0x10)...' )
         if not hasattr(self.data,'Count'):
             self.data.add_data('AnaIn2LSB',np.empty(self.n_samp_guess,dtype=np.uint8),'#extra')
             self.data.add_data('Count',np.empty(self.n_samp_guess,dtype=np.uint8),'#extra')
@@ -240,18 +240,18 @@ class vec_reader(object):
         c=self.c
         # Need to make this a vector...
         if self.debug:
-            print 'Reading vector system data (0x11)...'
+            print( 'Reading vector system data (0x11)...' )
         if not hasattr(self.data,'mpltime'):
-            self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64)*np.float32(np.NaN),'_essential')
-            self.data.add_data('batt',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#sys')
-            self.data.add_data('c_sound',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'env')
-            self.data.add_data('heading',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('pitch',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('roll',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('temp',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#env')
-            self.data.add_data('error',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#error')
-            self.data.add_data('status',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#error')
-            self.data.add_data('AnaIn',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.float32(np.NaN)),'#extra')
+            self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64) + np.float64(np.NaN),'_essential')
+            self.data.add_data('batt',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#sys')
+            self.data.add_data('c_sound',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'env')
+            self.data.add_data('heading',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('pitch',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('roll',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('temp',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#env')
+            self.data.add_data('error',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#error')
+            self.data.add_data('status',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#error')
+            self.data.add_data('AnaIn',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#extra')
             self._dtypes+=['vec_sysdata']
         byts=self.read(24)
         self.data.mpltime[c]=self.rd_time(byts[2:8]) # The first two are size (skip them).
@@ -294,7 +294,7 @@ class vec_reader(object):
             self.flag_lastread_sysdata=False
             self.c-=1
         if self.debug:
-            print 'Reading vector microstrain data (0x71)...'
+            print( 'Reading vector microstrain data (0x71)...' )
         byts0=self.read(4)
         ahrsid=unpack(self.endian+'3xB',byts0)[0] # The first 2 are the size, 3rd is count, 4th is the id.
         c=self.c
@@ -323,7 +323,7 @@ class vec_reader(object):
     def read_vec_hdr(self,):
         # ID: '0x12
         if self.debug:
-            print 'Reading vector header data (0x12)...'
+            print( 'Reading vector header data (0x12)...' )
         byts=self.read(38)
         tmp=unpack(self.endian+'8xH7B21x',byts) # The first two are size, the next 6 are time.
         self.config.add_data('data_header',adv.adv_config('DATA HEADER'))
@@ -341,21 +341,21 @@ class vec_reader(object):
     def read_awac_profile(self,):
         # ID: '0x20'
         if self.debug:
-            print 'Reading AWAC velocity data (0x20)...'
+            print( 'Reading AWAC velocity data (0x20)...' )
         nbins=self.config.user.NBins
         if not hasattr(self.data,'temp'):
             self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64),'_essential')
             self.data.add_data('Error',np.empty(self.n_samp_guess,dtype=np.uint16),'#error')
-            self.data.add_data('AnaIn1',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#extra')
-            self.data.add_data('batt',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#sys')
-            self.data.add_data('c_sound',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#env')
-            self.data.add_data('heading',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('pitch',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('roll',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('pressure',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'orient')
-            self.data.add_data('status',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'#error')
-            self.data.add_data('temp',np.empty(self.n_samp_guess,dtype=np.float32)*np.float32(np.NaN),'env')
-            self.data.add_data('_u',np.empty((3,nbins,self.n_samp_guess),dtype=np.float32)*np.float32(np.NaN),'main')
+            self.data.add_data('AnaIn1',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#extra')
+            self.data.add_data('batt',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#sys')
+            self.data.add_data('c_sound',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#env')
+            self.data.add_data('heading',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('pitch',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('roll',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('pressure',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
+            self.data.add_data('status',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#error')
+            self.data.add_data('temp',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'env')
+            self.data.add_data('_u',np.empty((3,nbins,self.n_samp_guess),dtype=np.float32) + np.float32(np.NaN),'main')
             self.data.add_data('_amp',np.zeros((3,nbins,self.n_samp_guess),dtype=np.uint8),'signal')
             self._dtypes+=['awac_profile']
         byts=self.read(116+9*nbins+np.mod(nbins,2)) # There is a 'fill' byte at the end, if nbins is odd.
@@ -456,7 +456,7 @@ class vec_reader(object):
                 raise Exception("I/O error: could not determine the 'endianness' of the file.  Are you sure this is a Nortek file?")
         self.endian=endian
         self.f.seek(0,0)
-        #print unpack(self.endian+'HH',self.read(4))
+        #print( unpack(self.endian+'HH',self.read(4)) )
         self.config=adv.db.config(config_type='NORTEK Header Data') # This is the configuration data...
         # Now read the header:
         if self.read_id()==5:
@@ -544,12 +544,12 @@ class vec_reader(object):
             except str_err:
                 return 2
         else:
-            print 'Unrecognized identifier: '+id
+            print( 'Unrecognized identifier: '+id )
             self.f.seek(-2,1)
             return 10
         
     def readfile(self,nlines=None):
-        print 'Reading file %s ...' % self.fname
+        print( 'Reading file %s ...' % self.fname )
         #self.progbar=db.progress_bar(self.filesz)
         #self.progbar.init()
         retval=None

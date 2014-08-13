@@ -207,14 +207,14 @@ def cpsd(a,b,nfft,fs,window='hann',step=None):
         pwr=s1*np.conj(fft(detrend(b[0:nfft])*window)[fft_inds])
     if nens-1:
         for i in range(step,l-nfft+1,step):
-            #print (i)
+            #print( (i) )
             s1=fft(detrend(a[i:(i+nfft)])*window)[fft_inds]
             if auto_psd:
                 pwr+=np.abs(s1)**2
             else:
                 pwr+=s1*np.conj(fft(detrend(b[i:(i+nfft)])*window)[fft_inds])
     pwr*=wght/nens/fs
-    #print 1,step,nens,l,nfft,wght,fs
+    #print( 1,step,nens,l,nfft,wght,fs )
     #error
     if auto_psd:# No need to take the abs again.
         return pwr

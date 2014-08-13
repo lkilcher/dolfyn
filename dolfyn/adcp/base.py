@@ -116,7 +116,7 @@ class adcp_raw(dbvel.velocity):
         if self.mpltime.__class__ is dio.h5._hl.dataset.Dataset:
             mmstr='mm'
         if (not hasattr(self,'mpltime')) or self.mpltime[0]<1:
-            print 'Warning: no time information!'
+            print('Warning: no time information!')
             dt=num2date(693596)
             tm=np.array([0,0])
         else:

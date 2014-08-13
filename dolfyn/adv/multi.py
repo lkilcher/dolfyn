@@ -10,7 +10,7 @@ class multi_sync(adv_raw):
         
     def __repr__(self,):
         if (not hasattr(self,'time')) or self.time[0]<1:
-            print 'Warning: no time information!'
+            print( 'Warning: no time information!' )
             dt=tbx.num2date(693596)
             tm=np.array([0,0])
         else:

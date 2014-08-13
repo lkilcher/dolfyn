@@ -55,7 +55,7 @@ args = parser.parse_args()
 if bool(args.fixed_head) != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
     if bool(args.O):
-        execfile(args.O) # ROTMAT and VEC should be in this file.
+        exec( open(args.O).read() ) # ROTMAT and VEC should be in this file.
         rmat = np.array(ROTMAT)
         vec = np.array(VEC)
         del VEC,ROTMAT
@@ -68,12 +68,12 @@ else:
     raise Exception("You must either specify --fixed-head, or specify an 'orientation' config file.")
 
 # Instantiate the 'motion correction' object.
-mc=avr.correct_motion(accel_filtfreq=args.f,vel_filtfreq=args.F)
+mc = avr.correct_motion(accel_filtfreq=args.f,vel_filtfreq=args.F)
 
 # Now loop over the specified file names:
 for fnm in args.filename:
     
-    dat=avm.read.read_nortek(fnm)
+    dat = avm.read.read_nortek(fnm)
 
     # Set the geometry
     dat.props['body2head_rotmat']=rmat
@@ -83,15 +83,15 @@ for fnm in args.filename:
 
     # Perform motion correction.
     if hasattr(dat,'orientmat'):
-        print 'Performing motion correction...'
+        print( 'Performing motion correction...' )
         mc(dat) # Perform the motion correction.
         # Compute pitch,roll,heading from orientmat.
         dat.pitch[:],dat.roll[:],dat.heading[:]=avr.orient2euler(dat.orientmat)
     else:
-        print "!!!--Warning--!!! : Orientation matrix ('orientmat') not found. Motion correction cannot be performed on this file"
+        print( "!!!--Warning--!!! : Orientation matrix ('orientmat') not found. Motion correction cannot be performed on this file" )
 
     outnm=fnm.rstrip('.vec').rstrip('.VEC')+'.mat'
-    print 'Saving corrected data to %s.' % outnm
+    print( 'Saving corrected data to %s.' % outnm )
     # Save the data.
     dat.save_mat(outnm,groups=['main','orient'])
     

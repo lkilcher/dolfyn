@@ -1,6 +1,9 @@
 import h5py as h5
-import cPickle
-from base import data_factory
+try:
+    import cPickle as pkl
+except:
+    import pickle as pkl
+from .base import data_factory
 from ..data.base import Dgroups,np,ma,config
 
 class saver(data_factory):
@@ -43,7 +46,7 @@ class saver(data_factory):
         self.fd=h5.File(self.filename,mode=self.file_mode,**kwargs)
         self.close=self.fd.close
         self.node=self.fd.get(where)
-        self.node.attrs.create('DataSaveVersion',cPickle.dumps(self.ver))
+        self.node.attrs.create('DataSaveVersion',pkl.dumps(self.ver))
         self._extrafiles=[]
 
     def getGroup(self,where=None,nosplit=False):
@@ -114,7 +117,7 @@ class saver(data_factory):
         """
         tmp=self.getGroup(where).require_group(name)
         for ky,val in dct.iteritems():
-            tmp.attrs.create(ky,cPickle.dumps(val))
+            tmp.attrs.create(ky,pkl.dumps(val))
     
     def write(self,obj,where='/',nosplit_file=False):
         """
@@ -143,13 +146,13 @@ class saver(data_factory):
                     grp.create_dataset(str(ky),data=val,compression=self.complib,shuffle=self.shuffle,fletcher32=self.fletcher32,)
                     if ma.valid and val.__class__ is ma.marray:
                         nd=grp.get(str(ky))
-                        #print 'writing meta data for %s' % ky
+                        #print( 'writing meta data for %s' % ky )
                         for nm,val in val.meta.__dict__.iteritems():
                             if nm not in ['xformat','yformat']:
-                                #print nm,val
-                                nd.attrs.create(nm,cPickle.dumps(val))
+                                #print( nm,val )
+                                nd.attrs.create(nm,pkl.dumps(val))
                 elif val.__class__ is dict:
-                    grp.attrs.create(ky,cPickle.dumps(val))
+                    grp.attrs.create(ky,pkl.dumps(val))
                 else:
                     grp.attrs.create(ky,val)
 
@@ -171,7 +174,7 @@ class loader(data_factory):
         self.fd=h5.File(self.filename,mode='r+') # Open the file r+ so that we can modify it on the fly if necessary (e.g. _fix_name)
         self.close=self.fd.close
         self.type_map=type_map
-        self.ver=cPickle.loads(self.fd.attrs.get('DataSaveVersion','I0\n.'))
+        self.ver=pkl.loads(self.fd.attrs.get('DataSaveVersion','I0\n.'))
 
     def iter_data(self,groups=None,where='/'):
         """
@@ -206,7 +209,7 @@ class loader(data_factory):
         for grp,attnm in self.iter_attrs(groups=groups,where=where):
             dat=grp.attrs[attnm]
             try:
-                dat=cPickle.loads(dat)
+                dat=pkl.loads(dat)
             except:
                 pass
             out.add_data(attnm,dat,self.get_name(grp))
@@ -221,7 +224,7 @@ class loader(data_factory):
         if propsstr in self.getGroup(where).keys():
             out.props=self.read_dict(where+"/"+propsstr)
         ## if unitsstr in self.getGroup(where).keys():
-        ##     print 1
+        ##     print( 1 )
         ##     out._units=self.read_dict(where+"/"+unitsstr)
 
     def _fix_name(self,nd):
@@ -293,30 +296,30 @@ class loader(data_factory):
                 if ma.valid and self.ver==0:
                     if '_label' in nd.attrs.keys():
                         # This is a deprecated file structure.
-                        setattr(out,nm,ma.marray(getattr(out,nm),meta=ma.varMeta(nd.attrs.get('_label'),cPickle.loads(nd.attrs.get('_units')))))
+                        setattr(out,nm,ma.marray(getattr(out,nm),meta=ma.varMeta(nd.attrs.get('_label'),pkl.loads(nd.attrs.get('_units')))))
                     if 'label' in nd.attrs.keys():
                         s=nd.attrs.get('units')
                         try:
-                            u=cPickle.loads(s)
+                            u=pkl.loads(s)
                         except ImportError:
                              # This is to catch a redefinition of data objects.
                              try:
-                                 u=cPickle.loads(s.replace('cdata_base','cdata').replace('unitsDict','dict'))
+                                 u=pkl.loads(s.replace('cdata_base','cdata').replace('unitsDict','dict'))
                              except:
-                                 u=cPickle.loads(s.replace('cdata_base','cdata.marray'))
-                        setattr(out,nm,ma.marray(getattr(out,nm),meta=ma.varMeta(nd.attrs.get('label'),u,cPickle.loads(nd.attrs.get('dim_names')))))
+                                 u=pkl.loads(s.replace('cdata_base','cdata.marray'))
+                        setattr(out,nm,ma.marray(getattr(out,nm),meta=ma.varMeta(nd.attrs.get('label'),u,pkl.loads(nd.attrs.get('dim_names')))))
                 elif ma.valid:
                     if '_name' in nd.attrs.keys():# This checks that this is a meta array
                         s=nd.attrs.get('_units')
                         try:
-                            u=cPickle.loads(s)
+                            u=pkl.loads(s)
                         except ImportError:
                              # This is to catch a redefinition of data objects.
-                            u=cPickle.loads(s.replace('cdata_base','cdata'))
-                        meta=ma.varMeta(cPickle.loads(nd.attrs.get('_name')),u,cPickle.loads(nd.attrs.get('dim_names')))
+                            u=pkl.loads(s.replace('cdata_base','cdata'))
+                        meta=ma.varMeta(pkl.loads(nd.attrs.get('_name')),u,pkl.loads(nd.attrs.get('dim_names')))
                         for atnm in nd.attrs.keys():
                             if atnm not in ['_name','_units','dim_names']:
-                                setattr(meta,atnm,cPickle.loads(nd.attrs.get(atnm)))
+                                setattr(meta,atnm,pkl.loads(nd.attrs.get(atnm)))
                         setattr(out,nm,ma.marray(getattr(out,nm),meta=meta))
         self.read_attrs(out,groups=groups,where=where)
         out.__postload__()
@@ -327,7 +330,7 @@ class loader(data_factory):
         nd=self.getGroup(where)
         for prpnm,prp in nd.attrs.iteritems():
             try:
-                out[prpnm]=cPickle.loads(prp)
+                out[prpnm]=pkl.loads(prp)
             except TypeError:
                 out[prpnm]=prp
         return out
@@ -336,7 +339,7 @@ class loader(data_factory):
         try:
             return self.getGroup(where).attrs['_object_type']
         except KeyError:
-            print 'Old style data file, trying to load...'
+            print( 'Old style data file, trying to load...' )
             return self.getGroup(where).attrs['object_type']
             
         
@@ -384,7 +387,7 @@ class loader(data_factory):
                 gnm=self.get_name(grp)
                 if groups is None:
                     if not (gnm[0] in ['#','/'] or (self.ver<=1 and gnm in ['_properties','_units'])) :
-                        #print gnm,grp
+                        #print( gnm,grp )
                         yield grp
                 elif groups=='ALL':
                     if not ((gnm.startswith('##') and gnm.endswith('##')) or (self.ver<=1 and gnm in ['_properties','_units'])):

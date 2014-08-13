@@ -2,7 +2,7 @@ import numpy as np
 from ..tools.psd import psd_freq,cohere,psd,cpsd_quasisync
 from ..tools.misc import slice1d_along_axis
 from scipy.signal import detrend
-from base import Dprops,ma,rad_hz,time_based,Dgroups
+from .base import Dprops,ma,rad_hz,time_based,Dgroups
 import copy
 from h5py._hl.dataset import Dataset
 
@@ -243,12 +243,12 @@ class time_binner(object):
             self.n_fft=n_bin
         elif n_fft>n_bin:
             self.n_fft=n_bin
-            print "n_fft larger than n_bin doesn't make sense, setting n_fft=n_bin"
+            print( "n_fft larger than n_bin doesn't make sense, setting n_fft=n_bin" )
         if n_fft_coh is None:
             self.n_fft_coh=self.n_bin/6
         elif n_fft_coh>=n_bin:
             self.n_fft_coh=n_bin/6
-            print "n_fft_coh >= n_bin doesn't make sense, setting n_fft_coh=n_bin/6"
+            print( "n_fft_coh >= n_bin doesn't make sense, setting n_fft_coh=n_bin/6" )
         
     def __call__(self,rawdat,out_type=time_bindat):
         outdat=out_type()

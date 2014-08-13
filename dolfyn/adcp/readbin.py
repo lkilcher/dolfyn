@@ -131,7 +131,7 @@ class adcp_loader(object):
         if (self.f.tell()-self.progress)<1048576:
             return
         self.progress=self.f.tell()
-        print 'pos %0.0fmb/%0.0fmb\r' % (self.f.tell()/1048576.,self._filesize/1048576.)
+        print('pos %0.0fmb/%0.0fmb\r' % (self.f.tell()/1048576.,self._filesize/1048576.) )
         
     def print_pos(self,byte_offset=-1):
         """
@@ -141,7 +141,7 @@ class adcp_loader(object):
             k=self.ensemble.k
         else:
             k=0
-        print 'pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' % (self.f.tell(),self._pos,self._nbyte,k,byte_offset)
+        print('pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' % (self.f.tell(),self._pos,self._nbyte,k,byte_offset) )
 
     def read_dat(self,id):
 
@@ -187,7 +187,7 @@ class adcp_loader(object):
             dfac=bin(id[3] & 3).count('1') # 3 is a 0b00000011 mask
             self.skip_Nbyte(12*nflds*dfac)
         else:
-            print 'Unrecognized ID code: %0.4X\n' % id
+            print( 'Unrecognized ID code: %0.4X\n' % id )
         
 
     def read_fixed(self,):
@@ -202,7 +202,7 @@ class adcp_loader(object):
         else:
             self.read_cfgseg()
         if self.__debug==1:
-            print self._pos
+            print( self._pos )
         self._nbyte+=2
 
     def read_var(self,):
@@ -338,7 +338,7 @@ class adcp_loader(object):
             fd.seek(16,1)
             qual=fd.read_ui8(1)
             if qual==0:
-                print 'qual==%d,%f %f' % (qual,ens.slatitude[k],ens.slongitude[k])
+                print( 'qual==%d,%f %f' % (qual,ens.slatitude[k],ens.slongitude[k]) )
                 ens.slatitude[k]=np.NaN
                 ens.slongitude[k]=np.NaN
             fd.seek(71-45-16-17,1)
@@ -364,7 +364,7 @@ class adcp_loader(object):
         ens=self.ensemble
         k=ens.k
         if self._source!=1:
-            print '\n***** Apparently a VMDAS file \n\n'
+            print( '\n***** Apparently a VMDAS file \n\n' )
         self._source=1
         self.vars_read+=['etime','slatitude','slongitude','stime','elatitude','elongitude','flags','ntime',]
         utim=fd.read_ui8(4)
@@ -390,7 +390,7 @@ class adcp_loader(object):
         self._winrivprob=True
         self.cfg['sourceprog']='WINRIVER'
         if self._source!=2:
-            print '\n***** Apparently a WINRIVER file - Raw NMEA data handler not yet implemented\n\n'
+            print( '\n***** Apparently a WINRIVER file - Raw NMEA data handler not yet implemented\n\n' )
         self._source=2
         self._nbyte=2+nbt
         # Below is Pawlowicz' $xxGGA code...
@@ -424,12 +424,12 @@ class adcp_loader(object):
             cfgid[1]=cfgid[0]
             cfgid[0]=nextbyte
             if np.mod(pos,1000)==0:
-                print 'Still looking for valid cfgid at file position %d ...' % pos
+                print( 'Still looking for valid cfgid at file position %d ...' % pos )
         self._pos=self.f.tell()-2
         if nread>0:
-            print 'Junk found at BOF... skipping %d bytes until\ncfgid= (%x,%x) at file pos %d' % (self._pos,cfgid[0],cfgid[1],nread)
+            print( 'Junk found at BOF... skipping %d bytes until\ncfgid= (%x,%x) at file pos %d' % (self._pos,cfgid[0],cfgid[1],nread) )
         if self.__debug:
-            print fd.tell()
+            print( fd.tell() )
         self.read_hdrseg()
 
     def read_cfg(self,):
@@ -512,7 +512,7 @@ class adcp_loader(object):
         fd=self.f
         self.hdr.nbyte=fd.read_i16(1)
         if self.__debug:
-            print fd.tell()
+            print( fd.tell() )
         fd.seek(1,1)
         ndat=fd.read_i8(1)
         self.hdr.dat_offsets=fd.read_i16(ndat)
@@ -539,7 +539,7 @@ class adcp_loader(object):
         self._filesize=getsize(fname)
         extrabytes=0
         self._npings=int(self._filesize/(self.hdr.nbyte+2+extrabytes))
-        print '%d pings estimated in this file' % self._npings
+        print( '%d pings estimated in this file' % self._npings )
         if nens is None:
             self._nens=int(self._npings/self.n_avg)
             self._ens_range=(0,self._nens)
@@ -553,8 +553,8 @@ class adcp_loader(object):
         else:
             self._nens=nens
             self._ens_range=(0,nens)
-        print 'taking data from pings %d - %d' % tuple(self._ens_range)
-        print '%d ensembles will be produced.' % self._nens
+        print( 'taking data from pings %d - %d' % tuple(self._ens_range) )
+        print( '%d ensembles will be produced.' % self._nens )
         self.init_data()
         self.outd.add_data('ranges',self.cfg['bin1_dist_m']+np.arange(self.cfg['n_cells'])*self.cfg['cell_size_m'],'_essential')
         self.outd.add_data('config',self.cfg,'_essential')
@@ -582,7 +582,7 @@ class adcp_loader(object):
             if self.ensemble.rtc[0,0]<100:
                 self.ensemble.rtc[0,:]+=century
             dats=date2num(datetime.datetime(self.ensemble.rtc[0,:],self.ensemble.rtc[1,:],self.ensemble.rtc[2,:],self.ensemble.rtc[3,:],self.ensemble.rtc[4,:],self.ensemble.rtc[5,:],1e4*self.ensemble.rtc[6,:]))
-            #print self.ensemble.bt_range
+            #print( self.ensemble.bt_range )
             for nm in self.vars_read:
                 getattr(self.outd,nm)[...,iens]=self.avg_func(self.ensemble[nm])
             self.outd.mpltime[iens]=np.median(dats)
@@ -599,7 +599,7 @@ class adcp_loader(object):
 
     def remove_end(self,iens):
         if iens<self.outd.shape[-1]:
-            print 'Encountered end of file.  Cleaning up data.'
+            print( 'Encountered end of file.  Cleaning up data.' )
             bds=range(iens,self._nens)
             for nm in self.vars_read:
                 setattr(self.outd,nm,delete(self.outd[nm],bds,-1))
@@ -634,7 +634,7 @@ class adcp_loader(object):
             for n in range(len(self.hdr.dat_offsets)):
                 id=fd.read_ui16(1)
                 self._winrivprob=False
-                #print "%0.4X" % id
+                #print( "%0.4X" % id )
                 #self.print_pos()
                 ##### Read the data for header "id"g
                 self.read_dat(id)
@@ -643,14 +643,14 @@ class adcp_loader(object):
                     oset=self.hdr.dat_offsets[n+1]-byte_offset
                     if oset!=0:
                         if self._verbose:
-                            print '%s: Adjust location by %d\n' % (id,oset)
+                            print( '%s: Adjust location by %d\n' % (id,oset) )
                         fd.seek(oset,1)
                     byte_offset=self.hdr.dat_offsets[n+1]
                 else:
                     if self.hdr.nbyte-2!=byte_offset:
                         if not self._winrivprob:
                             if self._verbose:
-                                print '%s: Adjust location by %d\n' % (id,self.hdr.nbyte-2-byte_offset)
+                                print( '%s: Adjust location by %d\n' % (id,self.hdr.nbyte-2-byte_offset) )
                             self.f.seek(self.hdr.nbyte-2-byte_offset,1)
                     byte_offset=self.hdr.nbyte-2
             readbytes=fd.tell()-startpos 
@@ -661,20 +661,20 @@ class adcp_loader(object):
     def check_offset(self,offset):
         fd=self.f
         if offset!=4 and self._fixoffset==0:
-            print '\n******************************************************\n'
+            print( '\n******************************************************\n' )
             if fd.tell()==self._filesize:
-                print ' EOF reached unexpectedly - discaring this last ensemble\n'
+                print( ' EOF reached unexpectedly - discaring this last ensemble\n' )
             else:
-                print 'Adjust location by %d (readbytes=%d,hdr.nbyte=%d\n' % (offset,readbytes,hdr.nbyte)
-                print """
+                print( 'Adjust location by %d (readbytes=%d,hdr.nbyte=%d\n' % (offset,readbytes,hdr.nbyte) )
+                print( """
                 NOTE - If this appears at the beginning of the read, it is\n
                        a program problem, possibly fixed by a fudge\n
                        PLEASE REPORT TO levi.kilcher@nrel.gov WITH DETAILS\n\n
                      - If this appears at the end of the file it means\n
                        The file is corrupted and only a partial record\n
                        has been read\n
-                """
-            print '******************************************************\n'
+                """ )
+            print( '******************************************************\n' )
             self._fixoffset=offset-4
         fd.seek(4+self._fixoffset,1)
 

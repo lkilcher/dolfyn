@@ -192,7 +192,7 @@ class Dgroups(Dbase):
     @property
     def groups(self,):
         if not hasattr(self,'__data_groups__'):
-            self.__data_groups__=groups({'main':oset([]),'_essential':oset([])})
+            self.__data_groups__ = groups({'main':oset([]),'_essential':oset([])})
         return self.__data_groups__
     @groups.setter
     def groups(self,val):
@@ -431,7 +431,7 @@ class time_based(Dprops,Dgroups):
                     self._dat_year[idx]=t.year
         return self._dat_year
 
-class config(Dgroups,dict):
+class config(Dgroups, dict):
     """
     A config object
     """

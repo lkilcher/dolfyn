@@ -16,7 +16,7 @@ class chmod_install_data(install_data):
         if os.name in ['posix']:
             for fn in self.get_outputs():
                 if not (fn.endswith('.py') or fn.endswith('.pyc')):
-                    mode = (((os.stat(fn).st_mode) | 0554) & 07777)
+                    mode = (( (os.stat(fn).st_mode) | 0o554 ) & 0o7777 )
                     log.info(('changing mode of %s to %o' % (fn, mode)))
                     os.chmod(fn,mode)
 
@@ -29,7 +29,7 @@ class chmod_install(install):
         install.run(self)
         if os.name in ['posix']:
             for fn in self.get_outputs():
-                mode = (((os.stat(fn).st_mode) | 0555) & 07777)
+                mode = (( (os.stat(fn).st_mode) | 0o555 ) & 0o7777 )
                 log.info(('changing mode of %s to %o' % (fn, mode)))
                 os.chmod(fn,mode)
 
@@ -43,5 +43,5 @@ setup(name='dolfyn',
       install_requires=['numpy','h5py','scipy','matplotlib'],
       provides=['dolfyn',],
       scripts=['scripts/motcorrect_vector.py','scripts/vec2mat.py'],
-      cmdclass={'install_data':chmod_install_data,'install':chmod_install,},
+      #cmdclass={'install_data':chmod_install_data,'install':chmod_install,},
       )

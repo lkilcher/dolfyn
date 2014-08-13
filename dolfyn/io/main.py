@@ -1,7 +1,7 @@
 import sys,inspect # These are for get_typemap
 from ..data.base import Dgroups
-import hdf5
-import mat
+from . import hdf5
+from . import mat
 
 # These define the default.
 loader=hdf5.loader
@@ -81,5 +81,5 @@ def probeFile(fname):
             else:
                 out[grpnm]=[ldr.get_name(nd)]
         tp=ldr.read_type()
-        print 'Object type: %s' % tp
+        print( 'Object type: %s' % tp )
     return tp,out

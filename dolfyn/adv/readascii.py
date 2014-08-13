@@ -161,7 +161,7 @@ class header_reader(object):
         self.close()
 
 def read_sen(filename,advd):
-    print "Reading sensor (time, etc.) file %s..." % filename
+    print( "Reading sensor (time, etc.) file %s..." % filename )
     sr=advd.fs
     with open(filename,'r') as fe:
         nlines=int(count_lines(fe))
@@ -232,7 +232,7 @@ def read_dat(filename,dat_map=['burst','ensemble','u','v','w','Amp1','Amp2','Amp
     *dat_map* specifies the variable names of the columns of the file.
     
     """
-    print "Reading adv ascii data file: %s..." % filename
+    print( "Reading adv ascii data file: %s..." % filename )
     with open(filename,'r') as fu:
         k=0
         if nlines is None:
@@ -283,7 +283,7 @@ def read_dat(filename,dat_map=['burst','ensemble','u','v','w','Amp1','Amp2','Amp
             if nm.startswith('_time'):
                 nm='mpltime'
             setattr(advd,nm,dat[...,:k])
-    print '%d out of %d lines had bad time stamps' % (bd_time,k)
+    print( '%d out of %d lines had bad time stamps' % (bd_time,k) )
     return advd
 
 def count_burst_lines(direc,sfx='.dat'):
@@ -298,6 +298,6 @@ def count_burst_lines(direc,sfx='.dat'):
         if flnm.endswith(sfx):
             with open(burst_dir+flnm,'r') as fl:
                 c=count_lines(fl)
-                print '%d lines in %s' % (c,flnm)
+                print( '%d lines in %s' % (c,flnm) )
                 n+=c
     return n

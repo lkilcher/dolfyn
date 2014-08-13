@@ -1,5 +1,5 @@
 from scipy import io as spio
-from base import data_factory
+from .base import data_factory
 import copy
 
 class saver(data_factory):

@@ -1,0 +1,78 @@
+## This is an example 'orientation' configuration file for use with
+## the 'motcorrect_vectory.py' file. That script, combined with this
+## .orient file can be used to perform motion correction of
+## Microstrain-IMU equipped Nortek ADV data files.
+
+## This file is executed as Python code, and therefore must obey
+## python syntax. This has the advantage of being flexible so that
+## when modified for your own purposes you may use the full python
+## language and available modules. Here we import numpy:
+
+import numpy as np
+
+## In order to be a valid '.orient' file for use with the
+## 'motcorrect_vector.py', this file must define two variables:
+##   1) ROTMAT (a 3x3 array), and
+##   2) VEC (a length 3 vector).
+## This is all that is needed in this file.
+
+## This file provides an example on computing the rotation matrix
+## based on arbitrary rotation angles.  See the
+## 'motion_correct_example1.orient' for a simple rotation matrix.
+
+#############################
+# BODY2HEAD ROTATION MATRIX #
+#############################
+## For non-fixed-head ADVs, the 'body2head' rotation matrix (ROTMAT) defines how to 
+## rotate a vector from the body frame into the head frame. That is:
+##    u_head = ROTMAT * u_body
+## and,
+##    u_body = transpose(ROTMAT) * u_head
+##
+## The Wikipedia 'Euler Angles' page is a good place to start when trying to understand rotation matrices:
+##    http://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
+
+## In this example we imagine a scenario in which the ADV body can be
+## rotated into the ADV head frame by a 90degree rotation about the
+## body y-axis, followed by a 24 degree rotation about the (new)
+## z-axis, followed by a 37 degree rotation about the (newer) x-axis,
+## that rotation matrix can be constructed in the following steps:
+
+## 1) First define the angles:
+
+theta_x = 37 * np.pi/180
+theta_y = 90 * np.pi/180#
+theta_z = 24 * np.pi/180#
+
+## 2) Define rotation matrices for each rotation (again see the
+## wikipedia page mentioned above):
+
+Rot_x = np.array([[0,                0,                1],
+                  [0,  np.cos(theta_x), -np.sin(theta_x)],
+                  [0,  np.sin(theta_x),  np.cos(theta_x)]])
+
+Rot_y = np.array([[np.cos(theta_y),  0,  np.sin(theta_y)],
+                  [0,                1,                0],
+                  [-np.sin(theta_y), 0,  np.cos(theta_y)]])
+
+Rot_z = np.array([[np.cos(theta_z), -np.sin(theta_z),  0],
+                  [np.sin(theta_z),  np.cos(theta_z),  0],
+                  [0,                0,                1]])
+
+## 3) Multiply the rotation matrices IN THE CORRECT ORDER (i.e. as they would be applied to u_body)
+
+ROTMAT = np.dot( Rot_x, np.dot( Rot_z, Rot_y ))
+
+# So long as the determinant of the ROTMAT is 1, then the rotation
+# rotates from one orthogonal unit coordinate system to another.
+
+####################
+# BODY2HEAD VECTOR #
+####################
+# The ADV-head 'position' is defined as the position of the transmitter face.
+# The ADV-body 'position' is defined as the center of the top of the ADV-body
+# (where the stem emerges).
+
+# For cable head ADVs the position of the head can be arbitrary relative to the body. Therefore it must be specified here.
+# For example, the position of the head (relative to the body) could be:
+VEC = [.13, 0.04, 1.3] # in meters

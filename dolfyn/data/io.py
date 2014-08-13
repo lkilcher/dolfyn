@@ -216,10 +216,10 @@ class saver(data_factory):
                     grp.create_dataset(str(ky),data=val,compression=self.complib,shuffle=self.shuffle,fletcher32=self.fletcher32,)
                     if ma.valid and val.__class__ is ma.marray:
                         nd=grp.get(str(ky))
-                        #print 'writing meta data for %s' % ky
+                        #print( 'writing meta data for %s' % ky )
                         for nm,val in val.meta.__dict__.iteritems():
                             if nm not in ['xformat','yformat']:
-                                #print nm,val
+                                #print( nm,val )
                                 nd.attrs.create(nm,cPickle.dumps(val))
                 elif val.__class__ is dict:
                     grp.attrs.create(ky,cPickle.dumps(val))
@@ -294,7 +294,7 @@ class loader(data_factory):
         if propsstr in self.getGroup(where).keys():
             out.props=self.read_dict(where+"/"+propsstr)
         ## if unitsstr in self.getGroup(where).keys():
-        ##     print 1
+        ##     print( 1 )
         ##     out._units=self.read_dict(where+"/"+unitsstr)
 
     def _fix_name(self,nd):
@@ -409,7 +409,7 @@ class loader(data_factory):
         try:
             return self.getGroup(where).attrs['_object_type']
         except KeyError:
-            print 'Old style data file, trying to load...'
+            print( 'Old style data file, trying to load...' )
             return self.getGroup(where).attrs['object_type']
             
         
@@ -457,7 +457,7 @@ class loader(data_factory):
                 gnm=self.get_name(grp)
                 if groups is None:
                     if not (gnm[0] in ['#','/'] or (self.ver<=1 and gnm in ['_properties','_units'])) :
-                        #print gnm,grp
+                        #print( gnm,grp )
                         yield grp
                 elif groups=='ALL':
                     if not ((gnm.startswith('##') and gnm.endswith('##')) or (self.ver<=1 and gnm in ['_properties','_units'])):
@@ -496,7 +496,7 @@ def probeFile(fname):
             else:
                 out[grpnm]=[ldr.get_name(nd)]
         tp=ldr.read_type()
-        print 'Object type: %s' % tp
+        print( 'Object type: %s' % tp )
     return tp,out
         
 

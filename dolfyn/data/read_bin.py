@@ -42,7 +42,7 @@ class checksum(object):
         else:
             message='Checksum failed at %d, with a difference of %d.' % (self.file.tell(),val)
         if self._error_behavior=='warning':
-            print 'Warning: '+message
+            print( 'Warning: '+message )
         elif self._error_behavior=='silent':
             pass
         else:

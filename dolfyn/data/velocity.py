@@ -1,8 +1,7 @@
-from base import np,Dprops,time_based,ma
+from .base import np, Dprops, time_based, ma, DataError
 from ..io.main import saveable
 import h5py as h5
-from binned import time_bindat,time_binner,rad_hz
-from base import DataError
+from .binned import time_bindat,time_binner,rad_hz
 from matplotlib.dates import date2num,num2date
 
 class velocity(time_based,saveable):
@@ -12,7 +11,7 @@ class velocity(time_based,saveable):
         if self.mpltime.__class__ is h5._hl.dataset.Dataset:
             mmstr=' - (!memory mapped!)'
         if (not hasattr(self,'mpltime')) or self.mpltime[0]<1:
-            print 'Warning: no time information!'
+            print( 'Warning: no time information!' )
             dt=num2date(693596)
             tm=np.array([0,0])
         else:
@@ -328,7 +327,7 @@ class vel_binner_spec(vel_binner_tke):
             tmpdat=self.reshape(veldat[0]+1j*veldat[1])
             tmpdat*=np.exp(-1j*np.angle(tmpdat.mean(-1)))
             if noise[0]!=noise[1]:
-                print 'Warning: noise levels different for u,v. This means noise-correction cannot be done here when rotating velocity.'
+                print( 'Warning: noise levels different for u,v. This means noise-correction cannot be done here when rotating velocity.' )
                 noise[0]=noise[1]=0
             datu=self.psd(tmpdat.real,fs,noise=noise[0],n_pad=n_pad)
             datv=self.psd(tmpdat.imag,fs,noise=noise[1],n_pad=n_pad)

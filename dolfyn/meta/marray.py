@@ -35,7 +35,7 @@ class marray(np.ndarray):
                         except:
                             pass
                 out.meta.dim_names=dms
-            #print out.ndim,self.ndim,slc # This code causes print statements when the _variable_ is printed because the print statement calls __getitem__.
+            #print( out.ndim,self.ndim,slc # This code causes print statements when the _variable_ is printed because the print statement calls __getitem__. )
         return out
 
     def var(self,axis=None,dtype=None,out=None,ddof=0):
@@ -53,7 +53,7 @@ class marray(np.ndarray):
         shps=[None]*len(np.unique(dims+dimo))
         shpo=[None]*len(np.unique(dims+dimo))
         dmo=[]
-        print dims,dimo,
+        print( dims,dimo, )
         for d in dims:
             if d in dimo:
                 ind=dimo.index(d)+1
