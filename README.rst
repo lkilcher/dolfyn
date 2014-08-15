@@ -22,3 +22,8 @@ Dependencies
 ============
 
 DOLfYN depends on `Python <http://www.python.org>`_ 2.7 (Python 3 is not yet supported), `NumPy <http://www.numpy.org>`_, `h5py <www.h5py.org>`_, `SciPy <http://www.scipy.org>`_ and `matplotlib <http://matplotlib.org>`_.
+
+License
+=======
+
+DOLfYN is distributed under the Apache 2.0 license.  See the LICENSE.txt file for further details.
