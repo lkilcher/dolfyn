@@ -2,4 +2,6 @@ build/*
 *deprecated*
 *dep*
 
+dist
+
 .pypirc
