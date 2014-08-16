@@ -1,0 +1,11 @@
+Test the whether this command works on a system that does not have my GPG key:
+
+pip install -i https://testpypi.python.org/pypi --pre dolfyn
+
+
+These commands should install the dependencies, but are they all necessary?
+
+pip install matplotlib
+pip install h5py
+pip install scipy
+pip install numpy
