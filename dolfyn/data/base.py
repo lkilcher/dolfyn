@@ -69,7 +69,7 @@ class Dprops(Dbase):
 
     ## @property
     ## def toff(self,):
-    ##     if self.props.has_key('toff'):
+    ##     if 'toff' not in self.props.keys():
     ##         return self.props['toff']
     ##     return 0
     ## @toff.setter
@@ -141,7 +141,7 @@ class groups(dict):
         return anms
     
     def remove(self,name):
-        for grp,vals in self.iteritems():
+        for grp,vals in self.items():
             if name in vals:
                 self[grp].remove(name)
 
@@ -153,15 +153,15 @@ class groups(dict):
 
         All instances of *name* in other groups are removed.
         """
-        if hasattr(name,'__iter__'):
+        if not isinstance(name,str) and hasattr(name,'__iter__'):
             for nm in name:
                 self.add(nm,group=group)
             return
-        if not self.has_key(group):
+        if group not in self.keys():
             self[group]=oset([])
         self[group].add(name)
         ### This next block makes sure no other groups have name in them.
-        for grp,vals in self.iteritems():
+        for grp,vals in self.items():
             if grp!=group:
                 if name in vals:
                     vals.remove(name)
@@ -172,7 +172,7 @@ class groups(dict):
 
         If it is not in a group, return 'main'.
         """
-        for grp,nms in self.iteritems():
+        for grp,nms in self.items():
             if name in nms:
                 return grp
         return 'main'
@@ -211,8 +211,8 @@ class Dgroups(Dbase):
         for grpnm,dnm in self.groups.iter(groups=groups):
             yield dnm,getattr(self,dnm)
 
-    __iter__=iter
-    iteritems=iter
+    __iter__ = iter
+    iteritems = iter
 
     def iter_wg(self,groups=None):
         """
@@ -376,7 +376,7 @@ class time_based(Dprops,Dgroups):
 
     @property
     def toff(self,):
-        if not self.props.has_key('toff'):
+        if 'toff' not in self.props.keys():
             self.props['toff']=0.0
         return self.props['toff']
     @toff.setter
@@ -450,6 +450,8 @@ class config(Dgroups, dict):
         self[nm]=val
 
     def __getattr__(self,nm):
+        if nm not in self.keys():
+            raise AttributeError( ("'self.__class__' object has no attribute '%s'" % (nm) ) )
         return self[nm]
 
     ## @property
