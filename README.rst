@@ -21,7 +21,7 @@ Then run the setup script. On a POSIX system this might look like::
 Dependencies
 ============
 
-DOLfYN depends on `Python <http://www.python.org>`_ 2.7 (Python 3 is not yet supported), `NumPy <http://www.numpy.org>`_, `h5py <www.h5py.org>`_, `SciPy <http://www.scipy.org>`_ and `matplotlib <http://matplotlib.org>`_.
+DOLfYN depends on `Python <http://www.python.org>`_ 2.7 (Python 3 is not yet supported), `NumPy <http://www.numpy.org>`_, `h5py <www.h5py.org>`_, and `SciPy <http://www.scipy.org>`_.
 
 License
 =======
