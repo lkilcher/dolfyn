@@ -1,12 +1,10 @@
 import numpy as np
 import copy
 from ..OrderedSet import OrderedSet as oset
-from matplotlib.dates import num2date
 from ..meta import api_dumb as ma
 
 class DataError(Exception):
     pass
-
 
 rad_hz=ma.marray(2*np.pi,ma.varMeta('',{'s':-1,'hz':-1}))
 
@@ -354,7 +352,6 @@ class Dgroups(Dbase):
             out[nm]=dat.shape
         return out
 
-
 class time_based(Dprops,Dgroups):
 
     def __len__(self):
@@ -383,53 +380,6 @@ class time_based(Dprops,Dgroups):
     def toff(self,val):
         self.props['toff']=val
 
-    @property
-    def time(self,):
-        return self.mpltime[:]-self.toff
-
-    @property
-    def datetime(self,):
-        if not hasattr(self,'_dat_datetime'):
-            self._dat_datetime=np.empty(len(self),dtype='O')
-            for idx,t in enumerate(self.mpltime):
-                if np.isnan(t):
-                    self._dat_datetime[idx]=None
-                else:
-                    self._dat_datetime[idx]=num2date(t)
-        return self._dat_datetime
-
-    @property
-    def month(self,):
-        if not hasattr(self,'_dat_month'):
-            self._dat_month=np.empty(len(self),dtype=np.int8)
-            for idx,t in enumerate(self.datetime):
-                if t is None:
-                    self._dat_month[idx]=-1
-                else:
-                    self._dat_month[idx]=t.month
-        return self._dat_month
-    
-    @property
-    def day(self,):
-        if not hasattr(self,'_dat_day'):
-            self._dat_day=np.empty(len(self),dtype=np.int8)
-            for idx,t in enumerate(self.datetime):
-                if t is None:
-                    self._dat_day[idx]=-1
-                else:
-                    self._dat_day[idx]=t.day
-        return self._dat_day
-
-    @property
-    def year(self,):
-        if not hasattr(self,'_dat_year'):
-            self._dat_year=np.empty(len(self),dtype=np.int16)
-            for idx,t in enumerate(self.datetime):
-                if t is None:
-                    self._dat_year[idx]=-1
-                else:
-                    self._dat_year[idx]=t.year
-        return self._dat_year
 
 class config(Dgroups, dict):
     """

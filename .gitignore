@@ -5,3 +5,5 @@ build/*
 dist
 
 .pypirc
+
+dolfyn.egg-info

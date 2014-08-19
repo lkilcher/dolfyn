@@ -5,17 +5,19 @@ except:
     import pickle as pkl
 from .base import data_factory
 from ..data.base import Dgroups,np,ma,config
+from ..data.time import time_array
 
 class saver(data_factory):
     """
     A save data_factory object.  This class saves data in DOLFYN classes into DOLFYN format hdf5 files.
     """
-    ver=1.1 # The version number of the save format.
+    ver=1.2 # The version number of the save format.
     # Version 1.0: underscore ('_') handled inconsistently.
     # Version 1.1: '_' and '#' handled consistently in group naming:
     #         '_' is for essential groups.
     #         '#' is for groups that should be excluded, unless listed explicitly.
     #         '##' and ending with '##' is for specially handled groups.
+    # Version 1.2: now using time_array.
     fletcher32=True
     complib='lzf'
     complevel=1
@@ -142,8 +144,10 @@ class saver(data_factory):
                 val=getattr(obj,ky) # The data
                 if Dgroups in val.__class__.__mro__: # If the data is another Dgro
                     self.write(val,where+'/'+grp_nm+'/_'+ky,nosplit_file=True)
-                elif ((val.__class__ is np.ndarray) or (ma and val.__class__ is ma.marray)) and val.__len__()>0:
-                    grp.create_dataset(str(ky),data=val,compression=self.complib,shuffle=self.shuffle,fletcher32=self.fletcher32,)
+                elif ((np.ndarray in val.__class__.__mro__) or (ma and val.__class__ is ma.marray)) and val.__len__()>0:
+                    nd = grp.create_dataset(str(ky),data=val,compression=self.complib,shuffle=self.shuffle,fletcher32=self.fletcher32,)
+                    if val.__class__ is time_array:
+                        nd.attrs.create('time_var','True')
                     if ma.valid and val.__class__ is ma.marray:
                         nd=grp.get(str(ky))
                         #print( 'writing meta data for %s' % ky )
@@ -261,7 +265,10 @@ class loader(data_factory):
                 out.add_data(self.get_name(nd)[1:],self.mmload(where=nd.name,add_closemethod=False),self.get_name(nd.parent))
                 continue
             if hasattr(nd,'read_direct'):
-                out.add_data(self.get_name(nd),nd,self.get_name(nd.parent))
+                nm = self.get_name(nd)
+                out.add_data(nm,nd,self.get_name(nd.parent))
+            if (self.ver<=1.2 and nm == 'mpltime') or nd.attrs.get('time_var',False) == 'True':
+                out[nm] = time_array(out[nm])
         self.read_attrs(out,groups=groups,where=where)
         return out
         
@@ -277,22 +284,10 @@ class loader(data_factory):
                 continue
             if hasattr(nd,'read_direct'):
                 nm=self.get_name(nd)
-                #try:
                 out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
-                ## except AttributeError:
-                ##     newnm=self._fix_name(nd)
-                ##     if newnm is None:
-                ##         continue
-                ##     elif newnm.__class__ is str:
-                ##         out.groups.remove(nm)
-                ##         nm=newnm
-                ##         out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
-                ##     elif newnm.__class__ is nd.__class__:
-                ##         nd=newnm
-                ##         nm=self.get_name(nd)
-                ##         out.add_data(nm,np.empty(nd.shape,nd.dtype),self.get_name(nd.parent))
-                        
                 nd.read_direct(getattr(out,nm)) # This puts the data in the output object.
+                if (self.ver<=1.2 and nm == 'mpltime') or nd.attrs.get('time_var',False) == 'True':
+                    out[nm] = out[nm].view(time_array)
                 if ma.valid and self.ver==0:
                     if '_label' in nd.attrs.keys():
                         # This is a deprecated file structure.
