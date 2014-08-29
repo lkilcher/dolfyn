@@ -74,13 +74,15 @@ args = parser.parse_args()
 
 ## if bool(args.out_principal) and bool(args.out_earth):
 ##     raise Exception('--out-principal and --out-earth can not both be selected. You must choose one output frame.')
-
+declin = 0
 if bool(args.fixed_head) != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
     if bool(args.O):
         exec( open(args.O).read() ) # ROTMAT and VEC should be in this file.
         rmat = np.array(ROTMAT)
         vec = np.array(VEC)
+        if 'DECLINATION' in vars():
+            declin = DECLINATION
         del VEC,ROTMAT
     else:
         rmat = np.array([[1,0,0],
@@ -99,8 +101,9 @@ for fnm in args.filename:
     dat = avm.read.read_nortek(fnm)
 
     # Set the geometry
-    dat.props['body2head_rotmat']=rmat
-    dat.props['body2head_vec']=vec
+    dat.props['body2head_rotmat'] = rmat
+    dat.props['body2head_vec'] = vec
+    dat.props['declination'] = declin
     # Set matlab 'datenum' time.
     dat.add_data('datenum',dat.mpltime+366.,'main')
 
