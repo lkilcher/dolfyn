@@ -316,6 +316,7 @@ class vec_reader(object):
                 self.data.add_data('Accel',np.empty((3,self.n_samp_guess),dtype=np.float32),'orient')
                 self.data.add_data('AngRt',np.empty((3,self.n_samp_guess),dtype=np.float32),'orient')
                 self.data.add_data('Mag',np.empty((3,self.n_samp_guess),dtype=np.float32),'orient')
+                self.data.props['rotate_vars'].update({'Accel','AngRt','Mag'})
                 if ahrsid==204:
                     self.data.add_data('orientmat',np.empty((3,3,self.n_samp_guess),dtype=np.float32),'orient')
             elif ahrsid==211:
@@ -323,6 +324,7 @@ class vec_reader(object):
                 self.data.add_data('Angle',np.empty((3,self.n_samp_guess),dtype=np.float32),'orient')
                 self.data.add_data('Veloc',np.empty((3,self.n_samp_guess),dtype=np.float32),'orient')
                 self.data.add_data('MagVe',np.empty((3,self.n_samp_guess),dtype=np.float32),'orient')
+                self.data.props['rotate_vars'].update({'Angle','Veloc','MagVe'})
         if ahrsid==204: # 0xcc
             byts=self.read(78)
             dt=unpack(self.endian+'ffffffffffffffffff6x',byts) # This skips the "DWORD" (4 bytes) and the AHRS checksum (2 bytes)
@@ -420,6 +422,7 @@ class vec_reader(object):
         self.data.props['inst_make']='Nortek'
         self.data.props['inst_model']='VECTOR'
         self.data.props['inst_type']='ADV'
+        self.data.props['rotate_vars']={'_u',}
         # Question to Nortek: How do they determine how many samples are in a file, in order to initialize arrays?
         dlta=self.code_spacing('0x11')
         self.config.add_data('fs',512/self.config.user.AvgInterval)

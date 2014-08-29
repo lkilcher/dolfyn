@@ -65,11 +65,38 @@ class rotate_msadv(object):
         
 
 class correct_motion(object):
+    """
+    This object performs motion correction on an IMU-ADV data
+    object. The IMU and ADV data should be tightly synchronized and
+    contained in a single data object.
 
-    def __init__(self,accel_filtfreq=1./30,vel_filtfreq=1./100,separate_probes=False):
-        self.accelvel_filtfreq=vel_filtfreq
-        self.accel_filtfreq=accel_filtfreq
-        self.separate_probes=separate_probes
+    Parameters
+    ----------
+    accel_filtfreq : the frequency at which to high-pass filter the
+                     acceleration signal to remove low-frequency drift.
+    vel_filtfreq : a second frequency to high-pass filter the
+                   integrated acceleration.
+                   (default: 1/3 of accel_filtfreq)
+    separate_probes : a flag to perform motion-correction at the probe
+                      tips, and perform motion correction in
+                      beam-coordinates, then transform back into
+                      XYZ/earth coordinates. This correction seems to
+                      be lower than the noise levels of the ADV, so
+                      the defualt is to not use it (False).
+
+
+    Use the '__call__' method of this object to actually perform
+    motion correction.
+    
+    """
+
+
+    def __init__(self,accel_filtfreq=1./30,vel_filtfreq=None,separate_probes=False):
+        self.accel_filtfreq = accel_filtfreq
+        if vel_filtfreq is None:
+            vel_filtfreq = accel_filtfreq/3
+        self.accelvel_filtfreq = vel_filtfreq
+        self.separate_probes = separate_probes
 
     def _rotateVel2body(self,advo):
         advo._u=np.dot(advo.props['body2head_rotmat'].T,advo._u) # The transpose should do head to body.
@@ -116,9 +143,9 @@ class correct_motion(object):
     
     def __call__(self,advo):
         if not advo.props.has_key('rotate_vars'):
-            advo.props['rotate_vars']=['_u','urot','uacc','Accel','AccelStable','AngRt','Mag']
+            advo.props['rotate_vars']={'_u','urot','uacc','Accel','AccelStable','AngRt','Mag'}
         else:
-            advo.props['rotate_vars']+=['urot','uacc','AccelStable']
+            advo.props['rotate_vars'].update({'urot','uacc','AccelStable'})
         self._rotateVel2body(advo)
         self._calcRotVel(advo)
         self._calcAccelStable(advo)
@@ -148,13 +175,97 @@ def cat4rot(tpl):
         tmp.append(vl[None,:])
     return np.concatenate(tuple(tmp),axis=0)
 
-def inst2earth(advo,use_mean_rotation=False):
+def inst2earth(advo,reverse = False):
+    """
+    Rotate data in an ADV object to the earth from the isntrument
+    frame (or vice-versa). If the 
+    
+    All data in the advo.props['rotate_vars'] list will be
+    rotated by the principal angle, and also if the data objet has an
+    orientation matrix (orientmat) it will be rotated so that it
+    represents the orientation of the ADV in the principal
+    (reverse:earth) frame.
+
+    Parameters
+    ----------
+    advo : The adv object containing the data.
+    reverse : bool (default: False)
+           If True, this function performs the inverse rotation
+           (principal->earth).
+
+    """
+
+
+    if reverse:
+        # The transpose of the rotation matrix gives the inverse
+        # rotation, so we simply reverse the order of the einsum:
+        sumstr = 'jik,jk->ik'
+        cs_now = 'earth'
+        cs_new = 'inst'
+    else:
+        sumstr = 'ijk,jk->ik'
+        cs_now = 'inst'
+        cs_new = 'earth'
+
+    if advo.props['coord_sys'] == cs_new:
+        print("Data is already in the '%s' coordinate system" % cs_new)
+        return
+    elif not advo.props['coord_sys'] == cs_now:
+        print("Data must be in the '%s' frame prior to using this function" % cs_now)
+
+    if hasattr(advo,'orientmat'):
+        if 'declination' in advo.props and not advo.props.get('declination_in_orientmat',False):
+            # Declination is defined as positive if MagN is east of
+            # TrueN. Therefore we must rotate about the z-axis by minus
+            # the declination angle to get from Mag to True.
+            cd, sd = cos( -advo.props['declination'] * np.pi / 180 ), sin( -advo.props['declination'] * np.pi / 180 )
+            # The ordering is funny here because orientmat is the
+            # transpose of the inst->earth rotation matrix:
+            advo['orientmat'][:2,:2] = np.einsum('ij,kjl->ikl',np.array([[cd,-sd],[sd,cd]]),advo['orientmat'][:2,:2])
+            advo.props['declination_in_orientmat'] = True
+
+        # Take the transpose of the orientation to get the inst->earth rotation matrix.
+        rmat = np.rollaxis(advo['orientmat'],1)
+        
+    else:
+        rr = advo.roll * np.pi / 180
+        pp = advo.pitch * np.pi / 180
+        hh = (advo.heading - 90) * np.pi / 180
+        if advo.config.orientation=='down':
+            # NOTE: For ADVs: 'down' configuration means the head was pointing UP!
+            #       check the Nortek coordinate transform matlab script for more info.
+            #       The 'up' orientation corresponds to the communication cable begin up.
+            #       This is ridiculous, but apparently a reality.
+            rr += np.pi
+        if advo.props.has_key('declination'):
+            hh+=(advo.props['declination']*np.pi/180) # Declination is in degrees East, so we add this to True heading.
+        
+        ch=cos(hh);sh=sin(hh)
+        cp=cos(pp);sp=sin(pp)
+        cr=cos(rr);sr=sin(rr)
+        
+        H = np.array([[ ch,  sh, 0],
+                      [-sh,  ch, 0],
+                      [  0,   0, 1]],dtype=np.float32)
+        P = np.array([[ cp, -sp*sr, -cr*sp],
+                      [  0,     cr,    -sr],
+                      [ sp,  sr*cp,  cp*cr]],dtype=np.float32)
+        rmat = np.einsum('ijl,jkl->ikl',H,P)
+
+    for nm in advo.props['rotate_vars']:
+        advo[nm] = np.einsum(sumstr,rmat,advo[nm])
+
+    advo.props['coord_sys'] = cs_new
+
+    return
+
+def inst2earth_dep(advo,use_mean_rotation=False):
     """
     Rotate the data from the instrument frame to the earth frame.
 
-    The rotation matrix is computed from heading, pitch, and roll
-    .
-    Taken from a "Coordinate transformation" script on the nortek site.
+    The rotation matrix is computed from heading, pitch, and roll.
+    Taken from a "Coordinate transformation" script on the nortek
+    site.
     
     --References--
     http://www.nortek-as.com/en/knowledge-center/forum/software/644656788
@@ -221,27 +332,54 @@ def inst2earth(advo,use_mean_rotation=False):
     advo.add_data('w',w,'main')
     advo.props['coord_sys']='earth'
     
-def earth2principal(advo,vrs=('u','v')):
-    """
-    Rotate the horizontal velocity into its principal axes.
-    """
-    #if advo.props['coord_sys']=='inst' and not hasattr(advo,'u_inst'):
-    #    advo.add_data('u_inst',advo.u,group='inst')
-    #    advo.add_data('v_inst',advo.v,group='inst')
-    #    advo.add_data('w_inst',advo.w,group='inst')
-    if advo.props['coord_sys']=='principal':
-        return
-    tmp=advo.U_rot(-advo.principal_angle)
-    advo.u=tmp.real.astype('single')
-    advo.v=tmp.imag.astype('single')
-    advo.props['coord_sys']='principal'
 
-def principal2earth(advo):
+def earth2principal(advo,reverse=False):
     """
-    Rotate the horizontal velocity into earth coordinates.
+    Rotate data in an ADV object to/from principal axes. If the
+    principal angle is not yet computed it will be computed.
+
+    All data in the advo.props['rotate_vars'] list will be
+    rotated by the principal angle, and also if the data objet has an
+    orientation matrix (orientmat) it will be rotated so that it
+    represents the orientation of the ADV in the principal
+    (reverse:earth) frame.
+
+    Parameters
+    ----------
+    advo : The adv object containing the data.
+    reverse : bool (default: False)
+           If True, this function performs the inverse rotation
+           (principal->earth).
+
     """
-    tmp=advo.U_rot(advo.principal_angle)
-    advo.u=tmp.real.astype('single')
-    advo.v=tmp.imag.astype('single')
-    advo.props['coord_sys']='earth'
+
+    if reverse:
+        ang = advo.principal_angle
+        cs_now = 'principal'
+        cs_new = 'earth'
+    else:
+        ang = -advo.principal_angle
+        cs_now = 'earth'
+        cs_new = 'principal'
+    if advo.props['coord_sys'] == cs_new:
+        print('Data is already in the %s coordinate system' % cs_new)
+        return
+    elif not advo.props['coord_sys'] == cs_now:
+        print('Data must be in the %s frame prior to using this function' % cs_now)
+
+    # Calculate the rotation matrix:
+    cp,sp = cos(ang),sin(ang)
+    rotmat = np.array([[cp,-sp],
+                       [sp, cp]],dtype=np.float32)
+
+    # Perform the rotation:
+    for nm in advo.props['rotate_vars']:
+        dat = advo[nm]
+        dat[:2] = np.einsum('ij,jk',rotmat,dat[:2])
+
+    if hasattr(advo,'orientmat'):
+        advo['orientmat'][:2,:2] = np.einsum('ij,kjl->ikl',rotmat,advo['orientmat'][:2,:2])
+
+    # Finalize the output.
+    advo.props['coord_sys'] = cs_new
     

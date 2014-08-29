@@ -74,20 +74,20 @@ class velocity(time_based,saveable):
         if self.props['principal_angle']<0:
             self.props['principal_angle']+=np.pi
 
-    def earth2principal(self,var='_u'):
-        """
-        Rotate the data into its principal axes.
-        """
-        dat=getattr(self,var)
-        if ma.valid and dat.__class__ is ma.marray:
-            if hasattr(dat.meta,'coordsys') and dat.meta.coordsys=='principal':
-                return # Do nothing.
-            else:
-                dat.meta.coordsys='principal' # Set the coordsys.
-        sang=np.sin(-self.principal_angle)
-        cang=np.cos(-self.principal_angle)
-        dat[:2]=np.tensordot(np.array([[cang,-sang],[sang,cang]],dtype='float32'),np.array(dat[:2]),([1],[0])) # Rotate the data using a rotation matrix.
-        self.props['coord_sys']='principal'
+    ## def earth2principal(self,var='_u'):
+    ##     """
+    ##     Rotate the data into its principal axes.
+    ##     """
+    ##     dat=getattr(self,var)
+    ##     if ma.valid and dat.__class__ is ma.marray:
+    ##         if hasattr(dat.meta,'coordsys') and dat.meta.coordsys=='principal':
+    ##             return # Do nothing.
+    ##         else:
+    ##             dat.meta.coordsys='principal' # Set the coordsys.
+    ##     sang=np.sin(-self.principal_angle)
+    ##     cang=np.cos(-self.principal_angle)
+    ##     dat[:2]=np.tensordot(np.array([[cang,-sang],[sang,cang]],dtype='float32'),np.array(dat[:2]),([1],[0])) # Rotate the data using a rotation matrix.
+    ##     self.props['coord_sys']='principal'
 
     def _init(self,nm,shape,dtype='float32',meta=None,clear_fromGrp=None,group='main'):
         """

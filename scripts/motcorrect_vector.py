@@ -4,6 +4,8 @@ import numpy as np
 import dolfyn.adv.rotate as avr
 import dolfyn.adv.api as avm
 
+# TODO: add option to rotate into earth or principal frame (include principal_angle_True in output).
+
 script_dir=os.path.dirname(__file__)
 
 parser = argparse.ArgumentParser(description='Perform motion correction of a Nortek Vector (.vec) file and save the output as a Matlab(TM) (.mat) file.')
@@ -15,6 +17,7 @@ parser.add_argument(
     prior to integrating acceleration (Accel) to get velocity. Default '0.03333' (Hz)
     = 30sec."""
     )
+
 parser.add_argument(
     '-F',
     default=0.01,
@@ -45,12 +48,32 @@ parser.add_argument(
     """
     )
 parser.add_argument(
+    '--out-earth',
+    action='store_false',
+    help="""
+    This specifies that the output data should be return in an earth (u:East, v:North, w:up) coordinate system.
+    """
+    )
+
+###########
+# I removed this option because the data in a raw file is often noisey, which will lead to inaccurate estimates of the principal angle. Data should be cleaned prior to rotating into the principal frame.
+## parser.add_argument(
+##     '--out-principal',
+##     action='store_false',
+##     help="""
+##     This specifies that the output data should be returned in a 'principal axes' frame (u:streamwise, v:cross-stream, w:up) coordinate system.
+##     """
+##     )
+parser.add_argument(
     'filename',
     help="The filename(s) of the the Nortek Vector file(s) to be processed (they probably end with '.vec').",
     action='append'
     )
 
 args = parser.parse_args()
+
+## if bool(args.out_principal) and bool(args.out_earth):
+##     raise Exception('--out-principal and --out-earth can not both be selected. You must choose one output frame.')
 
 if bool(args.fixed_head) != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
@@ -90,8 +113,13 @@ for fnm in args.filename:
     else:
         print( "!!!--Warning--!!! : Orientation matrix ('orientmat') not found. Motion correction cannot be performed on this file" )
 
+    # Rotate to chosen frame:
+    if args.out_earth:
+        print( "Rotating the data into the earth frame." )
+        avr.inst2earth(dat)
+
     outnm=fnm.rstrip('.vec').rstrip('.VEC')+'.mat'
-    print( 'Saving corrected data to %s.' % outnm )
+    print( 'Saving to %s.' % outnm )
     # Save the data.
     dat.save_mat(outnm,groups=['main','orient'])
     
