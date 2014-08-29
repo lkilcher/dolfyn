@@ -5,6 +5,42 @@ from ..tools.misc import fillgaps
 
 warnings.filterwarnings('ignore',category=np.RankWarning)
 
+def group(bl,ends_only=False,min_length=0):
+    """
+    Returns a set of slice objects, which indicate the continuous sections where *bl* is True.
+
+    ends_only=True will return a set of length 2 lists, which contain the start and endpoints of the regions.
+      ** Note ** : This functionality has funny behavior for single points.  It will return the same two indices for the beginning and end.
+
+    min_length may be used to specify the minimum number of continuos points that will be returned.
+    """
+    if not any(bl):
+        return np.empty((0,2))
+    vl=np.diff(bl.astype('int'))
+    ups=np.nonzero(vl==1)[0]+1
+    dns=np.nonzero(vl==-1)[0]+1
+    if bl[0]:
+        if len(ups)==0:
+            ups=np.array([0])
+        else:
+            ups=np.concatenate((np.arange([0]),[len(ups)]))
+    if bl[-1]:
+        if len(dns)==0:
+            dns=np.array([len(bl)])
+        else:
+            dns=np.concatenate((dns,[len(bl)]))
+    out=np.empty(len(dns),dtype='O')
+    idx = 0
+    for u,d in zip(ups,dns):
+        if d-u < min_length:
+            continue
+        if ends_only:
+            out[idx]=[u,d-1]
+        else:
+            out[idx]=slice(u,d)
+        idx+=1
+    return out[:idx]
+
 def cleanFill(u,bd):
     """
     Clean the array *u* by assigning NaN to the values in *bd* that are True.
@@ -124,6 +160,22 @@ def GN2002(u,npt=5000):
     """
     bds=np.zeros(len(u),dtype='bool')
     bds[0]=True
+    bad_segs = group(np.isnan(u),min_length=npt/10)
+    if len(bad_segs):
+        sp = 0
+        ep = len(u)
+        if bad_segs[0].start == sp:
+            sp = bad_segs[0].stop
+            bad_segs = bad_segs[1:]
+        if bad_segs[-1].stop == ep:
+            ep = bad_segs[-1].start
+            bad_segs = bad_segs[:-1]
+        for ind in range(len(bad_segs)):
+            bs = bad_segs[ind]
+            bds[sp:bs.start] = GN2002(u[sp:bs.start],npt=npt)
+            sp = bs.stop
+        bds[sp:ep] = GN2002(u[sp:ep],npt=npt)
+        return bds
     c=0
     ntot=len(u)
     nbins=ntot/npt
@@ -134,7 +186,7 @@ def GN2002(u,npt=5000):
         u[bds]=np.NaN
         #fillgaps(u)
         fillpoly(u,3,12)
-        print( 'GN2002: found %d bad points on loop %d' % (bds.sum(),c) )
+        #print( 'GN2002: found %d bad points on loop %d' % (bds.sum(),c) )
         c+=1
         if c>=100:
             error
