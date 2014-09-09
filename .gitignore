@@ -2,6 +2,8 @@ build/*
 *deprecated*
 *dep*
 
+doc-build
+
 !config_files/**/*.dep
 
 dist
