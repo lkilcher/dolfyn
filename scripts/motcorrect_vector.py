@@ -105,7 +105,7 @@ for fnm in args.filename:
     dat.props['body2head_vec'] = vec
     dat.props['declination'] = declin
     # Set matlab 'datenum' time.
-    dat.add_data('datenum',dat.mpltime+366.,'main')
+    dat.add_data('datenum', dat.mpltime.matlab_datenum, 'main')
 
     # Perform motion correction.
     if hasattr(dat,'orientmat'):
@@ -127,3 +127,4 @@ for fnm in args.filename:
     dat.save_mat(outnm,groups=['main','orient'])
     
     del dat
+

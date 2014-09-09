@@ -9,11 +9,11 @@ class saver(data_factory):
         pass
 
     def __init__(self,filename,mode='w',format='5',do_compression=True,oned_as='row',):
-        self.file_mode=mode
-        self.filename=filename
-        self.format=format
-        self.do_compression=do_compression
-        self.oned_as=oned_as
+        self.file_mode = mode
+        self.filename = filename
+        self.format = format
+        self.do_compression = do_compression
+        self.oned_as = oned_as
 
 
     def obj2todict(self,obj,groups=None):
@@ -22,13 +22,18 @@ class saver(data_factory):
             out[nm]=dat
         out['props']=dict(copy.deepcopy(obj.props))
         out['props'].pop('doppler_noise',None)
-        for nm in out['props'].keys(): # unicodes key-names are not supported
+        for nm in out['props'].keys():
+            # unicodes key-names are not supported
             if nm.__class__ is unicode:
                 out['props'][str(nm)]=out['props'].pop(nm)
+                nm = str(nm)
+            # sets are not supported
+            if out['props'][nm].__class__ is set:
+                out['props'][nm] = list(out['props'][nm])
         return out
 
     def write(self,obj,groups=None):
-        out=self.obj2todict(obj,groups=groups)
+        out = self.obj2todict(obj,groups=groups)
         if hasattr(obj,'_pre_mat_save'):
             obj._pre_mat_save(out)
-        spio.savemat(self.filename,out,format=self.format,do_compression=self.do_compression,oned_as=self.oned_as)
+        spio.savemat(self.filename, out, format=self.format, do_compression=self.do_compression, oned_as=self.oned_as)

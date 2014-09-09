@@ -20,12 +20,15 @@ def num2date(mpltime):
 
 def date2num(dt):
     if np.ndarray in dt.__class__.__mro__:
-        out = np.empty(len(dt),dtype = np.float64)
+        out = np.empty(len(dt), dtype=np.float64)
         for idx,val in enumerate(dt.flat):
             out[idx] = date2num(val)
         out.shape = dt.shape
         return out
     return dt.toordinal() + (dt.hour + (dt.minute + (dt.second + dt.microsecond/1e6)/60.)/60. )/24.
+
+def mpltime2matlab_datenum(time):
+    return time.view(np.ndarray) + 366
 
 class time_array(np.ndarray):
     """
@@ -92,4 +95,4 @@ class time_array(np.ndarray):
 
     @property
     def matlab_datenum(self,):
-        return self-366
+        return mpltime2matlab_datenum(self)

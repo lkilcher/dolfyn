@@ -4,6 +4,7 @@ from .. import adcp
 from ..tools import misc as tbx
 from struct import unpack
 from struct import error as str_err
+from ..data import time
 ma=adv.db.ma
 
 def bcd2char(cBCD):
@@ -233,7 +234,7 @@ class vec_reader(object):
         self.data.add_data('_sysi',~np.isnan(self.data.mpltime),'_essential') # These are the indices in the sysdata variables that are not interpolated.
         inds=np.nonzero(~np.isnan(self.data.mpltime))[0][1:] # Skip the first entry for the interpolation process
         p=np.poly1d(np.polyfit(inds,self.data.mpltime[inds],1))
-        self.data.mpltime=p(np.arange(len(self.data.mpltime)))
+        self.data.mpltime=p(np.arange(len(self.data.mpltime))).view(time.time_array)
         tbx.fillgaps(self.data.batt)
         tbx.fillgaps(self.data.c_sound)
         tbx.fillgaps(self.data.heading)
@@ -253,7 +254,7 @@ class vec_reader(object):
         if self.debug:
             print( 'Reading vector system data (0x11)...' )
         if not hasattr(self.data,'mpltime'):
-            self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64) + np.float64(np.NaN),'_essential')
+            self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64).view(time.time_array) + np.float64(np.NaN),'_essential')
             self.data.add_data('batt',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#sys')
             self.data.add_data('c_sound',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'env')
             self.data.add_data('heading',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'orient')
@@ -357,7 +358,7 @@ class vec_reader(object):
             print( 'Reading AWAC velocity data (0x20)...' )
         nbins=self.config.user.NBins
         if not hasattr(self.data,'temp'):
-            self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64),'_essential')
+            self.data.add_data('mpltime',np.empty(self.n_samp_guess,dtype=np.float64).view(time.time_array),'_essential')
             self.data.add_data('Error',np.empty(self.n_samp_guess,dtype=np.uint16),'#error')
             self.data.add_data('AnaIn1',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#extra')
             self.data.add_data('batt',np.empty(self.n_samp_guess,dtype=np.float32) + np.float32(np.NaN),'#sys')

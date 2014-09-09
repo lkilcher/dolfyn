@@ -22,6 +22,7 @@ class velocity(time_based,saveable):
     def _pre_mat_save(self,outdict):
         outdict['u']=self._u
         outdict.pop('_u')
+        outdict.pop('config',None) # The config object often has characters that cause problems.
         if not outdict.has_key('datenum') and outdict.has_key('mpltime'):
             outdict['datenum']=self.mpltime.reshape((1,-1))+366
             outdict.pop('mpltime')
