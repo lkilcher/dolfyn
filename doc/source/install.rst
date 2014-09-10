@@ -3,10 +3,11 @@
 Download and Install
 ====================
 
-|dlfn| can be installed in several different ways depending on your system.  At the most general level, assuming you have Python and NumPy installed, you should be able to simply download |dlfn| from the repository (http://github.com/lkilcher/pyTurbSim\ ). For example, if git is installed, you can::
+|dlfn| can be installed in several different ways depending on your system.  At the most general level, assuming you have Python and NumPy installed, you should be able to simply download |dlfn| from the repository (http://github.com/lkilcher/dolfyn\ ). For example, if git is installed, you can::
+
    $ git clone http://github.com/lkilcher/dolfyn <download_location>
 
-If `<download_location>` is not specified, the repository will be created in the current directory in a new `pyTurbSim` folder. Once you have downloaded |pyts|, you may either:
+If `<download_location>` is not specified, the repository will be created in the current directory in a new `dolfyn` folder. Once you have downloaded |dlfn|, you may either:
 
 a) install it into your Python packages repository by executing the setup.py script::
 
