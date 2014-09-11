@@ -28,30 +28,6 @@ dolfyn.adp.clean module
     :undoc-members:
     :show-inheritance:
 
-dolfyn.adp.plot module
-----------------------
-
-.. automodule:: dolfyn.adp.plot
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-dolfyn.adp.read_bin module
---------------------------
-
-.. automodule:: dolfyn.adp.read_bin
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-dolfyn.adp.readbin module
--------------------------
-
-.. automodule:: dolfyn.adp.readbin
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 dolfyn.adp.rotate module
 ------------------------
 

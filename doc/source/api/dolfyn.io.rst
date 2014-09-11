@@ -36,6 +36,22 @@ dolfyn.io.mat module
     :undoc-members:
     :show-inheritance:
 
+dolfyn.io.nortek module
+-----------------------
+
+.. automodule:: dolfyn.io.nortek
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.nortek_defs module
+----------------------------
+
+.. automodule:: dolfyn.io.nortek_defs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

@@ -11,7 +11,6 @@ Subpackages
     dolfyn.buoy
     dolfyn.data
     dolfyn.io
-    dolfyn.meta
     dolfyn.tools
 
 Submodules

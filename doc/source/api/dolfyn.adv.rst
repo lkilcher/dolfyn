@@ -36,14 +36,6 @@ dolfyn.adv.multi module
     :undoc-members:
     :show-inheritance:
 
-dolfyn.adv.read module
-----------------------
-
-.. automodule:: dolfyn.adv.read
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 dolfyn.adv.readascii module
 ---------------------------
 
@@ -56,14 +48,6 @@ dolfyn.adv.rotate module
 ------------------------
 
 .. automodule:: dolfyn.adv.rotate
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-dolfyn.adv.tmp module
----------------------
-
-.. automodule:: dolfyn.adv.tmp
     :members:
     :undoc-members:
     :show-inheritance:

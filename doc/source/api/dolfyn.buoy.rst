@@ -4,6 +4,14 @@ dolfyn.buoy package
 Submodules
 ----------
 
+dolfyn.buoy.base module
+-----------------------
+
+.. automodule:: dolfyn.buoy.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 dolfyn.buoy.read module
 -----------------------
 

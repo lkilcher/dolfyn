@@ -46,7 +46,7 @@ help:
 
 
 api:
-	$(SPHINXBUILDAPI) -f -o source/api -T -H 'DOLfYN API' ../dolfyn/
+	$(SPHINXBUILDAPI) -f -o source/api -T -H 'DOLfYN API' ../dolfyn/ ../dolfyn/meta ../dolfyn/adp/read_bin.py ../dolfyn/adp/readbin.py
 
 clean:
 	-rm -rf $(BUILDDIR)/*
