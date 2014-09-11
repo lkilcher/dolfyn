@@ -6,7 +6,7 @@ Subpackages
 
 .. toctree::
 
-    dolfyn.adcp
+    dolfyn.adp
     dolfyn.adv
     dolfyn.buoy
     dolfyn.data
