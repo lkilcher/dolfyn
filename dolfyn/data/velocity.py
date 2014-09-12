@@ -100,12 +100,16 @@ class velocity(time_based, saveable):
     # dat.meta.coordsys='principal' # Set the coordsys.
     # sang=np.sin(-self.principal_angle)
     # cang=np.cos(-self.principal_angle)
-    # dat[:2]=np.tensordot(np.array([[cang,-sang],[sang,cang]],dtype='float32'),np.array(dat[:2]),([1],[0])) # Rotate the data using a rotation matrix.
+    # Rotate the data using a rotation matrix:
+    # dat[:2]=np.tensordot(np.array([[cang,-sang],[sang,cang]],dtype='float32')
+    # ,np.array(dat[:2]),([1],[0]))
     # self.props['coord_sys']='principal'
 
-    def _init(self, nm, shape, dtype='float32', meta=None, clear_fromGrp=None, group='main'):
+    def _init(self, nm, shape, dtype='float32',
+              meta=None, clear_fromGrp=None, group='main'):
         """
-        This is a backwards-compatability hack to make it possible to load older-version data files.
+        This is a backwards-compatability hack to make it possible to
+        load older-version data files.
         """
         if not hasattr(self, nm):
             self.add_data(nm, np.empty(shape, dtype=dtype), group, meta=meta)
@@ -144,7 +148,7 @@ class velocity(time_based, saveable):
         """
         Return the principal angle of the data.
         """
-        if not self.props.has_key('principal_angle'):
+        if 'principal_angle' not in self.props.keys():
             self.calc_principal_angle()
         return self.props['principal_angle']
 
@@ -152,7 +156,8 @@ class velocity(time_based, saveable):
         return self.U * np.exp(1j * angle)
 
     def rotate_var(self, angle, vrs=('u', 'v')):
-        return (getattr(self, vrs[0]) + 1j * getattr(self, vrs[1])) * np.exp(1j * angle)
+        return (getattr(self, vrs[0]) + 1j *
+                getattr(self, vrs[1])) * np.exp(1j * angle)
 
     @property
     def U_earth(self,):
@@ -202,23 +207,33 @@ class vel_bindat_tke(velocity, time_bindat):
     def Ecoh(self,):
         """
         Niel Kelley's "coherent energy", i.e. the rms of the stresses.
-        Why did he do it this way, instead of the sum of the magnitude of the stresses?
         """
+        # Why did he do it this way, instead of the sum of the magnitude of the
+        # stresses?
         return (self.upwp_ ** 2 + self.upvp_ ** 2 + self.vpwp_ ** 2) ** (0.5)
 
     def Itke(self,):
         """
         Turbulence intensity.
-        Ratio of standard deviation of velocity magnitude to velocity magnitude.
+
+        Ratio of standard deviation of velocity magnitude to velocity
+        magnitude.
         """
-        return np.ma.masked_where(self.U_mag < self.props['Itke_thresh'], self.sigma_Uh / self.U_mag)
+        return np.ma.masked_where(self.U_mag < self.props['Itke_thresh'],
+                                  self.sigma_Uh / self.U_mag)
 
     @property
-    def Etke(self,):
-        return self.tke.sum(0)
+    def tke(self,):
+        """
+        The turbulent kinetic energy (sum of the three components).
+        """
+        return self._tke.sum(0)
 
     @property
     def upvp_(self,):
+        """
+        u'v' Reynolds stress
+        """
         return self.stress[0]
 
     @upvp_.setter
@@ -229,6 +244,9 @@ class vel_bindat_tke(velocity, time_bindat):
 
     @property
     def upwp_(self,):
+        """
+        u'w' Reynolds stress
+        """
         return self.stress[1]
 
     @upwp_.setter
@@ -239,6 +257,9 @@ class vel_bindat_tke(velocity, time_bindat):
 
     @property
     def vpwp_(self,):
+        """
+        v'w' Reynolds stress
+        """
         return self.stress[2]
 
     @vpwp_.setter
@@ -249,33 +270,48 @@ class vel_bindat_tke(velocity, time_bindat):
 
     @property
     def upup_(self,):
-        return self.tke[0]
+        """
+        u'u' component of the tke.
+        """
+        return self._tke[0]
 
     @property
     def vpvp_(self,):
-        return self.tke[1]
+        """
+        v'v' component of the tke.
+        """
+        return self._tke[1]
 
     @property
     def wpwp_(self,):
-        return self.tke[2]
+        """
+        w'w' component of the tke.
+        """
+        return self._tke[2]
 
     @upup_.setter
     def upup_(self, val):
-        self._init(
-            'tke', [3] + list(val.shape), val.dtype, clear_fromGrp='upup_')
-        self.tke[0] = val
+        self._init('_tke',
+                   [3] + list(val.shape),
+                   val.dtype,
+                   clear_fromGrp='upup_')
+        self._tke[0] = val
 
     @vpvp_.setter
     def vpvp_(self, val):
-        self._init(
-            'tke', [3] + list(val.shape), val.dtype, clear_fromGrp='vpvp_')
-        self.tke[1] = val
+        self._init('_tke',
+                   [3] + list(val.shape),
+                   val.dtype,
+                   clear_fromGrp='vpvp_')
+        self._tke[1] = val
 
     @wpwp_.setter
     def wpwp_(self, val):
-        self._init(
-            'tke', [3] + list(val.shape), val.dtype, clear_fromGrp='wpwp_')
-        self.tke[2] = val
+        self._init('_tke',
+                   [3] + list(val.shape),
+                   val.dtype,
+                   clear_fromGrp='wpwp_')
+        self._tke[2] = val
 
 
 class vel_binner_tke(time_binner):
@@ -298,81 +334,122 @@ class vel_binner_tke(time_binner):
         `veldat` and place them in `outdat`.
         """
         out = np.empty(self._outshape(veldat.shape)[:-1], dtype=np.float32)
-        out[0] = np.mean(self.detrend(veldat[0]) * self.detrend(
-            veldat[1]), -1, dtype=np.float64).astype(np.float32)
-        out[1] = np.mean(self.detrend(veldat[0]) * self.detrend(
-            veldat[2]), -1, dtype=np.float64).astype(np.float32)
-        out[2] = np.mean(self.detrend(veldat[1]) * self.detrend(
-            veldat[2]), -1, dtype=np.float64).astype(np.float32)
+        out[0] = np.mean(self.detrend(veldat[0]) * self.detrend(veldat[1]),
+                         -1, dtype=np.float64
+                         ).astype(np.float32)
+        out[1] = np.mean(self.detrend(veldat[0]) * self.detrend(veldat[2]),
+                         -1, dtype=np.float64
+                         ).astype(np.float32)
+        out[2] = np.mean(self.detrend(veldat[1]) * self.detrend(veldat[2]),
+                         -1, dtype=np.float64
+                         ).astype(np.float32)
         return out
 
 
 class vel_bindat_spec(vel_bindat_tke):
 
     @property
+    def freq(self,):
+        """
+        Frequency [Hz].
+        """
+        return self.omega / rad_hz
+
+    @property
     def k(self,):
         """
-        Wavenumber.
+        Wavenumber [1/m].
         """
         return self.omega[:, None] / self.U_mag
 
     @property
     def Suu(self,):
+        """
+        u-component spectrum [m^2/s]
+        """
         return self.Spec[0]
 
     @Suu.setter
     def Suu(self, val):
-        self._init(
-            'Spec', [3] + list(val.shape), val.dtype, clear_fromGrp='Suu')
+        self._init('Spec',
+                   [3] + list(val.shape),
+                   val.dtype,
+                   clear_fromGrp='Suu')
         self.Spec[0] = val
 
     @property
     def Svv(self,):
+        """
+        v-component spectrum [m^2/s]
+        """
         return self.Spec[1]
 
     @Svv.setter
     def Svv(self, val):
-        self._init(
-            'Spec', [3] + list(val.shape), val.dtype, clear_fromGrp='Svv')
+        self._init('Spec',
+                   [3] + list(val.shape),
+                   val.dtype,
+                   clear_fromGrp='Svv')
         self.Spec[1] = val
 
     @property
     def Sww(self,):
+        """
+        w-component spectrum [m^2/s]
+        """
         return self.Spec[2]
 
     @Sww.setter
     def Sww(self, val):
-        self._init(
-            'Spec', [3] + list(val.shape), val.dtype, clear_fromGrp='Sww')
+        self._init('Spec',
+                   [3] + list(val.shape),
+                   val.dtype,
+                   clear_fromGrp='Sww')
         self.Spec[2] = val
 
     @property
     def Suu_hz(self,):
+        """
+        u-component spectrum [m^2/s^2/Hz]
+        """
         return self.Spec[0] * rad_hz
 
     @property
     def Svv_hz(self,):
+        """
+        v-component spectrum [m^2/s^2/Hz]
+        """
         return self.Spec[1] * rad_hz
 
     @property
     def Sww_hz(self,):
+        """
+        w-component spectrum [m^2/s^2/Hz]
+        """
         return self.Spec[2] * rad_hz
 
 
 class vel_binner_spec(vel_binner_tke):
 
-    def calc_vel_psd(self, veldat, fs=None, rotate_u=False, noise=[0, 0, 0], n_pad=None):
+    def calc_vel_psd(self, veldat, fs=None,
+                     rotate_u=False, noise=[0, 0, 0], n_pad=None):
         """
-        Calculate the psd of *veldat*'s velocity and place it in *outdat*.
+        Calculate the psd of velocity.
 
         Parameters
         ----------
-        *veldat*   : The raw data object that contains velocity data.
-        *outdat*   : The bin'd data object where data will be stored.
-        *rotate_u* : (optional) If True, each 'bin' of horizontal velocity is
-                     rotated into its principal axis prior to calculating the psd.
-                     (default: False).
-        *noise*    : Noise level of each component's velocity measurement (default to 0).
+        veldat   : np.ndarray
+          The raw velocity data.
+        fs : float (optional)
+          The sample rate (default: from the binner).
+        rotate_u : bool (optional)
+          If True, each 'bin' of horizontal velocity is rotated into
+          its principal axis prior to calculating the psd.  (default:
+          False).
+        noise : list(3 floats) (optional)
+          Noise level of each component's velocity measurement (default to 0).
+        n_pad : int
+          The number of values to pad (with zero)
         """
         fs = self._parse_fs(fs)
         if rotate_u:
@@ -380,7 +457,9 @@ class vel_binner_spec(vel_binner_tke):
             tmpdat *= np.exp(-1j * np.angle(tmpdat.mean(-1)))
             if noise[0] != noise[1]:
                 print(
-                    'Warning: noise levels different for u,v. This means noise-correction cannot be done here when rotating velocity.')
+                    'Warning: noise levels different for u,v. This means \
+                    noise-correction cannot be done here when rotating \
+                    velocity.')
                 noise[0] = noise[1] = 0
             datu = self.psd(tmpdat.real, fs, noise=noise[0], n_pad=n_pad)
             datv = self.psd(tmpdat.imag, fs, noise=noise[1], n_pad=n_pad)
@@ -394,7 +473,9 @@ class vel_binner_spec(vel_binner_tke):
                 units = ma.unitsDict({'s': -2, 'm': -2, 'hz': -1})
             else:
                 units = ma.unitsDict({'s': -1, 'm': -2})
-            out = ma.marray(
-                out, ma.varMeta('S_{%s%s}', units, veldat.meta.dim_names + ['freq']))
+            out = ma.marray(out,
+                            ma.varMeta('S_{%s%s}', units,
+                                       veldat.meta.dim_names + ['freq'])
+                            )
         out[:] = datu, datv, datw
         return out

@@ -43,6 +43,7 @@ class VarAtts(object):
 
     Parameters
     ----------
+
     dims : (list, optional)
         The dimensions of the array other than the 'time'
         dimension. By default the time dimension is appended to the

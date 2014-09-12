@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from ..tools.misc import fillgaps
+from ..tools.misc import fillgaps, group
 # import tools.timer as tmr
 
 warnings.filterwarnings('ignore', category=np.RankWarning)
@@ -9,102 +9,88 @@ sin = np.sin
 cos = np.cos
 
 
-def group(bl, ends_only=False, min_length=0):
+def cleanFill(indat, bad):
     """
-    Returns a set of slice objects, which indicate the continuous
-    sections where *bl* is True.
+    Interpolate (linearly) over the points in `bad` that are True.
 
-    ends_only=True will return a set of length 2 lists, which contain
-    the start and endpoints of the regions.
+    Parameters
+    ----------
+    indat : |np.ndarray|
+      The field to be cleaned.
+    bad : |np.ndarray| (dtype=bool, shape=u.shape)
+      The bad indices to interpolate.
 
-    ** Note ** : This functionality has funny behavior for single
-    points.  It will return the same two indices for the beginning and
-    end.
-
-    min_length may be used to specify the minimum number of continuos
-    points that will be returned.
+    This function does not return anything, it operates on the `u`
+    array.
 
     """
-    if not any(bl):
-        return np.empty((0, 2))
-    vl = np.diff(bl.astype('int'))
-    ups = np.nonzero(vl == 1)[0] + 1
-    dns = np.nonzero(vl == -1)[0] + 1
-    if bl[0]:
-        if len(ups) == 0:
-            ups = np.array([0])
-        else:
-            ups = np.concatenate((np.arange([0]), [len(ups)]))
-    if bl[-1]:
-        if len(dns) == 0:
-            dns = np.array([len(bl)])
-        else:
-            dns = np.concatenate((dns, [len(bl)]))
-    out = np.empty(len(dns), dtype='O')
-    idx = 0
-    for u, d in zip(ups, dns):
-        if d - u < min_length:
-            continue
-        if ends_only:
-            out[idx] = [u, d - 1]
-        else:
-            out[idx] = slice(u, d)
-        idx += 1
-    return out[:idx]
-
-
-def cleanFill(u, bd):
-    """
-    Clean the array *u* by assigning NaN to the values in *bd* that are True.
-
-    Then fill the gaps by linear interpolation.
-    """
-    u[bd] = np.NaN
-    fillgaps(u)
+    indat[bad] = np.NaN
+    fillgaps(indat)
 
 
 def fillpoly(indat, deg, npt):
     """
-    Fill gaps in a vector by interpolating using a polynomial.
+    Interpolate (polynomial) over the points in `bad` that are True.
 
-    *deg* is the degree of the polynomial (see polyfit)
+    Parameters
+    ----------
+    indat : |np.ndarray|
+      The field to be cleaned.
+    deg : int
+      The degree of the polynomial (see polyfit)
+    npt : int
+      The number of points on either side of the gap that the fit
+      occurs over.  Must be >deg/2.
 
-    *npt* is the number of points on either side of the gap
-    that the fit occurs over.
+    This function does not return anything, it operates on the `indat`
+    array.
 
     """
+
     searching = True
     bds = np.isnan(indat)
-    pos = 0
-    i = np.arange(len(indat), dtype=np.uint32)
     ntail = 0
-    # count=0
+    pos = 0
+    # The index array:
+    i = np.arange(len(indat), dtype=np.uint32)
+
     while pos < len(indat):
         if searching:
+            # Check the point
             if bds[pos]:
+                # If it's bad, mark the start
                 start = max(pos - npt, 0)
+                # And stop searching.
                 searching = False
+            pos += 1
+            # Continue...
         else:
-            if bds[pos]:
+            # Another bad point?
+            if bds[pos]:  # Yes
+                # Reset ntail
                 ntail = 0
-            else:
+            else:  # No
+                # Add to the tail of the block.
                 ntail += 1
-        pos += 1
-        if (not searching) and (ntail == npt or pos == len(indat)):
-            # count+=1
-            itmp = i[start:pos]
-            btmp = bds[start:pos]
-            igd = itmp[~btmp]
-            ibd = itmp[btmp]
-            indat[ibd] = np.polyval(
-                np.polyfit(igd, indat[igd], deg), ibd).astype(indat.dtype)
-            # print( '%d bad points fixed at %d (fix# %d).' %
-            # (sum(btmp),pos-npt,count) )
-            searching = True
-            ntail = 0
+            pos += 1
+
+            if (ntail == npt or pos == len(indat)):
+                # This is the block we are interpolating over
+                itmp = i[start:pos]
+                # good and bad points:
+                igd = itmp[~bds[start:pos]]
+                ibd = itmp[bds[start:pos]]
+                # Fill them:
+                indat[ibd] = np.polyval(np.polyfit(igd,
+                                                   indat[igd],
+                                                   deg),
+                                        ibd).astype(indat.dtype)
+                # Reset!
+                searching = True
+                ntail = 0
 
 
-def spikeThresh(u, thresh):
+def _spikeThresh(u, thresh):
     """
     Returns a logical vector where a spike of magnitude greater than
     *thresh* occurs.  'Negative' and 'positive' spikes are both
@@ -121,12 +107,12 @@ def spikeThresh(u, thresh):
 def rangeLimit(u, range):
     """
     Returns a logical vector that is True where the
-    values of *u* are outside of *range*.
+    values of `u` are outside of `range`.
     """
     return ~((range[0] < u) & (u < range[1]))
 
 
-def calcab(al, Lu_std_u, Lu_std_d2u):
+def _calcab(al, Lu_std_u, Lu_std_d2u):
     """
     Solve equations 10 and 11 of Goring+Nikora2002.
 
@@ -145,7 +131,7 @@ def calcab(al, Lu_std_u, Lu_std_d2u):
         np.array([(Lu_std_u) ** 2, (Lu_std_d2u) ** 2])))
 
 
-def phaseSpaceThresh(u):
+def _phaseSpaceThresh(u):
     """
     Implements the Goring+Nikora2002 despiking method, with Wahl2003
     correction.
@@ -157,10 +143,9 @@ def phaseSpaceThresh(u):
     u = u - u.mean(0)
     du = np.zeros_like(u)
     d2u = np.zeros_like(u)
-    du[1:-1] = (u[2:] - u[:-2]) / \
-        2  # Correct. This is the centered difference.
-    # du[1:-1]=np.diff(u,n=2,axis=0) # Wrong: This is the second derivative,
-    # not the centered difference.
+    # Take the centered difference.
+    du[1:-1] = (u[2:] - u[:-2]) / 2
+    # And again.
     d2u[2:-2] = (du[1:-1][2:] - du[1:-1][:-2]) / 2
     # d2u[2:-2]=np.diff(du[1:-1],n=2,axis=0) # Again, wrong.
     p = (u ** 2 + du ** 2 + d2u ** 2)
@@ -172,7 +157,7 @@ def phaseSpaceThresh(u):
     b = np.empty_like(alpha)
     for idx, al in enumerate(alpha):
         # print( al,std_u[idx],std_d2u[idx],Lu )
-        a[idx], b[idx] = calcab(al, Lu * std_u[idx], Lu * std_d2u[idx])
+        a[idx], b[idx] = _calcab(al, Lu * std_u[idx], Lu * std_d2u[idx])
         # print( a[idx],b[idx] )
     if np.any(np.isnan(a)) or np.any(np.isnan(a[idx])):
         print('Coefficient calculation error')
@@ -187,36 +172,57 @@ def phaseSpaceThresh(u):
 
 def GN2002(u, npt=5000):
     """
+    Clean a dataset according to the Goring+Nikora2002 method.
+
+    Paramaters
+    ----------
+    u : |np.ndarray|
+      The velocity array that will be cleaned.
+
+    npt : int
+      The number of points over which to perform the method.
+
+    Implements the Goring+Nikora2002 despiking method, with Wahl2003
+    correction.
 
     """
     bds = np.zeros(len(u), dtype='bool')
-    bds[0] = True
+
+    # Find large bad segments (>npt/10):
+    # group returns a vector of slice objects.
     bad_segs = group(np.isnan(u), min_length=npt / 10)
-    if len(bad_segs):
+    if len(bad_segs):  # Are there any?
+        # Break them up into separate regions:
         sp = 0
         ep = len(u)
+
+        # Skip start and end bad_segs:
         if bad_segs[0].start == sp:
             sp = bad_segs[0].stop
             bad_segs = bad_segs[1:]
         if bad_segs[-1].stop == ep:
             ep = bad_segs[-1].start
             bad_segs = bad_segs[:-1]
+
         for ind in range(len(bad_segs)):
-            bs = bad_segs[ind]
+            bs = bad_segs[ind]  # bs is a slice object.
+            # Clean the good region:
             bds[sp:bs.start] = GN2002(u[sp:bs.start], npt=npt)
             sp = bs.stop
+        # Clean the last good region.
         bds[sp:ep] = GN2002(u[sp:ep], npt=npt)
         return bds
+
     c = 0
     ntot = len(u)
     nbins = ntot / npt
     bds_last = np.zeros_like(bds) + np.inf
+    bds[0] = True  # make sure we start.
     while bds.any():
-        bds[:nbins * npt] = phaseSpaceThresh(
+        bds[:nbins * npt] = _phaseSpaceThresh(
             np.array(np.reshape(u[:(nbins * npt)], (npt, nbins), order='F')))
-        bds[-npt:] = phaseSpaceThresh(u[-npt:])
+        bds[-npt:] = _phaseSpaceThresh(u[-npt:])
         u[bds] = np.NaN
-        # fillgaps(u)
         fillpoly(u, 3, 12)
         # print( 'GN2002: found %d bad points on loop %d' % (bds.sum(),c) )
         c += 1

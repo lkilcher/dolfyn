@@ -113,8 +113,9 @@ class groups(dict):
         if dict in args[0].__class__.__mro__:
             dict.__init__(self, *args, **kwargs)
         else:
-            dict.__init__(
-                self, {'main': oset([]), '_essential': oset([])}, *args, **kwargs)
+            dict.__init__(self, {'main': oset([]),
+                                 '_essential': oset([])},
+                          *args, **kwargs)
 
     def __repr__(self,):
         s = '{'
@@ -192,15 +193,16 @@ class groups(dict):
 class Dgroups(Dbase):
 
     """
-    This class implements 'data groups' which are used to organize datasets.
-    (also, the io package uses them for loading and saving subsets of a data object).
+    This class implements 'data groups' which are used to organize
+    datasets.  (also, the io package uses them for loading and saving
+    subsets of a data object).
 
     The critical attribute is the 'data_groups' property.
     """
 
     @property
-    def data_attrs(self,):
-        return dat.groups.data_names
+    def data_names(self,):
+        return self.groups.data_names
 
     @property
     def groups(self,):
@@ -268,16 +270,16 @@ class Dgroups(Dbase):
         This does not update props or meta.
 
         *nan_joint* is a logical flag that specifies whether to
-        insert a NaN between the datasets.
+        insert a slice of NaN between the datasets.
         """
         if self.__class__ is not other.__class__:
-            error
+            raise Exception('Classes must match to join objects.')
         n = len(self)
         for (nm, dat), (onm, odat) in zip(self, other):
             dim = self._time_dim(dat, n)
             if nan_joint:
                 shp = list(dat.shape)
-                shp[ax] = 1
+                shp[dim] = 1
                 dtmp = (dat, np.ones(shp) * np.NaN, odat)
             else:
                 dtmp = (dat, odat)
@@ -295,7 +297,8 @@ class Dgroups(Dbase):
         """
         Return a copy of the data, subsetted by *inds*.
 
-        *inds* defaults to return all of the data (used to get a copy of the data).
+        *inds* defaults to return all of the data (used to get a copy
+         of the data).
 
         *group* may be specified to load only some of the variables.
         """
@@ -305,7 +308,8 @@ class Dgroups(Dbase):
         for grp, nm in self.groups.iter(group):
             if hasattr(self, nm):
                 dt = copy.copy(self.__getattribute__(nm))
-                if inds is not None and hasattr(dt, 'shape') and dt.shape[-1] == self.shape[-1]:
+                if ((inds is not None and hasattr(dt, 'shape') and
+                     dt.shape[-1] == self.shape[-1])):
                     dt = dt[..., inds]
                 out.add_data(nm, dt, group=grp)
         return out
@@ -337,7 +341,8 @@ class Dgroups(Dbase):
 
     def __preload__(self,):
         """
-        This is called just after object creation, and just prior to data being loaded from disk.
+        This is called just after object creation, and just prior to
+        data being loaded from disk.
 
         It is a placeholder for modifying data types at load time.
         """

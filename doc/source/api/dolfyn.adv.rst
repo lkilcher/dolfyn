@@ -28,22 +28,6 @@ dolfyn.adv.clean module
     :undoc-members:
     :show-inheritance:
 
-dolfyn.adv.multi module
------------------------
-
-.. automodule:: dolfyn.adv.multi
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-dolfyn.adv.readascii module
----------------------------
-
-.. automodule:: dolfyn.adv.readascii
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 dolfyn.adv.rotate module
 ------------------------
 

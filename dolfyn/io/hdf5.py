@@ -112,11 +112,11 @@ class saver(data_factory):
         should be provided to the 'loader' data_factory.  The string
         (key) that matches the value of the file's '_object_type'
         attribute is chosen.  The corresponding class (value) is then
-        instanced and data is loaded into it according to the pyBODT
+        instanced and data is loaded into it according to the DOLfYN
         specification.
 
         This function writes the '_object_type' from the current
-        pyBODT instance to the file so that it can be loaded later.
+        DOLfYN instance to the file so that it can be loaded later.
 
         See also:
         - loader.read_type
@@ -152,7 +152,7 @@ class saver(data_factory):
     def write(self, obj, where='/', nosplit_file=False):
         """
         Write data in object `obj` to the file at location `where`.
-        `obj` should be a pyBODT type object; a subclass of the
+        `obj` should be a DOLfYN type object; a subclass of the
         Dgroups class.
 
         Parameters
@@ -173,7 +173,7 @@ class saver(data_factory):
         if hasattr(obj, '_units'):
             self.write_dict('##units##', obj._units, nd)
                             # Write the 'units' property if the data has it
-                            # (this has been deprecated in the pyBODT standard,
+                            # (this has been deprecated in the DOLfYN standard,
                             # in favor of meta arrays).
         # iterate over the group names:
         for grp_nm, dat_nms in obj.groups.iteritems():

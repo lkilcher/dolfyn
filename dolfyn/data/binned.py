@@ -30,6 +30,7 @@ class time_binner(object):
         Parameters
         ----------
         fs : float (optional)
+          The sample rate (Hz).
         coh : bool
           Calculate the frequency vector for coherence/cross-spectra
           (default: False) i.e. use self.n_fft_coh instead of
@@ -394,10 +395,12 @@ class time_binner(object):
             out[slc] = psd(dat[slc], n_fft, 2*np.pi*fs,
                            window=window, step=step)
         if ma.valid and ma.marray in dat.__class__.__mro__:
-            out = ma.marray(out,
-                            ma.varMeta('S(%s)' % dat.meta.name,
-                                   ma.unitsDict({'s': 1})*dat.meta._units**2,
-                                   dim_names=dat.meta.dim_names[:-1] + ['freq']))
+            out = ma.marray(
+                out,
+                ma.varMeta('S(%s)' % dat.meta.name,
+                           ma.unitsDict({'s': 1}) * dat.meta._units**2,
+                           dim_names=dat.meta.dim_names[:-1] + ['freq'])
+                )
             # The dat.meta.dim_names[:-1] drops the 'time2' dim_name.
 
         if noise != 0:
