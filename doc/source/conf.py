@@ -33,7 +33,7 @@ import dolfyn._version as ver
 # 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
 # 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',]
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.autosummary',
+              #              'sphinx.ext.autosummary',
               'sphinx.ext.doctest',
               'sphinx.ext.todo',
               'sphinx.ext.mathjax',

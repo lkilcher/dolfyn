@@ -54,7 +54,18 @@ def group(bl, min_length=0):
 class delta(object):
 
     """
-    delta objects are for creating boolean 'index' arrays. For an input data.
+    delta objects find indices in an input array of `data` that fall
+    within a distance `delta` from a `value`
+
+    Parameters
+    ----------
+
+    data : np.ndarray
+      The data that should be indexed.
+
+    delta : float
+      The distance from `val` that the data will be indexed as True.
+
     """
 
     @property
@@ -63,15 +74,22 @@ class delta(object):
 
     def __init__(self, data, delta):
         """
-        Creat a delta object for *data* with delta *delta*.
+        Create a delta object for *data* with delta *delta*.
         """
         self.data = data
         self.delta = delta
 
     def __call__(self, val):
         """
-        Return the indices of `data` that fall within `val`- delta to
-        `val` + delta.
+        Return the indices of `data` that fall within `val`- `delta` to
+        `val` + `delta`.
+
+        Parameters
+        ----------
+
+        val : float
+          The value at the center of the range.
+
         """
         return (val - self.delta < self.data) & (self.data < val + self.delta)
 
@@ -138,13 +156,24 @@ def slice1d_along_axis(arr_shape, axis=0):
 
 def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
     """
-    out=fillgaps(A,MAXGAP,DIM) Fills gaps in A by linear
-    interpolation along dimension DIM.  The maximum gap width
-    to be filled is specified by MAXGAP.
+    Linearly fill NaN value in an array.
 
-    MAXGAP defualts to fill gaps of any width.
+    Parameters
+    ----------
+    a : |np.ndarray|
+      The array to be filled.
 
-    DIM defaults to 0."""
+    maxgap : |np.ndarray| (optional: inf)
+      The maximum gap to fill.
+
+    dim : int (optional: 0)
+      The dimension to operate along.
+
+    extrapFlg : bool (optional: False)
+      Whether to extrapolate if NaNs are found at the ends of the
+      array.
+
+      """
 
     # If this is a multi-dimensional array, operate along axis dim.
     if a.ndim > 1:
@@ -190,12 +219,26 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
 
 def medfiltnan(a, kernel, thresh=0):
     """
-    Do a running median filter of the data.
+    Do a running median filter of the data that fills NaNs.
 
-    Regions where more than *thresh* fraction of the points NaN, are
-    set to NaN.
+    Parameters
+    ----------
+    a : |np.ndarray|
+      The array to filter.
 
-    Currently only work for vectors.
+    kernel : int
+      The length of the median filter.
+
+    thresh : float (default: 0)
+      In a region where more than `thresh` fractionf of the values are
+      NaN, the value at the center is set to NaN.
+
+    Returns
+    -------
+
+    out : |np.ndarray|
+      The filtered array.
+
     """
     nans = np.isnan(a)
     nans = np.convolve(nans, np.ones(kernel) / kernel, 'same')
@@ -206,6 +249,10 @@ def medfiltnan(a, kernel, thresh=0):
 
 
 def degN2cartDeg(angN,):
+    """
+    Convert degrees True North to 'cartesian Degrees'
+    (counter-clockwise from the East).
+    """
     out = 90 - angN
     out[out < -180] += 360
     return out

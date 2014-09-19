@@ -1,19 +1,52 @@
+"""
+This module uses the h5py (HDF5) package to read and write numpy
+arrays to disk.
+
+See the h5py and HDF5 documentation for further info on the details of
+this approach.
+
+"""
+
+
 import h5py as h5
 try:
     import cPickle as pkl
 except:
     import pickle as pkl
-from .base import data_factory
+from .base import DataFactory
 from ..data.base import Dgroups, np, ma, config
 from ..data.time import time_array
 import copy
 
 
-class saver(data_factory):
+class Saver(DataFactory):
 
     """
     A save data_factory object.  This class saves data in DOLFYN
     classes into DOLFYN format hdf5 files.
+
+    This function should not be used explicitly, instead use the
+    :meth:`main.Saveable.save` method of the data object.
+
+    Parameters
+    ----------
+
+    filename : string
+        Name of fale to save to.
+
+    mode     : string
+        File access mode.  Should be 'w' (default) or 'a'.
+
+    where    : string
+        Location in hdf5 file to save the data (default: '/')
+
+    max_file_size : int
+      option does not currently work.
+
+    See also:
+    - file
+    - h5py
+
     """
     ver = 1.2  # The version number of the save format.
     # Version 1.0: underscore ('_') handled inconsistently.
@@ -33,24 +66,6 @@ class saver(data_factory):
     # transparent.
 
     def __init__(self, filename, mode='w', where='/', max_file_size_mb=None):
-        """
-        Initialize the saver object.  Open a file and write
-        configuration parameters to it.
-
-        Paremeters
-        ----------
-        filename : string
-          Name of fale to save to.
-        mode     : string
-          File access mode.  Should be 'w' (default) or 'a'.
-        where    : string
-          Location in hdf5 file to save the data (default: '/')
-        max_file_size option does not currently work.
-
-        See also:
-        - file
-        - h5py
-        """
         self.file_mode = mode
         # This does an 'expanduser' on the filename (i.e. '~/'
         # replaced with '/home/<username>/').
@@ -66,7 +81,7 @@ class saver(data_factory):
         self.node.attrs.create('DataSaveVersion', pkl.dumps(self.ver))
         self._extrafiles = []
 
-    def getGroup(self, where=None, nosplit=False):
+    def get_group(self, where=None, nosplit=False):
         """
         An internal function for returning the current, or a specified
         node in the hdf5 file.
@@ -123,7 +138,7 @@ class saver(data_factory):
         - get_typemap
 
         """
-        self.getGroup(where).attrs.create('_object_type', str(obj.__class__))
+        self.get_group(where).attrs.create('_object_type', str(obj.__class__))
 
     def write_dict(self, name, dct, where='/'):
         """
@@ -145,7 +160,7 @@ class saver(data_factory):
           created at this location).
 
         """
-        tmp = self.getGroup(where).require_group(name)
+        tmp = self.get_group(where).require_group(name)
         for ky, val in dct.iteritems():
             tmp.attrs.create(ky, pkl.dumps(val))
 
@@ -165,7 +180,7 @@ class saver(data_factory):
         nosplit_file  - bool
           Currently non-functional, for writing data to multiple files.
         """
-        nd = self.getGroup(where)
+        nd = self.get_group(where)
         self.write_type(obj, nd)  # Write the data type.
         if hasattr(obj, 'props'):
             self.write_dict('##properties##', obj.props, nd)
@@ -177,7 +192,7 @@ class saver(data_factory):
                             # in favor of meta arrays).
         # iterate over the group names:
         for grp_nm, dat_nms in obj.groups.iteritems():
-            grp = self.getGroup(where + '/' + grp_nm, nosplit=nosplit_file)
+            grp = self.get_group(where + '/' + grp_nm, nosplit=nosplit_file)
                                 # Create or get the group specified.
             for ky in dat_nms:  # Iterate over the data names in the group.
                 if not hasattr(obj, ky):
@@ -214,18 +229,53 @@ class saver(data_factory):
                     grp.attrs.create(ky, val)
 
 
-class loader(data_factory):
+# class UpdateTool(DataFactory):
 
-    def getGroup(self, where=None):
-        if where is None:
-            return self.node
-        elif where.__class__ in [str, unicode]:
-            return self.fd.get(where, None)
-        else:
-            return where
+# """
+# A class for updating data files when the format specification
+# changes.
+# """
 
-    def get_name(self, nd):
-        return nd.name.split('/')[-1]
+# def __init__(self, filename, )
+# self.file_mode = mode
+# This does an 'expanduser' on the filename (i.e. '~/'
+# replaced with '/home/<username>/').
+# self.filename = filename
+# kwargs = {}
+# if max_file_size_mb is not None:
+# kwargs['driver'] = 'family'
+# kwargs['memb_size'] = max_file_size_mb * (2 ** 20)
+# Need to modify the filename to include a %d character.
+# self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)
+# self.close = self.fd.close
+# self.node = self.fd.get('/')
+# self.node.attrs.create('DataSaveVersion', pkl.dumps(self.ver))
+# self._extrafiles = []
+
+# def change_type_name(self, oldname, newname):
+# self.get_group(where).attrs.create('_object_type',
+# str(obj.__class__))
+
+
+class Loader(DataFactory):
+
+    """
+    A save data_factory object.  This class saves data in DOLFYN
+    classes into DOLFYN format hdf5 files.
+
+    This function should not be used explicitly, instead use the
+    :meth:`main.Saveable.save` method of the data object.
+
+    Parameters
+    ----------
+
+    filename : string
+        Name of fale to save to.
+    type_map : (dict, type)
+      A mapping of class strings to types (or a specific type) that
+      the data should be loaded into.
+
+    """
 
     def __init__(self, filename, type_map,):
         self.filename = filename
@@ -235,6 +285,26 @@ class loader(data_factory):
         self.close = self.fd.close
         self.type_map = type_map
         self.ver = pkl.loads(self.fd.attrs.get('DataSaveVersion', 'I0\n.'))
+
+    def get_group(self, where=None):
+        """
+        If `where` is:
+        - None: return the current node.
+        - string: return the node at that address.
+        - otherwise return `where` itself.
+        """
+        if where is None:
+            return self.node
+        elif where.__class__ in [str, unicode]:
+            return self.fd.get(where, None)
+        else:
+            return where
+
+    def get_name(self, node):
+        """
+        Return the name of the `node`.
+        """
+        return node.name.split('/')[-1]
 
     def iter_data(self, groups=None, where='/'):
         """
@@ -259,6 +329,9 @@ class loader(data_factory):
     __iter__ = iter
 
     def iter_attrs(self, groups=None, where='/'):
+        """
+        Iterate over the attributes in `groups`.
+        """
         for grp in self.iter_groups(groups=groups, where=where):
             for attnm in grp.attrs.iterkeys():
                 if not ((self.ver <= 1.0 and
@@ -268,6 +341,9 @@ class loader(data_factory):
                     yield grp, attnm
 
     def read_attrs(self, out, groups=None, where='/'):
+        """
+        Read the attributes in `groups` and add them to `out`.
+        """
         for grp, attnm in self.iter_attrs(groups=groups, where=where):
             dat = grp.attrs[attnm]
             try:
@@ -277,19 +353,29 @@ class loader(data_factory):
             out.add_data(attnm, dat, self.get_name(grp))
 
     def read_props(self, out, where):
+        """
+        Read the `props` attribute (:class:`Dprops
+        <dolfyn.data.base.Dprops>`) class.
+        """
         if self.ver >= 1.1:
             propsstr = '##properties##'
             unitsstr = '##units##'
         else:
             propsstr = '_properties'
             unitsstr = '_units'
-        if propsstr in self.getGroup(where).keys():
+        if propsstr in self.get_group(where).keys():
             out.props = self.read_dict(where + "/" + propsstr)
-        # if unitsstr in self.getGroup(where).keys():
+        # if unitsstr in self.get_group(where).keys():
         # print( 1 )
         # out._units=self.read_dict(where+"/"+unitsstr)
 
     def _fix_name(self, nd):
+        """
+        This is a hook for when the data class definition changes such
+        that a data attribute can not be written to the data container
+        (object). i.e. when an data attribute is changed to be a
+        read-only property.
+        """
         var = raw_input(
             """The name '%s' cannot be written to the input.  Do you wish to:
         a) move the data in the file?
@@ -309,6 +395,14 @@ class loader(data_factory):
             return None
 
     def mmload(self, groups=None, where='/', out=None, add_closemethod=True):
+        """
+        Load the data in `groups` as memory-mapped arrays.
+
+        See Also
+        --------
+
+        h5py memory mapped arrays.
+        """
         self.closefile = False
         out = self.init_object(out, where=where)
         out.__preload__()
@@ -334,6 +428,9 @@ class loader(data_factory):
         return out
 
     def load(self, groups=None, where='/', out=None):
+        """
+        Load the data in `groups` into memory.
+        """
         self.closefile = True
         out = self.init_object(out, where=where)
         out.__preload__()
@@ -411,8 +508,11 @@ class loader(data_factory):
         return out
 
     def read_dict(self, where):
+        """
+        Read a dictionary object at `where`.
+        """
         out = {}
-        nd = self.getGroup(where)
+        nd = self.get_group(where)
         for prpnm, prp in nd.attrs.iteritems():
             try:
                 out[prpnm] = pkl.loads(prp)
@@ -421,11 +521,14 @@ class loader(data_factory):
         return out
 
     def read_type(self, where='/'):
+        """
+        Read the type of object at `where`.
+        """
         try:
-            return self.getGroup(where).attrs['_object_type']
+            return self.get_group(where).attrs['_object_type']
         except KeyError:
             print('Old style data file, trying to load...')
-            return self.getGroup(where).attrs['object_type']
+            return self.get_group(where).attrs['object_type']
 
     def init_object(self, out, where='/'):
         """
@@ -476,7 +579,7 @@ class loader(data_factory):
 
         """
 
-        for grp in self.getGroup(where).itervalues():
+        for grp in self.get_group(where).itervalues():
             if grp.__class__ is h5.highlevel.Group:
                 gnm = self.get_name(grp)
 

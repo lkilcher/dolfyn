@@ -1,7 +1,39 @@
-from .base import adv_config, adv_raw, load, mmload
-from . import turbulence as turb
-from . import clean
-from ..io.nortek import read_nortek
-from rotate import CorrectMotion
+"""
+This module contains routines for reading and working with adv
+data. It contains:
 
-turb_binner = turb.turb_binner
++-----------------------------------+-----------------------------------------+
+| Name                              | Description                             |
++===================================+=========================================+
+| :func:`~dolfyn.adv.base.load`     | A function for loading ADV data in      |
+|                                   | DOLfYN format.                          |
++-----------------------------------+-----------------------------------------+
+| :func:`~dolfyn.adv.base.mmload`   | A function for loading ADV data in      |
+|                                   | DOLfYN format (as memory mapped arrays).|
++-----------------------------------+-----------------------------------------+
+| :func:`~dolfyn.io.nortek.\        | A function for reading Nortek Vector    |
+| read_nortek`                      | files.                                  |
++-----------------------------------+-----------------------------------------+
+| :mod:`rotate <dolfyn.adv.rotate>` | A module containing classes and         |
+|                                   | functions for rotating adv data between |
+|                                   | different coordinate systems and for    |
+|                                   | performing motion correction.           |
++-----------------------------------+-----------------------------------------+
+|  :class:`~dolfyn.\                | A class for breaking ADV data into      |
+|  adv.turbulence.turb_binner`      | 'bins', averaging it and estimating     |
+|                                   | various turbulence statistics.          |
++-----------------------------------+-----------------------------------------+
+
+Examples
+--------
+
+.. literalinclude:: ../examples/adv_example01.py
+
+"""
+
+
+from base import load, mmload
+from turbulence import turb_binner
+import clean
+from ..io.nortek import read_nortek
+import rotate

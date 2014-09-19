@@ -5,6 +5,9 @@ from ..data.time import num2date
 import numpy as np
 from scipy.stats.stats import nanmean, nanstd
 
+# !!!FIXTHIS:
+# This whole package needs to be rewritten in the 'new' style.
+
 import pylab as plb
 # from pylab import plot,show
 
@@ -52,6 +55,11 @@ def diffz_first(dat, z, axis=0):
 
 
 class adcp_raw(dbvel.velocity):
+
+    """
+    The base 'adcp' class.
+
+    """
     # meta=adcp_raw_meta()
     inds = slice(1000)
     diff_style = 'first'
@@ -189,15 +197,15 @@ class binner(dbvel.vel_binner_tke):
 
     def _calc_eps_sfz(self, adpr):
         """
-        I'm not really sure this works.
 
-        It seems that it might work over a couple bins at most, but in
-        general I think the structure functions must be done in time
-        (just as in advs), rather than depth.
-
-        ** Currently, this function is in a debugging state, and is
-           non-functional. **
         """
+        # !!!FIXTHIS: Currently, this function is in a debugging state,
+        # and is non-functional.
+
+        # It seems that it might work over a couple bins at most, but in
+        # general I think the structure functions must be done in time
+        # (just as in advs), rather than depth.
+
         self.epsilon_sfz = np.empty(self.shape, dtype='float32')
         D = np.empty((self.shape[0], self.shape[0]))
         inds = range(adpr.shape[0])

@@ -1,6 +1,6 @@
 import numpy as np
 from ..data.velocity import vel_binner_spec
-from .base import adv_binned
+from .base import ADVbinned
 from ..tools.misc import slice1d_along_axis
 from scipy.special import cbrt
 
@@ -9,7 +9,7 @@ kappa = 0.41
 
 class turb_binner(vel_binner_spec):
 
-    def __call__(self, advr, out_type=adv_binned,
+    def __call__(self, advr, out_type=ADVbinned,
                  omega_range_epsilon=[6.28, 12.57], Itke_thresh=0):
         """
         Compute a suite of turbulence statistics for the input data
@@ -18,7 +18,7 @@ class turb_binner(vel_binner_spec):
         Parameters
         ----------
 
-        advr : :class:`adv_raw <base.adv_raw>`
+        advr : :class:`ADVraw <base.ADVraw>`
           The raw-adv object.
 
         omega_range_epsilon : iterable(2)
@@ -32,7 +32,7 @@ class turb_binner(vel_binner_spec):
         Returns
         -------
 
-        advb : :class:`base.adv_binned`
+        advb : :class:`base.ADVbinned`
           Returns an 'binned' (i.e. 'averaged') data object. All
           fields of the input data object are averaged in n_bin
           chunks. This object also computes the following items over
@@ -192,11 +192,11 @@ class turb_binner(vel_binner_spec):
         Parameters
         ----------
 
-        advbin : :class:`adv_binned <base.adv_binned>`
+        advbin : :class:`ADVbinned <base.ADVbinned>`
           The binned adv object. The following spectra and basic
           turbulence statistics must already be computed.
 
-        advraw : :class:`adv_raw <base.adv_raw>`
+        advraw : :class:`ADVraw <base.ADVraw>`
           The raw adv object.
 
         Notes

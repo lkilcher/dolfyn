@@ -1,9 +1,9 @@
-from ..io import saveable, get_typemap, loader
+from ..io import Saveable, get_typemap, loader
 from base import Dprops
 # from binned import bindat
 
 
-class basic(saveable, Dprops):
+class basic(Saveable, Dprops):
 
     @property
     def shape(self,):

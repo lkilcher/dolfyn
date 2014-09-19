@@ -91,9 +91,7 @@ class time_binner(object):
           corners of the matrix (beginning/end of timeseries).  In
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
         n_bin : float, int (optional)
-          n_bin is specified in the adv_binned object.  Create a
-          different adv_binned object to use a different n_bin.  n is
-          fix(len(arr)/n_bin)
+          Override this binner's n_bin.
 
         Notes
         -----

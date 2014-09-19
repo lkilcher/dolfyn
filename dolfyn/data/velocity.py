@@ -1,11 +1,11 @@
 from .base import np, time_based, ma, DataError
-from ..io.main import saveable
+from ..io.main import Saveable
 import h5py as h5
 from .binned import time_bindat, time_binner, rad_hz
 from matplotlib.dates import num2date
 
 
-class velocity(time_based, saveable):
+class velocity(time_based, Saveable):
 
     def __repr__(self,):
         mmstr = ''

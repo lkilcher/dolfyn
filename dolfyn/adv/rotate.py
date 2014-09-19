@@ -106,7 +106,7 @@ def _calcRotationVel(AngRt, vec_imu2sample, transMat=None):
     else:
         # Here we drop a dimension because we added one with the
         # 'None's above.
-        return urot[:, 0,:]
+        return urot[:, 0, :]
 
 # class rotate_msadv(object):
 # order = ['beam', 'head', 'inst', 'earth', 'pax']
@@ -258,7 +258,7 @@ class CorrectMotion(object):
 
         Parameters
         ----------
-        advo : :class:`adv_raw <base.adv_raw>`
+        advo : :class:`ADVraw <base.ADVraw>`
           The adv object on which to perform motion correction.
           It must contain the following data attributes:
 
@@ -294,9 +294,8 @@ def orient2euler(advo):
 
     Parameters
     ----------
-    advo : :class:`adv_raw <base.adv_raw>`
-      An adv object containing the :attr:`orientmat
-      <base.adv_raw.orientmat>`.
+    advo : :class:`ADVraw <base.ADVraw>`
+      An adv object containing an `orientmat` attribute (array).
 
     Returns
     -------
@@ -317,7 +316,7 @@ def orient2euler(advo):
     if hasattr(advo, 'orientmat'):
         omat = advo.orientmat
     elif np.ndarray in advo.__class__.__mro__ and \
-             advo.shape[:2] == (3, 3):
+            advo.shape[:2] == (3, 3):
         omat = advo
     # I'm pretty sure the 'yaw' is the angle from the east axis, so we
     # correct this for 'deg_true':
@@ -330,7 +329,7 @@ def orient2euler(advo):
 def _cat4rot(tpl):
     tmp = []
     for vl in tpl:
-        tmp.append(vl[None,:])
+        tmp.append(vl[None, :])
     return np.concatenate(tuple(tmp), axis=0)
 
 
@@ -397,14 +396,13 @@ def inst2earth(advo, reverse=False):
         rr = advo.roll * np.pi / 180
         pp = advo.pitch * np.pi / 180
         hh = (advo.heading - 90) * np.pi / 180
-        if advo.config.orientation == 'down':
-            # NOTE: For ADVs: 'down' configuration means the head was
-            #       pointing UP!  check the Nortek coordinate
-            #       transform matlab script for more info.  The 'up'
-            #       orientation corresponds to the communication cable
-            #       begin up.  This is ridiculous, but apparently a
-            #       reality.
-            rr += np.pi
+        # NOTE: For Nortek Vector ADVs: 'down' configuration means the
+        #       head was pointing UP!  Check the Nortek coordinate
+        #       transform matlab script for more info.  The 'up'
+        #       orientation corresponds to the communication cable
+        #       being up.  This is ridiculous, but apparently a
+        #       reality.
+        rr[advo.orientation_down] += np.pi
         if 'declination' in advo.props.keys():
             hh += (advo.props['declination'] * np.pi / 180)
                    # Declination is in degrees East, so we add this to True
@@ -417,13 +415,23 @@ def inst2earth(advo, reverse=False):
         cr = cos(rr)
         sr = sin(rr)
 
-        H = np.array([[ch,  sh, 0],
-                      [-sh,  ch, 0],
-                      [0,   0, 1]], dtype=np.float32)
-        P = np.array([[cp, -sp * sr, -cr * sp],
-                      [0,     cr,    -sr],
-                      [sp,  sr * cp,  cp * cr]], dtype=np.float32)
-        rmat = np.einsum('ijl,jkl->ikl', H, P)
+        rmat = np.empty((3, 3, len(sh)), dtype=np.float32)
+        rmat[0, 0, :] = ch * cp
+        rmat[0, 1, :] = -ch * sp * sr + sh * cr
+        rmat[0, 2, :] = -ch * cr * sp - sh * sr
+        rmat[1, 0, :] = -sh * cp
+        rmat[1, 1, :] = sh * sp * sr + ch * cr
+        rmat[1, 2, :] = sh * cr * sp - ch * sr
+        rmat[2, 0, :] = sp
+        rmat[2, 1, :] = sr * cp
+        rmat[2, 2, :] = cp * cr
+        # H = np.array([[ch,  sh, 0],
+        # [-sh, ch, 0],
+        # [0,    0, 1]], dtype=np.float32)
+        # P = np.array([[cp, -sp * sr, -cr * sp],
+        # [0,        cr,      -sr],
+        # [sp,  sr * cp,  cp * cr]], dtype=np.float32)
+        # rmat = np.einsum('ijl,jkl->ikl', H, P)
 
     for nm in advo.props['rotate_vars']:
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])

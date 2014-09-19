@@ -1,13 +1,16 @@
+"""
+The base module for the io package.
+"""
+
 from os.path import expanduser
 import numpy as np
 from ..data import base as db
 
 
-class data_factory(object):
+class DataFactory(object):
 
     """
-    A base class for data factory objects.  data_factory objects save
-    or load data from files.
+    An abstract base class for writing :class:`main.Saveable` objects.
     """
     closefile = True
 

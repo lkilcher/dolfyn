@@ -1,3 +1,8 @@
+"""
+This module provides the routines for reading data from Nortek data
+files.
+"""
+
 import numpy as np
 from ..adv import base as adv_base
 from .. import adp
@@ -21,7 +26,7 @@ def read_nortek(filename, do_checksum=False, **kwargs):
 
     Returns
     -------
-    adv_data : :class:`adv_raw`
+    adv_data : :class:`ADVraw <dolfyn.adv.base.ADVraw>`
 
     """
     with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
@@ -114,7 +119,7 @@ class NortekReader(object):
         err_msg = "I/O error: The file does not \
                    appear to be a Nortek data file."
         if self.read_id() == 5:
-            self.read_hw_cfg(err_msg)
+            self.read_hw_cfg()
         else:
             raise Exception()
         if self.read_id() == 4:
@@ -171,11 +176,11 @@ class NortekReader(object):
           how to initialize each data variable.
 
         """
-        for nm, va in vardict.iteritems:
+        for nm, va in vardict.iteritems():
             if not hasattr(self.data, nm):
                 self.data.add_data(nm,
-                                   vardict._empty_array(self.n_samp_guess),
-                                   dtype=vardict.dtype)
+                                   va._empty_array(self.n_samp_guess),
+                                   va.group)
 
     def checksum(self, byts):
         """
@@ -212,7 +217,7 @@ class NortekReader(object):
         # ID: '0x00
         if self.debug:
             print('Reading user configuration (0x00)...')
-        self.config.add_data('user', adv_base.adv_config('USER'))
+        self.config.add_data('user', adv_base.ADVconfig('USER'))
         byts = self.read(508)
         tmp = unpack(
             self.endian + '2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H', byts)
@@ -269,7 +274,7 @@ class NortekReader(object):
         # ID: '0x04
         if self.debug:
             print('Reading head configuration (0x04)...')
-        self.config.add_data('head', adv_base.adv_config('HEAD'))
+        self.config.add_data('head', adv_base.ADVconfig('HEAD'))
         byts = self.read(220)
         tmp = unpack(self.endian + '2x3H12s176s22xH', byts)
         self.config.head.add_data('config', tmp[0])
@@ -286,7 +291,7 @@ class NortekReader(object):
         # ID 0x05
         if self.debug:
             print('Reading hardware configuration (0x05)...')
-        self.config.add_data('hardware', adv_base.adv_config('HARDWARE'))
+        self.config.add_data('hardware', adv_base.ADVconfig('HARDWARE'))
         byts = self.read(44)
         tmp = unpack(self.endian + '2x14s6H12xI', byts)
         self.config.hardware.add_data('serialNum', tmp[0][:8])
@@ -318,7 +323,7 @@ class NortekReader(object):
             print('Reading vector check data (0x07)...')
         byts0 = self.read(6)
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
-        self.config.add_data('checkdata', adv_base.adv_config('CHECKDATA'))
+        self.config.add_data('checkdata', adv_base.ADVconfig('CHECKDATA'))
         self.config.checkdata.add_data('Samples', tmp[0])
         n = self.config.checkdata.Samples
         self.config.checkdata.add_data('First_samp', tmp[1])
@@ -353,10 +358,7 @@ class NortekReader(object):
             'BEAM': 'beam'}[self.config.user.CoordSystem]
         self.data.props['toff'] = 0
         # I must be able to calculate this here, right? # !!!TODO!!!
-        self.data.props['doppler_noise'] = {'u': 0,
-                                            'v': 0,
-                                            'w': 0,
-                                            }
+        self.data.props['doppler_noise'] = [0, 0, 0]
 
     def read_vec_data(self,):
         """
@@ -413,6 +415,18 @@ class NortekReader(object):
         tbx.fillgaps(self.data.pitch)
         tbx.fillgaps(self.data.roll)
         tbx.fillgaps(self.data.temp)
+
+        tmpd = np.empty_like(self.data.heading)
+        tmpd[:] = np.NaN
+        # The first status bit should be the orientation.
+        tmpd[self.data._sysi] = self.data.status[self.data._sysi] & 1
+        tbx.fillgaps(tmpd, extrapFlg=True)
+        slope = np.diff(tmpd)
+        tmpd[1:][slope < 0] = 1
+        tmpd[:-1][slope > 0] = 0
+        self.data.add_data('orientation_down',
+                           tmpd.astype('bool'),
+                           '_essential')
 
     def read_vec_sysdata(self,):
         """
@@ -551,7 +565,7 @@ class NortekReader(object):
         byts = self.read(38)
         tmp = unpack(self.endian + '8xH7B21x', byts)
                      # The first two are size, the next 6 are time.
-        self.config.add_data('data_header', adv_base.adv_config('DATA HEADER'))
+        self.config.add_data('data_header', adv_base.ADVconfig('DATA HEADER'))
         self.config.data_header.add_data('time', self.rd_time(byts[2:8]))
         self.config.data_header.add_data('NRecords', tmp[0])
         self.config.data_header.add_data('Noise1', tmp[1])
@@ -637,7 +651,7 @@ class NortekReader(object):
         return (self.pos - p0) / iternum
 
     def init_ADV(self,):
-        self.data = adv_base.adv_raw()
+        self.data = adv_base.ADVraw()
         self.data.add_data('config', self.config, 'config')
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
@@ -682,7 +696,7 @@ class NortekReader(object):
         Read the time from the first 6bytes of the input string.
         """
         min, sec, day, hour, year, month = unpack('BBBBBB', strng[:6])
-        return tbx.date2num(tbx.datetime(
+        return time.date2num(time.datetime(
             time._fullyear(_bcd2char(year)),
             _bcd2char(month),
             _bcd2char(day),

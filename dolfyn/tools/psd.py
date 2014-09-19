@@ -5,8 +5,23 @@ fft = np.fft.fft
 
 def psd_freq(nfft, fs):
     """
-    Compute the frequency spectrum for use with psd.
-    *fs* is the sampling frequency.
+    Compute the frequency for vector for a `nfft` and `fs`.
+
+    Parameters
+    ----------
+
+    fs : float
+      The sampling frequency (e.g. samples/sec)
+
+    nfft : int
+      The number of samples in a window.
+
+    Returns
+    -------
+
+    freq : ndarray
+      The frequency vector.
+
     """
     fs = np.float64(fs)
     return np.arange(fs / nfft, fs / 2 + fs / nfft, fs / nfft)
@@ -52,16 +67,22 @@ def cohere(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
 
     Parameters
     ----------
+
     a : np.ndarray
       The first array over which to compute coherence.
+
     b : np.ndarray
       The second array over which to compute coherence.
+
     nfft : int
       The number of points to use in the fft.
+
     window : string, np.ndarray (default 'hann')
       The window to use for ffts.
+
     debias : bool (default: True)
       Specify whether to debias the signal according to Benignus1969.
+
     noise : tuple(2), or float
       The `noise` keyword may be used to specify the signals'
       noise levels (std of noise in a,b). If `noise` is a two
@@ -114,7 +135,45 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     """
     Compute the cross power spectral density (CPSD) of the signals *a* and *b*.
 
-    *a* and *b* do not need to be 'tightly' synchronized, and can even
+    Parameters
+    ----------
+
+    a : |np.ndarray|
+      The first signal.
+
+    b : |np.ndarray|
+      The second signal.
+
+    nfft : int
+      The number of points in the fft.
+
+    fs : float
+      The sample rate (e.g. sample/second).
+
+    window : {None, 1, 'hann', |np.ndarray|}
+      The window to use (default: 'hann'). Valid entries are:
+      - None,1               : uses a 'boxcar' or ones window.
+      - 'hann'               : hanning window.
+      - a length(nfft) array : use this as the window directly.
+
+    Returns
+    -------
+
+    cpsd : ndarray
+      The cross-spectral density of `a` and `b`.
+
+    See also
+    ---------
+    :func:`psd`,
+    :func:`cohere`,
+    :func:`cpsd`,
+    numpy.fft
+
+
+    Notes
+    -----
+
+    `a` and `b` do not need to be 'tightly' synchronized, and can even
     be different lengths, but the first- and last-index of both series
     should be synchronized (to whatever degree you want unbiased
     phases).
@@ -123,25 +182,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
 
     fft(a)*conj(fft(b))
 
-    Note that this is consistent with *np.correlate*'s definition of
-    correlation.  (The conjugate of D.B. Chelton's definition of
-    correlation.)
-
-    The two signals should be the same length, and should both be real.
-
-    See also:
-    psd,cohere,cpsd,numpy.fft
-
-    Parameters
-    ----------
-    a      : The first signal.
-    b      : The second signal.
-    nfft   : The number of points in the fft.
-    fs     : The sample rate (e.g. sample/second).
-    window : The window to use (default: 'hann'). Valid entries are:
-                 None,1               : uses a 'boxcar' or ones window.
-                 'hann'               : hanning window.
-                 a length(nfft) array : use this as the window directly.
+    Note that this is consistent with :func:`numpy.correlate`.
 
     It detrends the data and uses a minimum of 50% overlap for the
     shorter of `a` and `b`. For the longer, the overlap depends on the
@@ -189,37 +230,64 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
     This performs:
     fft(a)*conj(fft(b))
 
-    Note that this is consistent with the numpy.correlate definition
-    of correlation.  (The conjugate of D.B. Chelton's definition of
-    correlation.)
+    Parameters
+    ----------
+
+    a : |np.ndarray|
+      The first signal.
+
+    b : |np.ndarray|
+      The second signal.
+
+    nfft : int
+      The number of points in the fft.
+
+    fs : float
+      The sample rate (e.g. sample/second).
+
+    window : {None, 1, 'hann', |np.ndarray|}
+      The window to use (default: 'hann'). Valid entries are:
+      - None,1               : uses a 'boxcar' or ones window.
+      - 'hann'               : hanning window.
+      - a length(nfft) array : use this as the window directly.
+
+    step : int
+      Use this to specify the overlap.  For example:
+      - step : nfft/2 specifies a 50% overlap.
+      - step : nfft specifies no overlap.
+      - step=2*nfft means that half the data will be skipped.
+      By default, `step` is calculated to maximize data use and have
+      at least 50% overlap.
+
+
+    Returns
+    -------
+
+    cpsd : ndarray
+      The cross-spectral density of `a` and `b`.
+
+
+    See also
+    --------
+
+    :func:`psd`
+    :func:`cohere`
+    numpy.fft
+    :func:`cpsd_quasisync`
+
+    Notes
+    -----
+
+    cpsd removes a linear trend from the signals.
 
     The two signals should be the same length, and should both be real.
 
-    See also:
-    psd,cohere,numpy.fft
+    This implementation is consistent with the numpy.correlate
+    definition of correlation.  (The conjugate of D.B. Chelton's
+    definition of correlation.)
 
-    Parameters
-    ----------
-    a      : The first signal.
-    b      : The second signal.
-    nfft   : The number of points in the fft.
-    fs     : The sample rate (e.g. sample/second).
-    window : The window to use (default: 'hann'). Valid entries are:
-                 None,1               : uses a 'boxcar' or ones window.
-                 'hann'               : hanning window.
-                 a length(nfft) array : use this as the window directly.
-    step   : Use this to specify the overlap.  For example:
-               step=nfft/2 specifies a 50% overlap.
-               step=nfft specifies no overlap.
-               step=2*nfft means that half the data will be skipped.
-               By default, `step` is calculated to maximize data use and have
-               at least 50% overlap.
-
-    cpsd removes a linear trend from the data
-
-    For computing cpsd's of variables of different size, use cpsd_quasisync.
-
-    The units of the spectra is the product of the units of `a` and `b`, divided by the units of fs.
+    The units of the spectra is the product of the units of `a` and
+    `b`, divided by the units of fs.
     """
     if np.iscomplexobj(a) or np.iscomplexobj(b):
         raise Exception

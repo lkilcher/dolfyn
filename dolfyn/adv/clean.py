@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from ..tools.misc import fillgaps, group
+from ..tools.misc import fillgaps, group, slice1d_along_axis
 # import tools.timer as tmr
 
 warnings.filterwarnings('ignore', category=np.RankWarning)
@@ -20,8 +20,10 @@ def cleanFill(indat, bad):
     bad : |np.ndarray| (dtype=bool, shape=u.shape)
       The bad indices to interpolate.
 
-    This function does not return anything, it operates on the `u`
-    array.
+    Notes
+    -----
+
+    This function returns None, it operates on the `indat` array.
 
     """
     indat[bad] = np.NaN
@@ -42,8 +44,10 @@ def fillpoly(indat, deg, npt):
       The number of points on either side of the gap that the fit
       occurs over.  Must be >deg/2.
 
-    This function does not return anything, it operates on the `indat`
-    array.
+    Notes
+    -----
+
+    This function returns None, it operates on the `indat` array.
 
     """
 
@@ -93,10 +97,10 @@ def fillpoly(indat, deg, npt):
 def _spikeThresh(u, thresh):
     """
     Returns a logical vector where a spike of magnitude greater than
-    *thresh* occurs.  'Negative' and 'positive' spikes are both
+    `thresh` occurs.  'Negative' and 'positive' spikes are both
     caught.
 
-    *thresh* must be positive.
+    `thresh` must be positive.
     """
     du = np.diff(u)
     bds1 = ((du[1:] > thresh) & (du[:-1] < -thresh))
@@ -163,8 +167,10 @@ def _phaseSpaceThresh(u):
         print('Coefficient calculation error')
     theta = np.arctan2(du, u)
     phi = np.arctan2((du ** 2 + u ** 2) ** 0.5, d2u)
-    pe = (((sin(phi) * cos(theta) * cos(alpha) + cos(phi) * sin(alpha)) ** 2) / a +
-          ((sin(phi) * cos(theta) * sin(alpha) - cos(phi) * cos(alpha)) ** 2) / b +
+    pe = (((sin(phi) * cos(theta) * cos(alpha) +
+            cos(phi) * sin(alpha)) ** 2) / a +
+          ((sin(phi) * cos(theta) * sin(alpha) -
+            cos(phi) * cos(alpha)) ** 2) / b +
           ((sin(phi) * sin(theta)) ** 2) / (Lu * std_du) ** 2) ** -1
     pe[:, np.isnan(pe[0, :])] = 0
     return (p > pe).flatten('F')
@@ -172,20 +178,42 @@ def _phaseSpaceThresh(u):
 
 def GN2002(u, npt=5000):
     """
-    Clean a dataset according to the Goring+Nikora2002 method.
+    Clean an velocity dataset according to the Goring+Nikora2002
+    method.
 
-    Paramaters
+    Parameters
     ----------
-    u : |np.ndarray|
-      The velocity array that will be cleaned.
+
+    u : ndarray
+      The velocity array to clean.
 
     npt : int
       The number of points over which to perform the method.
 
+    Returns
+    -------
+
+    bads : ndarray(boolean)
+      The points in `u` that were cleaned.
+
+    Notes
+    -----
+
     Implements the Goring+Nikora2002 despiking method, with Wahl2003
     correction.
 
+    This function operates on the `indat` array (doesn't return it).
+
     """
+    if np.ndarray not in u.__class__.__mro__:
+        return GN2002(u._u, npt=npt)
+
+    if u.ndim > 1:
+        bds = np.zeros(u.shape, dtype='bool')
+        for slc in slice1d_along_axis(u.shape, -1):
+            bds[slc] = GN2002(u[slc], npt=npt)
+        return bds
+
     bds = np.zeros(len(u), dtype='bool')
 
     # Find large bad segments (>npt/10):
