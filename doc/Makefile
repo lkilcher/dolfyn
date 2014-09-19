@@ -46,10 +46,11 @@ help:
 
 
 api:
-	$(SPHINXBUILDAPI) -f -o source/api -T -H 'DOLfYN API' ../dolfyn/ ../dolfyn/meta 
+	$(SPHINXBUILDAPI) -f -o source/api -T -H 'DOLfYN API' ../dolfyn/ ../dolfyn/meta ../dolfyn/plot
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	-rm -rf source/api/*
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

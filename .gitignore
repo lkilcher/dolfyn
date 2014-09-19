@@ -11,3 +11,5 @@ dist
 .pypirc
 
 dolfyn.egg-info
+
+doc/source/api
