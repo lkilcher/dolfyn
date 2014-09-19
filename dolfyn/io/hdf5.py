@@ -550,9 +550,15 @@ class Loader(DataFactory):
                         # objects
                         out = config()
                     else:
-                        for ky in self.type_map:
-                            if ky.endswith(typestr.split('.')[-1]):
-                                out = self.type_map[ky]()
+                        try:
+                            out = self.type_map[
+                                typestr.split('.')[-1].rstrip("'>")]()
+                        except:
+                            for ky in self.type_map:
+                                print ky
+                                if ky.endswith(typestr.split('.')[-1]):
+                                    out = self.type_map[ky]()
+
             else:  # Then it is a type itself.
                 out = self.type_map()
         return out

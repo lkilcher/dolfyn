@@ -120,28 +120,13 @@ class velocity(time_based, Saveable):
     def u(self,):
         return self._u[0]
 
-    @u.setter
-    def u(self, val):
-        self._init('_u', [3] + list(val.shape), val.dtype, clear_fromGrp='u')
-        self._u[0] = val
-
     @property
     def v(self,):
         return self._u[1]
 
-    @v.setter
-    def v(self, val):
-        self._init('_u', [3] + list(val.shape), val.dtype, clear_fromGrp='v')
-        self._u[1] = val
-
     @property
     def w(self,):
         return self._u[2]
-
-    @w.setter
-    def w(self, val):
-        self._init('_u', [3] + list(val.shape), val.dtype, clear_fromGrp='w')
-        self._u[2] = val
 
     @property
     def principal_angle(self,):
@@ -236,12 +221,6 @@ class vel_bindat_tke(velocity, time_bindat):
         """
         return self.stress[0]
 
-    @upvp_.setter
-    def upvp_(self, val):
-        self._init(
-            'stress', [3] + list(val.shape), val.dtype, clear_fromGrp='upvp_')
-        self.stress[0] = val
-
     @property
     def upwp_(self,):
         """
@@ -249,24 +228,12 @@ class vel_bindat_tke(velocity, time_bindat):
         """
         return self.stress[1]
 
-    @upwp_.setter
-    def upwp_(self, val):
-        self._init(
-            'stress', [3] + list(val.shape), val.dtype, clear_fromGrp='upwp_')
-        self.stress[1] = val
-
     @property
     def vpwp_(self,):
         """
         v'w' Reynolds stress
         """
         return self.stress[2]
-
-    @vpwp_.setter
-    def vpwp_(self, val):
-        self._init(
-            'stress', [3] + list(val.shape), val.dtype, clear_fromGrp='vpwp_')
-        self.stress[2] = val
 
     @property
     def upup_(self,):
@@ -288,30 +255,6 @@ class vel_bindat_tke(velocity, time_bindat):
         w'w' component of the tke.
         """
         return self._tke[2]
-
-    @upup_.setter
-    def upup_(self, val):
-        self._init('_tke',
-                   [3] + list(val.shape),
-                   val.dtype,
-                   clear_fromGrp='upup_')
-        self._tke[0] = val
-
-    @vpvp_.setter
-    def vpvp_(self, val):
-        self._init('_tke',
-                   [3] + list(val.shape),
-                   val.dtype,
-                   clear_fromGrp='vpvp_')
-        self._tke[1] = val
-
-    @wpwp_.setter
-    def wpwp_(self, val):
-        self._init('_tke',
-                   [3] + list(val.shape),
-                   val.dtype,
-                   clear_fromGrp='wpwp_')
-        self._tke[2] = val
 
 
 class vel_binner_tke(time_binner):
@@ -369,14 +312,6 @@ class vel_bindat_spec(vel_bindat_tke):
         """
         return self.Spec[0]
 
-    @Suu.setter
-    def Suu(self, val):
-        self._init('Spec',
-                   [3] + list(val.shape),
-                   val.dtype,
-                   clear_fromGrp='Suu')
-        self.Spec[0] = val
-
     @property
     def Svv(self,):
         """
@@ -384,28 +319,12 @@ class vel_bindat_spec(vel_bindat_tke):
         """
         return self.Spec[1]
 
-    @Svv.setter
-    def Svv(self, val):
-        self._init('Spec',
-                   [3] + list(val.shape),
-                   val.dtype,
-                   clear_fromGrp='Svv')
-        self.Spec[1] = val
-
     @property
     def Sww(self,):
         """
         w-component spectrum [m^2/s]
         """
         return self.Spec[2]
-
-    @Sww.setter
-    def Sww(self, val):
-        self._init('Spec',
-                   [3] + list(val.shape),
-                   val.dtype,
-                   clear_fromGrp='Sww')
-        self.Spec[2] = val
 
     @property
     def Suu_hz(self,):

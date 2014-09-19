@@ -10,6 +10,7 @@ try:
 except:
     import pickle as pkl
 from .base import DataFactory
+import numpy as np
 
 
 class UpdateTool(DataFactory):
@@ -28,9 +29,33 @@ class UpdateTool(DataFactory):
         self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)
         self.close = self.fd.close
         self.node = self.fd.get('/')
-        self.node.attrs.create('DataSaveVersion', pkl.dumps(self.ver))
         self._extrafiles = []
 
-    def change_type_name(self, oldname, newname):
-        self.getGroup('/').attrs.create('_object_type',
-                                        newname)
+    def set_type(self, newname):
+        self.fd.attrs['_object_type'] = newname
+
+    def change_name(self, where, oldname, newname):
+        """
+        Change the name of the attribute at location `where`/`oldname`
+        to `where`/`newname`.
+        """
+        if oldname in self.fd[where].keys():
+            self.fd[where].move(oldname, newname)
+        else:
+            print('%s not found at %s' % (oldname, where))
+
+    def join_and_move(self, where, oldnames, newname):
+        """
+        Concatenate the data in oldnames along (a new) dimension 0,
+        and save them as newname.
+        """
+        if oldnames[0] in self.fd[where].keys():
+            nd = self.fd[where][oldnames[0]]
+            dat = np.empty([len(oldnames)] + list(nd.shape), dtype=nd.dtype)
+            for idx, nm in enumerate(oldnames):
+                nd = self.fd[where][nm]
+                nd.read_direct(dat[idx])
+                del nd
+                self.fd[where].create_dataset(newname, data=dat)
+            else:
+                print('%s not found at %s' % (oldnames[0], where))
