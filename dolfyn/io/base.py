@@ -83,6 +83,9 @@ class VarAtts(object):
     dim_names : (list, optional)
         A list of names for each dimension of the array\*\*.
 
+    Notes
+    -----
+
     \*\*: These variables are only used when meta-arrays are being
     used by DOLfYN (meta-arrays are currently sidelined).
 

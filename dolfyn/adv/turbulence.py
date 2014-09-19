@@ -85,7 +85,7 @@ class turb_binner(vel_binner_spec):
         return out
 
     def calc_epsilon_LT83(self, spec, omega, U_mag, omega_range=[6.28, 12.57]):
-        """
+        r"""
         Calculate the dissipation rate from the spectrum.
 
         Parameters
@@ -113,8 +113,10 @@ class turb_binner(vel_binner_spec):
 
         This uses the `standard` formula for dissipation:
 
-        .. math:: S(k)=\alpha * \epsilon^{2/3} * k^{-5/3}
+        .. math:: S(k) = \alpha \epsilon^{2/3} k^{-5/3}
 
+        where :math:`\alpha = 0.5`, `k` is wavenumber and `S(k)` is
+        the turbulent kinetic energy spectrum.
         """
         inds = (omega_range[0] < omega) & (omega < omega_range[1])
         a = 0.5

@@ -12,4 +12,4 @@ dist
 
 dolfyn.egg-info
 
-doc/source/api
+doc/source/api/*

@@ -49,8 +49,13 @@ api:
 	$(SPHINXBUILDAPI) -f -o source/api -T -H 'DOLfYN API' ../dolfyn/ ../dolfyn/meta ../dolfyn/plot
 
 clean:
+	mkdir /tmp/dolfyn-doc-build/
+	cp -R $(BUILDDIR)html /tmp/dolfyn-doc-build/
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf source/api/*
+	mkdir $(BUILDDIR)/html
+	cp -R /tmp/dolfyn-doc-build/html/.git /tmp/dolfyn-doc-build/html/.nojekyll $(BUILDDIR)/html/
+	rm -fr /tmp/dolfyn-doc-build/
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
