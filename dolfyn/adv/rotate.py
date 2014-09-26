@@ -226,6 +226,9 @@ class CorrectMotion(object):
         In the future, we could use the transformation matrix (and a
         probe-length lookup-table?)
         """
+        # This is the body->imu vector (in body frame)
+        # In inches it is: (0.25, 0.25, 5.9)
+        nortek_body2imu = np.array([0.00635, 0.00635, 0.14986])
         # According to the ADV_DataSheet, the probe-length radius is
         # 8.6cm @ 120deg from probe-stem axis.  If I subtract 1cm
         # (!!!checkthis) to get acoustic receiver center, this is
@@ -243,9 +246,14 @@ class CorrectMotion(object):
                           np.array([r * np.cos(theta),
                                     r * np.sin(theta),
                                     r * np.tan(phi) * np.ones(3)])) + \
-                advo.props['body2head_vec'][:, None]
+                advo.props['body2head_vec'][:, None] - nortek_body2imu
         else:
-            return advo.props['body2head_vec']
+            # The nortek_body2imu vector is subtracted because of
+            # vector addition:
+            # body2head = body2imu + imu2head
+            # Thus:
+            # imu2head = body2head - body2imu
+            return advo.props['body2head_vec'] - nortek_body2imu
 
     def _calcAccelVel(self, advo):
         advo.uacc = _calcAccelVel(

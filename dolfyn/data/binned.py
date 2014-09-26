@@ -2,11 +2,11 @@ import numpy as np
 from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync
 from ..tools.misc import slice1d_along_axis
 from scipy.signal import detrend
-from base import ma, rad_hz, time_based
+from .base import ma, rad_hz, TimeBased
 from h5py._hl.dataset import Dataset
 
 
-class time_bindat(time_based):
+class TimeBindat(TimeBased):
 
     """
     A base, abstract class for binned data.
@@ -18,10 +18,10 @@ class time_bindat(time_based):
 
     @freq.setter
     def freq(self, val):
-        self.omega = val*rad_hz
+        self.omega = val * rad_hz
 
 
-class time_binner(object):
+class TimeBinner(object):
 
     def calc_omega(self, fs=None, coh=False):
         """
@@ -42,7 +42,7 @@ class time_binner(object):
         if coh:
             n_fft = self.n_fft_coh
             freq_dim = 'coh_freq'
-        dat = ma.marray(psd_freq(n_fft, fs*2*np.pi),
+        dat = ma.marray(psd_freq(n_fft, fs * 2 * np.pi),
                         ma.varMeta('\omega', {'s': -1}, [freq_dim]))
         return dat
 
@@ -51,7 +51,7 @@ class time_binner(object):
         Returns `outshape` (the 'reshape'd shape) for an `inshape` array.
         """
         n_bin = int(self._parse_nbin(n_bin))
-        return list(inshape[:-1]) + [inshape[-1]/n_bin, n_bin+n_pad]
+        return list(inshape[:-1]) + [inshape[-1] / n_bin, n_bin + n_pad]
 
     def _outshape_fft(self, inshape, n_fft=None, n_bin=None):
         """
@@ -59,7 +59,7 @@ class time_binner(object):
         """
         n_fft = self._parse_nfft(n_fft)
         n_bin = self._parse_nbin(n_bin)
-        return list(inshape[:-1]) + [inshape[-1]/n_bin, n_fft/2]
+        return list(inshape[:-1]) + [inshape[-1] / n_bin, n_fft / 2]
 
     def _parse_fs(self, fs=None):
         if fs is not None:
@@ -116,14 +116,15 @@ class time_binner(object):
             out[..., npd0: n_bin + npd0] = (arr[..., :(shp[-2] * shp[-1])]
                                             ).reshape(shp, order='C')
         else:
-            inds = (np.arange(np.prod(shp[-2:]))*n_bin/int(n_bin)).astype(int)
-            out[..., npd0:int(n_bin)+npd0] = (arr[..., inds]
-                                              ).reshape(shp, order='C')
+            inds = (np.arange(np.prod(shp[-2:])) * n_bin / int(n_bin)
+                    ).astype(int)
+            out[..., npd0:int(n_bin) + npd0] = (arr[..., inds]
+                                                ).reshape(shp, order='C')
             # n_bin needs to be int for the n_pad operation.
             n_bin = int(n_bin)
         if n_pad != 0:
-            out[..., 1:, :npd0] = out[..., :-1, n_bin:n_bin+npd0]
-            out[..., :-1, -npd1:] = out[..., 1:, npd0:npd0+npd1]
+            out[..., 1:, :npd0] = out[..., :-1, n_bin:n_bin + npd0]
+            out[..., :-1, -npd1:] = out[..., 1:, npd0:npd0 + npd1]
         if ma.valid and out.__class__ is ma.marray:
             out.meta.dim_names += ['time2']
         return out
@@ -165,26 +166,26 @@ class time_binner(object):
 
         """
         n_bin = self._parse_nbin(n_bin)
-        out = np.empty(self._outshape(indat.shape, n_bin=n_bin)[:-1]+[n_bin/4],
-                       dtype=indat.dtype)
-        dt1 = self.reshape(indat, n_pad=n_bin/2-2)
+        out = np.empty(self._outshape(indat.shape, n_bin=n_bin)[:-1]
+                       + [n_bin / 4], dtype=indat.dtype)
+        dt1 = self.reshape(indat, n_pad=n_bin/2 - 2)
         # Here we de-mean only on the 'valid' range:
-        dt1 = dt1-dt1[...,:, n_bin/4:-n_bin/4].mean(-1)[..., None]
+        dt1 = dt1-dt1[...,:, n_bin / 4: -n_bin / 4].mean(-1)[..., None]
         dt2 = self.demean(indat)  # Don't pad the second variable.
-        dt2 = dt2-dt2.mean(-1)[..., None]
-        se = slice(int(n_bin/4)-1, None, 1)
-        sb = slice(int(n_bin/4)-1, None, -1)
+        dt2 = dt2 - dt2.mean(-1)[..., None]
+        se = slice(int(n_bin / 4) - 1, None, 1)
+        sb = slice(int(n_bin / 4) - 1, None, -1)
         for slc in slice1d_along_axis(dt1.shape, -1):
             tmp = np.correlate(dt1[slc], dt2[slc], 'valid')
             # The zero-padding in reshape means we compute coherence
             # from one-sided time-series for first and last points.
             if slc[-2] == 0:
                 out[slc] = tmp[se]
-            elif slc[-2] == dt2.shape[-2]-1:
+            elif slc[-2] == dt2.shape[-2] - 1:
                 out[slc] = tmp[sb]
             else:
                 # For the others we take the average of the two sides.
-                out[slc] = (tmp[se]+tmp[sb])/2
+                out[slc] = (tmp[se] + tmp[sb]) / 2
         return out
 
     def calc_lag(self, npt=None, one_sided=False):
@@ -193,7 +194,7 @@ class time_binner(object):
         if one_sided:
             return np.arange(npt / 2, dtype=np.float32)
         else:
-            return np.arange(npt, dtype=np.float32) - npt/2
+            return np.arange(npt, dtype=np.float32) - npt / 2
 
     def calc_xcov(self, indt1, indt2, npt=None,
                   n_bin1=None, n_bin2=None, normed=False):
@@ -205,14 +206,14 @@ class time_binner(object):
         n_bin2 = self._parse_nbin(n_bin2)
         shp = self._outshape(indt1.shape, n_bin=n_bin1)
         shp[-2] = min(shp[-2], self._outshape(indt2.shape, n_bin=n_bin2)[-2])
-        out = np.empty(shp[:-1]+[npt], dtype=indt1.dtype)
-        tmp = int(n_bin2)-int(n_bin1)+npt
-        dt1 = self.reshape(indt1, n_pad=tmp-1, n_bin=n_bin1)
+        out = np.empty(shp[:-1] + [npt], dtype=indt1.dtype)
+        tmp = int(n_bin2) - int(n_bin1) + npt
+        dt1 = self.reshape(indt1, n_pad=tmp - 1, n_bin=n_bin1)
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1-dt1[...,:, tmp/2:-tmp/2].mean(-1)[..., None]
+        dt1 = dt1 - dt1[...,:, tmp/2:-tmp/2].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(indt2, n_bin=n_bin2)
-        dt2 = dt2-dt2.mean(-1)[..., None]
+        dt2 = dt2 - dt2.mean(-1)[..., None]
         for slc in slice1d_along_axis(shp, -1):
             out[slc] = np.correlate(dt1[slc], dt2[slc], 'valid')
         if normed:
@@ -228,7 +229,7 @@ class time_binner(object):
         ----------
         rawdat : raw_data_object
            The raw data structure to be binned (if None, a basic
-           time_bindat class is created).
+           TimeBindat class is created).
         outdat : avg_data_object
            The bin'd (output) data object to which averaged data is added.
         names : list of strings
@@ -251,7 +252,7 @@ class time_binner(object):
         ----------
         rawdat : raw_data_object
            The raw data structure to be binned (if None, a basic
-           time_bindat class is created).
+           TimeBindat class is created).
 
         outdat : avg_data_object
            The bin'd (output) data object to which variance data is added.
@@ -265,7 +266,7 @@ class time_binner(object):
         for nm, dat, grp in rawdat.iter_wg():
             mro = dat.__class__.__mro__
             if (((names is None) or (nm in names)) and
-                  ((np.ndarray in mro) or (Dataset in mro)) and
+                ((np.ndarray in mro) or (Dataset in mro)) and
                   (dat.shape[-1] == n)):
                 outdat.add_data(nm + suffix, self.reshape(dat).var(-1), grp)
 
@@ -301,7 +302,7 @@ class time_binner(object):
             print("n_fft_coh >= n_bin doesn't make sense, \
             setting n_fft_coh=n_bin/6")
 
-    def __call__(self, rawdat, out_type=time_bindat):
+    def __call__(self, rawdat, out_type=TimeBindat):
         outdat = out_type()
         outdat.props['n_bin'] = self.n_bin
         outdat.props['n_fft'] = self.n_fft

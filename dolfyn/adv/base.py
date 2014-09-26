@@ -18,7 +18,7 @@ class ADVconfig(db.config):
     pass
 
 
-class ADVraw(dbvel.velocity):
+class ADVraw(dbvel.Velocity):
 
     """
     The base class for ADV data objects.
@@ -32,7 +32,7 @@ class ADVraw(dbvel.velocity):
         return hasattr(self, 'Accel') | hasattr(self, 'Veloc')
 
 
-class ADVbinned(dbvel.vel_bindat_spec, ADVraw):
+class ADVbinned(dbvel.VelBindatSpec, ADVraw):
 
     """
     A base class for binned ADV objects.

@@ -376,7 +376,7 @@ class Dgroups(Dbase):
         return out
 
 
-class time_based(Dprops, Dgroups):
+class TimeBased(Dprops, Dgroups):
 
     def __len__(self):
         """

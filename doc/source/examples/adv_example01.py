@@ -14,7 +14,7 @@ adv.rotate.inst2earth(dat)
 adv.rotate.earth2principal(dat)
 
 # Define an averaging object, and create an 'averaged' data set:
-binner = adv.turb_binner(n_bin=40000, fs=dat.fs, n_fft=4096)
+binner = adv.TurbBinner(n_bin=40000, fs=dat.fs, n_fft=4096)
 dat_bin = binner(dat)
 
 # At any point you can save the data:

@@ -1,5 +1,5 @@
 import numpy as np
-from ..data.velocity import vel_binner_spec
+from ..data.velocity import VelBinnerSpec
 from .base import ADVbinned
 from ..tools.misc import slice1d_along_axis
 from scipy.special import cbrt
@@ -7,23 +7,39 @@ from scipy.special import cbrt
 kappa = 0.41
 
 
-class turb_binner(vel_binner_spec):
+class TurbBinner(VelBinnerSpec):
+
+    """
+    Computes various averages and turbulence statistics from cleaned
+    ADV data.
+
+    Parameters
+    ----------
+    n_bin : int
+      The length of `bin` s, in number of points, for this averaging
+      operator.
+
+    n_fft : int (optional, default: n_fft = n_bin)
+      The length of the FFT for computing spectra (must be < n_bin)
+
+    """
 
     def __call__(self, advr, out_type=ADVbinned,
                  omega_range_epsilon=[6.28, 12.57], Itke_thresh=0):
         """
         Compute a suite of turbulence statistics for the input data
-        advr, and return a 'binned' data object.
+        advr, and return a `binned` data object.
 
         Parameters
         ----------
 
         advr : :class:`ADVraw <base.ADVraw>`
-          The raw-adv object.
+          The raw adv data-object to `bin`, average and compute
+          turbulence statistics of.
 
         omega_range_epsilon : iterable(2)
           The frequency range (low, high) over which to estimate the
-          dissipation rate 'epsilon' [rad/s].
+          dissipation rate `epsilon` [rad/s].
 
         Itke_thresh : The threshold for velocity magnitude for
           computing the turbulence intensity. Values of Itke where
@@ -40,33 +56,33 @@ class turb_binner(vel_binner_spec):
 
           - \_tke : The energy in each component (components are also
             accessible as
-            :attr:`upup_ <dolfyn.data.velocity.vel_bindat_tke.upup_>`,
-            :attr:`vpvp_ <dolfyn.data.velocity.vel_bindat_tke.vpvp_>`,
-            :attr:`wpwp_ <dolfyn.data.velocity.vel_bindat_tke.wpwp_>`)
+            :attr:`upup_ <dolfyn.data.velocity.VelBindatTke.upup_>`,
+            :attr:`vpvp_ <dolfyn.data.velocity.VelBindatTke.vpvp_>`,
+            :attr:`wpwp_ <dolfyn.data.velocity.VelBindatTke.wpwp_>`)
 
           - stress : The Reynolds stresses (each component is
             accessible as
-            :attr:`upwp_ <dolfyn.data.velocity.vel_bindat_tke.upwp_>`,
-            :attr:`vpwp_ <dolfyn.data.velocity.vel_bindat_tke.vpwp_>`,
-            :attr:`upvp_ <dolfyn.data.velocity.vel_bindat_tke.upvp_>`)
+            :attr:`upwp_ <dolfyn.data.velocity.VelBindatTke.upwp_>`,
+            :attr:`vpwp_ <dolfyn.data.velocity.VelBindatTke.vpwp_>`,
+            :attr:`upvp_ <dolfyn.data.velocity.VelBindatTke.upvp_>`)
 
           - sigma_Uh : The standard deviation of the horizontal
             velocity.
 
           - Spec : The spectra of the velocity in radial frequency
             units (each component is available as:
-            :attr:`Suu <dolfyn.data.velocity.vel_bindat_spec.Suu>`,
-            :attr:`Svv <dolfyn.data.velocity.vel_bindat_spec.Svv>`,
-            :attr:`Sww <dolfyn.data.velocity.vel_bindat_spec.Sww>`,
+            :attr:`Suu <dolfyn.data.velocity.VelBindatSpec.Suu>`,
+            :attr:`Svv <dolfyn.data.velocity.VelBindatSpec.Svv>`,
+            :attr:`Sww <dolfyn.data.velocity.VelBindatSpec.Sww>`,
             or in Hz units as:
-            :attr:`Suu_hz <dolfyn.data.velocity.vel_bindat_spec.Suu_hz>`,
-            :attr:`Svv_hz <dolfyn.data.velocity.vel_bindat_spec.Svv_hz>`,
-            :attr:`Sww_hz <dolfyn.data.velocity.vel_bindat_spec.Sww_hz>`)
+            :attr:`Suu_hz <dolfyn.data.velocity.VelBindatSpec.Suu_hz>`,
+            :attr:`Svv_hz <dolfyn.data.velocity.VelBindatSpec.Svv_hz>`,
+            :attr:`Sww_hz <dolfyn.data.velocity.VelBindatSpec.Sww_hz>`)
 
           - omega : The radial frequency [rad/s] (also see the :attr:`freq
-            <dolfyn.data.velocity.vel_bindat_spec.freq>` attribute).
+            <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
         """
-        out = vel_binner_spec.__call__(self, advr, out_type=out_type)
+        out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
         self.do_avg(advr, out)
         out.add_data('_tke', self.calc_tke(advr._u, noise=advr.noise), 'main')
         out.add_data('stress', self.calc_stress(advr._u), 'main')

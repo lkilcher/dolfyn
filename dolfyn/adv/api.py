@@ -20,7 +20,7 @@ data. It contains:
 |                                   | performing motion correction.           |
 +-----------------------------------+-----------------------------------------+
 |  :class:`~dolfyn.\                | A class for breaking ADV data into      |
-|  adv.turbulence.turb_binner`      | 'bins', averaging it and estimating     |
+|  adv.turbulence.TurbBinner`       | 'bins', averaging it and estimating     |
 |                                   | various turbulence statistics.          |
 +-----------------------------------+-----------------------------------------+
 
@@ -32,8 +32,8 @@ Examples
 """
 
 
-from base import load, mmload
-from turbulence import turb_binner
-import clean
+from .base import load, mmload
+from .turbulence import TurbBinner
+from . import clean
 from ..io.nortek import read_nortek
-import rotate
+from . import rotate

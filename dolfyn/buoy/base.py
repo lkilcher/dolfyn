@@ -1,10 +1,10 @@
 from ..io import main as io
 import numpy as np
-from ..data.velocity import velocity
+from ..data.velocity import Velocity
 from ..tools.misc import degN2cartDeg
 
 
-class buoy_raw(velocity):
+class buoy_raw(Velocity):
 
     @property
     def U(self,):

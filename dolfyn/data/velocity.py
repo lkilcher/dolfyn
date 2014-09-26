@@ -1,11 +1,11 @@
-from .base import np, time_based, ma, DataError
+from .base import np, TimeBased, ma, DataError
 from ..io.main import Saveable
 import h5py as h5
-from .binned import time_bindat, time_binner, rad_hz
+from .binned import TimeBindat, TimeBinner, rad_hz
 from matplotlib.dates import num2date
 
 
-class velocity(time_based, Saveable):
+class Velocity(TimeBased, Saveable):
 
     def __repr__(self,):
         mmstr = ''
@@ -186,7 +186,7 @@ class velocity(time_based, Saveable):
         return self.u[:] + self.v[:] * 1j
 
 
-class vel_bindat_tke(velocity, time_bindat):
+class VelBindatTke(Velocity, TimeBindat):
 
     @property
     def Ecoh(self,):
@@ -257,7 +257,7 @@ class vel_bindat_tke(velocity, time_bindat):
         return self._tke[2]
 
 
-class vel_binner_tke(time_binner):
+class VelBinnerTke(TimeBinner):
 
     def calc_tke(self, veldat, noise=[0, 0, 0]):
         """
@@ -289,7 +289,7 @@ class vel_binner_tke(time_binner):
         return out
 
 
-class vel_bindat_spec(vel_bindat_tke):
+class VelBindatSpec(VelBindatTke):
 
     @property
     def freq(self,):
@@ -348,7 +348,7 @@ class vel_bindat_spec(vel_bindat_tke):
         return self.Spec[2] * rad_hz
 
 
-class vel_binner_spec(vel_binner_tke):
+class VelBinnerSpec(VelBinnerTke):
 
     def calc_vel_psd(self, veldat, fs=None,
                      rotate_u=False, noise=[0, 0, 0], n_pad=None):

@@ -50,7 +50,7 @@ on ADV data. Most of these are available via the ADV
 
 .. literalinclude:: examples/adv_example01.py
 
-Plotting ADV data
-.................
+.. Plotting ADV data
+   .................
 
 

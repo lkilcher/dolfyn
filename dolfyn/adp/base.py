@@ -11,7 +11,7 @@ from scipy.stats.stats import nanmean, nanstd
 import pylab as plb
 # from pylab import plot,show
 
-import rotate
+from . import rotate
 # from scipy.signal import detrend
 
 deg2rad = np.pi / 180
@@ -54,7 +54,7 @@ def diffz_first(dat, z, axis=0):
 #    return np.diff(dat,axis=0)/(np.diff(z)[:,None])
 
 
-class adcp_raw(dbvel.velocity):
+class adcp_raw(dbvel.Velocity):
 
     """
     The base 'adcp' class.
@@ -144,7 +144,7 @@ class adcp_raw(dbvel.velocity):
                    dt.strftime('%b %d, %Y %H:%M')))
 
 
-class adcp_binned(dbvel.vel_bindat_tke, adcp_raw):
+class adcp_binned(dbvel.VelBindatTke, adcp_raw):
     # meta=adcp_binned_meta()
     inds = slice(None)
 
@@ -153,10 +153,10 @@ class adcp_binned(dbvel.vel_bindat_tke, adcp_raw):
         return self.upup_[:] + self.vpvp_[:] + self.wpwp_[:]
 
 
-class binner(dbvel.vel_binner_tke):
+class binner(dbvel.VelBinnerTke):
 
     def __call__(self, indat, out_type=adcp_binned):
-        out = dbvel.vel_binner_tke.__call__(self, indat, out_type=out_type)
+        out = dbvel.VelBinnerTke.__call__(self, indat, out_type=out_type)
         self.set_bindata(indat, out)
         out.add_data('_tke',
                      self.calc_tke(indat._u, noise=indat.noise),
