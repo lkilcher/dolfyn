@@ -2,7 +2,7 @@ from .base import np, TimeBased, ma, DataError
 from ..io.main import Saveable
 import h5py as h5
 from .binned import TimeBindat, TimeBinner, rad_hz
-from matplotlib.dates import num2date
+from .time import num2date
 
 
 class Velocity(TimeBased, Saveable):
@@ -197,14 +197,24 @@ class VelBindatTke(Velocity, TimeBindat):
         # stresses?
         return (self.upwp_ ** 2 + self.upvp_ ** 2 + self.vpwp_ ** 2) ** (0.5)
 
-    def Itke(self,):
+    def Itke(self, thresh=0):
         """
         Turbulence intensity.
 
         Ratio of standard deviation of velocity magnitude to velocity
         magnitude.
         """
-        return np.ma.masked_where(self.U_mag < self.props['Itke_thresh'],
+        return np.ma.masked_where(self.U_mag < thresh,
+                                  np.sqrt(self.tke) / self.U_mag)
+
+    def I(self, thresh=0):
+        """
+        Turbulence intensity.
+
+        Ratio of standard deviation of velocity magnitude to velocity
+        magnitude.
+        """
+        return np.ma.masked_where(self.U_mag < thresh,
                                   self.sigma_Uh / self.U_mag)
 
     @property
@@ -296,7 +306,7 @@ class VelBindatSpec(VelBindatTke):
         """
         Frequency [Hz].
         """
-        return self.omega / rad_hz
+        return self.omega[:] / rad_hz
 
     @property
     def k(self,):

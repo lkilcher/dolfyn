@@ -81,8 +81,8 @@ parser.add_argument(
 ##     )
 parser.add_argument(
     'filename',
-    help="The filename(s) of the the Nortek Vector file(s) to be
-    processed(they probably end with '.vec').",
+    help="""The filename(s) of the the Nortek Vector file(s) to be
+    processed(they probably end with '.vec').""",
     action='append'
 )
 
@@ -116,7 +116,7 @@ mc = avr.CorrectMotion(accel_filtfreq=args.f, vel_filtfreq=args.F)
 # Now loop over the specified file names:
 for fnm in args.filename:
 
-    dat = avm.read.read_nortek(fnm)
+    dat = avm.read_nortek(fnm)
 
     # Set the geometry
     dat.props['body2head_rotmat'] = rmat
@@ -137,11 +137,6 @@ for fnm in args.filename:
         !!!--Warning--!!!: Orientation matrix('orientmat')
         not found. Motion correction cannot be performed on this file
         """)
-
-    # Rotate to chosen frame:
-    ##if args.out_earth:
-    print("Rotating the data into the earth frame.")
-    avr.inst2earth(dat)
 
     outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
     print('Saving to %s.' % outnm)

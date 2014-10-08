@@ -240,9 +240,9 @@ class TimeBinner(object):
         n = len(rawdat)
         for nm, dat, grp in rawdat.iter_wg():
             mro = dat.__class__.__mro__
-            if (((names is None) or (nm in names)) and
-                  ((np.ndarray in mro) or (Dataset in mro)) and
-                  (dat.shape[-1] == n)):
+            if ((names is None) or (nm in names)) and \
+               ((np.ndarray in mro) or (Dataset in mro)) and \
+               (dat.shape[-1] == n):
                 outdat.add_data(nm, self.reshape(dat).mean(-1), grp)
 
     def do_var(self, rawdat, outdat, names=None, suffix='_var'):
@@ -265,9 +265,9 @@ class TimeBinner(object):
         n = len(rawdat)
         for nm, dat, grp in rawdat.iter_wg():
             mro = dat.__class__.__mro__
-            if (((names is None) or (nm in names)) and
-                ((np.ndarray in mro) or (Dataset in mro)) and
-                  (dat.shape[-1] == n)):
+            if ((names is None) or (nm in names)) and \
+               ((np.ndarray in mro) or (Dataset in mro)) and \
+               (dat.shape[-1] == n):
                 outdat.add_data(nm + suffix, self.reshape(dat).var(-1), grp)
 
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None):
@@ -296,9 +296,9 @@ class TimeBinner(object):
             print("n_fft larger than n_bin \
             doesn't make sense, setting n_fft=n_bin")
         if n_fft_coh is None:
-            self.n_fft_coh = self.n_bin/6
+            self.n_fft_coh = self.n_bin / 6
         elif n_fft_coh >= n_bin:
-            self.n_fft_coh = n_bin/6
+            self.n_fft_coh = n_bin / 6
             print("n_fft_coh >= n_bin doesn't make sense, \
             setting n_fft_coh=n_bin/6")
 
@@ -320,7 +320,7 @@ class TimeBinner(object):
         n_bin1 = self._parse_nbin(n_bin1)
         n_bin2 = self._parse_nbin(n_bin2)
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
-        oshp[-2] = np.min([oshp[-2], dat2.shape[-1]/n_bin2])
+        oshp[-2] = np.min([oshp[-2], dat2.shape[-1] / n_bin2])
         out = np.empty(oshp, dtype=dat1.dtype)
         # The data is detrended in psd, so we don't need to do it here.
         dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
@@ -356,14 +356,14 @@ class TimeBinner(object):
         n_bin1 = self._parse_nbin(n_bin1)
         n_bin2 = self._parse_nbin(n_bin2)
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
-        oshp[-2] = np.min([oshp[-2], dat2.shape[-1]/n_bin2])
+        oshp[-2] = np.min([oshp[-2], dat2.shape[-1] / n_bin2])
         out = np.empty(oshp, dtype=dat1.dtype)
         # The data is detrended in psd, so we don't need to do it here:
         dat1 = self.reshape(dat1, n_pad=n_fft)
         dat2 = self.reshape(dat2, n_pad=n_fft)
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
-            out[slc] = cpsd_quasisync(dat1[slc], dat2[slc], n_fft, 2*np.pi*fs)
+            out[slc] = cpsd_quasisync(dat1[slc], dat2[slc], n_fft, 2 * np.pi * fs)
         return out
 
     def psd(self, dat, fs=None, window='hann', noise=0,
@@ -391,7 +391,7 @@ class TimeBinner(object):
         dat = self.reshape(dat, n_pad=n_pad)
         for slc in slice1d_along_axis(dat.shape, -1):
             # PSD's are computed in radian units:
-            out[slc] = psd(dat[slc], n_fft, 2*np.pi*fs,
+            out[slc] = psd(dat[slc], n_fft, 2 * np.pi * fs,
                            window=window, step=step)
         if ma.valid and ma.marray in dat.__class__.__mro__:
             out = ma.marray(

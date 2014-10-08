@@ -1,6 +1,22 @@
 import numpy as np
-from matplotlib.mlab import detrend_linear as detrend
+from scipy.signal import detrend
 fft = np.fft.fft
+
+## class FFTobj(np.ndarray):
+
+##     @property
+##     def Spec(self,):
+##         return np.abs(self) ** 2
+
+##     def __new__(cls, input_array, info=None):
+##         obj = np.asarray(input_array).view(cls)
+##         obj.info = info
+##         return obj
+
+##     def __array_finalize__(self, obj):
+##         if obj is None:
+##             return
+##         self.info = getattr(obj, 'info', None)
 
 
 def psd_freq(nfft, fs):

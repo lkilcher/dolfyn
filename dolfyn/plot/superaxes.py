@@ -5,7 +5,7 @@ import matplotlib.pylab as pylab
 transforms = mpl.transforms
 Axes = mpl.axes.Axes
 rcParams = mpl.rcParams
-import basefuncs as bf
+from . import basefuncs as bf
 
 
 def axes(*args, **kwargs):
@@ -141,29 +141,75 @@ def axes(*args, **kwargs):
     return a
 
 
+class disperse(dict):
+
+    """
+    This dict subclass is for dispersing axgroup properties passed to
+    an axgroup.<some_method> across the individual calls to each
+    axes.<some_method>.
+    """
+    pass
+
+
+class dispersable(object):
+
+    """
+    A descriptor class for defining dispersable objects.
+    """
+
+    def __init__(self, name):
+        self.name = name
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return dispersable
+        return disperse([(ax, getattr(ax, self.name)) for ax in instance])
+
+    def __set__(self, instance):
+        raise AttributeError("Can't set attribute.")
+
+
 class axgroup(object):
 
     """
-    The axgroup class provides a group interface to axes-level methods.
+    The axgroup class provides a group interface to axes - level methods.
 
-    Many axes-level methods are defined here. These methods simply
+    Many axes - level methods are defined here. These methods simply
     perform the same operation on each axes in the group. These
     methods are poorly documented here, refer to the documentation at
-    the axes level for details (unless otherwise specified methods
+    the axes level for details(unless otherwise specified methods
     here simply pass arguments through to each call at the axes
     level).
 
     Parameters
     ----------
 
-    axes : iterable
+    axes:
+        iterable
       A list, tuple or np.ndarray of axes objects that will be
       included in the group.
 
     """
 
+    transAxesXDataY = dispersable("transAxesXDataY")
+    transDataXAxesY = dispersable("transDataXAxesY")
+    transAxes = dispersable("transAxes")
+    transData = dispersable("transData")
+    transLimits = dispersable("transLimits")
+
+    def _disperse_kwargs(self, **kwargs):
+        out = dict(**kwargs)
+        for ax in self:
+            for ky, val in kwargs.iteritems():
+                if val.__class__ is disperse:
+                    if len(val) != len(self):
+                        raise Exception("The length of dispersable \
+                        kwargs must match the length of the axgroup")
+                    out[ky] = val[ax]
+            yield ax, out
+
     def flatten(self,):
-        return self.axes.flatten()
+        return axgroup(self.axes.flatten())
 
     @property
     def flat(self,):
@@ -174,6 +220,10 @@ class axgroup(object):
 
     def to_set(self,):
         return set(self.flat)
+
+    def __iter__(self,):
+        for ax in self.axes.flatten():
+            yield ax
 
     def __init__(self, axes):
         if set not in axes.__class__.__mro__:
@@ -209,17 +259,6 @@ class axgroup(object):
     def __len__(self,):
         return len(self.axes)
 
-    def __iter__(self,):
-        for ax in self.flat:
-            yield ax
-
-    def annotate(self, *args, **kwargs):
-        """
-        Annotate all axes in the group.
-        """
-        for ax in self:
-            ax.annotate(*args, **kwargs)
-
     def __getitem__(self, val):
         if hasattr(val, '__len__'):
             for v in val:
@@ -229,62 +268,76 @@ class axgroup(object):
             return axgroup(self.axes[val])
         return self.axes[val]
 
+    def text(self, *args, **kwargs):
+        """
+        Place text on all axes in the group.
+        """
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.text(*args, **kwargs)
+
+    def annotate(self, *args, **kwargs):
+        """
+        Annotate all axes in the group.
+        """
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.annotate(*args, **kwargs)
+
     def xgrid(self, b=None, **kwargs):
         """
         Set the xgrid for all axes in the group.
         """
-        for ax in self:
-            ax.xaxis.grid(b, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.xaxis.grid(b, **kws)
 
     def ygrid(self, b=None, **kwargs):
         """
         Set the ygrid for all axes in the group.
         """
-        for ax in self:
-            ax.yaxis.grid(b, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.yaxis.grid(b, **kws)
 
     def axhspan(self, *args, **kwargs):
         """
-        Add a horizontal span (rectangle) across the axes in the group.
+        Add a horizontal span(rectangle) across the axes in the group.
         """
-        for ax in self:
-            ax.axhspan(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.axhspan(*args, **kws)
 
     def axvspan(self, *args, **kwargs):
         """
-        Add a vertical span (rectangle) across the axes in the group.
+        Add a vertical span(rectangle) across the axes in the group.
         """
-        for ax in self:
-            ax.axvspan(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.axvspan(*args, **kws)
 
     def axhline(self, y=0, *args, **kwargs):
         """
         Add a horizontal line across the axes in the group.
         """
-        for ax in self:
-            ax.axhline(y, *args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.axhline(y, *args, **kws)
 
     def axvline(self, x=0, *args, **kwargs):
         """
         Add a vertical line across the axes in the group.
         """
-        for ax in self:
-            ax.vln(x, *args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.vln(x, *args, **kws)
 
     def fill_between(self, *args, **kwargs):
         """
         Make filled polygons between two curves for all axes in the group.
         """
-        for ax in self:
-            ax.fill_between(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.fill_between(*args, **kws)
 
     def fill_betweenx(self, *args, **kwargs):
         """
         Make filled polygons between two horizontal curves for all
         axes in the group.
         """
-        for ax in self:
-            ax.fill_betweenx(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.fill_betweenx(*args, **kws)
 
     def set_xscale(self, val):
         """
@@ -304,40 +357,60 @@ class axgroup(object):
         """
         Set the xlimits for each axes in the group.
         """
-        for ax in self:
-            ax.set_xlim(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.set_xlim(*args, **kws)
 
     def set_ylim(self, *args, **kwargs):
         """
         Set the ylimits for each axes in the group.
         """
-        for ax in self:
-            ax.set_ylim(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.set_ylim(*args, **kws)
 
     def set_xticks(self, *args, **kwargs):
         """
         Set the xticks for each axes in the group.
         """
-        for ax in self:
-            ax.set_xticks(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.set_xticks(*args, **kws)
 
     def set_yticks(self, *args, **kwargs):
         """
         Set the yticks for each axes in the group.
         """
-        for ax in self:
-            ax.set_yticks(*args, **kwargs)
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.set_yticks(*args, **kws)
+
+    def set_title(self, lbls, *args, **kwargs):
+        """
+        Set the ylabel for each axes in the group.
+
+        `lbls` can be a list of labels the same length as the axgroup,
+        or if it is a string(or length 1 list) it specifies a single
+        label that will be placed on each axis.
+
+        """
+        if lbls.__class__ is str:
+            lbls = [lbls]
+        elif lbls.__class__ is not list:
+            lbls = list(lbls)
+        if len(lbls) == 1:
+            lbls = lbls * len(self)
+        for ax, lbl in zip(self, lbls):
+            ax.set_title(lbl, *args, **kwargs)
 
     def set_ylabel(self, lbls, *args, **kwargs):
         """
         Set the ylabel for each axes in the group.
 
         `lbls` can be a list of labels the same length as the axgroup,
-        or if it is a string (or length 1 list) it specifies a single
+        or if it is a string(or length 1 list) it specifies a single
         label that will be placed on each axis.
 
         """
-        if lbls.__class__ is not list:
+        if lbls.__class__ is str:
+            lbls = [lbls]
+        elif lbls.__class__ is not list:
             lbls = list(lbls)
         if len(lbls) == 1:
             lbls = lbls * len(self)
@@ -349,11 +422,13 @@ class axgroup(object):
         Set the xlabel for each axes in the group.
 
         `lbls` can be a list of labels the same length as the axgroup,
-        or if it is a string (or length 1 list) it specifies a single
+        or if it is a string(or length 1 list) it specifies a single
         label that will be placed on each axis.
 
         """
-        if lbls.__class__ is not list:
+        if lbls.__class__ is str:
+            lbls = [lbls]
+        elif lbls.__class__ is not list:
             lbls = list(lbls)
         if len(lbls) == 1:
             lbls = lbls * len(self)
@@ -364,33 +439,95 @@ class axgroup(object):
         """
         Plot data on all axes in the group.
         """
-        for ax in self:
+        for ax, kws in self._disperse_kwargs(**kwargs):
             ax.plot(*args, **kwargs)
+
+    def loglog(self, *args, **kwargs):
+        """
+        Loglog plot on all axes in the group.
+        """
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.loglog(*args, **kwargs)
+
+    def semilogx(self, *args, **kwargs):
+        """
+        Semilogx plot on all axes in the group.
+        """
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.semilogx(*args, **kwargs)
+
+    def semilogy(self, *args, **kwargs):
+        """
+        Semilogy plot on all axes in the group.
+        """
+        for ax, kws in self._disperse_kwargs(**kwargs):
+            ax.semilogy(*args, **kwargs)
 
     def offset_text(self, x, y, s, offset=(0, 0), *args, **kwargs):
         """
         Place offset_text in all axes in the group.
         """
-        for ax in self:
+        for ax, kws in self._disperse_kwargs(**kwargs):
             ax.offset_text(x, y, s, offset=offset, *args, **kwargs)
+
+    def hide_xticklabels(self, exclude=None, hide=True):
+        """
+        Hide the xticklabels of the axes in this group.
+
+        Parameters
+        ----------
+        exclude : list of axes or an axes
+          These are excluded from hiding.
+
+        hide : bool
+          set hide=False to show these ticklabels.
+
+        """
+        axs = self
+        if exclude is not None:
+            axs = list(axs.to_set() - set(exclude))
+        for ax in axs:
+            pylab.setp(ax.get_xticklabels(), visible=(not hide))
+
+    def hide_yticklabels(self, exclude=None, hide=True):
+        """
+        Hide the yticklabels of the axes in this group.
+
+        Parameters
+        ----------
+        exclude : list of axes or an axes
+          These are excluded from hiding.
+
+        hide : bool
+          set hide=False to show these ticklabels.
+
+        """
+        axs = self
+        if exclude is not None:
+            axs = list(axs.to_set() - set(exclude))
+        for ax in axs:
+            pylab.setp(ax.get_yticklabels(), visible=(not hide))
 
     def hide(self, objs='xticklabels', ax=None):
         """
-        Hide `objs` on all axes of this group *except* for those
+        Hide `objs` on all axes of this group * except* for those
         specified in `ax`.
 
         Parameters
         ----------
-        objs : str {'xticklabels', 'yticklabels', 'minorxticks', 'minoryticks'}
+        objs :
+            str {'xticklabels', 'yticklabels', 'minorxticks', 'minoryticks'}
           or a list of these.
-        ax   : axes, optional (default: hide all)
-               The axes (or list of axes) on which these items should
+        ax   :
+            axes, optional (default: hide all)
+               The axes(or list of axes) on which these items should
                not be hidden.
 
         Examples
         --------
-        Hide the xticklabels on all axes except ax0::
-            hide('xticklabels',self.ax0)
+        Hide the xticklabels on all axes except ax0:
+            :
+            hide('xticklabels', self.ax0)
 
         To hide all xticklabels, simply do:
            hide('xticklabels')
@@ -483,15 +620,17 @@ class axSharer(object):
     def __call__(self, iv, ih):
         """
         Returns the 'prime' axes to be shared for the axes at
-        grid-point (iv,ih).
+        grid-point (iv, ih).
 
         Parameters
         ----------
-        (iv,ih) : The index of the axgrid for which you want the shareax.
+        (iv,ih) :
+            The index of the axgrid for which you want the shareax.
 
         Returns
         -------
-        shareax : :class:`axes`, or :class:`None`.
+        shareax :
+            :class:`axes`, or :class:`None`.
                   `None` if the axis does not share an axes, or one
                   has not yet been created that it matches.
         """
@@ -520,15 +659,18 @@ class axSpacer(object):
 
     Parameters
     ----------
-    axsize : array_like(n,float)
+    axsize :
+        array_like(n,float)
              An array specifying the size of each axes in inches.
-    gap    : array_like(n+1,float)
+    gap    :
+        array_like(n+1,float)
              An array specifying the spacing in inches between
              axes. The first element is the distance from the
-             left/bottom of the figure to the first axes, the last
-             element is the distrance from the right/top of the figure
+             left /bottom of the figure to the first axes, the last
+             element is the distrance from the right /top of the figure
              to the last axes.
-    vertical : bool (default: False)
+    vertical :
+        bool (default: False)
                A flag specifying that this is a 'vertical' axSpacer
                (flips ordering of axes positions so that the first
                axes is at the top of the figure).
@@ -544,7 +686,7 @@ class axSpacer(object):
     @property
     def axsize_(self,):
         """
-        The figure-units axes sizes, array_like.
+        The figure -units axes sizes, array_like.
         """
         return self.axsize / self.totsize
 
@@ -555,7 +697,7 @@ class axSpacer(object):
     @property
     def gap_(self,):
         """
-        The figure-units gap between axes, array_like.
+        The figure -units gap between axes, array_like.
         """
         return self.gap / self.totsize
 
@@ -566,7 +708,7 @@ class axSpacer(object):
     @property
     def pos_(self,):
         """
-        The figure-units position of the axes, array_like.
+        The figure -units position of the axes, array_like.
         """
         return self.pos / self.totsize
 
@@ -632,29 +774,35 @@ class axSpacer(object):
 
 def axvec2axSpacer(n, vec, vertflag, rel=False):
     """
-    Returns an :class:`axSpacer` corresponding to the `n` axes based
+    Returns an :
+        class:`axSpacer` corresponding to the `n` axes based
     on the axes vector `vec`.
 
     Parameters
     ----------
 
-    n : int
+    n :
+        int
       The number of axes.
 
-    vec : iterable(3)
-      The (left/bottom,right/top,gap) surrounding and between the
+    vec :
+        iterable(3)
+      The (left/bottom, right/top,gap) surrounding and between the
       axes.
 
-    vertflag : bool, optional (default: False)
-      Specifies this is for vertical (True) or horizontal spacing.
+    vertflag :
+        bool, optional (default: False)
+      Specifies this is for vertical(True) or horizontal spacing.
 
-    rel : iterable(`n`), optional
+    rel :
+        iterable(`n`), optional
       This specifies the relative width of each of the axes. By
       default all axes are the same width.
 
     Returns
     -------
-    axSpacer : :class:`axSpacer`
+    axSpacer :
+        :class:`axSpacer`
       The axes spacer object corresponding to the specified inputs.
 
     Notes
@@ -682,9 +830,11 @@ class axPlacer(object):
 
     Parameters
     ----------
-    vSpacer : :class:`axSpacer`
+    vSpacer :
+        :class:`axSpacer`
               The vertical axes spacer object.
-    hSpacer : :class:`axSpacer`
+    hSpacer :
+        :class:`axSpacer`
               The horizontal axes spacer object.
     """
 
@@ -719,7 +869,7 @@ class axPlacer(object):
     @property
     def axes_positions(self,):
         """
-        Returns a list of location tuples (left, bottom, width,
+        Returns a list of location tuples(left, bottom, width,
         height) for axes objects.
         """
         return list(self.__iter__())
@@ -727,12 +877,13 @@ class axPlacer(object):
 
 def simpleAxSpacer(n, axsize, gap, frm=np.array([.5, .5]), vertical=False):
     """
-    calculates the width (or height) of a figure with *n* subplots.
-    Specify the width (height) of each subplot with *ax[0]*, the space
-    between subplots with *ax[1]*, and the left/right (bottom/top)
-    spacing with *frame[0]*/*frame[1]*.
+    calculates the width (or height) of a figure with *n * subplots.
+    Specify the width (height) of each subplot with *ax[0] *, the space
+    between subplots with *ax[1] *, and the left/right (bottom/top)
+    spacing with *frame[0] */*frame[1]*.
 
-    See also: saxes, axes, calcAxesSize
+    See also:
+        saxes, axes, calcAxesSize
     """
     gap = np.ones(n + 1) * gap
     gap[0] = frm[0]
@@ -748,29 +899,29 @@ class saxes(axgroup):
     Parameters
     ----------
 
-    Use keyword argument fig=<figure object> to specify the figure in
+    Use keyword argument fig =<figure object> to specify the figure in
     which to create the axes.
 
     Notes
     -----
-    n=(3,4) to set up a 3x4 array of axes.
+    n =(3,4) to set up a 3x4 array of axes.
 
-    n=(3,[1,1,1,.5]) to set up a 3x4 array of axes with the last
+    n =(3,[1,1,1,.5]) to set up a 3x4 array of axes with the last
     column half the width of the others.
 
-    n=([1,1,1.5],[1,1,1,.5]) to set up a 3x4 array of axes with the
+    n =([1,1,1.5],[1,1,1,.5]) to set up a 3x4 array of axes with the
     last row 1.5 times as tall and the last column half as wide.
 
-    h=(.1,.9,.05) to create the horizontal frame box at .1 and .9, with
+    h =(.1,.9,.05) to create the horizontal frame box at .1 and .9, with
     gaps of .05 between each axes.
 
-    v=(.1,.9,.05) similarly for the vertical frame/gap.
+    v =(.1,.9,.05) similarly for the vertical frame/gap.
 
-    drawax=L, where L is a logical array of the axes you actually want to
-    draw (default is all of them).
+    drawax =L, where L is a logical array of the axes you actually want to
+    draw(default is all of them).
 
-    sharex=True, chooses whether the axes share an xaxis.
-    sharey=True, chooses whether the axes share a yaxis.
+    sharex =True, chooses whether the axes share an xaxis.
+    sharey =True, chooses whether the axes share a yaxis.
 
     """
 
@@ -844,35 +995,43 @@ class saxes(axgroup):
 class figobj(axgroup):
 
     """
-    A base class for axes-grid figures.
+    A base class for axes -grid figures.
 
     Parameters
     ----------
 
-    fignum   : int
+    fignum   :
+        int
       Figure number
 
-    nax      : tuple(2 ints)
+    nax      :
+        tuple(2 ints)
       Shape of the axes grid.
 
-    saxparams  : dict
+    saxparams  :
+        dict
       input arguments to saxes.
 
-    axsize     : tuple(2 floats)
-      specifies the size of the axes [vertical,horizontal] in inches.
+    axsize     :
+        tuple(2 floats)
+      specifies the size of the axes [vertical, horizontal] in inches.
 
-    frame      : iterable(4)
-      specifies the frame around the axes [bottom,top,left,right], in
-      inches (default: [.6,.3,1,.3]).
+    frame      :
+        iterable(4)
+      specifies the frame around the axes [bottom, top,left,right], in
+      inches (default: [.6, .3,1,.3]).
 
-    gap        : tuple(2 floats) or float
-      specifies the gap between axes [vertical,horizontal], in inches
-      (default: [.2,.2]).
+    gap        :
+        tuple(2 floats) or float
+      specifies the gap between axes [vertical, horizontal], in inches
+      (default: [.2, .2]).
 
-    hrel       : iterable
+    hrel       :
+        iterable
       specifies the relative horizontal size of each axes.
 
-    vrel       : iterable
+    vrel       :
+        iterable
       specifies the relative vertical size of each axes.
 
     """
@@ -880,14 +1039,16 @@ class figobj(axgroup):
 
     def savefig(self, *args, **kwargs):
         self.fig.savefig(*args, **kwargs)
-        self.meta.write(args[0])
+        #self.meta.write(args[0])
 
-    def initFig(self, fignum, nax=None, **kwargs):
+    def initFig(self, fignum, **kwargs):
         figkws = {}
-        figkws['figsize'] = kwargs.pop('figsize', None)
+        figkws['figsize'] = kwargs.pop('figsize', self.saxes.axPlacer.figSize)
         self.fig = pylab.figure(fignum, **figkws)
-        if figkws['figsize'] is not None:
-            self.fig.set_size_inches(figkws['figsize'], forward=True)
+        ff = np.array([0, .425])  # A fudge factor.
+        if figkws['figsize'] is not None and \
+                np.all(self.fig.get_size_inches() != figkws['figsize']):
+            self.fig.set_size_inches(figkws['figsize'] + ff, forward=True)
         self.clf = self.fig.clf
         self.clf()
         if 'title' in kwargs.keys():
@@ -896,10 +1057,10 @@ class figobj(axgroup):
 
     def __init__(self, fignum, nax=[1, 1], axsize=[3, 3],
                  frame=[.6, .3, 1, .3], gap=[.4, .4],
-                 saxparams={}, **kwargs):
+                 sharex=False, sharey=False,
+                 **kwargs):
         gap = bf.pair(gap)
         axsize = bf.pair(axsize)
-        self.initFig(fignum, **kwargs)
         vSpacer = simpleAxSpacer(nax[0],
                                  axsize[0],
                                  gap[0],
@@ -911,7 +1072,8 @@ class figobj(axgroup):
                                  frm=frame[2:],
                                  vertical=False)
         placer = axPlacer(vSpacer, hSpacer)
-        self.saxes = saxes(placer, **saxparams)
+        self.saxes = saxes(placer, sharex=sharex, sharey=sharey,)
+        self.initFig(fignum, **kwargs)
         self.saxes.drawall()
         axgroup.__init__(self, self.saxes.axes)
 

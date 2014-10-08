@@ -36,9 +36,7 @@ def _calcAccelVel(accel, samp_freq, filt_freq):
     # for idx in range(accel.shape[0]):
     #    hp[idx]=accel[idx]-sig.filtfilt(filt[0],filt[1],accel[idx])
     hp = accel
-    shp = list(accel.shape[:-1])
-    shp += [1]
-    dat = np.concatenate((np.zeros(shp),
+    dat = np.concatenate((np.zeros(list(accel.shape[:-1]) + [1]),
                           cumtrapz(hp, dx=1. / samp_freq)), axis=-1)
     for idx in range(accel.shape[0]):
         dat[idx] = dat[idx] - sig.filtfilt(filt[0], filt[1], dat[idx])
@@ -209,16 +207,6 @@ class CorrectMotion(object):
             advo.urot = _calcRotationVel(advo.AngRt, pos)
         advo.groups['orient'].add('urot')
 
-    def _calcAccelStable(self, advo):
-        # Ordering does inst->earth:
-        acctmp = np.einsum('ijk,ik->jk', advo.orientmat, advo.Accel)
-        flt = sig.butter(1, self.accel_filtfreq / (advo.fs / 2))
-        for idx in range(3):
-            acctmp[idx] = sig.filtfilt(flt[0], flt[1], acctmp[idx])
-        # Ordering does earth-inst:
-        advo.AccelStable = np.einsum('ijk,jk->ik', advo.orientmat, acctmp)
-        advo.groups['orient'].add('AccelStable')
-
     def _calcProbePos(self, advo):
         """
         !!!Currently this only works for Nortek Vectors!
@@ -256,11 +244,24 @@ class CorrectMotion(object):
             return advo.props['body2head_vec'] - nortek_body2imu
 
     def _calcAccelVel(self, advo):
-        advo.uacc = _calcAccelVel(
-            advo.Accel - advo.AccelStable, advo.fs, self.accelvel_filtfreq)
+
+        ########
+        ## First calculate stableAccel
+        # Ordering does inst->earth:
+        advo.Accel = np.einsum('ijk,ik->jk', advo.orientmat, advo.Accel)
+        advo.AccelStable = advo.Accel.copy()
+        advo.groups['orient'].add('AccelStable')
+        flt = sig.butter(1, self.accel_filtfreq / (advo.fs / 2))
+        for idx in range(3):
+            advo.AccelStable[idx] = sig.filtfilt(flt[0], flt[1],
+                                                 advo.AccelStable[idx])
+        ########
+        ## Now calculate the acceleration-velocity.
+        advo.uacc = _calcAccelVel(advo.Accel - advo.AccelStable,
+                                  advo.fs, self.accelvel_filtfreq)
         advo.groups['orient'].add('uacc')
 
-    def __call__(self, advo):
+    def __call__(self, advo, to_earth=True):
         """
         Perform motion correction on an IMU-equipped ADV object.
 
@@ -274,6 +275,10 @@ class CorrectMotion(object):
           - Accel : The translational acceleration array.
           - AngRt : The rotation-rate array.
           - orientmat : The orientation matrix.
+
+        to_earth : bool (optional, default: True)
+          A boolean that specifies whether the data should be
+          rotated into the earth frame.
 
         Notes
         -----
@@ -290,8 +295,17 @@ class CorrectMotion(object):
             advo.props['rotate_vars'].update({'urot', 'uacc', 'AccelStable'})
         self._rotateVel2body(advo)
         self._calcRotVel(advo)
-        self._calcAccelStable(advo)
         self._calcAccelVel(advo)
+        # Accel, AccelStable and uacc are already in the earth frame.
+        if to_earth:
+            inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
+                       {'Accel', 'AccelStable', 'uacc', })
+        else:
+            # rotate these variables back to the instrument frame.
+            inst2earth(advo, reverse=True,
+                       rotate_vars={'Accel', 'AccelStable', 'uacc', },
+                       force=True,
+                       )
         advo._u -= (advo.urot + advo.uacc)
 
 
@@ -341,23 +355,25 @@ def _cat4rot(tpl):
     return np.concatenate(tuple(tmp), axis=0)
 
 
-def inst2earth(advo, reverse=False):
+def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
     Rotate data in an ADV object to the earth from the isntrument
     frame (or vice-versa). If the
 
-    All data in the advo.props['rotate_vars'] list will be
-    rotated by the principal angle, and also if the data objet has an
-    orientation matrix (orientmat) it will be rotated so that it
-    represents the orientation of the ADV in the principal
-    (reverse:earth) frame.
-
     Parameters
     ----------
     advo : The adv object containing the data.
+
     reverse : bool (default: False)
            If True, this function performs the inverse rotation
            (principal->earth).
+
+    rotate_vars : iterable
+      The list of variables to rotate. By default this is taken from
+      advo.props['rotate_vars'].
+
+    force : Do not check which frame the data is in prior to
+      performing this rotation.
 
     """
 
@@ -372,12 +388,17 @@ def inst2earth(advo, reverse=False):
         cs_now = 'inst'
         cs_new = 'earth'
 
-    if advo.props['coord_sys'] == cs_new:
-        print("Data is already in the '%s' coordinate system" % cs_new)
-        return
-    elif not advo.props['coord_sys'] == cs_now:
-        print("Data must be in the '%s' frame prior to using this function" %
-              cs_now)
+    if rotate_vars is None:
+        rotate_vars = advo.props['rotate_vars']
+
+    if not force:
+        if advo.props['coord_sys'] == cs_new:
+            print("Data is already in the '%s' coordinate system" % cs_new)
+            return
+        elif not advo.props['coord_sys'] == cs_now:
+            print(
+                "Data must be in the '%s' frame prior to using this function" %
+                cs_now)
 
     if hasattr(advo, 'orientmat'):
         if 'declination' in advo.props and not \
@@ -441,7 +462,7 @@ def inst2earth(advo, reverse=False):
         # [sp,  sr * cp,  cp * cr]], dtype=np.float32)
         # rmat = np.einsum('ijl,jkl->ikl', H, P)
 
-    for nm in advo.props['rotate_vars']:
+    for nm in rotate_vars:
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
     advo.props['coord_sys'] = cs_new
@@ -496,10 +517,10 @@ def _inst2earth(advo, use_mean_rotation=False):
         # The way it is written in the adv CT script is annoying:
         #    T and T_org, and minusing rows 2+3 of T, which only goes
         #    into R, but using T_org elsewhere.
-    if advo.config.coordinate_system == 'XYZ' and not hasattr(advo, 'u_inst'):
-        advo.add_data('u_inst', advo.u, 'inst')
-        advo.add_data('v_inst', advo.v, 'inst')
-        advo.add_data('w_inst', advo.w, 'inst')
+    ## if advo.config.coordinate_system == 'XYZ' and not hasattr(advo, 'u_inst'):
+    ##     advo.add_data('u_inst', advo.u, 'inst')
+    ##     advo.add_data('v_inst', advo.v, 'inst')
+    ##     advo.add_data('w_inst', advo.w, 'inst')
     # This is directly from the matlab script:
     # H=np.zeros(shp)
     # H[0,0]=cos(hh);  H[0,1]=sin(hh);
@@ -526,15 +547,16 @@ def _inst2earth(advo, use_mean_rotation=False):
     # This is me actually doing the rotation:
     # R=np.dot(H,P)
     # u=
-    u = ((ch * cp) * advo.u_inst + (-ch * sp * sr + sh * cr) * advo.v_inst +
-         (-ch * cr * sp - sh * sr) * advo.w_inst).astype('single')
-    v = ((-sh * cp) * advo.u_inst + (sh * sp * sr + ch * cr) * advo.v_inst +
-         (sh * cr * sp - ch * sr) * advo.w_inst).astype('single')
-    w = ((sp) * advo.u_inst + (sr * cp) * advo.v_inst +
-         cp * cr * advo.w_inst).astype('single')
-    advo.add_data('u', u, 'main')
-    advo.add_data('v', v, 'main')
-    advo.add_data('w', w, 'main')
+    utmp = advo._u.copy()
+    advo._u[0] = ((ch * cp) * utmp[0] +
+                  (-ch * sp * sr + sh * cr) * utmp[1] +
+                  (-ch * cr * sp - sh * sr) * utmp[2]).astype('single')
+    advo._u[1] = ((-sh * cp) * utmp[0] +
+                  (sh * sp * sr + ch * cr) * utmp[1] +
+                  (sh * cr * sp - ch * sr) * utmp[2]).astype('single')
+    advo._u[2] = ((sp) * utmp[0] +
+                  (sr * cp) * utmp[1] +
+                  cp * cr * utmp[2]).astype('single')
     advo.props['coord_sys'] = 'earth'
 
 

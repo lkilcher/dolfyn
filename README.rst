@@ -12,29 +12,8 @@ DOLfYN includes a data abstraction layer that enables saving and
 loading of data after it has been read from the binary files and
 processed.
 
-For further details visit the `DOLfYN homepage
-<http://lkilcher.github.io/dolfyn/>`_.
-
-Installation
-============
-
-To install DOLfYN, simply download the repository from
-http://github.com/lkilcher/dolfyn . If you have git installed, you may
-simply do::
-
-  $ git clone http://github.com/lkilcher/dolfyn <your-preferred-download-location>
-
-Then run the setup script. On a POSIX system this might look like::
-
-  $ cd <your-preferred-download-location>
-  $ python setup.py install
-
-Dependencies
-============
-
-DOLfYN depends on `Python <http://www.python.org>`_ 2.7 (Python 3 is
-not yet supported), `NumPy <http://www.numpy.org>`_, `h5py
-<www.h5py.org>`_, and `SciPy <http://www.scipy.org>`_.
+For details visit the `DOLfYN homepage
+<http://lkilcher.github.io/dolfyn/>`_.  For *INSTALL* instructions, visit the `install page <http://lkilcher.github.io/dolfyn/install.html>`_.
 
 License
 =======
