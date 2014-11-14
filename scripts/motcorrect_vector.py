@@ -2,8 +2,9 @@
 import argparse
 import os
 import numpy as np
-import dolfyn.adv.rotate as avr
+from dolfyn.adv.rotate import orient2euler
 import dolfyn.adv.api as avm
+from dolfyn.adv.motion import CorrectMotion
 
 # TODO: add option to rotate into earth or principal frame (include
 # principal_angle_True in output).
@@ -111,7 +112,7 @@ else:
                     an 'orientation' config file.""")
 
 # Instantiate the 'motion correction' object.
-mc = avr.CorrectMotion(accel_filtfreq=args.f, vel_filtfreq=args.F)
+mc = CorrectMotion(accel_filtfreq=args.f, vel_filtfreq=args.F)
 
 # Now loop over the specified file names:
 for fnm in args.filename:
@@ -130,8 +131,7 @@ for fnm in args.filename:
         print('Performing motion correction...')
         mc(dat)  # Perform the motion correction.
         # Compute pitch,roll,heading from orientmat.
-        dat.pitch[:], dat.roll[:], dat.heading[
-            :] = avr.orient2euler(dat.orientmat)
+        dat.pitch[:], dat.roll[:], dat.heading[:] = orient2euler(dat.orientmat)
     else:
         print("""
         !!!--Warning--!!!: Orientation matrix('orientmat')

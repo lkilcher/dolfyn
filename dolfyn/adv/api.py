@@ -16,8 +16,11 @@ data. It contains:
 +-----------------------------------+-----------------------------------------+
 | :mod:`rotate <dolfyn.adv.rotate>` | A module containing classes and         |
 |                                   | functions for rotating adv data between |
-|                                   | different coordinate systems and for    |
-|                                   | performing motion correction.           |
+|                                   | different coordinate systems            |
++-----------------------------------+-----------------------------------------+
+| :mod:`motion <dolfyn.adv.rotate>` | A module containing classes and         |
+|                                   | functions for performing motion         |
+|                                   | correction.                             |
 +-----------------------------------+-----------------------------------------+
 |  :class:`~dolfyn.\                | A class for breaking ADV data into      |
 |  adv.turbulence.TurbBinner`       | 'bins', averaging it and estimating     |
@@ -37,3 +40,4 @@ from .turbulence import TurbBinner
 from . import clean
 from ..io.nortek import read_nortek
 from . import rotate
+from . import motion
