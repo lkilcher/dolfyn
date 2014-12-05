@@ -6,8 +6,8 @@ package.
 import sys
 import inspect
 from ..data.base import Dgroups
-import hdf5
-import mat
+from . import hdf5
+from . import mat
 
 # These define the default.
 loader = hdf5.Loader

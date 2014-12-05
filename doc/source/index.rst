@@ -35,6 +35,7 @@ Table of Contents
    about
    install
    usage
+   usage-specific
    plotting-tools
    api/dolfyn
    glossary

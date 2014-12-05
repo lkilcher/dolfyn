@@ -361,7 +361,8 @@ class VelBindatSpec(VelBindatTke):
 class VelBinnerSpec(VelBinnerTke):
 
     def calc_vel_psd(self, veldat, fs=None,
-                     rotate_u=False, noise=[0, 0, 0], n_pad=None):
+                     rotate_u=False, noise=[0, 0, 0],
+                     n_pad=None, window='hann'):
         """
         Calculate the psd of velocity.
 
@@ -390,12 +391,17 @@ class VelBinnerSpec(VelBinnerTke):
                     noise-correction cannot be done here when rotating \
                     velocity.')
                 noise[0] = noise[1] = 0
-            datu = self.psd(tmpdat.real, fs, noise=noise[0], n_pad=n_pad)
-            datv = self.psd(tmpdat.imag, fs, noise=noise[1], n_pad=n_pad)
+            datu = self.psd(tmpdat.real, fs, noise=noise[0],
+                            n_pad=n_pad, window=window)
+            datv = self.psd(tmpdat.imag, fs, noise=noise[1],
+                            n_pad=n_pad, window=window)
         else:
-            datu = self.psd(veldat[0], fs, noise=noise[0], n_pad=n_pad)
-            datv = self.psd(veldat[1], fs, noise=noise[1], n_pad=n_pad)
-        datw = self.psd(veldat[2], fs, noise=noise[2], n_pad=n_pad)
+            datu = self.psd(veldat[0], fs, noise=noise[0],
+                            n_pad=n_pad, window=window)
+            datv = self.psd(veldat[1], fs, noise=noise[1],
+                            n_pad=n_pad, window=window)
+        datw = self.psd(veldat[2], fs, noise=noise[2],
+                        n_pad=n_pad, window=window)
         out = np.empty([3] + list(datw.shape), dtype=np.float32)
         if ma.valid:
             if self.hz:

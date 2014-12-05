@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.signal as sig
 from scipy.integrate import cumtrapz
-from rotate import inst2earth
+from .rotate import inst2earth
 
 
 class CalcMotion(object):

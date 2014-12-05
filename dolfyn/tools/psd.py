@@ -67,6 +67,8 @@ def _stepsize(l, nfft, nens=None, step=None):
     if l < nfft:
         nfft = l
     if nens is None and step is None:
+        if l == nfft:
+            return 0, 1, nfft
         nens = int(2. * l / nfft)
         return int((l - nfft) / (nens - 1)), nens, nfft
     elif nens is None:

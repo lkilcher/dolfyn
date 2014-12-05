@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import argparse
 import os
 import numpy as np
@@ -27,15 +28,16 @@ parser.add_argument(
     """
 )
 
-parser.add_argument(
-    '-F',
-    default=0.01,
-    help="""
-    Specify the high-pass filter frequency that is applied to the integrated
-    acceleration (uacc) to remove drift that remains after integration. Default
-    '0.01' (Hz) = 100sec
-    """
-)
+## parser.add_argument(
+##     '-F',
+##     default=0.01,
+##     help="""
+##     Specify the high-pass filter frequency that is applied to the integrated
+##     acceleration (uacc) to remove drift that remains after integration. Default
+##     '0.01' (Hz) = 100sec
+##     """
+## )
+
 parser.add_argument(
     '-O',
     default=None,
@@ -57,6 +59,28 @@ parser.add_argument(
     compute head motion.
     """
 )
+parser.add_argument(
+    '--mat',
+    action='store_true',
+    help="""
+    Save the earth-frame motion-corrected data in Matlab format (default).
+    """
+)
+## parser.add_argument(
+##     '--csv',
+##     action='store_true',
+##     help="""
+##     Save the earth-frame motion-corrected data in csv (comma-separated value) format.
+##     """
+## )
+parser.add_argument(
+    '--hdf5',
+    action='store_true',
+    help="""
+    Save the earth-frame motion-corrected data in the dolfyn-structured hdf5 format.
+    """
+)
+
 ## parser.add_argument(
 ##     '--out-earth',
 ##     action='store_true',
@@ -93,7 +117,7 @@ args = parser.parse_args()
 # raise Exception('--out-principal and --out-earth can not both be
 # selected. You must choose one output frame.')
 declin = 0
-if bool(args.fixed_head) != bool(args.O):
+if args.fixed_head != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
     if bool(args.O):
         exec(open(args.O).read())  # ROTMAT and VEC should be in this file.
@@ -111,8 +135,11 @@ else:
     raise Exception("""You must either specify --fixed-head, or specify
                     an 'orientation' config file.""")
 
+if not (args.mat or args.hdf5):
+    args.mat = True
+
 # Instantiate the 'motion correction' object.
-mc = CorrectMotion(accel_filtfreq=args.f, vel_filtfreq=args.F)
+mc = CorrectMotion(accel_filtfreq=args.f,)
 
 # Now loop over the specified file names:
 for fnm in args.filename:
@@ -138,9 +165,16 @@ for fnm in args.filename:
         not found. Motion correction cannot be performed on this file
         """)
 
-    outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
-    print('Saving to %s.' % outnm)
-    # Save the data.
-    dat.save_mat(outnm, groups=['main', 'orient'])
+    if args.mat:
+        outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
+        print('Saving to %s.' % outnm)
+        # Save the data.
+        dat.save_mat(outnm, groups=['main', 'orient'])
+
+    if args.hdf5:
+        outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.hdf5'
+        print('Saving to %s.' % outnm)
+        # Save the data.
+        dat.save(outnm,)
 
     del dat

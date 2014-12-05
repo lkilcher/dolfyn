@@ -12,6 +12,10 @@ Center <http://www.ndbc.noaa.gov/>`_ (NDBC).
 |dlfn| is organized into subpackages for working with each data type
 it supports, as well as base packages
 
+This page documents general and basic usage of the |dlfn| package, for
+detailed information on more specific uses of the package see the
+[usage-specific]_ page.
+
 Working with ADV data
 ---------------------
 
@@ -49,6 +53,10 @@ on ADV data. Most of these are available via the ADV
 :mod:`~dolfyn.adv.api`. For example:
 
 .. literalinclude:: examples/adv_example01.py
+
+
+
+
 
 .. Plotting ADV data
    .................

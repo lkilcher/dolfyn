@@ -10,7 +10,7 @@ from ..tools import misc as tbx
 from struct import unpack
 from struct import error as str_err
 from ..data.base import ma
-import nortek_defs
+from . import nortek_defs
 time = nortek_defs.time
 
 

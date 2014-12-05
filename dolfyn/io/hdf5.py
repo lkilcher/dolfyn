@@ -555,7 +555,7 @@ class Loader(DataFactory):
                                 typestr.split('.')[-1].rstrip("'>")]()
                         except:
                             for ky in self.type_map:
-                                print ky
+                                #print(ky)
                                 if ky.endswith(typestr.split('.')[-1]):
                                     out = self.type_map[ky]()
 

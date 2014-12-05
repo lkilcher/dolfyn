@@ -25,7 +25,8 @@ class TurbBinner(VelBinnerSpec):
     """
 
     def __call__(self, advr, out_type=ADVbinned,
-                 omega_range_epsilon=[6.28, 12.57], Itke_thresh=0):
+                 omega_range_epsilon=[6.28, 12.57],
+                 Itke_thresh=0, window='hann'):
         """
         Compute a suite of turbulence statistics for the input data
         advr, and return a `binned` data object.
@@ -44,6 +45,9 @@ class TurbBinner(VelBinnerSpec):
         Itke_thresh : The threshold for velocity magnitude for
           computing the turbulence intensity. Values of Itke where
           U_mag < Itke_thresh are set to NaN.  (default: 0).
+
+        window : 1, None, 'hann'
+          The window to use for psds.
 
         Returns
         -------
@@ -90,8 +94,11 @@ class TurbBinner(VelBinnerSpec):
                      np.std(self.reshape(advr.U_mag), -1, dtype=np.float64)
                      - (advr.noise[0] + advr.noise[1]) / 2, 'main')
         out.props['Itke_thresh'] = Itke_thresh
-        out.add_data('Spec', self.calc_vel_psd(
-            advr._u, noise=advr.noise), 'spec')
+        out.add_data('Spec',
+                     self.calc_vel_psd(advr._u,
+                                       noise=advr.noise,
+                                       window=window),
+                     'spec')
         out.add_data('omega', self.calc_omega(), '_essential')
 
         # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,

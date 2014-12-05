@@ -147,7 +147,10 @@ class TimeBinner(object):
         return dt - (dt.mean(-1)[..., None])
 
     def mean(self, dat, n_bin=None):
-        return self.reshape(dat, n_bin=n_bin).mean(-1)
+        out = self.reshape(dat, n_bin=n_bin).mean(-1)
+        if dat.__class__ is np.ndarray:
+            return out
+        return out.view(dat.__class__)
 
     def std(self, dat, n_bin=None):
         return self.reshape(dat, n_bin=n_bin).std(-1)
@@ -243,7 +246,7 @@ class TimeBinner(object):
             if ((names is None) or (nm in names)) and \
                ((np.ndarray in mro) or (Dataset in mro)) and \
                (dat.shape[-1] == n):
-                outdat.add_data(nm, self.reshape(dat).mean(-1), grp)
+                outdat.add_data(nm, self.mean(dat), grp)
 
     def do_var(self, rawdat, outdat, names=None, suffix='_var'):
         """Calculate the variance of data attributes.
@@ -363,7 +366,8 @@ class TimeBinner(object):
         dat2 = self.reshape(dat2, n_pad=n_fft)
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
-            out[slc] = cpsd_quasisync(dat1[slc], dat2[slc], n_fft, 2 * np.pi * fs)
+            out[slc] = cpsd_quasisync(dat1[slc], dat2[slc], n_fft,
+                                      2 * np.pi * fs, window=window)
         return out
 
     def psd(self, dat, fs=None, window='hann', noise=0,
@@ -385,7 +389,8 @@ class TimeBinner(object):
         fs = self._parse_fs(fs)
         n_bin = self._parse_nbin(n_bin)
         n_fft = self._parse_nfft(n_fft)
-        n_pad = self._parse_nfft(n_pad)
+        if n_pad is None:
+            n_pad = min(n_bin - n_fft, n_fft)
         out = np.empty(self._outshape_fft(dat.shape, n_fft=n_fft, n_bin=n_bin))
         # The data is detrended in psd, so we don't need to do it here.
         dat = self.reshape(dat, n_pad=n_pad)
