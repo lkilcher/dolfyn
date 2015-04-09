@@ -74,9 +74,12 @@ class CalcMotion(object):
         """
         """
         self.AccelStable = acc = self.Accel.copy()
-        flt = sig.butter(1, self.accel_filtfreq / (self.advo.fs / 2))
-        for idx in range(3):
-            acc[idx] = sig.filtfilt(flt[0], flt[1], acc[idx])
+        if self.accel_filtfreq == 0:
+            acc[:] = acc.mean(-1)[..., None]
+        else:
+            flt = sig.butter(1, self.accel_filtfreq / (self.advo.fs / 2))
+            for idx in range(3):
+                acc[idx] = sig.filtfilt(flt[0], flt[1], acc[idx])
 
     def __call__(self, vec):
         """
@@ -97,7 +100,7 @@ class CalcMotion(object):
           The motion (velocity) array (3, n_time).
 
         """
-        return self.calc_uacc() + self.calc_urot(vec, )
+        return self.calc_uacc() + self.calc_urot(np.array(vec), )
 
     def calc_uacc(self, ):
         """
@@ -109,17 +112,18 @@ class CalcMotion(object):
         uacc : |np.ndarray| (3 x n_time)
                The acceleration-induced velocity array (3, n_time).
         """
-        filt_freq = self.accelvel_filtfreq
         samp_freq = self.advo.fs
-        # 8th order butterworth filter.
-        filt = sig.butter(2, float(filt_freq) / (samp_freq / 2))
 
         hp = self.Accel - self.AccelStable
 
         dat = np.concatenate((np.zeros(list(hp.shape[:-1]) + [1]),
                               cumtrapz(hp, dx=1. / samp_freq)), axis=-1)
-        for idx in range(hp.shape[0]):
-            dat[idx] = dat[idx] - sig.filtfilt(filt[0], filt[1], dat[idx])
+        if self.accelvel_filtfreq > 0:
+            filt_freq = self.accelvel_filtfreq
+            # 8th order butterworth filter.
+            filt = sig.butter(2, float(filt_freq) / (samp_freq / 2))
+            for idx in range(hp.shape[0]):
+                dat[idx] = dat[idx] - sig.filtfilt(filt[0], filt[1], dat[idx])
         return dat
 
     def calc_urot(self, vec, to_earth=None):

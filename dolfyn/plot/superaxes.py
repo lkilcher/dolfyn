@@ -1055,7 +1055,7 @@ class figobj(axgroup):
             self.fig.canvas.set_window_title(
                 'Fg%d: ' % (self.fig.number) + kwargs['title'])
 
-    def __init__(self, fignum, nax=[1, 1], axsize=[3, 3],
+    def __init__(self, fignum=None, nax=[1, 1], axsize=[3, 3],
                  frame=[.6, .3, 1, .3], gap=[.4, .4],
                  sharex=False, sharey=False,
                  **kwargs):

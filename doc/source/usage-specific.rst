@@ -1,5 +1,7 @@
 .. _usage-specific:
 
+.. |pm|   unicode:: U+00B1 .. PLUS-MINUS SIGN
+
 Usage - Specific Cases
 ======================
 
@@ -23,14 +25,17 @@ documentation (journal articles are forthcoming).
 Pre-Deployment Requirements
 ...........................
 
-In order to perform motion correction the IMU-ADV must be assembled and configured correctly:
+In order to perform motion correction the IMU-ADV must be assembled
+and configured correctly:
 
 1. The ADV *head* must be rigidly connected to the ADV *body*
    (pressure case, which contains the IMU sensor).
 
-   a. For fixed-head (fixed-stem) ADVs the body is rigidly connected to the body.
+   a. For fixed-head (fixed-stem) ADVs the body is rigidly connected
+      to the body.
 
-   b. For cable-head (cabled-probe) ADVs, a support structure must be constructed that rigidly connects the ADV body to the head.
+   b. For cable-head (cabled-probe) ADVs, a support structure must be
+      constructed that rigidly connects the ADV body to the head.
 
 2. The ADV software must be configured properly.  In the 'Deployment
    Planning' frame of the Vector Nortek Software, be sure that:
@@ -39,6 +44,9 @@ In order to perform motion correction the IMU-ADV must be assembled and configur
       xF'*.
 
    b. The 'Coordinate system' must be set to *'XYZ'*.
+
+   c. It is recommended to set the ADV velocity range to |pm| *4 m/s*,
+      or larger.
 
 3. For cable-head ADVs be sure to record the position and orientation
    of the ADV head relative to the ADV body (Figure 1).
@@ -49,7 +57,16 @@ In order to perform motion correction the IMU-ADV must be assembled and configur
    :alt: ADV head and body coordinate systems.
    :figwidth: 560px
 
-   Figure 1) Coordinate systems of the ADV body (magenta) and head (yellow). The :math:`\hat{x}^\mathrm{head}` -direction is known by the black-band around the transducer arm, and the :math:`\hat{x}^*` -direction is marked by a notch on the end-cap (indiscernible in the image). The cyan arrow indicates the body-to-head vector, :math:`\vec{\ell}_{head}^*` .  The perspective slightly distorts the fact that  :math:`\hat{x}^\mathrm{head} \parallel - \hat{z}^*` , :math:`\hat{y}^\mathrm{head} \parallel -\hat{y}^*` , and :math:`\hat{z}^\mathrm{head} \parallel -\hat{x}^*` .
+   Figure 1) Coordinate systems of the ADV body (magenta) and head
+   (yellow). The :math:`\hat{x}^\mathrm{head}` -direction is known by
+   the black-band around the transducer arm, and the
+   :math:`\hat{x}^*` -direction is marked by a notch on the end-cap
+   (indiscernible in the image). The cyan arrow indicates the
+   body-to-head vector, :math:`\vec{\ell}_{head}^*` .  The perspective
+   slightly distorts the fact that :math:`\hat{x}^\mathrm{head}
+   \parallel - \hat{z}^*` , :math:`\hat{y}^\mathrm{head} \parallel
+   -\hat{y}^*` , and :math:`\hat{z}^\mathrm{head} \parallel
+   -\hat{x}^*` .
 
 
 Data processing
@@ -63,7 +80,8 @@ primary methods for going about this:
    explicitly in Python::
 
      from dolfyn.adv import api as adv
-     
+     import numpy as np
+
    Load your data file, for example::
 
      dat_raw = adv.read_nortek('vector_data_imu01.vec')
@@ -114,9 +132,9 @@ primary methods for going about this:
 
    a. For fixed-head ADVs, the position and orientation of the head
       are known to the script so that all that is necessary is to
-      call, for example::
+      call, for example\ [#prfxnote]_::
 
-        $ motcorrect_vector.py --fixed-head vector_data_imu01.vec
+        $ python motcorrect_vector.py --fixed-head vector_data_imu01.vec
 
    b. For cable-head ADVs, you must specify the position and
       orientation of the head in a *.orient* file (the extension is
@@ -136,22 +154,25 @@ primary methods for going about this:
       <dolfyn_repository>/examples/ directory.
 
       With the orientation file defined, you specify it on the command
-      line using the ``-O`` flag::
+      line using the ``-O`` flag\ [#prfxnote]_::
         
-        $ motcorrect_vector.py -O My_Vector.orient vector_data_imu01.vec
+        $ python motcorrect_vector.py -O My_Vector.orient vector_data_imu01.vec
 
    The motcorrect_vector.py script also allows the user to specify the
    ``accel_filtfreq`` using the ``-f`` flag.  Therefore, to use a
    filter frequency of 0.1Hz (as opposed to the default 0.033Hz), you
-   could do::
+   could do\ [#prfxnote]_::
      
-     $ motcorrect_vector.py -O My_Vector.orient -f 0.1 vector_data_imu01.vec
+     $ python motcorrect_vector.py -O My_Vector.orient -f 0.1 vector_data_imu01.vec
 
    It is also possible to do motion correction of multiple data files
-   at once, for example::
+   at once, for example\ [#prfxnote]_::
 
-     $ motcorrect_vector.py --fixed-head vector_data_imu01.vec vector_data_imu02.vec
+     $ python motcorrect_vector.py --fixed-head vector_data_imu01.vec vector_data_imu02.vec
 
    In all of these cases the script will perform motion correction on
    the specified file and save the data in ENU coordinates, in Matlab
    format.  Happy motion-correcting!
+
+.. [#prfxnote] Calling ``python`` explicitly in the command line is
+               probably only required on Windows platforms.

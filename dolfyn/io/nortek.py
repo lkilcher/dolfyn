@@ -8,7 +8,6 @@ from ..adv import base as adv_base
 from .. import adp
 from ..tools import misc as tbx
 from struct import unpack
-from struct import error as str_err
 from ..data.base import ma
 from . import nortek_defs
 time = nortek_defs.time
@@ -94,7 +93,6 @@ class NortekReader(object):
         self.fname = fname
         self._bufsize = bufsize
         self.f = open(fname, 'rb', 1000)
-        self.read = self.f.read
         self.do_checksum = do_checksum
         self.filesize  # initialize the filesize.
         self.debug = debug
@@ -102,9 +100,9 @@ class NortekReader(object):
         self._dtypes = []
         self._npings = npings
         if endian is None:
-            if unpack('<HH', self.f.read(4)) == (1445, 24):
+            if unpack('<HH', self.read(4)) == (1445, 24):
                 endian = '<'
-            elif unpack('>HH', self.f.read(4)) == (1445, 24):
+            elif unpack('>HH', self.read(4)) == (1445, 24):
                 endian = '>'
             else:
                 raise Exception("I/O error: could not determine the \
@@ -144,10 +142,15 @@ class NortekReader(object):
         self.f.close()  # This has a small buffer, so close it.
         self.f = open(fname, 'rb', bufsize)  # This has a large buffer...
         self.close = self.f.close
-        self.read = self.f.read
         if npings is not None:
             self.n_samp_guess = npings + 1
         self.f.seek(pnow, 0)  # Seek to the previous position.
+
+    def read(self, nbyte):
+        byts = self.f.read(nbyte)
+        if not (len(byts) == nbyte):
+            raise EOFError('Reached the end of the file')
+        return byts
 
     def _sci_data(self, vardict):
         """Convert the data to scientific units accordint to vardict.
@@ -204,10 +207,10 @@ class NortekReader(object):
         self._thisid_bytes = bts = self.read(2)
         tmp = unpack(self.endian + 'BB', bts)
         if tmp[0] != 165:  # This catches a corrupted data block.
-            print('Corrupted data block sync code. \
-            Searching for next valid code...')
+            print('Corrupted data block sync code found in ping %d. Searching for next valid code...' % (self.c))
             val = int(self.findnext(do_cs=False), 0)
             self.f.seek(2, 1)
+            print('FOUND.')
             return val
         # if self.debug:
         #    print( tmp[1] )
@@ -488,6 +491,13 @@ class NortekReader(object):
                 'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
             self.data.AngRt = ma.marray(self.data.AngRt, ma.varMeta(
                 'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
+        if hasattr(self.data, 'DVel'):
+            # This value comes from the MS 3DM-GX3 MIP manual.
+            self.data.DVel *= 9.80665
+            self.data.DVel = ma.marray(self.data.DVel, ma.varMeta(
+                'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
+            self.data.DAng = ma.marray(self.data.DAng, ma.varMeta(
+                'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
 
     def read_microstrain(self,):
         """
@@ -502,11 +512,30 @@ class NortekReader(object):
         if self.debug:
             print('Reading vector microstrain data (0x71)...')
         byts0 = self.read(4)
-        ahrsid = unpack(self.endian + '3xB', byts0)[
-            0]  # The first 2 are the size, 3rd is count, 4th is the id.
+        # The first 2 are the size, 3rd is count, 4th is the id.
+        ahrsid = unpack(self.endian + '3xB', byts0)[0]
         c = self.c
-        if not hasattr(self.data, 'Accel'):
+        if not (hasattr(self.data, 'Accel') or hasattr(self.data, 'DVel')):
             self._dtypes += ['microstrain']
+            if ahrsid == 195:
+                self._orient_dnames = ['DVel', 'DAng', 'orientmat']
+                self.data.add_data(
+                    'DVel',
+                    np.empty((3, self.n_samp_guess), dtype=np.float32),
+                    'orient'
+                )
+                self.data.add_data(
+                    'DAng',
+                    np.empty((3, self.n_samp_guess), dtype=np.float32),
+                    'orient'
+                )
+                self.data.add_data(
+                    'orientmat',
+                    np.empty((3, 3, self.n_samp_guess),
+                             dtype=np.float32),
+                    'orient'
+                )
+                self.data.props['rotate_vars'].update({'DVel', 'DAng', })
             if ahrsid in [204, 210]:
                 self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'orientmat']
                 self.data.add_data(
@@ -529,33 +558,49 @@ class NortekReader(object):
                     self.data.add_data('orientmat', np.empty(
                         (3, 3, self.n_samp_guess), dtype=np.float32), 'orient')
             elif ahrsid == 211:
-                self._orient_dnames = ['Angle', 'Veloc', 'MagVe']
+                self._orient_dnames = ['DAng', 'DVel', 'Mag']
                 self.data.add_data(
-                    'Angle',
+                    'DAng',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
                 self.data.add_data(
-                    'Veloc',
+                    'DVel',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
                 self.data.add_data(
-                    'MagVe',
+                    'Mag',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
                 self.data.props['rotate_vars'].update(
-                    {'Angle', 'Veloc', 'MagVe'})
-        if ahrsid == 204:  # 0xcc
+                    {'DAng', 'DVel', 'Mag'})
+        byts = ''
+        if ahrsid == 195:  # 0xc3
+            byts = self.read(64)
+            dt = unpack(self.endian + '6f9f4x', byts)
+            (self.data.DAng[:, c],
+             self.data.DVel[:, c]) = (dt[0:3], dt[3:6],)
+            self.data.orientmat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
+        elif ahrsid == 204:  # 0xcc
             byts = self.read(78)
-            dt = unpack(self.endian + 'ffffffffffffffffff6x', byts)
+            dt = unpack(self.endian + '18f6x', byts)
                         # This skips the "DWORD" (4 bytes) and the AHRS
                         # checksum (2 bytes)
-            self.data.Accel[:, c], self.data.AngRt[
-                :, c], self.data.Mag[:, c] = (dt[0:3], dt[3:6], dt[6:9],)
-            self.data.orientmat[:,:, c] = ((dt[9:12], dt[12:15], dt[15:18]))
-        # Still need to add a reader for the other two ahrsid's (211,210).
+            (self.data.Accel[:, c],
+             self.data.AngRt[:, c],
+             self.data.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            self.data.orientmat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
+        elif ahrsid == 211:
+            byts = self.read(42)
+            dt = unpack(self.endian + '9f6x', byts)
+            (self.data.DAng[:, c],
+             self.data.DVel[:, c],
+             self.data.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+        else:
+            # Still need to add a reader for ahrsid 210.
+            raise Exception('This IMU data format is not currently supported by DOLfYN.')
         self.checksum(byts0 + byts)
 
     def read_vec_hdr(self,):
@@ -723,11 +768,7 @@ class NortekReader(object):
             func = np.uint8
             func2 = _bitshift8
         while True:
-            try:
-                val = unpack(self.endian + 'H', self.read(2))[0]
-            except:
-                if not len(self.read(2)) == 2:
-                    break
+            val = unpack(self.endian + 'H', self.read(2))[0]
             if func(val) == 165 and (not do_cs or cs == np.uint16(sum)):
                 self.f.seek(-2, 1)
                 return hex(func2(val))
@@ -742,19 +783,10 @@ class NortekReader(object):
         return self.pos
 
     def readnext(self,):
-        try:
-            id = '0x%02x' % self.read_id()
-        except str_err:
-            return 1
+        id = '0x%02x' % self.read_id()
         if id in self.fun_map.keys():
-            # This can cause some funny behavior if self.f.read throws an
-            # "error". It is an attempt at finding the eof, but there may be a
-            # better way.
-            try:
-                getattr(self, self.fun_map[id])()
-                return
-            except str_err:
-                return 2
+            getattr(self, self.fun_map[id])()
+            return
         else:
             print('Unrecognized identifier: ' + id)
             self.f.seek(-2, 1)
@@ -765,15 +797,18 @@ class NortekReader(object):
         # self.progbar=db.progress_bar(self.filesz)
         # self.progbar.init()
         retval = None
-        while not retval:
-            if self.c == nlines:
-                break
-            retval = self.readnext()
-            if retval == 10:
-                self.findnext()
-                retval = None
-            if self._npings is not None and self.c >= self._npings:
-                break
+        try:
+            while not retval:
+                if self.c == nlines:
+                    break
+                retval = self.readnext()
+                if retval == 10:
+                    self.findnext()
+                    retval = None
+                if self._npings is not None and self.c >= self._npings:
+                    break
+        except EOFError:
+            pass
         if retval == 2:
             self.c -= 1
         for nm, dat in self.data.iter():

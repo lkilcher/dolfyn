@@ -120,3 +120,63 @@ class time_array(np.ndarray):
     @property
     def matlab_datenum(self,):
         return mpltime2matlab_datenum(self)
+
+    def minmax(self, round_to=None):
+        """
+        Find the minimum and maximum values in the time object.
+
+        The value `round_to` specifies that the `min`/`max` values
+        should be rounded down/up (respectively) to the nearest:
+        'second', 's'
+        'minute', 'M'
+        'hour', 'h'
+        'day', 'd'
+        'month', 'm'
+        'year', 'y'
+        """
+        minmax = np.array([min(self), max(self)])
+        if round_to is None:
+            return minmax
+
+        elif round_to.lower().startswith('s'):
+            # Round to second:
+            minmax[0] = np.floor(minmax[0] * 24 * 3600) / (24 * 3600)
+            minmax[1] = np.ceil(minmax[1] * 24 * 3600) / (24 * 3600)
+
+        elif round_to == 'M' or round_to.lower().startswith('mi'):
+            # Round to minute:
+            minmax[0] = np.floor(minmax[0] * 24 * 60) / (24 * 60)
+            minmax[1] = np.ceil(minmax[1] * 24 * 60) / (24 * 60)
+
+        elif round_to.lower().startswith('h'):
+            # Round to hour:
+            minmax[0] = np.floor(minmax[0] * 24) / (24)
+            minmax[1] = np.ceil(minmax[1] * 24) / (24)
+
+        elif round_to.lower().startswith('d'):
+            # Round to day:
+            minmax[0] = np.floor(minmax[0])
+            minmax[1] = np.ceil(minmax[1])
+
+        elif round_to == 'm' or round_to.lower().startswith('mo'):
+            # Round to month:
+            dt = num2date(minmax[0])
+            minmax[0] = date2num(datetime(dt.year, dt.month, 1))
+            dt = num2date(minmax[1])
+            y = dt.year
+            m = dt.month
+            if m < 12:
+                m += 1
+            else:  # m==12
+                y += 1
+                m = 1
+            minmax[1] = date2num(datetime(y, m, 1))
+            
+        elif round_to.lower().startswith('y'):
+            # Round to year:
+            dt = num2date(minmax[0])
+            minmax[0] = date2num(datetime(dt.year, 1, 1))
+            dt = num2date(minmax[1])
+            minmax[1] = date2num(datetime(dt.year+1, 1, 1))
+
+        return minmax

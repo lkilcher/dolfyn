@@ -274,8 +274,8 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
       - step : nfft/2 specifies a 50% overlap.
       - step : nfft specifies no overlap.
       - step=2*nfft means that half the data will be skipped.
-      By default, `step` is calculated to maximize data use and have
-      at least 50% overlap.
+      By default, `step` is calculated to maximize data use, have
+      at least 50% overlap and minimize the number of ensembles.
 
 
     Returns
@@ -363,11 +363,11 @@ def psd(a, nfft, fs, window='hann', step=None):
                  'hann'               : hanning window.
                  a length(nfft) array : use this as the window directly.
     step   : Use this to specify the overlap.  For example:
-               step=nfft/2 specifies a 50% overlap.
-               step=nfft specifies no overlap.
-               step=2*nfft means that half the data will be skipped.
-               By default, `step` is calculated to maximize data use and have
-               at least 50% overlap.
+             -  step=nfft/2 specifies a 50% overlap.
+             -  step=nfft specifies no overlap.
+             -  step=2*nfft means that half the data will be skipped.
+             By default, `step` is calculated to maximize data use, have
+             at least 50% overlap and minimize the number of ensembles.
 
     Returns
     -------
