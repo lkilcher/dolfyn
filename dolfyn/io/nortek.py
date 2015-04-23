@@ -13,6 +13,13 @@ from . import nortek_defs
 time = nortek_defs.time
 
 
+def int2binarray(val, n):
+    out = np.zeros(n, dtype='bool')
+    for idx, n in enumerate(range(n)):
+        out[idx] = val & (2 ** n)
+    return out
+
+
 def read_nortek(filename, do_checksum=False, **kwargs):
     """
     Read a nortek file.
@@ -235,8 +242,8 @@ class NortekReader(object):
         self.config.user.add_data('Npings', tmp[5])
         self.config.user.add_data('AvgInterval', tmp[6])
         self.config.user.add_data('NBeams', tmp[7])
-        self.config.user.add_data('TimCtrlReg', bin(tmp[8])[2:])
-        self.config.user.add_data('PwrCtrlReg', bin(tmp[9])[2:])
+        self.config.user.add_data('TimCtrlReg', int2binarray(tmp[8], 16))
+        self.config.user.add_data('PwrCtrlReg', int2binarray(tmp[9], 16))
         self.config.user.add_data('A1', tmp[10])
         self.config.user.add_data('B0', tmp[11])
         self.config.user.add_data('B1', tmp[12])
@@ -250,17 +257,17 @@ class NortekReader(object):
         self.config.user.add_data('WrapMode', tmp[19])
         self.config.user.add_data('ClockDeploy', np.array(tmp[20:23]))
         self.config.user.add_data('DiagInterval', tmp[23])
-        self.config.user.add_data('Mode0', bin(tmp[24])[2:])
+        self.config.user.add_data('Mode0', int2binarray(tmp[24], 16))
         self.config.user.add_data('AdjSoundSpeed', tmp[25])
         self.config.user.add_data('NSampDiag', tmp[26])
         self.config.user.add_data('NBeamsCellDiag', tmp[27])
         self.config.user.add_data('NPingsDiag', tmp[28])
-        self.config.user.add_data('ModeTest', tmp[29])
+        self.config.user.add_data('ModeTest', int2binarray(tmp[29], 16))
         self.config.user.add_data('AnaInAddr', tmp[30])
         self.config.user.add_data('SWVersion', tmp[31])
         self.config.user.add_data('VelAdjTable', np.array(tmp[32:122]))
         self.config.user.add_data('Comments', tmp[122].partition('\x00')[0])
-        self.config.user.add_data('Mode1', bin(tmp[123])[2:])
+        self.config.user.add_data('Mode1', int2binarray(tmp[123], 16))
         self.config.user.add_data('DynPercPos', tmp[124])
         self.config.user.add_data('T1w', tmp[125])
         self.config.user.add_data('T2w', tmp[126])
@@ -272,6 +279,21 @@ class NortekReader(object):
         self.config.user.add_data('TiLag2', tmp[132])
         self.config.user.add_data('QualConst', np.array(tmp[133:141]))
         self.checksum(byts)
+        self.config.user.add_data('mode', {})
+        self.config.user['mode']['user_sound'] = self.config.user['Mode0'][0]
+        self.config.user['mode']['diagnostics_mode'] = self.config.user['Mode0'][1]
+        self.config.user['mode']['analog_output_mode'] = self.config.user['Mode0'][2]
+        self.config.user['mode']['output_format'] = ['Vector', 'ADV'][self.config.user['Mode0'][3]]
+        self.config.user['mode']['vel_scale'] = [1, 0.1][self.config.user['Mode0'][4]]
+        self.config.user['mode']['serial_output'] = self.config.user['Mode0'][5]
+        self.config.user['mode']['reserved_EasyQ'] = self.config.user['Mode0'][6]
+        self.config.user['mode']['stage'] = self.config.user['Mode0'][7]
+        self.config.user['mode']['output_power'] = self.config.user['Mode0'][8]
+        self.config.user['mode']['mode_test_use_DSP'] = self.config.user['ModeTest'][0]
+        self.config.user['mode']['mode_test_filter_output'] = ['total', 'correction_only'][self.config.user['ModeTest'][1]]  # noqa
+        self.config.user['mode']['rate'] = ['1hz', '2hz'][self.config.user['Mode1'][0]]
+        self.config.user['mode']['cell_position'] = ['fixed', 'dynamic'][self.config.user['Mode1'][1]]  # noqa
+        self.config.user['mode']['dynamic_pos_type'] = ['pct of mean press', 'pct of min re'][self.config.user['Mode1'][2]]  # noqa
 
     def read_head_cfg(self,):
         # ID: '0x04
@@ -362,6 +384,8 @@ class NortekReader(object):
         self.data.props['toff'] = 0
         # I must be able to calculate this here, right? # !!!TODO!!!
         self.data.props['doppler_noise'] = [0, 0, 0]
+        # Apply velocity scaling (1 or 0.1)
+        self.data._u *= self.config['user']['mode']['vel_scale']
 
     def read_vec_data(self,):
         """
@@ -616,10 +640,11 @@ class NortekReader(object):
         self.config.data_header.add_data('Noise1', tmp[1])
         self.config.data_header.add_data('Noise2', tmp[2])
         self.config.data_header.add_data('Noise3', tmp[3])
-        self.config.data_header.add_data('Spare0', tmp[4])
+        self.config.data_header.add_data('Spare0', byts[13])
         self.config.data_header.add_data('Corr1', tmp[5])
         self.config.data_header.add_data('Corr2', tmp[6])
         self.config.data_header.add_data('Corr3', tmp[7])
+        self.config.data_header.add_data('Spare1', byts[17:])
         self.checksum(byts)
 
     def read_awac_profile(self,):
