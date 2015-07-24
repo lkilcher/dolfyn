@@ -360,6 +360,15 @@ class CorrectMotion(object):
         Notes
         -----
 
+        After calling this function, `advo` will have *urot* and
+        *uacc* data attributes. The velocity vector attribute ``_u``
+        will be motion corrected according to:
+
+            u_corr = u_raw + uacc + urot
+
+        Therefore, to recover the 'raw' velocity, subtract uacc and
+        urot from ``_u``.
+
         This method does not return a data object, it operates on
         (motion corrects) the input `advo`.
 

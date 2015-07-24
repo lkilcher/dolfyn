@@ -13,3 +13,6 @@ dist
 dolfyn.egg-info
 
 doc/source/api/*
+
+*.pyc
+*~

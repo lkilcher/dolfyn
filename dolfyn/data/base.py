@@ -276,7 +276,11 @@ class Dgroups(Dbase):
             raise Exception('Classes must match to join objects.')
         n = len(self)
         for (nm, dat), (onm, odat) in zip(self, other):
-            dim = self._time_dim(dat, n)
+            try:
+                dim = self._time_dim(dat, n)
+            except (ValueError,  AttributeError):
+                # No dimension with that shape, so skip it.
+                continue
             if nan_joint:
                 shp = list(dat.shape)
                 shp[dim] = 1
@@ -390,7 +394,7 @@ class TimeBased(Dprops, Dgroups):
         If *n* is none,
         """
         if n is None:
-            n = len(self)
+            n = len(dat)
         if ma.valid and ma.marray in dat.__class__.__mro__:
             return dat.getdim('time')
         return dat.shape.index(n)
@@ -414,7 +418,7 @@ class config(Dgroups, dict):
     _lvl_spaces = 3
 
     def __init__(self, config_type='*UNKNOWN*'):
-        self['config_type'] = config_type
+        self.config_type = config_type
 
     def __getitem__(self, indx):
         return dict.__getitem__(self, indx)
@@ -441,8 +445,7 @@ class config(Dgroups, dict):
         return self.__repr_level__(0)
 
     def __repr_level__(self, level=0):
-        string = level * \
-            (self._lvl_spaces) * ' ' + '%s Configuration:\n' % self.config_type
+        string = level * (self._lvl_spaces) * ' ' + '%s Configuration:\n' % self.config_type
         for nm, dt in self:
             if nm in ['system', 'config_type']:
                 pass

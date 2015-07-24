@@ -515,13 +515,6 @@ class NortekReader(object):
                 'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
             self.data.AngRt = ma.marray(self.data.AngRt, ma.varMeta(
                 'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
-        if hasattr(self.data, 'DVel'):
-            # This value comes from the MS 3DM-GX3 MIP manual.
-            self.data.DVel *= 9.80665
-            self.data.DVel = ma.marray(self.data.DVel, ma.varMeta(
-                'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
-            self.data.DAng = ma.marray(self.data.DAng, ma.varMeta(
-                'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
 
     def read_microstrain(self,):
         """
@@ -538,18 +531,19 @@ class NortekReader(object):
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
+        #print byts0
         c = self.c
-        if not (hasattr(self.data, 'Accel') or hasattr(self.data, 'DVel')):
+        if not (hasattr(self.data, 'Accel')):
             self._dtypes += ['microstrain']
             if ahrsid == 195:
-                self._orient_dnames = ['DVel', 'DAng', 'orientmat']
+                self._orient_dnames = ['Accel', 'AngRt', 'orientmat']
                 self.data.add_data(
-                    'DVel',
+                    'Accel',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
                 self.data.add_data(
-                    'DAng',
+                    'AngRt',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
@@ -559,7 +553,7 @@ class NortekReader(object):
                              dtype=np.float32),
                     'orient'
                 )
-                self.data.props['rotate_vars'].update({'DVel', 'DAng', })
+                self.data.props['rotate_vars'].update({'Accel', 'AngRt', })
             if ahrsid in [204, 210]:
                 self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'orientmat']
                 self.data.add_data(
@@ -582,14 +576,14 @@ class NortekReader(object):
                     self.data.add_data('orientmat', np.empty(
                         (3, 3, self.n_samp_guess), dtype=np.float32), 'orient')
             elif ahrsid == 211:
-                self._orient_dnames = ['DAng', 'DVel', 'Mag']
+                self._orient_dnames = ['AngRt', 'Accel', 'Mag']
                 self.data.add_data(
-                    'DAng',
+                    'AngRt',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
                 self.data.add_data(
-                    'DVel',
+                    'Accel',
                     np.empty((3, self.n_samp_guess), dtype=np.float32),
                     'orient'
                 )
@@ -599,13 +593,13 @@ class NortekReader(object):
                     'orient'
                 )
                 self.data.props['rotate_vars'].update(
-                    {'DAng', 'DVel', 'Mag'})
+                    {'AngRt', 'Accel', 'Mag'})
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
             dt = unpack(self.endian + '6f9f4x', byts)
-            (self.data.DAng[:, c],
-             self.data.DVel[:, c]) = (dt[0:3], dt[3:6],)
+            (self.data.AngRt[:, c],
+             self.data.Accel[:, c]) = (dt[0:3], dt[3:6],)
             self.data.orientmat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
         elif ahrsid == 204:  # 0xcc
             byts = self.read(78)
@@ -619,12 +613,17 @@ class NortekReader(object):
         elif ahrsid == 211:
             byts = self.read(42)
             dt = unpack(self.endian + '9f6x', byts)
-            (self.data.DAng[:, c],
-             self.data.DVel[:, c],
+            (self.data.AngRt[:, c],
+             self.data.Accel[:, c],
              self.data.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
         else:
-            # Still need to add a reader for ahrsid 210.
-            raise Exception('This IMU data format is not currently supported by DOLfYN.')
+            print('Unrecognized IMU identifier: ' + str(ahrsid))
+            self.f.seek(-2, 1)
+            return 10
+
+            ## print self.f.read(100)
+            ## # Still need to add a reader for ahrsid 210.
+            ## raise Exception('This IMU data format is not currently supported by DOLfYN.')
         self.checksum(byts0 + byts)
 
     def read_vec_hdr(self,):
@@ -810,8 +809,7 @@ class NortekReader(object):
     def readnext(self,):
         id = '0x%02x' % self.read_id()
         if id in self.fun_map.keys():
-            getattr(self, self.fun_map[id])()
-            return
+            return getattr(self, self.fun_map[id])()
         else:
             print('Unrecognized identifier: ' + id)
             self.f.seek(-2, 1)
