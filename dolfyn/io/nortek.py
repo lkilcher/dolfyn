@@ -515,6 +515,10 @@ class NortekReader(object):
                 'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
             self.data.AngRt = ma.marray(self.data.AngRt, ma.varMeta(
                 'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
+        if self._ahrsid in [195, 211]:
+            # These are DAng and DVel, so we convert them to AngRt, Accel here
+            self.data.AngRt *= self.config.fs
+            self.data.Accel *= self.config.fs
 
     def read_microstrain(self,):
         """
@@ -531,6 +535,9 @@ class NortekReader(object):
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
+        if hasattr(self, '_ahrsid') and self._ahrsid != ahrsid:
+            raise Exception("AHRSID Changes mid-file!")
+        self._ahrsid = ahrsid
         #print byts0
         c = self.c
         if not (hasattr(self.data, 'Accel')):
