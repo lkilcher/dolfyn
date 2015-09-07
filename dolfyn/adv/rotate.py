@@ -106,10 +106,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                 -advo.props['declination'] * np.pi / 180)
             # The ordering is funny here because orientmat is the
             # transpose of the inst->earth rotation matrix:
-            advo['orientmat'][:2, :2] = np.einsum(
-                'ij,kjl->ikl',
-                np.array([[cd, -sd], [sd, cd]]),
-                advo['orientmat'][:2, :2])
+            Rdec = np.array([[cd, -sd, 0],
+                             [sd, cd, 0],
+                             [0, 0, 1]])
+            advo['orientmat'] = np.einsum('ij,kjl->ikl',
+                                          Rdec, 
+                                          advo['orientmat'])
 
             advo.props['declination_in_orientmat'] = True
 
@@ -293,17 +295,18 @@ def earth2principal(advo, reverse=False):
 
     # Calculate the rotation matrix:
     cp, sp = cos(ang), sin(ang)
-    rotmat = np.array([[cp, -sp],
-                       [sp, cp]], dtype=np.float32)
+    rotmat = np.array([[cp, -sp, 0],
+                       [sp, cp, 0],
+                       [0, 0, 1]], dtype=np.float32)
 
     # Perform the rotation:
     for nm in advo.props['rotate_vars']:
         dat = advo[nm]
-        dat[:2] = np.einsum('ij,jk', rotmat, dat[:2])
+        dat[:2] = np.einsum('ij,jk', rotmat[:2, :2], dat[:2])
 
     if hasattr(advo, 'orientmat'):
-        advo['orientmat'][:2, :2] = np.einsum(
-            'ij,kjl->ikl', rotmat, advo['orientmat'][:2, :2])
+        advo['orientmat'] = np.einsum('ij,kjl->ikl',
+                                      rotmat, advo['orientmat'])
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new
