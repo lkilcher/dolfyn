@@ -127,6 +127,7 @@ class CalcMotion(object):
         return dat
 
     def calc_urot(self, vec, to_earth=None):
+
         """
         Calculate the induced velocity due to rotations of the instrument
         about the IMU center.
@@ -318,15 +319,15 @@ class CorrectMotion(object):
         # then, the positions of the centers of the receivers is:
         if advo.make_model == 'Nortek VECTOR' and self.separate_probes:
             r = 0.076
-            phi = -30. * np.pi / \
-                180.  # The angle between the x-y plane and the probes
+            # The angle between the x-y plane and the probes
+            phi = -30. * np.pi / 180.
             theta = np.array([0., 120., 240.]) * np.pi / \
                 180.  # The angles of the probes from the x-axis.
             return (np.dot(advo.props['body2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
-                                     r * np.tan(phi) * np.ones(3)]))
-                    + advo.props['body2head_vec'][:, None]
+                                     r * np.tan(phi) * np.ones(3)])) +
+                    advo.props['body2head_vec'][:, None]
                     )
         else:
             return advo.props['body2head_vec']
