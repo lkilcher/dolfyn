@@ -35,7 +35,7 @@ class Saveable(Dgroups):
                        oned_as=oned_as) as svr:
             svr.write(self, groups=groups)
 
-    def save(self, filename, mode='w', where='/'):
+    def save(self, filename, mode='w', where='/', **kwargs):
         """
         Save the data in this object to file `filename` in the DOLfYN
         HDF5 format.
@@ -56,7 +56,7 @@ class Saveable(Dgroups):
           the 'h5py' module
         """
         with hdf5.Saver(filename, mode=mode) as svr:
-            svr.write(self, where=where)
+            svr.write(self, where=where, **kwargs)
 
     def load(self, groups, where='/', filename=None,):
         """

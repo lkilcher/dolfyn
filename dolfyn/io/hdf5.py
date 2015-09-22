@@ -56,8 +56,8 @@ class Saver(DataFactory):
     # '##' and ending with '##' is for specially handled groups.
     # Version 1.2: now using time_array.
     fletcher32 = True
-    complib = 'lzf'
-    complevel = 1
+    complib = 'gzip'
+    complevel = 2
     shuffle = True
 
     split_groups_into_files = False
@@ -164,7 +164,7 @@ class Saver(DataFactory):
         for ky, val in dct.iteritems():
             tmp.attrs.create(ky, pkl.dumps(val))
 
-    def write(self, obj, where='/', nosplit_file=False):
+    def write(self, obj, where='/', nosplit_file=False, **kwargs):
         """
         Write data in object `obj` to the file at location `where`.
         `obj` should be a DOLfYN type object; a subclass of the
@@ -211,6 +211,9 @@ class Saver(DataFactory):
                                             compression=self.complib,
                                             shuffle=self.shuffle,
                                             fletcher32=self.fletcher32,)
+                    for kw, d in kwargs.iteritems():
+                        if ky in d:
+                            nd.attrs.create(str(kw), d[ky])
 
                     if val.__class__ is time_array:
                         nd.attrs.create('time_var', 'True')
