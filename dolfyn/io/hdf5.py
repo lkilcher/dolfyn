@@ -48,13 +48,16 @@ class Saver(DataFactory):
     - h5py
 
     """
-    ver = 1.2  # The version number of the save format.
+    ver = 1.3  # The version number of the save format.
+
     # Version 1.0: underscore ('_') handled inconsistently.
     # Version 1.1: '_' and '#' handled consistently in group naming:
-    #         '_' is for essential groups.
     # '#' is for groups that should be excluded, unless listed explicitly.
     # '##' and ending with '##' is for specially handled groups.
     # Version 1.2: now using time_array.
+    #         '_' is for essential groups.
+    # Version 1.3: Now load/unload is fully symmetric (needed for __eq__ tests).
+    #         Added _config_type to i/o.
     fletcher32 = True
     complib = 'gzip'
     complevel = 2
@@ -139,6 +142,8 @@ class Saver(DataFactory):
 
         """
         self.get_group(where).attrs.create('_object_type', str(obj.__class__))
+        if isinstance(obj, config) and obj.config_type not in [None, '*UNKNOWN*']:
+            self.get_group(where).attrs.create('_config_type', obj.config_type)
 
     def write_dict(self, name, dct, where='/'):
         """
@@ -203,9 +208,7 @@ class Saver(DataFactory):
                                where + '/' + grp_nm + '/_' + ky,
                                nosplit_file=True)
 
-                elif ((np.ndarray in val.__class__.__mro__) or
-                      (ma and val.__class__ is ma.marray)) and \
-                        val.__len__() > 0:
+                elif isinstance(val, (np.ndarray, )) and len(val) > 0:
                     nd = grp.create_dataset(str(ky),
                                             data=val,
                                             compression=self.complib,
@@ -229,7 +232,7 @@ class Saver(DataFactory):
                 elif val.__class__ is dict:
                     grp.attrs.create(ky, pkl.dumps(val))
                 else:
-                    grp.attrs.create(ky, val)
+                    grp.attrs.create(ky, pkl.dumps(val))
 
 
 # class UpdateTool(DataFactory):
@@ -502,10 +505,8 @@ class Loader(DataFactory):
                                           )
                         for atnm in nd.attrs.keys():
                             if atnm not in ['_name', '_units', 'dim_names']:
-                                setattr(
-                                    meta, atnm, pkl.loads(nd.attrs.get(atnm)))
-                        setattr(
-                            out, nm, ma.marray(getattr(out, nm), meta=meta))
+                                setattr(meta, atnm, pkl.loads(nd.attrs.get(atnm)))
+                        setattr(out, nm, ma.marray(getattr(out, nm), meta=meta))
         self.read_attrs(out, groups=groups, where=where)
         out.__postload__()
         return out
@@ -552,6 +553,9 @@ class Loader(DataFactory):
                         # This is a catch for deleted module-specific config
                         # objects
                         out = config()
+                        nd = self.get_group(where)
+                        if '_config_type' in nd.attrs:
+                            out.config_type = nd.attrs.get('_config_type')
                     else:
                         try:
                             out = self.type_map[

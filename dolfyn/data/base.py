@@ -1,7 +1,9 @@
 import numpy as np
 import copy
-from ..OrderedSet import OrderedSet as oset
 from ..meta import api_dumb as ma
+import numpy.testing as nptest
+#from ..OrderedSet import OrderedSet as oset
+oset = set
 
 
 class DataError(Exception):
@@ -20,12 +22,35 @@ def cat(a, axis=0):
     return out
 
 
+def _equiv_dict(d1, d2):
+    if set(d2.keys()) == set(d1.keys()):
+        for ky in d1:
+            try:
+                if isinstance(d1[ky], np.ndarray):
+                    assert type(d1[ky]) is type(d2[ky])
+                    nptest.assert_equal(d1[ky], d2[ky])
+                elif isinstance(d1[ky], dict):
+                    assert _equiv_dict(d1[ky], d2[ky])
+                else:
+                    assert d1[ky] == d2[ky]
+            except AssertionError:
+                return False
+        return True
+    return False
+
+
 class Dbase(object):
 
     """
     The base data object class.
     """
-    pass
+    def __eq__(self, other):
+        """
+        Test for equivalence, between data objects.
+        """
+        if type(other) is not type(self):
+            return False
+        return _equiv_dict(self.__dict__, other.__dict__)
 
 
 class props(dict):
@@ -42,6 +67,7 @@ class Dprops(Dbase):
     """
     A base data class, which implements the 'props' attribute.
     """
+
     @property
     def props(self,):
         if not hasattr(self, '__props__'):
@@ -228,7 +254,8 @@ class Dgroups(Dbase):
         for grpnm, dnm in self.groups.iter(groups=groups):
             yield dnm, getattr(self, dnm)
 
-    __iter__ = iter
+    # This needs to behave like a dict!
+    #__iter__ = iter
     iteritems = iter
 
     def iter_wg(self, groups=None):
@@ -420,6 +447,9 @@ class config(Dgroups, dict):
     def __init__(self, config_type='*UNKNOWN*'):
         self.config_type = config_type
 
+    def __eq__(self, other):
+        return _equiv_dict(self, other) and type(self) is type(other)
+
     def __getitem__(self, indx):
         return dict.__getitem__(self, indx)
 
@@ -446,7 +476,7 @@ class config(Dgroups, dict):
 
     def __repr_level__(self, level=0):
         string = level * (self._lvl_spaces) * ' ' + '%s Configuration:\n' % self.config_type
-        for nm, dt in self:
+        for nm, dt in self.iteritems():
             if nm in ['system', 'config_type']:
                 pass
             elif config in dt.__class__.__mro__:
