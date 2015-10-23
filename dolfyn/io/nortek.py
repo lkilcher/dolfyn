@@ -214,25 +214,29 @@ class NortekReader(object):
         """
         self._thisid_bytes = bts = self.read(2)
         tmp = unpack(self.endian + 'BB', bts)
+        if self.debug == 2:
+            print 'Positon: {}, codes: {}'.format(self.f.tell(), tmp)
         if tmp[0] != 165:  # This catches a corrupted data block.
-            print('Corrupted data block sync code found in ping %d. Searching for next valid code...' % (self.c))
+            print('Corrupted data block sync code found in ping %d. '
+                  'Searching for next valid code...' % (self.c))
             val = int(self.findnext(do_cs=False), 0)
             self.f.seek(2, 1)
-            print('FOUND.')
+            print('FOUND {}.'.format(val))
+            if self.debug:
+                print('  at position: {}'.format(self.pos))
             return val
         # if self.debug:
         #    print( tmp[1] )
         return tmp[1]
 
     def read_user_cfg(self,):
-        # ID: '0x00
+        # ID: '0x00 = 00
         if self.debug:
             print('Reading user configuration (0x00)...')
         self.config.add_data('user', adv_base.ADVconfig('USER'))
         byts = self.read(508)
-        tmp = unpack(
-            self.endian + '2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H', byts)
-            # the first two are the size.
+        tmp = unpack(self.endian + '2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H', byts)
+        # the first two are the size.
         self.config.user.add_data(
             'Transmit', {'pulse length': tmp[0],
                          'blank distance': tmp[1],
@@ -297,7 +301,7 @@ class NortekReader(object):
         self.config.user['mode']['dynamic_pos_type'] = ['pct of mean press', 'pct of min re'][self.config.user['Mode1'][2]]  # noqa
 
     def read_head_cfg(self,):
-        # ID: '0x04
+        # ID: '0x04 = 04
         if self.debug:
             print('Reading head configuration (0x04)...')
         self.config.add_data('head', adv_base.ADVconfig('HEAD'))
@@ -314,7 +318,7 @@ class NortekReader(object):
         self.checksum(byts)
 
     def read_hw_cfg(self,):
-        # ID 0x05
+        # ID 0x05 = 05
         if self.debug:
             print('Reading hardware configuration (0x05)...')
         self.config.add_data('hardware', adv_base.ADVconfig('HARDWARE'))
@@ -344,7 +348,7 @@ class NortekReader(object):
         self.checksum(byts)
 
     def read_vec_checkdata(self,):
-        # ID: '0x07
+        # ID: 0x07 = 07
         if self.debug:
             print('Reading vector check data (0x07)...')
         byts0 = self.read(6)
@@ -392,7 +396,10 @@ class NortekReader(object):
         """
         Read vector data.
         """
-        # ID: 0x10
+        # ID: 0x10 = 16
+        if self.flag_lastread_sysdata is None:
+            print('Warning: First "vector data" block '
+                  'is before first "vector system data" block.')
         if not self.flag_lastread_sysdata:
             self.c += 1
         c = self.c
@@ -460,7 +467,7 @@ class NortekReader(object):
         """
         Read vector system data.
         """
-        # ID: 0x11
+        # ID: 0x11 = 17
         self.flag_lastread_sysdata = True
         self.c += 1
         c = self.c
@@ -525,7 +532,10 @@ class NortekReader(object):
         """
         Read microstrain sensor data.
         """
-        # 0x71
+        # 0x71 = 113
+        if self.flag_lastread_sysdata is None:
+            print('Warning: First "microstrain data" block '
+                  'is before first "vector system data" block.')
         if self.flag_lastread_sysdata:
             # This handles a bug where the system data gets written between the
             # last 'vec_data' and its associated 'microstrain' data.
@@ -635,7 +645,7 @@ class NortekReader(object):
         self.checksum(byts0 + byts)
 
     def read_vec_hdr(self,):
-        # ID: '0x12
+        # ID: '0x12 = 18
         if self.debug:
             print('Reading vector header data (0x12)...')
         byts = self.read(38)
@@ -655,7 +665,7 @@ class NortekReader(object):
         self.checksum(byts)
 
     def read_awac_profile(self,):
-        # ID: '0x20'
+        # ID: '0x20' = 32
         if self.debug:
             print('Reading AWAC velocity data (0x20)...')
         nbins = self.config.user.NBins
@@ -685,8 +695,8 @@ class NortekReader(object):
         tmp = unpack(self.endian + str(3 * nbins) + 'h' +
                      str(3 * nbins) + 'B', byts[116:116 + 9 * nbins])
         for idx in range(3):
-            self.data._u[idx,:, c] = tmp[idx * nbins: (idx + 1) * nbins]
-            self.data._amp[idx,:, c] = tmp[(idx + 3) * nbins:
+            self.data._u[idx, :, c] = tmp[idx * nbins: (idx + 1) * nbins]
+            self.data._amp[idx, :, c] = tmp[(idx + 3) * nbins:
                                             (idx + 4) * nbins]
         self.checksum(byts)
 
@@ -760,8 +770,8 @@ class NortekReader(object):
         if not hasattr(self, '_filesz'):
             pos = self.pos
             self.f.seek(0, 2)
-                        # Seek to the end of the file to determine the
-                        # filesize.
+            # Seek to the end of the file to determine the
+            # filesize.
             self._filesz = self.pos
             self.f.seek(pos, 0)  # Return to the initial position.
         return self._filesz
