@@ -290,8 +290,7 @@ def earth2principal(advo, reverse=False):
         print('Data is already in the %s coordinate system' % cs_new)
         return
     elif not advo.props['coord_sys'] == cs_now:
-        print('Data must be in the %s frame prior to using this function' %
-              cs_now)
+        raise Exception('Data must be in the {} frame prior to using this function'.format(cs_now))
 
     # Calculate the rotation matrix:
     cp, sp = cos(ang), sin(ang)

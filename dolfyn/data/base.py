@@ -459,10 +459,14 @@ class config(Dgroups, dict):
     def __setattr__(self, nm, val):
         self[nm] = val
 
+    def __copy__(self, ):
+        out = self.__class__(self.config_type)
+        for nm in self:
+            out[nm] = copy.copy(self[nm])
+
     def __getattr__(self, nm):
         if nm not in self.keys():
-            raise AttributeError(
-                ("'self.__class__' object has no attribute '%s'" % (nm)))
+            raise AttributeError("{} object has no attribute '{}'".format(self.__class__, nm))
         return self[nm]
 
     # @property
