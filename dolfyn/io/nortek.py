@@ -83,6 +83,7 @@ class NortekReader(object):
 
 
     """
+    flag_lastread_sysdata = None
 
     fun_map = {'0x00': 'read_user_cfg',
                '0x04': 'read_head_cfg',
@@ -724,7 +725,9 @@ class NortekReader(object):
         for i in range(iternum):
             self.findnextid(searchcode)
         # Compute the average of the data size:
-        return (self.pos - p0) / iternum
+        if self.debug:
+            print 'p0={}, pos={}, i={}'.format(p0, self.pos, i)
+        return (self.pos - p0) / (i + 1)
 
     def init_ADV(self,):
         self.data = adv_base.ADVraw()
@@ -809,8 +812,20 @@ class NortekReader(object):
     def findnextid(self, id):
         if id.__class__ is str:
             id = int(id, 0)
-        while int(self.findnext(), 0) != id:
-            pass
+        nowid = None
+        while nowid != id:
+            nowid = self.read_id()
+            if nowid == 16:
+                # Vector velocity data doesn't have a 'size' field. !?
+                # sz = 24
+                # We already read(2) for id, so we shift by sz-2
+                shift = 22
+            else:
+                sz = 2 * unpack(self.endian + 'H', self.read(2))[0]
+                # We already read(2) for id, and read(2) for size, so we shift by sz-4
+                shift = sz - 4
+            #print 'nowid = {}, size = {}'.format(nowid, sz)
+            self.f.seek(shift, 1)
         return self.pos
 
     def readnext(self,):
