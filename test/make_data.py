@@ -1,4 +1,15 @@
-import run_tests as rt
+"""
+!!!Warning!!! the lines in this file will rebuild data files that
+are benchmark tests. Uncomment lines to rebuiled data files only if
+you know you have fixed a bug, and wish to fix an existing test data
+set.
+"""
+print __doc__
 
-rt.read_test(make_data=True)
-rt.motion_test(make_data=True)
+import adv_tests as advt
+
+#advt.read_test(make_data=True)
+#advt.motion_test(make_data=True)
+#advt.heading_test(make_data=True)
+#advt.turbulence_test(make_data=True)
+#advt.clean_test(make_data=True)

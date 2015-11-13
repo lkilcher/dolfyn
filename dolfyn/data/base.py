@@ -463,6 +463,9 @@ class config(Dgroups, dict):
         out = self.__class__(self.config_type)
         for nm in self:
             out[nm] = copy.copy(self[nm])
+        return out
+
+    copy = __copy__
 
     def __getattr__(self, nm):
         if nm not in self.keys():

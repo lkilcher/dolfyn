@@ -110,7 +110,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                              [sd, cd, 0],
                              [0, 0, 1]])
             advo['orientmat'] = np.einsum('ij,kjl->ikl',
-                                          Rdec, 
+                                          Rdec,
                                           advo['orientmat'])
 
             advo.props['declination_in_orientmat'] = True
