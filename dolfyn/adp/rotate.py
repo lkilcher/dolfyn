@@ -5,16 +5,17 @@ deg2rad = np.pi / 180.
 
 
 def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
-    """
-    Calculate the rotation matrix from beam coordinates to
-    instrument-head coordinates.
+    """Calculate the rotation matrix from beam coordinates to
+    instrument head coordinates.
 
-    *theta* is the angle of the heads (usually 20 or 30 degrees)
+    Parameters
+    ----------
+    theta : is the angle of the heads (usually 20 or 30 degrees)
 
-    *convex* is a flag for convex or concave head configuration.
+    convex : is a flag for convex or concave head configuration.
 
-    *degrees* is a flag which specifies whether *theta* is in degrees
-        or radians (default: *degrees*=True)
+    degrees : is a flag which specifies whether theta is in degrees
+        or radians (default: degrees=True)
     """
     if degrees:
         theta = theta * deg2rad
@@ -25,13 +26,13 @@ def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
     a = 1 / (2. * np.sin(theta))
     b = 1 / (4. * np.cos(theta))
     d = a / (2. ** 0.5)
-    return np.array([[c * a, -c * a,    0,   0],
-                     [0,      0, -c * a, c * a],
-                     [b,      b,    b,   b],
-                     [d,      d,   -d,  -d]])
+    return np.array([[c * a, -c * a, 0, 0],
+                     [0, 0, -c * a, c * a],
+                     [b, b, b, b],
+                     [d, d, -d, -d]])
 
 
-def cat4rot(tpl):
+def _cat4rot(tpl):
     tmp = []
     for vl in tpl:
         tmp.append(vl[:, None, :])
@@ -39,6 +40,8 @@ def cat4rot(tpl):
 
 
 def beam2inst(adcpo,):
+    """Rotate velocities from beam to instrument coordinates.
+    """
     if hasattr(adcpo.config, 'rotmat'):
         rotmat = adcpo.config.rotmat
     else:
@@ -79,11 +82,10 @@ def beam2inst(adcpo,):
 
 
 def inst2earth(adcpo, fixed_orientation=False):
-    """
-    Rotate the velocities from the instrument to the earth frame.
+    """Rotate velocities from the instrument to the earth frame.
 
-    The rotation matrix is taken from Teledyne RDI's
-    "ADCP Coordinate Transformation" manual, (January 2008).
+    The rotation matrix is taken from the Teledyne RDI
+    ADCP Coordinate Transformation manual January 2008
     """
     r = adcpo.roll_deg * deg2rad
     p = np.arctan(np.tan(adcpo.pitch_deg * deg2rad) * np.cos(r))

@@ -270,9 +270,19 @@ class VelBindatTke(Velocity, TimeBindat):
 class VelBinnerTke(TimeBinner):
 
     def calc_tke(self, veldat, noise=[0, 0, 0]):
-        """
-        Calculate the tke (variances of u,v,w) for the data object
-        *veldat* and place them in *outdat.
+        """Calculate the tke (variances of u,v,w).
+
+        Parameters
+        ----------
+        veldat : a velocity data array. The last dimension is assumed
+                 to be time.
+
+        noise : a three-element vector of the noise levels of the
+                velocity data for ach component of velocity.
+
+        Returns
+        -------
+        out : An array of tke values.
         """
         out = np.mean(self.detrend(veldat) ** 2,
                       -1, dtype=np.float64).astype('float32')
@@ -282,9 +292,16 @@ class VelBinnerTke(TimeBinner):
         return out
 
     def calc_stress(self, veldat):
-        """
-        Calculate the stresses (cross-covariances of u,v,w) for the data object
-        `veldat` and place them in `outdat`.
+        """Calculate the stresses (cross-covariances of u,v,w).
+
+        Parameters
+        ----------
+        veldat : a velocity data array. The last dimension is assumed
+                 to be time.
+
+        Returns
+        -------
+        out : An array of stress values.
         """
         out = np.empty(self._outshape(veldat.shape)[:-1], dtype=np.float32)
         out[0] = np.mean(self.detrend(veldat[0]) * self.detrend(veldat[1]),

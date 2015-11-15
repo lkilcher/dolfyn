@@ -150,8 +150,20 @@ primary methods for going about this:
                   [-1, 0, 0],]
 
       Examples of estimating ROTMAT for more complex orientations can
-      be found in the *.orient* files found in the
-      <dolfyn_repository>/examples/ directory.
+      be found in the *.orient* files found in the :repo:`examples directory </tree/master/examples/>` of the :repo:`dolfyn repository </>`.
+
+      It is also possible to specify a magnetic declination in the
+      *.orient* file. Magnetic declination (the direction of Magnetic
+      North) is specified in degrees clockwise from True North. For
+      example::
+
+        DECLINATION = 16.3
+
+      By specifying the declination in this way, the data output by
+      the motcorrect_vector.py script will be in an ENU coordinate
+      system refeferenced to True North, rather than magnetic north
+      (when the declination is not specified).  Values for declination
+      can be obtained from a number of websites, e.g. `<http://www.ngdc.noaa.gov/geomag-web/>`_.
 
       With the orientation file defined, you specify it on the command
       line using the ``-O`` flag\ [#prfxnote]_::

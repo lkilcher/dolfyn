@@ -56,3 +56,15 @@ ROTMAT = [[0,0,1],
 
 VEC = [.13, 0.04, 1.3] # in meters
 
+###############
+# DECLINATION #
+###############
+## The magnetic declination may be included in this script.  If it is,
+## rotation of velocity fields to the earth frame will include the
+## declination correction.
+
+## Declination should be specified in degrees east (clockwise) of True
+## North.  i.e.: positive declination indicates that magnetic north is
+## clockwise from True.
+
+DECLINATION = 14.3

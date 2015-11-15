@@ -366,6 +366,7 @@ def psd(a, nfft, fs, window='hann', step=None):
              -  step=nfft/2 specifies a 50% overlap.
              -  step=nfft specifies no overlap.
              -  step=2*nfft means that half the data will be skipped.
+
              By default, `step` is calculated to maximize data use, have
              at least 50% overlap and minimize the number of ensembles.
 
