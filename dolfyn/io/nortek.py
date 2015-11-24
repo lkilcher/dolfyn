@@ -11,6 +11,8 @@ from struct import unpack
 from ..data.base import ma
 from . import nortek_defs
 time = nortek_defs.time
+from ..data.base import config
+from pycoda.base import data
 
 
 def int2binarray(val, n):
@@ -120,7 +122,7 @@ class NortekReader(object):
         self.f.seek(0, 0)
         # print( unpack(self.endian+'HH',self.read(4)) )
         # This is the configuration data:
-        self.config = adv_base.db.config(config_type='NORTEK Header Data')
+        self.config = config(_type='NORTEK Header Data')
         # Now read the header:
         err_msg = "I/O error: The file does not \
                    appear to be a Nortek data file."
@@ -171,7 +173,10 @@ class NortekReader(object):
 
         """
         for nm, vd in vardict.iteritems():
-            retval = vd.sci_func(getattr(self.data, nm))
+            if vd.group is None:
+                retval = vd.sci_func(getattr(self.data, nm))
+            else:
+                retval = vd.sci_func(getattr(self.data[vd.group], nm))
             # This checks whether a new data object was created:
             # sci_func returns None if it modifies the existing data.
             if retval is not None:
@@ -188,10 +193,11 @@ class NortekReader(object):
 
         """
         for nm, va in vardict.iteritems():
-            if not hasattr(self.data, nm):
-                self.data.add_data(nm,
-                                   va._empty_array(self.n_samp_guess),
-                                   va.group)
+            if nm not in self.data:
+                if va.group is None:
+                    self.data[nm] = va._empty_array(self.n_samp_guess)
+                else:
+                    self.data[va.group][nm] = va._empty_array(self.n_samp_guess)
 
     def checksum(self, byts):
         """
@@ -233,58 +239,55 @@ class NortekReader(object):
         # ID: '0x00 = 00
         if self.debug:
             print('Reading user configuration (0x00)...')
-        self.config.add_data('user', adv_base.ADVconfig('USER'))
+        self.config['user'] = config(_type='USER')
         byts = self.read(508)
         tmp = unpack(self.endian + '2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H', byts)
         # the first two are the size.
-        self.config.user.add_data(
-            'Transmit', {'pulse length': tmp[0],
-                         'blank distance': tmp[1],
-                         'receive length': tmp[2],
-                         'time_between_pings': tmp[3],
-                         'time_between_bursts': tmp[4],
-                         })
-        self.config.user.add_data('Npings', tmp[5])
-        self.config.user.add_data('AvgInterval', tmp[6])
-        self.config.user.add_data('NBeams', tmp[7])
-        self.config.user.add_data('TimCtrlReg', int2binarray(tmp[8], 16))
-        self.config.user.add_data('PwrCtrlReg', int2binarray(tmp[9], 16))
-        self.config.user.add_data('A1', tmp[10])
-        self.config.user.add_data('B0', tmp[11])
-        self.config.user.add_data('B1', tmp[12])
-        self.config.user.add_data('CompassUpdRate', tmp[13])
-        self.config.user.add_data(
-            'CoordSystem', ['ENU', 'XYZ', 'BEAM'][tmp[14]])
-        self.config.user.add_data('NBins', tmp[15])
-        self.config.user.add_data('BinLength', tmp[16])
-        self.config.user.add_data('MeasInterval', tmp[17])
-        self.config.user.add_data('DeployName', tmp[18].partition('\x00')[0])
-        self.config.user.add_data('WrapMode', tmp[19])
-        self.config.user.add_data('ClockDeploy', np.array(tmp[20:23]))
-        self.config.user.add_data('DiagInterval', tmp[23])
-        self.config.user.add_data('Mode0', int2binarray(tmp[24], 16))
-        self.config.user.add_data('AdjSoundSpeed', tmp[25])
-        self.config.user.add_data('NSampDiag', tmp[26])
-        self.config.user.add_data('NBeamsCellDiag', tmp[27])
-        self.config.user.add_data('NPingsDiag', tmp[28])
-        self.config.user.add_data('ModeTest', int2binarray(tmp[29], 16))
-        self.config.user.add_data('AnaInAddr', tmp[30])
-        self.config.user.add_data('SWVersion', tmp[31])
-        self.config.user.add_data('VelAdjTable', np.array(tmp[32:122]))
-        self.config.user.add_data('Comments', tmp[122].partition('\x00')[0])
-        self.config.user.add_data('Mode1', int2binarray(tmp[123], 16))
-        self.config.user.add_data('DynPercPos', tmp[124])
-        self.config.user.add_data('T1w', tmp[125])
-        self.config.user.add_data('T2w', tmp[126])
-        self.config.user.add_data('T3w', tmp[127])
-        self.config.user.add_data('NSamp', tmp[128])
-        self.config.user.add_data('NBurst', tmp[129])
-        self.config.user.add_data('AnaOutScale', tmp[130])
-        self.config.user.add_data('CorrThresh', tmp[131])
-        self.config.user.add_data('TiLag2', tmp[132])
-        self.config.user.add_data('QualConst', np.array(tmp[133:141]))
+        self.config.user['Transmit'] = {'pulse length': tmp[0],
+                                        'blank distance': tmp[1],
+                                        'receive length': tmp[2],
+                                        'time_between_pings': tmp[3],
+                                        'time_between_bursts': tmp[4], }
+        self.config.user['Npings'] = tmp[5]
+        self.config.user['AvgInterval'] = tmp[6]
+        self.config.user['NBeams'] = tmp[7]
+        self.config.user['TimCtrlReg'] = int2binarray(tmp[8], 16)
+        self.config.user['PwrCtrlReg'] = int2binarray(tmp[9], 16)
+        self.config.user['A1'] = tmp[10]
+        self.config.user['B0'] = tmp[11]
+        self.config.user['B1'] = tmp[12]
+        self.config.user['CompassUpdRate'] = tmp[13]
+        self.config.user['CoordSystem'] = ['ENU', 'XYZ', 'BEAM'][tmp[14]]
+        self.config.user['NBins'] = tmp[15]
+        self.config.user['BinLength'] = tmp[16]
+        self.config.user['MeasInterval'] = tmp[17]
+        self.config.user['DeployName'] = tmp[18].partition('\x00')[0]
+        self.config.user['WrapMode'] = tmp[19]
+        self.config.user['ClockDeploy'] = np.array(tmp[20:23])
+        self.config.user['DiagInterval'] = tmp[23]
+        self.config.user['Mode0'] = int2binarray(tmp[24], 16)
+        self.config.user['AdjSoundSpeed'] = tmp[25]
+        self.config.user['NSampDiag'] = tmp[26]
+        self.config.user['NBeamsCellDiag'] = tmp[27]
+        self.config.user['NPingsDiag'] = tmp[28]
+        self.config.user['ModeTest'] = int2binarray(tmp[29], 16)
+        self.config.user['AnaInAddr'] = tmp[30]
+        self.config.user['SWVersion'] = tmp[31]
+        self.config.user['VelAdjTable'] = np.array(tmp[32:122])
+        self.config.user['Comments'] = tmp[122].partition('\x00')[0]
+        self.config.user['Mode1'] = int2binarray(tmp[123], 16)
+        self.config.user['DynPercPos'] = tmp[124]
+        self.config.user['T1w'] = tmp[125]
+        self.config.user['T2w'] = tmp[126]
+        self.config.user['T3w'] = tmp[127]
+        self.config.user['NSamp'] = tmp[128]
+        self.config.user['NBurst'] = tmp[129]
+        self.config.user['AnaOutScale'] = tmp[130]
+        self.config.user['CorrThresh'] = tmp[131]
+        self.config.user['TiLag2'] = tmp[132]
+        self.config.user['QualConst'] = np.array(tmp[133:141])
         self.checksum(byts)
-        self.config.user.add_data('mode', {})
+        self.config.user['mode'] = {}
         self.config.user['mode']['user_sound'] = self.config.user['Mode0'][0]
         self.config.user['mode']['diagnostics_mode'] = self.config.user['Mode0'][1]
         self.config.user['mode']['analog_output_mode'] = self.config.user['Mode0'][2]
@@ -304,47 +307,48 @@ class NortekReader(object):
         # ID: '0x04 = 04
         if self.debug:
             print('Reading head configuration (0x04)...')
-        self.config.add_data('head', adv_base.ADVconfig('HEAD'))
+        self.config['head'] = config(_type='HEAD')
         byts = self.read(220)
         tmp = unpack(self.endian + '2x3H12s176s22xH', byts)
-        self.config.head.add_data('config', tmp[0])
-        self.config.head.add_data('freq', tmp[1])
-        self.config.head.add_data('type', tmp[2])
-        self.config.head.add_data('serialNum', tmp[3])
-        self.config.head.add_data('system', tmp[4])
-        self.config.head.add_data('TransMatrix', np.array(
-            unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.)
-        self.config.head.add_data('NBeams', tmp[5])
+        self.config.head['config'] = tmp[0]
+        self.config.head['freq'] = tmp[1]
+        self.config.head['type'] = tmp[2]
+        self.config.head['serialNum'] = tmp[3]
+        self.config.head['system'] = tmp[4]
+        self.config.head['TransMatrix'] = np.array(
+            unpack(self.endian + '9h',
+                   tmp[4][8:26])).reshape(3, 3) / 4096.
+        self.config.head['NBeams'] = tmp[5]
         self.checksum(byts)
 
     def read_hw_cfg(self,):
         # ID 0x05 = 05
         if self.debug:
             print('Reading hardware configuration (0x05)...')
-        self.config.add_data('hardware', adv_base.ADVconfig('HARDWARE'))
+        self.config['hardware'] = config(_type='HARDWARE')
         byts = self.read(44)
         tmp = unpack(self.endian + '2x14s6H12xI', byts)
-        self.config.hardware.add_data('serialNum', tmp[0][:8])
-        self.config.hardware.add_data('ProLogID', unpack('B', tmp[0][8])[0])
-        self.config.hardware.add_data('ProLogFWver', tmp[0][10:])
-        self.config.hardware.add_data('config', tmp[1])
-        self.config.hardware.add_data('freq', tmp[2])
-        self.config.hardware.add_data('PICversion', tmp[3])
-        self.config.hardware.add_data('HWrevision', tmp[4])
-        self.config.hardware.add_data('recSize', tmp[5] * 65536)
-        self.config.hardware.add_data('status', tmp[6])
-        self.config.hardware.add_data('FWversion', tmp[7])
+        self.config.hardware['serialNum'] = tmp[0][:8]
+        self.config.hardware['ProLogID'] = unpack('B', tmp[0][8])[0]
+        self.config.hardware['ProLogFWver'] = tmp[0][10:]
+        self.config.hardware['config'] = tmp[1]
+        self.config.hardware['freq'] = tmp[2]
+        self.config.hardware['PICversion'] = tmp[3]
+        self.config.hardware['HWrevision'] = tmp[4]
+        self.config.hardware['recSize'] = tmp[5] * 65536
+        self.config.hardware['status'] = tmp[6]
+        self.config.hardware['FWversion'] = tmp[7]
         # tmp=unpack(self.endian+'2x8sBx4s6H12xI',byts)
-        # self.config.hardware.add_data('serialNum',tmp[0][:8])
-        # self.config.hardware.add_data('ProLogID',unpack('B',tmp[0][8])[0])
-        # self.config.hardware.add_data('ProLogFWver',tmp[0][10:])
-        # self.config.hardware.add_data('config',tmp[1])
-        # self.config.hardware.add_data('freq',tmp[2])
-        # self.config.hardware.add_data('PICversion',tmp[3])
-        # self.config.hardware.add_data('HWrevision',tmp[4])
-        # self.config.hardware.add_data('recSize',tmp[5]*65536)
-        # self.config.hardware.add_data('status',tmp[6])
-        # self.config.hardware.add_data('FWversion',tmp[7])
+        # self.config.hardware['serialNum'] = tmp[0][:8]
+        # self.config.hardware['ProLogID'] = unpack('B',tmp[0][8])[0])
+        # self.config.hardware['ProLogFWver']=tmp[0][10:]
+        # self.config.hardware['config']=tmp[1]
+        # self.config.hardware['freq']=tmp[2]
+        # self.config.hardware['PICversion']=tmp[3]
+        # self.config.hardware['HWrevision']=tmp[4]
+        # self.config.hardware['recSize']=tmp[5]*65536
+        # self.config.hardware['status']=tmp[6]
+        # self.config.hardware['FWversion']=tmp[7]
         self.checksum(byts)
 
     def read_vec_checkdata(self,):
@@ -353,13 +357,13 @@ class NortekReader(object):
             print('Reading vector check data (0x07)...')
         byts0 = self.read(6)
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
-        self.config.add_data('checkdata', adv_base.ADVconfig('CHECKDATA'))
-        self.config.checkdata.add_data('Samples', tmp[0])
+        self.config['checkdata'] = config(_type='CHECKDATA')
+        self.config.checkdata['Samples'] = tmp[0]
         n = self.config.checkdata.Samples
-        self.config.checkdata.add_data('First_samp', tmp[1])
-        self.config.checkdata.add_data('Amp1', np.empty(n, dtype=np.uint8))
-        self.config.checkdata.add_data('Amp2', np.empty(n, dtype=np.uint8))
-        self.config.checkdata.add_data('Amp3', np.empty(n, dtype=np.uint8))
+        self.config.checkdata['First_samp'] = tmp[1]
+        self.config.checkdata['Amp1'] = np.empty(n, dtype=np.uint8)
+        self.config.checkdata['Amp2'] = np.empty(n, dtype=np.uint8)
+        self.config.checkdata['Amp3'] = np.empty(n, dtype=np.uint8)
         byts1 = self.read(3 * n)
         tmp = unpack(self.endian + (3 * n * 'B'), byts1)
         for idx, nm in enumerate(['Amp1', 'Amp2', 'Amp3']):
@@ -369,17 +373,16 @@ class NortekReader(object):
     def sci_vec_data(self,):
         self._sci_data(nortek_defs.vec_data)
 
-        self.data.add_data(
-            'pressure', (self.data.PressureMSB.astype('float32') * 65536 +
-                         self.data.PressureLSW.astype('float32')) / 1000.,
-            None, 'env')
+        self.data.env['pressure'] = (self.data.env.PressureMSB.astype('float32') * 65536 +
+                                     self.data.env.PressureLSW.astype('float32')) / 1000.
 
-        self.data.pressure = ma.marray(
-            self.data.pressure,
+        self.data.env.pressure = ma.marray(
+            self.data.env.pressure,
             ma.varMeta('P', ma.unitsDict({'dbar': 1}), ['time'])
         )
 
-        self.data.del_data('PressureMSB', 'PressureLSW')
+        self.data.env.pop('PressureMSB')
+        self.data.env.pop('PressureLSW')
 
         self.data.props['fs'] = self.config.fs
         self.data.props['coord_sys'] = {
@@ -390,7 +393,7 @@ class NortekReader(object):
         # I must be able to calculate this here, right? # !!!TODO!!!
         self.data.props['doppler_noise'] = [0, 0, 0]
         # Apply velocity scaling (1 or 0.1)
-        self.data._u *= self.config['user']['mode']['vel_scale']
+        self.data.vel *= self.config['user']['mode']['vel_scale']
 
     def read_vec_data(self,):
         """
@@ -407,26 +410,26 @@ class NortekReader(object):
         if self.debug:
             print('Reading vector data (0x10)...')
 
-        if not hasattr(self.data, '_u'):
+        if 'vel' not in self.data:
             self._init_data(nortek_defs.vec_data)
             self._dtypes += ['vec_data']
 
         byts = self.read(20)
-        (self.data.AnaIn2LSB[c],
-         self.data.Count[c],
-         self.data.PressureMSB[c],
-         self.data.AnaIn2MSB[c],
-         self.data.PressureLSW[c],
-         self.data.AnaIn1[c],
-         self.data._u[0, c],
-         self.data._u[1, c],
-         self.data._u[2, c],
-         self.data._amp[0, c],
-         self.data._amp[1, c],
-         self.data._amp[2, c],
-         self.data._corr[0, c],
-         self.data._corr[1, c],
-         self.data._corr[2, c]) = unpack(self.endian + '4B2H3h6B', byts)
+        (self.data.extra.AnaIn2LSB[c],
+         self.data.sys.Count[c],
+         self.data.env.PressureMSB[c],
+         self.data.extra.AnaIn2MSB[c],
+         self.data.env.PressureLSW[c],
+         self.data.extra.AnaIn1[c],
+         self.data.vel[0, c],
+         self.data.vel[1, c],
+         self.data.vel[2, c],
+         self.data.sys.amp[0, c],
+         self.data.sys.amp[1, c],
+         self.data.sys.amp[2, c],
+         self.data.sys.corr[0, c],
+         self.data.sys.corr[1, c],
+         self.data.sys.corr[2, c]) = unpack(self.endian + '4B2H3h6B', byts)
 
         self.flag_lastread_sysdata = False
         self.checksum(byts)
@@ -436,7 +439,7 @@ class NortekReader(object):
         Turn the data in the vec_sysdata structure into scientific units.
         """
         self._sci_data(nortek_defs.vec_sysdata)
-        self.data.add_data('_sysi', ~np.isnan(self.data.mpltime), '_essential')
+        self.data.sys['_sysi'] = ~np.isnan(self.data.mpltime)
         # These are the indices in the sysdata variables
         # that are not interpolated.
         # Skip the first entry for the interpolation process
@@ -444,24 +447,22 @@ class NortekReader(object):
         p = np.poly1d(np.polyfit(inds, self.data.mpltime[inds], 1))
         self.data.mpltime = p(np.arange(len(self.data.mpltime))
                               ).view(time.time_array)
-        tbx.fillgaps(self.data.batt)
-        tbx.fillgaps(self.data.c_sound)
-        tbx.fillgaps(self.data.heading)
-        tbx.fillgaps(self.data.pitch)
-        tbx.fillgaps(self.data.roll)
-        tbx.fillgaps(self.data.temp)
+        tbx.fillgaps(self.data.sys.batt)
+        tbx.fillgaps(self.data.env.c_sound)
+        tbx.fillgaps(self.data.orient.heading)
+        tbx.fillgaps(self.data.orient.pitch)
+        tbx.fillgaps(self.data.orient.roll)
+        tbx.fillgaps(self.data.env.temp)
 
-        tmpd = np.empty_like(self.data.heading)
+        tmpd = np.empty_like(self.data.orient.heading)
         tmpd[:] = np.NaN
         # The first status bit should be the orientation.
-        tmpd[self.data._sysi] = self.data.status[self.data._sysi] & 1
+        tmpd[self.data.sys._sysi] = self.data.sys.status[self.data.sys._sysi] & 1
         tbx.fillgaps(tmpd, extrapFlg=True)
         slope = np.diff(tmpd)
         tmpd[1:][slope < 0] = 1
         tmpd[:-1][slope > 0] = 0
-        self.data.add_data('orientation_down',
-                           tmpd.astype('bool'),
-                           '_essential')
+        self.data.orient['orientation_down'] = tmpd.astype('bool')
 
     def read_vec_sysdata(self,):
         """
@@ -474,21 +475,21 @@ class NortekReader(object):
         # Need to make this a vector...
         if self.debug:
             print('Reading vector system data (0x11)...')
-        if not hasattr(self.data, 'mpltime'):
+        if 'mpltime' not in self.data:
             self._init_data(nortek_defs.vec_sysdata)
             self._dtypes += ['vec_sysdata']
         byts = self.read(24)
         # The first two are size (skip them).
         self.data.mpltime[c] = self.rd_time(byts[2:8])
-        (self.data.batt[c],
-         self.data.c_sound[c],
-         self.data.heading[c],
-         self.data.pitch[c],
-         self.data.roll[c],
-         self.data.temp[c],
-         self.data.error[c],
-         self.data.status[c],
-         self.data.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
+        (self.data.sys.batt[c],
+         self.data.env.c_sound[c],
+         self.data.orient.heading[c],
+         self.data.orient.pitch[c],
+         self.data.orient.roll[c],
+         self.data.env.temp[c],
+         self.data.sys.error[c],
+         self.data.sys.status[c],
+         self.data.extra.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
         self.checksum(byts)
 
     def sci_microstrain(self,):
@@ -500,23 +501,23 @@ class NortekReader(object):
             # Rotate the MS orientation data (in MS coordinate system)
             # to be consistent with the ADV coordinate system.
             # (x,y,-z)_ms = (z,y,x)_adv
-            (self.data[nm][2],
-             self.data[nm][0]) = (self.data[nm][0],
-                                  -self.data[nm][2].copy())
+            (self.data.orient[nm][2],
+             self.data.orient[nm][0]) = (self.data.orient[nm][0],
+                                         -self.data.orient[nm][2].copy())
             # tmp=self.data[nm][2].copy()
             # self.data[nm][2]=self.data[nm][0]
             # self.data[nm][0]=tmp
             # self.data[nm][2]*=-1
-            # self.data[nm]=np.roll(self.data[nm],-1,axis=0) # I think this is
+            # self.data[nm]=np.orient.roll(self.data[nm],-1,axis=0) # I think this is
             # wrong.
-        if 'orientmat' in self._orient_dnames:
+        if 'mat' in self._orient_dnames:
             # MS coordinate system is in North-East-Down (NED),
             # we want East-North-Up (ENU)
-            self.data.orientmat[:, 2] *= -1
-            (self.data.orientmat[:, 0],
-             self.data.orientmat[:, 1]) = (self.data.orientmat[:, 1],
-                                           self.data.orientmat[:, 0].copy())
-        if hasattr(self.data, 'Accel'):
+            self.data.orient.mat[:, 2] *= -1
+            (self.data.orient.mat[:, 0],
+             self.data.orient.mat[:, 1]) = (self.data.orient.mat[:, 1],
+                                            self.data.orient.mat[:, 0].copy())
+        if 'Accel' in self.data:
             # This value comes from the MS 3DM-GX3 MIP manual.
             self.data.Accel *= 9.80665
             self.data.Accel = ma.marray(self.data.Accel, ma.varMeta(
@@ -551,74 +552,45 @@ class NortekReader(object):
         self._ahrsid = ahrsid
         #print byts0
         c = self.c
-        if not (hasattr(self.data, 'Accel')):
+        if 'Accel' not in self.data:
             self._dtypes += ['microstrain']
             if ahrsid == 195:
-                self._orient_dnames = ['Accel', 'AngRt', 'orientmat']
-                self.data.add_data(
-                    'Accel',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.add_data(
-                    'AngRt',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.add_data(
-                    'orientmat',
-                    np.empty((3, 3, self.n_samp_guess),
-                             dtype=np.float32),
-                    'orient'
-                )
-                self.data.props['rotate_vars'].update({'Accel', 'AngRt', })
+                self._orient_dnames = ['Accel', 'AngRt', 'mat']
+                self.data.orient['Accel'] = np.empty((3, self.n_samp_guess),
+                                                     dtype=np.float32)
+                self.data.orient['AngRt'] = np.empty((3, self.n_samp_guess),
+                                                     dtype=np.float32)
+                self.data.orient['mat'] = np.empty((3, 3, self.n_samp_guess),
+                                                   dtype=np.float32)
+                self.data.props['rotate_vars'].update({'orient.Accel',
+                                                       'orient.AngRt', })
             if ahrsid in [204, 210]:
-                self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'orientmat']
-                self.data.add_data(
-                    'Accel',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.add_data(
-                    'AngRt',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient')
-                self.data.add_data(
-                    'Mag',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.props['rotate_vars'].update(
-                    {'Accel', 'AngRt', 'Mag'})
+                self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'mat']
+                self.data.orient['Accel'] = np.empty((3, self.n_samp_guess),
+                                                     dtype=np.float32)
+                self.data.orient['AngRt'] = np.empty((3, self.n_samp_guess),
+                                                     dtype=np.float32)
+                self.data.orient['Mag'] = np.empty((3, self.n_samp_guess), dtype=np.float32)
+                self.data.props['rotate_vars'].update({'Accel', 'AngRt', 'Mag'})
                 if ahrsid == 204:
-                    self.data.add_data('orientmat', np.empty(
-                        (3, 3, self.n_samp_guess), dtype=np.float32), 'orient')
+                    self.data.orient['mat'] = np.empty((3, 3, self.n_samp_guess),
+                                                       dtype=np.float32)
             elif ahrsid == 211:
                 self._orient_dnames = ['AngRt', 'Accel', 'Mag']
-                self.data.add_data(
-                    'AngRt',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.add_data(
-                    'Accel',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.add_data(
-                    'Mag',
-                    np.empty((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                self.data.props['rotate_vars'].update(
-                    {'AngRt', 'Accel', 'Mag'})
+                self.data.orient['AngRt'] = np.empty((3, self.n_samp_guess),
+                                                     dtype=np.float32),
+                self.data.orient['Accel'] = np.empty((3, self.n_samp_guess),
+                                                     dtype=np.float32)
+                self.data.orient['Mag'] = np.empty((3, self.n_samp_guess),
+                                                   dtype=np.float32)
+                self.data.props['rotate_vars'].update({'AngRt', 'Accel', 'Mag'})
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
             dt = unpack(self.endian + '6f9f4x', byts)
             (self.data.AngRt[:, c],
              self.data.Accel[:, c]) = (dt[0:3], dt[3:6],)
-            self.data.orientmat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
+            self.data.mat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
         elif ahrsid == 204:  # 0xcc
             byts = self.read(78)
             dt = unpack(self.endian + '18f6x', byts)
@@ -627,7 +599,7 @@ class NortekReader(object):
             (self.data.Accel[:, c],
              self.data.AngRt[:, c],
              self.data.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
-            self.data.orientmat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
+            self.data.mat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
         elif ahrsid == 211:
             byts = self.read(42)
             dt = unpack(self.endian + '9f6x', byts)
@@ -651,17 +623,17 @@ class NortekReader(object):
         byts = self.read(38)
         tmp = unpack(self.endian + '8xH7B21x', byts)
                      # The first two are size, the next 6 are time.
-        self.config.add_data('data_header', adv_base.ADVconfig('DATA HEADER'))
-        self.config.data_header.add_data('time', self.rd_time(byts[2:8]))
-        self.config.data_header.add_data('NRecords', tmp[0])
-        self.config.data_header.add_data('Noise1', tmp[1])
-        self.config.data_header.add_data('Noise2', tmp[2])
-        self.config.data_header.add_data('Noise3', tmp[3])
-        self.config.data_header.add_data('Spare0', byts[13])
-        self.config.data_header.add_data('Corr1', tmp[5])
-        self.config.data_header.add_data('Corr2', tmp[6])
-        self.config.data_header.add_data('Corr3', tmp[7])
-        self.config.data_header.add_data('Spare1', byts[17:])
+        self.config['data_header'] = config(_type='DATA HEADER')
+        self.config.data_header['time'] = self.rd_time(byts[2:8])
+        self.config.data_header['NRecords'] = tmp[0]
+        self.config.data_header['Noise1'] = tmp[1]
+        self.config.data_header['Noise2'] = tmp[2]
+        self.config.data_header['Noise3'] = tmp[3]
+        self.config.data_header['Spare0'] = byts[13]
+        self.config.data_header['Corr1'] = tmp[5]
+        self.config.data_header['Corr2'] = tmp[6]
+        self.config.data_header['Corr3'] = tmp[7]
+        self.config.data_header['Spare1'] = byts[17:]
         self.checksum(byts)
 
     def read_awac_profile(self,):
@@ -669,7 +641,7 @@ class NortekReader(object):
         if self.debug:
             print('Reading AWAC velocity data (0x20)...')
         nbins = self.config.user.NBins
-        if not hasattr(self.data, 'temp'):
+        if 'temp' not in self.data:
             self._init_data(nortek_defs.awac_profile)
             self._dtypes += ['awac_profile']
 
@@ -679,24 +651,24 @@ class NortekReader(object):
         c = self.c
         self.data.mpltime[c] = self.rd_time(byts[2:8])
         (self.data.Error[c],
-         self.data.AnaIn1[c],
-         self.data.batt[c],
-         self.data.c_sound[c],
-         self.data.heading[c],
-         self.data.pitch[c],
-         self.data.roll[c],
+         self.data.extra.AnaIn1[c],
+         self.data.sys.batt[c],
+         self.data.env.c_sound[c],
+         self.data.orient.heading[c],
+         self.data.orient.pitch[c],
+         self.data.orient.roll[c],
          p_msb,
-         self.data.status[c],
+         self.data.sys.status[c],
          p_lsw,
-         self.data.temp[c],) = unpack(self.endian + '7HBB2H', byts[8:28])
-        self.data.pressure[c] = (65536 * p_msb + p_lsw)
+         self.data.env.temp[c],) = unpack(self.endian + '7HBB2H', byts[8:28])
+        self.data.env.pressure[c] = (65536 * p_msb + p_lsw)
         # The nortek system integrator manual specifies an 88byte 'spare'
         # field, therefore we start at 116.
         tmp = unpack(self.endian + str(3 * nbins) + 'h' +
                      str(3 * nbins) + 'B', byts[116:116 + 9 * nbins])
         for idx in range(3):
-            self.data._u[idx, :, c] = tmp[idx * nbins: (idx + 1) * nbins]
-            self.data._amp[idx, :, c] = tmp[(idx + 3) * nbins:
+            self.data.vel[idx, :, c] = tmp[idx * nbins: (idx + 1) * nbins]
+            self.data.amp[idx, :, c] = tmp[(idx + 3) * nbins:
                                             (idx + 4) * nbins]
         self.checksum(byts)
 
@@ -716,13 +688,11 @@ class NortekReader(object):
             0.0229 * np.cos(h_ang) - cs
 
         # These are the centers of the cells:
-        self.data.add_data(
-            'range',
-            ma.marray(
-                np.float32(np.arange(self.config.user.NBins) + cs / 2 + bd),
-                ma.varMeta('range', {'m': 1}, ['depth'])), '_essential')
-        self.config.add_data('cell_size', cs)
-        self.config.add_data('blank_dist', bd)
+        self.data['range'] = ma.marray(
+            np.float32(np.arange(self.config.user.NBins) + cs / 2 + bd),
+            ma.varMeta('range', {'m': 1}, ['depth']))
+        self.config['cell_size'] = cs
+        self.config['blank_dist'] = bd
         # self.
 
     def code_spacing(self, searchcode, iternum=50):
@@ -741,22 +711,26 @@ class NortekReader(object):
 
     def init_ADV(self,):
         self.data = adv_base.ADVraw()
-        self.data.add_data('config', self.config, 'config')
+        self.data['orient'] = data()
+        self.data['sys'] = data()
+        self.data['env'] = data()
+        self.data['extra'] = data()
+        self.data['config'] = self.config
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'VECTOR'
         self.data.props['inst_type'] = 'ADV'
-        self.data.props['rotate_vars'] = {'_u', }
+        self.data.props['rotate_vars'] = {'vel', }
         # Question to Nortek: How do they determine how many samples are in a
         # file, in order to initialize arrays?
         dlta = self.code_spacing('0x11')
-        self.config.add_data('fs', 512 / self.config.user.AvgInterval)
+        self.config['fs'] = 512 / self.config.user.AvgInterval
         self.n_samp_guess = self.filesize / dlta + 1
         self.n_samp_guess *= self.config.fs
 
     def init_AWAC(self,):
         self.data = adp.adcp_raw()
-        self.data.add_data('config', self.config, 'config')
+        self.data['config'] = self.config
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'AWAC'
@@ -866,7 +840,7 @@ class NortekReader(object):
             pass
         if retval == 2:
             self.c -= 1
-        for nm, dat in self.data.iter():
+        for nm, dat in self.data.iteritems():
             if (hasattr(getattr(self.data, nm), 'shape') and
                 (getattr(self.data, nm).shape[-1]
                  == self.n_samp_guess)):
@@ -881,19 +855,3 @@ class NortekReader(object):
 
     def __enter__(self,):
         return self
-
-
-if __name__ == '__main__':
-
-    datdir = 'home/lkilcher/data/ttm_dem_june2012/TTM_AWAC/'
-
-    datfile = datdir + '/TTM_AWAC_Jun2012.wpr'
-
-    # d=np.zeros(100)
-    rdr = NortekReader(datfile, debug=False, do_checksum=True)
-    rdr.readfile()
-    rdr.dat2sci()
-
-    # with vec_reader(datfile,debug=False,do_checksum=False) as rdr:
-    # rdr.readfile()
-    # rdr.dat2sci()
