@@ -304,8 +304,14 @@ def earth2principal(advo, reverse=False):
         dat[:2] = np.einsum('ij,jk', rotmat[:2, :2], dat[:2])
 
     if hasattr(advo, 'orientmat'):
-        advo['orientmat'] = np.einsum('ij,kjl->ikl',
-                                      rotmat, advo['orientmat'])
+        # The orientmat does earth->inst, so the orientmat needs to
+        # rotate from principal to earth first. rotmat does
+        # earth->principal, so we use the inverse (via index ordering)
+        # This should handle the 'reverse' case also, because the
+        # inverse rotmat gets applied first.
+        advo['orientmat'] = np.einsum('ijl,kj->ikl',
+                                      advo['orientmat'],
+                                      rotmat, )
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new

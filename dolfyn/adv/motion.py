@@ -381,11 +381,11 @@ class CorrectMotion(object):
                              to_earth=to_earth)
 
         if 'rotate_vars' not in advo.props.keys():
-            advo.props['rotate_vars'] = {'_u', 'urot', 'uacc',
+            advo.props['rotate_vars'] = {'_u', 'urot', 'uacc', 'uraw',
                                          'Accel', 'AccelStable',
                                          'AngRt', 'Mag'}
         else:
-            advo.props['rotate_vars'].update({'urot', 'uacc', 'AccelStable'})
+            advo.props['rotate_vars'].update({'urot', 'uacc', 'AccelStable', 'uraw'})
 
         self._rotate_vel2body(advo)
         self._calc_rot_vel(calcobj)
@@ -395,6 +395,7 @@ class CorrectMotion(object):
         # the earth frame.
         advo.groups['orient'].add('AccelStable')
         advo.AccelStable = calcobj.AccelStable
+        advo.add_data('uraw', advo._u.copy(), 'main')
         if to_earth:
             advo.Accel = calcobj.Accel
             inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
