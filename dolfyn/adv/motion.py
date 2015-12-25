@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.signal as sig
 from scipy.integrate import cumtrapz
-from .rotate import inst2earth
+from .rotate import inst2earth, _rotate_vel2body
+import warnings
 
 
 class CalcMotion(object):
@@ -65,7 +66,7 @@ class CalcMotion(object):
         elif self.advo.props['coord_sys'] == 'earth':
             self.Accel = advo.Accel.copy()
         else:
-            raise Exception(("Invalid coordinate system '%s'. the coordinate "
+            raise Exception(("Invalid coordinate system '%s'. The coordinate "
                              "system must either be 'earth' or 'inst' to "
                              "perform motion correction.")
                             % (self.advo.props['coord_sys'], ))
@@ -184,6 +185,233 @@ class CalcMotion(object):
         return urot
 
 
+def _calc_probe_pos(advo, separate_probes=False):
+    """
+    !!!Currently this only works for Nortek Vectors!
+
+    In the future, we could use the transformation matrix (and a
+    probe-length lookup-table?)
+    """
+    # According to the ADV_DataSheet, the probe-length radius is
+    # 8.6cm @ 120deg from probe-stem axis.  If I subtract 1cm
+    # (!!!checkthis) to get acoustic receiver center, this is
+    # 7.6cm.  In the coordinate sys of the center of the probe
+    # then, the positions of the centers of the receivers is:
+    if advo.make_model == 'Nortek VECTOR' and separate_probes:
+        r = 0.076
+        # The angle between the x-y plane and the probes
+        phi = -30. * np.pi / 180.
+        theta = np.array([0., 120., 240.]) * np.pi / \
+            180.  # The angles of the probes from the x-axis.
+        return (np.dot(advo.props['body2head_rotmat'].T,
+                       np.array([r * np.cos(theta),
+                                 r * np.sin(theta),
+                                 r * np.tan(phi) * np.ones(3)])) +
+                advo.props['body2head_vec'][:, None]
+                )
+    else:
+        return advo.props['body2head_vec']
+
+
+def correct_motion(advo,
+                   accel_filtfreq=1. / 30,
+                   vel_filtfreq=None,
+                   to_earth=True,
+                   separate_probes=False, ):
+    """
+    This function performs motion correction on an IMU-ADV data
+    object. The IMU and ADV data should be tightly synchronized and
+    contained in a single data object.
+
+    Parameters
+    ----------
+
+    advo : dolfyn.adv.adv class
+
+    accel_filtfreq : float
+      the frequency at which to high-pass filter the acceleration
+      signal to remove low-frequency drift.
+
+    vel_filtfreq : float (optional)
+      a second frequency to high-pass filter the integrated
+      acceleration.  (default: 1/3 of accel_filtfreq)
+
+    to_earth : bool (optional, default: True)
+      All variables in the advo.props['rotate_vars'] list will be
+      rotated into either the earth frame (to_earth=True) or the
+      instrument frame (to_earth=False).
+
+    separate_probes : bool (optional, default: False)
+      a flag to perform motion-correction at the probe tips, and
+      perform motion correction in beam-coordinates, then transform
+      back into XYZ/earth coordinates. This correction seems to be
+      lower than the noise levels of the ADV, so the defualt is to not
+      use it (False).
+
+    Returns
+    -------
+    This function returns None, it operates on the input data object,
+    ``advo``. The following attributes are added to `advo`:
+
+      ``uraw`` is the uncorrected velocity
+
+      ``urot`` is the rotational component of the head motion (from
+               AngRt)
+
+      ``uacc`` is the translational component of the head motion (from
+               Accel)
+
+      ``AccelStable`` is the low-pass filtered Accel signal
+
+    The primary velocity vector attribute, ``_u``, is motion corrected
+    such that:
+
+          _u = uraw + urot + uacc
+
+    The signs are correct in this equation. The measured velocity
+    induced by head-motion is *in the opposite direction* of the head
+    motion.  i.e. when the head moves one way in stationary flow, it
+    measures a velocity in the opposite direction. Therefore, to
+    remove the motion from the raw signal we *add* the head motion.
+
+    Notes
+    -----
+
+    Acceleration signals from inertial sensors are notorious for
+    having a small bias that can drift slowly in time. When
+    integrating these signals to estimate velocity the bias is
+    amplified and leads to large errors in the estimated
+    velocity. There are two methods for removing these errors,
+
+    1) high-pass filter the acceleration signal prior and/or after
+       integrating. This implicitly assumes that the low-frequency
+       translational velocity is zero.
+    2) provide a slowly-varying reference position (often from a GPS)
+       to an IMU that can use the signal (usually using Kalman
+       filters) to debias the acceleration signal.
+
+    Because method (1) removes `real` low-frequency acceleration,
+    method (2) is more accurate. However, providing reference position
+    estimates to undersea instruments is practically challenging and
+    expensive. Therefore, lacking the ability to use method (2), this
+    function utilizes method (1).
+
+    For deployments in which the ADV is mounted on a mooring, or other
+    semi-fixed structure, the assumption of zero low-frequency
+    translational velocity is a reasonable one. However, for
+    deployments on ships, gliders, or other moving objects it is
+    not. The measured velocity, after motion-correction, will still
+    hold some of this contamination and will be a sum of the ADV
+    motion and the measured velocity on long time scales.  If
+    low-frequency motion is known separate from the ADV (e.g. from a
+    bottom-tracking ADP, or from a ship's GPS), it may be possible to
+    remove that signal from the ADV signal in post-processing. The
+    accuracy of this approach has not, to my knowledge, been tested
+    yet.
+
+    Examples
+    --------
+
+    >>> from dolfyn.adv import api as avm
+    >>> dat = avm.read_nortek('my_data_file.vec')
+    >>> avm.motion.correct_motion(dat)
+
+    ``dat`` will now have motion-corrected.
+
+    """
+
+    if hasattr(advo, 'urot'):
+        raise Exception('The data object already appears to have been motion corrected.')
+
+    if advo.props['coord_sys'] != 'inst':
+        raise Exception('The data object must be in the instrument frame to be motion corrected.')
+
+    if vel_filtfreq is None:
+        vel_filtfreq = accel_filtfreq / 3
+
+    # Be sure the velocity data has been rotated to the body frame.
+    _rotate_vel2body(advo)
+
+    # Create the motion 'calculator':
+    calcobj = CalcMotion(advo,
+                         accel_filtfreq=accel_filtfreq,
+                         vel_filtfreq=vel_filtfreq,
+                         to_earth=to_earth)
+
+    ##########
+    # Calculate the translational velocity (from the Accel):
+    advo.groups['orient'].add('uacc')
+    advo.uacc = calcobj.calc_uacc()
+    # Copy AccelStable to the adv-object.
+    advo.groups['orient'].add('AccelStable')
+    advo.AccelStable = calcobj.AccelStable
+
+    ##########
+    # Calculate rotational velocity (from AngRt):
+    pos = _calc_probe_pos(advo, separate_probes)
+    # Calculate the velocity of the head (or probes).
+    urot = calcobj.calc_urot(pos, to_earth=False)
+    if separate_probes:
+        # The head->beam transformation matrix
+        transMat = advo.config.head.get('TransMatrix', None)
+        # The body->head transformation matrix
+        rmat = advo.props['body2head_rotmat']
+
+        # 1) Rotate body-coordinate velocities to head-coord.
+        urot = np.dot(rmat, urot)
+        # 2) Rotate body-coord to beam-coord (einsum),
+        # 3) Take along beam-component (diagonal),
+        # 4) Rotate back to head-coord (einsum),
+        urot = np.einsum('ij,kj->ik',
+                         transMat,
+                         np.diagonal(np.einsum('ij,jkl->ikl',
+                                               np.linalg.inv(transMat),
+                                               urot)
+                                     ))
+        # 5) Rotate back to body-coord.
+        urot = np.dot(rmat.T, urot)
+    advo.urot = urot
+    advo.groups['orient'].add('urot')
+
+    ##########
+    # Rotate the data into the correct coordinate system.
+    # inst2earth expects a 'rotate_vars' property.
+    # Add urot, uacc, AccelStable, to it.
+    if 'rotate_vars' not in advo.props.keys():
+        advo.props['rotate_vars'] = {'_u', 'urot', 'uacc',
+                                     'Accel', 'AccelStable',
+                                     'AngRt', 'Mag'}
+    else:
+        advo.props['rotate_vars'].update({'urot', 'uacc', 'AccelStable'})
+
+    # NOTE: Accel, AccelStable, and uacc are in the earth-frame after
+    #       calc_uacc() call.
+    if to_earth:
+        advo.Accel = calcobj.Accel
+        inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
+                   {'Accel', 'AccelStable', 'uacc', })
+    else:
+        # rotate these variables back to the instrument frame.
+        inst2earth(advo, reverse=True,
+                   rotate_vars={'AccelStable', 'uacc', },
+                   force=True,
+                   )
+
+    ##########
+    # Copy _u -> uraw prior to motion correction:
+    advo.add_data('uraw', advo._u.copy(), 'main')
+    # Add it to rotate_vars:
+    advo.props['rotate_vars'].update({'uraw', })
+
+    ##########
+    # Remove motion from measured velocity!
+    # NOTE: The plus sign is because the measured-induced velocities
+    #       are in the opposite direction of the head motion.
+    #       i.e. when the head moves one way in stationary flow, it
+    #       measures a velocity in the opposite direction.
+    advo._u += (advo.urot + advo.uacc)
+
+
 class CorrectMotion(object):
 
     """
@@ -263,6 +491,10 @@ class CorrectMotion(object):
             vel_filtfreq = accel_filtfreq / 3
         self.accelvel_filtfreq = vel_filtfreq
         self.separate_probes = separate_probes
+        warnings.warn("The 'CorrectMotion' class is being deprecated "
+                      "and will be removed in a future DOLfYN release. "
+                      "Use the 'correct_motion' function instead.",
+                      DeprecationWarning)
 
     def _rotate_vel2body(self, advo):
         # The transpose should do head to body.

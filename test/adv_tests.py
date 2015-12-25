@@ -1,8 +1,15 @@
 import dolfyn.adv.api as avm
+import dolfyn.data.base
 import numpy as np
 from os import path
 
-test_root = path.realpath(__file__).replace("\\", "/").rsplit('/', 1)[0] + '/'
+dolfyn.data.base.debug_level = 1
+
+try:
+    test_root = path.realpath(__file__).replace("\\", "/").rsplit('/', 1)[0] + '/'
+except:
+    test_root = './'
+
 pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
 dat = avm.load(test_root + 'data/vector_data01.h5', 'ALL')
@@ -32,9 +39,8 @@ def read_test(make_data=False):
 
 
 def motion_test(make_data=False):
-    mc = avm.motion.CorrectMotion()
     tdm = dat_imu.copy()
-    mc(tdm)
+    avm.motion.correct_motion(tdm)
 
     if make_data:
         tdm.save(test_root + 'data/vector_data_imu01_mc.h5')

@@ -84,44 +84,40 @@ primary methods for going about this:
 
    Load your data file, for example::
 
-     dat_raw = adv.read_nortek('vector_data_imu01.vec')
+     dat = adv.read_nortek('vector_data_imu01.vec')
 
    Then specify the position and orientation of the ADV head relative
    to the body. These must be specified as entries in the ``props``
    attribute.  For a 'fixed-head' Nortek Vector ADVs, the rotation
    matrix is the identity matrix and the position is::
 
-     dat_raw.props['body2head_vec'] = np.array([0., 0., -0.21])  # in meters
+     dat.props['body2head_vec'] = np.array([0., 0., -0.21])  # in meters
 
-     dat_raw.props['body2head_rotmat'] = np.eye(3)
+     dat.props['body2head_rotmat'] = np.eye(3)
 
    For a cable-head ADV, you must specify the position and orientation
    for your configuration. For example, the position and orientation
    of the ADV-head in Figure 1 is::
    
-     dat_raw.props['body2head_vec'] = np.array([0.48, -0.07, -0.27])  # in meters
+     dat.props['body2head_vec'] = np.array([0.48, -0.07, -0.27])  # in meters
 
-     dat_raw.props['body2head_rotmat'] = np.array([[0, 0, -1],
+     dat.props['body2head_rotmat'] = np.array([[0, 0, -1],
                                                    [0, -1, 0],
                                                    [-1, 0, 0],])
 
-   Now we create a 'motion correction' instance, a tool that performs
-   motion correction. This tool can be initialized with the high-pass
-   filter frequency you wish to use to remove low-frequency bias drift
-   from the IMU accelerometer signal (the default value is 0.033Hz,
-   30second period)::
+   Now we call the 'correct_motion' function to remove motion from adv
+   object. A key input parameter to this function is the high-pass
+   filter frequency that removes low-frequency bias drift from the IMU
+   accelerometer signal (the default value is 0.033Hz, 30second
+   period)::
 
-     mc = adv.motion.CorrectMotion(accel_filtfreq=0.1) # specify the filter frequency in Hz.
+     adv.motion.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
 
-   Now you can use this motion correction *tool* to perform motion
-   correction of your data object::
-
-     mc(dat_raw)
-
-   Your ``dat_raw`` object is now motion corrected and it's ``.u``,
+   Your ``dat`` object is now motion corrected and it's ``.u``,
    ``.v`` and ``.w`` attributes are in an East, North and Up (ENU)
    coordinate system, respectively.  In fact, all vector quantities
-   in ``dat_raw`` are now in this ENU coordinate system.
+   in ``dat`` are now in this ENU coordinate system.  See the
+   documentation of the correct_motion function for more information.
 
 2. For users who want to perform motion correction with minimal Python
    scripting, the **motcorrect_vector.py** script can be used. So long as

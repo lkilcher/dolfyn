@@ -5,7 +5,7 @@ import os
 import numpy as np
 from dolfyn.adv.rotate import orient2euler
 import dolfyn.adv.api as avm
-from dolfyn.adv.motion import CorrectMotion
+from dolfyn.adv.motion import correct_motion
 
 # TODO: add option to rotate into earth or principal frame (include
 # principal_angle_True in output).
@@ -138,9 +138,6 @@ else:
 if not (args.mat or args.hdf5):
     args.mat = True
 
-# Instantiate the 'motion correction' object.
-mc = CorrectMotion(accel_filtfreq=args.f,)
-
 # Now loop over the specified file names:
 for fnm in args.filename:
 
@@ -156,7 +153,7 @@ for fnm in args.filename:
     # Perform motion correction.
     if hasattr(dat, 'orientmat'):
         print('Performing motion correction...')
-        mc(dat)  # Perform the motion correction.
+        correct_motion(dat, accel_filtfreq=args.f)  # Perform the motion correction.
         # Compute pitch,roll,heading from orientmat.
         dat.pitch[:], dat.roll[:], dat.heading[:] = orient2euler(dat.orientmat)
     else:

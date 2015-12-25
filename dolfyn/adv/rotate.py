@@ -258,6 +258,15 @@ def _inst2earth(advo, use_mean_rotation=False):
     advo.props['coord_sys'] = 'earth'
 
 
+def _rotate_vel2body(advo):
+    if 'vel_rotated2body' in advo.props and advo.props['vel_rotated2body'] == True:
+        # Don't re-rotate the data if its already been rotated.
+        return
+    # The transpose should do head to body.
+    advo._u = np.dot(advo.props['body2head_rotmat'].T, advo._u)
+    advo.props['vel_rotated2body'] = True
+
+
 def earth2principal(advo, reverse=False):
     """
     Rotate data in an ADV object to/from principal axes. If the
