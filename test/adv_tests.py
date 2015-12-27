@@ -19,23 +19,31 @@ dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
 def read_test(make_data=False):
 
     td = avm.read_nortek(pkg_root + 'example_data/vector_data01.VEC')
-    tdm = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC')
-    # These values are not correct for this data but I'm adding them for
-    # test purposes only.
-    tdm.props['body2head_rotmat'] = np.eye(3)
-    tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
         td.save(test_root + 'data/vector_data01.h5')
-        tdm.save(test_root + 'data/vector_data_imu01.h5')
         return
 
     err_str = ("The output of read_nortek('vector_data01.VEC') "
                "does not match 'vector_data01.h5'.")
     assert td == dat, err_str
+
+
+def read_test_imu(make_data=False):
+
+    td = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC')
+    # These values are not correct for this data but I'm adding them for
+    # test purposes only.
+    td.props['body2head_rotmat'] = np.eye(3)
+    td.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
+
+    if make_data:
+        td.save(test_root + 'data/vector_data_imu01.h5')
+        return
+
     err_str = ("The output of read_nortek('vector_data_imu01.VEC') "
                "does not match 'vector_data_imu01.h5'.")
-    assert tdm == dat_imu, err_str
+    assert td == dat_imu, err_str
 
 
 def motion_test(make_data=False):
