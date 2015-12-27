@@ -5,6 +5,7 @@ import numpy.testing as nptest
 #from ..OrderedSet import OrderedSet as oset
 oset = set
 
+debug_level = 0
 
 
 class DataError(Exception):
@@ -35,8 +36,17 @@ def _equiv_dict(d1, d2):
                 else:
                     assert d1[ky] == d2[ky]
             except AssertionError:
+                if debug_level > 0:
+                    print('The values in {} do not match between the data objects.'
+                          .format(ky, d1, d2))
                 return False
         return True
+    if debug_level > 0:
+        dif1 = set(d1.keys()) - set(d2.keys())
+        dif2 = set(d2.keys()) - set(d1.keys())
+        print("The list of items are not the same.\n"
+              "Entries in 1 that are not in 2: {}\n"
+              "Entries in 2 that are not in 1: {}".format(list(dif1), list(dif2)))
     return False
 
 
@@ -68,6 +78,11 @@ class Dprops(Dbase):
     """
     A base data class, which implements the 'props' attribute.
     """
+
+    def __eq__(self, other):
+        val = Dbase.__eq__(self, other)
+        p = _equiv_dict(self.props, other.props)
+        return val and p
 
     @property
     def props(self,):

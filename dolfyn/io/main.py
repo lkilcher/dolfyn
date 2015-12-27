@@ -5,7 +5,7 @@ package.
 
 import sys
 import inspect
-from ..data.base import Dgroups
+from ..data.base_old import Dgroups
 from . import hdf5
 from . import mat
 

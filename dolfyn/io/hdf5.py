@@ -14,7 +14,7 @@ try:
 except:
     import pickle as pkl
 from .base import DataFactory
-from ..data.base import Dgroups, np, ma, config
+from ..data.base_old import Dgroups, np, ma, config
 from ..data.time import time_array
 import copy
 

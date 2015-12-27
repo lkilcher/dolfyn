@@ -8,3 +8,4 @@ datfile = 'example_data/vector_data01.VEC'
 rdr = nrtk.NortekReader(datfile, debug=False, do_checksum=True)
 rdr.readfile()
 rdr.dat2sci()
+dat = rdr.data
