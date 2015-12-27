@@ -497,6 +497,7 @@ class NortekReader(object):
         Rotate orientation data into ADV coordinate system.
         """
         # MS = MicroStrain
+        print self._orient_dnames
         for nm in self._orient_dnames:
             # Rotate the MS orientation data (in MS coordinate system)
             # to be consistent with the ADV coordinate system.
@@ -517,7 +518,7 @@ class NortekReader(object):
             (self.data.orient.mat[:, 0],
              self.data.orient.mat[:, 1]) = (self.data.orient.mat[:, 1],
                                             self.data.orient.mat[:, 0].copy())
-        if 'Accel' in self.data:
+        if 'Accel' in self.data.orient:
             # This value comes from the MS 3DM-GX3 MIP manual.
             self.data.orient.Accel *= 9.80665
             self.data.orient.Accel = ma.marray(self.data.orient.Accel, ma.varMeta(
@@ -552,7 +553,7 @@ class NortekReader(object):
         self._ahrsid = ahrsid
         #print byts0
         c = self.c
-        if 'Accel' not in self.data:
+        if 'Accel' not in self.data.orient:
             self._dtypes += ['microstrain']
             if ahrsid == 195:
                 self._orient_dnames = ['Accel', 'AngRt', 'mat']
