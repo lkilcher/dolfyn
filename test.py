@@ -11,8 +11,10 @@ reload(avm)
 # dat = rdr.data
 
 
-dat = avm.load('test/data/vector_data01.h5', 'ALL')
-tdm = nrtk.read_nortek('example_data/vector_data01.VEC')
+dat = avm.load('test/data/vector_data_imu01.h5', 'ALL')
+
+tdm = nrtk.read_nortek('example_data/vector_data_imu01.VEC')
+
 
 # dat_imu = avm.load('test/data/vector_data_imu01.h5', 'ALL')
 

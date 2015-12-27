@@ -122,7 +122,7 @@ class NortekReader(object):
         self.f.seek(0, 0)
         # print( unpack(self.endian+'HH',self.read(4)) )
         # This is the configuration data:
-        self.config = config(_type='NORTEK Header Data')
+        self.config = config(_type='NORTEK')
         # Now read the header:
         err_msg = "I/O error: The file does not \
                    appear to be a Nortek data file."
@@ -139,11 +139,11 @@ class NortekReader(object):
         else:
             raise Exception(err_msg)
         if self.config.hardware.serialNum[0:3].upper() == 'WPR':
-            self.config.config_type = 'AWAC'
+            self.config['inst_type'] = 'AWAC'
         elif self.config.hardware.serialNum[0:3].upper() == 'VEC':
-            self.config.config_type = 'ADV'
+            self.config['inst_type'] = 'ADV'
         # Initialize the instrument type:
-        self._inst = self.config.config_type
+        self._inst = self.config['inst_type']
         # This is the position after reading the 'hardware',
         # 'head', and 'user' configuration.
         pnow = self.pos
@@ -519,15 +519,15 @@ class NortekReader(object):
                                             self.data.orient.mat[:, 0].copy())
         if 'Accel' in self.data:
             # This value comes from the MS 3DM-GX3 MIP manual.
-            self.data.Accel *= 9.80665
-            self.data.Accel = ma.marray(self.data.Accel, ma.varMeta(
+            self.data.orient.Accel *= 9.80665
+            self.data.orient.Accel = ma.marray(self.data.orient.Accel, ma.varMeta(
                 'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
-            self.data.AngRt = ma.marray(self.data.AngRt, ma.varMeta(
+            self.data.orient.AngRt = ma.marray(self.data.orient.AngRt, ma.varMeta(
                 'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
         if self._ahrsid in [195, 211]:
             # These are DAng and DVel, so we convert them to AngRt, Accel here
-            self.data.AngRt *= self.config.fs
-            self.data.Accel *= self.config.fs
+            self.data.orient.AngRt *= self.config.fs
+            self.data.orient.Accel *= self.config.fs
 
     def read_microstrain(self,):
         """
@@ -588,24 +588,24 @@ class NortekReader(object):
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
             dt = unpack(self.endian + '6f9f4x', byts)
-            (self.data.AngRt[:, c],
-             self.data.Accel[:, c]) = (dt[0:3], dt[3:6],)
-            self.data.mat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
+            (self.data.orient.AngRt[:, c],
+             self.data.orient.Accel[:, c]) = (dt[0:3], dt[3:6],)
+            self.data.orient.mat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
         elif ahrsid == 204:  # 0xcc
             byts = self.read(78)
             dt = unpack(self.endian + '18f6x', byts)
                         # This skips the "DWORD" (4 bytes) and the AHRS
                         # checksum (2 bytes)
-            (self.data.Accel[:, c],
-             self.data.AngRt[:, c],
-             self.data.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
-            self.data.mat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
+            (self.data.orient.Accel[:, c],
+             self.data.orient.AngRt[:, c],
+             self.data.orient.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            self.data.orient.mat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
         elif ahrsid == 211:
             byts = self.read(42)
             dt = unpack(self.endian + '9f6x', byts)
-            (self.data.AngRt[:, c],
-             self.data.Accel[:, c],
-             self.data.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            (self.data.orient.AngRt[:, c],
+             self.data.orient.Accel[:, c],
+             self.data.orient.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
         else:
             print('Unrecognized IMU identifier: ' + str(ahrsid))
             self.f.seek(-2, 1)

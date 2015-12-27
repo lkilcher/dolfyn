@@ -6,6 +6,8 @@ from ..io import main as dio
 from pycoda.base import data, load_hdf5
 from ..data import velocity as dbvel
 import numpy as np
+from ..data.base import config
+from ..data import base_old
 # import turbulence as turb
 
 # This is the body->imu vector (in body frame)
@@ -68,6 +70,18 @@ type_map.update(
      })
 
 
+def remap_config(old_cfg, new_cfg=None):
+    if new_cfg is None:
+        new_cfg = config()
+    for nm in old_cfg:
+        if isinstance(old_cfg[nm], base_old.config):
+            new_cfg[nm] = config(_type=old_cfg[nm].config_type)
+            remap_config(old_cfg[nm].main, new_cfg[nm])
+        else:
+            new_cfg[nm] = old_cfg[nm]
+    return new_cfg
+
+
 def load(fname, data_groups=None):
     try:
         return load_hdf5(fname, )
@@ -75,6 +89,7 @@ def load(fname, data_groups=None):
         out = load_old(fname, data_groups=data_groups, type_map=type_map)
         main = out.pop('main')
         out['vel'] = main['_u']
+        out['env']['pressure'] = main['pressure']
         ess = out.pop('_essential')
         for val in ess:
             out[val] = ess[val]
@@ -89,6 +104,12 @@ def load(fname, data_groups=None):
         out['sys']['corr'] = sig['_corr']
         out['sys']['amp'] = sig['_amp']
         #out['env']['pressure'] = out.pop('pressure')
+        cfg = out.config.config
+        out['config'] = remap_config(out.pop('config'), config()).config
+        out['config']['inst_type'] = cfg.config_type
+        out['config']['_type'] = 'NORTEK'
+        if 'orientmat' in out['orient']:
+            out['orient']['mat'] = out['orient'].pop('orientmat')
         return out
 
 
