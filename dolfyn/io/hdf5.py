@@ -438,6 +438,7 @@ class Loader(DataFactory):
         Load the data in `groups` into memory.
         """
         self.closefile = True
+        print(out)
         out = self.init_object(out, where=where)
         out.__preload__()
         self.read_props(out, where=where)
@@ -544,8 +545,9 @@ class Loader(DataFactory):
         the basic type is used.
         """
         if out is None:
-            if self.type_map.__class__ is dict:
+            if isinstance(self.type_map, dict):
                 typestr = self.read_type(where=where)
+                print typestr
                 if typestr in self.type_map:
                     out = self.type_map[typestr]()
                 else:
@@ -558,6 +560,7 @@ class Loader(DataFactory):
                             out.config_type = nd.attrs.get('_config_type')
                     else:
                         try:
+                            print("TRYING...")
                             out = self.type_map[
                                 typestr.split('.')[-1].rstrip("'>")]()
                         except:
