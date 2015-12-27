@@ -62,6 +62,9 @@ type_map.update(
     {'adv_raw': ADVraw,
      'adv_config': ADVconfig,
      'adv_binned': ADVbinned,
+     'ADVraw': ADVraw,
+     'ADVconfig': ADVconfig,
+     'ADVbinned': ADVbinned,
      })
 
 
@@ -69,7 +72,24 @@ def load(fname, data_groups=None):
     try:
         return load_hdf5(fname, )
     except KeyError:
-        return load_old(fname, data_groups=data_groups, type_map=type_map)
+        out = load_old(fname, data_groups=data_groups, type_map=type_map)
+        main = out.pop('main')
+        out['vel'] = main['_u']
+        ess = out.pop('_essential')
+        for val in ess:
+            out[val] = ess[val]
+        out['orient']['orientation_down'] = out.pop('orientation_down')
+        out['sys'] = out.pop('#sys')
+        out['sys']['_sysi'] = out.pop('_sysi')
+        out['props']['rotate_vars'].remove('_u')
+        out['props']['rotate_vars'].add('vel')
+        out['_extra'] = out.pop('#extra')
+        out['_extra']['AnaIn2MSB'] = out.env.pop('AnaIn2MSB')
+        sig = out.pop('signal')
+        out['sys']['corr'] = sig['_corr']
+        out['sys']['amp'] = sig['_amp']
+        #out['env']['pressure'] = out.pop('pressure')
+        return out
 
 
 def mmload():

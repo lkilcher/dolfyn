@@ -1,5 +1,6 @@
 import dolfyn.adv.base as avm
 import dolfyn.io.nortek as nrtk
+import numpy as np
 reload(nrtk)
 reload(avm)
 
@@ -11,11 +12,12 @@ reload(avm)
 
 
 dat = avm.load('test/data/vector_data01.h5', 'ALL')
+tdm = nrtk.read_nortek('example_data/vector_data01.VEC')
+
 # dat_imu = avm.load('test/data/vector_data_imu01.h5', 'ALL')
 
 # def read_test(make_data=False):
 
-#     td = avm.read_nortek('example_data/vector_data01.VEC')
 #     tdm = avm.read_nortek('example_data/vector_data_imu01.VEC')
 #     # These values are not correct for this data but I'm adding them for
 #     # test purposes only.

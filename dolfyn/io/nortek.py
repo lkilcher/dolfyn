@@ -415,12 +415,12 @@ class NortekReader(object):
             self._dtypes += ['vec_data']
 
         byts = self.read(20)
-        (self.data.extra.AnaIn2LSB[c],
-         self.data.sys.Count[c],
+        (self.data._extra.AnaIn2LSB[c],
+         self.data._extra.Count[c],
          self.data.env.PressureMSB[c],
-         self.data.extra.AnaIn2MSB[c],
+         self.data._extra.AnaIn2MSB[c],
          self.data.env.PressureLSW[c],
-         self.data.extra.AnaIn1[c],
+         self.data._extra.AnaIn1[c],
          self.data.vel[0, c],
          self.data.vel[1, c],
          self.data.vel[2, c],
@@ -489,7 +489,7 @@ class NortekReader(object):
          self.data.env.temp[c],
          self.data.sys.error[c],
          self.data.sys.status[c],
-         self.data.extra.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
+         self.data._extra.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
         self.checksum(byts)
 
     def sci_microstrain(self,):
@@ -651,7 +651,7 @@ class NortekReader(object):
         c = self.c
         self.data.mpltime[c] = self.rd_time(byts[2:8])
         (self.data.Error[c],
-         self.data.extra.AnaIn1[c],
+         self.data._extra.AnaIn1[c],
          self.data.sys.batt[c],
          self.data.env.c_sound[c],
          self.data.orient.heading[c],
@@ -714,7 +714,7 @@ class NortekReader(object):
         self.data['orient'] = data()
         self.data['sys'] = data()
         self.data['env'] = data()
-        self.data['extra'] = data()
+        self.data['_extra'] = data()
         self.data['config'] = self.config
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
@@ -840,11 +840,7 @@ class NortekReader(object):
             pass
         if retval == 2:
             self.c -= 1
-        for nm, dat in self.data.iteritems():
-            if (hasattr(getattr(self.data, nm), 'shape') and
-                (getattr(self.data, nm).shape[-1]
-                 == self.n_samp_guess)):
-                setattr(self.data, nm, dat[..., :self.c])
+        crop_data(self.data, slice(0, self.c), self.n_samp_guess)
 
     def dat2sci(self,):
         for nm in self._dtypes:
@@ -855,3 +851,12 @@ class NortekReader(object):
 
     def __enter__(self,):
         return self
+
+
+def crop_data(obj, range, n_lastdim):
+    for nm, dat in obj.iteritems():
+        if isinstance(dat, np.ndarray) and \
+           (dat.shape[-1] == n_lastdim):
+            obj[nm] = dat[..., range]
+        if isinstance(dat, data):
+            crop_data(dat, range, n_lastdim)

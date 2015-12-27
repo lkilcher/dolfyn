@@ -17,6 +17,13 @@ from .base import DataFactory
 from ..data.base_old import Dgroups, np, ma, config
 from ..data.time import time_array
 import copy
+from pycoda.base import data as pcd_data
+
+
+def add_data(obj, name, dat, group):
+    if group not in obj:
+        obj[group] = pcd_data()
+    obj[group][name] = dat
 
 
 class Saver(DataFactory):
@@ -356,7 +363,8 @@ class Loader(DataFactory):
                 dat = pkl.loads(dat)
             except:
                 pass
-            out.add_data(attnm, dat, self.get_name(grp))
+            add_data(out, attnm, dat, self.get_name(grp))
+            #out.add_data(attnm, dat, self.get_name(grp))
 
     def read_props(self, out, where):
         """
@@ -419,14 +427,14 @@ class Loader(DataFactory):
             out.close = self.fd.close
         for nd in self.iter_data(groups=groups, where=where):
             if '_object_type' in nd.attrs.keys():
-                out.add_data(self.get_name(nd)[1:],
-                             self.mmload(where=nd.name,
-                                         add_closemethod=False),
-                             self.get_name(nd.parent))
+                add_data(out, self.get_name(nd)[1:],
+                         self.mmload(where=nd.name,
+                                     add_closemethod=False),
+                         self.get_name(nd.parent))
                 continue
             if hasattr(nd, 'read_direct'):
                 nm = self.get_name(nd)
-                out.add_data(nm, nd, self.get_name(nd.parent))
+                add_data(out, nm, nd, self.get_name(nd.parent))
             if (self.ver <= 1.2 and nm == 'mpltime') or \
                     nd.attrs.get('time_var', False) == 'True':
                 out[nm] = time_array(out[nm])
@@ -438,24 +446,30 @@ class Loader(DataFactory):
         Load the data in `groups` into memory.
         """
         self.closefile = True
-        print(out)
         out = self.init_object(out, where=where)
-        out.__preload__()
+        try:
+            out.__preload__()
+        except:
+            pass
         self.read_props(out, where=where)
         for nd in self.iter_data(groups=groups, where=where):
             if '_object_type' in nd.attrs.keys():
-                out.add_data(self.get_name(nd)[1:], self.load(
-                    where=nd.name), self.get_name(nd.parent))
+                add_data(out,
+                         self.get_name(nd)[1:],
+                         self.load(where=nd.name),
+                         self.get_name(nd.parent))
                 continue
             if hasattr(nd, 'read_direct'):
                 nm = self.get_name(nd)
-                out.add_data(
-                    nm, np.empty(nd.shape, nd.dtype), self.get_name(nd.parent))
-                nd.read_direct(getattr(out, nm))
-                               # This puts the data in the output object.
+                grp = self.get_name(nd.parent)
+                add_data(out,
+                         nm,
+                         np.empty(nd.shape, nd.dtype),
+                         grp)
+                nd.read_direct(out[grp][nm])
                 if (self.ver <= 1.2 and nm == 'mpltime') or \
                         nd.attrs.get('time_var', False) == 'True':
-                    out[nm] = out[nm].view(time_array)
+                    out[grp][nm] = out[grp][nm].view(time_array)
                 if ma.valid and self.ver == 0:
                     if '_label' in nd.attrs.keys():
                         # This is a deprecated file structure.
@@ -509,7 +523,10 @@ class Loader(DataFactory):
                                 setattr(meta, atnm, pkl.loads(nd.attrs.get(atnm)))
                         setattr(out, nm, ma.marray(getattr(out, nm), meta=meta))
         self.read_attrs(out, groups=groups, where=where)
-        out.__postload__()
+        try:
+            out.__postload__()
+        except:
+            pass
         return out
 
     def read_dict(self, where):
@@ -547,7 +564,6 @@ class Loader(DataFactory):
         if out is None:
             if isinstance(self.type_map, dict):
                 typestr = self.read_type(where=where)
-                print typestr
                 if typestr in self.type_map:
                     out = self.type_map[typestr]()
                 else:
@@ -560,7 +576,6 @@ class Loader(DataFactory):
                             out.config_type = nd.attrs.get('_config_type')
                     else:
                         try:
-                            print("TRYING...")
                             out = self.type_map[
                                 typestr.split('.')[-1].rstrip("'>")]()
                         except:
