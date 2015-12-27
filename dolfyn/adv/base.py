@@ -98,6 +98,10 @@ def load(fname, data_groups=None):
         out['sys']['_sysi'] = out.pop('_sysi')
         out['props']['rotate_vars'].remove('_u')
         out['props']['rotate_vars'].add('vel')
+        for val in out['props']['rotate_vars']:
+            if val in ['Accel', 'AngRt', 'Mag']:
+                out.props['rotate_vars'].remove(val)
+                out.props['rotate_vars'].add('orient.' + val)
         out['_extra'] = out.pop('#extra')
         out['_extra']['AnaIn2MSB'] = out.env.pop('AnaIn2MSB')
         sig = out.pop('signal')
