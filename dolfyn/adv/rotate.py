@@ -13,7 +13,7 @@ def orient2euler(advo):
     Parameters
     ----------
     advo : :class:`ADVraw <base.ADVraw>`
-      An adv object containing an `orientmat` attribute (array).
+      An adv object containing an `orient.mat` item (array).
 
     Returns
     -------
@@ -31,8 +31,8 @@ def orient2euler(advo):
     Communications Protocol", (Rev 15).
 
     """
-    if hasattr(advo, 'orientmat'):
-        omat = advo.orientmat
+    if 'orient.mat' in advo:
+        omat = advo.orient.mat
     elif np.ndarray in advo.__class__.__mro__ and \
             advo.shape[:2] == (3, 3):
         omat = advo
@@ -96,7 +96,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                 "Data must be in the '%s' frame prior to using this function" %
                 cs_now)
 
-    if hasattr(advo, 'orientmat'):
+    if 'orient.mat' in advo:
         if 'declination' in advo.props and not \
                 advo.props.get('declination_in_orientmat', False):
             # Declination is defined as positive if MagN is east of
@@ -109,15 +109,15 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             Rdec = np.array([[cd, -sd, 0],
                              [sd, cd, 0],
                              [0, 0, 1]])
-            advo['orientmat'] = np.einsum('ij,kjl->ikl',
-                                          Rdec,
-                                          advo['orientmat'])
+            advo['orient']['mat'] = np.einsum('ij,kjl->ikl',
+                                              Rdec,
+                                              advo['orient']['mat'])
 
             advo.props['declination_in_orientmat'] = True
 
         # Take the transpose of the orientation to get the inst->earth rotation
         # matrix.
-        rmat = np.rollaxis(advo['orientmat'], 1)
+        rmat = np.rollaxis(advo['orient']['mat'], 1)
 
     else:
         rr = advo.roll * np.pi / 180
@@ -245,16 +245,16 @@ def _inst2earth(advo, use_mean_rotation=False):
     # This is me actually doing the rotation:
     # R=np.dot(H,P)
     # u=
-    utmp = advo._u.copy()
-    advo._u[0] = ((ch * cp) * utmp[0] +
-                  (-ch * sp * sr + sh * cr) * utmp[1] +
-                  (-ch * cr * sp - sh * sr) * utmp[2]).astype('single')
-    advo._u[1] = ((-sh * cp) * utmp[0] +
-                  (sh * sp * sr + ch * cr) * utmp[1] +
-                  (sh * cr * sp - ch * sr) * utmp[2]).astype('single')
-    advo._u[2] = ((sp) * utmp[0] +
-                  (sr * cp) * utmp[1] +
-                  cp * cr * utmp[2]).astype('single')
+    utmp = advo.vel.copy()
+    advo.vel[0] = ((ch * cp) * utmp[0] +
+                   (-ch * sp * sr + sh * cr) * utmp[1] +
+                   (-ch * cr * sp - sh * sr) * utmp[2]).astype('single')
+    advo.vel[1] = ((-sh * cp) * utmp[0] +
+                   (sh * sp * sr + ch * cr) * utmp[1] +
+                   (sh * cr * sp - ch * sr) * utmp[2]).astype('single')
+    advo.vel[2] = ((sp) * utmp[0] +
+                   (sr * cp) * utmp[1] +
+                   cp * cr * utmp[2]).astype('single')
     advo.props['coord_sys'] = 'earth'
 
 
@@ -263,7 +263,7 @@ def _rotate_vel2body(advo):
         # Don't re-rotate the data if its already been rotated.
         return
     # The transpose should do head to body.
-    advo._u = np.dot(advo.props['body2head_rotmat'].T, advo._u)
+    advo.vel = np.dot(advo.props['body2head_rotmat'].T, advo.vel)
     advo.props['vel_rotated2body'] = True
 
 
@@ -312,15 +312,15 @@ def earth2principal(advo, reverse=False):
         dat = advo[nm]
         dat[:2] = np.einsum('ij,jk', rotmat[:2, :2], dat[:2])
 
-    if hasattr(advo, 'orientmat'):
+    if 'orient.mat' in advo:
         # The orientmat does earth->inst, so the orientmat needs to
         # rotate from principal to earth first. rotmat does
         # earth->principal, so we use the inverse (via index ordering)
         # This should handle the 'reverse' case also, because the
         # inverse rotmat gets applied first.
-        advo['orientmat'] = np.einsum('ijl,kj->ikl',
-                                      advo['orientmat'],
-                                      rotmat, )
+        advo['orient']['mat'] = np.einsum('ijl,kj->ikl',
+                                          advo.orient.mat,
+                                          rotmat, )
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new

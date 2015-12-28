@@ -1,20 +1,17 @@
 import dolfyn.adv.base as avm
 import dolfyn.io.nortek as nrtk
+import dolfyn.adv.motion as avmot
 import numpy as np
 reload(nrtk)
 reload(avm)
+reload(avmot)
 
-# # d=np.zeros(100)
-# rdr = nrtk.NortekReader(datfile, debug=False, do_checksum=True)
-# rdr.readfile()
-# rdr.dat2sci()
-# dat = rdr.data
-
-
-dat = avm.load('test/data/vector_data_imu01.h5', 'ALL')
+dat = avm.load('test/data/vector_data_imu01_mc.h5', 'ALL')
 
 tdm = nrtk.read_nortek('example_data/vector_data_imu01.VEC')
-
+tdm.props['body2head_rotmat'] = np.eye(3)
+tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
+avmot.correct_motion(tdm)
 
 # dat_imu = avm.load('test/data/vector_data_imu01.h5', 'ALL')
 

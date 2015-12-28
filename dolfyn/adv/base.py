@@ -31,6 +31,10 @@ class ADVraw(dbvel.Velocity):
     """
 
     @property
+    def fs(self, ):
+        return self.props['fs']
+
+    @property
     def make_model(self,):
         return self.props['inst_make'] + ' ' + self.props['inst_model']
 
@@ -44,7 +48,7 @@ class ADVraw(dbvel.Velocity):
         Test whether this data object contains Inertial Motion Unit
         (IMU) data.
         """
-        return hasattr(self, 'Accel') | hasattr(self, 'Veloc')
+        return 'Accel' in self.orient
 
 
 class ADVbinned(dbvel.VelBindatSpec, ADVraw):
@@ -88,8 +92,10 @@ def load(fname, data_groups=None):
     except KeyError:
         out = load_old(fname, data_groups=data_groups, type_map=type_map)
         main = out.pop('main')
-        out['vel'] = main['_u']
-        out['env']['pressure'] = main['pressure']
+        for nm in main:
+            out[nm] = main[nm]
+        out['vel'] = out.pop('_u')
+        out['env']['pressure'] = out.pop('pressure')
         ess = out.pop('_essential')
         for val in ess:
             out[val] = ess[val]
@@ -99,9 +105,14 @@ def load(fname, data_groups=None):
         out['props']['rotate_vars'].remove('_u')
         out['props']['rotate_vars'].add('vel')
         for val in out['props']['rotate_vars']:
-            if val in ['Accel', 'AngRt', 'Mag']:
+            if val in ['Accel', 'AngRt', 'Mag', 'AccelStable',
+                       'uacc', 'urot', 'uraw']:
                 out.props['rotate_vars'].remove(val)
-                out.props['rotate_vars'].add('orient.' + val)
+                if val.startswith('u'):
+                    val = 'vel_' + val[1:]
+                if val not in ['vel_raw']:
+                    val = 'orient.' + val
+                out.props['rotate_vars'].add(val)
         out['_extra'] = out.pop('#extra')
         out['_extra']['AnaIn2MSB'] = out.env.pop('AnaIn2MSB')
         sig = out.pop('signal')
@@ -114,6 +125,12 @@ def load(fname, data_groups=None):
         out['config']['_type'] = 'NORTEK'
         if 'orientmat' in out['orient']:
             out['orient']['mat'] = out['orient'].pop('orientmat')
+        try:
+            out['orient']['vel_rot'] = out.orient.pop('urot')
+            out['orient']['vel_acc'] = out.orient.pop('uacc')
+            out['vel_raw'] = out.pop('uraw')
+        except:
+            pass
         return out
 
 

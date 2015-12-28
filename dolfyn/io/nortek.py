@@ -497,7 +497,6 @@ class NortekReader(object):
         Rotate orientation data into ADV coordinate system.
         """
         # MS = MicroStrain
-        print self._orient_dnames
         for nm in self._orient_dnames:
             # Rotate the MS orientation data (in MS coordinate system)
             # to be consistent with the ADV coordinate system.
@@ -572,7 +571,9 @@ class NortekReader(object):
                 self.data.orient['AngRt'] = np.empty((3, self.n_samp_guess),
                                                      dtype=np.float32)
                 self.data.orient['Mag'] = np.empty((3, self.n_samp_guess), dtype=np.float32)
-                self.data.props['rotate_vars'].update({'Accel', 'AngRt', 'Mag'})
+                self.data.props['rotate_vars'].update({'orient.Accel',
+                                                       'orient.AngRt',
+                                                       'orient.Mag'})
                 if ahrsid == 204:
                     self.data.orient['mat'] = np.empty((3, 3, self.n_samp_guess),
                                                        dtype=np.float32)
@@ -584,7 +585,9 @@ class NortekReader(object):
                                                      dtype=np.float32)
                 self.data.orient['Mag'] = np.empty((3, self.n_samp_guess),
                                                    dtype=np.float32)
-                self.data.props['rotate_vars'].update({'AngRt', 'Accel', 'Mag'})
+                self.data.props['rotate_vars'].update({'orient.AngRt',
+                                                       'orient.Accel',
+                                                       'orient.Mag'})
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
