@@ -1,17 +1,19 @@
 import dolfyn.adv.base as avm
 import dolfyn.io.nortek as nrtk
 import dolfyn.adv.motion as avmot
+import dolfyn.adv.rotate as avrot
 import numpy as np
 reload(nrtk)
 reload(avm)
 reload(avmot)
 
-dat = avm.load('test/data/vector_data_imu01_mc.h5', 'ALL')
+cd = avm.load('test/data/vector_data_imu01_head_pitch_roll.h5', 'ALL')
 
-tdm = nrtk.read_nortek('example_data/vector_data_imu01.VEC')
-tdm.props['body2head_rotmat'] = np.eye(3)
-tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
-avmot.correct_motion(tdm)
+td = avm.load('test/data/vector_data_imu01.h5', 'ALL')
+o = td['orient']
+o['pitch'], o['roll'], o['heading'] = avrot.orient2euler(td)
+
+
 
 # dat_imu = avm.load('test/data/vector_data_imu01.h5', 'ALL')
 

@@ -62,10 +62,8 @@ def motion_test(make_data=False):
 def heading_test(make_data=False):
     td = dat_imu.copy()
 
-    pitch, roll, head = avm.rotate.orient2euler(td)
-    td.add_data('pitch', pitch, 'orient')
-    td.add_data('roll', roll, 'orient')
-    td.add_data('heading', head, 'orient')
+    o = td['orient']
+    o['pitch'], o['roll'], o['heading'] = avm.rotate.orient2euler(td)
 
     if make_data:
         td.save(test_root + 'data/vector_data_imu01_head_pitch_roll.h5')
@@ -92,7 +90,7 @@ def turbulence_test(make_data=False):
 
 def clean_test(make_data=False):
     td = dat.copy()
-    avm.clean.GN2002(td.u)
+    avm.clean.GN2002(td['vel'][0])
 
     if make_data:
         td.save(test_root + 'data/vector_data01_uclean.h5')
