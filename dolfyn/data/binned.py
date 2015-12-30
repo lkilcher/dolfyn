@@ -226,7 +226,7 @@ class TimeBinner(object):
                     n_bin2)[..., None]
         return out
 
-    def do_avg(self, rawdat, outdat, names=None):
+    def average_all(self, rawdat, outdat, names=None, ):
         """
 
         Parameters
@@ -241,13 +241,13 @@ class TimeBinner(object):
            all data in `rawdat` will be binned.
 
         """
-        n = len(rawdat)
-        for nm, dat, grp in rawdat.iter_wg():
-            mro = dat.__class__.__mro__
-            if ((names is None) or (nm in names)) and \
-               ((np.ndarray in mro) or (Dataset in mro)) and \
-               (dat.shape[-1] == n):
-                outdat.add_data(nm, self.mean(dat), grp)
+        n = len(rawdat.mpltime)
+        for nm in rawdat.iter_data(include_hidden=True):
+            dat = rawdat[nm]
+            if ((names is None) or (nm in names)) \
+               and isinstance(dat, (np.ndarray, Dataset, )) \
+               and (dat.shape[-1] == n):
+                outdat[nm] = self.mean(dat)
 
     def do_var(self, rawdat, outdat, names=None, suffix='_var'):
         """Calculate the variance of data attributes.
@@ -308,6 +308,7 @@ class TimeBinner(object):
 
     def __call__(self, rawdat, out_type=TimeBindat):
         outdat = out_type()
+        outdat['props'] = {}
         outdat.props['n_bin'] = self.n_bin
         outdat.props['n_fft'] = self.n_fft
         outdat.props['n_fft_coh'] = self.n_fft_coh

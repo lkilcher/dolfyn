@@ -3,6 +3,7 @@ from ..data.velocity import VelBinnerSpec
 from .base import ADVbinned
 from ..tools.misc import slice1d_along_axis
 from scipy.special import cbrt
+from pycoda.base import SpecData
 
 kappa = 0.41
 
@@ -87,19 +88,36 @@ class TurbBinner(VelBinnerSpec):
             <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
         """
         out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
-        self.do_avg(advr, out)
-        out.add_data('_tke', self.calc_tke(advr._u, noise=advr.noise), 'main')
-        out.add_data('stress', self.calc_stress(advr._u), 'main')
-        out.add_data('sigma_Uh',
-                     np.std(self.reshape(advr.U_mag), -1, dtype=np.float64)
-                     - (advr.noise[0] + advr.noise[1]) / 2, 'main')
+        # Create the matching groups:
+        for nm in advr.iter_subgroups(include_hidden=True):
+            if nm.startswith('config'):
+                continue
+            out[nm] = advr[nm].__class__()
+        # out['config'] = advr['config'].copy()
+        self.average_all(advr, out)
+        noise = advr.props['doppler_noise']
+        out['vel2'] = self.calc_tke(advr['vel'], noise=noise)
+        out['stress'] = self.calc_stress(advr['vel'])
+        out['sigma_Uh'] = (np.std(self.reshape(np.abs(advr.U)), -1,
+                                  dtype=np.float64) -
+                           (noise[0] + noise[1]) / 2)
         out.props['Itke_thresh'] = Itke_thresh
-        out.add_data('Spec',
-                     self.calc_vel_psd(advr._u,
-                                       noise=advr.noise,
-                                       window=window),
-                     'spec')
-        out.add_data('omega', self.calc_omega(), '_essential')
+        out['Spec'] = SpecData()
+        out['Spec']['vel'] = self.calc_vel_psd(advr['vel'],
+                                               noise=noise,
+                                               window=window)
+        out['Spec']['omega'] = self.calc_omega()
+        if 'orient.Accel' in advr:
+            otmp = out['orient']['Spec'] = SpecData()
+            for nm in ['AngRt', 'Accel', 'vel_rot', 'vel_acc', ]:
+                if nm in advr.orient:
+                    otmp[nm] = self.calc_vel_psd(advr.orient[nm],
+                                                 window=window)
+            if 'vel_rot' in advr.orient:
+                otmp['vel_mot'] = self.calc_vel_psd(advr.orient['vel_rot'] +
+                                                    advr.orient['vel_acc'],
+                                                    window=window)
+            otmp['omega'] = out['Spec']['omega']
 
         # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,
         # out.U_mag,omega_range=omega_range_epsilon),'main')

@@ -11,99 +11,20 @@ import numpy as np
 class Velocity(data):
 
     @property
-    def shape(self,):
-        return self.u.shape
+    def u(self, ):
+        return self['vel'][0]
 
     @property
-    def U_mag(self,):
-        """
-        Velocity magnitude
-        """
-        return np.abs(self.U)
+    def v(self, ):
+        return self['vel'][1]
 
     @property
-    def U_angle(self,):
-        """
-        Angle of velocity vector.
-        """
-        return np.angle(self.U)
-
-    def calc_principal_angle(self, bin=None):
-        """
-        Compute the principal angle of the horizontal velocity.
-        """
-        if not self.props['coord_sys'] in ['earth', 'inst']:
-            raise Exception("The principal angle should only be estimated \
-            if the coordinate system is either 'earth' or 'inst'.")
-        self.props['coord_sys_principal_ref'] = self.props['coord_sys']
-        dt = self.U
-        if bin is None:
-            if dt.ndim > 1:
-                dt = dt.mean(0)
-        else:
-            dt = dt[bin]
-        dt[dt.imag <= 0] *= np.exp(1j * np.pi)
-        # Now double the angle, so that angles near pi and 0 get averaged
-        # together correctly:
-        dt *= np.exp(1j * np.angle(dt))
-        dt = np.ma.masked_invalid(dt)
-        # Divide the angle by 2 to remove the doubling done on the previous
-        # line.
-        self.props['principal_angle'] = np.angle(
-            np.mean(dt, 0, dtype=np.complex128)) / 2
-        # Angle returns values between -pi and pi.  I want the
-        # principal angle always to be between 0 and pi.  Therefore,
-        # add pi to the negative ones.
-        if self.props['principal_angle'] < 0:
-            self.props['principal_angle'] += np.pi
-
-    def U_rot(self, angle):
-        return self.U * np.exp(1j * angle)
-
-    def rotate_var(self, angle, vrs=('u', 'v')):
-        return (getattr(self, vrs[0]) + 1j *
-                getattr(self, vrs[1])) * np.exp(1j * angle)
+    def w(self, ):
+        return self['vel'][2]
 
     @property
-    def U_earth(self,):
-        if self.props['coord_sys'] == 'earth':
-            return self.U
-        return self.U_rot(self.principal_angle)
-
-    @property
-    def u_earth(self,):
-        return self.U_earth.real
-
-    @property
-    def v_earth(self,):
-        return self.U_earth.imag
-
-    @property
-    def U_pax(self,):
-        """
-        The complex velocity in principal axes.
-        """
-        if self.props['coord_sys'] == 'principal':
-            return self.U
-        return self.U_rot(-self.principal_angle)
-
-    @property
-    def u_pax(self,):
-        """
-        The main component of the principal axes velocity.
-        """
-        return self.U_pax.real
-
-    @property
-    def v_pax(self,):
-        """
-        The off-axis component of the prinicipal axes velocity.
-        """
-        return self.U_pax.imag
-
-    @property
-    def U(self,):
-        return self.u[:] + self.v[:] * 1j
+    def U(self, ):
+        return self['vel'][0] + self['vel'][1] * 1j
 
 
 class VelBindatTke(data):
@@ -115,7 +36,7 @@ class VelBindatTke(data):
         """
         # Why did he do it this way, instead of the sum of the magnitude of the
         # stresses?
-        return (self.upwp_ ** 2 + self.upvp_ ** 2 + self.vpwp_ ** 2) ** (0.5)
+        return np.sqrt((self['stress'] ** 2).sum(0))
 
     def Itke(self, thresh=0):
         """
@@ -142,49 +63,49 @@ class VelBindatTke(data):
         """
         The turbulent kinetic energy (sum of the three components).
         """
-        return self._tke.sum(0)
+        return self['vel2'].sum(0)
 
     @property
     def upvp_(self,):
         """
         u'v' Reynolds stress
         """
-        return self.stress[0]
+        return self['stress'][0]
 
     @property
     def upwp_(self,):
         """
         u'w' Reynolds stress
         """
-        return self.stress[1]
+        return self['stress'][1]
 
     @property
     def vpwp_(self,):
         """
         v'w' Reynolds stress
         """
-        return self.stress[2]
+        return self['stress'][2]
 
     @property
     def upup_(self,):
         """
         u'u' component of the tke.
         """
-        return self._tke[0]
+        return self['vel2'][0]
 
     @property
     def vpvp_(self,):
         """
         v'v' component of the tke.
         """
-        return self._tke[1]
+        return self['vel2'][1]
 
     @property
     def wpwp_(self,):
         """
         w'w' component of the tke.
         """
-        return self._tke[2]
+        return self['vel2'][2]
 
 
 class VelBinnerTke(TimeBinner):
@@ -243,56 +164,7 @@ class VelBindatSpec(VelBindatTke):
         """
         Frequency [Hz].
         """
-        return self.omega[:] / rad_hz
-
-    @property
-    def k(self,):
-        """
-        Wavenumber [1/m].
-        """
-        return self.omega[:, None] / self.U_mag
-
-    @property
-    def Suu(self,):
-        """
-        u-component spectrum [m^2/s]
-        """
-        return self.Spec[0]
-
-    @property
-    def Svv(self,):
-        """
-        v-component spectrum [m^2/s]
-        """
-        return self.Spec[1]
-
-    @property
-    def Sww(self,):
-        """
-        w-component spectrum [m^2/s]
-        """
-        return self.Spec[2]
-
-    @property
-    def Suu_hz(self,):
-        """
-        u-component spectrum [m^2/s^2/Hz]
-        """
-        return self.Spec[0] * rad_hz
-
-    @property
-    def Svv_hz(self,):
-        """
-        v-component spectrum [m^2/s^2/Hz]
-        """
-        return self.Spec[1] * rad_hz
-
-    @property
-    def Sww_hz(self,):
-        """
-        w-component spectrum [m^2/s^2/Hz]
-        """
-        return self.Spec[2] * rad_hz
+        return self.omega / rad_hz
 
 
 class VelBinnerSpec(VelBinnerTke):
@@ -316,7 +188,7 @@ class VelBinnerSpec(VelBinnerTke):
         noise : list(3 floats) (optional)
           Noise level of each component's velocity measurement (default to 0).
         n_pad : int
-          The number of values to pad (with zero)
+          The number of values to pad with zero
         """
         fs = self._parse_fs(fs)
         if rotate_u:

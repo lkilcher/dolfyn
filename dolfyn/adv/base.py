@@ -3,7 +3,7 @@ The base module for the adv package.
 """
 #from ..data import base as db
 from ..io import main as dio
-from pycoda.base import data, load_hdf5
+from pycoda.base import data, load_hdf5, SpecData
 from ..data import velocity as dbvel
 import numpy as np
 from ..data.base import config
@@ -118,11 +118,18 @@ def load(fname, data_groups=None):
         sig = out.pop('signal')
         out['sys']['corr'] = sig['_corr']
         out['sys']['amp'] = sig['_amp']
+        if 'spec' in out:
+            out['Spec'] = SpecData()
+            out.Spec['vel'] = out.pop('spec')['Spec']
+            out.Spec['omega'] = out.pop('omega')
+        if '_tke' in out:
+            out['vel2'] = out.pop('_tke')
         #out['env']['pressure'] = out.pop('pressure')
-        cfg = out.config.config
-        out['config'] = remap_config(out.pop('config'), config()).config
-        out['config']['inst_type'] = cfg.config_type
-        out['config']['_type'] = 'NORTEK'
+        if 'config' in out:
+            cfg = out.config.config
+            out['config'] = remap_config(out.pop('config'), config()).config
+            out['config']['inst_type'] = cfg.config_type
+            out['config']['_type'] = 'NORTEK'
         if 'orientmat' in out['orient']:
             out['orient']['mat'] = out['orient'].pop('orientmat')
         try:
