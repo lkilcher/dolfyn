@@ -46,6 +46,11 @@ def read_test_imu(make_data=False):
     assert td == dat_imu, err_str
 
 
+# For non-IMU advs:
+#def inst2earth_test(make_data=False):
+
+#def earth2principal_test(make_data=False):
+
 def motion_test(make_data=False):
     tdm = dat_imu.copy()
     avm.motion.correct_motion(tdm)

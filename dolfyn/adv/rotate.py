@@ -267,7 +267,33 @@ def _rotate_vel2body(advo):
     advo.props['vel_rotated2body'] = True
 
 
-def earth2principal(advo, reverse=False):
+def calc_principal_angle(u, v, tidal=True):
+    """
+    Compute the principal angle of the horizontal velocity.
+    """
+    U = u + 1j * v
+    if tidal:
+        U[U.imag <= 0] *= np.exp(1j * np.pi)
+        # Now double the angle, so that angles near pi and 0 get averaged
+        # together correctly:
+        U *= np.exp(1j * np.angle(U))
+        U = np.ma.masked_invalid(U)
+        # Divide the angle by 2 to remove the doubling done on the previous
+        # line.
+        pang = np.angle(np.mean(U,
+                                -1,
+                                dtype=np.complex128)) / 2
+        # Angle returns values between -pi and pi.  I want the
+        # principal angle always to be between 0 and pi.  Therefore,
+        # add pi to the negative ones.
+        if pang < 0:
+            pang += np.pi
+        return pang
+    else:
+        return np.angle(np.mean(U, -1, dtype=np.complex128))
+
+
+def earth2principal(advo, reverse=False, tidal=True):
     """
     Rotate data in an ADV object to/from principal axes. If the
     principal angle is not yet computed it will be computed.
@@ -286,7 +312,11 @@ def earth2principal(advo, reverse=False):
            (principal->earth).
 
     """
-
+    if 'principal_angle' not in advo.props:
+        if not advo.props['coord_sys'] == 'earth':
+            raise Exception("The principal angle should only be estimated"
+                            "if the coordinate system is 'earth'.")
+        advo.props['principal_angle'] = calc_principal_angle(advo.vel[0], advo.vel[1], tidal=tidal)
     if reverse:
         ang = advo.principal_angle
         cs_now = 'principal'

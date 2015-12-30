@@ -1,4 +1,5 @@
 import dolfyn.adv.base as avm
+import dolfyn.adv.turbulence as avturb
 import dolfyn.io.nortek as nrtk
 import dolfyn.adv.motion as avmot
 import dolfyn.adv.rotate as avrot
@@ -6,12 +7,22 @@ import numpy as np
 reload(nrtk)
 reload(avm)
 reload(avmot)
+reload(avrot)
+reload(avturb)
 
-cd = avm.load('test/data/vector_data_imu01_head_pitch_roll.h5', 'ALL')
+dat = avm.load('test/data/vector_data01.h5', 'ALL')
 
-td = avm.load('test/data/vector_data_imu01.h5', 'ALL')
-o = td['orient']
-o['pitch'], o['roll'], o['heading'] = avrot.orient2euler(td)
+bnr = avturb.TurbBinner(4096, dat.fs)
+td = bnr(dat)
+
+cd = avm.load('test/data/vector_data01_bin.h5', 'ALL')
+
+assert cd == td, "TurbBinner gives unexpected results!"
+
+# cd = avm.load('test/data/vector_data_imu01_head_pitch_roll.h5', 'ALL')
+
+# o = td['orient']
+# o['pitch'], o['roll'], o['heading'] = avrot.orient2euler(td)
 
 
 
