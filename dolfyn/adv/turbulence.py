@@ -4,6 +4,7 @@ from .base import ADVbinned
 from ..tools.misc import slice1d_along_axis
 from scipy.special import cbrt
 from pycoda.base import SpecData
+import warnings
 
 kappa = 0.41
 
@@ -87,6 +88,10 @@ class TurbBinner(VelBinnerSpec):
           - omega : The radial frequency [rad/s] (also see the :attr:`freq
             <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
         """
+        warnings.warn("The instance.__call__ syntax of turbulence averaging"
+                      " is being deprecated. Use the functional form, e.g. '"
+                      "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
+                      .format(self.n_bin))
         out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
         # Create the matching groups:
         for nm in advr.iter_subgroups(include_hidden=True):
@@ -336,3 +341,112 @@ class TurbBinner(VelBinnerSpec):
         fs = self._parse_fs(fs)
         return U_mag / fs * np.argmin((corr_vel / corr_vel[..., 0][..., None]
                                        ) > (1. / np.e), axis=-1)
+
+
+def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
+                    omega_range_epsilon=[6.28, 12.57],
+                    Itke_thresh=0, window='hann'):
+    """
+    Compute a suite of turbulence statistics for the input data
+    advr, and return a `binned` data object.
+
+    Parameters
+    ----------
+
+    advr : :class:`ADVraw <base.ADVraw>`
+      The raw adv data-object to `bin`, average and compute
+      turbulence statistics of.
+
+    n_bin : int
+      The length of `bin`s, in number of points, for this averaging
+      operator.
+
+    n_fft : int (optional, default: n_fft = n_bin)
+      The length of the FFT for computing spectra (must be < n_bin)
+
+    omega_range_epsilon : iterable(2)
+      The frequency range (low, high) over which to estimate the
+      dissipation rate `epsilon` [rad/s].
+
+    Itke_thresh : The threshold for velocity magnitude for
+      computing the turbulence intensity. Values of Itke where
+      U_mag < Itke_thresh are set to NaN.  (default: 0).
+
+    window : 1, None, 'hann'
+      The window to use for psds.
+
+    Returns
+    -------
+
+    advb : :class:`base.ADVbinned`
+      Returns an 'binned' (i.e. 'averaged') data object. All
+      fields of the input data object are averaged in n_bin
+      chunks. This object also computes the following items over
+      those chunks:
+
+      - \_tke : The energy in each component (components are also
+        accessible as
+        :attr:`upup_ <dolfyn.data.velocity.VelBindatTke.upup_>`,
+        :attr:`vpvp_ <dolfyn.data.velocity.VelBindatTke.vpvp_>`,
+        :attr:`wpwp_ <dolfyn.data.velocity.VelBindatTke.wpwp_>`)
+
+      - stress : The Reynolds stresses (each component is
+        accessible as
+        :attr:`upwp_ <dolfyn.data.velocity.VelBindatTke.upwp_>`,
+        :attr:`vpwp_ <dolfyn.data.velocity.VelBindatTke.vpwp_>`,
+        :attr:`upvp_ <dolfyn.data.velocity.VelBindatTke.upvp_>`)
+
+      - sigma_Uh : The standard deviation of the horizontal
+        velocity.
+
+      - Spec : The spectra of the velocity in radial frequency
+        units (each component is available as:
+        :attr:`Suu <dolfyn.data.velocity.VelBindatSpec.Suu>`,
+        :attr:`Svv <dolfyn.data.velocity.VelBindatSpec.Svv>`,
+        :attr:`Sww <dolfyn.data.velocity.VelBindatSpec.Sww>`,
+        or in Hz units as:
+        :attr:`Suu_hz <dolfyn.data.velocity.VelBindatSpec.Suu_hz>`,
+        :attr:`Svv_hz <dolfyn.data.velocity.VelBindatSpec.Svv_hz>`,
+        :attr:`Sww_hz <dolfyn.data.velocity.VelBindatSpec.Sww_hz>`)
+
+      - omega : The radial frequency [rad/s] (also see the :attr:`freq
+        <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
+    """
+    calculator = TurbBinner(n_bin, advr.fs, n_fft=n_fft)
+    out = VelBinnerSpec.__call__(calculator, advr, out_type=out_type)
+    # Create the matching groups:
+    for nm in advr.iter_subgroups(include_hidden=True):
+        if nm.startswith('config'):
+            continue
+        out[nm] = advr[nm].__class__()
+    # out['config'] = advr['config'].copy()
+    calculator.average_all(advr, out)
+    noise = advr.props['doppler_noise']
+    out['vel2'] = calculator.calc_tke(advr['vel'], noise=noise)
+    out['stress'] = calculator.calc_stress(advr['vel'])
+    out['sigma_Uh'] = (np.std(calculator.reshape(np.abs(advr.U)), -1,
+                              dtype=np.float64) -
+                       (noise[0] + noise[1]) / 2)
+    out.props['Itke_thresh'] = Itke_thresh
+    out['Spec'] = SpecData()
+    out['Spec']['vel'] = calculator.calc_vel_psd(advr['vel'],
+                                                 noise=noise,
+                                                 window=window)
+    out['Spec']['omega'] = calculator.calc_omega()
+    if 'orient.Accel' in advr:
+        otmp = out['orient']['Spec'] = SpecData()
+        for nm in ['AngRt', 'Accel', 'vel_rot', 'vel_acc', ]:
+            if nm in advr.orient:
+                otmp[nm] = calculator.calc_vel_psd(advr.orient[nm],
+                                                   window=window)
+        if 'vel_rot' in advr.orient:
+            otmp['vel_mot'] = calculator.calc_vel_psd(advr.orient['vel_rot'] +
+                                                      advr.orient['vel_acc'],
+                                                      window=window)
+        otmp['omega'] = out['Spec']['omega']
+
+    # out.add_data('epsilon',calculator.calc_epsilon_LT83(out.Spec,out.omega,
+    # out.U_mag,omega_range=omega_range_epsilon),'main')
+    # out.add_data('Acov',calculator.calc_acov(advr._u),'corr')
+    # out.add_data('Lint',calculator.calc_Lint(out.Acov,out.U_mag),'main')
+    return out

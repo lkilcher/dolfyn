@@ -36,7 +36,7 @@ Examples
 
 
 from .base import load, mmload
-from .turbulence import TurbBinner
+from .turbulence import calc_turbulence, TurbBinner
 from . import clean
 from ..io.nortek import read_nortek
 from . import rotate
