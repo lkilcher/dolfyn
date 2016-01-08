@@ -14,8 +14,8 @@ except:
 
 pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
-dat = avm.load(test_root + 'data/vector_data01.h5', 'ALL')
-dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
+dat = avm.load(test_root + 'data/vector_data01.h5')
+dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5')
 
 
 def read_test(make_data=False):
@@ -24,7 +24,7 @@ def read_test(make_data=False):
 
     if make_data:
         td.to_hdf5(test_root + 'data/vector_data01.h5')
-        return
+        return td
 
     err_str = ("The output of read_nortek('vector_data01.VEC') "
                "does not match 'vector_data01.h5'.")
@@ -41,7 +41,7 @@ def read_test_imu(make_data=False):
 
     if make_data:
         td.to_hdf5(test_root + 'data/vector_data_imu01.h5')
-        return
+        return td
 
     err_str = ("The output of read_nortek('vector_data_imu01.VEC') "
                "does not match 'vector_data_imu01.h5'.")
@@ -50,37 +50,63 @@ def read_test_imu(make_data=False):
 
 # For non-IMU advs:
 def inst2earth_test(make_data=False):
-    tdm = dat.copy()
-    avm.rotate.inst2earth(tdm)
+    td = dat.copy()
+    avm.rotate.inst2earth(td)
     # only compare the 'vel' data.
-    tdm = pcd.data(vel=tdm['vel'])
+    td = pcd.data(vel=td['vel'])
 
     if make_data:
-        tdm.to_hdf5(test_root + 'data/vector_data_imu01_inst2earth.h5')
-        return
+        td.to_hdf5(test_root + 'data/vector_data_imu01_inst2earth.h5')
+        return td
 
-    cdm = avm.load(test_root + 'data/vector_data_imu01_inst2earth.h5', 'ALL')
+    cd = avm.load(test_root + 'data/vector_data_imu01_inst2earth.h5')
 
-    assert tdm == cdm, "Motion correction does not match expectations."
+    assert td == cd, "Rotation to earth does not match expectations."
 
-#def earth2principal_test(make_data=False):
 
 #def subset_test(make_data=False):
 
-#def declination_test(make_data=False):
-
 
 def motion_test(make_data=False):
-    tdm = dat_imu.copy()
-    avm.motion.correct_motion(tdm)
+    td = dat_imu.copy()
+    avm.motion.correct_motion(td)
 
     if make_data:
-        tdm.to_hdf5(test_root + 'data/vector_data_imu01_mc.h5')
-        return
+        td.to_hdf5(test_root + 'data/vector_data_imu01_mc.h5')
+        return td
 
-    cdm = avm.load(test_root + 'data/vector_data_imu01_mc.h5', 'ALL')
+    cd = avm.load(test_root + 'data/vector_data_imu01_mc.h5')
 
-    assert tdm == cdm, "Motion correction does not match expectations."
+    assert td == cd, "Motion correction does not match expectations."
+
+
+def earth2principal_test(make_data=False):
+    td = avm.load(test_root + 'data/vector_data_imu01_mc.h5')
+    avm.rotate.earth2principal(td)
+    td = pcd.data(vel=td['vel'], orient=td['orient'], props=td['props'])
+
+    if make_data:
+        td.to_hdf5(test_root + 'data/vector_data_imu01_principal.h5')
+        return td
+
+    cd = avm.load(test_root + 'data/vector_data_imu01_principal.h5')
+
+    assert td == cd, "Rotation to principal axes does not match expectations."
+
+
+def declination_test(make_data=False):
+    td = dat_imu.copy()
+    td.props['declination'] = 14.3
+    avm.motion.correct_motion(td)
+    td = pcd.data(vel=td['vel'], props=td['props'])
+
+    if make_data:
+        td.to_hdf5(test_root + 'data/vector_data_imu01_declination.h5')
+        return td
+
+    cd = avm.load(test_root + 'data/vector_data_imu01_declination.h5')
+
+    assert td == cd, "Motion correction does not match expectations."
 
 
 def heading_test(make_data=False):
@@ -92,9 +118,9 @@ def heading_test(make_data=False):
 
     if make_data:
         td.to_hdf5(test_root + 'data/vector_data_imu01_head_pitch_roll.h5')
-        return
+        return td
 
-    cd = avm.load(test_root + 'data/vector_data_imu01_head_pitch_roll.h5', 'ALL')
+    cd = avm.load(test_root + 'data/vector_data_imu01_head_pitch_roll.h5')
 
     assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
 
@@ -104,9 +130,9 @@ def turbulence_test(make_data=False):
 
     if make_data:
         td.to_hdf5(test_root + 'data/vector_data01_bin.h5')
-        return
+        return td
 
-    cd = avm.load(test_root + 'data/vector_data01_bin.h5', 'ALL')
+    cd = avm.load(test_root + 'data/vector_data01_bin.h5')
 
     assert cd == td, "TurbBinner gives unexpected results!"
 
@@ -119,8 +145,8 @@ def clean_test(make_data=False):
 
     if make_data:
         td.to_hdf5(test_root + 'data/vector_data01_uclean.h5')
-        return
+        return td
 
-    cd = avm.load(test_root + 'data/vector_data01_uclean.h5', 'ALL')
+    cd = avm.load(test_root + 'data/vector_data01_uclean.h5')
 
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"

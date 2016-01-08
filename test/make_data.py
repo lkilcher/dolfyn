@@ -11,6 +11,8 @@ import adv_tests as advt
 #advt.read_test(make_data=True)
 #advt.read_test_imu(make_data=True)
 #advt.motion_test(make_data=True)
+#advt.earth2principal_test(make_data=True)
+#advt.declination_test(make_data=True)
 #advt.heading_test(make_data=True)
 #advt.inst2earth_test(make_data=True)
 #advt.turbulence_test(make_data=True)

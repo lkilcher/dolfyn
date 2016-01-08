@@ -318,11 +318,11 @@ def earth2principal(advo, reverse=False, tidal=True):
                             "if the coordinate system is 'earth'.")
         advo.props['principal_angle'] = calc_principal_angle(advo.vel[0], advo.vel[1], tidal=tidal)
     if reverse:
-        ang = advo.principal_angle
+        ang = advo.props['principal_angle']
         cs_now = 'principal'
         cs_new = 'earth'
     else:
-        ang = -advo.principal_angle
+        ang = -advo.props['principal_angle']
         cs_now = 'earth'
         cs_new = 'principal'
     if advo.props['coord_sys'] == cs_new:

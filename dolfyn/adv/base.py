@@ -86,11 +86,11 @@ def remap_config(old_cfg, new_cfg=None):
     return new_cfg
 
 
-def load(fname, data_groups=None):
+def load(fname, ):
     try:
         return load_hdf5(fname, )
     except KeyError:
-        out = load_old(fname, data_groups=data_groups, type_map=type_map)
+        out = load_old(fname, data_groups='ALL', type_map=type_map)
         main = out.pop('main')
         for nm in main:
             out[nm] = main[nm]
