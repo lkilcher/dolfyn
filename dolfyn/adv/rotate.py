@@ -120,16 +120,16 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rmat = np.rollaxis(advo['orient']['mat'], 1)
 
     else:
-        rr = advo.roll * np.pi / 180
-        pp = advo.pitch * np.pi / 180
-        hh = (advo.heading - 90) * np.pi / 180
+        rr = advo.orient.roll * np.pi / 180
+        pp = advo.orient.pitch * np.pi / 180
+        hh = (advo.orient.heading - 90) * np.pi / 180
         # NOTE: For Nortek Vector ADVs: 'down' configuration means the
         #       head was pointing UP!  Check the Nortek coordinate
         #       transform matlab script for more info.  The 'up'
         #       orientation corresponds to the communication cable
         #       being up.  This is ridiculous, but apparently a
         #       reality.
-        rr[advo.orientation_down] += np.pi
+        rr[advo.orient.orientation_down] += np.pi
         if 'declination' in advo.props.keys():
             hh += (advo.props['declination'] * np.pi / 180)
                    # Declination is in degrees East, so we add this to True
