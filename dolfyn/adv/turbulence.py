@@ -3,7 +3,7 @@ from ..data.velocity import VelBinnerSpec
 from .base import ADVbinned
 from ..tools.misc import slice1d_along_axis
 from scipy.special import cbrt
-from pycoda.base import SpecData
+from ..data.base import SpecData
 import warnings
 
 kappa = 0.41

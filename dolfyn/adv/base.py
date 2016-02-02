@@ -3,11 +3,14 @@ The base module for the adv package.
 """
 #from ..data import base as db
 from ..io import main as dio
-from pycoda.base import data, load_hdf5, SpecData
+from pycoda.base import data
+from pycoda.io import load_hdf5
 from ..data import velocity as dbvel
 import numpy as np
-from ..data.base import config
+from ..data.base import config, SpecData
 from ..data import base_old
+from matplotlib import dates as dt
+
 # import turbulence as turb
 
 # This is the body->imu vector (in body frame)
@@ -29,6 +32,16 @@ class ADVraw(dbvel.Velocity):
     """
     The base class for ADV data objects.
     """
+
+    # def subset(self, inds=None, time_range=None):
+    #     if inds is None and time_range is None:
+    #         raise Exception("Either inds or time_range must be specified.")
+    #     elif inds is not None:
+    #     if time_range is not None:
+    #         if time_range[0] is None:
+    #             i0 = 0
+    #         else:
+    #             inds =
 
     @property
     def fs(self, ):
@@ -100,7 +113,7 @@ def load(fname, ):
         for val in ess:
             out[val] = ess[val]
         out['orient']['orientation_down'] = out.pop('orientation_down')
-        out['sys'] = out.pop('#sys')
+        out['sys'] = out.pop('#sys', data())
         out['sys']['_sysi'] = out.pop('_sysi')
         out['props']['rotate_vars'].remove('_u')
         out['props']['rotate_vars'].add('vel')
@@ -113,7 +126,7 @@ def load(fname, ):
                 if val not in ['vel_raw']:
                     val = 'orient.' + val
                 out.props['rotate_vars'].add(val)
-        out['_extra'] = out.pop('#extra')
+        out['_extra'] = out.pop('#extra', data())
         out['_extra']['AnaIn2MSB'] = out.env.pop('AnaIn2MSB')
         sig = out.pop('signal')
         out['sys']['corr'] = sig['_corr']
@@ -127,7 +140,11 @@ def load(fname, ):
         #out['env']['pressure'] = out.pop('pressure')
         if 'config' in out:
             cfg = out.config.config
-            out['config'] = remap_config(out.pop('config'), config()).config
+            try:
+                out['config'] = remap_config(out.pop('config'), config()).config
+            except:
+                out['config'] = data()
+                pass
             out['config']['inst_type'] = cfg.config_type
             out['config']['_type'] = 'NORTEK'
         if 'orientmat' in out['orient']:

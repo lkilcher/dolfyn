@@ -3,3 +3,4 @@ particular, linearly interpolating time, as is done in
 `NortekReader.sci_vec_sysdata` will not work for duty-cycled data
 files.
 
+FIX SUBSET!

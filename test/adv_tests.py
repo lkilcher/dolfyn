@@ -64,8 +64,10 @@ def inst2earth_test(make_data=False):
     assert td == cd, "Rotation to earth does not match expectations."
 
 
-#def subset_test(make_data=False):
-
+def subset_test(make_data=False):
+    td = dat.copy()
+    td = td.subset[..., 100:1000]
+    
 
 def motion_test(make_data=False):
     td = dat_imu.copy()
