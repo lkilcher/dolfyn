@@ -538,7 +538,6 @@ class CorrectMotion(object):
             vel_rot = np.dot(rmat.T, vel_rot)
 
         advo.vel_rot = vel_rot
-        advo.groups['orient'].add('vel_rot')
 
     def _calc_probe_pos(self, advo):
         """
