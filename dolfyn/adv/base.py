@@ -133,8 +133,22 @@ def load(fname, ):
         out['sys']['amp'] = sig['_amp']
         if 'spec' in out:
             out['Spec'] = SpecData()
-            out.Spec['vel'] = out.pop('spec')['Spec']
+            tmp_specdata = out.pop('spec')
+            out.Spec['vel'] = tmp_specdata['Spec']
             out.Spec['omega'] = out.pop('omega')
+            out['orient']['Spec'] = SpecData()
+            if 'Spec_uacc' in tmp_specdata:
+                out['orient']['Spec']['vel_acc'] = tmp_specdata['Spec_uacc']
+            if 'Spec_urot' in tmp_specdata:
+                out['orient']['Spec']['vel_rot'] = tmp_specdata['Spec_urot']
+            if 'Spec_umot' in tmp_specdata:
+                out['orient']['Spec']['vel_mot'] = tmp_specdata['Spec_umot']
+            if len(out['orient']['Spec']) == 0:
+                out['orient'].pop('Spec')
+            else:
+                out['orient']['Spec']['omega'] = out['Spec']['omega'].copy()
+            if 'Spec_uraw' in tmp_specdata:
+                out['Spec']['vel_raw'] = tmp_specdata['Spec_uraw']
         if '_tke' in out:
             out['vel2'] = out.pop('_tke')
         #out['env']['pressure'] = out.pop('pressure')
