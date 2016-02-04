@@ -11,7 +11,7 @@ import numpy as np
 # User input and customization
 
 # The file to load:
-fname = './data/vector_data_imu01.vec'
+fname = './example_data/vector_data_imu01.vec'
 # This file is available at:
 # http://goo.gl/yckXtG
 

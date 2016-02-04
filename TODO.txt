@@ -2,3 +2,7 @@ Check whether the read_nortek functions work for 'burst mode'. In
 particular, linearly interpolating time, as is done in
 `NortekReader.sci_vec_sysdata` will not work for duty-cycled data
 files.
+
+Add test to confirm that the adv_example01.py script works.
+
+Add tests to confirm that all scripts work.
