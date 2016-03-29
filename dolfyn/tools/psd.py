@@ -19,7 +19,7 @@ fft = np.fft.fft
 ##         self.info = getattr(obj, 'info', None)
 
 
-def psd_freq(nfft, fs):
+def psd_freq(nfft, fs, full=False):
     """
     Compute the frequency for vector for a `nfft` and `fs`.
 
@@ -31,6 +31,8 @@ def psd_freq(nfft, fs):
 
     nfft : int
       The number of samples in a window.
+    full : bool (default: False)
+      Whether to return half frequencies (positive), or the full frequencies.
 
     Returns
     -------
@@ -40,7 +42,19 @@ def psd_freq(nfft, fs):
 
     """
     fs = np.float64(fs)
-    return np.arange(fs / nfft, fs / 2 + fs / nfft, fs / nfft)
+    f = np.fft.fftfreq(nfft, 1 / fs)
+    if full:
+        return f
+    else:
+        return f[1:np.floor(nfft / 2. + 1)]
+
+
+def _getwindow(window, nfft):
+    if window == 'hann':
+        window = np.hanning(nfft)
+    elif window is None or window == 1:
+        window = np.ones(nfft)
+    return window
 
 
 def _stepsize(l, nfft, nens=None, step=None):
@@ -224,10 +238,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     step[0], nens, nfft = _stepsize(l[0], nfft)
     step[1], nens, nfft = _stepsize(l[1], nfft, nens=nens)
     fs = np.float64(fs)
-    if window == 'hann':
-        window = np.hanning(nfft)
-    elif window is None or window == 1:
-        window = np.ones(nfft)
+    window = _getwindow(window, nfft)
     fft_inds = slice(1, np.floor(nfft / 2. + 1))
     wght = 2. / (window ** 2).sum()
     pwr = fft(detrend(a[0:nfft]) * window)[fft_inds] * \
@@ -315,10 +326,7 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
     l = len(a)
     step, nens, nfft = _stepsize(l, nfft, step=step)
     fs = np.float64(fs)
-    if window.__class__ is str and window.startswith('hann'):
-        window = np.hanning(nfft)
-    elif window is None or window == 1:
-        window = np.ones(nfft)
+    window = _getwindow(window, nfft)
     fft_inds = slice(1, int(nfft / 2. + 1))
     wght = 2. / (window ** 2).sum()
     s1 = fft(detrend(a[0:nfft]) * window)[fft_inds]
@@ -381,3 +389,26 @@ def psd(a, nfft, fs, window='hann', step=None):
 
     """
     return cpsd(a, a, nfft, fs, window=window, step=step)
+
+
+def delta_angle(a, b, nfft, window='hann', step=None):
+
+    window = _getwindow(window, nfft)
+    fft_inds = slice(1, int(nfft / 2. + 1))
+    s1 = fft(detrend(a[0:nfft]) * window)[fft_inds]
+    s2 = fft(detrend(b[0:nfft]) * window)[fft_inds]
+    s1 /= np.abs(s1)
+    s2 /= np.abs(s2)
+    ang = s2 / s1
+    l = len(a)
+    step, nens, nfft = _stepsize(l, nfft, step=step)
+    if nens - 1:
+        for i in range(step, l - nfft + 1, step):
+            # print( (i) )
+            s1 = fft(detrend(a[i:(i + nfft)]) * window)[fft_inds]
+            s1 /= np.abs(s1)
+            s2 = fft(detrend(a[i:(i + nfft)]) * window)[fft_inds]
+            s2 /= np.abs(s2)
+            ang += s2 / s1
+    ang /= nens
+    return ang
