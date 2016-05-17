@@ -43,10 +43,11 @@ def psd_freq(nfft, fs, full=False):
     """
     fs = np.float64(fs)
     f = np.fft.fftfreq(nfft, 1 / fs)
+    f[nfft // 2] *= -1
     if full:
         return f
     else:
-        return f[1:np.floor(nfft / 2. + 1)]
+        return f[1:int(nfft / 2. + 1)]
 
 
 def _getwindow(window, nfft):
@@ -152,7 +153,7 @@ def cohere(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
         raise Exception("Coherence must be computed from a set of ensembles.")
     # fs=1 is ok because it comes out in the normalization.  (noise
     # normalization depends on this)
-    out = ((cross(a, b, nfft, 1, window=window) ** 2) /
+    out = ((np.abs(cross(a, b, nfft, 1, window=window)) ** 2) /
            ((psd(a, nfft, 1, window=window, step=step1) - noise[0] ** 2 / np.pi) *
             (psd(b, nfft, 1, window=window, step=step2) - noise[1] ** 2 / np.pi))
            )
@@ -239,17 +240,18 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     step[1], nens, nfft = _stepsize(l[1], nfft, nens=nens)
     fs = np.float64(fs)
     window = _getwindow(window, nfft)
-    fft_inds = slice(1, np.floor(nfft / 2. + 1))
+    fft_inds = slice(1, int(nfft / 2. + 1))
     wght = 2. / (window ** 2).sum()
     pwr = fft(detrend(a[0:nfft]) * window)[fft_inds] * \
         np.conj(fft(detrend(b[0:nfft]) * window)[fft_inds])
+    print pwr.dtype
     if nens - 1:
         for i1, i2 in zip(range(step[0], l[0] - nfft + 1, step[0]),
                           range(step[1], l[1] - nfft + 1, step[1])):
             pwr += fft(detrend(a[i1:(i1 + nfft)]) * window)[fft_inds] * \
                 np.conj(fft(detrend(b[i2:(i2 + nfft)]) * window)[fft_inds])
     pwr *= wght / nens / fs
-    return np.abs(pwr)
+    return pwr
 
 
 def cpsd(a, b, nfft, fs, window='hann', step=None):
@@ -341,14 +343,11 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
             if auto_psd:
                 pwr += np.abs(s1) ** 2
             else:
-                pwr += s1 * \
-                    np.conj(fft(detrend(b[i:(i + nfft)]) * window)[fft_inds])
+                pwr += s1 * np.conj(fft(detrend(b[i:(i + nfft)]) * window)[fft_inds])
     pwr *= wght / nens / fs
     # print( 1,step,nens,l,nfft,wght,fs )
     # error
-    if auto_psd:  # No need to take the abs again.
-        return pwr
-    return np.abs(pwr)
+    return pwr
 
 
 def psd(a, nfft, fs, window='hann', step=None):
@@ -388,7 +387,7 @@ def psd(a, nfft, fs, window='hann', step=None):
     numpy.fft
 
     """
-    return cpsd(a, a, nfft, fs, window=window, step=step)
+    return np.abs(cpsd(a, a, nfft, fs, window=window, step=step))
 
 
 def delta_angle(a, b, nfft, window='hann', step=None):

@@ -1,5 +1,5 @@
 import numpy as np
-from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync
+from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd
 from ..tools.misc import slice1d_along_axis
 from scipy.signal import detrend
 from .base import ma, rad_hz, TimeBased
@@ -360,14 +360,18 @@ class TimeBinner(object):
         n_bin2 = self._parse_nbin(n_bin2)
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], dat2.shape[-1] / n_bin2])
-        out = np.empty(oshp, dtype=dat1.dtype)
         # The data is detrended in psd, so we don't need to do it here:
         dat1 = self.reshape(dat1, n_pad=n_fft)
         dat2 = self.reshape(dat2, n_pad=n_fft)
+        out = np.empty(oshp, dtype='c{}'.format(dat1.dtype.itemsize * 2))
+        if dat1.shape == dat2.shape:
+            cross = cpsd
+        else:
+            cross = cpsd_quasisync
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
-            out[slc] = cpsd_quasisync(dat1[slc], dat2[slc], n_fft,
-                                      2 * np.pi * fs, window=window)
+            out[slc] = cross(dat1[slc], dat2[slc], n_fft,
+                             2 * np.pi * fs, window=window)
         return out
 
     def psd(self, dat, fs=None, window='hann', noise=0,
