@@ -18,12 +18,17 @@ class Velocity(TimeBased, Saveable):
         else:
             tm = [self.mpltime[0], self.mpltime[-1]]
             dt = num2date(tm[0])
-        return ("%0.2fh %s %s (%s) record, started: %s%s" %
+        burst_str = ''
+        if 'DutyCycle_NBurst' in self.props:
+            burst_str = (' (Burst Mode: {:.2g}% duty cycle)'.format(
+                100. * self.props['DutyCycle_NBurst'] / self.props['DutyCycle_NCycle']))
+        return ("%0.2fh @%0.2gHz %s record%s, started: %s%s" %
                 ((tm[-1] - tm[0]) * 24,
-                 self.props.get('inst_make', '*unknown*'), self.
-                 props.get('inst_model', '*unknown*'),
+                 self.props['fs'],
                  self.props.get('inst_type', '*unknown*'),
-                 dt.strftime('%b %d, %Y %H:%M'), mmstr,))
+                 burst_str,
+                 dt.strftime('%b %d, %Y %H:%M'),
+                 mmstr,))
 
     def _pre_mat_save(self, outdict):
         outdict['u'] = self._u

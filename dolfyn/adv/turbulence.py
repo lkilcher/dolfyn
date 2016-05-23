@@ -87,10 +87,10 @@ class TurbBinner(VelBinnerSpec):
           - omega : The radial frequency [rad/s] (also see the :attr:`freq
             <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
         """
-        warnings.warn("The instance.__call__ syntax of turbulence averaging"
-                      " is being deprecated. Use the functional form, e.g. '"
-                      "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
-                      .format(self.n_bin))
+        # warnings.warn("The instance.__call__ syntax of turbulence averaging"
+        #               " is being deprecated. Use the functional form, e.g. '"
+        #               "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
+        #               .format(self.n_bin))
         out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
         self.do_avg(advr, out)
         out.add_data('_tke', self.calc_tke(advr._u, noise=advr.noise), 'main')

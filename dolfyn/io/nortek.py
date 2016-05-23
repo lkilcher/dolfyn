@@ -13,6 +13,42 @@ from . import nortek_defs
 time = nortek_defs.time
 
 
+def interp_burst(arr, Nburst, Ncycle):
+    """Interpolate an array of duty-cycled data samples.
+
+    This function assumes that the burst starts at the point of the
+    data sampling, and adds points starting with that point.
+
+    Ncycle is the number of points that would be between each of the
+    arr points, if sampling were continuous at the rate of Nburst.
+
+    Note that:
+    Nburst < Ncycle
+
+    Parameters
+    ----------
+    arr : array_like (N)
+       The intermittent data samples.
+
+    Nburst : int
+       The number of points in the burst.
+
+    Ncycle : int
+       The number of points that would be between each point in `arr`
+       if sampling were continuous.
+
+    Returns
+    -------
+
+    arr_out : array_like (N * Nburst)
+
+    """
+    assert Nburst < Ncycle, "Nburst must be less than Ncycle."
+    arr = np.pad(arr, [(0, 1)], 'reflect', reflect_type='odd')
+    tmpd = np.arange(Nburst) / Ncycle
+    return (arr[:-1, None] + np.diff(arr)[:, None] * tmpd[None, :]).flatten()
+
+
 def int2binarray(val, n):
     out = np.zeros(n, dtype='bool')
     for idx, n in enumerate(range(n)):
@@ -232,7 +268,7 @@ class NortekReader(object):
     def read_user_cfg(self,):
         # ID: '0x00 = 00
         if self.debug:
-            print('Reading user configuration (0x00)...')
+            print('Reading user configuration (0x00) ping #{} @ {}...'.format(self.c, self.pos))
         self.config.add_data('user', adv_base.ADVconfig('USER'))
         byts = self.read(508)
         tmp = unpack(self.endian + '2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H', byts)
@@ -303,7 +339,7 @@ class NortekReader(object):
     def read_head_cfg(self,):
         # ID: '0x04 = 04
         if self.debug:
-            print('Reading head configuration (0x04)...')
+            print('Reading head configuration (0x04) ping #{} @ {}...'.format(self.c, self.pos))
         self.config.add_data('head', adv_base.ADVconfig('HEAD'))
         byts = self.read(220)
         tmp = unpack(self.endian + '2x3H12s176s22xH', byts)
@@ -320,7 +356,7 @@ class NortekReader(object):
     def read_hw_cfg(self,):
         # ID 0x05 = 05
         if self.debug:
-            print('Reading hardware configuration (0x05)...')
+            print('Reading hardware configuration (0x05) ping #{} @ {}...'.format(self.c, self.pos))
         self.config.add_data('hardware', adv_base.ADVconfig('HARDWARE'))
         byts = self.read(44)
         tmp = unpack(self.endian + '2x14s6H12xI', byts)
@@ -350,7 +386,7 @@ class NortekReader(object):
     def read_vec_checkdata(self,):
         # ID: 0x07 = 07
         if self.debug:
-            print('Reading vector check data (0x07)...')
+            print('Reading vector check data (0x07) ping #{} @ {}...'.format(self.c, self.pos))
         byts0 = self.read(6)
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
         self.config.add_data('checkdata', adv_base.ADVconfig('CHECKDATA'))
@@ -382,10 +418,12 @@ class NortekReader(object):
         self.data.del_data('PressureMSB', 'PressureLSW')
 
         self.data.props['fs'] = self.config.fs
-        self.data.props['coord_sys'] = {
-            'XYZ': 'inst',
-            'ENU': 'earth',
-            'BEAM': 'beam'}[self.config.user.CoordSystem]
+        if self.config.user.NBurst >= 0:
+            self.data.props['DutyCycle_NBurst'] = self.config.user.NBurst
+            self.data.props['DutyCycle_NCycle'] = self.config.user.MeasInterval * self.config.fs
+        self.data.props['coord_sys'] = {'XYZ': 'inst',
+                                        'ENU': 'earth',
+                                        'BEAM': 'beam'}[self.config.user.CoordSystem]
         self.data.props['toff'] = 0
         # I must be able to calculate this here, right? # !!!TODO!!!
         self.data.props['doppler_noise'] = [0, 0, 0]
@@ -405,7 +443,7 @@ class NortekReader(object):
         c = self.c
 
         if self.debug:
-            print('Reading vector data (0x10)...')
+            print('Reading vector data (0x10) ping #{} @ {}...'.format(self.c, self.pos))
 
         if not hasattr(self.data, '_u'):
             self._init_data(nortek_defs.vec_data)
@@ -435,33 +473,46 @@ class NortekReader(object):
         """
         Turn the data in the vec_sysdata structure into scientific units.
         """
+        dat = self.data
         self._sci_data(nortek_defs.vec_sysdata)
-        self.data.add_data('_sysi', ~np.isnan(self.data.mpltime), '_essential')
+        dat.add_data('_sysi', ~np.isnan(dat.mpltime), '_essential')
         # These are the indices in the sysdata variables
         # that are not interpolated.
         # Skip the first entry for the interpolation process
-        inds = np.nonzero(~np.isnan(self.data.mpltime))[0][1:]
-        p = np.poly1d(np.polyfit(inds, self.data.mpltime[inds], 1))
-        self.data.mpltime = p(np.arange(len(self.data.mpltime))
-                              ).view(time.time_array)
-        tbx.fillgaps(self.data.batt)
-        tbx.fillgaps(self.data.c_sound)
-        tbx.fillgaps(self.data.heading)
-        tbx.fillgaps(self.data.pitch)
-        tbx.fillgaps(self.data.roll)
-        tbx.fillgaps(self.data.temp)
+        #pdb.set_trace()
+        if self.config.user.NBurst == 0:
+            inds = np.nonzero(~np.isnan(dat.mpltime))[0][1:]
+            p = np.poly1d(np.polyfit(inds, dat.mpltime[inds], 1))
+            dat.mpltime = p(np.arange(len(dat.mpltime))).view(time.time_array)
+            tbx.fillgaps(dat.batt)
+            tbx.fillgaps(dat.c_sound)
+            tbx.fillgaps(dat.heading)
+            tbx.fillgaps(dat.pitch)
+            tbx.fillgaps(dat.roll)
+            tbx.fillgaps(dat.temp)
 
-        tmpd = np.empty_like(self.data.heading)
-        tmpd[:] = np.NaN
-        # The first status bit should be the orientation.
-        tmpd[self.data._sysi] = self.data.status[self.data._sysi] & 1
-        tbx.fillgaps(tmpd, extrapFlg=True)
-        slope = np.diff(tmpd)
-        tmpd[1:][slope < 0] = 1
-        tmpd[:-1][slope > 0] = 0
-        self.data.add_data('orientation_down',
-                           tmpd.astype('bool'),
-                           '_essential')
+            tmpd = np.empty_like(dat.heading)
+            tmpd[:] = np.NaN
+            # The first status bit should be the orientation.
+            tmpd[dat._sysi] = dat.status[dat._sysi] & 1
+            tbx.fillgaps(tmpd, extrapFlg=True)
+            slope = np.diff(tmpd)
+            tmpd[1:][slope < 0] = 1
+            tmpd[:-1][slope > 0] = 0
+            dat.add_data('orientation_down',
+                         tmpd.astype('bool'),
+                         '_essential')
+        else:
+            nburst = self.config.user.NBurst
+            fs = dat.config.fs
+            timedt = np.arange(nburst) * 1. / (fs * 24 * 3600)
+            tmp = dat.mpltime[dat._sysi][:, None] + timedt[None, :]
+            dat.mpltime = tmp.flatten()[:self.c]
+            for var in ['batt', 'c_sound', 'heading', 'pitch', 'roll', 'temp']:
+                dat[var] = interp_burst(
+                    dat[var][dat._sysi],
+                    nburst,
+                    self.config.user.MeasInterval * dat.config.fs)[:self.c]
 
     def read_vec_sysdata(self,):
         """
@@ -473,7 +524,7 @@ class NortekReader(object):
         c = self.c
         # Need to make this a vector...
         if self.debug:
-            print('Reading vector system data (0x11)...')
+            print('Reading vector system data (0x11) ping #{} @ {}...'.format(self.c, self.pos))
         if not hasattr(self.data, 'mpltime'):
             self._init_data(nortek_defs.vec_sysdata)
             self._dtypes += ['vec_sysdata']
@@ -542,7 +593,7 @@ class NortekReader(object):
             self.flag_lastread_sysdata = False
             self.c -= 1
         if self.debug:
-            print('Reading vector microstrain data (0x71)...')
+            print('Reading vector microstrain data (0x71) ping #{} @ {}...'.format(self.c, self.pos))
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
@@ -647,7 +698,7 @@ class NortekReader(object):
     def read_vec_hdr(self,):
         # ID: '0x12 = 18
         if self.debug:
-            print('Reading vector header data (0x12)...')
+            print('Reading vector header data (0x12) ping #{} @ {}...'.format(self.c, self.pos))
         byts = self.read(38)
         tmp = unpack(self.endian + '8xH7B21x', byts)
                      # The first two are size, the next 6 are time.
@@ -667,7 +718,7 @@ class NortekReader(object):
     def read_awac_profile(self,):
         # ID: '0x20' = 32
         if self.debug:
-            print('Reading AWAC velocity data (0x20)...')
+            print('Reading AWAC velocity data (0x20) ping #{} @ {}...'.format(self.c, self.pos))
         nbins = self.config.user.NBins
         if not hasattr(self.data, 'temp'):
             self._init_data(nortek_defs.awac_profile)
@@ -785,6 +836,7 @@ class NortekReader(object):
         Read the time from the first 6bytes of the input string.
         """
         min, sec, day, hour, year, month = unpack('BBBBBB', strng[:6])
+        #pdb.set_trace()
         return time.date2num(time.datetime(
             time._fullyear(_bcd2char(year)),
             _bcd2char(month),
