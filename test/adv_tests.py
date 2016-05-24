@@ -96,3 +96,36 @@ def clean_test(make_data=False):
     cd = avm.load(test_root + 'data/vector_data01_uclean.h5', 'ALL')
 
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"
+
+
+def subset_test(make_data=False):
+    td = dat.copy().subset(slice(10, 20))
+
+    if make_data:
+        td.save(test_root + 'data/vector_data01_subset.h5')
+        return
+
+    cd = avm.load(test_root + 'data/vector_data01_subset.h5', 'ALL')
+
+    # First check that subsetting works correctly
+    assert cd == td, "ADV data object `subset` method gives unexpected results."
+
+    # Now check that empty subsetting raises an error
+    try:
+        td.subset(slice(0))
+    except IndexError:
+        pass
+    else:
+        raise Exception("Attempts to subset to an empty data-object should raise an error.")
+    try:
+        td.subset(td.mpltime < 0)
+    except IndexError:
+        pass
+    else:
+        raise Exception("Attempts to subset to an empty data-object should raise an error.")
+    try:
+        td.subset(slice(td.mpltime.shape[0] + 5, td.mpltime.shape[0] + 100))
+    except IndexError:
+        pass
+    else:
+        raise Exception("Attempts to subset to an empty data-object should raise an error.")

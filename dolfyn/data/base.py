@@ -367,9 +367,9 @@ class Dgroups(Dbase):
                 if ((inds is not None and hasattr(dt, 'shape') and
                      dt.shape[-1] == self.shape[-1])):
                     dt = dt[..., inds]
+                    if np.any(np.array(dt.shape) == 0):
+                        raise IndexError('The indexing object yields empty arrays.')
                 out.add_data(nm, dt, group=grp)
-                if np.any(np.array(dt.shape) == 0):
-                    raise IndexError('The indexing object yields empty arrays.')
         return out
 
     def del_data(self, *args):
