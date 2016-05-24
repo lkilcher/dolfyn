@@ -37,8 +37,8 @@ def read_test(make_data=False):
                        "does not match 'vector_data01.h5'.")
     assert tdm == dat_imu, ("The output of read_nortek('vector_data_imu01.VEC') "
                             "does not match 'vector_data_imu01.h5'.")
-    assert tdb == dat_burst, ("The output of read_nortek('vector_data_imu01.VEC') "
-                              "does not match 'vector_data_imu01.h5'.")
+    assert tdb == dat_burst, ("The output of read_nortek('burst_mode01.VEC') "
+                              "does not match 'burst_mode01.h5'.")
 
 
 def motion_test(make_data=False):
