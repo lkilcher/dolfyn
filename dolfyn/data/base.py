@@ -31,8 +31,10 @@ def _equiv_dict(d1, d2):
         for ky in d1:
             try:
                 if isinstance(d1[ky], np.ndarray):
-                    assert type(d1[ky]) is type(d2[ky])
-                    if objEQ_allclose_tols == dict(rtol=0, atol=0):
+                    assert type(d1[ky]) is type(d2[ky])  # nopep8
+                    assert d1[ky].shape == d2[ky].shape
+                    if (not np.issubdtype(d1[ky].dtype, np.inexact)) or \
+                       objEQ_allclose_tols == dict(rtol=0, atol=0):
                         nptest.assert_equal(d1[ky], d2[ky])
                     else:
                         assert np.allclose(d1[ky], d2[ky], equal_nan=True, **objEQ_allclose_tols)
@@ -45,8 +47,12 @@ def _equiv_dict(d1, d2):
                 if debug_level > 0:
                     print('The values in {} do not match between the data objects.'
                           .format(ky, d1, d2))
-                    if np.allclose(d1[ky], d2[ky], rtol=1e-3, equal_nan=True):
-                        print(' ... but they are close.')
+                    if isinstance(d1[ky], np.ndarray):
+                        try:
+                            assert np.allclose(d1[ky], d2[ky], rtol=1e-3, equal_nan=True)
+                            print(' ... but they are close.')
+                        except:
+                            pass
                 else:
                     return False
         return retval
@@ -330,7 +336,7 @@ class Dgroups(Dbase):
         for (nm, dat), (onm, odat) in zip(self, other):
             try:
                 dim = self._time_dim(dat, n)
-            except (ValueError,  AttributeError):
+            except (ValueError, AttributeError):
                 # No dimension with that shape, so skip it.
                 continue
             if nan_joint:
