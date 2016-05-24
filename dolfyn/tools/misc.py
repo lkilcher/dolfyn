@@ -2,6 +2,39 @@ import numpy as np
 from scipy.signal import medfilt2d
 
 
+def detrend(arr, axis=-1, in_place=False):
+    """Remove a linear trend from arr.
+
+    Parameters
+    ----------
+
+    arr : array_like
+       The array from which to remove a linear trend.
+
+    axis : int
+       The axis along which to operate.
+
+    Notes
+    -----
+    This method is copied from the matplotlib.mlab library, but
+    implements the covariance calcs explicitly for added speed.
+
+    This works much faster than mpl.mlab.detrend for multi-dimensional
+    arrays, and is also faster than linalg.lstsq methods.
+    """
+    arr = np.asarray(arr)
+    if not in_place:
+        arr = arr.copy()
+    sz = np.ones(arr.ndim, dtype=int)
+    sz[axis] = arr.shape[axis]
+    x = np.arange(sz[axis], dtype=np.float_).reshape(sz)
+    x -= x.mean(axis=axis, keepdims=True)
+    arr -= arr.mean(axis=axis, keepdims=True)
+    b = (x * arr).mean(axis=axis, keepdims=True) / (x ** 2).mean(axis=axis, keepdims=True)
+    arr -= b * x
+    return arr
+
+
 def group(bl, min_length=0):
     """Find continuous segments in a boolean array.
 

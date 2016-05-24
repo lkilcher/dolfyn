@@ -1,7 +1,6 @@
 import numpy as np
 from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd
-from ..tools.misc import slice1d_along_axis
-from scipy.signal import detrend
+from ..tools.misc import slice1d_along_axis, detrend
 from .base import ma, rad_hz, TimeBased
 from h5py._hl.dataset import Dataset
 
@@ -135,9 +134,7 @@ class TimeBinner(object):
 
         ... Need to fix this to deal with NaNs...
         """
-        return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin),
-                       axis=-1,
-                       type='linear')
+        return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
 
     def demean(self, dat, n_pad=0, n_bin=None):
         """

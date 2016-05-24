@@ -12,7 +12,6 @@ import pylab as plb
 # from pylab import plot,show
 
 from . import rotate
-# from scipy.signal import detrend
 
 deg2rad = np.pi / 180
 

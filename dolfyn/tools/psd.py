@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import detrend
+from misc import detrend
 fft = np.fft.fft
 
 ## class FFTobj(np.ndarray):
