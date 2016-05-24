@@ -4,7 +4,6 @@ from ..tools.misc import slice1d_along_axis
 from scipy.signal import detrend
 from .base import ma, rad_hz, TimeBased
 from h5py._hl.dataset import Dataset
-from warnings import warn
 
 
 class TimeBindat(TimeBased):
@@ -307,15 +306,20 @@ class TimeBinner(object):
                   "setting n_fft_coh=n_bin/6")
 
     def __call__(self, rawdat, out_type=TimeBindat):
+        self.check_indata(rawdat)
         outdat = out_type()
         outdat.props['n_bin'] = self.n_bin
         outdat.props['n_fft'] = self.n_fft
         outdat.props['n_fft_coh'] = self.n_fft_coh
+        outdat.props.update(rawdat.props)
+        return outdat
+
+    def check_indata(self, rawdat):
+        if np.any(np.array(rawdat.shape) == 0):
+            raise RuntimeError("The input data cannot be averaged because it is empty.")
         if 'DutyCycle_NBurst' in rawdat.props and rawdat.props['DutyCycle_NBurst'] < self.n_bin:
             print("Warning: The averaging interval (n_bin = {}) is larger than the burst interval "
                   "(NBurst = {})!".format(self.n_bin, rawdat.props['DutyCycle_NBurst']))
-        outdat.props.update(rawdat.props)
-        return outdat
 
     def cohere(self, dat1, dat2, window='hann', debias=True,
                noise=(0, 0), n_fft=None, n_bin1=None, n_bin2=None,):
