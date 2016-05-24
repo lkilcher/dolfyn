@@ -49,6 +49,20 @@ def interp_burst(arr, Nburst, Ncycle):
     return (arr[:-1, None] + np.diff(arr)[:, None] * tmpd[None, :]).flatten()
 
 
+def recatenate(obj):
+    out = obj[0].__class__(obj[0]['config_type'])
+    keys = obj[0].keys()
+    for ky in keys:
+        if ky in ['__data_groups__', 'config_type']:
+            continue
+        val0 = obj[0][ky]
+        if isinstance(val0, np.ndarray) and val0.size > 1:
+            out.add_data(ky, np.concatenate([val[ky][..., None] for val in obj], axis=-1))
+        else:
+            out.add_data(ky, np.array([val[ky] for val in obj]))
+    return out
+
+
 def int2binarray(val, n):
     out = np.zeros(n, dtype='bool')
     for idx, n in enumerate(range(n)):
@@ -119,7 +133,7 @@ class NortekReader(object):
 
 
     """
-    flag_lastread_sysdata = None
+    _lastread = None
 
     fun_map = {'0x00': 'read_user_cfg',
                '0x04': 'read_head_cfg',
@@ -388,19 +402,25 @@ class NortekReader(object):
         if self.debug:
             print('Reading vector check data (0x07) ping #{} @ {}...'.format(self.c, self.pos))
         byts0 = self.read(6)
+        checknow = adv_base.ADVconfig('CHECKDATA')
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
-        self.config.add_data('checkdata', adv_base.ADVconfig('CHECKDATA'))
-        self.config.checkdata.add_data('Samples', tmp[0])
-        n = self.config.checkdata.Samples
-        self.config.checkdata.add_data('First_samp', tmp[1])
-        self.config.checkdata.add_data('Amp1', np.empty(n, dtype=np.uint8))
-        self.config.checkdata.add_data('Amp2', np.empty(n, dtype=np.uint8))
-        self.config.checkdata.add_data('Amp3', np.empty(n, dtype=np.uint8))
+        checknow.add_data('Samples', tmp[0])
+        n = checknow.Samples
+        checknow.add_data('First_samp', tmp[1])
+        # checknow.add_data('Amp1', np.empty(n, dtype=np.uint8) + 8)
+        # checknow.add_data('Amp2', np.empty(n, dtype=np.uint8) + 8)
+        # checknow.add_data('Amp3', np.empty(n, dtype=np.uint8) + 8)
         byts1 = self.read(3 * n)
         tmp = unpack(self.endian + (3 * n * 'B'), byts1)
         for idx, nm in enumerate(['Amp1', 'Amp2', 'Amp3']):
-            self.config.checkdata[nm] = np.array(tmp[idx * n:(idx + 1) * n])
+            checknow.add_data(nm, np.array(tmp[idx * n:(idx + 1) * n], dtype=np.uint8))
         self.checksum(byts0 + byts1)
+        if 'checkdata' not in self.config:
+            self.config.add_data('checkdata', checknow)
+        else:
+            if not isinstance(self.config.checkdata, list):
+                self.config.checkdata = [self.config.checkdata, ]
+            self.config.checkdata = self.config.checkdata + [checknow]
 
     def sci_vec_data(self,):
         self._sci_data(nortek_defs.vec_data)
@@ -435,10 +455,10 @@ class NortekReader(object):
         Read vector data.
         """
         # ID: 0x10 = 16
-        if self.flag_lastread_sysdata is None:
+        if self.c == -1:
             print('Warning: First "vector data" block '
                   'is before first "vector system data" block.')
-        if not self.flag_lastread_sysdata:
+        if not self._lastread == 'vec_sysdata':
             self.c += 1
         c = self.c
 
@@ -466,7 +486,6 @@ class NortekReader(object):
          self.data._corr[1, c],
          self.data._corr[2, c]) = unpack(self.endian + '4B2H3h6B', byts)
 
-        self.flag_lastread_sysdata = False
         self.checksum(byts)
 
     def sci_vec_sysdata(self,):
@@ -519,7 +538,6 @@ class NortekReader(object):
         Read vector system data.
         """
         # ID: 0x11 = 17
-        self.flag_lastread_sysdata = True
         self.c += 1
         c = self.c
         # Need to make this a vector...
@@ -584,13 +602,12 @@ class NortekReader(object):
         Read microstrain sensor data.
         """
         # 0x71 = 113
-        if self.flag_lastread_sysdata is None:
+        if self.c == -1:
             print('Warning: First "microstrain data" block '
                   'is before first "vector system data" block.')
-        if self.flag_lastread_sysdata:
+        if self._lastread == 'vec_sysdata':
             # This handles a bug where the system data gets written between the
             # last 'vec_data' and its associated 'microstrain' data.
-            self.flag_lastread_sysdata = False
             self.c -= 1
         if self.debug:
             print('Reading vector microstrain data (0x71) ping #{} @ {}...'.format(self.c, self.pos))
@@ -700,20 +717,26 @@ class NortekReader(object):
         if self.debug:
             print('Reading vector header data (0x12) ping #{} @ {}...'.format(self.c, self.pos))
         byts = self.read(38)
+        # The first two are size, the next 6 are time.
         tmp = unpack(self.endian + '8xH7B21x', byts)
-                     # The first two are size, the next 6 are time.
-        self.config.add_data('data_header', adv_base.ADVconfig('DATA HEADER'))
-        self.config.data_header.add_data('time', self.rd_time(byts[2:8]))
-        self.config.data_header.add_data('NRecords', tmp[0])
-        self.config.data_header.add_data('Noise1', tmp[1])
-        self.config.data_header.add_data('Noise2', tmp[2])
-        self.config.data_header.add_data('Noise3', tmp[3])
-        self.config.data_header.add_data('Spare0', byts[13])
-        self.config.data_header.add_data('Corr1', tmp[5])
-        self.config.data_header.add_data('Corr2', tmp[6])
-        self.config.data_header.add_data('Corr3', tmp[7])
-        self.config.data_header.add_data('Spare1', byts[17:])
+        hdrnow = adv_base.ADVconfig('DATA HEADER')
+        hdrnow.add_data('time', self.rd_time(byts[2:8]))
+        hdrnow.add_data('NRecords', tmp[0])
+        hdrnow.add_data('Noise1', tmp[1])
+        hdrnow.add_data('Noise2', tmp[2])
+        hdrnow.add_data('Noise3', tmp[3])
+        hdrnow.add_data('Spare0', byts[13])
+        hdrnow.add_data('Corr1', tmp[5])
+        hdrnow.add_data('Corr2', tmp[6])
+        hdrnow.add_data('Corr3', tmp[7])
+        hdrnow.add_data('Spare1', byts[17:])
         self.checksum(byts)
+        if 'data_header' not in self.config:
+            self.config.add_data('data_header', hdrnow)
+        else:
+            if not isinstance(self.config.data_header, list):
+                self.config.data_header = [self.config.data_header, ]
+            self.config.data_header = self.config.data_header + [hdrnow]
 
     def read_awac_profile(self,):
         # ID: '0x20' = 32
@@ -896,7 +919,10 @@ class NortekReader(object):
     def readnext(self,):
         id = '0x%02x' % self.read_id()
         if id in self.fun_map.keys():
-            return getattr(self, self.fun_map[id])()
+            func_name = self.fun_map[id]
+            out = getattr(self, func_name)()
+            self._lastread = func_name[5:]
+            return out
         else:
             print('Unrecognized identifier: ' + id)
             self.f.seek(-2, 1)
@@ -930,6 +956,9 @@ class NortekReader(object):
     def dat2sci(self,):
         for nm in self._dtypes:
             getattr(self, 'sci_' + nm)()
+        for nm in ['data_header', 'checkdata']:
+            if nm in self.config and isinstance(self.config[nm], list):
+                self.config[nm] = recatenate(self.config[nm])
 
     def __exit__(self, type, value, trace,):
         self.close()
