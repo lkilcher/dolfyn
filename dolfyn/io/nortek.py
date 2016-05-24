@@ -944,8 +944,9 @@ class NortekReader(object):
                 if self._npings is not None and self.c >= self._npings:
                     break
         except EOFError:
-            pass
-        print(' end of file at {} bytes.'.format(self.pos))
+            print(' end of file at {} bytes.'.format(self.pos))
+        else:
+            print(' stopped at {} bytes.'.format(self.pos))
         if retval == 2:
             self.c -= 1
         for nm, dat in self.data.iter():
