@@ -133,7 +133,7 @@ class NortekReader(object):
 
 
     """
-    _lastread = None
+    _lastread = [None, None, None, None, None]
 
     fun_map = {'0x00': 'read_user_cfg',
                '0x04': 'read_head_cfg',
@@ -458,7 +458,7 @@ class NortekReader(object):
         if self.c == -1:
             print('Warning: First "vector data" block '
                   'is before first "vector system data" block.')
-        if not self._lastread == 'vec_sysdata':
+        if not self._lastread[0] == 'vec_sysdata':
             self.c += 1
         c = self.c
 
@@ -543,6 +543,12 @@ class NortekReader(object):
         # Need to make this a vector...
         if self.debug:
             print('Reading vector system data (0x11) ping #{} @ {}...'.format(self.c, self.pos))
+        if self.data.props.get('DutyCycle_NBurst', False) and \
+           not self._lastread[:2] == ['vec_checkdata', 'vec_hdr', ]:
+            self.f.seek(26, 1)
+            if self.debug:
+                print(" ...SKIP this system data (it's not at the beginning of a burst)!")
+            return
         if not hasattr(self.data, 'mpltime'):
             self._init_data(nortek_defs.vec_sysdata)
             self._dtypes += ['vec_sysdata']
@@ -605,7 +611,7 @@ class NortekReader(object):
         if self.c == -1:
             print('Warning: First "microstrain data" block '
                   'is before first "vector system data" block.')
-        if self._lastread == 'vec_sysdata':
+        if self._lastread[0] == 'vec_sysdata':
             # This handles a bug where the system data gets written between the
             # last 'vec_data' and its associated 'microstrain' data.
             self.c -= 1
@@ -921,7 +927,7 @@ class NortekReader(object):
         if id in self.fun_map.keys():
             func_name = self.fun_map[id]
             out = getattr(self, func_name)()
-            self._lastread = func_name[5:]
+            self._lastread = [func_name[5:]] + self._lastread[:-1]
             return out
         else:
             print('Unrecognized identifier: ' + id)
