@@ -14,12 +14,14 @@ pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
 dat = avm.load(test_root + 'data/vector_data01.h5', 'ALL')
 dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
+dat_burst = avm.load(test_root + 'data/burst_mode01.h5', 'ALL')
 
 
 def read_test(make_data=False):
 
     td = avm.read_nortek(pkg_root + 'example_data/vector_data01.VEC')
     tdm = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC')
+    tdb = avm.read_nortek(pkg_root + 'example_data/burst_mode01.VEC')
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
@@ -28,14 +30,15 @@ def read_test(make_data=False):
     if make_data:
         td.save(test_root + 'data/vector_data01.h5')
         tdm.save(test_root + 'data/vector_data_imu01.h5')
+        tdb.save(test_root + 'data/burst_mode01.h5')
         return
 
-    err_str = ("The output of read_nortek('vector_data01.VEC') "
-               "does not match 'vector_data01.h5'.")
-    assert td == dat, err_str
-    err_str = ("The output of read_nortek('vector_data_imu01.VEC') "
-               "does not match 'vector_data_imu01.h5'.")
-    assert tdm == dat_imu, err_str
+    assert td == dat, ("The output of read_nortek('vector_data01.VEC') "
+                       "does not match 'vector_data01.h5'.")
+    assert tdm == dat_imu, ("The output of read_nortek('vector_data_imu01.VEC') "
+                            "does not match 'vector_data_imu01.h5'.")
+    assert tdb == dat_burst, ("The output of read_nortek('vector_data_imu01.VEC') "
+                              "does not match 'vector_data_imu01.h5'.")
 
 
 def motion_test(make_data=False):
