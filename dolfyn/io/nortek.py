@@ -784,10 +784,13 @@ class NortekReader(object):
         """
         p0 = self.findnextid(searchcode)
         for i in range(iternum):
-            self.findnextid(searchcode)
-        # Compute the average of the data size:
+            try:
+                self.findnextid(searchcode)
+            except EOFError:
+                break
         if self.debug:
             print 'p0={}, pos={}, i={}'.format(p0, self.pos, i)
+        # Compute the average of the data size:
         return (self.pos - p0) / (i + 1)
 
     def init_ADV(self,):
