@@ -6,6 +6,7 @@ import numpy.testing as nptest
 oset = set
 
 debug_level = 0
+objEQ_allclose_tols = dict(rtol=1e-3, atol=1e-6)
 
 
 class DataError(Exception):
@@ -26,21 +27,29 @@ def cat(a, axis=0):
 
 def _equiv_dict(d1, d2):
     if set(d2.keys()) == set(d1.keys()):
+        retval = True
         for ky in d1:
             try:
                 if isinstance(d1[ky], np.ndarray):
                     assert type(d1[ky]) is type(d2[ky])
-                    nptest.assert_equal(d1[ky], d2[ky])
+                    if objEQ_allclose_tols == dict(rtol=0, atol=0):
+                        nptest.assert_equal(d1[ky], d2[ky])
+                    else:
+                        assert np.allclose(d1[ky], d2[ky], equal_nan=True, **objEQ_allclose_tols)
                 elif isinstance(d1[ky], dict):
                     assert _equiv_dict(d1[ky], d2[ky])
                 else:
                     assert d1[ky] == d2[ky]
             except AssertionError:
+                retval = False
                 if debug_level > 0:
                     print('The values in {} do not match between the data objects.'
                           .format(ky, d1, d2))
-                return False
-        return True
+                    if np.allclose(d1[ky], d2[ky], rtol=1e-3, equal_nan=True):
+                        print(' ... but they are close.')
+                else:
+                    return False
+        return retval
     if debug_level > 0:
         dif1 = set(d1.keys()) - set(d2.keys())
         dif2 = set(d2.keys()) - set(d1.keys())

@@ -418,7 +418,7 @@ class NortekReader(object):
         self.data.del_data('PressureMSB', 'PressureLSW')
 
         self.data.props['fs'] = self.config.fs
-        if self.config.user.NBurst >= 0:
+        if self.config.user.NBurst > 0:
             self.data.props['DutyCycle_NBurst'] = self.config.user.NBurst
             self.data.props['DutyCycle_NCycle'] = self.config.user.MeasInterval * self.config.fs
         self.data.props['coord_sys'] = {'XYZ': 'inst',
