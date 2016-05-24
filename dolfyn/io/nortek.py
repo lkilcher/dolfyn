@@ -203,6 +203,14 @@ class NortekReader(object):
         if npings is not None:
             self.n_samp_guess = npings + 1
         self.f.seek(pnow, 0)  # Seek to the previous position.
+        if self.config.user.NBurst > 0:
+            self.data.props['DutyCycle_NBurst'] = self.config.user.NBurst
+            self.data.props['DutyCycle_NCycle'] = self.config.user.MeasInterval * self.config.fs
+        self.data.props['fs'] = self.config.fs
+        self.data.props['coord_sys'] = {'XYZ': 'inst',
+                                        'ENU': 'earth',
+                                        'BEAM': 'beam'}[self.config.user.CoordSystem]
+        self.data.props['toff'] = 0
 
     def read(self, nbyte):
         byts = self.f.read(nbyte)
@@ -437,14 +445,6 @@ class NortekReader(object):
 
         self.data.del_data('PressureMSB', 'PressureLSW')
 
-        self.data.props['fs'] = self.config.fs
-        if self.config.user.NBurst > 0:
-            self.data.props['DutyCycle_NBurst'] = self.config.user.NBurst
-            self.data.props['DutyCycle_NCycle'] = self.config.user.MeasInterval * self.config.fs
-        self.data.props['coord_sys'] = {'XYZ': 'inst',
-                                        'ENU': 'earth',
-                                        'BEAM': 'beam'}[self.config.user.CoordSystem]
-        self.data.props['toff'] = 0
         # I must be able to calculate this here, right? # !!!TODO!!!
         self.data.props['doppler_noise'] = [0, 0, 0]
         # Apply velocity scaling (1 or 0.1)
