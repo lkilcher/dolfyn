@@ -390,7 +390,49 @@ def psd(a, nfft, fs, window='hann', step=None):
     return np.abs(cpsd(a, a, nfft, fs, window=window, step=step))
 
 
-def delta_angle(a, b, nfft, window='hann', step=None):
+def phase_angle(a, b, nfft, window='hann', step=None):
+    """
+    Compute the phase difference between signals a and b. This is the
+    complimentary function to cohere and cpsd.
+
+    Positive angles means that `b` leads `a`, i.e. this does,
+    essentially:
+
+          angle(b) - angle(a)
+
+    This function computes one-dimensional `n`-point PSD.
+
+    The angles are output as magnitude = 1 complex numbers (to
+    simplify averaging). Therefore, use `numpy.angle` to actually
+    output the angle.
+
+
+    Parameters
+    ----------
+    a      : 1d-array_like, the signal. Currently only supports vectors.
+    nfft   : The number of points in the fft.
+    window : The window to use (default: 'hann'). Valid entries are:
+                 None,1               : uses a 'boxcar' or ones window.
+                 'hann'               : hanning window.
+                 a length(nfft) array : use this as the window directly.
+    step   : Use this to specify the overlap.  For example:
+             -  step=nfft/2 specifies a 50% overlap.
+             -  step=nfft specifies no overlap.
+             -  step=2*nfft means that half the data will be skipped.
+
+             By default, `step` is calculated to maximize data use, have
+             at least 50% overlap and minimize the number of ensembles.
+
+    Returns
+    -------
+    ang    : complex numpy_array (unit magnitude values)
+
+    See also:
+    numpy.fft
+    cohere
+    cpsd
+
+    """
 
     window = _getwindow(window, nfft)
     fft_inds = slice(1, int(nfft / 2. + 1))

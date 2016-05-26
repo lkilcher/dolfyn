@@ -1,5 +1,5 @@
 import numpy as np
-from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd
+from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd, phase_angle
 from ..tools.misc import slice1d_along_axis, detrend
 from .base import ma, rad_hz, TimeBased
 from h5py._hl.dataset import Dataset
@@ -377,6 +377,42 @@ class TimeBinner(object):
             # PSD's are computed in radian units:
             out[slc] = cross(dat1[slc], dat2[slc], n_fft,
                              2 * np.pi * fs, window=window)
+        return out
+
+    def phase_angle(self, dat1, dat2, window='hann',
+                    n_fft=None, n_bin1=None, n_bin2=None,):
+        """
+        Calculate the phase difference between two signals as a
+        function of frequency (complimentary to coherence).
+
+        Parameters
+        ----------
+        dat1    : np.ndarray
+          The first raw-data array of which to calculate the cpsd.
+        dat2    : np.ndarray
+          The second raw-data array of which to calculate the cpsd.
+        window : string
+          String indicating the window function to use (default: 'hanning').
+
+        Returns
+        -------
+        out : np.ndarray
+          The phase difference between signal dat1 and dat2.
+        """
+        if n_fft is None:
+            n_fft = self.n_fft_coh
+        n_bin1 = self._parse_nbin(n_bin1)
+        n_bin2 = self._parse_nbin(n_bin2)
+        oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
+        oshp[-2] = np.min([oshp[-2], dat2.shape[-1] / n_bin2])
+        # The data is detrended in psd, so we don't need to do it here:
+        dat1 = self.reshape(dat1, n_pad=n_fft)
+        dat2 = self.reshape(dat2, n_pad=n_fft)
+        out = np.empty(oshp, dtype='c{}'.format(dat1.dtype.itemsize * 2))
+        for slc in slice1d_along_axis(out.shape, -1):
+            # PSD's are computed in radian units:
+            out[slc] = phase_angle(dat1[slc], dat2[slc], n_fft,
+                                   window=window)
         return out
 
     def psd(self, dat, fs=None, window='hann', noise=0,
