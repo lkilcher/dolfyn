@@ -17,6 +17,19 @@ dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
 dat_burst = avm.load(test_root + 'data/burst_mode01.h5', 'ALL')
 
 
+def data_equiv(dat1, dat2, message=''):
+    assert dat1 == dat2, message
+
+
+def check_except(fn, args, errors=Exception, message=''):
+    try:
+        fn(args)
+    except errors:
+        pass
+    else:
+        raise Exception(message)
+
+
 def read_test(make_data=False):
 
     td = avm.read_nortek(pkg_root + 'example_data/vector_data01.VEC')
@@ -33,12 +46,16 @@ def read_test(make_data=False):
         tdb.save(test_root + 'data/burst_mode01.h5')
         return
 
-    assert td == dat, ("The output of read_nortek('vector_data01.VEC') "
-                       "does not match 'vector_data01.h5'.")
-    assert tdm == dat_imu, ("The output of read_nortek('vector_data_imu01.VEC') "
-                            "does not match 'vector_data_imu01.h5'.")
-    assert tdb == dat_burst, ("The output of read_nortek('burst_mode01.VEC') "
-                              "does not match 'burst_mode01.h5'.")
+    msg_form = "The output of read_nortek('{}.VEC') does not match '{}.h5'."
+    for dat1, dat2, msg in [
+            (td, dat,
+             msg_form.format('vector_data01', 'vector_data01')),
+            (tdm, dat_imu,
+             msg_form.format('vector_data_imu01', 'vector_data_imu01')),
+            (tdb, dat_burst,
+             msg_form.format('burst_mode01', 'burst_mode01')),
+    ]:
+        yield data_equiv, dat1, dat2, msg
 
 
 def motion_test(make_data=False):
@@ -108,24 +125,11 @@ def subset_test(make_data=False):
     cd = avm.load(test_root + 'data/vector_data01_subset.h5', 'ALL')
 
     # First check that subsetting works correctly
-    assert cd == td, "ADV data object `subset` method gives unexpected results."
+    yield data_equiv, cd, td, "ADV data object `subset` method gives unexpected results."
 
     # Now check that empty subsetting raises an error
-    try:
-        td.subset(slice(0))
-    except IndexError:
-        pass
-    else:
-        raise Exception("Attempts to subset to an empty data-object should raise an error.")
-    try:
-        td.subset(td.mpltime < 0)
-    except IndexError:
-        pass
-    else:
-        raise Exception("Attempts to subset to an empty data-object should raise an error.")
-    try:
-        td.subset(slice(td.mpltime.shape[0] + 5, td.mpltime.shape[0] + 100))
-    except IndexError:
-        pass
-    else:
-        raise Exception("Attempts to subset to an empty data-object should raise an error.")
+    for index in [slice(0),
+                  td.mpltime < 0,
+                  slice(td.mpltime.shape[0] + 5, td.mpltime.shape[0] + 100)]:
+        yield (check_except, td.subset, index, IndexError,
+               "Attempts to subset to an empty data-object should raise an error.")
