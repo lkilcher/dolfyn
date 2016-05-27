@@ -17,6 +17,11 @@ dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
 dat_burst = avm.load(test_root + 'data/burst_mode01.h5', 'ALL')
 
 
+def rungen(gen):
+    for g in gen:
+        pass
+
+
 def data_equiv(dat1, dat2, message=''):
     assert dat1 == dat2, message
 
@@ -32,9 +37,9 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def read_test(make_data=False):
 
-    td = avm.read_nortek(pkg_root + 'example_data/vector_data01.VEC')
-    tdm = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC')
-    tdb = avm.read_nortek(pkg_root + 'example_data/burst_mode01.VEC')
+    td = avm.read_nortek(pkg_root + 'example_data/vector_data01.VEC', npings=100)
+    tdm = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC', npings=100)
+    tdb = avm.read_nortek(pkg_root + 'example_data/burst_mode01.VEC', npings=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
@@ -90,7 +95,7 @@ def heading_test(make_data=False):
 
 def turbulence_test(make_data=False):
     tmp = dat.copy()
-    bnr = avm.TurbBinner(4096, tmp.fs)
+    bnr = avm.TurbBinner(20, tmp.fs)
     td = bnr(tmp)
 
     if make_data:
@@ -104,7 +109,7 @@ def turbulence_test(make_data=False):
 
 def clean_test(make_data=False):
     td = dat.copy()
-    avm.clean.GN2002(td.u)
+    avm.clean.GN2002(td.u, 20)
 
     if make_data:
         td.save(test_root + 'data/vector_data01_uclean.h5')

@@ -8,8 +8,9 @@ print __doc__
 
 import adv_tests as advt
 
-#advt.read_test(make_data=True)
-#advt.motion_test(make_data=True)
-#advt.heading_test(make_data=True)
-#advt.turbulence_test(make_data=True)
-#advt.clean_test(make_data=True)
+# advt.rungen(advt.read_test(make_data=True))
+# advt.motion_test(make_data=True)
+# advt.heading_test(make_data=True)
+# advt.turbulence_test(make_data=True)
+# advt.clean_test(make_data=True)
+# advt.rungen(advt.subset_test(make_data=True))

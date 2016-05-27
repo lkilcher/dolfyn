@@ -147,7 +147,7 @@ class NortekReader(object):
                }
 
     def __init__(self, fname, endian=None, debug=False,
-                 do_checksum=True, bufsize=100000, npings=None):
+                 do_checksum=True, bufsize=100000, npings=None, ):
         self.fname = fname
         self._bufsize = bufsize
         self.f = open(fname, 'rb', 1000)
@@ -306,6 +306,17 @@ class NortekReader(object):
         self.config.user.add_data('AvgInterval', tmp[6])
         self.config.user.add_data('NBeams', tmp[7])
         self.config.user.add_data('TimCtrlReg', int2binarray(tmp[8], 16))
+        # From the nortek system integrator manual
+        # (note: bit numbering is zero-based)
+        treg = self.config.user.TimCtrlReg
+        self.config.user.add_data('Profile Timing', ['single', 'continuous'][treg[1]])
+        self.config.user.add_data('Burst Mode', ~treg[2])
+        # How is this different from the power level in PwrCtrlReg?
+        #self.config.user.add_data('Power Level', treg[5] + 2 * treg[6] + 1)
+        self.config.user.add_data('sync-out',
+                                  ['middle', 'end', ][treg[7]])
+        self.config.user.add_data('Sample on Sync', treg[8])
+        self.config.user.add_data('Start on Sync', treg[9])
         self.config.user.add_data('PwrCtrlReg', int2binarray(tmp[9], 16))
         self.config.user.add_data('A1', tmp[10])
         self.config.user.add_data('B0', tmp[11])
