@@ -112,8 +112,7 @@ class TimeBinner(object):
             dtype=arr.dtype)
         if np.mod(n_bin, 1) == 0:
             # If n_bin is an integer, we can do this simply.
-            out[..., npd0: n_bin + npd0] = (arr[..., :(shp[-2] * shp[-1])]
-                                            ).reshape(shp, order='C')
+            out[..., npd0: n_bin + npd0] = (arr[..., :(shp[-2] * shp[-1])]).reshape(shp, order='C')
         else:
             inds = (np.arange(np.prod(shp[-2:])) * n_bin / int(n_bin)
                     ).astype(int)
@@ -124,7 +123,9 @@ class TimeBinner(object):
         if n_pad != 0:
             out[..., 1:, :npd0] = out[..., :-1, n_bin:n_bin + npd0]
             out[..., :-1, -npd1:] = out[..., 1:, npd0:npd0 + npd1]
-        if ma.valid and out.__class__ is ma.marray:
+        if isinstance(arr, np.ma.MaskedArray):
+            out = np.ma.masked_where(self.reshape(arr.mask, n_pad=n_pad, n_bin=n_bin), out)
+        if ma.valid and isinstance(out, ma.marray):
             out.meta.dim_names += ['time2']
         return out
 
@@ -143,8 +144,23 @@ class TimeBinner(object):
         dt = self.reshape(dat, n_pad=n_pad, n_bin=n_bin)
         return dt - (dt.mean(-1)[..., None])
 
-    def mean(self, dat, n_bin=None):
-        out = self.reshape(dat, n_bin=n_bin).mean(-1)
+    def mean(self, dat, n_bin=None, mask_thresh=None):
+        """Average an array object.
+
+        Parameters
+        ----------
+        n_bin : int (default is self.n_bin)
+
+        mask_thresh : float (between 0 and 1)
+            if the input data is a masked array, and mask_thresh is
+            not None mask the averaged values where the fraction of
+            bad points is greater than mask_thresh
+        """
+        n_bin = self._parse_nbin(n_bin)
+        tmp = self.reshape(dat, n_bin=n_bin)
+        out = tmp.mean(-1)
+        if isinstance(dat, np.ma.MaskedArray) and mask_thresh is not None:
+            out.mask = tmp.mask.sum(-1).astype(np.float) > mask_thresh * n_bin
         if dat.__class__ is np.ndarray:
             return out
         return out.view(dat.__class__)
