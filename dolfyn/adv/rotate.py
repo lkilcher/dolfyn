@@ -102,14 +102,14 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             # Declination is defined as positive if MagN is east of
             # TrueN. Therefore we must rotate about the z-axis by minus
             # the declination angle to get from Mag to True.
-            cd, sd = cos(-advo.props['declination'] * np.pi / 180), sin(
-                -advo.props['declination'] * np.pi / 180)
+            cd = cos(-advo.props['declination'] * np.pi / 180)
+            sd = sin(-advo.props['declination'] * np.pi / 180)
             # The ordering is funny here because orientmat is the
             # transpose of the inst->earth rotation matrix:
             Rdec = np.array([[cd, -sd, 0],
                              [sd, cd, 0],
                              [0, 0, 1]])
-            advo['orientmat'] = np.einsum('ij,kjl->ikl',
+            advo['orientmat'] = np.einsum('ij,kjl->kil',
                                           Rdec,
                                           advo['orientmat'])
 

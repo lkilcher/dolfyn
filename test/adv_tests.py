@@ -76,6 +76,21 @@ def motion_test(make_data=False):
     assert tdm == cdm, "Motion correction does not match expectations."
 
 
+def declin_motion_test(make_data=False):
+    tdm = dat_imu.copy()
+    avm.motion.correct_motion(tdm)
+    # Include the declination.
+    tdm.props['declination'] = 10.0
+
+    if make_data:
+        tdm.save(test_root + 'data/vector_data_imu01_mcDeclin.h5')
+        return
+
+    cdm = avm.load(test_root + 'data/vector_data_imu01_mcDeclin.h5', 'ALL')
+
+    assert tdm == cdm, "Motion correction with declination does not match expectations."
+
+
 def heading_test(make_data=False):
     td = dat_imu.copy()
 

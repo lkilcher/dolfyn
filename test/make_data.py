@@ -10,6 +10,7 @@ import adv_tests as advt
 
 # advt.rungen(advt.read_test(make_data=True))
 # advt.motion_test(make_data=True)
+# advt.declin_motion_test(make_data=True)
 # advt.heading_test(make_data=True)
 # advt.turbulence_test(make_data=True)
 # advt.clean_test(make_data=True)
