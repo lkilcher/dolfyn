@@ -26,6 +26,10 @@ def data_equiv(dat1, dat2, message=''):
     assert dat1 == dat2, message
 
 
+def assert_close(dat1, dat2, message='', *args):
+    assert np.allclose(dat1, dat2, *args), message
+
+
 def check_except(fn, args, errors=Exception, message=''):
     try:
         fn(args)
@@ -66,29 +70,34 @@ def read_test(make_data=False):
 def motion_test(make_data=False):
     tdm = dat_imu.copy()
     avm.motion.correct_motion(tdm)
+    tdm10 = dat_imu.copy()
+    # Include the declination.
+    tdm10.props['declination'] = 10.0
+    avm.motion.correct_motion(tdm10)
+    tdm0 = dat_imu.copy()
+    # Include the declination.
+    tdm0.props['declination'] = 0.0
+    avm.motion.correct_motion(tdm0)
 
     if make_data:
         tdm.save(test_root + 'data/vector_data_imu01_mc.h5')
+        tdm10.save(test_root + 'data/vector_data_imu01_mcDeclin10.h5')
         return
 
-    cdm = avm.load(test_root + 'data/vector_data_imu01_mc.h5', 'ALL')
+    msg_form = "Motion correction {}does not match expectations."
 
-    assert tdm == cdm, "Motion correction does not match expectations."
+    for dat1, dat2, msg in [
+            (tdm,
+             avm.load(test_root + 'data/vector_data_imu01_mc.h5', 'ALL'),
+             ''),
+            (tdm10,
+             avm.load(test_root + 'data/vector_data_imu01_mcDeclin10.h5', 'ALL'),
+             'with declination=10 '),
+    ]:
+        yield data_equiv, dat1, dat2, msg_form.format(msg)
 
-
-def declin_motion_test(make_data=False):
-    tdm = dat_imu.copy()
-    avm.motion.correct_motion(tdm)
-    # Include the declination.
-    tdm.props['declination'] = 10.0
-
-    if make_data:
-        tdm.save(test_root + 'data/vector_data_imu01_mcDeclin.h5')
-        return
-
-    cdm = avm.load(test_root + 'data/vector_data_imu01_mcDeclin.h5', 'ALL')
-
-    assert tdm == cdm, "Motion correction with declination does not match expectations."
+    yield assert_close, tdm0.orientmat, tdm.orientmat, \
+        "The orientation matrix changes when declination is 0!"
 
 
 def heading_test(make_data=False):
