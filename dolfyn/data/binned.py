@@ -325,6 +325,8 @@ class TimeBinner(object):
         outdat.props['n_fft'] = self.n_fft
         outdat.props['n_fft_coh'] = self.n_fft_coh
         outdat.props.update(rawdat.props)
+        if hasattr(rawdat, 'config'):
+            outdat.add_data('config', rawdat['config'].copy(), 'config')
         return outdat
 
     def check_indata(self, rawdat):

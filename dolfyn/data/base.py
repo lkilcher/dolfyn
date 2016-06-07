@@ -257,6 +257,13 @@ class Dgroups(Dbase):
     The critical attribute is the 'data_groups' property.
     """
 
+    def __contains__(self, key):
+        try:
+            self[key]
+            return True
+        except:
+            return False
+
     @property
     def data_names(self,):
         return self.groups.data_names
