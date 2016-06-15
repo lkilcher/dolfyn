@@ -2,6 +2,10 @@ import numpy as np
 from scipy.signal import medfilt2d
 
 
+def find(arr):
+    return np.nonzero(np.ravel(arr))[0]
+
+
 def detrend(arr, axis=-1, in_place=False):
     """Remove a linear trend from arr.
 
@@ -248,6 +252,42 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
             a[ii] = (np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) *
                      (np.arange(0, ii.__len__()) + 1) /
                      (ii.__len__() + 1) + a[gd[inds[i2]]]).astype(a.dtype)
+
+
+def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
+    """
+    out=interpgaps(A,T,MAXGAP,DIM) Fills gaps in A by linear
+    interpolation along dimension DIM.  The maximum gap width
+    to be filled is specified by MAXGAP.
+
+    MAXGAP defualts to fill gaps of any width.
+
+    DIM defaults to 0."""
+
+    # If this is a multi-dimensional array, operate along dim dim.
+    if a.ndim > 1:
+        for inds in slice1d_along_axis(a.shape, dim):
+            interpgaps(a[inds], t, maxgap, 0, extrapFlg)
+        return
+    #
+    gd = find(~np.isnan(a))
+
+    # Here we extrapolate the ends, if necessary:
+    if extrapFlg and gd.__len__() > 0:
+        if gd[0] != 0 and gd[0] <= maxgap:
+            a[:gd[0]] = a[gd[0]]
+        if gd[-1] != a.__len__() and (a.__len__() - (gd[-1] + 1)) <= maxgap:
+            a[gd[-1]:] = a[gd[-1]]
+
+    # Here is the main loop
+    if gd.__len__() > 1:
+        inds = find((1 < np.diff(gd)) &
+                    (np.diff(gd) <= maxgap + 1))
+        for i2 in range(0, inds.__len__()):
+            ii = np.arange(gd[inds[i2]] + 1, gd[inds[i2] + 1])
+            ti = (t[ii] - t[gd[inds[i2]]]) / np.diff(t[[gd[inds[i2]], gd[inds[i2] + 1]]])
+            a[ii] = (np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) * ti +
+                     a[gd[inds[i2]]]).astype(a.dtype)
 
 
 def medfiltnan(a, kernel, thresh=0):
