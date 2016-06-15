@@ -13,42 +13,6 @@ from . import nortek_defs
 time = nortek_defs.time
 
 
-def interp_burst(arr, Nburst, Ncycle):
-    """Interpolate an array of duty-cycled data samples.
-
-    This function assumes that the burst starts at the point of the
-    data sampling, and adds points starting with that point.
-
-    Ncycle is the number of points that would be between each of the
-    arr points, if sampling were continuous at the rate of Nburst.
-
-    Note that:
-    Nburst < Ncycle
-
-    Parameters
-    ----------
-    arr : array_like (N)
-       The intermittent data samples.
-
-    Nburst : int
-       The number of points in the burst.
-
-    Ncycle : int
-       The number of points that would be between each point in `arr`
-       if sampling were continuous.
-
-    Returns
-    -------
-
-    arr_out : array_like (N * Nburst)
-
-    """
-    assert Nburst < Ncycle, "Nburst must be less than Ncycle."
-    arr = np.pad(arr, [(0, 1)], 'reflect', reflect_type='odd')
-    tmpd = np.arange(Nburst) / Ncycle
-    return (arr[:-1, None] + np.diff(arr)[:, None] * tmpd[None, :]).flatten()
-
-
 def recatenate(obj):
     out = obj[0].__class__(obj[0]['config_type'])
     keys = obj[0].keys()
@@ -206,6 +170,7 @@ class NortekReader(object):
         if self.config.user.NBurst > 0:
             self.data.props['DutyCycle_NBurst'] = self.config.user.NBurst
             self.data.props['DutyCycle_NCycle'] = self.config.user.MeasInterval * self.config.fs
+        self.burst_start = np.zeros(self.n_samp_guess, dtype='bool')
         self.data.props['fs'] = self.config.fs
         self.data.props['coord_sys'] = {'XYZ': 'inst',
                                         'ENU': 'earth',
@@ -275,8 +240,8 @@ class NortekReader(object):
         if self.debug == 2:
             print 'Positon: {}, codes: {}'.format(self.f.tell(), tmp)
         if tmp[0] != 165:  # This catches a corrupted data block.
-            print('Corrupted data block sync code found in ping %d. '
-                  'Searching for next valid code...' % (self.c))
+            print('Corrupted data block sync code (%d, %d) found in ping %d. '
+                  'Searching for next valid code...' % (tmp[0], tmp[1], self.c))
             val = int(self.findnext(do_cs=False), 0)
             self.f.seek(2, 1)
             print('FOUND {}.'.format(val))
@@ -504,45 +469,52 @@ class NortekReader(object):
         Turn the data in the vec_sysdata structure into scientific units.
         """
         dat = self.data
+        fs = dat.config.fs
         self._sci_data(nortek_defs.vec_sysdata)
         dat.add_data('_sysi', ~np.isnan(dat.mpltime), '_essential')
         # These are the indices in the sysdata variables
         # that are not interpolated.
-        # Skip the first entry for the interpolation process
         #pdb.set_trace()
-        if self.config.user.NBurst == 0:
-            inds = np.nonzero(~np.isnan(dat.mpltime))[0][1:]
-            p = np.poly1d(np.polyfit(inds, dat.mpltime[inds], 1))
-            dat.mpltime = p(np.arange(len(dat.mpltime))).view(time.time_array)
-            tbx.fillgaps(dat.batt)
-            tbx.fillgaps(dat.c_sound)
-            tbx.fillgaps(dat.heading)
-            tbx.fillgaps(dat.pitch)
-            tbx.fillgaps(dat.roll)
-            tbx.fillgaps(dat.temp)
+        nburst = self.config.user.NBurst
+        dat.add_data('orientation_down',
+                     np.empty(len(dat.mpltime), dtype='bool'),
+                     '_essential')
+        if nburst == 0:
+            num_bursts = 1
+            nburst = len(dat.mpltime)
+        else:
+            num_bursts = len(dat.mpltime) // nburst + 1
+        for nb in range(num_bursts):
+            iburst = slice(nb * nburst, (nb + 1) * nburst)
+            sysi = dat._sysi[iburst]
+            # Skip the first entry for the interpolation process
+            inds = np.nonzero(sysi)[0][1:]
+            arng = np.arange(len(dat.mpltime[iburst]), dtype=np.float64)
+            if len(inds) >= 2:
+                p = np.poly1d(np.polyfit(inds, dat.mpltime[iburst][inds], 1))
+                dat.mpltime[iburst] = p(arng)
+            elif len(inds) == 1:
+                dat.mpltime[iburst] = ((arng - inds[0]) / (fs * 3600 * 24) +
+                                       dat.mpltime[iburst][inds[0]])
+            else:
+                dat.mpltime[iburst] = (dat.mpltime[iburst][0] +
+                                       arng / (fs * 24 * 3600))
 
-            tmpd = np.empty_like(dat.heading)
-            tmpd[:] = np.NaN
+            tmpd = np.empty_like(dat.heading[iburst]) + np.NaN
             # The first status bit should be the orientation.
-            tmpd[dat._sysi] = dat.status[dat._sysi] & 1
+            tmpd[sysi] = dat.status[iburst][sysi] & 1
             tbx.fillgaps(tmpd, extrapFlg=True)
             slope = np.diff(tmpd)
             tmpd[1:][slope < 0] = 1
             tmpd[:-1][slope > 0] = 0
-            dat.add_data('orientation_down',
-                         tmpd.astype('bool'),
-                         '_essential')
-        else:
-            nburst = self.config.user.NBurst
-            fs = dat.config.fs
-            timedt = np.arange(nburst) * 1. / (fs * 24 * 3600)
-            tmp = dat.mpltime[dat._sysi][:, None] + timedt[None, :]
-            dat.mpltime = tmp.flatten()[:self.c]
-            for var in ['batt', 'c_sound', 'heading', 'pitch', 'roll', 'temp']:
-                dat[var] = interp_burst(
-                    dat[var][dat._sysi],
-                    nburst,
-                    self.config.user.MeasInterval * dat.config.fs)[:self.c]
+            dat.orientation_down[iburst] = tmpd.astype('bool')
+        tbx.interpgaps(dat.batt, dat.mpltime)
+        tbx.interpgaps(dat.c_sound, dat.mpltime)
+        tbx.interpgaps(dat.heading, dat.mpltime)
+        tbx.interpgaps(dat.pitch, dat.mpltime)
+        tbx.interpgaps(dat.roll, dat.mpltime)
+        tbx.interpgaps(dat.temp, dat.mpltime)
+        dat.mpltime = dat.mpltime.view(time.time_array)
 
     def read_vec_sysdata(self,):
         """
@@ -554,12 +526,13 @@ class NortekReader(object):
         # Need to make this a vector...
         if self.debug:
             print('Reading vector system data (0x11) ping #{} @ {}...'.format(self.c, self.pos))
-        if self.data.props.get('DutyCycle_NBurst', False) and \
-           not self._lastread[:2] == ['vec_checkdata', 'vec_hdr', ]:
-            self.f.seek(26, 1)
-            if self.debug:
-                print(" ...SKIP this system data (it's not at the beginning of a burst)!")
-            return
+        if self._lastread[:2] == ['vec_checkdata', 'vec_hdr', ]:
+            self.burst_start[c] = True
+        # else:
+        #     self.f.seek(26, 1)
+        #     if self.debug:
+        #         print(" ...SKIP this system data (it's not at the beginning of a burst)!")
+        #     return
         if not hasattr(self.data, 'mpltime'):
             self._init_data(nortek_defs.vec_sysdata)
             self._dtypes += ['vec_sysdata']
@@ -879,15 +852,17 @@ class NortekReader(object):
         Read the time from the first 6bytes of the input string.
         """
         min, sec, day, hour, year, month = unpack('BBBBBB', strng[:6])
-        #pdb.set_trace()
-        return time.date2num(time.datetime(
-            time._fullyear(_bcd2char(year)),
-            _bcd2char(month),
-            _bcd2char(day),
-            _bcd2char(hour),
-            _bcd2char(min),
-            _bcd2char(sec)
-        ))
+        try:
+            return time.date2num(time.datetime(
+                time._fullyear(_bcd2char(year)),
+                _bcd2char(month),
+                _bcd2char(day),
+                _bcd2char(hour),
+                _bcd2char(min),
+                _bcd2char(sec)
+            ))
+        except ValueError:
+            return np.NaN
 
     def findnext(self, do_cs=True):
         """
