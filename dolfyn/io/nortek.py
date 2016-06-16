@@ -118,7 +118,7 @@ class NortekReader(object):
         self.do_checksum = do_checksum
         self.filesize  # initialize the filesize.
         self.debug = debug
-        self.c = -1
+        self.c = 0
         self._dtypes = []
         self._npings = npings
         if endian is None:
@@ -431,11 +431,9 @@ class NortekReader(object):
         Read vector data.
         """
         # ID: 0x10 = 16
-        if self.c == -1:
-            print('Warning: First "vector data" block '
-                  'is before first "vector system data" block.')
-        if not self._lastread[0] == 'vec_sysdata':
-            self.c += 1
+        # if 'vec_sysdata' not in self._lastread:
+        #     print('Warning: First "vector data" block '
+        #           'is before first "vector system data" block.')
         c = self.c
 
         if self.debug:
@@ -463,6 +461,7 @@ class NortekReader(object):
          self.data._corr[2, c]) = unpack(self.endian + '4B2H3h6B', byts)
 
         self.checksum(byts)
+        self.c += 1
 
     def sci_vec_sysdata(self,):
         """
@@ -487,6 +486,8 @@ class NortekReader(object):
         for nb in range(num_bursts):
             iburst = slice(nb * nburst, (nb + 1) * nburst)
             sysi = dat._sysi[iburst]
+            if len(sysi) == 0:
+                break
             # Skip the first entry for the interpolation process
             inds = np.nonzero(sysi)[0][1:]
             arng = np.arange(len(dat.mpltime[iburst]), dtype=np.float64)
@@ -521,18 +522,12 @@ class NortekReader(object):
         Read vector system data.
         """
         # ID: 0x11 = 17
-        self.c += 1
         c = self.c
         # Need to make this a vector...
         if self.debug:
             print('Reading vector system data (0x11) ping #{} @ {}...'.format(self.c, self.pos))
         if self._lastread[:2] == ['vec_checkdata', 'vec_hdr', ]:
             self.burst_start[c] = True
-        # else:
-        #     self.f.seek(26, 1)
-        #     if self.debug:
-        #         print(" ...SKIP this system data (it's not at the beginning of a burst)!")
-        #     return
         if not hasattr(self.data, 'mpltime'):
             self._init_data(nortek_defs.vec_sysdata)
             self._dtypes += ['vec_sysdata']
@@ -592,15 +587,14 @@ class NortekReader(object):
         Read microstrain sensor data.
         """
         # 0x71 = 113
-        if self.c == -1:
+        if self.c == 0:
             print('Warning: First "microstrain data" block '
                   'is before first "vector system data" block.')
-        if self._lastread[0] == 'vec_sysdata':
-            # This handles a bug where the system data gets written between the
-            # last 'vec_data' and its associated 'microstrain' data.
+        else:
             self.c -= 1
         if self.debug:
-            print('Reading vector microstrain data (0x71) ping #{} @ {}...'.format(self.c, self.pos))
+            print('Reading vector microstrain data (0x71) ping #{} @ {}...'
+                  .format(self.c, self.pos))
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
@@ -696,11 +690,11 @@ class NortekReader(object):
             print('Unrecognized IMU identifier: ' + str(ahrsid))
             self.f.seek(-2, 1)
             return 10
-
             ## print self.f.read(100)
             ## # Still need to add a reader for ahrsid 210.
             ## raise Exception('This IMU data format is not currently supported by DOLfYN.')
         self.checksum(byts0 + byts)
+        self.c += 1 # reset the increment
 
     def read_vec_hdr(self,):
         # ID: '0x12 = 18
@@ -739,7 +733,6 @@ class NortekReader(object):
 
         byts = self.read(116 + 9 * nbins + np.mod(nbins, 2))
                          # There is a 'fill' byte at the end, if nbins is odd.
-        self.c += 1
         c = self.c
         self.data.mpltime[c] = self.rd_time(byts[2:8])
         (self.data.Error[c],
@@ -763,6 +756,7 @@ class NortekReader(object):
             self.data._amp[idx, :, c] = tmp[(idx + 3) * nbins:
                                             (idx + 4) * nbins]
         self.checksum(byts)
+        self.c += 1
 
     def sci_awac_profile(self,):
         self._sci_data(nortek_defs.awac_profile)
@@ -934,6 +928,11 @@ class NortekReader(object):
                     self.findnext()
                     retval = None
                 if self._npings is not None and self.c >= self._npings:
+                    if 'microstrain' in self._dtypes:
+                        try:
+                            self.readnext()
+                        except:
+                            pass
                     break
         except EOFError:
             print(' end of file at {} bytes.'.format(self.pos))
