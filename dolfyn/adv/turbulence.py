@@ -143,16 +143,25 @@ class TurbBinner(VelBinnerSpec):
 
         .. math:: S(k) = \alpha \epsilon^{2/3} k^{-5/3}
 
-        where :math:`\alpha = 0.5`, `k` is wavenumber and `S(k)` is
-        the turbulent kinetic energy spectrum.
+        where :math:`\alpha = 0.5` (1.5 for all three velocity
+        components), `k` is wavenumber and `S(k)` is the turbulent
+        kinetic energy spectrum.
+
+        With :math:`k \rightarrow \omega / U` then--to preserve variance--
+        :math:`S(k) = U S(\omega)` and so this becomes:
+
+        .. math:: S(\omega) = \alpha \epsilon^{2/3} \omega^{-5/3} U^{2/3}
+
+        LT83 : Lumley and Terray "Kinematics of turbulence convected
+        by a random wave field" JPO, 1983, 13, 2000-2007.
+
         """
         inds = (omega_range[0] < omega) & (omega < omega_range[1])
         a = 0.5
         f_shp = [1] * (spec.ndim - 1) + [inds.sum()]
-        # !!!CHECKTHIS... should U_mag be inside the ()**5/3?
-        return np.mean(
-            spec[..., inds] * (omega[inds].reshape(f_shp)) ** (5. / 3.) / a,
-            axis=-1) ** (3. / 2.) / U_mag
+        return np.mean(spec[..., inds] *
+                       (omega[inds].reshape(f_shp)) ** (5. / 3.) / a,
+                       axis=-1) ** (3. / 2.) / U_mag
 
     def calc_epsilon_SF(self, veldat, umag, fs=None, freq_rng=[.5, 5.]):
         """
@@ -253,6 +262,11 @@ class TurbBinner(VelBinnerSpec):
             [1] * (advbin.Spec.ndim - 2) + [sum(inds)])
 
         # Estimate values
+        # u component
+        out = (np.mean((spec[0] + spec[1]) * (omega) ** (5. / 3.), -1) /
+               (21. / 55. * alpha * intgrl)
+               ) ** (3. / 2.) / U_mag
+        # v component
         out = (np.mean((spec[0] + spec[1]) * (omega) ** (5. / 3.), -1) /
                (21. / 55. * alpha * intgrl)
                ) ** (3. / 2.) / U_mag
