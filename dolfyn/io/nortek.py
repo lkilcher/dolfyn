@@ -599,8 +599,10 @@ class NortekReader(object):
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
         if hasattr(self, '_ahrsid') and self._ahrsid != ahrsid:
-            raise Exception("AHRSID Changes mid-file!")
-        self._ahrsid = ahrsid
+            print('Warning: AHRSID Changes mid-file!')
+            #raise Exception("AHRSID Changes mid-file!")
+        if ahrsid in [195, 204, 210, 211]:
+            self._ahrsid = ahrsid
         #print byts0
         c = self.c
         if not (hasattr(self.data, 'Accel')):
