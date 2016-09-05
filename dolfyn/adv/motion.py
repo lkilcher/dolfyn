@@ -410,6 +410,8 @@ def correct_motion(advo,
     #       i.e. when the head moves one way in stationary flow, it
     #       measures a velocity in the opposite direction.
     advo._u += (advo.urot + advo.uacc)
+    advo.props['motion corrected'] = True
+    advo.props['motion accel filfreq Hz'] = accel_filtfreq
 
 
 class CorrectMotion(object):
@@ -643,3 +645,5 @@ class CorrectMotion(object):
         #       i.e. when the head moves one way in stationary flow, it
         #       measures a velocity in the opposite direction.
         advo._u += (advo.urot + advo.uacc)
+        advo.props['motion corrected'] = True
+        advo.props['motion accel filfreq Hz'] = self.accel_filtfreq
