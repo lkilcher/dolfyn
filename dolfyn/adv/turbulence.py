@@ -96,8 +96,8 @@ class TurbBinner(VelBinnerSpec):
         out.add_data('_tke', self.calc_tke(advr._u, noise=advr.noise), 'main')
         out.add_data('stress', self.calc_stress(advr._u), 'main')
         out.add_data('sigma_Uh',
-                     np.std(self.reshape(advr.U_mag), -1, dtype=np.float64)
-                     - (advr.noise[0] + advr.noise[1]) / 2, 'main')
+                     np.std(self.reshape(advr.U_mag), -1, dtype=np.float64) -
+                     (advr.noise[0] + advr.noise[1]) / 2, 'main')
         out.props['Itke_thresh'] = Itke_thresh
         out.add_data('Spec',
                      self.calc_vel_psd(advr._u,
