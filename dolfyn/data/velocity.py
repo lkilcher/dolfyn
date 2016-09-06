@@ -436,3 +436,51 @@ class VelBinnerSpec(VelBinnerTke):
                             )
         out[:] = datu, datv, datw
         return out
+
+    cspec_pairs = [(0, 1), (0, 2), (1, 2)]
+
+    def calc_vel_cpsd(self, veldat, fs=None,
+                      rotate_u=False,
+                      window='hann', n_fft=None):
+        """
+        Calculate the cross-spectra of velocity components.
+
+        Parameters
+        ----------
+        veldat   : np.ndarray
+          The raw velocity data.
+        fs : float (optional)
+          The sample rate (default: from the binner).
+        rotate_u : bool (optional)
+          If True, each 'bin' of horizontal velocity is rotated into
+          its principal axis prior to calculating the psd.  (default:
+          False).
+
+        Returns
+        -------
+        CSpec    : np.ndarray (3, M, N_FFT)
+          The first-dimension of the cross-spectrum is the three
+          different cross-spectra: 'uv', 'uw', 'vw' (in that order).
+        """
+        # Here we are using the full n_fft (not coh_n_fft)
+        n_fft = self._parse_nfft(n_fft)
+        fs = self._parse_fs(fs)
+        veldat = veldat.copy()
+        if rotate_u:
+            tmpdat = self.reshape(veldat[0] + 1j * veldat[1])
+            tmpdat *= np.exp(-1j * np.angle(tmpdat.mean(-1)))
+            veldat[0] = tmpdat.real
+            veldat[1] = tmpdat.imag
+        out = np.empty(self._outshape_fft(veldat.shape, ), dtype='complex')
+        for ip, ipair in enumerate(self.cspec_pairs):
+            out[ip] = self.cpsd(veldat[ipair[0]], veldat[ipair[1]], n_fft=n_fft)
+        if ma.valid:
+            if self.hz:
+                units = ma.unitsDict({'s': -2, 'm': -2, 'hz': -1})
+            else:
+                units = ma.unitsDict({'s': -1, 'm': -2})
+            out = ma.marray(out,
+                            ma.varMeta('S_{%s%s}', units,
+                                       veldat.meta.dim_names + ['freq'])
+                            )
+        return out
