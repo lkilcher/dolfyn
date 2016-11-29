@@ -177,7 +177,7 @@ def probeFile(fname):
     with hdf5.loader(fname, None) as ldr:
         for nd, grp in ldr.iter('ALL'):
             grpnm = ldr.get_name(grp)
-            if grpnm in out.keys():
+            if grpnm in out:
                 out[grpnm] += [ldr.get_name(nd)]
             else:
                 out[grpnm] = [ldr.get_name(nd)]

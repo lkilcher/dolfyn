@@ -10,6 +10,7 @@ that comes online, but apparently it has several issues so I'm going
 to simply use this for now.
 
 """
+from __future__ import division
 import numpy as np
 from datetime import datetime, timedelta
 
@@ -43,9 +44,9 @@ def date2num(dt):
         return out
     return (dt.toordinal() +
             (((dt.microsecond / 1e6 +
-               dt.second) / 60. +
-              dt.minute) / 60. +
-             dt.hour) / 24.)
+               dt.second) / 60 +
+              dt.minute) / 60 +
+             dt.hour) / 24)
 
 
 def mpltime2matlab_datenum(time):
@@ -171,12 +172,12 @@ class time_array(np.ndarray):
                 y += 1
                 m = 1
             minmax[1] = date2num(datetime(y, m, 1))
-            
+
         elif round_to.lower().startswith('y'):
             # Round to year:
             dt = num2date(minmax[0])
             minmax[0] = date2num(datetime(dt.year, 1, 1))
             dt = num2date(minmax[1])
-            minmax[1] = date2num(datetime(dt.year+1, 1, 1))
+            minmax[1] = date2num(datetime(dt.year + 1, 1, 1))
 
         return minmax

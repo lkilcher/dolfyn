@@ -1,5 +1,6 @@
 # from labels import default_labeler
 import numpy as np
+from six import string_types
 
 
 class unitsDict(dict):
@@ -19,7 +20,7 @@ class unitsDict(dict):
         """
         Return a shallow copy of the present object.
         """
-        return unitsDict([(ky, val) for ky, val in self.iteritems()])
+        return unitsDict([(ky, val) for ky, val in list(self.items())])
 
     def __mul__(self, other):
         """
@@ -27,8 +28,8 @@ class unitsDict(dict):
         """
         out = self.copy()
         if other.__class__ is unitsDict:
-            for u, vl in other.iteritems():
-                if u in out.keys():
+            for u, vl in list(other.items()):
+                if u in list(out.keys()):
                     out[u] += vl
                 else:
                     out[u] = vl
@@ -49,8 +50,8 @@ class unitsDict(dict):
         """
         out = self.copy()
         if other.__class__ is unitsDict:
-            for u, vl in other.iteritems():
-                if u in out.keys():
+            for u, vl in list(other.items()):
+                if u in list(out.keys()):
                     out[u] -= vl
                 else:
                     out[u] = -vl
@@ -109,7 +110,7 @@ class varMeta(object):
         self.dim_names = dim_names
         if units.__class__ is not unitsDict:
             self._units = unitsDict(units)
-        elif units.__class__ in [str, unicode]:
+        elif isinstance(units, string_types):
             self._units = unitsDict({units: 1})
         else:
             self._units = units
@@ -223,7 +224,7 @@ class varMeta(object):
             return None
         elif self._units.__class__ is str:
             return self._units
-        elif None in self._units.keys():
+        elif None in self._units:
             return self._units[None]
         if units_style is None:
             units_style = self._units_style
@@ -233,13 +234,13 @@ class varMeta(object):
             dns = np.sort([ks[ks < 0]])[0]
             st = r''
             for ik in ups:
-                for ky, vl in self._units.iteritems():
+                for ky, vl in list(self._units.items()):
                     if vl == ik:
                         st += ky
                         if ik != 1:  # If the power is not 1, add an exponent:
                             st += '^{%d}' % ik
             for ik in dns:
-                for ky, vl in self._units.iteritems():
+                for ky, vl in list(self._units.items()):
                     if vl == ik:
                         st += '%s^{%d}' % (ky, ik)
             return st

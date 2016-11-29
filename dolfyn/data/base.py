@@ -110,7 +110,7 @@ class Dprops(Dbase):
         self.__props__ = props(val).copy()
 
     def __getattr__(self, nm):
-        if nm in self.__getattribute__('__props__').keys():
+        if nm in self.__getattribute__('__props__'):
             return self.props[nm]
         return self.__getattribute__(nm)
 
@@ -128,7 +128,7 @@ class Dprops(Dbase):
     # self._units=self._get_props('_units')
     # if obj is not None:
     # self.props=obj._get_props('props')
-    # for ky,val in kwargs.iteritems():
+    # for ky,val in kwargs.items():
     # self.props[ky]=val
 
     # @property
@@ -177,7 +177,7 @@ class groups(dict):
     def __repr__(self,):
         s = '{'
         sp = ''
-        for k in np.sort(self.keys()):
+        for k in list(self.keys()):
             s += (sp + "'%s'" + ((15 - len(k)) * ' ') + ": %s,\n") % (
                 k, self[k].__repr__())
             sp = ' '
@@ -205,12 +205,12 @@ class groups(dict):
     @property
     def data_names(self,):
         anms = oset([])
-        for gnms in self.itervalues():
+        for gnms in list(self.values()):
             anms |= oset(gnms)
         return anms
 
     def remove(self, name):
-        for grp, vals in self.items():
+        for grp, vals in list(self.items()):
             if name in vals:
                 self[grp].remove(name)
 
@@ -226,11 +226,11 @@ class groups(dict):
             for nm in name:
                 self.add(nm, group=group)
             return
-        if group not in self.keys():
+        if group not in list(self.keys()):
             self[group] = oset([])
         self[group].add(name)
         # This next block makes sure no other groups have name in them.
-        for grp, vals in self.items():
+        for grp, vals in list(self.items()):
             if grp != group:
                 if name in vals:
                     vals.remove(name)
@@ -241,7 +241,7 @@ class groups(dict):
 
         If it is not in a group, return 'main'.
         """
-        for grp, nms in self.items():
+        for grp, nms in list(self.items()):
             if name in nms:
                 return grp
         return 'main'
@@ -294,7 +294,7 @@ class Dgroups(Dbase):
 
     # This needs to behave like a dict!
     #__iter__ = iter
-    iteritems = iter
+    items = iter
 
     def iter_wg(self, groups=None):
         """
@@ -468,7 +468,7 @@ class TimeBased(Dprops, Dgroups):
 
     @property
     def toff(self,):
-        if 'toff' not in self.props.keys():
+        if 'toff' not in self.props:
             self.props['toff'] = 0.0
         return self.props['toff']
 
@@ -508,7 +508,7 @@ class config(Dgroups, dict):
     copy = __copy__
 
     def __getattr__(self, nm):
-        if nm not in self.keys():
+        if nm not in self:
             raise AttributeError("{} object has no attribute '{}'".format(self.__class__, nm))
         return self[nm]
 
@@ -523,7 +523,7 @@ class config(Dgroups, dict):
 
     def __repr_level__(self, level=0):
         string = level * (self._lvl_spaces) * ' ' + '%s Configuration:\n' % self.config_type
-        for nm, dt in self.iteritems():
+        for nm, dt in list(self.items()):
             if nm in ['system', 'config_type']:
                 pass
             elif config in dt.__class__.__mro__:

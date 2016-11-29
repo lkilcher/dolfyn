@@ -1,4 +1,4 @@
-from base import Dgroups, np, oset, ma
+from .base import Dgroups, np, oset, ma
 
 
 # In general, these are not savable objects (for now?).

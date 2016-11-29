@@ -20,7 +20,7 @@ for fnm in args.files:
     dat.add_data('datenum', dat.mpltime + 366., 'main')
 
     outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
-    print 'Saving to %s.' % outnm
+    print('Saving to %s.' % outnm)
     # Save the data.
     dat.save_mat(outnm,
                  groups=['main',

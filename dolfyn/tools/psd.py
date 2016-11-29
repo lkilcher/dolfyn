@@ -1,5 +1,5 @@
 import numpy as np
-from misc import detrend
+from .misc import detrend
 fft = np.fft.fft
 
 ## class FFTobj(np.ndarray):
@@ -244,7 +244,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     wght = 2. / (window ** 2).sum()
     pwr = fft(detrend(a[0:nfft]) * window)[fft_inds] * \
         np.conj(fft(detrend(b[0:nfft]) * window)[fft_inds])
-    print pwr.dtype
+    print(pwr.dtype)
     if nens - 1:
         for i1, i2 in zip(range(step[0], l[0] - nfft + 1, step[0]),
                           range(step[1], l[1] - nfft + 1, step[1])):

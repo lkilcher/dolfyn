@@ -17,6 +17,11 @@ from .base import DataFactory
 from ..data.base import Dgroups, np, ma, config
 from ..data.time import time_array
 import copy
+from six import string_types
+try:
+    input = raw_input
+except NameError:
+    pass
 
 
 class Saver(DataFactory):
@@ -99,7 +104,7 @@ class Saver(DataFactory):
             return self.node
         elif where.__class__ is h5.Group:
             return where
-        elif where.__class__ in [str, unicode]:
+        elif isinstance(where, string_types):
             if self.split_groups_into_files and where != '/' and not nosplit:
                 if self.fd.get(where, None) is None:
                     fname = copy.copy(self.fd.filename)
@@ -166,7 +171,7 @@ class Saver(DataFactory):
 
         """
         tmp = self.get_group(where).require_group(name)
-        for ky, val in dct.iteritems():
+        for ky, val in list(dct.items()):
             tmp.attrs.create(ky, pkl.dumps(val))
 
     def write(self, obj, where='/', nosplit_file=False, **kwargs):
@@ -196,7 +201,7 @@ class Saver(DataFactory):
                             # (this has been deprecated in the DOLfYN standard,
                             # in favor of meta arrays).
         # iterate over the group names:
-        for grp_nm, dat_nms in obj.groups.iteritems():
+        for grp_nm, dat_nms in list(obj.groups.items()):
             grp = self.get_group(where + '/' + grp_nm, nosplit=nosplit_file)
                                 # Create or get the group specified.
             for ky in dat_nms:  # Iterate over the data names in the group.
@@ -208,13 +213,13 @@ class Saver(DataFactory):
                                where + '/' + grp_nm + '/_' + ky,
                                nosplit_file=True)
 
-                elif isinstance(val, (np.ndarray, )) and len(val) > 0:
+                elif isinstance(val, np.ndarray) and len(val) > 0:
                     nd = grp.create_dataset(str(ky),
                                             data=val,
                                             compression=self.complib,
                                             shuffle=self.shuffle,
                                             fletcher32=self.fletcher32,)
-                    for kw, d in kwargs.iteritems():
+                    for kw, d in list(kwargs.items()):
                         if ky in d:
                             nd.attrs.create(str(kw), d[ky])
 
@@ -224,7 +229,7 @@ class Saver(DataFactory):
                     if ma.valid and val.__class__ is ma.marray:
                         nd = grp.get(str(ky))
                         # print( 'writing meta data for %s' % ky )
-                        for nm, val in val.meta.__dict__.iteritems():
+                        for nm, val in list(val.meta.__dict__.items()):
                             if nm not in ['xformat', 'yformat']:
                                 # print( nm,val )
                                 nd.attrs.create(nm, pkl.dumps(val))
@@ -301,7 +306,7 @@ class Loader(DataFactory):
         """
         if where is None:
             return self.node
-        elif where.__class__ in [str, unicode]:
+        elif isinstance(where, string_types):
             return self.fd.get(where, None)
         else:
             return where
@@ -319,7 +324,7 @@ class Loader(DataFactory):
         See iter_groups for more info on how to specify groups.
         """
         for grp in self.iter_groups(groups=groups, where=where):
-            for nd in grp.itervalues():
+            for nd in list(grp.values()):
                 yield nd
 
     def iter(self, groups=None, where='/'):
@@ -329,7 +334,7 @@ class Loader(DataFactory):
         See iter_groups for more info on how to specify groups.
         """
         for grp in self.iter_groups(groups=groups, where=where):
-            for nd in grp.itervalues():
+            for nd in list(grp.values()):
                 yield nd, grp
 
     __iter__ = iter
@@ -339,7 +344,7 @@ class Loader(DataFactory):
         Iterate over the attributes in `groups`.
         """
         for grp in self.iter_groups(groups=groups, where=where):
-            for attnm in grp.attrs.iterkeys():
+            for attnm in list(grp.attrs.keys()):
                 if not ((self.ver <= 1.0 and
                          attnm in ['_properties', '_units']) or
                         (attnm.startswith('##') and attnm.endswith('##'))):
@@ -369,7 +374,7 @@ class Loader(DataFactory):
         else:
             propsstr = '_properties'
             unitsstr = '_units'
-        if propsstr in self.get_group(where).keys():
+        if propsstr in self.get_group(where):
             out.props = self.read_dict(where + "/" + propsstr)
         # if unitsstr in self.get_group(where).keys():
         # print( 1 )
@@ -382,21 +387,21 @@ class Loader(DataFactory):
         (object). i.e. when an data attribute is changed to be a
         read-only property.
         """
-        var = raw_input(
+        var = input((
             """The name '%s' cannot be written to the input.  Do you wish to:
         a) move the data in the file?
         b) specify a different attribute to assign the data to?
         c) skip the attribute (default)?
-        """ % (nd.name.rsplit('/', 1)[-1]))
+        """ % (nd.name.rsplit('/', 1)[-1])))
         if var == 'a':
-            newnm = raw_input("What name shall the data be reassigned to?")
+            newnm = input("What name shall the data be reassigned to?")
             grpnm, name = nd.name.rsplit('/', 1)
             grp = self.fd.get(grpnm)
             grp.copy(nd.name, grpnm + '/' + newnm)
             del nd
             return self.fd.get(grpnm + '/' + newnm)
         elif var == 'b':
-            return raw_input("What shall the attribute be called?")
+            return input("What shall the attribute be called?")
         else:
             return None
 
@@ -418,7 +423,7 @@ class Loader(DataFactory):
             out._fileobject = self.fd
             out.close = self.fd.close
         for nd in self.iter_data(groups=groups, where=where):
-            if '_object_type' in nd.attrs.keys():
+            if '_object_type' in nd.attrs:
                 out.add_data(self.get_name(nd)[1:],
                              self.mmload(where=nd.name,
                                          add_closemethod=False),
@@ -442,7 +447,7 @@ class Loader(DataFactory):
         out.__preload__()
         self.read_props(out, where=where)
         for nd in self.iter_data(groups=groups, where=where):
-            if '_object_type' in nd.attrs.keys():
+            if '_object_type' in nd.attrs:
                 out.add_data(self.get_name(nd)[1:], self.load(
                     where=nd.name), self.get_name(nd.parent))
                 continue
@@ -456,7 +461,7 @@ class Loader(DataFactory):
                         nd.attrs.get('time_var', False) == 'True':
                     out[nm] = out[nm].view(time_array)
                 if ma.valid and self.ver == 0:
-                    if '_label' in nd.attrs.keys():
+                    if '_label' in nd.attrs:
                         # This is a deprecated file structure.
                         setattr(out, nm,
                                 ma.marray(getattr(out, nm),
@@ -466,7 +471,7 @@ class Loader(DataFactory):
                                           )
                                           )
                                 )
-                    if 'label' in nd.attrs.keys():
+                    if 'label' in nd.attrs:
                         s = nd.attrs.get('units')
                         try:
                             u = pkl.loads(s)
@@ -491,7 +496,7 @@ class Loader(DataFactory):
                                           )
                                 )
                 elif ma.valid:
-                    if '_name' in nd.attrs.keys():
+                    if '_name' in nd.attrs:
                         # Confirm this is a meta array
                         s = nd.attrs.get('_units')
                         try:
@@ -503,7 +508,7 @@ class Loader(DataFactory):
                                           u,
                                           pkl.loads(nd.attrs.get('dim_names'))
                                           )
-                        for atnm in nd.attrs.keys():
+                        for atnm in nd.attrs:
                             if atnm not in ['_name', '_units', 'dim_names']:
                                 setattr(meta, atnm, pkl.loads(nd.attrs.get(atnm)))
                         setattr(out, nm, ma.marray(getattr(out, nm), meta=meta))
@@ -517,7 +522,7 @@ class Loader(DataFactory):
         """
         out = {}
         nd = self.get_group(where)
-        for prpnm, prp in nd.attrs.iteritems():
+        for prpnm, prp in list(nd.attrs.items()):
             try:
                 out[prpnm] = pkl.loads(prp)
             except TypeError:
@@ -592,7 +597,7 @@ class Loader(DataFactory):
 
         """
 
-        for grp in self.get_group(where).itervalues():
+        for grp in list(self.get_group(where).values()):
             if grp.__class__ is h5.highlevel.Group:
                 gnm = self.get_name(grp)
 

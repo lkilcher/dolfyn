@@ -1,9 +1,10 @@
+from __future__ import division
 import numpy as np
 from ..data.velocity import VelBinnerSpec
 from .base import ADVbinned
 from ..tools.misc import slice1d_along_axis
 from scipy.special import cbrt
-import warnings
+
 
 kappa = 0.41
 
@@ -160,8 +161,8 @@ class TurbBinner(VelBinnerSpec):
         a = 0.5
         f_shp = [1] * (spec.ndim - 1) + [inds.sum()]
         return np.mean(spec[..., inds] *
-                       (omega[inds].reshape(f_shp)) ** (5. / 3.) / a,
-                       axis=-1) ** (3. / 2.) / U_mag
+                       (omega[inds].reshape(f_shp)) ** (5 / 3) / a,
+                       axis=-1) ** (3 / 2) / U_mag
 
     def calc_epsilon_SF(self, veldat, umag, fs=None, freq_rng=[.5, 5.]):
         """
@@ -198,10 +199,10 @@ class TurbBinner(VelBinnerSpec):
             lag = umag[slc[:-1]] / fs * np.arange(up.shape[0])
             DAA = np.NaN * lag
             for L in range(int(fs / freq_rng[1]), int(fs / freq_rng[0])):
-                DAA[L] = np.mean((up[L:] - up[:-L]) ** 2., dtype=np.float64)
-            cv2 = DAA / (lag ** (2. / 3.))
+                DAA[L] = np.mean((up[L:] - up[:-L]) ** 2, dtype=np.float64)
+            cv2 = DAA / (lag ** (2 / 3))
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
-            out[slc[:-1]] = (cv2m / 2.1) ** (3. / 2.)
+            out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
         return out
 
     def up_angle(self, Uh_complex):
@@ -263,17 +264,17 @@ class TurbBinner(VelBinnerSpec):
 
         # Estimate values
         # u component
-        out = (np.mean((spec[0] + spec[1]) * (omega) ** (5. / 3.), -1) /
-               (21. / 55. * alpha * intgrl)
-               ) ** (3. / 2.) / U_mag
+        out = (np.mean((spec[0] + spec[1]) * (omega) ** (5 / 3), -1) /
+               (21 / 55 * alpha * intgrl)
+               ) ** (3 / 2) / U_mag
         # v component
-        out = (np.mean((spec[0] + spec[1]) * (omega) ** (5. / 3.), -1) /
-               (21. / 55. * alpha * intgrl)
-               ) ** (3. / 2.) / U_mag
+        out = (np.mean((spec[0] + spec[1]) * (omega) ** (5 / 3), -1) /
+               (21 / 55 * alpha * intgrl)
+               ) ** (3 / 2) / U_mag
 
-        out += (np.mean(spec[2] * (omega) ** (5. / 3.), -1) /
-                (12. / 55. * alpha * intgrl)
-                ) ** (3. / 2.) / U_mag
+        out += (np.mean(spec[2] * (omega) ** (5 / 3), -1) /
+                (12 / 55 * alpha * intgrl)
+                ) ** (3 / 2) / U_mag
 
         # Average the two estimates.
         out *= 0.5
@@ -304,7 +305,7 @@ class TurbBinner(VelBinnerSpec):
                 cbrt(x ** 2 - 2 / b * np.cos(t) * x + b ** (-2)) *
                 np.exp(-0.5 * x ** 2), x)
         return out.reshape(Itke.shape) * \
-            (2. * np.pi) ** (-.5) * Itke ** (2. / 3.)
+            (2 * np.pi) ** (-0.5) * Itke ** (2 / 3)
 
     def calc_Lint(self, corr_vel, U_mag, fs=None):
         """
@@ -336,7 +337,7 @@ class TurbBinner(VelBinnerSpec):
         """
         fs = self._parse_fs(fs)
         return U_mag / fs * np.argmin((corr_vel / corr_vel[..., 0][..., None]
-                                       ) > (1. / np.e), axis=-1)
+                                       ) > (1 / np.e), axis=-1)
 
 
 def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,

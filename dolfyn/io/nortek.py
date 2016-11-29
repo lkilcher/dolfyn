@@ -15,8 +15,7 @@ time = nortek_defs.time
 
 def recatenate(obj):
     out = obj[0].__class__(obj[0]['config_type'])
-    keys = obj[0].keys()
-    for ky in keys:
+    for ky in list(obj[0].keys()):
         if ky in ['__data_groups__', 'config_type']:
             continue
         val0 = obj[0][ky]
@@ -193,7 +192,7 @@ class NortekReader(object):
           how to scale each data variable.
 
         """
-        for nm, vd in vardict.iteritems():
+        for nm, vd in list(vardict.items()):
             retval = vd.sci_func(getattr(self.data, nm))
             # This checks whether a new data object was created:
             # sci_func returns None if it modifies the existing data.
@@ -210,7 +209,7 @@ class NortekReader(object):
           how to initialize each data variable.
 
         """
-        for nm, va in vardict.iteritems():
+        for nm, va in list(vardict.items()):
             if not hasattr(self.data, nm):
                 self.data.add_data(nm,
                                    va._empty_array(self.n_samp_guess),
@@ -238,7 +237,7 @@ class NortekReader(object):
         self._thisid_bytes = bts = self.read(2)
         tmp = unpack(self.endian + 'BB', bts)
         if self.debug == 2:
-            print 'Positon: {}, codes: {}'.format(self.f.tell(), tmp)
+            print('Positon: {}, codes: {}'.format(self.f.tell(), tmp))
         if tmp[0] != 165:  # This catches a corrupted data block.
             print('Corrupted data block sync code (%d, %d) found in ping %d. '
                   'Searching for next valid code...' % (tmp[0], tmp[1], self.c))
@@ -594,7 +593,7 @@ class NortekReader(object):
             self.c -= 1
         if self.debug:
             print('Reading vector microstrain data (0x71) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+                   .format(self.c, self.pos))
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
@@ -603,7 +602,7 @@ class NortekReader(object):
             #raise Exception("AHRSID Changes mid-file!")
         if ahrsid in [195, 204, 210, 211]:
             self._ahrsid = ahrsid
-        #print byts0
+        #print(byts0)
         c = self.c
         if not (hasattr(self.data, 'Accel')):
             self._dtypes += ['microstrain']
@@ -798,7 +797,7 @@ class NortekReader(object):
             except EOFError:
                 break
         if self.debug:
-            print 'p0={}, pos={}, i={}'.format(p0, self.pos, i)
+            print('p0={}, pos={}, i={}'.format(p0, self.pos, i))
         # Compute the average of the data size:
         return (self.pos - p0) / (i + 1)
 
@@ -906,7 +905,7 @@ class NortekReader(object):
 
     def readnext(self,):
         id = '0x%02x' % self.read_id()
-        if id in self.fun_map.keys():
+        if id in self.fun_map:
             func_name = self.fun_map[id]
             out = getattr(self, func_name)()
             self._lastread = [func_name[5:]] + self._lastread[:-1]

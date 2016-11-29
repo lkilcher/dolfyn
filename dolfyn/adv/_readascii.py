@@ -1,9 +1,11 @@
-import base as adv
+from . import base as adv
 import os
 from ..tools import misc as tbx
 from ..data import time
 import string
 import numpy as np
+from six import string_types
+
 
 alphs = set(string.ascii_letters).union(['(', ')', '%'])
 
@@ -25,7 +27,7 @@ def count_lines(fd):
     val = (pe - p1) / (p2 - p1)
     if val != int(val):
         raise ValueError('Number of lines is not an integer: \
-                         perhaps the bytes / line is not constant?')
+                         perhaps the bytes-per-line is not constant?')
     return int(val)
 
 
@@ -141,7 +143,7 @@ class header_reader(object):
                 return
             else:
                 dt = self.parseline(ln)
-                if dt[0] in format.keys():
+                if dt[0] in format:
                     dt[0] = format[dt[0]]
                 else:
                     dt[0] = dt[0].replace(' ', '_').lower()
@@ -302,7 +304,7 @@ def read_dat(filename,
                     continue
                 # if not hasattr(advd,nm):
 
-                if nm.__class__ in [str, unicode] and not nm.startswith('_'):
+                if isinstance(nm, string_types) and not nm.startswith('_'):
                     advd.__getattribute__(nm)[idx] = float(dt[ind])
                 # is 'nm' a function?
                 elif nm.__class__ is time_func.__class__:

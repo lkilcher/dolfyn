@@ -1,3 +1,4 @@
+from __future__ import division
 from .base import np, TimeBased, ma, DataError
 from ..io.main import Saveable
 import h5py as h5
@@ -33,10 +34,9 @@ class Velocity(TimeBased, Saveable):
     def _pre_mat_save(self, outdict):
         outdict['u'] = self._u
         outdict.pop('_u')
+        # The config object often has characters that cause problems.
         outdict.pop('config', None)
-                    # The config object often has characters that cause
-                    # problems.
-        if (not 'datenum' in outdict.keys()) and 'mpltime' in outdict.keys():
+        if ('datenum' not in outdict) and 'mpltime' in outdict:
             outdict['datenum'] = self.mpltime.reshape((1, -1)) + 366
             outdict.pop('mpltime')
         if hasattr(self, 'ranges'):
@@ -138,7 +138,7 @@ class Velocity(TimeBased, Saveable):
         """
         Return the principal angle of the data.
         """
-        if 'principal_angle' not in self.props.keys():
+        if 'principal_angle' not in self.props:
             self.calc_principal_angle()
         return self.props['principal_angle']
 

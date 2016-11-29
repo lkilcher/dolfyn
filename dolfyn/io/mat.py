@@ -1,6 +1,12 @@
 from scipy import io as spio
 from .base import DataFactory
 import copy
+try:
+    # Python 2
+    ucode_type = unicode
+except NameError:
+    # No unicode builtin in Python 3
+    ucode_type = None
 
 
 class Saver(DataFactory):
@@ -38,9 +44,9 @@ class Saver(DataFactory):
             out[nm] = dat
         out['props'] = dict(copy.deepcopy(obj.props))
         out['props'].pop('doppler_noise', None)
-        for nm in out['props'].keys():
+        for nm in list(out['props'].keys()):
             # unicodes key-names are not supported
-            if nm.__class__ is unicode:
+            if nm.__class__ is ucode_type:
                 out['props'][str(nm)] = out['props'].pop(nm)
                 nm = str(nm)
             # sets are not supported

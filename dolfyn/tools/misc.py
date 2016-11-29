@@ -171,7 +171,7 @@ def slice1d_along_axis(arr_shape, axis=0):
         axis += nd
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
-    indlist = range(nd)
+    indlist = list(range(nd))
     indlist.remove(axis)
     i[axis] = slice(None)
     itr_dims = np.asarray(arr_shape).take(indlist)
@@ -227,7 +227,7 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
                          % (dim, nd))
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
-    indlist = range(nd)
+    indlist = list(range(nd))
     indlist.remove(dim)
     i[dim] = slice(None, None)
     # outshape = np.asarray(a.shape).take(indlist)
@@ -248,7 +248,7 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
     if gd.__len__() > 1:
         inds = np.nonzero((1 < np.diff(gd)) & (np.diff(gd) <= maxgap + 1))[0]
         for i2 in range(0, inds.__len__()):
-            ii = range(gd[inds[i2]] + 1, gd[inds[i2] + 1])
+            ii = list(range(gd[inds[i2]] + 1, gd[inds[i2] + 1]))
             a[ii] = (np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) *
                      (np.arange(0, ii.__len__()) + 1) /
                      (ii.__len__() + 1) + a[gd[inds[i2]]]).astype(a.dtype)

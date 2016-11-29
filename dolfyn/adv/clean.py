@@ -218,7 +218,7 @@ def GN2002(u, npt=5000):
 
     # Find large bad segments (>npt/10):
     # group returns a vector of slice objects.
-    bad_segs = group(np.isnan(u), min_length=npt / 10)
+    bad_segs = group(np.isnan(u), min_length=npt // 10)
     if len(bad_segs):  # Are there any?
         # Break them up into separate regions:
         sp = 0
@@ -243,7 +243,7 @@ def GN2002(u, npt=5000):
 
     c = 0
     ntot = len(u)
-    nbins = ntot / npt
+    nbins = ntot // npt
     bds_last = np.zeros_like(bds) + np.inf
     bds[0] = True  # make sure we start.
     while bds.any():
