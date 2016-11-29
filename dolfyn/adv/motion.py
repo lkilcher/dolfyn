@@ -1,7 +1,8 @@
+from __future__ import division
 import numpy as np
 import scipy.signal as sig
 from scipy.integrate import cumtrapz
-from .rotate import inst2earth, _rotate_vel2body
+from .rotate import inst2earth, _rotate_vel2body, deg2rad
 import warnings
 
 
@@ -42,7 +43,7 @@ class CalcMotion(object):
     """
 
     def __init__(self, advo,
-                 accel_filtfreq=1. / 30,
+                 accel_filtfreq=1 / 30,
                  vel_filtfreq=None,
                  to_earth=True):
 
@@ -118,7 +119,7 @@ class CalcMotion(object):
         hp = self.Accel - self.AccelStable
 
         dat = np.concatenate((np.zeros(list(hp.shape[:-1]) + [1]),
-                              cumtrapz(hp, dx=1. / samp_freq)), axis=-1)
+                              cumtrapz(hp, dx=1 / samp_freq)), axis=-1)
         if self.accelvel_filtfreq > 0:
             filt_freq = self.accelvel_filtfreq
             # 8th order butterworth filter.
@@ -200,9 +201,9 @@ def _calc_probe_pos(advo, separate_probes=False):
     if advo.make_model == 'Nortek VECTOR' and separate_probes:
         r = 0.076
         # The angle between the x-y plane and the probes
-        phi = -30. * np.pi / 180.
-        theta = np.array([0., 120., 240.]) * np.pi / \
-            180.  # The angles of the probes from the x-axis.
+        phi = -30 * deg2rad
+        # The angles of the probes from the x-axis:
+        theta = np.array([0., 120., 240.]) * deg2rad
         return (np.dot(advo.props['body2head_rotmat'].T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
@@ -214,7 +215,7 @@ def _calc_probe_pos(advo, separate_probes=False):
 
 
 def correct_motion(advo,
-                   accel_filtfreq=1. / 30,
+                   accel_filtfreq=1 / 30,
                    vel_filtfreq=None,
                    to_earth=True,
                    separate_probes=False, ):
@@ -377,7 +378,7 @@ def correct_motion(advo,
     # Rotate the data into the correct coordinate system.
     # inst2earth expects a 'rotate_vars' property.
     # Add urot, uacc, AccelStable, to it.
-    if 'rotate_vars' not in advo.props.keys():
+    if 'rotate_vars' not in advo.props:
         advo.props['rotate_vars'] = {'_u', 'urot', 'uacc',
                                      'Accel', 'AccelStable',
                                      'AngRt', 'Mag'}
@@ -484,7 +485,7 @@ class CorrectMotion(object):
 
     """
 
-    def __init__(self, accel_filtfreq=1. / 30,
+    def __init__(self, accel_filtfreq=1 / 30,
                  vel_filtfreq=None,
                  separate_probes=False):
 
@@ -554,9 +555,9 @@ class CorrectMotion(object):
         if advo.make_model == 'Nortek VECTOR' and self.separate_probes:
             r = 0.076
             # The angle between the x-y plane and the probes
-            phi = -30. * np.pi / 180.
-            theta = np.array([0., 120., 240.]) * np.pi / \
-                180.  # The angles of the probes from the x-axis.
+            phi = -30 * deg2rad
+            # The angles of the probes from the x-axis:
+            theta = np.array([0., 120., 240.]) * deg2rad
             return (np.dot(advo.props['body2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
@@ -614,7 +615,7 @@ class CorrectMotion(object):
                              vel_filtfreq=self.accelvel_filtfreq,
                              to_earth=to_earth)
 
-        if 'rotate_vars' not in advo.props.keys():
+        if 'rotate_vars' not in advo.props:
             advo.props['rotate_vars'] = {'_u', 'urot', 'uacc', 'uraw',
                                          'Accel', 'AccelStable',
                                          'AngRt', 'Mag'}

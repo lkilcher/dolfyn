@@ -4,7 +4,7 @@ are benchmark tests. Uncomment lines to rebuiled data files only if
 you know you have fixed a bug, and wish to fix an existing test data
 set.
 """
-print __doc__
+print(__doc__)
 
 import adv_tests as advt
 

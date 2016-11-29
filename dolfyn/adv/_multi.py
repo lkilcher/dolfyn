@@ -1,4 +1,4 @@
-from base import ADVraw
+from .base import ADVraw
 import numpy as np
 from dolfyn.data.time import num2date
 

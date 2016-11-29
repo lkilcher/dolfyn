@@ -61,9 +61,9 @@ def axes(*args, **kwargs):
     except:
         pass
     for nm in ['axisbg', 'frameon', 'sharex', 'sharey', 'polar', ]:
-        if nm in kwargs.keys():
+        if nm in kwargs:
             axd[nm] = kwargs.pop(nm)
-    if 'ticksize' in kwargs.keys():
+    if 'ticksize' in kwargs:
         newd['xticksize'] = kwargs.get('ticksize')
         newd['yticksize'] = kwargs.pop('ticksize')
     for nm in [('lw', 'linewidth'), 'linewidth', 'xticksize',
@@ -75,11 +75,11 @@ def axes(*args, **kwargs):
         else:
             ky = nm
             nm = nm
-        if ky in kwargs.keys():
+        if ky in kwargs:
             newd[nm] = kwargs.pop(ky)
-    if ('fig' not in kwargs.keys()) and ('figure' not in kwargs.keys()):
+    if ('fig' not in kwargs) and ('figure' not in kwargs):
         fig = pylab.gcf()
-    elif 'figure' in kwargs.keys():
+    elif 'figure' in kwargs:
         fig = kwargs.pop('figure')
     else:
         fig = kwargs.pop('fig')
@@ -91,32 +91,32 @@ def axes(*args, **kwargs):
         a = fig.add_axes(rect, **axd)
         a.set(**kwargs)
 
-        if 'xlocation' in newd.keys():
+        if 'xlocation' in newd:
             a.xaxis.set_ticks_position(newd['xlocation'])
             if newd['xlocation'] == 'top':
                 a.spines['bottom'].set_visible(False)
             elif newd['xlocation'] == 'bottom':
                 a.spines['top'].set_visible(False)
-        if 'ylocation' in newd.keys():
+        if 'ylocation' in newd:
             a.yaxis.set_ticks_position(newd['ylocation'])
             if newd['ylocation'] == 'right':
                 a.spines['left'].set_visible(False)
             elif newd['ylocation'] == 'left':
                 a.spines['right'].set_visible(False)
-        if 'lw' in newd.keys():
+        if 'lw' in newd:
             for sp in a.spines:
                 a.spines[sp].set_linewidth(newd['lw'])
             for tck in a.xaxis.get_ticklines():
                 tck.set_mew(newd['lw'])
             for tck in a.yaxis.get_ticklines():
                 tck.set_mew(newd['lw'])
-        if 'xticksize' in newd.keys():
+        if 'xticksize' in newd:
             for tck in a.xaxis.get_ticklines():
                 tck.set_ms(newd['xticksize'])
-        if 'yticksize' in newd.keys():
+        if 'yticksize' in newd:
             for tck in a.yaxis.get_ticklines():
                 tck.set_ms(newd['yticksize'])
-        if 'fontsize' in newd.keys():
+        if 'fontsize' in newd:
             for tklbl in a.xaxis.get_ticklabels():
                 tklbl.set_fontsize(newd['fontsize'])
             for tklbl in a.yaxis.get_ticklabels():
@@ -200,7 +200,7 @@ class axgroup(object):
     def _disperse_kwargs(self, **kwargs):
         out = dict(**kwargs)
         for ax in self:
-            for ky, val in kwargs.iteritems():
+            for ky, val in list(kwargs.items()):
                 if val.__class__ is disperse:
                     if len(val) != len(self):
                         raise Exception("The length of dispersable \
@@ -575,16 +575,16 @@ class axgroup(object):
 
     def antiset(self, ax, **kwargs):
         # Some backwards compatability stuff:
-        if 'xticklabels' in kwargs.keys() and kwargs['xticklabels'] == '':
+        if 'xticklabels' in kwargs and kwargs['xticklabels'] == '':
             kwargs.pop('xticklabels')
             self.hide('xticklabels', ax)
-        if 'yticklabels' in kwargs.keys() and kwargs['yticklabels'] == '':
+        if 'yticklabels' in kwargs and kwargs['yticklabels'] == '':
             kwargs.pop('yticklabels')
             self.hide('yticklabels', ax)
-        if 'minorxticks' in kwargs.keys() and not kwargs['minorxticks']:
+        if 'minorxticks' in kwargs and not kwargs['minorxticks']:
             kwargs.pop('minorxticks')
             self.hide('minorxticks', ax)
-        if 'minoryticks' in kwargs.keys() and not kwargs['minoryticks']:
+        if 'minoryticks' in kwargs and not kwargs['minoryticks']:
             kwargs.pop('minoryticks', ax)
             self.hide('minoryticks', ax)
 
@@ -637,7 +637,7 @@ class axSharer(object):
         mapVal = self.map[iv, ih]
         if not mapVal:  # mapVal==0 do not share axes.
             return
-        elif mapVal in self._share_ax.keys():
+        elif mapVal in self._share_ax:
             # The mapVal is already in the _share_ax dictionary
             return self._share_ax[mapVal]
         else:
@@ -967,9 +967,9 @@ class saxes(axgroup):
     def drawall(self, **kwargs):
         if not self.n == self.drawax.shape:
             self.drawax = np.ones(self.n, dtype='bool')
-        if 'lw' in kwargs.keys():
+        if 'lw' in kwargs:
             kwargs['linewidth'] = kwargs.pop('lw', self.linewidth)
-        if 'linewidth' not in kwargs.keys():
+        if 'linewidth' not in kwargs:
             kwargs['linewidth'] = self.linewidth
         else:
             self.linewidth = kwargs['linewidth']
@@ -1051,7 +1051,7 @@ class figobj(axgroup):
             self.fig.set_size_inches(figkws['figsize'] + ff, forward=True)
         self.clf = self.fig.clf
         self.clf()
-        if 'title' in kwargs.keys():
+        if 'title' in kwargs:
             self.fig.canvas.set_window_title(
                 'Fg%d: ' % (self.fig.number) + kwargs['title'])
 

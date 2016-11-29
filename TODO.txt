@@ -6,3 +6,14 @@ files.
 Add test to confirm that the adv_example01.py script works.
 
 Add tests to confirm that all scripts work.
+
+Add tests to confirm that matlab file I/O works.
+
+Confirm that tests work in Python 3.
+
+Document need for git-lfs for testfiles!
+
+Document need for command line tools (xcode) on OSX.
+
+Document need for Python 2?
+

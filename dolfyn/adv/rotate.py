@@ -1,5 +1,8 @@
+from __future__ import division
 import numpy as np
 import warnings
+
+deg2rad = np.pi / 180
 
 sin = np.sin
 cos = np.cos
@@ -38,9 +41,9 @@ def orient2euler(advo):
         omat = advo
     # I'm pretty sure the 'yaw' is the angle from the east axis, so we
     # correct this for 'deg_true':
-    return (180 / np.pi * np.arcsin(omat[0, 2]),
-            180 / np.pi * np.arctan2(omat[1, 2], omat[2, 2]),
-            180 / np.pi * np.arctan2(omat[0, 1], omat[0, 0])
+    return (np.arcsin(omat[0, 2]) / deg2rad,
+            np.arctan2(omat[1, 2], omat[2, 2]) / deg2rad,
+            np.arctan2(omat[0, 1], omat[0, 0]) / deg2rad
             )
 
 
@@ -92,9 +95,8 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             print("Data is already in the '%s' coordinate system" % cs_new)
             return
         elif not advo.props['coord_sys'] == cs_now:
-            print(
-                "Data must be in the '%s' frame prior to using this function" %
-                cs_now)
+            print("Data must be in the '%s' frame prior to using this function" %
+                   cs_now)
 
     if hasattr(advo, 'orientmat'):
         if 'declination' in advo.props and not \
@@ -102,8 +104,8 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             # Declination is defined as positive if MagN is east of
             # TrueN. Therefore we must rotate about the z-axis by minus
             # the declination angle to get from Mag to True.
-            cd = cos(-advo.props['declination'] * np.pi / 180)
-            sd = sin(-advo.props['declination'] * np.pi / 180)
+            cd = cos(-advo.props['declination'] * deg2rad)
+            sd = sin(-advo.props['declination'] * deg2rad)
             # The ordering is funny here because orientmat is the
             # transpose of the inst->earth rotation matrix:
             Rdec = np.array([[cd, -sd, 0],
@@ -120,9 +122,9 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rmat = np.rollaxis(advo['orientmat'], 1)
 
     else:
-        rr = advo.roll * np.pi / 180
-        pp = advo.pitch * np.pi / 180
-        hh = (advo.heading - 90) * np.pi / 180
+        rr = advo.roll * deg2rad
+        pp = advo.pitch * deg2rad
+        hh = (advo.heading - 90) * deg2rad
         # NOTE: For Nortek Vector ADVs: 'down' configuration means the
         #       head was pointing UP!  Check the Nortek coordinate
         #       transform matlab script for more info.  The 'up'
@@ -130,8 +132,8 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         #       being up.  This is ridiculous, but apparently a
         #       reality.
         rr[advo.orientation_down] += np.pi
-        if 'declination' in advo.props.keys():
-            hh += (advo.props['declination'] * np.pi / 180)
+        if 'declination' in advo.props:
+            hh += (advo.props['declination'] * deg2rad)
                    # Declination is in degrees East, so we add this to True
                    # heading.
 
@@ -180,24 +182,24 @@ def _inst2earth(advo, use_mean_rotation=False):
     http://www.nortek-as.com/en/knowledge-center/forum/software/644656788
     http://www.nortek-as.com/en/knowledge-center/forum/software/644656788/resolveuid/af5dec86a5df8e7fd82a2f2aed1bc537
     """
-    rr = advo.roll * np.pi / 180
-    pp = advo.pitch * np.pi / 180
-    hh = (advo.heading - 90) * np.pi / 180
+    rr = advo.roll * deg2rad
+    pp = advo.pitch * deg2rad
+    hh = (advo.heading - 90) * deg2rad
     if use_mean_rotation:
         rr = np.angle(np.exp(1j * rr).mean())
         pp = np.angle(np.exp(1j * pp).mean())
         hh = np.angle(np.exp(1j * hh).mean())
-    if 'declination' in advo.props.keys():
-        hh += (advo.props['declination'] * np.pi / 180)
+    if 'declination' in advo.props:
+        hh += (advo.props['declination'] * deg2rad)
         # Declination is in degrees East, so we add this to True
         # heading.
     else:
         warnings.warn(
             'No declination in adv object.  Assuming a declination of 0.')
-    if 'heading_offset' in advo.props.keys():
+    if 'heading_offset' in advo.props:
         # Offset is in CCW degrees that the case was offset relative
         # to the head.
-        hh += advo.props['heading_offset'] * np.pi / 180
+        hh += advo.props['heading_offset'] * deg2rad
     if advo.config.orientation == 'down':
         # NOTE: For ADVs: 'down' configuration means the head was
         #       pointing UP!  check the Nortek coordinate transform

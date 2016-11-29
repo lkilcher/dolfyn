@@ -5,10 +5,6 @@ changes.
 
 
 import h5py as h5
-try:
-    import cPickle as pkl
-except:
-    import pickle as pkl
 from .base import DataFactory
 import numpy as np
 
@@ -39,7 +35,7 @@ class UpdateTool(DataFactory):
         Change the name of the attribute at location `where`/`oldname`
         to `where`/`newname`.
         """
-        if oldname in self.fd[where].keys():
+        if oldname in self.fd[where]:
             self.fd[where].move(oldname, newname)
         else:
             print('%s not found at %s' % (oldname, where))
@@ -49,7 +45,7 @@ class UpdateTool(DataFactory):
         Concatenate the data in oldnames along (a new) dimension 0,
         and save them as newname.
         """
-        if oldnames[0] in self.fd[where].keys():
+        if oldnames[0] in self.fd[where]:
             nd = self.fd[where][oldnames[0]]
             dat = np.empty([len(oldnames)] + list(nd.shape), dtype=nd.dtype)
             for idx, nm in enumerate(oldnames):

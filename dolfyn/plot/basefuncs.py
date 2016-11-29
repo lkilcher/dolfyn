@@ -3,6 +3,12 @@ from scipy.stats import nanmean
 import matplotlib as mpl
 from string import lowercase
 
+try:
+    numeric_types = (int, long, float, complex)
+except NameError:
+    # Python 3 doesn't have `long`
+    numeric_types = (int, float, complex)
+
 transforms = mpl.transforms
 rcParams = mpl.rcParams
 
@@ -56,24 +62,23 @@ def cpcolor(*args, **kwargs):
         # Data is the second (1) element of args... (see below)
         argind += 1
         ax = args[0]
-    elif ('ax' in kwargs.keys()) or \
-            ('axes' in kwargs.keys()) or ('parent' in kwargs.keys()):
-        if 'parent' in kwargs.keys():
+    elif ('ax' in kwargs) or ('axes' in kwargs) or ('parent' in kwargs):
+        if 'parent' in kwargs:
             ax = kwargs.pop('parent')
-        elif 'ax' in kwargs.keys():
+        elif 'ax' in kwargs:
             ax = kwargs.pop('ax')
         else:
             ax = kwargs.pop('axes')
     else:
         ax = mpl.pylab.gca()
 
-    if 'fixgaps' in kwargs.keys():
+    if 'fixgaps' in kwargs:
         fixgaps = kwargs.pop('fixgaps')
-    if 'threshx' in kwargs.keys():
+    if 'threshx' in kwargs:
         threshx = kwargs.pop('threshx')
-    if 'threshy' in kwargs.keys():
+    if 'threshy' in kwargs:
         threshy = kwargs.pop('threshy')
-    if 'clim' in kwargs.keys():
+    if 'clim' in kwargs:
         clm = kwargs.pop('clim')
         kwargs['vmin'] = clm[0]
         kwargs['vmax'] = clm[1]
@@ -206,20 +211,20 @@ def cbar(peer, mappable=None, place='right',
         if axp[3] < axp[2]:
             orient = 'horizontal'
 
-    if 'orient' in kwargs.keys():
+    if 'orient' in kwargs:
         orient = kwargs.pop('orient')
 
-    if 'axdict' in kwargs.keys():
+    if 'axdict' in kwargs:
         axd = kwargs.pop('axdict')
     else:
         axd = {}
     ax2 = {}
-    if 'linewidth' in kwargs.keys():
+    if 'linewidth' in kwargs:
         axd['linewidth'] = kwargs.pop('linewidth')
-    if 'ticklabels' in kwargs.keys():
+    if 'ticklabels' in kwargs:
         ax2['yticklabels'] = kwargs.pop('ticklabels')
 
-    if 'fontsize' in kwargs.keys():
+    if 'fontsize' in kwargs:
         ax2['fontsize'] = kwargs.pop('fontsize')
 
     tmp = mpl.pyplot.axes(axp, **axd)
@@ -229,7 +234,7 @@ def cbar(peer, mappable=None, place='right',
         hndl = mpl.pylab.colorbar(
             mappable, cax=tmp, orientation=orient, **kwargs)
 
-    if 'fontsize' in ax2.keys():
+    if 'fontsize' in ax2:
         if orient == 'vertical':
             mpl.pylab.setp(tmp.get_yticklabels(), fontsize=ax2.pop('fontsize'))
         else:
@@ -252,7 +257,7 @@ def labelax(peer, str, place='right', **kwargs):
         place = (1.025, .6)
     elif place == 'over':
         place = (.48, 1.1)
-        if 'horizontalalignment' not in kwargs.keys():
+        if 'horizontalalignment' not in kwargs:
             kwargs['horizontalalignment'] = 'right'
 
     hndl = peer.text(
@@ -503,7 +508,7 @@ def annoteCorner(ax, s, pos='ll', offset=10, **kwargs):
     prm['transform'] = ax.transAxes
 
     for key in prm:
-        if key not in kwargs.keys():
+        if key not in kwargs:
             kwargs[key] = prm[key]
     ax.corner_label = offset_text(ax, xp, yp, s, **kwargs)
     return ax.corner_label
@@ -527,7 +532,7 @@ def shadey(ax, y, x=[0, 1], transform='AxesXDataY', label='_nolegend_',
 
 def _vln(ax, x, y=[0, 1], transform='DataXAxesY', label='_nolegend_',
          color='k', linewidth=rcParams['axes.linewidth'], **kwargs):
-    if isinstance(x, (int, long, float, complex)):
+    if isinstance(x, numeric_types):
         x = [x]
     transform = get_transform(ax, transform)
     for xnow in x:
@@ -536,13 +541,13 @@ def _vln(ax, x, y=[0, 1], transform='DataXAxesY', label='_nolegend_',
 
 
 def _hln(ax, y, x=[0, 1], transform='AxesXDataY', **kwargs):
-    if 'label' not in kwargs.keys():
+    if 'label' not in kwargs:
         kwargs['label'] = '_nolegend_'
-    if 'color' not in kwargs.keys():
+    if 'color' not in kwargs:
         kwargs['color'] = 'k'
-    if 'linewidth' not in kwargs.keys() and 'lw' not in kwargs.keys():
+    if 'linewidth' not in kwargs and 'lw' not in kwargs:
         kwargs['lw'] = rcParams['axes.linewidth']
-    if isinstance(y, (int, long, float, complex)):
+    if isinstance(y, numeric_types):
         y = [y]
     transform = get_transform(ax, transform)
     for ynow in y:
