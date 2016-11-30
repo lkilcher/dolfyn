@@ -9,19 +9,29 @@ this approach.
 
 
 import h5py as h5
-try:
-    import cPickle as pkl
-except:
-    import pickle as pkl
+import numpy as np
 from .base import DataFactory
-from ..data.base import Dgroups, np, ma, config
+from ..data.base import Dgroups, ma, config
 from ..data.time import time_array
 import copy
 from six import string_types
-try:
+import sys
+
+if sys.version_info >= (3, 0):
+    import pickle as pkl
+
+    def pkl_loads(s):
+        try:
+            return pkl.loads(s)
+        except UnicodeDecodeError:
+            return pkl.loads(s, encoding='bytes')
+
+else:  # Python 2
     input = raw_input
-except NameError:
-    pass
+    import cPickle as pkl
+
+    def pkl_loads(s):
+        return pkl.loads(s)
 
 
 class Saver(DataFactory):
@@ -358,7 +368,7 @@ class Loader(DataFactory):
         for grp, attnm in self.iter_attrs(groups=groups, where=where):
             dat = grp.attrs[attnm]
             try:
-                dat = pkl.loads(dat)
+                dat = pkl_loads(dat)
             except:
                 pass
             out.add_data(attnm, dat, self.get_name(grp))
@@ -433,7 +443,7 @@ class Loader(DataFactory):
                 nm = self.get_name(nd)
                 out.add_data(nm, nd, self.get_name(nd.parent))
             if (self.ver <= 1.2 and nm == 'mpltime') or \
-                    nd.attrs.get('time_var', False) == 'True':
+                    nd.attrs.get('time_var', False) == b'True':
                 out[nm] = time_array(out[nm])
         self.read_attrs(out, groups=groups, where=where)
         return out
@@ -453,12 +463,16 @@ class Loader(DataFactory):
                 continue
             if hasattr(nd, 'read_direct'):
                 nm = self.get_name(nd)
-                out.add_data(
-                    nm, np.empty(nd.shape, nd.dtype), self.get_name(nd.parent))
+                dtype = nd.dtype
+                out.add_data(nm, np.empty(nd.shape, dtype), self.get_name(nd.parent))
+                # This puts the data in the output object:
                 nd.read_direct(getattr(out, nm))
-                               # This puts the data in the output object.
+                if nd.dtype.char == 'S' and sys.version_info >= (3, 0):
+                    # This catches a bug in Python3 when reading string arrays
+                    # (converts bytes to unicode)
+                    out[nm] = out[nm].astype('<U')
                 if (self.ver <= 1.2 and nm == 'mpltime') or \
-                        nd.attrs.get('time_var', False) == 'True':
+                        nd.attrs.get('time_var', False) == b'True':
                     out[nm] = out[nm].view(time_array)
                 if ma.valid and self.ver == 0:
                     if '_label' in nd.attrs:
@@ -467,30 +481,30 @@ class Loader(DataFactory):
                                 ma.marray(getattr(out, nm),
                                           meta=ma.varMeta(
                                               nd.attrs.get('_label'),
-                                              pkl.loads(nd.attrs.get('_units'))
+                                              pkl_loads(nd.attrs.get('_units'))
                                           )
                                           )
                                 )
                     if 'label' in nd.attrs:
                         s = nd.attrs.get('units')
                         try:
-                            u = pkl.loads(s)
+                            u = pkl_loads(s)
                         except ImportError:
                             # This is to catch a redefinition of data objects.
                             try:
-                                u = pkl.loads(
+                                u = pkl_loads(
                                     s.replace('cdata_base',
                                               'cdata').replace('unitsDict',
                                                                'dict'))
                             except:
-                                u = pkl.loads(
+                                u = pkl_loads(
                                     s.replace('cdata_base', 'cdata.marray'))
                         setattr(out, nm,
                                 ma.marray(getattr(out, nm),
                                           meta=ma.varMeta(
                                               nd.attrs.get('label'),
                                               u,
-                                              pkl.loads(
+                                              pkl_loads(
                                                   nd.attrs.get('dim_names'))
                                           )
                                           )
@@ -500,17 +514,17 @@ class Loader(DataFactory):
                         # Confirm this is a meta array
                         s = nd.attrs.get('_units')
                         try:
-                            u = pkl.loads(s)
+                            u = pkl_loads(s)
                         except ImportError:
                             # This is to catch a redefinition of data objects.
-                            u = pkl.loads(s.replace('cdata_base', 'cdata'))
-                        meta = ma.varMeta(pkl.loads(nd.attrs.get('_name')),
+                            u = pkl_loads(s.replace('cdata_base', 'cdata'))
+                        meta = ma.varMeta(pkl_loads(nd.attrs.get('_name')),
                                           u,
-                                          pkl.loads(nd.attrs.get('dim_names'))
+                                          pkl_loads(nd.attrs.get('dim_names'))
                                           )
                         for atnm in nd.attrs:
                             if atnm not in ['_name', '_units', 'dim_names']:
-                                setattr(meta, atnm, pkl.loads(nd.attrs.get(atnm)))
+                                setattr(meta, atnm, pkl_loads(nd.attrs.get(atnm)))
                         setattr(out, nm, ma.marray(getattr(out, nm), meta=meta))
         self.read_attrs(out, groups=groups, where=where)
         out.__postload__()
@@ -524,9 +538,9 @@ class Loader(DataFactory):
         nd = self.get_group(where)
         for prpnm, prp in list(nd.attrs.items()):
             try:
-                out[prpnm] = pkl.loads(prp)
+                out[prpnm] = pkl_loads(prp)
             except TypeError:
-                out[prpnm] = prp
+                out[prpnm] = prp.decode('utf-8')
         return out
 
     def read_type(self, where='/'):
@@ -550,7 +564,7 @@ class Loader(DataFactory):
         """
         if out is None:
             if self.type_map.__class__ is dict:
-                typestr = self.read_type(where=where)
+                typestr = self.read_type(where=where).decode('utf-8')
                 if typestr in self.type_map:
                     out = self.type_map[typestr]()
                 else:
@@ -560,11 +574,10 @@ class Loader(DataFactory):
                         out = config()
                         nd = self.get_group(where)
                         if '_config_type' in nd.attrs:
-                            out.config_type = nd.attrs.get('_config_type')
+                            out.config_type = nd.attrs.get('_config_type').decode('utf-8')
                     else:
                         try:
-                            out = self.type_map[
-                                typestr.split('.')[-1].rstrip("'>")]()
+                            out = self.type_map[typestr.split('.')[-1].rstrip("'>")]()
                         except:
                             for ky in self.type_map:
                                 #print(ky)
