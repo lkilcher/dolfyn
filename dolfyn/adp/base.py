@@ -3,23 +3,17 @@ from ..io import main as dio
 from ..data import velocity as dbvel
 from ..data.time import num2date
 import numpy as np
-from scipy.stats.stats import nanmean, nanstd
 
 # !!!FIXTHIS:
 # This whole package needs to be rewritten in the 'new' style.
 
-import pylab as plb
+# import pylab as plb
 # from pylab import plot,show
 
 from . import rotate
 
 deg2rad = np.pi / 180
 
-
-def nanvar(dat, **kwargs):
-    if 'axis' in kwargs.keys() and kwargs['axis'] < 0:
-        kwargs['axis'] = dat.ndim + kwargs['axis']
-    return nanstd(dat, **kwargs) ** 2
 
 # These may need to be a data_base object, and it would be good to
 # give it a __save__ method, which can be incorporated into my
@@ -161,8 +155,8 @@ class binner(dbvel.VelBinnerTke):
                      self.calc_tke(indat._u, noise=indat.noise),
                      'main')
         out.add_data('sigma_Uh',
-                     np.std(self.reshape(indat.U_mag), -1, dtype=np.float64)
-                     - (indat.noise[0] + indat.noise[1]) / 2,
+                     np.std(self.reshape(indat.U_mag), -1, dtype=np.float64) -
+                     (indat.noise[0] + indat.noise[1]) / 2,
                      'main')
         return out
 
@@ -172,7 +166,7 @@ class binner(dbvel.VelBinnerTke):
         """
         flds = ['u', 'v', 'w']
         for fld in flds:
-            self.add_data(fld + 'p' + fld + 'p_', nanmean(
+            self.add_data(fld + 'p' + fld + 'p_', np.nanmean(
                 self.demean(advr, fld) ** 2, axis=-1))
         # These are the beam rotation constants, multiplied by
         # sqrt(num_beams_in_component), to give the error (we are
@@ -194,30 +188,30 @@ class binner(dbvel.VelBinnerTke):
         # self.meta['vpvp_']=db.varMeta("v'v'",{2:'m',-2:'s'})
         # self.meta['wpwp_']=db.varMeta("w'w'",{2:'m',-2:'s'})
 
-    def _calc_eps_sfz(self, adpr):
-        """
+    # def _calc_eps_sfz(self, adpr):
+    #     """
 
-        """
-        # !!!FIXTHIS: Currently, this function is in a debugging state,
-        # and is non-functional.
+    #     """
+    #     # !!!FIXTHIS: Currently, this function is in a debugging state,
+    #     # and is non-functional.
 
-        # It seems that it might work over a couple bins at most, but in
-        # general I think the structure functions must be done in time
-        # (just as in advs), rather than depth.
+    #     # It seems that it might work over a couple bins at most, but in
+    #     # general I think the structure functions must be done in time
+    #     # (just as in advs), rather than depth.
 
-        self.epsilon_sfz = np.empty(self.shape, dtype='float32')
-        D = np.empty((self.shape[0], self.shape[0]))
-        inds = range(adpr.shape[0])
-        for idx, (bm1,) in enumerate(adpr.iter_n(['beam1vel'],
-                                                 self.props['n_bin'])):
-            bm1 -= self.beam1vel[:, idx][:, None]
-            for ind in inds:
-                D[ind, :] = nanmean((bm1[ind, :] - bm1) ** 2, axis=1)
-                r = np.abs(adpr.ranges[ind] - adpr.ranges)
-                pti = inds.copyind
-                plb.plot(D[pti, :], r ** (2. / 3.))
-                if ind == 10:
-                    raise Exception('Too many loops')
+    #     self.epsilon_sfz = np.empty(self.shape, dtype='float32')
+    #     D = np.empty((self.shape[0], self.shape[0]))
+    #     inds = range(adpr.shape[0])
+    #     for idx, (bm1,) in enumerate(adpr.iter_n(['beam1vel'],
+    #                                              self.props['n_bin'])):
+    #         bm1 -= self.beam1vel[:, idx][:, None]
+    #         for ind in inds:
+    #             D[ind, :] = np.nanmean((bm1[ind, :] - bm1) ** 2, axis=1)
+    #             # r = np.abs(adpr.ranges[ind] - adpr.ranges)
+    #             # pti = inds.copyind
+    #             # # plb.plot(D[pti, :], r ** (2. / 3.))
+    #             if ind == 10:
+    #                 raise Exception('Too many loops')
 
     def calc_ustar_fitstress(self, dinds=slice(None), H=None):
         if H is None:
@@ -245,10 +239,10 @@ class binner(dbvel.VelBinnerTke):
         #                        x-axis points from beam 1 to 2, and
         #                        y-axis points from beam 4 to 3.
         #       Therefore:
-        stress = ((nanvar(self.reshape(beamvel[0]), axis=-1) -
-                   nanvar(self.reshape(beamvel[1]), axis=-1)) + 1j *
-                  (nanvar(self.reshape(beamvel[2]), axis=-1) -
-                   nanvar(self.reshape(beamvel[3]), axis=-1))
+        stress = ((np.nanvar(self.reshape(beamvel[0]), axis=-1) -
+                   np.nanvar(self.reshape(beamvel[1]), axis=-1)) + 1j *
+                  (np.nanvar(self.reshape(beamvel[2]), axis=-1) -
+                   np.nanvar(self.reshape(beamvel[3]), axis=-1))
                   ) / fac
         if self.config.orientation == 'up':
             # This comes about because, when the ADCP is 'up', the u

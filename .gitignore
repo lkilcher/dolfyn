@@ -22,3 +22,5 @@ debug/
 #*#
 
 .DS_Store
+
+tmp/
