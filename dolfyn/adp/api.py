@@ -1,5 +1,5 @@
-from base import type_map, dio
-from _readbin import adcp_loader
+from .base import type_map, dio
+from ._readbin import adcp_loader
 
 
 def load(fname, data_groups=None):
@@ -12,7 +12,7 @@ def mmload(fname, data_groups=None):
         return ldr.mmload(data_groups)
 
 
-def read_rdi(fname):
+def read_rdi(fname, nens=None):
     with adcp_loader(fname) as ldr:
-        dat = ldr.load_data()
+        dat = ldr.load_data(nens=nens)
     return dat

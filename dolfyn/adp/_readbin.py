@@ -588,7 +588,9 @@ class adcp_loader(object):
     def __enter__(self,):
         return self
 
-    def __init__(self, fname, navg=1, nens=None, avg_func='mean'):
+    extrabytes = 0
+
+    def __init__(self, fname, navg=1, avg_func='mean'):
         self.fname = fname
         self.cfg = adcp_config()
         self.hdr = adcp_header()
@@ -601,9 +603,20 @@ class adcp_loader(object):
         self.n_avg = navg
         self.ensemble = ensemble(self.n_avg, self.cfg['n_cells'])
         self._filesize = getsize(fname)
-        extrabytes = 0
-        self._npings = int(self._filesize / (self.hdr.nbyte + 2 + extrabytes))
+        self._npings = int(self._filesize / (self.hdr.nbyte + 2 + self.extrabytes))
         print('%d pings estimated in this file' % self._npings)
+        self.avg_func = getattr(self, avg_func)
+
+    def init_data(self,):
+        outd = adcp_raw()
+        for nm in data_defs:
+            outd.add_data(nm,
+                          np.empty(get_size(nm, self._nens, self.cfg['n_cells']),
+                                   dtype=data_defs[nm][2]),
+                          group=data_defs[nm][1])
+        self.outd = outd
+
+    def load_data(self, nens=None):
         if nens is None:
             self._nens = int(self._npings / self.n_avg)
             self._ens_range = (0, self._nens)
@@ -613,7 +626,7 @@ class adcp_loader(object):
                 nens[1] = self._npings
             self._nens = int((nens[1] - nens[0]) / self.n_avg)
             self._ens_range = nens
-            self.f.seek((self.hdr.nbyte + 2 + extrabytes) * self._ens_range[0], 1)
+            self.f.seek((self.hdr.nbyte + 2 + self.extrabytes) * self._ens_range[0], 1)
         else:
             self._nens = nens
             self._ens_range = (0, nens)
@@ -627,18 +640,6 @@ class adcp_loader(object):
         self.outd.add_data('config', self.cfg, '_essential')
         if self.cfg['orientation'] == 1:
             self.outd.ranges *= -1
-        self.avg_func = getattr(self, avg_func)
-
-    def init_data(self,):
-        outd = adcp_raw()
-        for nm in data_defs:
-            outd.add_data(nm,
-                          np.empty(get_size(nm, self._nens, self.cfg['n_cells']),
-                                   dtype=data_defs[nm][2]),
-                          group=data_defs[nm][1])
-        self.outd = outd
-
-    def load_data(self,):
         for iens in range(self._nens):
             try:
                 self.read_buffer()
