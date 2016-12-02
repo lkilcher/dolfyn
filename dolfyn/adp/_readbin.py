@@ -446,7 +446,7 @@ class adcp_loader(object):
 
     def read_winriver(self, nbt):
         self._winrivprob = True
-        self.cfg['sourceprog'] = 'WINRIVER'
+        self.cfg.add_data('sourceprog', 'WINRIVER')
         if self._source != 2:
             print('\n***** Apparently a WINRIVER file - '
                   'Raw NMEA data handler not yet implemented\n\n')
@@ -459,16 +459,16 @@ class adcp_loader(object):
             k = self.ensemble.k
             if l != -1:
                 self.vars_read += ['stime']
-                self.ensemble.stime[k] = (int(strng[l + 7:l + 8])
-                                          + (int(strng[l + 9:l + 10])
-                                             + int(str[l + 11:l + 12]) / 60) / 60) / 24
+                self.ensemble.stime[k] = (int(strng[l + 7:l + 8]) +
+                                          (int(strng[l + 9:l + 10]) +
+                                           int(str[l + 11:l + 12]) / 60) / 60) / 24
                 # MATLAB CODE:
                 # (sscanf(str(l + 7:l + 8), '%d')
                 #  + (sscanf(str(l + 9:l + 10),'%d')
                 #     + sscanf(str(l + 11:l + 12), '%d') / 60) / 60) / 24;
 
     def skip_Ncol(self, n_skip=1):
-        self.f.seek(n_skip * self.cfg['n_cells'])
+        self.f.seek(n_skip * self.cfg['n_cells'], 1)
         self._nbyte = 2 + n_skip * self.cfg['n_cells']
 
     def skip_Nbyte(self, n_skip):
@@ -507,68 +507,68 @@ class adcp_loader(object):
         fd = self.f
         tmp = fd.read_ui8(5)
         prog_ver0 = tmp[0]
-        cfg['prog_ver'] = tmp[0] + tmp[1] / 100.
-        cfg['name'] = self._cfgnames.get(tmp[0], 'unrecognized firmware version')
+        cfg.add_data('prog_ver', tmp[0] + tmp[1] / 100.)
+        cfg.add_data('name', self._cfgnames.get(tmp[0], 'unrecognized firmware version'))
         config = tmp[2:4]
-        cfg['config'] = np.binary_repr(config[1], 8) + '-' + np.binary_repr(config[0], 8)
-        cfg['beam_angle'] = [15, 20, 30][(config[1] & 3)]
-        cfg['numbeams'] = [4, 5][(config[1] & 16) == 16]
-        cfg['beam_freq_khz'] = [75, 150, 300, 600, 1200, 2400, 38][(config[0] & 7)]
-        cfg['beam_pattern'] = ['concave', 'convex'][(config[0] & 8) == 8]
-        cfg['orientation'] = ['down', 'up'][(config[0] & 128) == 128]
-        cfg['simflag'] = ['real', 'simulated'][tmp[4]]
+        cfg.add_data('config', np.binary_repr(config[1], 8) + '-' + np.binary_repr(config[0], 8))
+        cfg.add_data('beam_angle', [15, 20, 30][(config[1] & 3)])
+        cfg.add_data('numbeams', [4, 5][(config[1] & 16) == 16])
+        cfg.add_data('beam_freq_khz', [75, 150, 300, 600, 1200, 2400, 38][(config[0] & 7)])
+        cfg.add_data('beam_pattern', ['concave', 'convex'][(config[0] & 8) == 8])
+        cfg.add_data('orientation', ['down', 'up'][(config[0] & 128) == 128])
+        cfg.add_data('simflag', ['real', 'simulated'][tmp[4]])
         fd.seek(1, 1)
-        cfg['n_beam'] = fd.read_ui8(1)
-        cfg['n_cells'] = fd.read_ui8(1)
-        cfg['pings_per_ensemble'] = fd.read_ui16(1)
-        cfg['cell_size_m'] = fd.read_ui16(1) * .01
-        cfg['blank_m'] = fd.read_ui16(1) * .01
-        cfg['prof_mode'] = fd.read_ui8(1)
-        cfg['corr_threshold'] = fd.read_ui8(1)
-        cfg['prof_codereps'] = fd.read_ui8(1)
-        cfg['min_pgood'] = fd.read_ui8(1)
-        cfg['evel_threshold'] = fd.read_ui16(1)
-        cfg['sec_between_ping_groups'] = np.sum(np.array(fd.read_ui8(3)) * np.array([60., 1., .01]))
+        cfg.add_data('n_beam', fd.read_ui8(1))
+        cfg.add_data('n_cells', fd.read_ui8(1))
+        cfg.add_data('pings_per_ensemble', fd.read_ui16(1))
+        cfg.add_data('cell_size_m', fd.read_ui16(1) * .01)
+        cfg.add_data('blank_m', fd.read_ui16(1) * .01)
+        cfg.add_data('prof_mode', fd.read_ui8(1))
+        cfg.add_data('corr_threshold', fd.read_ui8(1))
+        cfg.add_data('prof_codereps', fd.read_ui8(1))
+        cfg.add_data('min_pgood', fd.read_ui8(1))
+        cfg.add_data('evel_threshold', fd.read_ui16(1))
+        cfg.add_data('sec_between_ping_groups', np.sum(np.array(fd.read_ui8(3)) * np.array([60., 1., .01])))
         coord_sys = fd.read_ui8(1)
-        cfg['coord'] = np.binary_repr(coord_sys, 8)
-        cfg['coord_sys'] = ['beam', 'instrument', 'ship', 'earth'][((coord_sys >> 3) & 3)]
-        cfg['use_pitchroll'] = ['no', 'yes'][(coord_sys & 4) == 4]
-        cfg['use_3beam'] = ['no', 'yes'][(coord_sys & 2) == 2]
-        cfg['bin_mapping'] = ['no', 'yes'][(coord_sys & 1) == 1]
-        cfg['xducer_misalign_deg'] = fd.read_i16(1) * .01
-        cfg['magnetic_var_deg'] = fd.read_i16(1) * .01
-        cfg['sensors_src'] = np.binary_repr(fd.read_ui8(1), 8)
-        cfg['sensors_avail'] = np.binary_repr(fd.read_ui8(1), 8)
-        cfg['bin1_dist_m'] = fd.read_ui16(1) * .01
-        cfg['xmit_pulse'] = fd.read_ui16(1) * .01
-        cfg['water_ref_cells'] = fd.read_ui8(2)
-        cfg['fls_target_threshold'] = fd.read_ui8(1)
+        cfg.add_data('coord', np.binary_repr(coord_sys, 8))
+        cfg.add_data('coord_sys', ['beam', 'instrument', 'ship', 'earth'][((coord_sys >> 3) & 3)])
+        cfg.add_data('use_pitchroll', ['no', 'yes'][(coord_sys & 4) == 4])
+        cfg.add_data('use_3beam', ['no', 'yes'][(coord_sys & 2) == 2])
+        cfg.add_data('bin_mapping', ['no', 'yes'][(coord_sys & 1) == 1])
+        cfg.add_data('xducer_misalign_deg', fd.read_i16(1) * .01)
+        cfg.add_data('magnetic_var_deg', fd.read_i16(1) * .01)
+        cfg.add_data('sensors_src', np.binary_repr(fd.read_ui8(1), 8))
+        cfg.add_data('sensors_avail', np.binary_repr(fd.read_ui8(1), 8))
+        cfg.add_data('bin1_dist_m', fd.read_ui16(1) * .01)
+        cfg.add_data('xmit_pulse', fd.read_ui16(1) * .01)
+        cfg.add_data('water_ref_cells', fd.read_ui8(2))
+        cfg.add_data('fls_target_threshold', fd.read_ui8(1))
         fd.seek(1, 1)
-        cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
+        cfg.add_data('xmit_lag_m', fd.read_ui16(1) * .01)
         self._nbyte = 40
 
         if prog_ver0 in [8, 16]:
             if cfg['prog_ver'] >= 8.14:
-                cfg['serialnum'] = fd.read_ui8(8)
+                cfg.add_data('serialnum', fd.read_ui8(8))
                 self._nbyte += 8
             if cfg['prog_ver'] >= 8.24:
-                cfg['sysbandwidth'] = fd.read_ui8(2)
+                cfg.add_data('sysbandwidth', fd.read_ui8(2))
                 self._nbyte += 2
             if cfg['prog_ver'] >= 16.05:
-                cfg['syspower'] = fd.read_ui8(1)
+                cfg.add_data('syspower', fd.read_ui8(1))
                 self._nbyte += 1
             if cfg['prog_ver'] >= 16.27:
-                cfg['navigator_basefreqindex'] = fd.read_ui8(1)
-                cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
-                cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
+                cfg.add_data('navigator_basefreqindex', fd.read_ui8(1))
+                cfg.add_data('remus_serialnum', fd.reaadcpd('uint8', 4))
+                cfg.add_data('h_adcp_beam_angle', fd.read_ui8(1))
                 self._nbyte += 6
         elif prog_ver0 == 9:
             if cfg['prog_ver'] >= 9.10:
-                cfg['serialnum'] = fd.read_ui8(8)
-                cfg['sysbandwidth'] = fd.read_ui8(2)
+                cfg.add_data('serialnum', fd.read_ui8(8))
+                cfg.add_data('sysbandwidth', fd.read_ui8(2))
                 self._nbyte += 10
         elif prog_ver0 in [14, 23]:
-            cfg['serialnum'] = fd.read_ui8(8)
+            cfg.add_data('serialnum', fd.read_ui8(8))
             self._nbyte += 8
         self.configsize = self.f.tell() - cfgstart
 
@@ -592,7 +592,10 @@ class adcp_loader(object):
 
     def __init__(self, fname, navg=1, avg_func='mean'):
         self.fname = fname
-        self.cfg = adcp_config()
+        self.cfg = adcp_config('ADCP')
+        self.cfg.add_data('name', 'wh-adcp')
+        self.cfg.add_data('sourceprog', 'instrument')
+        self.cfg.prog_ver = 0
         self.hdr = adcp_header()
         #self.f=io.npfile(fname,'r','l')
         self.f = bin_reader(fname)
@@ -637,7 +640,7 @@ class adcp_loader(object):
                            self.cfg['bin1_dist_m'] +
                            np.arange(self.cfg['n_cells']) * self.cfg['cell_size_m'],
                            '_essential')
-        self.outd.add_data('config', self.cfg, '_essential')
+        self.outd.add_data('config', self.cfg, 'config')
         if self.cfg['orientation'] == 1:
             self.outd.ranges *= -1
         for iens in range(self._nens):
@@ -664,6 +667,8 @@ class adcp_loader(object):
                 getattr(self.outd, nm)[..., iens] = self.avg_func(self.ensemble[nm])
             self.outd.mpltime[iens] = np.median(dats)
         self.clean_up()
+        self.outd.props['fs'] = (self.outd.config['sec_between_ping_groups'] *
+                                 self.outd.config['pings_per_ensemble']) ** -1
         return self.outd
 
     def clean_up(self,):
@@ -696,9 +701,9 @@ class adcp_loader(object):
             id1[1] = id1[0]
             id1[0] = nextbyte
         if search_cnt == self._search_num:
-            warnings.warn('Searched %d entries... Not a workhorse/broadband'
-                          ' file or bad data encountered: -> %x' %
-                          (search_cnt, id1), ADCPWarning, )  # MAKE THIS AN ERROR/EXCEPTION?
+            warnings.warn('Searched {} entries... Not a workhorse/broadband'
+                          ' file or bad data encountered: -> {}'.format(search_cnt, id1),
+                          ADCPWarning)  # MAKE THIS AN ERROR/EXCEPTION?
         elif search_cnt > 0:
             warnings.warn('Searched %d bytes to find next valid ensemble start' %
                           search_cnt, ADCPWarning)

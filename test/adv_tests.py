@@ -17,11 +17,6 @@ dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
 dat_burst = avm.load(test_root + 'data/burst_mode01.h5', 'ALL')
 
 
-def rungen(gen):
-    for g in gen:
-        pass
-
-
 def data_equiv(dat1, dat2, message=''):
     assert dat1 == dat2, message
 

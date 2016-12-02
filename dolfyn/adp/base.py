@@ -26,16 +26,18 @@ class adcp_header(object):
 
 
 class adcp_config(db.config):
-    config_type = 'ADCP'
+    # Is this needed anymore?
+    pass
 
-    def __init__(self,):
-        # self._data_groups={}
-        # self.setattr('_data_groups',{'main':data_base.oset([])})
-        # Legacy setattr
-        # super(adcp_config,self).__init__() # I Don't think this is necessary.
-        self.name = 'wh-adcp'
-        self.sourceprog = 'instrument'
-        self.prog_ver = 0
+    # def __init__(self,):
+    #     self.config_type = 'ADCP'
+    #     # self._data_groups={}
+    #     # self.setattr('_data_groups',{'main':data_base.oset([])})
+    #     # Legacy setattr
+    #     # super(adcp_config,self).__init__() # I Don't think this is necessary.
+    #     self.name = 'wh-adcp'
+    #     self.sourceprog = 'instrument'
+    #     self.prog_ver = 0
 
 
 def diffz_first(dat, z, axis=0):
