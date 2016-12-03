@@ -593,7 +593,7 @@ class NortekReader(object):
             self.c -= 1
         if self.debug:
             print('Reading vector microstrain data (0x71) ping #{} @ {}...'
-                   .format(self.c, self.pos))
+                  .format(self.c, self.pos))
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]

@@ -127,6 +127,7 @@ class adcp_loader(object):
     _winrivprob = False
     _search_num = 3000  # Maximum distance? to search
     _verbose = False
+    _debug7f79 = None
     vars_read = variable_setlist(['mpltime'])
 
     def mean(self, dat):
@@ -480,9 +481,10 @@ class adcp_loader(object):
         cfgid = list(fd.read_ui8(2))
         nread = 0
         if debug > 2:
-            print(cfgid[0] not in [127])
-            print(cfgid[0] not in [127] or cfgid[1] not in [127])
-            print(not self.checkheader())
+            print(self.f.pos)
+            print('cfgid0: [{:x}, {:x}]'.format(*cfgid))
+            # print(cfgid[0] not in [127] or cfgid[1] not in [127])
+            # print(not self.checkheader())
         while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
             nextbyte = fd.read_ui8(1)
             pos = fd.tell()
@@ -495,7 +497,7 @@ class adcp_loader(object):
                 print('Still looking for valid cfgid at file position %d ...' % pos)
         self._pos = self.f.tell() - 2
         if nread > 0:
-            print('Junk found at BOF... skipping %d bytes until\ncfgid= (%x,%x) at file pos %d.'
+            print('Junk found at BOF... skipping %d bytes until\ncfgid: (%x,%x) at file pos %d.'
                   % (self._pos, cfgid[0], cfgid[1], nread))
         if debug:
             print(fd.tell())
@@ -702,6 +704,8 @@ class adcp_loader(object):
         id1 = list(self.f.read_ui8(2))
         search_cnt = 0
         fd = self.f
+        if debug > 3:
+            print('-->In search_buffer...')
         while (search_cnt < self._search_num and
                ((id1[0] != 127 or id1[1] != 127) or
                 not self.checkheader())):
@@ -716,8 +720,9 @@ class adcp_loader(object):
             raise Exception('Searched {} entries... Not a workhorse/broadband'
                             ' file or bad data encountered. -> {}'.format(search_cnt, id1))
         elif search_cnt > 0:
-            warnings.warn('Searched %d bytes to find next valid ensemble start' %
-                          search_cnt, ADCPWarning)
+            warnings.warn('Searched {} bytes to find next valid ensemble start [{:x}, {:x}]'
+                          .format(search_cnt, *id1),
+                          ADCPWarning)
 
     def read_buffer(self,):
         fd = self.f
@@ -780,19 +785,43 @@ class adcp_loader(object):
         fd.seek(4 + self._fixoffset, 1)
 
     def checkheader(self,):
+        if debug > 1:
+            print("###In checkheader!")
         fd = self.f
         valid = 0
+        #print(self.f.pos)
         numbytes = fd.read_i16(1)
+        #print('numbytes={}'.format(numbytes))
+        #print(self.f.pos)
         if numbytes > 0:
+            #print(self.f.pos)
             fd.seek(numbytes - 2, 1)
+            #print(self.f.pos)
             cfgid = fd.read_ui8(2)
+            #print(self.f.pos)
+            #print('cfgid: [{:x}, {:x}]'.format(*cfgid))
             #### sloppy code:
             if len(cfgid) == 2:
                 fd.seek(-numbytes - 2, 1)
-                if cfgid[0] == 127 and cfgid[1] in [127]:
+                #print(self.f.pos)
+                if cfgid[0] == 127 and cfgid[1] in [127, 121]:
+                    if cfgid[1] == 121 and self._debug7f79 is None:
+                        self._debug7f79 = True
+                        warnings.warn(
+                            "This ADCP file has an undocumented "
+                            "sync-code.  If possible, please notify the "
+                            "DOLfYN developers that you are recieving "
+                            "this warning by posting the hardware and "
+                            "softadetails on how you acquired this file "
+                            "to "
+                            "http://github.com/lkilcher/dolfyn/issues/7"
+                        )
                     valid = 1
         else:
             fd.seek(-2, 1)
+        #print(self.f.pos)
+        if debug > 1:
+            print("###Leaving checkheader.")
         return valid
 
 
