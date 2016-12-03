@@ -113,12 +113,12 @@ class adcp_raw(dbvel.Velocity):
     def time(self, val):
         self.add_data('mpltime', val)
 
-    def __getitem__(self, indx):
-        dat = getattr(self, indx)
-        if hasattr(self, 'mask'):
-            return np.ma.masked_array(dat, mask=self.mask)
-        else:
-            return np.ma.masked_array(dat, mask=np.isnan(dat))
+    # def __getitem__(self, indx):
+    #     dat = getattr(self, indx)
+    #     if hasattr(self, 'mask'):
+    #         return np.ma.masked_array(dat, mask=self.mask)
+    #     else:
+    #         return np.ma.masked_array(dat, mask=np.isnan(dat))
 
     def __repr__(self,):
         mmstr = ''

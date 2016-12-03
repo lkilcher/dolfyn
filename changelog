@@ -1,0 +1,15 @@
+# Change Log
+All notable changes to this project should be documented in this file.
+
+
+Unreleased
+---------
+
+
+Version 0.5.0
+-------------
++ Added a test for reading an RDI ADCP file.
++ The ADV module is now Python 3 compatible.
++ Add motion correction flags to ADV output files.
++ Add the changelog!
+

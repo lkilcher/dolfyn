@@ -151,8 +151,6 @@ class bin_reader(object):
         return val
 
     def read(self, n, frmt):
-        #if frmt.__class__ is type:
-        #    frmt=self._frmt[frmt]
         val = self.f.read(n * self._size_factor[frmt])
         if not val:  # If val is empty we are at the end of the file.
             raise eofException
