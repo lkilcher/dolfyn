@@ -114,7 +114,7 @@ class bin_reader(object):
          function does not perform checksums.
         """
         self.endian = endian
-        self.f = open(expanduser(fname), 'r')
+        self.f = open(expanduser(fname), 'rb')
         self.f.seek(0, 2)
         self.fsize = self.tell()
         self.f.seek(0, 0)
