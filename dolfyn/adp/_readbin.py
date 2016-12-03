@@ -1,4 +1,5 @@
 #import scipy.io as io
+from __future__ import print_function
 import numpy as np
 import datetime
 from ..data.time import date2num
@@ -10,6 +11,8 @@ import warnings
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
 # Rich Pawlawicz' rdadcp routines.
+
+debug = 0
 
 ### This causes the time information to be returned in python's
 ### datenum format.  See pylab's date2num and num2date functions for
@@ -130,7 +133,6 @@ class adcp_loader(object):
     _nbyte = 0
     _winrivprob = False
     _search_num = 3000  # Maximum distance? to search
-    __debug = False
     _verbose = False
     vars_read = variable_setlist(['mpltime'])
 
@@ -152,12 +154,13 @@ class adcp_loader(object):
         """
         Print the position in the file, used for debugging.
         """
-        if hasattr(self, 'ensemble'):
-            k = self.ensemble.k
-        else:
-            k = 0
-        print('pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
-              (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
+        if debug > 3:
+            if hasattr(self, 'ensemble'):
+                k = self.ensemble.k
+            else:
+                k = 0
+            print('pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
+                  (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
 
     def read_dat(self, id):
 
@@ -196,7 +199,11 @@ class adcp_loader(object):
                         }
         ## Call the correct function:
         if id in function_map:
+            if debug >= 2:
+                print('Reading code {}...'.format(hex(id)), end='')
             function_map.get(id)[0](*function_map[id][1])
+            if debug >= 2:
+                print(' success!')
         else:
             self.read_nocode(id)
 
@@ -229,7 +236,7 @@ class adcp_loader(object):
             self._nbyte = self.configsize
         else:
             self.read_cfgseg()
-        if self.__debug == 1:
+        if debug == 1:
             print(self._pos)
         self._nbyte += 2
 
@@ -337,7 +344,7 @@ class adcp_loader(object):
         k = self.ensemble.k
         self.vars_read += ['echo']
         self.ensemble.echo[:, :, k] = np.array(self.f.read_ui8(4 * self.cfg['n_cells'])
-                                              ).reshape((self.cfg['n_cells'], 4))
+                                               ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
     def read_prcnt_gd(self,):
@@ -479,20 +486,25 @@ class adcp_loader(object):
         fd = self.f
         cfgid = list(fd.read_ui8(2))
         nread = 0
-        while (cfgid[0] != 127 | cfgid[1] != 127) | (not self.checkheader()):
+        if debug > 2:
+            print(cfgid[0] not in [127])
+            print(cfgid[0] not in [127] or cfgid[1] not in [127])
+            print(not self.checkheader())
+        while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
             nextbyte = fd.read_ui8(1)
             pos = fd.tell()
             nread += 1
-            ### SKIPPED some EOF stuff here ###
+            # print(pos)
+            # print(nextbyte)
             cfgid[1] = cfgid[0]
             cfgid[0] = nextbyte
-            if np.mod(pos, 1000) == 0:
+            if not pos % 1000:
                 print('Still looking for valid cfgid at file position %d ...' % pos)
         self._pos = self.f.tell() - 2
         if nread > 0:
-            print('Junk found at BOF... skipping %d bytes until\ncfgid= (%x,%x) at file pos %d'
+            print('Junk found at BOF... skipping %d bytes until\ncfgid= (%x,%x) at file pos %d.'
                   % (self._pos, cfgid[0], cfgid[1], nread))
-        if self.__debug:
+        if debug:
             print(fd.tell())
         self.read_hdrseg()
 
@@ -575,7 +587,7 @@ class adcp_loader(object):
     def read_hdrseg(self,):
         fd = self.f
         self.hdr.nbyte = fd.read_i16(1)
-        if self.__debug:
+        if debug > 2:
             print(fd.tell())
         fd.seek(1, 1)
         ndat = fd.read_i8(1)
@@ -648,10 +660,8 @@ class adcp_loader(object):
                 self.read_buffer()
             except eofException:
                 self.remove_end(iens)
-                self.clean_up()
+                self.finalize()
                 return self.outd
-            #if iens==5000:
-            #    return self.outd
             self.ensemble.clean_data()
             if self.ensemble.rtc[0, 0] < 100:
                 self.ensemble.rtc[0, :] += century
@@ -666,18 +676,20 @@ class adcp_loader(object):
             for nm in self.vars_read:
                 getattr(self.outd, nm)[..., iens] = self.avg_func(self.ensemble[nm])
             self.outd.mpltime[iens] = np.median(dats)
-        self.clean_up()
-        self.outd.props['fs'] = (self.outd.config['sec_between_ping_groups'] *
-                                 self.outd.config['pings_per_ensemble']) ** -1
+        self.finalize()
         return self.outd
 
-    def clean_up(self,):
+    def finalize(self, ):
         """
         Remove the attributes from the data that were never loaded.
         """
         for nm in set(data_defs.keys()) - self.vars_read:
             self.outd.pop_data(nm)
         self.outd.config = self.cfg
+        self.outd.props['fs'] = (self.outd.config['sec_between_ping_groups'] *
+                                 self.outd.config['pings_per_ensemble']) ** -1
+        for nm in ['_u', 'echo', 'corr', 'prcnt_gd']:
+            self.outd['echo']
 
     def remove_end(self, iens):
         if iens < self.outd.shape[-1]:
@@ -694,16 +706,19 @@ class adcp_loader(object):
         id1 = list(self.f.read_ui8(2))
         search_cnt = 0
         fd = self.f
-        while search_cnt < self._search_num and ((id1[0] != 127 or id1[1] != 127)
-                                                 or not self.checkheader()):
+        while (search_cnt < self._search_num and
+               ((id1[0] != 127 or id1[1] != 127) or
+                not self.checkheader())):
             search_cnt += 1
             nextbyte = fd.read_ui8(1)
             id1[1] = id1[0]
             id1[0] = nextbyte
         if search_cnt == self._search_num:
-            warnings.warn('Searched {} entries... Not a workhorse/broadband'
-                          ' file or bad data encountered: -> {}'.format(search_cnt, id1),
-                          ADCPWarning)  # MAKE THIS AN ERROR/EXCEPTION?
+            # warnings.warn('Searched {} entries... Not a workhorse/broadband'
+            #               ' file or bad data encountered: -> {}'.format(search_cnt, id1),
+            #               ADCPWarning)  # MAKE THIS AN ERROR/EXCEPTION?
+            raise Exception('Searched {} entries... Not a workhorse/broadband'
+                            ' file or bad data encountered. -> {}'.format(search_cnt, id1))
         elif search_cnt > 0:
             warnings.warn('Searched %d bytes to find next valid ensemble start' %
                           search_cnt, ADCPWarning)
@@ -721,7 +736,7 @@ class adcp_loader(object):
                 id = fd.read_ui16(1)
                 self._winrivprob = False
                 #print( "%0.4X" % id )
-                #self.print_pos()
+                self.print_pos()
                 ##### Read the data for header "id"g
                 self.read_dat(id)
                 byte_offset += self._nbyte
@@ -744,7 +759,7 @@ class adcp_loader(object):
             #### The 2 is for the checksum:
             offset = self.hdr.nbyte + 2 - byte_offset
             self.check_offset(offset, readbytes)
-            #self.print_pos(byte_offset=byte_offset)
+            self.print_pos(byte_offset=byte_offset)
 
     def check_offset(self, offset, readbytes):
         fd = self.f
@@ -778,7 +793,7 @@ class adcp_loader(object):
             #### sloppy code:
             if len(cfgid) == 2:
                 fd.seek(-numbytes - 2, 1)
-                if cfgid[0] == 127 & cfgid[1] == 127:
+                if cfgid[0] == 127 and cfgid[1] in [127]:
                     valid = 1
         else:
             fd.seek(-2, 1)
