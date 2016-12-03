@@ -92,7 +92,7 @@ class variable_setlist(set):
 
 
 def get_size(name, n=None, ncell=0):
-    sz = data_defs[name][0]
+    sz = list(data_defs[name][0])  # create a copy!
     if 'nc' in sz:
         sz.insert(sz.index('nc'), ncell)
         sz.remove('nc')
@@ -688,8 +688,10 @@ class adcp_loader(object):
         self.outd.config = self.cfg
         self.outd.props['fs'] = (self.outd.config['sec_between_ping_groups'] *
                                  self.outd.config['pings_per_ensemble']) ** -1
-        for nm in ['_u', 'echo', 'corr', 'prcnt_gd']:
-            self.outd['echo']
+        for nm in data_defs:
+            shp = data_defs[nm][0]
+            if len(shp) and shp[0] == 'nc' and nm in self.outd:
+                self.outd[nm] = np.swapaxes(self.outd[nm], 0, 1)
 
     def remove_end(self, iens):
         if iens < self.outd.shape[-1]:
