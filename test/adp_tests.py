@@ -35,6 +35,20 @@ def read_test(make_data=False):
         yield data_equiv, dat1, dat2, msg
 
 
+def rotate_beam2inst_test(make_data=False):
+
+    td = dat.copy()
+    apm.beam2inst(td)
+
+    if make_data:
+        td.save(test_root + 'data/RDI_test01_rotate_beam2inst.h5')
+        return
+
+    cd = apm.load(test_root + 'data/RDI_test01_rotate_beam2inst.h5', 'ALL')
+
+    assert td == cd, "adp.rotate.beam2inst gives unexpected results!"
+
+
 if __name__ == '__main__':
 
     pkg_root = '../'
