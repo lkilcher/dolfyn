@@ -13,6 +13,7 @@ pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
 
 dat = apm.load(test_root + 'data/RDI_test01.h5', 'ALL')
+dati = apm.load(test_root + 'data/RDI_test01_rotate_beam2inst.h5', 'ALL')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -44,9 +45,21 @@ def rotate_beam2inst_test(make_data=False):
         td.save(test_root + 'data/RDI_test01_rotate_beam2inst.h5')
         return
 
-    cd = apm.load(test_root + 'data/RDI_test01_rotate_beam2inst.h5', 'ALL')
+    assert td == dati, "adp.rotate.beam2inst gives unexpected results!"
 
-    assert td == cd, "adp.rotate.beam2inst gives unexpected results!"
+
+def rotate_inst2earth_test(make_data=False):
+
+    td = dati.copy()
+    apm.inst2earth(td)
+
+    if make_data:
+        td.save(test_root + 'data/RDI_test01_rotate_inst2earth.h5')
+        return
+
+    cd = apm.load(test_root + 'data/RDI_test01_rotate_inst2earth.h5', 'ALL')
+
+    assert td == cd, "adp.rotate.inst2earth gives unexpected results!"
 
 
 if __name__ == '__main__':
