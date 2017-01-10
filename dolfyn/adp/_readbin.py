@@ -688,6 +688,7 @@ class adcp_loader(object):
         self.outd.config = self.cfg
         self.outd.props['fs'] = (self.outd.config['sec_between_ping_groups'] *
                                  self.outd.config['pings_per_ensemble']) ** -1
+        self.outd.props['coord_sys'] = self.outd.config.coord_sys
         for nm in data_defs:
             shp = data_defs[nm][0]
             if len(shp) and shp[0] == 'nc' and nm in self.outd:
@@ -768,15 +769,15 @@ class adcp_loader(object):
         if offset != 4 and self._fixoffset == 0:
             print('\n******************************************************\n')
             if fd.tell() == self._filesize:
-                print(' EOF reached unexpectedly - discaring this last ensemble\n')
+                print(' EOF reached unexpectedly - discarding this last ensemble\n')
             else:
                 print('Adjust location by {:d} (readbytes={:d},hdr.nbyte={:d}\n'
                       .format(offset, self.readbytes, self.hdr.nbyte))
                 print("""
-                NOTE - If this appears at the beginning of the read, it is
-                       a program problem, possibly fixed by a fudge
-                       PLEASE REPORT TO levi.kilcher@nrel.gov WITH DETAILS
-                       
+                NOTE - If this appears at the beginning of the file, it may be
+                       a dolfyn problem. Please report this message, with details here:
+                       https://github.com/lkilcher/dolfyn/issues/8
+
                      - If this appears at the end of the file it means
                        The file is corrupted and only a partial record
                        has been read\n
