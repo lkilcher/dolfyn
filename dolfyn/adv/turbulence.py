@@ -94,14 +94,14 @@ class TurbBinner(VelBinnerSpec):
         #               .format(self.n_bin))
         out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
         self.do_avg(advr, out)
-        out.add_data('_tke', self.calc_tke(advr._u, noise=advr.noise), 'main')
-        out.add_data('stress', self.calc_stress(advr._u), 'main')
+        out.add_data('_tke', self.calc_tke(advr['vel'], noise=advr.noise), 'main')
+        out.add_data('stress', self.calc_stress(advr['vel']), 'main')
         out.add_data('sigma_Uh',
                      np.std(self.reshape(advr.U_mag), -1, dtype=np.float64) -
                      (advr.noise[0] + advr.noise[1]) / 2, 'main')
         out.props['Itke_thresh'] = Itke_thresh
         out.add_data('Spec',
-                     self.calc_vel_psd(advr._u,
+                     self.calc_vel_psd(advr['vel'],
                                        noise=advr.noise,
                                        window=window),
                      'spec')
@@ -109,7 +109,7 @@ class TurbBinner(VelBinnerSpec):
 
         # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,
         # out.U_mag,omega_range=omega_range_epsilon),'main')
-        # out.add_data('Acov',self.calc_acov(advr._u),'corr')
+        # out.add_data('Acov',self.calc_acov(advr['vel']),'corr')
         # out.add_data('Lint',self.calc_Lint(out.Acov,out.U_mag),'main')
         return out
 
@@ -405,14 +405,14 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
     calculator = TurbBinner(n_bin, advr.fs, n_fft=n_fft)
     out = VelBinnerSpec.__call__(calculator, advr, out_type=out_type)
     calculator.do_avg(advr, out)
-    out.add_data('_tke', calculator.calc_tke(advr._u, noise=advr.noise), 'main')
-    out.add_data('stress', calculator.calc_stress(advr._u), 'main')
+    out.add_data('_tke', calculator.calc_tke(advr['vel'], noise=advr.noise), 'main')
+    out.add_data('stress', calculator.calc_stress(advr['vel']), 'main')
     out.add_data('sigma_Uh',
                  np.std(calculator.reshape(advr.U_mag), -1, dtype=np.float64) -
                  (advr.noise[0] + advr.noise[1]) / 2, 'main')
     out.props['Itke_thresh'] = Itke_thresh
     out.add_data('Spec',
-                 calculator.calc_vel_psd(advr._u,
+                 calculator.calc_vel_psd(advr['vel'],
                                          noise=advr.noise,
                                          window=window),
                  'spec')
@@ -420,6 +420,6 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
 
     # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,
     # out.U_mag,omega_range=omega_range_epsilon),'main')
-    # out.add_data('Acov',self.calc_acov(advr._u),'corr')
+    # out.add_data('Acov',self.calc_acov(advr['vel']),'corr')
     # out.add_data('Lint',self.calc_Lint(out.Acov,out.U_mag),'main')
     return out

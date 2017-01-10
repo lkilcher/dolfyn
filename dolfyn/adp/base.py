@@ -153,7 +153,7 @@ class binner(dbvel.VelBinnerTke):
         out = dbvel.VelBinnerTke.__call__(self, indat, out_type=out_type)
         self.set_bindata(indat, out)
         out.add_data('_tke',
-                     self.calc_tke(indat._u, noise=indat.noise),
+                     self.calc_tke(indat['vel'], noise=indat.noise),
                      'main')
         out.add_data('sigma_Uh',
                      np.std(self.reshape(indat.U_mag), -1, dtype=np.float64) -

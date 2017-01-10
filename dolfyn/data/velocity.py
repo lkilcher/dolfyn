@@ -32,8 +32,6 @@ class Velocity(TimeBased, Saveable):
                  mmstr,))
 
     def _pre_mat_save(self, outdict):
-        outdict['u'] = self._u
-        outdict.pop('_u')
         # The config object often has characters that cause problems.
         outdict.pop('config', None)
         if ('datenum' not in outdict) and 'mpltime' in outdict:
@@ -123,15 +121,15 @@ class Velocity(TimeBased, Saveable):
 
     @property
     def u(self,):
-        return self._u[0]
+        return self['vel'][0]
 
     @property
     def v(self,):
-        return self._u[1]
+        return self['vel'][1]
 
     @property
     def w(self,):
-        return self._u[2]
+        return self['vel'][2]
 
     @property
     def principal_angle(self,):
@@ -204,10 +202,9 @@ class VelBindatTke(Velocity, TimeBindat):
 
     def Itke(self, thresh=0):
         """
-        Turbulence intensity.
+        Turbulence kinetic energy intensity.
 
-        Ratio of standard deviation of velocity magnitude to velocity
-        magnitude.
+        Ratio of sqrt(tke) to velocity magnitude.
         """
         return np.ma.masked_where(self.U_mag < thresh,
                                   np.sqrt(self.tke) / self.U_mag)
@@ -216,8 +213,8 @@ class VelBindatTke(Velocity, TimeBindat):
         """
         Turbulence intensity.
 
-        Ratio of standard deviation of velocity magnitude to velocity
-        magnitude.
+        Ratio of standard deviation of horizontal velocity magnitude
+        to horizontal velocity magnitude.
         """
         return np.ma.masked_where(self.U_mag < thresh,
                                   self.sigma_Uh / self.U_mag)

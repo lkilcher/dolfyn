@@ -247,16 +247,16 @@ def _inst2earth(advo, use_mean_rotation=False):
     # This is me actually doing the rotation:
     # R=np.dot(H,P)
     # u=
-    utmp = advo._u.copy()
-    advo._u[0] = ((ch * cp) * utmp[0] +
-                  (-ch * sp * sr + sh * cr) * utmp[1] +
-                  (-ch * cr * sp - sh * sr) * utmp[2]).astype('single')
-    advo._u[1] = ((-sh * cp) * utmp[0] +
-                  (sh * sp * sr + ch * cr) * utmp[1] +
-                  (sh * cr * sp - ch * sr) * utmp[2]).astype('single')
-    advo._u[2] = ((sp) * utmp[0] +
-                  (sr * cp) * utmp[1] +
-                  cp * cr * utmp[2]).astype('single')
+    utmp = advo['vel'].copy()
+    advo['vel'][0] = ((ch * cp) * utmp[0] +
+                      (-ch * sp * sr + sh * cr) * utmp[1] +
+                      (-ch * cr * sp - sh * sr) * utmp[2]).astype('single')
+    advo['vel'][1] = ((-sh * cp) * utmp[0] +
+                      (sh * sp * sr + ch * cr) * utmp[1] +
+                      (sh * cr * sp - ch * sr) * utmp[2]).astype('single')
+    advo['vel'][2] = ((sp) * utmp[0] +
+                      (sr * cp) * utmp[1] +
+                      cp * cr * utmp[2]).astype('single')
     advo.props['coord_sys'] = 'earth'
 
 
@@ -265,7 +265,7 @@ def _rotate_vel2body(advo):
         # Don't re-rotate the data if its already been rotated.
         return
     # The transpose should do head to body.
-    advo._u = np.dot(advo.props['body2head_rotmat'].T, advo._u)
+    advo['vel'] = np.dot(advo.props['body2head_rotmat'].T, advo['vel'])
     advo.props['vel_rotated2body'] = True
 
 
