@@ -57,7 +57,7 @@ def _cat4rot(tpl):
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
     Rotate data in an ADV object to the earth from the instrument
-    frame (or vice-versa). If the
+    frame (or vice-versa).
 
     Parameters
     ----------
