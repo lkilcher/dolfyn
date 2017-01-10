@@ -15,3 +15,4 @@ Document need for command line tools (xcode) on OSX.
 
 Document need for Python 2?
 
+Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)

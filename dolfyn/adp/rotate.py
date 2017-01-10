@@ -39,46 +39,27 @@ def _cat4rot(tpl):
     return np.concatenate(tuple(tmp), axis=1)
 
 
-def beam2inst(adcpo,):
+def beam2inst(adcpo, reverse=False):
     """Rotate velocities from beam to instrument coordinates.
     """
+    if not reverse and adcpo.props['coord_sys'] != 'beam':
+        raise ValueError('The input must be in beam coordinates.')
+    if reverse and adcpo.props['coord_sys'] != 'inst':
+        raise ValueError('The input must be in inst coordinates.')
     if hasattr(adcpo.config, 'rotmat'):
         rotmat = adcpo.config.rotmat
     else:
         rotmat = calc_beam_rotmatrix(adcpo.config.beam_angle,
                                      adcpo.config.beam_pattern == 'convex')
-    adcpo.add_data('u_inst',
-                   (adcpo.beam1vel * rotmat[0, 0] +
-                    adcpo.beam2vel * rotmat[0, 1] +
-                    adcpo.beam3vel * rotmat[0, 2] +
-                    adcpo.beam4vel * rotmat[0, 3]
-                    ).astype('float32'),
-                   'inst'
-                   )
-    adcpo.add_data('v_inst',
-                   (adcpo.beam1vel * rotmat[1, 0] +
-                    adcpo.beam2vel * rotmat[1, 1] +
-                    adcpo.beam3vel * rotmat[1, 2] +
-                    adcpo.beam4vel * rotmat[1, 3]
-                    ).astype('float32'),
-                   'inst'
-                   )
-    adcpo.add_data('w_inst',
-                   (adcpo.beam1vel * rotmat[2, 0] +
-                    adcpo.beam2vel * rotmat[2, 1] +
-                    adcpo.beam3vel * rotmat[2, 2] +
-                    adcpo.beam4vel * rotmat[2, 3]
-                    ).astype('float32'),
-                   'inst'
-                   )
-    adcpo.add_data('err_vel',
-                   (adcpo.beam1vel * rotmat[3, 0] +
-                    adcpo.beam2vel * rotmat[3, 1] +
-                    adcpo.beam3vel * rotmat[3, 2] +
-                    adcpo.beam4vel * rotmat[3, 3]
-                    ).astype('float32'),
-                   'main'
-                   )
+    cs = 'inst'
+    if reverse:
+        # Can't use transpose because rotation is not between
+        # orthogonal coordinate systems
+        rotmat = np.linalg.inv(rotmat)
+        cs = 'beam'
+    newvel = np.einsum('ij,jkl->ikl', rotmat, adcpo._u)
+    adcpo['_u'] = newvel
+    adcpo.props['coord_sys'] = cs
 
 
 def inst2earth(adcpo, fixed_orientation=False):
