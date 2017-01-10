@@ -129,8 +129,9 @@ class adcp_raw(dbvel.Velocity):
         else:
             tm = [self.mpltime[0], self.mpltime[-1]]
             dt = num2date(tm[0])
-        return ("%0.2f hour %sADCP record (%s bins, %s pings), started: %s"
+        return ("%0.2f hour %s-frame %sADP record (%s bins, %s pings), started: %s"
                 % ((tm[-1] - tm[0]) * 24,
+                   self.props['coord_sys'],
                    mmstr,
                    self.shape[0],
                    self.shape[1],
