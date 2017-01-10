@@ -108,41 +108,35 @@ def inst2earth(adcpo, fixed_orientation=False):
     # rotmat[2, 1,:] = sp
     # rotmat[2, 2,:] = cp * cr
     # adcpo.add_data('u',
-    # (rotmat[0, 0] * adcpo.u_inst +
-    # rotmat[0, 1] * adcpo.v_inst +
-    # rotmat[0, 2] * adcpo.w_inst
+    # (rotmat[0, 0] * adcpo.u +
+    # rotmat[0, 1] * adcpo.v +
+    # rotmat[0, 2] * adcpo.w
     # ).astype('float32'), 'main')
     # adcpo.add_data('v',
-    # (rotmat[1, 0] * adcpo.u_inst +
-    # rotmat[1, 1] * adcpo.v_inst +
-    # rotmat[1, 2] * adcpo.w_inst
+    # (rotmat[1, 0] * adcpo.u +
+    # rotmat[1, 1] * adcpo.v +
+    # rotmat[1, 2] * adcpo.w
     # ).astype('float32'), 'main')
     # adcpo.add_data('w',
-    # (rotmat[2, 0] * adcpo.u_inst +
-    # rotmat[2, 1] * adcpo.v_inst +
-    # rotmat[2, 2] * adcpo.w_inst
+    # (rotmat[2, 0] * adcpo.u +
+    # rotmat[2, 1] * adcpo.v +
+    # rotmat[2, 2] * adcpo.w
     # ).astype('float32'), 'main')
-    adcpo.add_data('u',
-                   ((ch * cr + sh * sp * sr) * adcpo.u_inst +
-                    sh * cp * adcpo.v_inst +
-                    (ch * sr - sh * sp * cr) * adcpo.w_inst
-                    ).astype('float32'),
-                   'main'
-                   )
-    adcpo.add_data('v',
-                   ((-sh * cr + ch * sp * sr) * adcpo.u_inst +
-                    (ch * cp) * adcpo.v_inst +
-                    (-sh * sr - ch * sp * cr) * adcpo.w_inst
-                    ).astype('float32'),
-                   'main'
-                   )
-    adcpo.add_data('w',
-                   (-cp * sr * adcpo.u_inst +
-                    sp * adcpo.v_inst
-                    + cp * cr * adcpo.w_inst
-                    ).astype('float32'),
-                   'main'
-                   )
+    tmp0 = ((ch * cr + sh * sp * sr) * adcpo.u +
+            sh * cp * adcpo.v +
+            (ch * sr - sh * sp * cr) * adcpo.w
+            ).astype('float32')
+    tmp1 = ((-sh * cr + ch * sp * sr) * adcpo.u +
+            (ch * cp) * adcpo.v +
+            (-sh * sr - ch * sp * cr) * adcpo.w
+            ).astype('float32')
+    tmp2 = (-cp * sr * adcpo.u +
+            sp * adcpo.v +
+            cp * cr * adcpo.w
+            ).astype('float32')
+    adcpo['_u'][0] = tmp0
+    adcpo['_u'][1] = tmp1
+    adcpo['_u'][2] = tmp2
     adcpo.props['coord_sys'] = 'earth'
 
 
