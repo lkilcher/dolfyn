@@ -142,17 +142,13 @@ class adcp_binned(dbvel.VelBindatTke, adcp_raw):
     # meta=adcp_binned_meta()
     inds = slice(None)
 
-    @property
-    def Etke(self,):
-        return self.upup_[:] + self.vpvp_[:] + self.wpwp_[:]
-
 
 class binner(dbvel.VelBinnerTke):
 
     def __call__(self, indat, out_type=adcp_binned):
         out = dbvel.VelBinnerTke.__call__(self, indat, out_type=out_type)
         self.set_bindata(indat, out)
-        out.add_data('_tke',
+        out.add_data('tke_vec',
                      self.calc_tke(indat['vel'], noise=indat.noise),
                      'main')
         out.add_data('sigma_Uh',
@@ -161,33 +157,30 @@ class binner(dbvel.VelBinnerTke):
                      'main')
         return out
 
-    def calc_tke(self, advr):
-        """
-        Calculate the variance of 'u','v' and 'w'.
-        """
-        flds = ['u', 'v', 'w']
-        for fld in flds:
-            self.add_data(fld + 'p' + fld + 'p_', np.nanmean(
-                self.demean(advr, fld) ** 2, axis=-1))
-        # These are the beam rotation constants, multiplied by
-        # sqrt(num_beams_in_component), to give the error (we are
-        # adding/subtracting 2,2 and 4 beams in u,v, and w.
-        if 'doppler_noise' in self.props.keys:
-            if dict not in self.props['doppler_noise'].__class__.__mro__:
-                erruv = self.props['doppler_noise'] / 2 / np.sin(
-                    self.config.beam_angle * np.pi / 180) * 2 ** 0.5
-                errw = self.props['doppler_noise'] / 4 / np.cos(
-                    self.config.beam_angle * np.pi / 180) * 2
-                self.upup_ -= erruv ** 2
-                self.vpvp_ -= erruv ** 2
-                self.wpwp_ -= errw ** 2
-            else:
-                self.upup_ -= self.props['doppler_noise']['u'] ** 2
-                self.vpvp_ -= self.props['doppler_noise']['v'] ** 2
-                self.wpwp_ -= self.props['doppler_noise']['w'] ** 2
-        # self.meta['upup_']=db.varMeta("u'u'",{2:'m',-2:'s'})
-        # self.meta['vpvp_']=db.varMeta("v'v'",{2:'m',-2:'s'})
-        # self.meta['wpwp_']=db.varMeta("w'w'",{2:'m',-2:'s'})
+    # def calc_tke(self, advr):
+    #     """
+    #     Calculate the variance of the velocity vector.
+    #     """
+    #     self.tke_vec = np.nanmean(self.demean(advr['vel']) ** 2, axis=-1)
+    #     # These are the beam rotation constants, multiplied by
+    #     # sqrt(num_beams_in_component), to give the error (we are
+    #     # adding/subtracting 2,2 and 4 beams in u,v, and w.
+    #     if 'doppler_noise' in self.props.keys:
+    #         if dict not in self.props['doppler_noise'].__class__.__mro__:
+    #             erruv = self.props['doppler_noise'] / 2 / np.sin(
+    #                 self.config.beam_angle * np.pi / 180) * 2 ** 0.5
+    #             errw = self.props['doppler_noise'] / 4 / np.cos(
+    #                 self.config.beam_angle * np.pi / 180) * 2
+    #             self.upup_ -= erruv ** 2
+    #             self.vpvp_ -= erruv ** 2
+    #             self.wpwp_ -= errw ** 2
+    #         else:
+    #             self.upup_ -= self.props['doppler_noise']['u'] ** 2
+    #             self.vpvp_ -= self.props['doppler_noise']['v'] ** 2
+    #             self.wpwp_ -= self.props['doppler_noise']['w'] ** 2
+    #     # self.meta['upup_']=db.varMeta("u'u'",{2:'m',-2:'s'})
+    #     # self.meta['vpvp_']=db.varMeta("v'v'",{2:'m',-2:'s'})
+    #     # self.meta['wpwp_']=db.varMeta("w'w'",{2:'m',-2:'s'})
 
     # def _calc_eps_sfz(self, adpr):
     #     """

@@ -60,7 +60,7 @@ class TurbBinner(VelBinnerSpec):
           chunks. This object also computes the following items over
           those chunks:
 
-          - \_tke : The energy in each component (components are also
+          - tke\_vec : The energy in each component (components are also
             accessible as
             :attr:`upup_ <dolfyn.data.velocity.VelBindatTke.upup_>`,
             :attr:`vpvp_ <dolfyn.data.velocity.VelBindatTke.vpvp_>`,
@@ -94,7 +94,7 @@ class TurbBinner(VelBinnerSpec):
         #               .format(self.n_bin))
         out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
         self.do_avg(advr, out)
-        out.add_data('_tke', self.calc_tke(advr['vel'], noise=advr.noise), 'main')
+        out.add_data('tke_vec', self.calc_tke(advr['vel'], noise=advr.noise), 'main')
         out.add_data('stress', self.calc_stress(advr['vel']), 'main')
         out.add_data('sigma_Uh',
                      np.std(self.reshape(advr.U_mag), -1, dtype=np.float64) -
@@ -374,7 +374,7 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
       chunks. This object also computes the following items over
       those chunks:
 
-      - \_tke : The energy in each component (components are also
+      - tke\_vec : The energy in each component (components are also
         accessible as
         :attr:`upup_ <dolfyn.data.velocity.VelBindatTke.upup_>`,
         :attr:`vpvp_ <dolfyn.data.velocity.VelBindatTke.vpvp_>`,
@@ -405,7 +405,7 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
     calculator = TurbBinner(n_bin, advr.fs, n_fft=n_fft)
     out = VelBinnerSpec.__call__(calculator, advr, out_type=out_type)
     calculator.do_avg(advr, out)
-    out.add_data('_tke', calculator.calc_tke(advr['vel'], noise=advr.noise), 'main')
+    out.add_data('tke_vec', calculator.calc_tke(advr['vel'], noise=advr.noise), 'main')
     out.add_data('stress', calculator.calc_stress(advr['vel']), 'main')
     out.add_data('sigma_Uh',
                  np.std(calculator.reshape(advr.U_mag), -1, dtype=np.float64) -

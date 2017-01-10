@@ -224,7 +224,7 @@ class VelBindatTke(Velocity, TimeBindat):
         """
         The turbulent kinetic energy (sum of the three components).
         """
-        return self._tke.sum(0)
+        return self.tke_vec.sum(0)
 
     @property
     def upvp_(self,):
@@ -252,21 +252,21 @@ class VelBindatTke(Velocity, TimeBindat):
         """
         u'u' component of the tke.
         """
-        return self._tke[0]
+        return self.tke_vec[0]
 
     @property
     def vpvp_(self,):
         """
         v'v' component of the tke.
         """
-        return self._tke[1]
+        return self.tke_vec[1]
 
     @property
     def wpwp_(self,):
         """
         w'w' component of the tke.
         """
-        return self._tke[2]
+        return self.tke_vec[2]
 
 
 class VelBinnerTke(TimeBinner):
