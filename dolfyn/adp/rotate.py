@@ -40,9 +40,7 @@ def _cat4rot(tpl):
 
 
 def beam2inst(adcpo, reverse=False, force=False):
-    """
-    Rotate velocities, `_u`, in an ADP object from beam to instrument
-    coordinates coordinates (or vice-versa).
+    """Rotate velocitiesfrom beam to instrument coordinates.
 
     Parameters
     ----------
@@ -71,14 +69,12 @@ def beam2inst(adcpo, reverse=False, force=False):
         # orthogonal coordinate systems
         rotmat = np.linalg.inv(rotmat)
         cs = 'beam'
-    newvel = np.einsum('ij,jkl->ikl', rotmat, adcpo._u)
-    adcpo['_u'] = newvel
+    adcpo['vel'] = np.einsum('ij,jkl->ikl', rotmat, adcpo['vel'])
     adcpo.props['coord_sys'] = cs
 
 
 def inst2earth(adcpo, reverse=False, fixed_orientation=False, force=False):
-    """Rotate velocities, `_u`, in an ADP object from the instrument
-    to the earth frame (or vice-versa).
+    """Rotate velocities from the instrument to earth coordinates.
 
     Parameters
     ----------
@@ -149,7 +145,7 @@ def inst2earth(adcpo, reverse=False, fixed_orientation=False, force=False):
     if fixed_orientation:
         ess = ess.replace('k,', ',')
         rotmat = rotmat.mean(-1)
-    adcpo['_u'][:3] = np.einsum(ess, rotmat, adcpo._u[:3])
+    adcpo['vel'][:3] = np.einsum(ess, rotmat, adcpo['vel'][:3])
     adcpo.props['coord_sys'] = cs
 
 

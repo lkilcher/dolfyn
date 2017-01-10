@@ -206,7 +206,7 @@ def GN2002(u, npt=5000):
 
     """
     if np.ndarray not in u.__class__.__mro__:
-        return GN2002(u._u, npt=npt)
+        return GN2002(u['vel'], npt=npt)
 
     if u.ndim > 1:
         bds = np.zeros(u.shape, dtype='bool')

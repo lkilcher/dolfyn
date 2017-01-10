@@ -218,6 +218,8 @@ class Saver(DataFactory):
                 if not hasattr(obj, ky):
                     continue
                 val = getattr(obj, ky)
+                if isinstance(val, np.ndarray) and val.dtype.name.startswith('unicode'):
+                    val = val.astype('S')
                 if Dgroups in val.__class__.__mro__:
                     self.write(val,
                                where + '/' + grp_nm + '/_' + ky,

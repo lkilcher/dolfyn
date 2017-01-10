@@ -44,14 +44,7 @@ data_defs = {'number': ([], 'index', 'uint32'),
              'error_status_wd': ([], 'signal', 'float32'),
              'pressure': ([], 'main', 'float32'),
              'pressure_std': ([], 'main', 'float32'),
-             '_u': (['nc', 4], 'main', 'float32'),
-             #'v':(['nc',],'main','float32'),
-             #'w':(['nc',],'main','float32'),
-             #'err_vel':(['nc',],'main','float32'),
-             #'beam1vel': (['nc', ], 'beam', 'float32'),
-             #'beam2vel': (['nc', ], 'beam', 'float32'),
-             #'beam3vel': (['nc', ], 'beam', 'float32'),
-             #'beam4vel': (['nc', ], 'beam', 'float32'),
+             'vel': (['nc', 4], 'main', 'float32'),
              'echo': (['nc', 4], 'signal', 'uint8'),
              'corr': (['nc', 4], 'signal', 'uint8'),
              'prcnt_gd': (['nc', 4], 'signal', 'uint8'),
@@ -117,7 +110,7 @@ class ensemble(object):
             setattr(self, nm, np.empty(get_size(nm, n=navg, ncell=n_cells)))
 
     def clean_data(self,):
-        self._u[self._u == -32.768] = np.NaN
+        self['vel'][self['vel'] == -32.768] = np.NaN
 
 
 class adcp_loader(object):
@@ -327,10 +320,10 @@ class adcp_loader(object):
         ##     var_nms = ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel']
         ## else:
         ##     var_nms = ['u', 'v', 'w', 'err_vel']
-        self.vars_read += ['_u']
+        self.vars_read += ['vel']
         k = ens.k
-        ens._u[:, :, k] = np.array(self.f.read_i16(4 * self.cfg['n_cells'])
-                                   ).reshape((self.cfg['n_cells'], 4)) * .001
+        ens['vel'][:, :, k] = np.array(self.f.read_i16(4 * self.cfg['n_cells'])
+                                       ).reshape((self.cfg['n_cells'], 4)) * .001
         self._nbyte = 2 + 4 * self.cfg['n_cells'] * 2
 
     def read_corr(self,):

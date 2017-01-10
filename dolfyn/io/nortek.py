@@ -423,7 +423,7 @@ class NortekReader(object):
         # I must be able to calculate this here, right? # !!!TODO!!!
         self.data.props['doppler_noise'] = [0, 0, 0]
         # Apply velocity scaling (1 or 0.1)
-        self.data._u *= self.config['user']['mode']['vel_scale']
+        self.data['vel'] *= self.config['user']['mode']['vel_scale']
 
     def read_vec_data(self,):
         """
@@ -438,26 +438,26 @@ class NortekReader(object):
         if self.debug:
             print('Reading vector data (0x10) ping #{} @ {}...'.format(self.c, self.pos))
 
-        if not hasattr(self.data, '_u'):
+        if not hasattr(self.data, 'vel'):
             self._init_data(nortek_defs.vec_data)
             self._dtypes += ['vec_data']
 
         byts = self.read(20)
-        (self.data.AnaIn2LSB[c],
-         self.data.Count[c],
-         self.data.PressureMSB[c],
-         self.data.AnaIn2MSB[c],
-         self.data.PressureLSW[c],
-         self.data.AnaIn1[c],
-         self.data._u[0, c],
-         self.data._u[1, c],
-         self.data._u[2, c],
-         self.data._amp[0, c],
-         self.data._amp[1, c],
-         self.data._amp[2, c],
-         self.data._corr[0, c],
-         self.data._corr[1, c],
-         self.data._corr[2, c]) = unpack(self.endian + '4B2H3h6B', byts)
+        (self.data['AnaIn2LSB'][c],
+         self.data['Count'][c],
+         self.data['PressureMSB'][c],
+         self.data['AnaIn2MSB'][c],
+         self.data['PressureLSW'][c],
+         self.data['AnaIn1'][c],
+         self.data['vel'][0, c],
+         self.data['vel'][1, c],
+         self.data['vel'][2, c],
+         self.data['amp'][0, c],
+         self.data['amp'][1, c],
+         self.data['amp'][2, c],
+         self.data['corr'][0, c],
+         self.data['corr'][1, c],
+         self.data['corr'][2, c]) = unpack(self.endian + '4B2H3h6B', byts)
 
         self.checksum(byts)
         self.c += 1
@@ -753,9 +753,9 @@ class NortekReader(object):
         tmp = unpack(self.endian + str(3 * nbins) + 'h' +
                      str(3 * nbins) + 'B', byts[116:116 + 9 * nbins])
         for idx in range(3):
-            self.data._u[idx, :, c] = tmp[idx * nbins: (idx + 1) * nbins]
-            self.data._amp[idx, :, c] = tmp[(idx + 3) * nbins:
-                                            (idx + 4) * nbins]
+            self.data['vel'][idx, :, c] = tmp[idx * nbins: (idx + 1) * nbins]
+            self.data['amp'][idx, :, c] = tmp[(idx + 3) * nbins:
+                                              (idx + 4) * nbins]
         self.checksum(byts)
         self.c += 1
 
@@ -808,7 +808,7 @@ class NortekReader(object):
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'VECTOR'
         self.data.props['inst_type'] = 'ADV'
-        self.data.props['rotate_vars'] = {'_u', }
+        self.data.props['rotate_vars'] = {'vel', }
         # Question to Nortek: How do they determine how many samples are in a
         # file, in order to initialize arrays?
         dlta = self.code_spacing('0x11')
