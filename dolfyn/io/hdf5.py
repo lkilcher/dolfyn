@@ -158,7 +158,7 @@ class Saver(DataFactory):
         """
         self.get_group(where).attrs.create('_object_type', str(obj.__class__))
         if isinstance(obj, config) and obj.config_type not in [None, '*UNKNOWN*']:
-            self.get_group(where).attrs.create('_config_type', obj.config_type)
+            self.get_group(where).attrs.create('_config_type', obj.config_type.encode('ascii'))
 
     def write_dict(self, name, dct, where='/'):
         """
