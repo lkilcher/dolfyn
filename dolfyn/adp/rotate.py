@@ -39,13 +39,27 @@ def _cat4rot(tpl):
     return np.concatenate(tuple(tmp), axis=1)
 
 
-def beam2inst(adcpo, reverse=False):
-    """Rotate velocities from beam to instrument coordinates.
+def beam2inst(adcpo, reverse=False, force=False):
     """
-    if not reverse and adcpo.props['coord_sys'] != 'beam':
-        raise ValueError('The input must be in beam coordinates.')
-    if reverse and adcpo.props['coord_sys'] != 'inst':
-        raise ValueError('The input must be in inst coordinates.')
+    Rotate velocity data (the `_u` attribute/key) in an ADP object
+    from beam to instrument coordinates coordinates (or vice-versa).
+
+    Parameters
+    ----------
+    adpo : The ADP object containing the data.
+
+    reverse : bool (default: False)
+           If True, this function performs the inverse rotation
+           (inst->beam).
+    force : bool (default: False)
+        When true do not check which coordinate system the data is in
+        prior to performing this rotation.
+    """
+    if not force:
+        if not reverse and adcpo.props['coord_sys'] != 'beam':
+            raise ValueError('The input must be in beam coordinates.')
+        if reverse and adcpo.props['coord_sys'] != 'inst':
+            raise ValueError('The input must be in inst coordinates.')
     if hasattr(adcpo.config, 'rotmat'):
         rotmat = adcpo.config.rotmat
     else:
