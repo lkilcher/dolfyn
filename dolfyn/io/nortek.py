@@ -239,13 +239,13 @@ class NortekReader(object):
         if self.debug == 2:
             print('Positon: {}, codes: {}'.format(self.f.tell(), tmp))
         if tmp[0] != 165:  # This catches a corrupted data block.
-            print('Corrupted data block sync code (%d, %d) found in ping %d. '
-                  'Searching for next valid code...' % (tmp[0], tmp[1], self.c))
+            if self.debug:
+                print('Corrupted data block sync code (%d, %d) found in ping %d. '
+                      'Searching for next valid code...' % (tmp[0], tmp[1], self.c))
             val = int(self.findnext(do_cs=False), 0)
             self.f.seek(2, 1)
-            print('FOUND {}.'.format(val))
             if self.debug:
-                print('  at position: {}'.format(self.pos))
+                print(' ...FOUND {} at position: {}.'.format(val, self.pos))
             return val
         # if self.debug:
         #    print( tmp[1] )
