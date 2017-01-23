@@ -16,6 +16,8 @@ from ..data.time import time_array
 import copy
 from six import string_types
 import sys
+from .. import _version as _ver
+
 
 if sys.version_info >= (3, 0):
     import pickle as pkl
@@ -63,16 +65,8 @@ class Saver(DataFactory):
     - h5py
 
     """
-    ver = 1.3  # The version number of the save format.
+    ver = _ver.version_info
 
-    # Version 1.0: underscore ('_') handled inconsistently.
-    # Version 1.1: '_' and '#' handled consistently in group naming:
-    # '#' is for groups that should be excluded, unless listed explicitly.
-    # '##' and ending with '##' is for specially handled groups.
-    # Version 1.2: now using time_array.
-    #         '_' is for essential groups.
-    # Version 1.3: Now load/unload is fully symmetric (needed for __eq__ tests).
-    #         Added _config_type to i/o.
     fletcher32 = True
     complib = 'gzip'
     complevel = 2
@@ -96,7 +90,7 @@ class Saver(DataFactory):
         self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)
         self.close = self.fd.close
         self.node = self.fd.get(where)
-        self.node.attrs.create('DataSaveVersion', pkl.dumps(self.ver))
+        self.node.attrs.create('DataSaveVersion', pkl.dumps(_ver.ver2tuple(self.ver)))
         self._extrafiles = []
 
     def get_group(self, where=None, nosplit=False):
@@ -307,7 +301,7 @@ class Loader(DataFactory):
                           # fly if necessary (e.g. _fix_name)
         self.close = self.fd.close
         self.type_map = type_map
-        self.ver = pkl.loads(self.fd.attrs.get('DataSaveVersion', 'I0\n.'))
+        self.ver = _ver.ver2tuple(pkl.loads(self.fd.attrs.get('DataSaveVersion', 'I0\n.')))
 
     def get_group(self, where=None):
         """
@@ -357,7 +351,7 @@ class Loader(DataFactory):
         """
         for grp in self.iter_groups(groups=groups, where=where):
             for attnm in list(grp.attrs.keys()):
-                if not ((self.ver <= 1.0 and
+                if not ((self.ver <= (0, 1, 0) and
                          attnm in ['_properties', '_units']) or
                         (attnm.startswith('##') and attnm.endswith('##'))):
                     # Skip the "_properties" attribute, if it exists.
@@ -380,7 +374,7 @@ class Loader(DataFactory):
         Read the `props` attribute (:class:`Dprops
         <dolfyn.data.base.Dprops>`) class.
         """
-        if self.ver >= 1.1:
+        if self.ver >= (0, 1, 1):
             propsstr = '##properties##'
             unitsstr = '##units##'
         else:
@@ -444,7 +438,7 @@ class Loader(DataFactory):
             if hasattr(nd, 'read_direct'):
                 nm = self.get_name(nd)
                 out.add_data(nm, nd, self.get_name(nd.parent))
-            if (self.ver <= 1.2 and nm == 'mpltime') or \
+            if (self.ver <= (0, 1, 2) and nm == 'mpltime') or \
                     nd.attrs.get('time_var', False) == b'True':
                 out[nm] = time_array(out[nm])
         self.read_attrs(out, groups=groups, where=where)
@@ -473,10 +467,10 @@ class Loader(DataFactory):
                     # This catches a bug in Python3 when reading string arrays
                     # (converts bytes to unicode)
                     out[nm] = out[nm].astype('<U')
-                if (self.ver <= 1.2 and nm == 'mpltime') or \
+                if (self.ver <= (0, 1, 2) and nm == 'mpltime') or \
                         nd.attrs.get('time_var', False) == b'True':
                     out[nm] = out[nm].view(time_array)
-                if ma.valid and self.ver == 0:
+                if ma.valid and self.ver == (0, 0, 0):
                     if '_label' in nd.attrs:
                         # This is a deprecated file structure.
                         setattr(out, nm,
@@ -484,9 +478,7 @@ class Loader(DataFactory):
                                           meta=ma.varMeta(
                                               nd.attrs.get('_label'),
                                               pkl_loads(nd.attrs.get('_units'))
-                                          )
-                                          )
-                                )
+                                )))
                     if 'label' in nd.attrs:
                         s = nd.attrs.get('units')
                         try:
@@ -529,8 +521,24 @@ class Loader(DataFactory):
                                 setattr(meta, atnm, pkl_loads(nd.attrs.get(atnm)))
                         setattr(out, nm, ma.marray(getattr(out, nm), meta=meta))
         self.read_attrs(out, groups=groups, where=where)
+        self._check_compat(out)
         out.__postload__()
         return out
+
+    def _check_compat(self, out):
+        if self.ver < (0, 6, 0):
+            for old_name, new_name in [('_u', 'vel'),
+                                       ('_corr', 'corr'),
+                                       ('_amp', 'amp'),
+                                       ('urot', 'velrot'),
+                                       ('uacc', 'velacc'),
+                                       ('_tke', 'tke_vec'), ]:
+                if old_name in out.data_names:
+                    g = out.groups.get_group(old_name)
+                    out.add_data(new_name, out.pop_data(old_name), g)
+                if hasattr(out, 'props') and old_name in out.props.get('rotate_vars', []):
+                    out.props['rotate_vars'].remove(old_name)
+                    out.props['rotate_vars'].add(new_name)
 
     def read_dict(self, where):
         """
@@ -618,14 +626,14 @@ class Loader(DataFactory):
 
                 if groups is None:
                     if not (gnm[0] in ['#', '/'] or
-                            (self.ver <= 1 and gnm in ['_properties',
-                                                       '_units'])):
+                            (self.ver <= (0, 1, 0) and gnm in ['_properties',
+                                                               '_units'])):
                         yield grp
 
                 elif groups == 'ALL':
                     if not ((gnm.startswith('##') and gnm.endswith('##')) or
-                            (self.ver <= 1 and gnm in ['_properties',
-                                                       '_units'])):
+                            (self.ver <= (0, 1, 0) and gnm in ['_properties',
+                                                               '_units'])):
                         yield grp
 
                 elif gnm in groups or (gnm[0] == '_' and not no_essential):
