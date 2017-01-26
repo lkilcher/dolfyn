@@ -166,6 +166,9 @@ class TimeBinner(object):
             return out
         return out.view(dat.__class__)
 
+    def var(self, dat, n_bin=None):
+        return self.reshape(dat, n_bin=n_bin).var(-1)
+
     def std(self, dat, n_bin=None):
         return self.reshape(dat, n_bin=n_bin).std(-1)
 

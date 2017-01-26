@@ -40,8 +40,7 @@ and configured correctly:
 2. The ADV software must be configured properly.  In the 'Deployment
    Planning' frame of the Vector Nortek Software, be sure that:
 
-   a. The IMU sensor is enabled (checkbox) and set to record *'Accl AngR Mag
-      xF'*.
+   a. The IMU sensor is enabled (checkbox) and set to record *'dAng dVel Orient'*.
 
    b. The 'Coordinate system' must be set to *'XYZ'*.
 
