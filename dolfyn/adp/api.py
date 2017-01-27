@@ -1,6 +1,6 @@
 from .base import type_map, dio
 from ._readbin import adcp_loader
-from rotate import beam2inst, inst2earth, earth2principal
+from .rotate import beam2inst, inst2earth, earth2principal
 
 
 def load(fname, data_groups=None):
