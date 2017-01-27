@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to the DOLfYN home page! &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="#" />
+    <link rel="next" title="About" href="about.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-the-dolfyn-home-page">
+<h1>Welcome to the DOLfYN home page!<a class="headerlink" href="#welcome-to-the-dolfyn-home-page" title="Permalink to this headline">¶</a></h1>
+<p>DOLfYN is the Doppler Oceanography Library for pYthoN.</p>
+<p>DOLfYN includes libraries for reading binary Nortek(tm) and
+Teledyne-RDI(tm) data files.  At this point it is designed to read and
+work with Acoustic Doppler Velocimeter (ADV) and Acoustic Doppler
+Profiler (ADP/ADCP) data.  If you have a data file of one of these
+formats that is not read by DOLfYN, contact the DOLfYN development
+team.  If you have suggestions of other data-file formats that should
+be added to DOLfYN, contact the development team.</p>
+<p>DOLfYN includes a data abstraction and input/output layer that enables
+saving and loading of data after it has been read from the binary
+files. This data abstraction layer is designed to allow easy
+input/output (loading/saving) of data along the data processing and
+analysis chain. The data is written to disk in HDF5 format using the
+<a class="reference external" href="www.h5py.org">h5py</a> library. Data can also be written to Matlab<sup>TM</sup> format.</p>
+</div>
+<div class="section" id="table-of-contents">
+<h1>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="about.html#history">History</a></li>
+<li class="toctree-l2"><a class="reference internal" href="about.html#license">License</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Download and Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#working-with-adv-data">Working with ADV data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="usage.html#reading-adv-data">Reading ADV data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usage.html#id3">Working with ADV data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage-specific.html">Usage - Specific Cases</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage-specific.html#motion-correcting-imu-adv-measurements">Motion Correcting IMU-ADV measurements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="usage-specific.html#pre-deployment-requirements">Pre-Deployment Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usage-specific.html#data-processing">Data processing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/dolfyn.html">dolfyn package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/dolfyn.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/dolfyn.adp.html">dolfyn.adp package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/dolfyn.adv.html">dolfyn.adv package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/dolfyn.buoy.html">dolfyn.buoy package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/dolfyn.data.html">dolfyn.data package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/dolfyn.io.html">dolfyn.io package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/dolfyn.tools.html">dolfyn.tools package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/dolfyn.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/dolfyn.html#module-dolfyn.OrderedSet">dolfyn.OrderedSet module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/dolfyn.html#module-dolfyn">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-tables-and-notes">
+<h1>Indices, tables and notes<a class="headerlink" href="#indices-tables-and-notes" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span>Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
+<li><a class="reference internal" href="glossary.html"><em>Glossary</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to the DOLfYN home page!</a></li>
+<li><a class="reference internal" href="#table-of-contents">Table of Contents</a></li>
+<li><a class="reference internal" href="#indices-tables-and-notes">Indices, tables and notes</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="about.html" title="next chapter">About</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

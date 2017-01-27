@@ -12,8 +12,6 @@ dist
 
 dolfyn.egg-info
 
-doc/source/api/*
-
 debug/
 
 *.pyc

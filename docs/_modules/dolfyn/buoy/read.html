@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dolfyn.buoy.read &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.buoy.read</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">base</span> <span class="kn">as</span> <span class="nn">buoy</span>
+<span class="kn">from</span> <span class="nn">..data</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="readtxt"><a class="viewcode-back" href="../../../api/dolfyn.buoy.html#dolfyn.buoy.read.readtxt">[docs]</a><span class="k">def</span> <span class="nf">readtxt</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+        <span class="n">h1</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">fl</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+    <span class="n">odat</span> <span class="o">=</span> <span class="n">buoy</span><span class="o">.</span><span class="n">buoy_raw</span><span class="p">()</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;mpltime&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;wspd&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;wdir&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;gst&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;wvht&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;apd&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;dpd&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;mwd&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;press&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;atmp&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;wtmp&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;dewp&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;tide&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">odat</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s">&#39;vis&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ln</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dat</span><span class="p">):</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ln</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">mpltime</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                        <span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                                        <span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                                        <span class="n">tmp</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                                                        <span class="n">tmp</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                                                        <span class="mi">0</span><span class="p">))</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">wdir</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">wspd</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">gst</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">wvht</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">dpd</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">apd</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">mwd</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">press</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">12</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">atmp</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">13</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">wtmp</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">14</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">dewp</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">15</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">vis</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+        <span class="n">odat</span><span class="o">.</span><span class="n">tide</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">odat</span><span class="o">.</span><span class="n">_data_groups</span><span class="p">[</span><span class="s">&#39;main&#39;</span><span class="p">]:</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">odat</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="p">(</span><span class="n">dat</span> <span class="o">==</span> <span class="mi">99</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">dat</span> <span class="o">==</span> <span class="mi">999</span><span class="p">)</span>
+        <span class="n">dat</span><span class="p">[</span><span class="n">bad</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+
+    <span class="k">return</span> <span class="n">odat</span>
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">bdat</span> <span class="o">=</span> <span class="n">readtxt</span><span class="p">(</span><span class="s">&#39;/home/lkilcher/data/pnnl/buoy/ptww1h2011.txt&#39;</span><span class="p">)</span>
+    <span class="n">bdat</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;/home/lkilcher/data/pnnl/buoy_ptww.h5&#39;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

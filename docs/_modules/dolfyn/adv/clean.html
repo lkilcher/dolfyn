@@ -1,0 +1,478 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dolfyn.adv.clean &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.adv.clean</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">..tools.misc</span> <span class="kn">import</span> <span class="n">fillgaps</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">slice1d_along_axis</span>
+<span class="c"># import tools.timer as tmr</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">RankWarning</span><span class="p">)</span>
+
+<span class="n">sin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span>
+<span class="n">cos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span>
+
+
+<div class="viewcode-block" id="cleanFill"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.clean.cleanFill">[docs]</a><span class="k">def</span> <span class="nf">cleanFill</span><span class="p">(</span><span class="n">indat</span><span class="p">,</span> <span class="n">bad</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolate (linearly) over the points in `bad` that are True.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    indat : |np.ndarray|</span>
+<span class="sd">      The field to be cleaned.</span>
+<span class="sd">    bad : |np.ndarray| (dtype=bool, shape=u.shape)</span>
+<span class="sd">      The bad indices to interpolate.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    This function returns None, it operates on the `indat` array.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">indat</span><span class="p">[</span><span class="n">bad</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+    <span class="n">fillgaps</span><span class="p">(</span><span class="n">indat</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="fillpoly"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.clean.fillpoly">[docs]</a><span class="k">def</span> <span class="nf">fillpoly</span><span class="p">(</span><span class="n">indat</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="n">npt</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolate (polynomial) over the points in `bad` that are True.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    indat : |np.ndarray|</span>
+<span class="sd">      The field to be cleaned.</span>
+<span class="sd">    deg : int</span>
+<span class="sd">      The degree of the polynomial (see polyfit)</span>
+<span class="sd">    npt : int</span>
+<span class="sd">      The number of points on either side of the gap that the fit</span>
+<span class="sd">      occurs over.  Must be &gt;deg/2.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    This function returns None, it operates on the `indat` array.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">searching</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">bds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">indat</span><span class="p">)</span>
+    <span class="n">ntail</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c"># The index array:</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indat</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">indat</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">searching</span><span class="p">:</span>
+            <span class="c"># Check the point</span>
+            <span class="k">if</span> <span class="n">bds</span><span class="p">[</span><span class="n">pos</span><span class="p">]:</span>
+                <span class="c"># If it&#39;s bad, mark the start</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">pos</span> <span class="o">-</span> <span class="n">npt</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="c"># And stop searching.</span>
+                <span class="n">searching</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c"># Continue...</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Another bad point?</span>
+            <span class="k">if</span> <span class="n">bds</span><span class="p">[</span><span class="n">pos</span><span class="p">]:</span>  <span class="c"># Yes</span>
+                <span class="c"># Reset ntail</span>
+                <span class="n">ntail</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c"># No</span>
+                <span class="c"># Add to the tail of the block.</span>
+                <span class="n">ntail</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">ntail</span> <span class="o">==</span> <span class="n">npt</span> <span class="ow">or</span> <span class="n">pos</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">indat</span><span class="p">)):</span>
+                <span class="c"># This is the block we are interpolating over</span>
+                <span class="n">itmp</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">pos</span><span class="p">]</span>
+                <span class="c"># good and bad points:</span>
+                <span class="n">igd</span> <span class="o">=</span> <span class="n">itmp</span><span class="p">[</span><span class="o">~</span><span class="n">bds</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">pos</span><span class="p">]]</span>
+                <span class="n">ibd</span> <span class="o">=</span> <span class="n">itmp</span><span class="p">[</span><span class="n">bds</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">pos</span><span class="p">]]</span>
+                <span class="c"># Fill them:</span>
+                <span class="n">indat</span><span class="p">[</span><span class="n">ibd</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">igd</span><span class="p">,</span>
+                                                   <span class="n">indat</span><span class="p">[</span><span class="n">igd</span><span class="p">],</span>
+                                                   <span class="n">deg</span><span class="p">),</span>
+                                        <span class="n">ibd</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">indat</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="c"># Reset!</span>
+                <span class="n">searching</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">ntail</span> <span class="o">=</span> <span class="mi">0</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_spikeThresh</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">thresh</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a logical vector where a spike of magnitude greater than</span>
+<span class="sd">    `thresh` occurs.  &#39;Negative&#39; and &#39;positive&#39; spikes are both</span>
+<span class="sd">    caught.</span>
+
+<span class="sd">    `thresh` must be positive.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">du</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">bds1</span> <span class="o">=</span> <span class="p">((</span><span class="n">du</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="n">thresh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">du</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">thresh</span><span class="p">))</span>
+    <span class="n">bds2</span> <span class="o">=</span> <span class="p">((</span><span class="n">du</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">thresh</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">du</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">thresh</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="bp">False</span><span class="p">],</span> <span class="n">bds1</span> <span class="o">|</span> <span class="n">bds2</span><span class="p">,</span> <span class="p">[</span><span class="bp">False</span><span class="p">]))</span>
+
+
+<div class="viewcode-block" id="rangeLimit"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.clean.rangeLimit">[docs]</a><span class="k">def</span> <span class="nf">rangeLimit</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="nb">range</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a logical vector that is True where the</span>
+<span class="sd">    values of `u` are outside of `range`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="o">~</span><span class="p">((</span><span class="nb">range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">u</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">u</span> <span class="o">&lt;</span> <span class="nb">range</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_calcab</span><span class="p">(</span><span class="n">al</span><span class="p">,</span> <span class="n">Lu_std_u</span><span class="p">,</span> <span class="n">Lu_std_d2u</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solve equations 10 and 11 of Goring+Nikora2002.</span>
+
+<span class="sd">    I think they have the equation wrong (power of 2 exponents should</span>
+<span class="sd">    be -2,except on sin,cos), but I&#39;m not certain, and it doesn&#39;t</span>
+<span class="sd">    appear to make too much difference.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># return</span>
+    <span class="c"># tuple(np.linalg.solve(np.array([[cos(al)**2,sin(al)**2],</span>
+    <span class="c"># [sin(al)**2,cos(al)**2]]),</span>
+    <span class="c"># np.array([(Lu_std_u)**-2,(Lu_std_d2u)**-2]))**-1)</span>
+    <span class="c"># I think this is correct</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos</span><span class="p">(</span><span class="n">al</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sin</span><span class="p">(</span><span class="n">al</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">],</span>
+                  <span class="p">[</span><span class="n">sin</span><span class="p">(</span><span class="n">al</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cos</span><span class="p">(</span><span class="n">al</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">]]),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">Lu_std_u</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">Lu_std_d2u</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">])))</span>
+
+
+<span class="k">def</span> <span class="nf">_phaseSpaceThresh</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implements the Goring+Nikora2002 despiking method, with Wahl2003</span>
+<span class="sd">    correction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">u</span><span class="p">[:,</span> <span class="bp">None</span><span class="p">]</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>  <span class="c"># Don&#39;t want to deal with marray in this function.</span>
+    <span class="n">Lu</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">**</span> <span class="mf">0.5</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">u</span> <span class="o">-</span> <span class="n">u</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">du</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">d2u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="c"># Take the centered difference.</span>
+    <span class="n">du</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c"># And again.</span>
+    <span class="n">d2u</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">du</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">du</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c"># d2u[2:-2]=np.diff(du[1:-1],n=2,axis=0) # Again, wrong.</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">du</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">d2u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">std_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">std_du</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">du</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">std_d2u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">d2u</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">u</span> <span class="o">*</span> <span class="n">d2u</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">al</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alpha</span><span class="p">):</span>
+        <span class="c"># print( al,std_u[idx],std_d2u[idx],Lu )</span>
+        <span class="n">a</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calcab</span><span class="p">(</span><span class="n">al</span><span class="p">,</span> <span class="n">Lu</span> <span class="o">*</span> <span class="n">std_u</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">Lu</span> <span class="o">*</span> <span class="n">std_d2u</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+        <span class="c"># print( a[idx],b[idx] )</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">idx</span><span class="p">])):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;Coefficient calculation error&#39;</span><span class="p">)</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">du</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">((</span><span class="n">du</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">d2u</span><span class="p">)</span>
+    <span class="n">pe</span> <span class="o">=</span> <span class="p">(((</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">+</span>
+            <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span> <span class="o">+</span>
+          <span class="p">((</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">-</span>
+            <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">b</span> <span class="o">+</span>
+          <span class="p">((</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Lu</span> <span class="o">*</span> <span class="n">std_du</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">pe</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pe</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">p</span> <span class="o">&gt;</span> <span class="n">pe</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="s">&#39;F&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GN2002"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.clean.GN2002">[docs]</a><span class="k">def</span> <span class="nf">GN2002</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">npt</span><span class="o">=</span><span class="mi">5000</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clean an velocity dataset according to the Goring+Nikora2002</span>
+<span class="sd">    method.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    u : ndarray</span>
+<span class="sd">      The velocity array to clean.</span>
+
+<span class="sd">    npt : int</span>
+<span class="sd">      The number of points over which to perform the method.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    bads : ndarray(boolean)</span>
+<span class="sd">      The points in `u` that were cleaned.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    Implements the Goring+Nikora2002 despiking method, with Wahl2003</span>
+<span class="sd">    correction.</span>
+
+<span class="sd">    This function operates on the `indat` array (doesn&#39;t return it).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">u</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__mro__</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">GN2002</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="s">&#39;vel&#39;</span><span class="p">],</span> <span class="n">npt</span><span class="o">=</span><span class="n">npt</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">bds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;bool&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">bds</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">GN2002</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">npt</span><span class="o">=</span><span class="n">npt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bds</span>
+
+    <span class="n">bds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;bool&#39;</span><span class="p">)</span>
+
+    <span class="c"># Find large bad segments (&gt;npt/10):</span>
+    <span class="c"># group returns a vector of slice objects.</span>
+    <span class="n">bad_segs</span> <span class="o">=</span> <span class="n">group</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">min_length</span><span class="o">=</span><span class="n">npt</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_segs</span><span class="p">):</span>  <span class="c"># Are there any?</span>
+        <span class="c"># Break them up into separate regions:</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ep</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+
+        <span class="c"># Skip start and end bad_segs:</span>
+        <span class="k">if</span> <span class="n">bad_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">==</span> <span class="n">sp</span><span class="p">:</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="n">bad_segs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span>
+            <span class="n">bad_segs</span> <span class="o">=</span> <span class="n">bad_segs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">bad_segs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span> <span class="o">==</span> <span class="n">ep</span><span class="p">:</span>
+            <span class="n">ep</span> <span class="o">=</span> <span class="n">bad_segs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">start</span>
+            <span class="n">bad_segs</span> <span class="o">=</span> <span class="n">bad_segs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bad_segs</span><span class="p">)):</span>
+            <span class="n">bs</span> <span class="o">=</span> <span class="n">bad_segs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>  <span class="c"># bs is a slice object.</span>
+            <span class="c"># Clean the good region:</span>
+            <span class="n">bds</span><span class="p">[</span><span class="n">sp</span><span class="p">:</span><span class="n">bs</span><span class="o">.</span><span class="n">start</span><span class="p">]</span> <span class="o">=</span> <span class="n">GN2002</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="n">sp</span><span class="p">:</span><span class="n">bs</span><span class="o">.</span><span class="n">start</span><span class="p">],</span> <span class="n">npt</span><span class="o">=</span><span class="n">npt</span><span class="p">)</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="n">bs</span><span class="o">.</span><span class="n">stop</span>
+        <span class="c"># Clean the last good region.</span>
+        <span class="n">bds</span><span class="p">[</span><span class="n">sp</span><span class="p">:</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">GN2002</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="n">sp</span><span class="p">:</span><span class="n">ep</span><span class="p">],</span> <span class="n">npt</span><span class="o">=</span><span class="n">npt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bds</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ntot</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">nbins</span> <span class="o">=</span> <span class="n">ntot</span> <span class="o">//</span> <span class="n">npt</span>
+    <span class="n">bds_last</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bds</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">bds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c"># make sure we start.</span>
+    <span class="k">while</span> <span class="n">bds</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">bds</span><span class="p">[:</span><span class="n">nbins</span> <span class="o">*</span> <span class="n">npt</span><span class="p">]</span> <span class="o">=</span> <span class="n">_phaseSpaceThresh</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">u</span><span class="p">[:(</span><span class="n">nbins</span> <span class="o">*</span> <span class="n">npt</span><span class="p">)],</span> <span class="p">(</span><span class="n">npt</span><span class="p">,</span> <span class="n">nbins</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="s">&#39;F&#39;</span><span class="p">)))</span>
+        <span class="n">bds</span><span class="p">[</span><span class="o">-</span><span class="n">npt</span><span class="p">:]</span> <span class="o">=</span> <span class="n">_phaseSpaceThresh</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="o">-</span><span class="n">npt</span><span class="p">:])</span>
+        <span class="n">u</span><span class="p">[</span><span class="n">bds</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+        <span class="n">fillpoly</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+        <span class="c"># print( &#39;GN2002: found %d bad points on loop %d&#39; % (bds.sum(),c) )</span>
+        <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;GN2002 loop-limit exceeded.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">bds</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">bds_last</span><span class="o">.</span><span class="n">sum</span><span class="p">():</span>
+            <span class="k">break</span>
+        <span class="n">bds_last</span> <span class="o">=</span> <span class="n">bds</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">bds</span>
+
+
+<span class="c"># class adv_cleaner(object):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># Clean an adv data set, and plot some of the important parameters of this.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+
+<span class="c"># corr_thresh=70</span>
+<span class="c"># _plot_inds=slice(4000)</span>
+<span class="c"># fill_maxgap=32 # This is 1 second, for 32hz sampling.</span>
+
+<span class="c"># def __init__(self,**kwargs):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># Initialize the adv_cleaner object.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># for ky,val in kwargs.iteritems():</span>
+<span class="c"># setattr(self,ky,val)</span>
+
+
+<span class="c"># def clean_corr(self,advo,thresh=None):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># NaN out the adv velocity (u,v,w) estimates with corr less than *thresh*</span>
+
+<span class="c"># A value of thresh=70% is apparently suggested by Sontek (default).</span>
+<span class="c"># --- I need to see if this works for all datasets.</span>
+<span class="c"># Elgar++2005 suggest using 0.3+0.4*sqrt{s_f/25}.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># if thresh is None:</span>
+<span class="c"># thresh=self.corr_thresh</span>
+
+<span class="c"># Addition is logical or</span>
+<span class="c"># self.corr_bad=bd=(advo.corr1&lt;thresh)+(advo.corr2&lt;thresh)+(advo.corr3&lt;thresh)</span>
+<span class="c">#</span>
+<span class="c"># advo.u[bd]=np.nan</span>
+<span class="c"># advo.v[bd]=np.nan</span>
+<span class="c"># advo.w[bd]=np.nan</span>
+
+<span class="c"># def fill_vel(self,advo,maxgap=None):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># Fill the NaN&#39;s in the velocity data.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># if maxgap is None:</span>
+<span class="c"># maxgap=self.fill_maxgap</span>
+<span class="c"># fillgaps(advo.u,maxgap)</span>
+<span class="c"># fillgaps(advo.v,maxgap)</span>
+<span class="c"># fillgaps(advo.w,maxgap)</span>
+
+<span class="c"># def plot_corr(self,advo,**kwargs):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># Plot the corr data...</span>
+
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># if not kwargs.has_key(&#39;title&#39;):</span>
+<span class="c"># kwargs[&#39;title&#39;]=&#39;Correlations&#39;</span>
+<span class="c"># self.corr_fig=fg=advo.plot([&#39;corr1&#39;,&#39;corr2&#39;,&#39;corr3&#39;],fignum=401,**kwargs)</span>
+<span class="c"># for ax in fg.sax.ax[:,0]:</span>
+<span class="c"># ax.hln(self.corr_thresh,color=&#39;r&#39;,linestyle=&#39;dashed&#39;)</span>
+<span class="c"># ax.set_xlim(fg.x_minmax)</span>
+
+<span class="c"># def plot_snr(self,advo):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># Plot the SNR data...</span>
+<span class="c"># It is unclear whether SNR should be used for cleaning adv data.  See:</span>
+<span class="c"># www.nortekusa.com/en/knowledge-center/forum/velocimeters/</span>
+<span class="c"># for more info.</span>
+<span class="c"># In particular, see the &#39;SNR in the Vector&#39; post.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># self.snr_fig=fg=advo.plot([&#39;SNR1&#39;,&#39;SNR2&#39;,&#39;SNR3&#39;],fignum=402)</span>
+<span class="c"># self.snr_fig.canvas.set_window_title(&#39;SNR&#39;)</span>
+<span class="c"># self.snr_fig.sax.ax[0,0].set_title(&#39;SNR&#39;)</span>
+
+<span class="c"># def __call__(self,advo):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># Clean the adv data.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># self.clean_corr(advo)</span>
+<span class="c"># self.fill_vel(advo)</span>
+
+<span class="c"># def phase_spacethresh_GN02(self,advo):</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># The phase-space thresholding method of Goring and Nikora 2002.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># du=np.concatenate((np.ones(1)*np.NaN,</span>
+<span class="c"># (advo.u[2:]-advo.u[:-2]),np.ones(1)*np.NaN))/2.</span>
+<span class="c"># d2u=np.concatenate((np.ones(1)*np.NaN,</span>
+<span class="c"># (du[2:]-du[:-2])/2.,np.ones(1)*np.NaN))/2.</span>
+
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="kn">import</span> <span class="nn">adv</span> <span class="kn">as</span> <span class="nn">avm</span>
+    <span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="n">figure</span><span class="p">,</span> <span class="n">clf</span><span class="p">,</span> <span class="n">plot</span>
+    <span class="k">if</span> <span class="s">&#39;dat&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">():</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">avm</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="s">&#39;/home/lkilcher/data/ttm_dem_june2012/TTM_Vectors/TTM_NRELvector_Jun2012.h5&#39;</span><span class="p">)</span>
+        <span class="n">uorig</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">vorig</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">worig</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">w</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">bds</span> <span class="o">=</span> <span class="n">rangeLimit</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c"># | spikeThresh(dat.u,0.5)</span>
+        <span class="c"># bds=rangeLimit(dat.v,[-1.5,1])# | spikeThresh(dat.u,0.5)</span>
+        <span class="c"># bds=rangeLimit(dat.w,[-2.5,1])# | spikeThresh(dat.u,0.5)</span>
+        <span class="n">dat</span><span class="o">.</span><span class="n">u</span><span class="p">[</span><span class="n">bds</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+        <span class="n">fillgaps</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">610000</span><span class="p">,</span> <span class="mi">5886900</span><span class="p">)</span>
+        <span class="n">newd</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">rng</span><span class="p">)</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">2150000</span><span class="p">,</span> <span class="mi">2160000</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">2151290</span><span class="p">,</span> <span class="mi">2151310</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">bds</span> <span class="o">=</span> <span class="n">GN2002</span><span class="p">(</span><span class="n">newd</span><span class="o">.</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">bds</span> <span class="o">=</span> <span class="n">GN2002</span><span class="p">(</span><span class="n">newd</span><span class="o">.</span><span class="n">w</span><span class="p">)</span>
+
+    <span class="c"># figure(2)</span>
+    <span class="c"># clf()</span>
+    <span class="c"># plot(uorig[inds],&#39;ko&#39;)</span>
+    <span class="c"># plot(dat.u[inds])</span>
+    <span class="c"># plot(dat.v[inds])</span>
+    <span class="c"># plot(dat.w[inds])</span>
+    <span class="c"># plot(du[inds])</span>
+    <span class="c"># plot(du[1:][inds])</span>
+
+    <span class="n">inds</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">figure</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">clf</span><span class="p">()</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">uorig</span><span class="p">[</span><span class="n">rng</span><span class="p">][</span><span class="n">inds</span><span class="p">],</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">newd</span><span class="o">.</span><span class="n">u</span><span class="p">[</span><span class="n">inds</span><span class="p">],</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">worig</span><span class="p">[</span><span class="n">rng</span><span class="p">][</span><span class="n">inds</span><span class="p">],</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">plot</span><span class="p">(</span><span class="n">newd</span><span class="o">.</span><span class="n">w</span><span class="p">[</span><span class="n">inds</span><span class="p">],</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+    <span class="c"># plot(newd.u[inds])</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

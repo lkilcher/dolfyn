@@ -1,0 +1,736 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dolfyn.io.hdf5 &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.io.hdf5</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module uses the h5py (HDF5) package to read and write numpy</span>
+<span class="sd">arrays to disk.</span>
+
+<span class="sd">See the h5py and HDF5 documentation for further info on the details of</span>
+<span class="sd">this approach.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">h5py</span> <span class="kn">as</span> <span class="nn">h5</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">DataFactory</span>
+<span class="kn">from</span> <span class="nn">..data.base</span> <span class="kn">import</span> <span class="n">Dgroups</span><span class="p">,</span> <span class="n">ma</span><span class="p">,</span> <span class="n">config</span>
+<span class="kn">from</span> <span class="nn">..data.time</span> <span class="kn">import</span> <span class="n">time_array</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">string_types</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">_version</span> <span class="k">as</span> <span class="n">_ver</span>
+
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">pickle</span> <span class="kn">as</span> <span class="nn">pkl</span>
+
+    <span class="k">def</span> <span class="nf">pkl_loads</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pkl</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pkl</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">&#39;bytes&#39;</span><span class="p">)</span>
+
+<span class="k">else</span><span class="p">:</span>  <span class="c"># Python 2</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="nb">raw_input</span>
+    <span class="kn">import</span> <span class="nn">cPickle</span> <span class="kn">as</span> <span class="nn">pkl</span>
+
+<div class="viewcode-block" id="pkl_loads"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.pkl_loads">[docs]</a>    <span class="k">def</span> <span class="nf">pkl_loads</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pkl</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Saver"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Saver">[docs]</a><span class="k">class</span> <span class="nc">Saver</span><span class="p">(</span><span class="n">DataFactory</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A save data_factory object.  This class saves data in DOLFYN</span>
+<span class="sd">    classes into DOLFYN format hdf5 files.</span>
+
+<span class="sd">    This function should not be used explicitly, instead use the</span>
+<span class="sd">    :meth:`main.Saveable.save` method of the data object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    filename : string</span>
+<span class="sd">        Name of fale to save to.</span>
+
+<span class="sd">    mode     : string</span>
+<span class="sd">        File access mode.  Should be &#39;w&#39; (default) or &#39;a&#39;.</span>
+
+<span class="sd">    where    : string</span>
+<span class="sd">        Location in hdf5 file to save the data (default: &#39;/&#39;)</span>
+
+<span class="sd">    max_file_size : int</span>
+<span class="sd">      option does not currently work.</span>
+
+<span class="sd">    See also:</span>
+<span class="sd">    - file</span>
+<span class="sd">    - h5py</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ver</span> <span class="o">=</span> <span class="n">_ver</span><span class="o">.</span><span class="n">version_info</span>
+
+    <span class="n">fletcher32</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">complib</span> <span class="o">=</span> <span class="s">&#39;gzip&#39;</span>
+    <span class="n">complevel</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">shuffle</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">split_groups_into_files</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="c"># Right now, this isn&#39;t working, I think it is a bug in h5py.</span>
+    <span class="c"># Perhaps later this will work, and it should be pretty</span>
+    <span class="c"># transparent.</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;w&#39;</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">max_file_size_mb</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="c"># This does an &#39;expanduser&#39; on the filename (i.e. &#39;~/&#39;</span>
+        <span class="c"># replaced with &#39;/home/&lt;username&gt;/&#39;).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">max_file_size_mb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;driver&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;family&#39;</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;memb_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_file_size_mb</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span><span class="p">)</span>
+            <span class="c"># Need to modify the filename to include a %d character.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">close</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;DataSaveVersion&#39;</span><span class="p">,</span> <span class="n">pkl</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">_ver</span><span class="o">.</span><span class="n">ver2tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ver</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extrafiles</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Saver.get_group"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Saver.get_group">[docs]</a>    <span class="k">def</span> <span class="nf">get_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nosplit</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        An internal function for returning the current, or a specified</span>
+<span class="sd">        node in the hdf5 file.</span>
+
+<span class="sd">        Return the h5py node at location `where`, `where` can be:</span>
+<span class="sd">        - a string indicating a location in the hdf5 file,</span>
+<span class="sd">        - a node in the hdf5 file (returns this node)</span>
+<span class="sd">        - None, in which case, the current value of self.node is returned.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">where</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span>
+        <span class="k">elif</span> <span class="n">where</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">h5</span><span class="o">.</span><span class="n">Group</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">where</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_groups_into_files</span> <span class="ow">and</span> <span class="n">where</span> <span class="o">!=</span> <span class="s">&#39;/&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">nosplit</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">fname</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+                    <span class="n">grpname</span> <span class="o">=</span> <span class="n">where</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.h5&#39;</span><span class="p">):</span>
+                        <span class="n">fname</span> <span class="o">=</span> <span class="n">fname</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">grpname</span> <span class="o">+</span> <span class="s">&#39;.h5&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">fname</span> <span class="o">+=</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">grpname</span>
+                    <span class="n">thisgroup_file</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_mode</span><span class="p">)</span>
+                    <span class="n">thisgroup_file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s">&#39;data&#39;</span><span class="p">)</span>
+                    <span class="n">thisgroup_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="p">[</span><span class="n">where</span><span class="p">]</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">ExternalLink</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s">&#39;/data&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">require_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Not a valid group specification&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Saver.write_type"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Saver.write_type">[docs]</a>    <span class="k">def</span> <span class="nf">write_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the type of the object being saved to the hdf5 file.</span>
+<span class="sd">        This allows for automatic loading of a file into a specific</span>
+<span class="sd">        DOLfYN class.</span>
+
+<span class="sd">        When a file is loaded, a dict of string:class (key:val) pairs</span>
+<span class="sd">        should be provided to the &#39;loader&#39; data_factory.  The string</span>
+<span class="sd">        (key) that matches the value of the file&#39;s &#39;_object_type&#39;</span>
+<span class="sd">        attribute is chosen.  The corresponding class (value) is then</span>
+<span class="sd">        instanced and data is loaded into it according to the DOLfYN</span>
+<span class="sd">        specification.</span>
+
+<span class="sd">        This function writes the &#39;_object_type&#39; from the current</span>
+<span class="sd">        DOLfYN instance to the file so that it can be loaded later.</span>
+
+<span class="sd">        See also:</span>
+<span class="sd">        - loader.read_type</span>
+<span class="sd">        - get_typemap</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;_object_type&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">config_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;*UNKNOWN*&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;_config_type&#39;</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">config_type</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Saver.write_dict"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Saver.write_dict">[docs]</a>    <span class="k">def</span> <span class="nf">write_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This is a method for writing simple dictionaries.</span>
+
+<span class="sd">        It writes the dictionary as attributes in a group.  The keys</span>
+<span class="sd">        are written as attribute names (only string keys are allowed).</span>
+<span class="sd">        The values are pickled and written to the attribute value.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        name   : string</span>
+<span class="sd">          name of the dictionary to be written (hdf5 group to create).</span>
+<span class="sd">        dct    : dict</span>
+<span class="sd">          The dictionary who&#39;s data should be saved.</span>
+<span class="sd">        where  : string</span>
+<span class="sd">          The location to write `dct` (a Group named `name` will be</span>
+<span class="sd">          created at this location).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">require_group</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ky</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dct</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">tmp</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">pkl</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Saver.write"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Saver.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">nosplit_file</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write data in object `obj` to the file at location `where`.</span>
+<span class="sd">        `obj` should be a DOLfYN type object; a subclass of the</span>
+<span class="sd">        Dgroups class.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        obj    - data_boject</span>
+<span class="sd">          The object to write to the file.</span>
+<span class="sd">        where  - string</span>
+<span class="sd">          The location in the file to write the data in the object</span>
+<span class="sd">          (default: &#39;/&#39;)</span>
+<span class="sd">        nosplit_file  - bool</span>
+<span class="sd">          Currently non-functional, for writing data to multiple files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_type</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>  <span class="c"># Write the data type.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;props&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_dict</span><span class="p">(</span><span class="s">&#39;##properties##&#39;</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">props</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+                            <span class="c"># Write the &#39;props&#39; attribute, if the data has one.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;_units&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_dict</span><span class="p">(</span><span class="s">&#39;##units##&#39;</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">_units</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+                            <span class="c"># Write the &#39;units&#39; property if the data has it</span>
+                            <span class="c"># (this has been deprecated in the DOLfYN standard,</span>
+                            <span class="c"># in favor of meta arrays).</span>
+        <span class="c"># iterate over the group names:</span>
+        <span class="k">for</span> <span class="n">grp_nm</span><span class="p">,</span> <span class="n">dat_nms</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">grp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">grp_nm</span><span class="p">,</span> <span class="n">nosplit</span><span class="o">=</span><span class="n">nosplit_file</span><span class="p">)</span>
+                                <span class="c"># Create or get the group specified.</span>
+            <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">dat_nms</span><span class="p">:</span>  <span class="c"># Iterate over the data names in the group.</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ky</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ky</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;unicode&#39;</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;S&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">Dgroups</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__mro__</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">val</span><span class="p">,</span>
+                               <span class="n">where</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">grp_nm</span> <span class="o">+</span> <span class="s">&#39;/_&#39;</span> <span class="o">+</span> <span class="n">ky</span><span class="p">,</span>
+                               <span class="n">nosplit_file</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">nd</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ky</span><span class="p">),</span>
+                                            <span class="n">data</span><span class="o">=</span><span class="n">val</span><span class="p">,</span>
+                                            <span class="n">compression</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">complib</span><span class="p">,</span>
+                                            <span class="n">shuffle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shuffle</span><span class="p">,</span>
+                                            <span class="n">fletcher32</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fletcher32</span><span class="p">,)</span>
+                    <span class="k">for</span> <span class="n">kw</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                        <span class="k">if</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                            <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">kw</span><span class="p">),</span> <span class="n">d</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+
+                    <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">time_array</span><span class="p">:</span>
+                        <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s">&#39;time_var&#39;</span><span class="p">,</span> <span class="s">&#39;True&#39;</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">:</span>
+                        <span class="n">nd</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ky</span><span class="p">))</span>
+                        <span class="c"># print( &#39;writing meta data for %s&#39; % ky )</span>
+                        <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                            <span class="k">if</span> <span class="n">nm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;xformat&#39;</span><span class="p">,</span> <span class="s">&#39;yformat&#39;</span><span class="p">]:</span>
+                                <span class="c"># print( nm,val )</span>
+                                <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">pkl</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+
+                <span class="k">elif</span> <span class="n">val</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                    <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">pkl</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">pkl</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+
+
+<span class="c"># class UpdateTool(DataFactory):</span>
+
+<span class="c"># &quot;&quot;&quot;</span>
+<span class="c"># A class for updating data files when the format specification</span>
+<span class="c"># changes.</span>
+<span class="c"># &quot;&quot;&quot;</span>
+
+<span class="c"># def __init__(self, filename, )</span>
+<span class="c"># self.file_mode = mode</span>
+<span class="c"># This does an &#39;expanduser&#39; on the filename (i.e. &#39;~/&#39;</span>
+<span class="c"># replaced with &#39;/home/&lt;username&gt;/&#39;).</span>
+<span class="c"># self.filename = filename</span>
+<span class="c"># kwargs = {}</span>
+<span class="c"># if max_file_size_mb is not None:</span>
+<span class="c"># kwargs[&#39;driver&#39;] = &#39;family&#39;</span>
+<span class="c"># kwargs[&#39;memb_size&#39;] = max_file_size_mb * (2 ** 20)</span>
+<span class="c"># Need to modify the filename to include a %d character.</span>
+<span class="c"># self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)</span>
+<span class="c"># self.close = self.fd.close</span>
+<span class="c"># self.node = self.fd.get(&#39;/&#39;)</span>
+<span class="c"># self.node.attrs.create(&#39;DataSaveVersion&#39;, pkl.dumps(self.ver))</span>
+<span class="c"># self._extrafiles = []</span>
+
+<span class="c"># def change_type_name(self, oldname, newname):</span>
+<span class="c"># self.get_group(where).attrs.create(&#39;_object_type&#39;,</span>
+<span class="c"># str(obj.__class__))</span>
+
+</div></div>
+<div class="viewcode-block" id="Loader"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader">[docs]</a><span class="k">class</span> <span class="nc">Loader</span><span class="p">(</span><span class="n">DataFactory</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A save data_factory object.  This class saves data in DOLFYN</span>
+<span class="sd">    classes into DOLFYN format hdf5 files.</span>
+
+<span class="sd">    This function should not be used explicitly, instead use the</span>
+<span class="sd">    :meth:`main.Saveable.save` method of the data object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    filename : string</span>
+<span class="sd">        Name of fale to save to.</span>
+<span class="sd">    type_map : (dict, type)</span>
+<span class="sd">      A mapping of class strings to types (or a specific type) that</span>
+<span class="sd">      the data should be loaded into.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">type_map</span><span class="p">,):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;r+&#39;</span><span class="p">)</span>
+                          <span class="c"># Open the file r+ so that we can modify it on the</span>
+                          <span class="c"># fly if necessary (e.g. _fix_name)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">close</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span> <span class="o">=</span> <span class="n">type_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">=</span> <span class="n">_ver</span><span class="o">.</span><span class="n">ver2tuple</span><span class="p">(</span><span class="n">pkl</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;DataSaveVersion&#39;</span><span class="p">,</span> <span class="s">&#39;I0</span><span class="se">\n</span><span class="s">.&#39;</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="Loader.get_group"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.get_group">[docs]</a>    <span class="k">def</span> <span class="nf">get_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If `where` is:</span>
+<span class="sd">        - None: return the current node.</span>
+<span class="sd">        - string: return the node at that address.</span>
+<span class="sd">        - otherwise return `where` itself.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">where</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">where</span>
+</div>
+<div class="viewcode-block" id="Loader.get_name"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.get_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the name of the `node`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Loader.iter_data"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.iter_data">[docs]</a>    <span class="k">def</span> <span class="nf">iter_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over data nodes in `groups`.</span>
+
+<span class="sd">        See iter_groups for more info on how to specify groups.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">grp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_groups</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">grp</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="k">yield</span> <span class="n">nd</span>
+</div>
+<div class="viewcode-block" id="Loader.iter"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.iter">[docs]</a>    <span class="k">def</span> <span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over data nodes in `groups`, with the group name returned.</span>
+
+<span class="sd">        See iter_groups for more info on how to specify groups.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">grp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_groups</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">grp</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="k">yield</span> <span class="n">nd</span><span class="p">,</span> <span class="n">grp</span>
+</div>
+    <span class="n">__iter__</span> <span class="o">=</span> <span class="nb">iter</span>
+
+<div class="viewcode-block" id="Loader.iter_attrs"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.iter_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">iter_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over the attributes in `groups`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">grp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_groups</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">attnm</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span>
+                         <span class="n">attnm</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;_properties&#39;</span><span class="p">,</span> <span class="s">&#39;_units&#39;</span><span class="p">])</span> <span class="ow">or</span>
+                        <span class="p">(</span><span class="n">attnm</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;##&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">attnm</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;##&#39;</span><span class="p">))):</span>
+                    <span class="c"># Skip the &quot;_properties&quot; attribute, if it exists.</span>
+                    <span class="k">yield</span> <span class="n">grp</span><span class="p">,</span> <span class="n">attnm</span>
+</div>
+<div class="viewcode-block" id="Loader.read_attrs"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.read_attrs">[docs]</a>    <span class="k">def</span> <span class="nf">read_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the attributes in `groups` and add them to `out`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">grp</span><span class="p">,</span> <span class="n">attnm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_attrs</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">):</span>
+            <span class="n">dat</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attnm</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dat</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">attnm</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">grp</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="Loader.read_props"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.read_props">[docs]</a>    <span class="k">def</span> <span class="nf">read_props</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">where</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the `props` attribute (:class:`Dprops</span>
+<span class="sd">        &lt;dolfyn.data.base.Dprops&gt;`) class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">propsstr</span> <span class="o">=</span> <span class="s">&#39;##properties##&#39;</span>
+            <span class="n">unitsstr</span> <span class="o">=</span> <span class="s">&#39;##units##&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">propsstr</span> <span class="o">=</span> <span class="s">&#39;_properties&#39;</span>
+            <span class="n">unitsstr</span> <span class="o">=</span> <span class="s">&#39;_units&#39;</span>
+        <span class="k">if</span> <span class="n">propsstr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_dict</span><span class="p">(</span><span class="n">where</span> <span class="o">+</span> <span class="s">&quot;/&quot;</span> <span class="o">+</span> <span class="n">propsstr</span><span class="p">)</span>
+        <span class="c"># if unitsstr in self.get_group(where).keys():</span>
+        <span class="c"># print( 1 )</span>
+        <span class="c"># out._units=self.read_dict(where+&quot;/&quot;+unitsstr)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_fix_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nd</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This is a hook for when the data class definition changes such</span>
+<span class="sd">        that a data attribute can not be written to the data container</span>
+<span class="sd">        (object). i.e. when an data attribute is changed to be a</span>
+<span class="sd">        read-only property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="nb">input</span><span class="p">((</span>
+            <span class="sd">&quot;&quot;&quot;The name &#39;%s&#39; cannot be written to the input.  Do you wish to:</span>
+<span class="sd">        a) move the data in the file?</span>
+<span class="sd">        b) specify a different attribute to assign the data to?</span>
+<span class="sd">        c) skip the attribute (default)?</span>
+<span class="sd">        &quot;&quot;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="k">if</span> <span class="n">var</span> <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">:</span>
+            <span class="n">newnm</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s">&quot;What name shall the data be reassigned to?&quot;</span><span class="p">)</span>
+            <span class="n">grpnm</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">grp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">grpnm</span><span class="p">)</span>
+            <span class="n">grp</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">grpnm</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">newnm</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">nd</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">grpnm</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">newnm</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">var</span> <span class="o">==</span> <span class="s">&#39;b&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">input</span><span class="p">(</span><span class="s">&quot;What shall the attribute be called?&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="Loader.mmload"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.mmload">[docs]</a>    <span class="k">def</span> <span class="nf">mmload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">add_closemethod</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the data in `groups` as memory-mapped arrays.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+
+<span class="sd">        h5py memory mapped arrays.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closefile</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_object</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">__preload__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_props</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">add_closemethod</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">_fileobject</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">close</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fd</span><span class="o">.</span><span class="n">close</span>
+        <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_data</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s">&#39;_object_type&#39;</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">mmload</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="n">nd</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                         <span class="n">add_closemethod</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="s">&#39;read_direct&#39;</span><span class="p">):</span>
+                <span class="n">nm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="p">)</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">nd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nm</span> <span class="o">==</span> <span class="s">&#39;mpltime&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+                    <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;time_var&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;True&#39;</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_attrs</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="Loader.load"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the data in `groups` into memory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closefile</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_object</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">__preload__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_props</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_data</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s">&#39;_object_type&#39;</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+                    <span class="n">where</span><span class="o">=</span><span class="n">nd</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="s">&#39;read_direct&#39;</span><span class="p">):</span>
+                <span class="n">nm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="p">)</span>
+                <span class="n">dtype</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">dtype</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+                <span class="c"># This puts the data in the output object:</span>
+                <span class="n">nd</span><span class="o">.</span><span class="n">read_direct</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">nd</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span> <span class="o">==</span> <span class="s">&#39;S&#39;</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="c"># This catches a bug in Python3 when reading string arrays</span>
+                    <span class="c"># (converts bytes to unicode)</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;&lt;U&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nm</span> <span class="o">==</span> <span class="s">&#39;mpltime&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+                        <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;time_var&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;True&#39;</span><span class="p">:</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">time_array</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">==</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="s">&#39;_label&#39;</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                        <span class="c"># This is a deprecated file structure.</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span>
+                                <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span>
+                                          <span class="n">meta</span><span class="o">=</span><span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span>
+                                              <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_label&#39;</span><span class="p">),</span>
+                                              <span class="n">pkl_loads</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_units&#39;</span><span class="p">))</span>
+                                <span class="p">)))</span>
+                    <span class="k">if</span> <span class="s">&#39;label&#39;</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                        <span class="n">s</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;units&#39;</span><span class="p">)</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">u</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                            <span class="c"># This is to catch a redefinition of data objects.</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">u</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span>
+                                    <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;cdata_base&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;cdata&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;unitsDict&#39;</span><span class="p">,</span>
+                                                               <span class="s">&#39;dict&#39;</span><span class="p">))</span>
+                            <span class="k">except</span><span class="p">:</span>
+                                <span class="n">u</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span>
+                                    <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;cdata_base&#39;</span><span class="p">,</span> <span class="s">&#39;cdata.marray&#39;</span><span class="p">))</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span>
+                                <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span>
+                                          <span class="n">meta</span><span class="o">=</span><span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span>
+                                              <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;label&#39;</span><span class="p">),</span>
+                                              <span class="n">u</span><span class="p">,</span>
+                                              <span class="n">pkl_loads</span><span class="p">(</span>
+                                                  <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;dim_names&#39;</span><span class="p">))</span>
+                                          <span class="p">)</span>
+                                          <span class="p">)</span>
+                                <span class="p">)</span>
+                <span class="k">elif</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s">&#39;_name&#39;</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                        <span class="c"># Confirm this is a meta array</span>
+                        <span class="n">s</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_units&#39;</span><span class="p">)</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">u</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                            <span class="c"># This is to catch a redefinition of data objects.</span>
+                            <span class="n">u</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;cdata_base&#39;</span><span class="p">,</span> <span class="s">&#39;cdata&#39;</span><span class="p">))</span>
+                        <span class="n">meta</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span><span class="n">pkl_loads</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_name&#39;</span><span class="p">)),</span>
+                                          <span class="n">u</span><span class="p">,</span>
+                                          <span class="n">pkl_loads</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;dim_names&#39;</span><span class="p">))</span>
+                                          <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">atnm</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">atnm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;_name&#39;</span><span class="p">,</span> <span class="s">&#39;_units&#39;</span><span class="p">,</span> <span class="s">&#39;dim_names&#39;</span><span class="p">]:</span>
+                                <span class="nb">setattr</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">atnm</span><span class="p">,</span> <span class="n">pkl_loads</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">atnm</span><span class="p">)))</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_attrs</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_compat</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">__postload__</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+</div>
+    <span class="k">def</span> <span class="nf">_check_compat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">old_name</span><span class="p">,</span> <span class="n">new_name</span> <span class="ow">in</span> <span class="p">[(</span><span class="s">&#39;_u&#39;</span><span class="p">,</span> <span class="s">&#39;vel&#39;</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s">&#39;_corr&#39;</span><span class="p">,</span> <span class="s">&#39;corr&#39;</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s">&#39;_amp&#39;</span><span class="p">,</span> <span class="s">&#39;amp&#39;</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s">&#39;urot&#39;</span><span class="p">,</span> <span class="s">&#39;velrot&#39;</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s">&#39;uacc&#39;</span><span class="p">,</span> <span class="s">&#39;velacc&#39;</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="s">&#39;_tke&#39;</span><span class="p">,</span> <span class="s">&#39;tke_vec&#39;</span><span class="p">),</span> <span class="p">]:</span>
+                <span class="k">if</span> <span class="n">old_name</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">data_names</span><span class="p">:</span>
+                    <span class="n">g</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">old_name</span><span class="p">)</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">new_name</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">pop_data</span><span class="p">(</span><span class="n">old_name</span><span class="p">),</span> <span class="n">g</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s">&#39;props&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">old_name</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;rotate_vars&#39;</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;rotate_vars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">old_name</span><span class="p">)</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;rotate_vars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Loader.read_dict"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.read_dict">[docs]</a>    <span class="k">def</span> <span class="nf">read_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read a dictionary object at `where`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">prpnm</span><span class="p">,</span> <span class="n">prp</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">prpnm</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkl_loads</span><span class="p">(</span><span class="n">prp</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">prpnm</span><span class="p">]</span> <span class="o">=</span> <span class="n">prp</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="Loader.read_type"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.read_type">[docs]</a>    <span class="k">def</span> <span class="nf">read_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the type of object at `where`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&#39;_object_type&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Old style data file, trying to load...&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&#39;object_type&#39;</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Loader.init_object"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.init_object">[docs]</a>    <span class="k">def</span> <span class="nf">init_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look at the &#39;object_type&#39; attribute in the node at `where`.</span>
+
+<span class="sd">        Return an attribute of the data type based on type_map.</span>
+
+<span class="sd">        If the type_map does not have a key of the type found in the file,</span>
+<span class="sd">        the basic type is used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="n">typestr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_type</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">typestr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="p">[</span><span class="n">typestr</span><span class="p">]()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">typestr</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;config&#39;&gt;&quot;</span><span class="p">):</span>
+                        <span class="c"># This is a catch for deleted module-specific config</span>
+                        <span class="c"># objects</span>
+                        <span class="n">out</span> <span class="o">=</span> <span class="n">config</span><span class="p">()</span>
+                        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="s">&#39;_config_type&#39;</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                            <span class="n">out</span><span class="o">.</span><span class="n">config_type</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_config_type&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="p">[</span><span class="n">typestr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&quot;&#39;&gt;&quot;</span><span class="p">)]()</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="p">:</span>
+                                <span class="c">#print(ky)</span>
+                                <span class="k">if</span> <span class="n">ky</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">typestr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                                    <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="p">[</span><span class="n">ky</span><span class="p">]()</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c"># Then it is a type itself.</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_map</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+</div>
+<div class="viewcode-block" id="Loader.iter_groups"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.hdf5.Loader.iter_groups">[docs]</a>    <span class="k">def</span> <span class="nf">iter_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">no_essential</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an iterator of the groups in `groups`.</span>
+<span class="sd">        Here is how `groups` specification works:</span>
+
+<span class="sd">        +-------------+-----------------------------------------------+</span>
+<span class="sd">        | `groups`    |   Result                                      |</span>
+<span class="sd">        +=============+===============================================+</span>
+<span class="sd">        | None        |  (default) Return iterator for &#39;default&#39;      |</span>
+<span class="sd">        |             |  groups (those not starting with &#39;#&#39; or &#39;/&#39;.) |</span>
+<span class="sd">        +-------------+-----------------------------------------------+</span>
+<span class="sd">        | [&lt;a list&gt;]  |  Iterates over the groups in the list (plus   |</span>
+<span class="sd">        |             |  the data in &#39;essential&#39; groups, ie those     |</span>
+<span class="sd">        |             |  starting with &#39;_&#39;\*\*\*).                    |</span>
+<span class="sd">        +-------------+-----------------------------------------------+</span>
+<span class="sd">        | &#39;ALL&#39;       |  Iterates over all the data in the file.      |</span>
+<span class="sd">        +-------------+-----------------------------------------------+</span>
+
+<span class="sd">        \*\*\*: Unless no_essential=True</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">grp</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">where</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">grp</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">h5</span><span class="o">.</span><span class="n">highlevel</span><span class="o">.</span><span class="n">Group</span><span class="p">:</span>
+                <span class="n">gnm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">groups</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">gnm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;#&#39;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">]</span> <span class="ow">or</span>
+                            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gnm</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;_properties&#39;</span><span class="p">,</span>
+                                                               <span class="s">&#39;_units&#39;</span><span class="p">])):</span>
+                        <span class="k">yield</span> <span class="n">grp</span>
+
+                <span class="k">elif</span> <span class="n">groups</span> <span class="o">==</span> <span class="s">&#39;ALL&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">gnm</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;##&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gnm</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;##&#39;</span><span class="p">))</span> <span class="ow">or</span>
+                            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ver</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gnm</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;_properties&#39;</span><span class="p">,</span>
+                                                               <span class="s">&#39;_units&#39;</span><span class="p">])):</span>
+                        <span class="k">yield</span> <span class="n">grp</span>
+
+                <span class="k">elif</span> <span class="n">gnm</span> <span class="ow">in</span> <span class="n">groups</span> <span class="ow">or</span> <span class="p">(</span><span class="n">gnm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;_&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">no_essential</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">grp</span>
+
+</div></div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c"># filename=&#39;/home/lkilcher/data/eastriver/advb_10m_6_09.h5&#39;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;/home/lkilcher/data/ttm_dem_june2012/TTM_Vectors/TTM_NRELvector_Jun2012_b5m.h5&#39;</span>
+    <span class="kn">import</span> <span class="nn">adv</span>
+    <span class="n">ldr</span> <span class="o">=</span> <span class="n">loader</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">adv</span><span class="o">.</span><span class="n">type_map</span><span class="p">)</span>
+    <span class="n">dat</span> <span class="o">=</span> <span class="n">ldr</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

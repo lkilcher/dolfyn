@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dolfyn.data.spec &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.data.spec</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">Dgroups</span><span class="p">,</span> <span class="n">np</span><span class="p">,</span> <span class="n">oset</span><span class="p">,</span> <span class="n">ma</span>
+
+
+<span class="c"># In general, these are not savable objects (for now?).</span>
+<div class="viewcode-block" id="specobj"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.specobj">[docs]</a><span class="k">class</span> <span class="nc">specobj</span><span class="p">(</span><span class="n">Dgroups</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_data_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;__data_groups__&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__data_groups__</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s">&#39;spec&#39;</span><span class="p">:</span> <span class="n">oset</span><span class="p">([</span><span class="s">&#39;Suu&#39;</span><span class="p">,</span> <span class="s">&#39;Svv&#39;</span><span class="p">,</span> <span class="s">&#39;Sww&#39;</span><span class="p">]),</span>
+                <span class="s">&#39;_essential&#39;</span><span class="p">:</span> <span class="n">oset</span><span class="p">([</span><span class="s">&#39;freq&#39;</span><span class="p">])</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__data_groups__</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ind</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">)[</span><span class="n">ind</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span>
+
+<div class="viewcode-block" id="specobj.iter4axgroup"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.specobj.iter4axgroup">[docs]</a>    <span class="k">def</span> <span class="nf">iter4axgroup</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">dat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_wd</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="n">dat</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">dat</span><span class="o">.</span><span class="n">getax</span><span class="p">(</span><span class="s">&#39;freq&#39;</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">specvars</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="c"># if not self._data_groups.has_key(&#39;spec&#39;):</span>
+        <span class="c">#    self._data_groups[&#39;spec&#39;]=oset([&#39;Suu&#39;,&#39;Svv&#39;,&#39;Sww&#39;])</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_groups</span><span class="p">[</span><span class="s">&#39;spec&#39;</span><span class="p">])</span>
+
+    <span class="nd">@specvars.setter</span>
+    <span class="k">def</span> <span class="nf">specvars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_groups</span><span class="p">[</span><span class="s">&#39;spec&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">oset</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span> <span class="o">/</span> <span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">__isub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">-=</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">+=</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span> <span class="o">**</span> <span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">specobj</span><span class="p">:</span>
+                <span class="n">sdat</span><span class="p">,</span> <span class="n">odat</span><span class="p">,</span> <span class="n">dims</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">matchdims</span><span class="p">(</span><span class="n">other</span><span class="p">[</span><span class="n">nm</span><span class="p">])</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="n">sdat</span> <span class="o">*</span> <span class="n">odat</span><span class="p">)</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span> <span class="o">=</span> <span class="n">dims</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span> <span class="o">*</span> <span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="specobj.trapz"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.specobj.trapz">[docs]</a>    <span class="k">def</span> <span class="nf">trapz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inds</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">inds</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="p">{</span><span class="n">nm</span><span class="p">:</span> <span class="n">inds</span> <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">}</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="n">dims</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">getax</span><span class="p">(</span><span class="s">&#39;freq&#39;</span><span class="p">)</span>
+            <span class="n">dims</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">][</span><span class="o">...</span><span class="p">,</span> <span class="n">inds</span><span class="p">[</span><span class="n">nm</span><span class="p">]],</span> <span class="n">out</span><span class="o">.</span><span class="n">freq</span><span class="p">[</span><span class="n">inds</span><span class="p">[</span><span class="n">nm</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span> <span class="o">=</span> <span class="n">dims</span>
+        <span class="k">return</span> <span class="n">out</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">iter_wd</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">nm</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&quot;&lt;specobj: &quot;</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specvars</span><span class="p">)</span> <span class="o">*</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">, &#39;</span> <span class="o">+</span> <span class="s">&#39;(</span><span class="si">%s</span><span class="s">)&gt;&#39;</span><span class="p">)</span> <span class="o">%</span> \
+            <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specvars</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+
+<div class="viewcode-block" id="specobj.mean"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.specobj.mean">[docs]</a>    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s">&#39;time&#39;</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">dat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_wd</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="n">dat</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+</div></div>
+<div class="viewcode-block" id="cohereobj"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.cohereobj">[docs]</a><span class="k">class</span> <span class="nc">cohereobj</span><span class="p">(</span><span class="n">specobj</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_data_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;__data_groups__&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__data_groups__</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s">&#39;spec&#39;</span><span class="p">:</span> <span class="n">oset</span><span class="p">([</span><span class="s">&#39;Coh_uu&#39;</span><span class="p">,</span> <span class="s">&#39;Coh_vv&#39;</span><span class="p">,</span> <span class="s">&#39;Coh_ww&#39;</span><span class="p">]),</span>
+                <span class="s">&#39;_essential&#39;</span><span class="p">:</span> <span class="n">oset</span><span class="p">([</span><span class="s">&#39;freq&#39;</span><span class="p">])</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__data_groups__</span>
+</div>
+<span class="n">rad_per_cyc</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span>
+    <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;hz&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="p">[]))</span>
+
+
+<div class="viewcode-block" id="specobj_hz2rad"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.specobj_hz2rad">[docs]</a><span class="k">def</span> <span class="nf">specobj_hz2rad</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">*=</span> <span class="n">rad_per_cyc</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">freq</span> <span class="o">*=</span> <span class="n">rad_per_cyc</span>
+    <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">:</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s">&#39;\omega&#39;</span>
+    <span class="k">return</span> <span class="n">obj</span>
+
+</div>
+<div class="viewcode-block" id="specobj_rad2hz"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.specobj_rad2hz">[docs]</a><span class="k">def</span> <span class="nf">specobj_rad2hz</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">*=</span> <span class="n">rad_per_cyc</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">freq</span> <span class="o">*=</span> <span class="n">rad_per_cyc</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">:</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s">&#39;f&#39;</span>
+    <span class="k">return</span> <span class="n">obj</span>
+
+</div>
+<div class="viewcode-block" id="denoise_specobj"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.denoise_specobj">[docs]</a><span class="k">def</span> <span class="nf">denoise_specobj</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">renoise</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">sgn</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">renoise</span><span class="p">:</span>
+        <span class="n">sgn</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="nb">dict</span> <span class="ow">in</span> <span class="n">vals</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__mro__</span><span class="p">:</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">vals</span><span class="p">[</span><span class="s">&#39;u&#39;</span><span class="p">],</span> <span class="n">vals</span><span class="p">[</span><span class="s">&#39;v&#39;</span><span class="p">],</span> <span class="n">vals</span><span class="p">[</span><span class="s">&#39;w&#39;</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="s">&#39;__len__&#39;</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">vals</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">vals</span> <span class="o">*=</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">specvars</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span> <span class="o">-</span> <span class="n">sgn</span> <span class="o">*</span> <span class="n">val</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">obj</span><span class="o">.</span><span class="n">freq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">obj</span>
+
+</div>
+<div class="viewcode-block" id="ind_specobj"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.ind_specobj">[docs]</a><span class="k">def</span> <span class="nf">ind_specobj</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">inds</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),</span> <span class="n">typeobj</span><span class="o">=</span><span class="n">specobj</span><span class="p">,</span>
+                <span class="n">names</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">freqvar</span><span class="o">=</span><span class="s">&#39;omega&#39;</span><span class="p">,</span> <span class="n">dflt_ax</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A specobj constructor.</span>
+
+<span class="sd">    The object *dat* must contain the attributes in *names*, and the *freqvar*.</span>
+
+<span class="sd">    It takes the indices from *dat* along the &quot;time&quot; axis to include in the</span>
+<span class="sd">    returned *specobj*.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">typeobj</span><span class="p">()</span>
+    <span class="n">tup</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="c"># This pulls the defaults from the chosen specobj.</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">specvars</span>
+        <span class="n">nms</span> <span class="o">=</span> <span class="n">names</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="n">tup</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">nms</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">indxs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+                <span class="n">nms</span> <span class="o">+=</span> <span class="p">[</span><span class="n">nm</span> <span class="o">+</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">idx</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nms</span> <span class="o">=</span> <span class="n">names</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">specvars</span> <span class="o">=</span> <span class="n">nms</span>
+
+    <span class="k">if</span> <span class="n">dflt_ax</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">dflt_ax</span> <span class="o">=</span> <span class="p">{</span><span class="n">nm</span><span class="p">:</span> <span class="n">dflt_ax</span> <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">specvars</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">in</span> <span class="n">inds</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__mro__</span> <span class="ow">and</span> <span class="n">inds</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s">&#39;bool&#39;</span><span class="p">:</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">inds</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">nmo</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">nms</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">freqvar</span> <span class="o">==</span> <span class="s">&#39;freq&#39;</span><span class="p">:</span>
+            <span class="n">nm</span> <span class="o">+=</span> <span class="s">&#39;_f&#39;</span>
+        <span class="k">if</span> <span class="n">tup</span><span class="p">:</span>
+            <span class="n">dnow</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="n">nm</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">nm</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">nm</span> <span class="o">=</span> <span class="n">nm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dnow</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="n">dnow</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">:</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">dnow</span><span class="o">.</span><span class="n">getax</span><span class="p">(</span><span class="s">&#39;time&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">dflt_ax</span><span class="p">[</span><span class="n">nmo</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">inds</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="nb">slice</span> <span class="ow">and</span> <span class="n">inds</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">nmo</span><span class="p">,</span> <span class="n">dnow</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">nmo</span><span class="p">,</span> <span class="n">dnow</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">inds</span><span class="p">,</span> <span class="n">ax</span><span class="p">))</span>
+
+    <span class="n">out</span><span class="o">.</span><span class="n">freq</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="n">freqvar</span><span class="p">]</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">_data_groups</span><span class="p">[</span><span class="s">&#39;_essential&#39;</span><span class="p">]</span> <span class="o">|=</span> <span class="p">[</span><span class="s">&#39;freq&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+</div>
+<div class="viewcode-block" id="mean_specobj"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.spec.mean_specobj">[docs]</a><span class="k">def</span> <span class="nf">mean_specobj</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">inds</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A specobj constructor, that returns an average over the *inds*.</span>
+
+<span class="sd">    See also:</span>
+<span class="sd">    ind_specobj</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">ind_specobj</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">del</span> <span class="n">a</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

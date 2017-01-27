@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Usage - Specific Cases &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="index.html" />
+    <link rel="next" title="Plotting Tools" href="plotting-tools.html" />
+    <link rel="prev" title="Usage" href="usage.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <span class="target" id="usage-specific"></span><div class="section" id="usage-specific-cases">
+<h1>Usage - Specific Cases<a class="headerlink" href="#usage-specific-cases" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="motion-correcting-imu-adv-measurements">
+<h2>Motion Correcting IMU-ADV measurements<a class="headerlink" href="#motion-correcting-imu-adv-measurements" title="Permalink to this headline">¶</a></h2>
+<p>The Nortek Vector ADV can be purchased with an Inertial Motion Unit
+(IMU) that measures the ADV motion. These measurements can be used to
+remove motion from ADV velocity measurements when the ADV is mounted
+on a moving platform (e.g. a mooring). This approach has been found to
+be effective for removing high-frequency motion from ADV measurements,
+but cannot remove low-frequency (<span class="math">\(\lesssim\)</span> 0.03Hz) motion
+because of bias-drift inherent in IMU accelerometer sensors that
+contaminates motion estimates at those frequencies.</p>
+<p>This documentation is designed to document the methods for performing
+motion correction of IMU-ADV measurements. The accuracy and
+applicability of these measurements is beyond the scope of this
+documentation (journal articles are forthcoming).</p>
+<div class="section" id="pre-deployment-requirements">
+<h3>Pre-Deployment Requirements<a class="headerlink" href="#pre-deployment-requirements" title="Permalink to this headline">¶</a></h3>
+<p>In order to perform motion correction the IMU-ADV must be assembled
+and configured correctly:</p>
+<ol class="arabic simple">
+<li>The ADV <em>head</em> must be rigidly connected to the ADV <em>body</em>
+(pressure case, which contains the IMU sensor).<ol class="loweralpha">
+<li>For fixed-head (fixed-stem) ADVs the body is rigidly connected
+to the body.</li>
+<li>For cable-head (cabled-probe) ADVs, a support structure must be
+constructed that rigidly connects the ADV body to the head.</li>
+</ol>
+</li>
+<li>The ADV software must be configured properly.  In the &#8216;Deployment
+Planning&#8217; frame of the Vector Nortek Software, be sure that:<ol class="loweralpha">
+<li>The IMU sensor is enabled (checkbox) and set to record <em>&#8216;dAng dVel Orient&#8217;</em>.</li>
+<li>The &#8216;Coordinate system&#8217; must be set to <em>&#8216;XYZ&#8217;</em>.</li>
+<li>It is recommended to set the ADV velocity range to ± <em>4 m/s</em>,
+or larger.</li>
+</ol>
+</li>
+<li>For cable-head ADVs be sure to record the position and orientation
+of the ADV head relative to the ADV body (Figure 1).</li>
+</ol>
+<div class="figure align-center" id="id5" style="width: 560px">
+<a class="reference internal image-reference" href="_images/adv_coord_sys3_warr.png"><img alt="ADV head and body coordinate systems." src="_images/adv_coord_sys3_warr.png" style="width: 531.0px; height: 466.8px;" /></a>
+<p class="caption"><span class="caption-text">Figure 1) Coordinate systems of the ADV body (magenta) and head
+(yellow). The <span class="math">\(\hat{x}^\mathrm{head}\)</span> -direction is known by
+the black-band around the transducer arm, and the
+<span class="math">\(\hat{x}^*\)</span> -direction is marked by a notch on the end-cap
+(indiscernible in the image). The cyan arrow indicates the
+body-to-head vector, <span class="math">\(\vec{\ell}_{head}^*\)</span> .  The perspective
+slightly distorts the fact that <span class="math">\(\hat{x}^\mathrm{head}
+\parallel - \hat{z}^*\)</span> , <span class="math">\(\hat{y}^\mathrm{head} \parallel
+-\hat{y}^*\)</span> , and <span class="math">\(\hat{z}^\mathrm{head} \parallel
+-\hat{x}^*\)</span> .</span></p>
+</div>
+</div>
+<div class="section" id="data-processing">
+<h3>Data processing<a class="headerlink" href="#data-processing" title="Permalink to this headline">¶</a></h3>
+<p>After making IMU-ADV measurements, the DOLfYN package can perform
+motion correction processing steps on the ADV data. There are two
+primary methods for going about this:</p>
+<ol class="arabic">
+<li><p class="first">Utilize the DOLfYN api perform motion-correction processing
+explicitly in Python:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">dolfyn.adv</span> <span class="kn">import</span> <span class="n">api</span> <span class="k">as</span> <span class="n">adv</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</pre></div>
+</div>
+<p>Load your data file, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">dat</span> <span class="o">=</span> <span class="n">adv</span><span class="o">.</span><span class="n">read_nortek</span><span class="p">(</span><span class="s">&#39;vector_data_imu01.vec&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then specify the position and orientation of the ADV head relative
+to the body. These must be specified as entries in the <code class="docutils literal"><span class="pre">props</span></code>
+attribute.  For a &#8216;fixed-head&#8217; Nortek Vector ADVs, the rotation
+matrix is the identity matrix and the position is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">dat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;body2head_vec&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.21</span><span class="p">])</span>  <span class="c"># in meters</span>
+
+<span class="n">dat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;body2head_rotmat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For a cable-head ADV, you must specify the position and orientation
+for your configuration. For example, the position and orientation
+of the ADV-head in Figure 1 is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">dat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;body2head_vec&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.48</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.07</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.27</span><span class="p">])</span>  <span class="c"># in meters</span>
+
+<span class="n">dat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;body2head_rotmat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                              <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                              <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],])</span>
+</pre></div>
+</div>
+<p>Now we call the &#8216;correct_motion&#8217; function to remove motion from adv
+object. A key input parameter to this function is the high-pass
+filter frequency that removes low-frequency bias drift from the IMU
+accelerometer signal (the default value is 0.033Hz, 30second
+period):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">adv</span><span class="o">.</span><span class="n">motion</span><span class="o">.</span><span class="n">correct_motion</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">accel_filtfreq</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span> <span class="c"># specify the filter frequency in Hz.</span>
+</pre></div>
+</div>
+<p>Your <code class="docutils literal"><span class="pre">dat</span></code> object is now motion corrected and it&#8217;s <code class="docutils literal"><span class="pre">.u</span></code>,
+<code class="docutils literal"><span class="pre">.v</span></code> and <code class="docutils literal"><span class="pre">.w</span></code> attributes are in an East, North and Up (ENU)
+coordinate system, respectively.  In fact, all vector quantities
+in <code class="docutils literal"><span class="pre">dat</span></code> are now in this ENU coordinate system.  See the
+documentation of the correct_motion function for more information.</p>
+</li>
+<li><p class="first">For users who want to perform motion correction with minimal Python
+scripting, the <strong>motcorrect_vector.py</strong> script can be used. So long as
+DOLfYN has been <a class="reference external" href="install">installed properly</a>, you can use this
+script from the command line in a directory which contains your
+data files.  By default it will write a Matlab file containing your
+motion-corrected ADV data in ENU coordinates.</p>
+<ol class="loweralpha">
+<li><p class="first">For fixed-head ADVs, the position and orientation of the head
+are known to the script so that all that is necessary is to
+call, for example<a class="footnote-reference" href="#prfxnote" id="id1">[1]</a>:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ python motcorrect_vector.py --fixed-head vector_data_imu01.vec
+</pre></div>
+</div>
+</li>
+<li><p class="first">For cable-head ADVs, you must specify the position and
+orientation of the head in a <em>.orient</em> file (the extension is
+not required).  These files are simply python scripts which
+define <code class="docutils literal"><span class="pre">ROTMAT</span></code> and <code class="docutils literal"><span class="pre">VEC</span></code> variables, for the head position
+and orientation in Figure 1 the &#8216;My_Vector.orient&#8217; file could be
+as simple as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">VEC</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.48</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.07</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.27</span><span class="p">]</span>  <span class="c"># in meters</span>
+
+<span class="n">ROTMAT</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+          <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],]</span>
+</pre></div>
+</div>
+<p>Examples of estimating ROTMAT for more complex orientations can
+be found in the <em>.orient</em> files found in the <a class="reference external" href="http://github.com/lkilcher/dolfyn/tree/master/examples/">examples directory</a> of the <a class="reference external" href="http://github.com/lkilcher/dolfyn/">dolfyn repository</a>.</p>
+<p>It is also possible to specify a magnetic declination in the
+<em>.orient</em> file. Magnetic declination (the direction of Magnetic
+North) is specified in degrees clockwise from True North. For
+example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DECLINATION</span> <span class="o">=</span> <span class="mf">16.3</span>
+</pre></div>
+</div>
+<p>By specifying the declination in this way, the data output by
+the motcorrect_vector.py script will be in an ENU coordinate
+system refeferenced to True North, rather than magnetic north
+(when the declination is not specified).  Values for declination
+can be obtained from a number of websites, e.g. <a class="reference external" href="http://www.ngdc.noaa.gov/geomag-web/">http://www.ngdc.noaa.gov/geomag-web/</a>.</p>
+<p>With the orientation file defined, you specify it on the command
+line using the <code class="docutils literal"><span class="pre">-O</span></code> flag<a class="footnote-reference" href="#prfxnote" id="id2">[1]</a>:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ python motcorrect_vector.py -O My_Vector.orient vector_data_imu01.vec
+</pre></div>
+</div>
+</li>
+</ol>
+<p>The motcorrect_vector.py script also allows the user to specify the
+<code class="docutils literal"><span class="pre">accel_filtfreq</span></code> using the <code class="docutils literal"><span class="pre">-f</span></code> flag.  Therefore, to use a
+filter frequency of 0.1Hz (as opposed to the default 0.033Hz), you
+could do<a class="footnote-reference" href="#prfxnote" id="id3">[1]</a>:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ python motcorrect_vector.py -O My_Vector.orient -f 0.1 vector_data_imu01.vec
+</pre></div>
+</div>
+<p>It is also possible to do motion correction of multiple data files
+at once, for example<a class="footnote-reference" href="#prfxnote" id="id4">[1]</a>:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ python motcorrect_vector.py --fixed-head vector_data_imu01.vec vector_data_imu02.vec
+</pre></div>
+</div>
+<p>In all of these cases the script will perform motion correction on
+the specified file and save the data in ENU coordinates, in Matlab
+format.  Happy motion-correcting!</p>
+</li>
+</ol>
+<table class="docutils footnote" frame="void" id="prfxnote" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>, <a class="fn-backref" href="#id3">3</a>, <a class="fn-backref" href="#id4">4</a>)</em> Calling <code class="docutils literal"><span class="pre">python</span></code> explicitly in the command line is
+probably only required on Windows platforms.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Usage - Specific Cases</a><ul>
+<li><a class="reference internal" href="#motion-correcting-imu-adv-measurements">Motion Correcting IMU-ADV measurements</a><ul>
+<li><a class="reference internal" href="#pre-deployment-requirements">Pre-Deployment Requirements</a></li>
+<li><a class="reference internal" href="#data-processing">Data processing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="usage.html" title="previous chapter">Usage</a></li>
+      <li>Next: <a href="plotting-tools.html" title="next chapter">Plotting Tools</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/usage-specific.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/usage-specific.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

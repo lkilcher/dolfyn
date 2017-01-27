@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Download and Install &mdash; DOLfYN 0.6.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.6.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="DOLfYN 0.6.0 documentation" href="index.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+    <link rel="prev" title="About" href="about.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="download-and-install">
+<span id="install"></span><h1>Download and Install<a class="headerlink" href="#download-and-install" title="Permalink to this headline">¶</a></h1>
+<p>DOLfYN can be installed in several different ways depending on your
+system.  On Windows I recommend getting PythonXY, because it comes
+with a functioning pip installation.</p>
+<p>If you are on a system with a working version of Python that includes
+pip, you can simply do:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ pip install dolfyn
+</pre></div>
+</div>
+<p>For systems that do not include pip you will need to install the <span class="xref std std-ref">dependencies</span> manually. From that point onward you can download DOLfYN from the repository (<a class="reference external" href="http://github.com/lkilcher/dolfyn/">http://github.com/lkilcher/dolfyn/</a>). For example, if git is installed, you can:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ git clone https://github.com/lkilcher/dolfyn.git &lt;download_location&gt;
+</pre></div>
+</div>
+<p>If <cite>&lt;download_location&gt;</cite> is not specified, the repository will be created in the current directory in a new <cite>dolfyn</cite> folder. Once you have downloaded DOLfYN, you may either:</p>
+<ol class="loweralpha">
+<li><p class="first">install it into your Python packages repository by executing the setup.py script:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd &lt;download_location&gt;
+$ python setup.py install
+</pre></div>
+</div>
+</li>
+<li><p class="first">use it out of <cite>&lt;download_location&gt;</cite>.</p>
+</li>
+</ol>
+<p>For information on how to use DOLfYN consult the <a class="reference internal" href="usage.html"><em>Usage</em></a> page.</p>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>DOLfYN is known to work with Python 2.7 and <a class="reference external" href="http://www.numpy.org">Numpy</a> &gt;=1.6.</li>
+<li>DOLfYN requires <a class="reference external" href="www.h5py.org">h5py</a>, and <a class="reference external" href="http://www.scipy.org">SciPy</a>.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Download and Install</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="about.html" title="previous chapter">About</a></li>
+      <li>Next: <a href="usage.html" title="next chapter">Usage</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/install.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/install.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
