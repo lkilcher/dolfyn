@@ -145,7 +145,7 @@ primary methods for going about this:
                   [-1, 0, 0],]
 
       Examples of estimating ROTMAT for more complex orientations can
-      be found in the *.orient* files found in the :repo:`examples directory </tree/master/examples/>` of the :repo:`dolfyn repository </>`.
+      be found in the *.orient* files found in the :repo:`examples directory <tree/master/examples/>` of the :repo:`dolfyn repository <>`.
 
       It is also possible to specify a magnetic declination in the
       *.orient* file. Magnetic declination (the direction of Magnetic

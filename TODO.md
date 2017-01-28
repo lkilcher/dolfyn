@@ -11,10 +11,12 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
 
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?!?
 
+Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
+
+Move ``api`` files to ``__init__`` files (and document this!)
+
 Testing
 ======
-
-Add test to confirm that the adv_example01.py script works.
 
 Add tests to confirm that all scripts work.
 
@@ -23,11 +25,6 @@ Add tests to confirm that matlab file I/O works.
 Documentation
 ====
 
-Move from gh-pages to doc/ folder for documentation.
+Add some examples to the plotting tools page
 
-Document need for git-lfs for testfiles!
-
-Document need for command line tools (xcode) on OSX.
-
-Document need for Python 2?
-
+Add usage examples for the adp package.
