@@ -16,6 +16,7 @@ from ..data.time import time_array
 import copy
 from six import string_types
 import sys
+
 from .. import _version as _ver
 
 
@@ -351,7 +352,11 @@ class Loader(DataFactory):
         """
         for grp in self.iter_groups(groups=groups, where=where):
             for attnm in list(grp.attrs.keys()):
+<<<<<<< HEAD
                 if not ((self.ver <= (0, 1, 0) and
+=======
+                if not ((self.ver <= 1.0 and
+>>>>>>> cc4c6e52d3bd06e9cd4d55e66fbc7c1391a8bd43
                          attnm in ['_properties', '_units']) or
                         (attnm.startswith('##') and attnm.endswith('##'))):
                     # Skip the "_properties" attribute, if it exists.
@@ -438,7 +443,11 @@ class Loader(DataFactory):
             if hasattr(nd, 'read_direct'):
                 nm = self.get_name(nd)
                 out.add_data(nm, nd, self.get_name(nd.parent))
+<<<<<<< HEAD
             if (self.ver <= (0, 1, 2) and nm == 'mpltime') or \
+=======
+            if (self.ver <= 1.2 and nm == 'mpltime') or \
+>>>>>>> cc4c6e52d3bd06e9cd4d55e66fbc7c1391a8bd43
                     nd.attrs.get('time_var', False) == b'True':
                 out[nm] = time_array(out[nm])
         self.read_attrs(out, groups=groups, where=where)
@@ -467,10 +476,17 @@ class Loader(DataFactory):
                     # This catches a bug in Python3 when reading string arrays
                     # (converts bytes to unicode)
                     out[nm] = out[nm].astype('<U')
+<<<<<<< HEAD
                 if (self.ver <= (0, 1, 2) and nm == 'mpltime') or \
                         nd.attrs.get('time_var', False) == b'True':
                     out[nm] = out[nm].view(time_array)
                 if ma.valid and self.ver == (0, 0, 0):
+=======
+                if (self.ver <= 1.2 and nm == 'mpltime') or \
+                        nd.attrs.get('time_var', False) == b'True':
+                    out[nm] = out[nm].view(time_array)
+                if ma.valid and self.ver == 0:
+>>>>>>> cc4c6e52d3bd06e9cd4d55e66fbc7c1391a8bd43
                     if '_label' in nd.attrs:
                         # This is a deprecated file structure.
                         setattr(out, nm,
@@ -478,7 +494,13 @@ class Loader(DataFactory):
                                           meta=ma.varMeta(
                                               nd.attrs.get('_label'),
                                               pkl_loads(nd.attrs.get('_units'))
+<<<<<<< HEAD
                                 )))
+=======
+                                          )
+                                          )
+                                )
+>>>>>>> cc4c6e52d3bd06e9cd4d55e66fbc7c1391a8bd43
                     if 'label' in nd.attrs:
                         s = nd.attrs.get('units')
                         try:

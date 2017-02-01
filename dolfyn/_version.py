@@ -3,6 +3,7 @@ __prog_name__ = 'DOLfYN'
 __version_date__ = 'Jan-10-2017'
 
 
+
 def ver2tuple(ver):
     if isinstance(ver, tuple):
         return ver
@@ -31,3 +32,4 @@ def ver2tuple(ver):
     return tuple(out)
 
 version_info = ver2tuple(__version__)
+
