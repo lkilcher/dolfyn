@@ -30,7 +30,8 @@
 ## and,
 ##    u_body = transpose(ROTMAT) * u_head
 ##
-## The Wikipedia 'Euler Angles' page is a good place to start when trying to understand rotation matrices:
+## The Wikipedia 'Euler Angles' page is a good place to start when
+## trying to understand rotation matrices:
 ##    http://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
 
 ## For cable-head ADVs the orientation of the ADV head relative to the

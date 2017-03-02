@@ -13,7 +13,7 @@ What about dropping data from averaging? Is this something we should support? Vi
 
 Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
-Move ``api`` files to ``__init__`` files (and document this!)
+Add <filename.vec>.json files?
 
 Testing
 ======

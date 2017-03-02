@@ -15,7 +15,7 @@ def ver2tuple(ver):
     #         '_' is for essential groups.
     # Version 1.3: Now load/unload is fully symmetric (needed for __eq__ tests).
     #         Added _config_type to i/o.
-    if isinstance(ver, float):
+    if isinstance(ver, (float, int)):
         return (0, int(ver), int(round(10 * (ver % 1))))
     # ### Now switched to use pkg_version STRING.
     # Switch to pkg_version STRING (pkg_version 0.6)
