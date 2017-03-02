@@ -11,6 +11,7 @@ from struct import unpack
 from ..data.base import ma
 from . import nortek_defs
 time = nortek_defs.time
+import json
 
 
 def recatenate(obj):
@@ -51,7 +52,15 @@ def read_nortek(filename, do_checksum=False, **kwargs):
     with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
         rdr.readfile()
     rdr.dat2sci()
+    jsonfile = filename + '.json'
+    if file_exists(jsonfile):
+        json_props = _read_vecjson(jsonfile)
+        rdr.data.props.update(json_props)
     return rdr.data
+
+
+def _read_vecjson(jsonfname):
+    # read the json file, and return the items as a dictionary
 
 
 def _bcd2char(cBCD):
