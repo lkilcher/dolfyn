@@ -11,6 +11,7 @@ from struct import unpack
 from ..data.base import ma
 from . import nortek_defs
 time = nortek_defs.time
+import os.path
 import json
 
 
@@ -53,14 +54,19 @@ def read_nortek(filename, do_checksum=False, **kwargs):
         rdr.readfile()
     rdr.dat2sci()
     jsonfile = filename + '.json'
-    if file_exists(jsonfile):
+
+    if os.path.isfile(jsonfile):
         json_props = _read_vecjson(jsonfile)
         rdr.data.props.update(json_props)
     return rdr.data
 
 
 def _read_vecjson(jsonfname):
-    # read the json file, and return the items as a dictionary
+    """Reads a json file containing the rotation matrix, the vector and the t_range
+       and return the items as a dictionary"""
+    with open(jsonfname) as data_file:
+        data = json.load(data_file)
+    return data
 
 
 def _bcd2char(cBCD):
