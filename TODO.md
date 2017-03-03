@@ -1,9 +1,16 @@
 General
 =======
 
+File format:
+- Switch to pycoda formatted hdf5 files? --Use git's submodule functionality?
+- Or, switch to default to matlab files?
+- Best option: write matlab-compatible hdf5 files?!
+
+Add support for csv files? What do these look like?
+
 Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
 
-ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts"".
+ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts".
 
 What if I want 30-minute turbulence averages spaced 15-minutes apart?
   - add `n_pad` option to `TurbBinner.__init__`, or
