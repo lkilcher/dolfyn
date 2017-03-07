@@ -35,7 +35,7 @@ def int2binarray(val, n):
     return out
 
 
-def read_nortek(filename, read_userdata_json=True, do_checksum=False, **kwargs):
+def read_nortek(filename, read_userdata=True, do_checksum=False, **kwargs):
     """
     Read a nortek file.
 
@@ -43,8 +43,8 @@ def read_nortek(filename, read_userdata_json=True, do_checksum=False, **kwargs):
     ----------
     filename : string
                Filename of Nortek file to read.
-    read_userdata_json: True or False (default True)
-                Reads a json file
+    read_userdata: True or False (default True)
+                Whether to read the json 'userdata' file.
     **kwargs : keyword arguments to :class:`NortekReader`
 
     Returns
@@ -57,7 +57,7 @@ def read_nortek(filename, read_userdata_json=True, do_checksum=False, **kwargs):
     rdr.dat2sci()
     jsonfile = filename.replace('.VEC', '.userdata') + '.json'
 
-    if os.path.isfile(jsonfile) and read_userdata_json:
+    if os.path.isfile(jsonfile) and read_userdata:
         json_props = _read_vecjson(jsonfile)
         rdr.data.props.update(json_props)
     return rdr.data
