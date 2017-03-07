@@ -914,7 +914,7 @@ and the sync byte(0xa5).</p>
 
 <dl class="function">
 <dt id="dolfyn.io.nortek.read_nortek">
-<code class="descclassname">dolfyn.io.nortek.</code><code class="descname">read_nortek</code><span class="sig-paren">(</span><em>filename</em>, <em>do_checksum=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/io/nortek.html#read_nortek"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.io.nortek.read_nortek" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">dolfyn.io.nortek.</code><code class="descname">read_nortek</code><span class="sig-paren">(</span><em>filename</em>, <em>read_userdata=True</em>, <em>do_checksum=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/io/nortek.html#read_nortek"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.io.nortek.read_nortek" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a nortek file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -923,6 +923,10 @@ and the sync byte(0xa5).</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : string</p>
 <blockquote>
 <div><p>Filename of Nortek file to read.</p>
+</div></blockquote>
+<p><strong>read_userdata: True or False (default True)</strong></p>
+<blockquote>
+<div><p>Whether to read the json &#8216;userdata&#8217; file.</p>
 </div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments to <a class="reference internal" href="#dolfyn.io.nortek.NortekReader" title="dolfyn.io.nortek.NortekReader"><code class="xref py py-class docutils literal"><span class="pre">NortekReader</span></code></a></p>
 </td>

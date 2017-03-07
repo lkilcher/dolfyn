@@ -542,8 +542,7 @@
                       <span class="ne">DeprecationWarning</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_rotate_vel2body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">advo</span><span class="p">):</span>
-        <span class="c"># The transpose should do head to body.</span>
-        <span class="n">advo</span><span class="o">.</span><span class="n">vel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s">&#39;body2head_rotmat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">advo</span><span class="o">.</span><span class="n">vel</span><span class="p">)</span>
+        <span class="n">_rotate_vel2body</span><span class="p">(</span><span class="n">advo</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_calc_rot_vel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calcobj</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
