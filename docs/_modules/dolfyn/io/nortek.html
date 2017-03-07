@@ -53,6 +53,8 @@
 <span class="kn">from</span> <span class="nn">..data.base</span> <span class="kn">import</span> <span class="n">ma</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">nortek_defs</span>
 <span class="n">time</span> <span class="o">=</span> <span class="n">nortek_defs</span><span class="o">.</span><span class="n">time</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">json</span>
 
 
 <div class="viewcode-block" id="recatenate"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek.recatenate">[docs]</a><span class="k">def</span> <span class="nf">recatenate</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
@@ -75,7 +77,7 @@
     <span class="k">return</span> <span class="n">out</span>
 
 </div>
-<div class="viewcode-block" id="read_nortek"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek.read_nortek">[docs]</a><span class="k">def</span> <span class="nf">read_nortek</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">do_checksum</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="read_nortek"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek.read_nortek">[docs]</a><span class="k">def</span> <span class="nf">read_nortek</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">read_userdata</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">do_checksum</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Read a nortek file.</span>
 
@@ -83,6 +85,8 @@
 <span class="sd">    ----------</span>
 <span class="sd">    filename : string</span>
 <span class="sd">               Filename of Nortek file to read.</span>
+<span class="sd">    read_userdata: True or False (default True)</span>
+<span class="sd">                Whether to read the json &#39;userdata&#39; file.</span>
 <span class="sd">    **kwargs : keyword arguments to :class:`NortekReader`</span>
 
 <span class="sd">    Returns</span>
@@ -93,9 +97,22 @@
     <span class="k">with</span> <span class="n">NortekReader</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">do_checksum</span><span class="o">=</span><span class="n">do_checksum</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">rdr</span><span class="p">:</span>
         <span class="n">rdr</span><span class="o">.</span><span class="n">readfile</span><span class="p">()</span>
     <span class="n">rdr</span><span class="o">.</span><span class="n">dat2sci</span><span class="p">()</span>
+    <span class="n">jsonfile</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;.VEC&#39;</span><span class="p">,</span> <span class="s">&#39;.userdata&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;.json&#39;</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">jsonfile</span><span class="p">)</span> <span class="ow">and</span> <span class="n">read_userdata</span><span class="p">:</span>
+        <span class="n">json_props</span> <span class="o">=</span> <span class="n">_read_vecjson</span><span class="p">(</span><span class="n">jsonfile</span><span class="p">)</span>
+        <span class="n">rdr</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">json_props</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">rdr</span><span class="o">.</span><span class="n">data</span>
 
 </div>
+<span class="k">def</span> <span class="nf">_read_vecjson</span><span class="p">(</span><span class="n">jsonfname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reads a json file containing the rotation matrix, the vector and the t_range</span>
+<span class="sd">       and return the items as a dictionary&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">jsonfname</span><span class="p">)</span> <span class="k">as</span> <span class="n">data_file</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
 <span class="k">def</span> <span class="nf">_bcd2char</span><span class="p">(</span><span class="n">cBCD</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Taken from the Nortek System Integrator</span>
@@ -635,7 +652,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
             <span class="k">print</span><span class="p">(</span><span class="s">&#39;Reading vector microstrain data (0x71) ping #{} @ {}...&#39;</span>
-                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">))</span>
+                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">))</span>
         <span class="n">byts0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
         <span class="c"># The first 2 are the size, 3rd is count, 4th is the id.</span>
         <span class="n">ahrsid</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">endian</span> <span class="o">+</span> <span class="s">&#39;3xB&#39;</span><span class="p">,</span> <span class="n">byts0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>

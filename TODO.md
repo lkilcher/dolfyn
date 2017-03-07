@@ -1,6 +1,8 @@
 General
 =======
 
+- Check determinant of rotation matrices.
+
 File format:
 - Switch to pycoda formatted hdf5 files? --Use git's submodule functionality?
 - Or, switch to default to matlab files?

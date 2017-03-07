@@ -41,13 +41,14 @@ parser.add_argument(
 parser.add_argument(
     '-O',
     default=None,
-    help="""
-    Specify the 'orientation' configuration file (default:
+    help="""NOTE: this option is deprecated and will be removed in
+    future releases. Use the '<filename>.userdata.json' method
+    instead.  Specify the 'orientation' configuration file (default:
     '<filename>.orient', or 'vector.orient', in that
     order). Cable-Head Vector probes the orientation of, and distance
     between, the head to the body is arbitrary. This option specifies
     the file which defines these variables. For more information on
-    how to measure these variables, consult the
+    how to measure these variables, take a look at the
     'dolfyn-src-dir/examples/motion_correct_example.orient'
     """
 )
@@ -116,7 +117,7 @@ args = parser.parse_args()
 ## if bool(args.out_principal) and bool(args.out_earth):
 # raise Exception('--out-principal and --out-earth can not both be
 # selected. You must choose one output frame.')
-declin = 0
+declin = None
 if args.fixed_head != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
     if bool(args.O):
@@ -132,8 +133,8 @@ if args.fixed_head != bool(args.O):
                          [0, 0, 1]], dtype=np.float32)
         vec = np.array([0, 0, -0.21])  # in meters
 else:
-    raise Exception("""You must either specify --fixed-head, or specify
-                    an 'orientation' config file.""")
+    rmat = None
+    vec = None
 
 if not (args.mat or args.hdf5):
     args.mat = True
@@ -143,12 +144,23 @@ for fnm in args.filename:
 
     dat = avm.read_nortek(fnm)
 
-    # Set the geometry
-    dat.props['body2head_rotmat'] = rmat
-    dat.props['body2head_vec'] = vec
-    dat.props['declination'] = declin
-    # Set matlab 'datenum' time.
-    dat.add_data('datenum', dat.mpltime.matlab_datenum, 'main')
+    if rmat is not None:
+        dat.props['body2head_rotmat'] = rmat
+    if vec is not None:
+        dat.props['body2head_vec'] = vec
+    if declin is not None:
+        dat.props['declination'] = declin
+    if ('body2head_rotmat' not in dat.props or
+            'body2head_vec' not in dat.props):
+        raise Exception("body2head_rotmat or body2head_vec not found "
+                        "in dat.props. These must be specified by either:\n"
+                        "  1) defining them in a '.userdata.json' file\n"
+                        "  2) using the --fixed-head command-line argument\n"
+                        "  3) specifying them in a '.orient' file "
+                        "(will be deprecated).")
+
+        # Set matlab 'datenum' time.
+        dat.add_data('datenum', dat.mpltime.matlab_datenum, 'main')
 
     # Perform motion correction.
     if hasattr(dat, 'orientmat'):

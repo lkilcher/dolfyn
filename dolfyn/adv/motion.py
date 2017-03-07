@@ -500,8 +500,7 @@ class CorrectMotion(object):
                       DeprecationWarning)
 
     def _rotate_vel2body(self, advo):
-        # The transpose should do head to body.
-        advo.vel = np.dot(advo.props['body2head_rotmat'].T, advo.vel)
+        _rotate_vel2body(advo)
 
     def _calc_rot_vel(self, calcobj):
         """

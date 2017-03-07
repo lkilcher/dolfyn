@@ -5,7 +5,7 @@
 Usage - Specific Cases
 ======================
 
-Motion Correcting IMU-ADV measurements
+Motion Correcting ADV-IMU measurements
 --------------------------------------
 
 The Nortek Vector ADV can be purchased with an Inertial Motion Unit
@@ -18,14 +18,14 @@ because of bias-drift inherent in IMU accelerometer sensors that
 contaminates motion estimates at those frequencies.
 
 This documentation is designed to document the methods for performing
-motion correction of IMU-ADV measurements. The accuracy and
+motion correction of ADV-IMU measurements. The accuracy and
 applicability of these measurements is beyond the scope of this
 documentation (journal articles are forthcoming).
 
 Pre-Deployment Requirements
 ...........................
 
-In order to perform motion correction the IMU-ADV must be assembled
+In order to perform motion correction the ADV-IMU must be assembled
 and configured correctly:
 
 1. The ADV *head* must be rigidly connected to the ADV *body*
@@ -48,8 +48,35 @@ and configured correctly:
       or larger.
 
 3. For cable-head ADVs be sure to record the position and orientation
-   of the ADV head relative to the ADV body (Figure 1).
+   of the ADV head relative to the ADV body (Figure 1). It is
+   recommended that this information be stored in a
+   ``<vec_filename>.userdata.json`` file (e.g., for a data file
+   ``vector_data_imu01.VEC``, the userdata file should have the name
+   ``vector_data_imu01.userdata.json``). `json is a simple
+   text-based data format <http://www.json.org/>`_. |dlfn| expects the
+   format of this file to be a single dict-like container (i.e., the
+   file should start with ``{`` and end with ``}``, that contains
+   ``'name': value`` pairs, for example::
 
+    {"body2head_rotmat": [[ 0, 0, 1],
+                          [ 0,-1, 0],
+                          [ 1, 0, 0]],
+     "body2head_vec": [0.13, 0.04, 1.3],
+     "declination": 14.3,
+     "lat": 43.2,
+     "lon": -123,
+     "depth": 90,
+     "inds_range": [1000, 5000]
+    }
+
+  You can store any information you want to attribute with the binary
+  `.VEC` file in this file. One advantage of creating the
+  `.userdata.json` file is that this file is read when you read the
+  `.VEC` file using the :func:`~dolfyn.io.nortek.read_nortek`
+  function, and the name-value pairs are added to the ``props``
+  attribute (a dictionary) of the returned
+  :class:`~dolfyn.adv.base.ADVraw` data object.
+  
 .. figure:: pic/adv_coord_sys3_warr.png
    :align: center
    :scale: 60%
@@ -68,118 +95,107 @@ and configured correctly:
    -\hat{x}^*` .
 
 
+The other major advantage of using these ``userdata.json`` files, is
+that many property names are special in that they are used by
+|dlfn| in later processing steps. The property names that are
+recognized and used by |dlfn| to provide specific information are:
+
+body2head_rotmat
+  The rotation matrix (a 3-by-3 array) that rotates vectors in the
+  ADV's pressure case coordinate system (i.e., the 'body'), to the ADV
+  head coordinate system. For fixed-head ADVs this is the identify
+  matrix, but for cable-head ADVs it is an arbitrary unimodular
+  (determinant of 1) matrix.
+
+body2head_vec
+  The 3-element vector that specifies the position of the ADV head in
+  the ADV pressure case's coordinate system (Figure 1). This property
+  must be in the ``props`` attribute of the data object in order to do
+  motion correction, so you might as well store it in the
+  ``userdata.json`` file.
+
+declination
+  This is the magnetic declination at the measurement site. If it is
+  in the ``props`` attribute, it will be incorporated into the
+  orientation matrix when :func:`~dolfyn.adv.rotate.inst2earth` is
+  called so that all rotations are to/from a 'True' north coordinate
+  system, rather than a 'magnetic' north coordinate system.
+
 Data processing
 ...............
 
-After making IMU-ADV measurements, the |dlfn| package can perform
-motion correction processing steps on the ADV data. There are two
-primary methods for going about this:
+After making ADV-IMU measurements, the |dlfn| package can perform
+motion correction processing steps on the ADV data. Assuming you have
+created the ``.userdata.json`` file and added the ``body2head_rotmat``
+and ``body2head_vec`` attributes to it, motion correction is fairly
+simple, you can either:
 
 1. Utilize the |dlfn| api perform motion-correction processing
    explicitly in Python::
 
      from dolfyn.adv import api as adv
-     import numpy as np
 
-   Load your data file, for example::
+   a. Load your data file, for example::
 
-     dat = adv.read_nortek('vector_data_imu01.vec')
+        dat = adv.read_nortek('vector_data_imu01.vec')
 
-   Then specify the position and orientation of the ADV head relative
-   to the body. These must be specified as entries in the ``props``
-   attribute.  For a 'fixed-head' Nortek Vector ADVs, the rotation
-   matrix is the identity matrix and the position is::
+   b. Then perform motion correction::
 
-     dat.props['body2head_vec'] = np.array([0., 0., -0.21])  # in meters
+        adv.motion.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
 
-     dat.props['body2head_rotmat'] = np.eye(3)
-
-   For a cable-head ADV, you must specify the position and orientation
-   for your configuration. For example, the position and orientation
-   of the ADV-head in Figure 1 is::
-   
-     dat.props['body2head_vec'] = np.array([0.48, -0.07, -0.27])  # in meters
-
-     dat.props['body2head_rotmat'] = np.array([[0, 0, -1],
-                                                   [0, -1, 0],
-                                                   [-1, 0, 0],])
-
-   Now we call the 'correct_motion' function to remove motion from adv
-   object. A key input parameter to this function is the high-pass
-   filter frequency that removes low-frequency bias drift from the IMU
-   accelerometer signal (the default value is 0.033Hz, 30second
-   period)::
-
-     adv.motion.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
-
-   Your ``dat`` object is now motion corrected and it's ``.u``,
-   ``.v`` and ``.w`` attributes are in an East, North and Up (ENU)
-   coordinate system, respectively.  In fact, all vector quantities
-   in ``dat`` are now in this ENU coordinate system.  See the
-   documentation of the correct_motion function for more information.
 
 2. For users who want to perform motion correction with minimal Python
-   scripting, the **motcorrect_vector.py** script can be used. So long as
+   scripting, the :repo:`motcorrect_vectory.py
+   <tree/master/scripts/motcorrect_vector.py>` script can be used. So long as
    |dlfn| has been `installed properly <install>`_, you can use this
    script from the command line in a directory which contains your
-   data files.  By default it will write a Matlab file containing your
-   motion-corrected ADV data in ENU coordinates.
+   data files::
 
-   a. For fixed-head ADVs, the position and orientation of the head
-      are known to the script so that all that is necessary is to
-      call, for example\ [#prfxnote]_::
+        $ python motcorrect_vector.py vector_data_imu01.vec
 
+   By default this will write a Matlab file containing your
+   motion-corrected ADV data in ENU coordinates. Note that for
+   fixed-stem ADVs (no cable-head), the standard values for
+   ``body2head_rotmat`` and ``body2head_vec`` can be specified by
+   using the ``--fixed-head`` command-line parameter::
+     
         $ python motcorrect_vector.py --fixed-head vector_data_imu01.vec
 
-   b. For cable-head ADVs, you must specify the position and
-      orientation of the head in a *.orient* file (the extension is
-      not required).  These files are simply python scripts which
-      define ``ROTMAT`` and ``VEC`` variables, for the head position
-      and orientation in Figure 1 the 'My_Vector.orient' file could be
-      as simple as::
-
-        VEC = [0.48, -0.07, -0.27]  # in meters
-
-        ROTMAT = [[0, 0, -1],
-                  [0, -1, 0],
-                  [-1, 0, 0],]
-
-      Examples of estimating ROTMAT for more complex orientations can
-      be found in the *.orient* files found in the :repo:`examples directory <tree/master/examples/>` of the :repo:`dolfyn repository <>`.
-
-      It is also possible to specify a magnetic declination in the
-      *.orient* file. Magnetic declination (the direction of Magnetic
-      North) is specified in degrees clockwise from True North. For
-      example::
-
-        DECLINATION = 16.3
-
-      By specifying the declination in this way, the data output by
-      the motcorrect_vector.py script will be in an ENU coordinate
-      system refeferenced to True North, rather than magnetic north
-      (when the declination is not specified).  Values for declination
-      can be obtained from a number of websites, e.g. `<http://www.ngdc.noaa.gov/geomag-web/>`_.
-
-      With the orientation file defined, you specify it on the command
-      line using the ``-O`` flag\ [#prfxnote]_::
-        
-        $ python motcorrect_vector.py -O My_Vector.orient vector_data_imu01.vec
+   Otherwise, these parameters should be specified in the
+   ``.userdata.json`` file, as described above.
 
    The motcorrect_vector.py script also allows the user to specify the
    ``accel_filtfreq`` using the ``-f`` flag.  Therefore, to use a
    filter frequency of 0.1Hz (as opposed to the default 0.033Hz), you
-   could do\ [#prfxnote]_::
+   could do::
      
-     $ python motcorrect_vector.py -O My_Vector.orient -f 0.1 vector_data_imu01.vec
+     $ python motcorrect_vector.py -f 0.1 vector_data_imu01.vec
 
    It is also possible to do motion correction of multiple data files
-   at once, for example\ [#prfxnote]_::
+   at once, for example::
 
-     $ python motcorrect_vector.py --fixed-head vector_data_imu01.vec vector_data_imu02.vec
+     $ python motcorrect_vector.py vector_data_imu01.vec vector_data_imu02.vec
 
    In all of these cases the script will perform motion correction on
    the specified file and save the data in ENU coordinates, in Matlab
    format.  Happy motion-correcting!
 
-.. [#prfxnote] Calling ``python`` explicitly in the command line is
-               probably only required on Windows platforms.
+After following one of these paths, your data will be motion corrected and it's ``.u``,
+``.v`` and ``.w`` attributes are in an East, North and Up (ENU)
+coordinate system, respectively.  In fact, all vector quantities
+in ``dat`` are now in this ENU coordinate system.  See the
+documentation of the :func:`~dolfyn.adv.motion.correct_motion`
+function for more information.
+
+A key input parameter of motion-correction is the high-pass filter
+frequency that removes low-frequency bias drift from the IMU
+accelerometer signal (the default value is 0.033Hz, 30second
+period). By default, |dlfn| uses a value of 0.03 Hz. For more details
+on choosing the appropriate value for a particular application, please
+see [Kilcher_etal_2016]_.
+
+.. [Kilcher_etal_2016] Kilcher, L.; Thomson, J.; Talbert, J.; DeKlerk, A.; 2016,
+   "Measuring Turbulence from Moored Acoustic
+   Doppler Velocimeters" National Renewable Energy
+   Lab, `Report Number 62979
+   <http://www.nrel.gov/docs/fy16osti/62979.pdf>`_.
