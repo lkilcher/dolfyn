@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 import warnings
+from numpy.linalg import det
 
 deg2rad = np.pi / 180
 
@@ -162,6 +163,10 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # [sp,  sr * cp,  cp * cr]], dtype=np.float32)
         # rmat = np.einsum('ijl,jkl->ikl', H, P)
 
+    if not _check_rotmat_det(rmat):
+        raise ValueError("Invalid orientation matrix"
+                         " (determinant != 1).")
+
     for nm in rotate_vars:
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
@@ -260,10 +265,20 @@ def _inst2earth(advo, use_mean_rotation=False):
     advo.props['coord_sys'] = 'earth'
 
 
+def _check_rotmat_det(rotmat):
+    if rotmat.ndim > 2:
+        rotmat = np.transpose(rotmat)
+    return np.all(np.abs(det(rotmat) - 1) < 1e-3)
+
+
 def _rotate_vel2body(advo):
-    if 'vel_rotated2body' in advo.props and advo.props['vel_rotated2body'] == True:
+    if 'vel_rotated2body' in advo.props and \
+       advo.props['vel_rotated2body'] == True:
         # Don't re-rotate the data if its already been rotated.
         return
+    if not _check_rotmat_det(advo.props['body2head_rotmat']):
+        raise ValueError("Invalid body-to-head rotation matrix"
+                         " (determinant != 1).")
     # The transpose should do head to body.
     advo['vel'] = np.dot(advo.props['body2head_rotmat'].T, advo['vel'])
     advo.props['vel_rotated2body'] = True
@@ -301,7 +316,8 @@ def earth2principal(advo, reverse=False):
         print('Data is already in the %s coordinate system' % cs_new)
         return
     elif not advo.props['coord_sys'] == cs_now:
-        raise Exception('Data must be in the {} frame prior to using this function'.format(cs_now))
+        raise Exception('Data must be in the {} frame prior '
+                        'to using this function'.format(cs_now))
 
     # Calculate the rotation matrix:
     cp, sp = cos(ang), sin(ang)
