@@ -47,6 +47,9 @@ def read_test(make_data=False):
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
     tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
+    td.config.head.pop_data('spare')
+    tdm.config.head.pop_data('spare')
+    tdb.config.head.pop_data('spare')
 
     if make_data:
         td.save(test_root + 'data/vector_data01.h5')

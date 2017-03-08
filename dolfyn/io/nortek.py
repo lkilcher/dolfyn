@@ -43,8 +43,10 @@ def read_nortek(filename, read_userdata=True, do_checksum=False, **kwargs):
     ----------
     filename : string
                Filename of Nortek file to read.
-    read_userdata: True or False (default True)
+    read_userdata : True or False (default True)
                 Whether to read the json 'userdata' file.
+    npings : int
+          Number of pings to read from the file
     **kwargs : keyword arguments to :class:`NortekReader`
 
     Returns
@@ -356,7 +358,7 @@ class NortekReader(object):
             print('Reading head configuration (0x04) ping #{} @ {}...'.format(self.c, self.pos))
         self.config.add_data('head', adv_base.ADVconfig('HEAD'))
         byts = self.read(220)
-        tmp = unpack(self.endian + '2x3H12s176s22xH', byts)
+        tmp = unpack(self.endian + '2x3H12s176s22sH', byts)
         self.config.head.add_data('config', tmp[0])
         self.config.head.add_data('freq', tmp[1])
         self.config.head.add_data('type', tmp[2])
@@ -364,7 +366,8 @@ class NortekReader(object):
         self.config.head.add_data('system', tmp[4])
         self.config.head.add_data('TransMatrix', np.array(
             unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.)
-        self.config.head.add_data('NBeams', tmp[5])
+        self.config.head.add_data('spare', tmp[5])
+        self.config.head.add_data('NBeams', tmp[6])
         self.checksum(byts)
 
     def read_hw_cfg(self,):

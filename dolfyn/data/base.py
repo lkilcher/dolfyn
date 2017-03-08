@@ -407,7 +407,10 @@ class Dgroups(Dbase):
     def pop_data(self, name,):
         self.groups.remove(name)
         tmp = getattr(self, name)
-        delattr(self, name)
+        try:
+            delattr(self, name)
+        except AttributeError:
+            tmp = self.pop(name)
         return tmp
 
     def __preload__(self,):
