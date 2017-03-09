@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 from ..data.velocity import VelBinnerSpec
 from .base import ADVbinned
-from ..tools.misc import slice1d_along_axis
+from ..tools.misc import slice1d_along_axis, nans_like
 from scipy.special import cbrt
 
 
@@ -197,7 +197,7 @@ class TurbBinner(VelBinnerSpec):
         for slc in slice1d_along_axis(dt.shape, -1):
             up = dt[slc]
             lag = umag[slc[:-1]] / fs * np.arange(up.shape[0])
-            DAA = np.NaN * lag
+            DAA = nans_like(lag)
             for L in range(int(fs / freq_rng[1]), int(fs / freq_rng[0])):
                 DAA[L] = np.mean((up[L:] - up[:-L]) ** 2, dtype=np.float64)
             cv2 = DAA / (lag ** (2 / 3))

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import nanmean
 import matplotlib as mpl
 from string import lowercase
+from ..tools.misc import nans, nans_like
 
 try:
     numeric_types = (int, long, float, complex)
@@ -111,8 +112,8 @@ def cpcolor(*args, **kwargs):
     dy = nanmean(dy).astype('double')
 
     N = dat.shape[1] + sum(abs(dfx) > 3 * abs(dx)) * fixgaps
-    datn = np.NaN * np.ones([dat.shape[0], N + 1])
-    xn = np.NaN * np.ones([N + 1, 1])
+    datn = nans([dat.shape[0], N + 1])
+    xn = nans([N + 1, 1])
     if fixgaps:
         if abs(dfx[0]) < 3 * abs(dx) or abs(dfx[0]) <= threshx:
             xn[0] = x[0] - dfx[0] / 2
@@ -128,7 +129,7 @@ def cpcolor(*args, **kwargs):
                 datn[:, c] = dat[:, i0 + 1]
             else:
                 xn[c] = x[i0] + dx
-                datn[:, c] = np.NaN * dat[:, 0]
+                datn[:, c] = nans_like(dat[:, 0])
                 c = c + 1
                 xn[c] = x[i0] + dfx[i0] - dx
                 datn[:, c] = dat[:, i0]
@@ -140,8 +141,8 @@ def cpcolor(*args, **kwargs):
     xn[-1] = x[-1] + dx / 2
 
     N = datn.shape[0] + sum(abs(dfy) > 3 * abs(dy)) * fixgaps
-    datn2 = np.NaN * np.ones([N + 1, datn.shape[1]])
-    yn = np.NaN * np.ones([N + 1, 1])
+    datn2 = nans([N + 1, datn.shape[1]])
+    yn = nans([N + 1, 1])
     if fixgaps:
         if abs(dfy[0]) < 3 * abs(dy) or abs(dfy[0]) <= threshy:
             yn[0] = y[0] - dfy[0] / 2
@@ -157,7 +158,7 @@ def cpcolor(*args, **kwargs):
                 datn2[c, :] = datn[i0 + 1, :]
             else:
                 yn[c] = y[i0] + dy
-                datn2[c, :] = np.NaN * datn[0, :]
+                datn2[c, :] = nans_like(datn[0, :])
                 c = c + 1
                 yn[c] = y[i0] + dfy[i0] - dy
                 datn2[c, :] = datn[i0, :]

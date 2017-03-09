@@ -2,6 +2,18 @@ import numpy as np
 from scipy.signal import medfilt2d
 
 
+def nans(*args, **kwargs):
+    out = np.empty(*args, **kwargs)
+    out[:] = np.NaN
+    return out
+
+
+def nans_like(*args, **kwargs):
+    out = np.empty_like(*args, **kwargs)
+    out[:] = np.NaN
+    return out
+
+
 def find(arr):
     return np.nonzero(np.ravel(arr))[0]
 
