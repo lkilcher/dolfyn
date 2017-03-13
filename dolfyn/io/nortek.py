@@ -999,8 +999,7 @@ class NortekReader(object):
             print(' end of file at {} bytes.'.format(self.pos))
         else:
             print(' stopped at {} bytes.'.format(self.pos))
-        if retval == 2:
-            self.c -= 1
+        self.c -= 1
         for nm, dat in self.data.iter():
             if hasattr(getattr(self.data, nm), 'shape') and \
                (getattr(self.data, nm).shape[-1] == self.n_samp_guess):

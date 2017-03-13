@@ -1,6 +1,6 @@
 """
 !!!Warning!!! the lines in this file will rebuild data files that
-are benchmark tests. Uncomment lines to rebuiled data files only if
+are benchmark tests. Uncomment lines to rebuild data files only if
 you know you have fixed a bug, and wish to fix an existing test data
 set.
 """
