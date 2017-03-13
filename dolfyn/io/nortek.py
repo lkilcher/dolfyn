@@ -70,6 +70,9 @@ def _read_vecjson(jsonfname):
        and return the items as a dictionary"""
     with open(jsonfname) as data_file:
         data = json.load(data_file)
+    for nm in ['body2head_rotmat', 'body2head_vec']:
+        if nm in data:
+            data[nm] = np.array(data[nm])
     return data
 
 
