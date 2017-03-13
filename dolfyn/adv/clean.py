@@ -205,7 +205,7 @@ def GN2002(u, npt=5000):
     This function operates on the `indat` array (doesn't return it).
 
     """
-    if np.ndarray not in u.__class__.__mro__:
+    if not isinstance(u, np.ndarray):
         return GN2002(u['vel'], npt=npt)
 
     if u.ndim > 1:

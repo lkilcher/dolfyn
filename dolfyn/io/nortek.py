@@ -13,6 +13,7 @@ from . import nortek_defs
 time = nortek_defs.time
 import os.path
 import json
+import six
 
 
 def recatenate(obj):
@@ -35,7 +36,11 @@ def int2binarray(val, n):
     return out
 
 
-def read_nortek(filename, read_userdata=True, do_checksum=False, **kwargs):
+def read_nortek(filename,
+                read_userdata=True,
+                cropdata=False,
+                do_checksum=False,
+                **kwargs):
     """
     Read a nortek file.
 
@@ -43,8 +48,13 @@ def read_nortek(filename, read_userdata=True, do_checksum=False, **kwargs):
     ----------
     filename : string
                Filename of Nortek file to read.
-    read_userdata : True or False (default True)
+    read_userdata : True or False (default ``True``)
                 Whether to read the json 'userdata' file.
+    cropdata : bool or string (default ``False``)
+                Use the 'inds_range', or 'time_range' field in the
+                'userdata.json' file to crop the data. This can also
+                be ``'inds_range'``, or ``'time_range'``, to specify
+                which property to use.
     npings : int
           Number of pings to read from the file
     **kwargs : keyword arguments to :class:`NortekReader`
@@ -57,12 +67,39 @@ def read_nortek(filename, read_userdata=True, do_checksum=False, **kwargs):
     with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
         rdr.readfile()
     rdr.dat2sci()
-    jsonfile = filename.replace('.VEC', '.userdata') + '.json'
+    dat = rdr.data
 
+    # Read the json file
+    jsonfile = filename.replace('.VEC', '.userdata') + '.json'
     if os.path.isfile(jsonfile) and read_userdata:
         json_props = _read_vecjson(jsonfile)
-        rdr.data.props.update(json_props)
-    return rdr.data
+        dat.props.update(json_props)
+
+    # Crop the data?
+    if cropdata:
+        if cropdata is True:
+            if 'inds_range' in dat.props:
+                inds = slice(*dat.props['inds_range'])
+            elif 'time_range' in dat.props:
+                tr = dat.props['time_range']
+                inds = ((tr[0] < dat.mpltime) & (dat.mpltime < tr[1]))
+            else:
+                raise Exception("The data does not contain a 'inds_range', "
+                                "or 'time_range' property. Unable to crop the "
+                                "data. Either specify one of these properties "
+                                "in the `.userdata.json` file, or specify "
+                                "``cropdata=False`` in the call to "
+                                "read_nortek.")
+        if isinstance(cropdata, six.string_types):
+            if cropdata == 'inds_range':
+                inds = slice(*dat.props['inds_range'])
+            elif cropdata == 'time_range':
+                tr = dat.props['time_range']
+                inds = ((tr[0] < dat.mpltime) & (dat.mpltime < tr[1]))
+            else:
+                raise KeyError(cropdata)
+        dat = dat.subset(inds)
+    return dat
 
 
 def _read_vecjson(jsonfname):
