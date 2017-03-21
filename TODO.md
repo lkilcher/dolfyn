@@ -22,6 +22,8 @@ Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
 Add <filename.vec>.json files?
 
+Add ad2cp reader.
+
 Testing
 ======
 

@@ -194,8 +194,8 @@ class NortekReader(object):
         # This is the configuration data:
         self.config = adv_base.db.config(config_type='NORTEK Header Data')
         # Now read the header:
-        err_msg = "I/O error: The file does not \
-                   appear to be a Nortek data file."
+        err_msg = ("I/O error: The file does not "
+                   "appear to be a Nortek data file.")
         if self.read_id() == 5:
             self.read_hw_cfg()
         else:
