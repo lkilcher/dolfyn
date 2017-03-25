@@ -11,10 +11,10 @@ class Ad2cpReader(object):
 
         self.fname = fname
         self._check_nortek(endian)
-        self.reopen(bufsize)
         self._estimate_bytes_per_ping()
         self.c = 0
         self._burst_readers = {}
+        self.reopen(bufsize)
 
     def read_hdr(self, ):
         res = defs._header.read2dict(self.f)
@@ -130,6 +130,5 @@ class Ad2cpReader(object):
 if __name__ == '__main__':
 
     rdr = Ad2cpReader('../../example_data/BenchFile01.ad2cp')
-    rdr.reopen()
     rdr.readfile()
-    
+
