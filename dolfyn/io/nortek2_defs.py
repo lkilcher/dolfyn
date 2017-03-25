@@ -9,7 +9,6 @@ class DataDef(object):
     def __init__(self, list_of_defs):
         self._names = []
         self._format = []
-        self._func = []
         self._N = []
         for itm in list_of_defs:
             self._names.append(itm[0])
@@ -18,10 +17,6 @@ class DataDef(object):
                 self._N.append(1)
             else:
                 self._N.append(int(itm[1][:-1]))
-            if len(itm) > 2:
-                self._func.append(itm[2])
-            else:
-                self._func.append(None)
         self._struct = Struct('<' + self.format)
 
     @property
@@ -45,16 +40,6 @@ class DataDef(object):
                 out.append(data[c])
             else:
                 out.append(data[c:(c + n)])
-            if self._func[idx] is None:
-                continue
-            elif callable(self._func[idx]):
-                data[idx] = self._func[idx](data[idx])
-            else:
-                if n == 1:
-                    data[idx] *= self._func[idx]
-                else:
-                    for id2, val in data[idx]:
-                        data[idx][id2] = data[idx][id2] * self._func[idx]
         return data
 
     def read2dict(self, fobj):
