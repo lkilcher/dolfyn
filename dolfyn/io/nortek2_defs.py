@@ -40,19 +40,12 @@ class DataDef(object):
                 out.append(data[c])
             else:
                 out.append(data[c:(c + n)])
-        return data
-
-    def read2dict(self, fobj):
-        data = self.read(fobj)
-        out = {}
-        c = 0
-        for nm, n in zip(self._names, self._N):
-            if n == 1:
-                out[nm] = data[c]
-            else:
-                out[nm] = data[c:(c + n)]
             c += n
         return out
+
+    def read2dict(self, fobj):
+        return {self._names[idx]: dat
+                for idx, dat in enumerate(self.read(fobj))}
 
 _header = DataDef([
     ('sync', 'B'),
