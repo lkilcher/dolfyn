@@ -64,7 +64,7 @@ class Ad2cpReader(object):
         while not retval:
             id, sz = self.read_hdr()
             print id
-            if id == 21:
+            if id in [21, 24]:
                 self.read_burst()
             else:
                 self.f.seek(sz, 1)
@@ -97,26 +97,15 @@ class Ad2cpReader(object):
         reader_id = (b_hd['config'], b_hd['beam_config'])
         try:
             brdr = self._burst_readers[reader_id]
+            print("using cached reader")
         except KeyError:
+            print("Loading reader")
             brdr = self._burst_readers[reader_id] = defs.calc_burst_struct(
                 b_hd['config'], b_hd['n_beams'], b_hd['n_cells'])
         dat = brdr.read2dict(self.f)
-        print '!!!, ', b_hd['ver']
-        # (ver, off, config, sn,
-        #  year, month, day, hour, min, sec, usec,
-        #  c_sound, temp, press,
-        #  head, pitch, roll,
-        #  nbeam_cs_cells,
-        #  cell_size, blanking, nom_corr,
-        #  temp_press, batt_V,
-        #  mag_X, mag_Y, mag_Z,
-        #  acc_X, acc_Y, acc_Z,
-        #  vel_ambig, data_desc, xmit_e,
-        #  vel_scale, power_level,
-        #  mag_temp, clock_temp,
-        #  error, status0, ens, ) = self.read('2BH4s6B2HhLH2h3H2BH')
-        pdb.set_trace()
-    
+        print 'ENS: {:016d} '.format(b_hd['ensemble'])
+        return dat
+
     def __exit__(self, type, value, trace,):
         self.f.close()
 
@@ -131,4 +120,3 @@ if __name__ == '__main__':
 
     rdr = Ad2cpReader('../../example_data/BenchFile01.ad2cp')
     rdr.readfile()
-

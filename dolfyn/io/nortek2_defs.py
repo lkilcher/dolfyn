@@ -13,25 +13,26 @@ class DataDef(object):
         for itm in list_of_defs:
             self._names.append(itm[0])
             self._format.append(itm[1])
-            if len(itm[1]) == 1:
+            if len(itm) <= 2:
                 self._N.append(1)
             else:
-                self._N.append(int(itm[1][:-1]))
+                self._N.append(itm[2])
         self._struct = Struct('<' + self.format)
+        self.nbyte = calcsize(self.format)
 
     @property
     def format(self, ):
         out = ''
-        for f in self._format:
+        for f, n in zip(self._format, self._N):
+            if n >= 1:
+                out += '{}'.format(n)
             out += f
         return out
 
-    @property
-    def nbyte(self, ):
-        return calcsize(self.format)
-
     def read(self, fobj):
         bytes = fobj.read(self.nbyte)
+        if len(bytes) != self.nbyte:
+            raise IOError("End of file.")
         data = self._struct.unpack(bytes)
         out = []
         c = 0
@@ -110,7 +111,42 @@ def calc_burst_struct(config, nb, nc):
             'alt', 'alt_raw', 'ast', 'echo',
             'ahrs', 'p_gd', 'std', None]):
         flags[nm] = cb[idx]
-    dd = DataDef([
-        ('vel', '{}h'.format(nb * nc)),
-    ])
-    return dd
+    dd = []
+    if flags['vel']:
+        dd.append(('vel', 'h', nb * nc))
+    if flags['amp']:
+        dd.append(('amp', 'B', nb * nc))
+    if flags['corr']:
+        dd.append(('corr', 'B', nb * nc))
+    if flags['alt']:
+        # There may be a problem here with reading 32bit floats if
+        # nb and nc are odd?
+        dd += [('alt_dist', 'f'),
+               ('alt_quality', 'H'),
+               ('alt_status', 'H')]
+    if flags['ast']:
+        dd += [('ast_dist', 'f'),
+               ('ast_quality', 'H'),
+               ('ast_offset_time', 'h'),
+               ('ast_pressure', 'f'),
+               # This is a hack
+               ('alt_spare', 'B7x')]
+    if flags['alt_raw']:
+        dd += [('altraw_nsamp', 'L'),
+               ('altraw_dist', 'H'),
+               ('altraw_samp', 'h')]
+    if flags['echo']:
+        dd += [('echo', 'H', nc)]
+    if flags['ahrs']:
+        dd += [('orientmat', 'f', 9),
+               ('ahrs_spare', 'B15x'),
+               ('ahrs_gyro', 'f', 3)]
+    if flags['p_gd']:
+        dd += [('percent_good', 'B', nc)]
+    if flags['std']:
+        dd += [('std_pitch', 'h'),
+               ('std_roll', 'h'),
+               ('std_heading', 'h'),
+               ('std_press', 'h'),
+               ('std_spare', 'H22x')]
+    return DataDef(dd)
