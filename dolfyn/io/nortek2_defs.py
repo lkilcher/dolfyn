@@ -48,6 +48,7 @@ class DataDef(object):
         return {self._names[idx]: dat
                 for idx, dat in enumerate(self.read(fobj))}
 
+
 _header = DataDef([
     ('sync', 'B'),
     ('hsz', 'B'),
@@ -129,7 +130,7 @@ def calc_burst_struct(config, nb, nc):
                ('ast_quality', 'H'),
                ('ast_offset_time', 'h'),
                ('ast_pressure', 'f'),
-               # This is a hack
+               # This use of 'x' here is a hack
                ('alt_spare', 'B7x')]
     if flags['alt_raw']:
         dd += [('altraw_nsamp', 'L'),
@@ -139,6 +140,7 @@ def calc_burst_struct(config, nb, nc):
         dd += [('echo', 'H', nc)]
     if flags['ahrs']:
         dd += [('orientmat', 'f', 9),
+               # This use of 'x' here is a hack
                ('ahrs_spare', 'B15x'),
                ('ahrs_gyro', 'f', 3)]
     if flags['p_gd']:
@@ -148,5 +150,15 @@ def calc_burst_struct(config, nb, nc):
                ('std_roll', 'h'),
                ('std_heading', 'h'),
                ('std_press', 'h'),
+               # This use of 'x' here is a hack
                ('std_spare', 'H22x')]
     return DataDef(dd)
+
+"""
+Note on "This use of 'x' is a hack": I'm afraid that using a larger
+int size will give syncing problems (e.g. unpack('HB')
+vs. unpack('BH')), and I need to read SOMETHING otherwise, the
+unpack order will get messed up. In the future, it'd be good to read
+the size of the format, and hold that differently than self._N
+(e.g. self._N2?)
+"""
