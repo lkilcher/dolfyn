@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import warnings
-from numpy.linalg import det
+from numpy.linalg import det, inv
 
 deg2rad = np.pi / 180
 
@@ -53,6 +53,12 @@ def _cat4rot(tpl):
     for vl in tpl:
         tmp.append(vl[None, :])
     return np.concatenate(tuple(tmp), axis=0)
+
+
+def _beam2inst(dat, transmat, reverse=False):
+    if reverse:
+        transmat = inv(transmat)
+    return np.einsum('ij,jk->ik', transmat, dat)
 
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
