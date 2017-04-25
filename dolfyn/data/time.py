@@ -13,6 +13,7 @@ to simply use this for now.
 from __future__ import division
 import numpy as np
 from datetime import datetime, timedelta
+from six import string_types
 
 
 def _fullyear(year):
@@ -25,8 +26,22 @@ def _fullyear(year):
     return year
 
 
+def isotime2mpltime(val):
+    if isinstance(val, string_types):
+        return date2num(datetime.strptime(val, '%Y-%m-%dT%H:%M:%S'))
+    elif isinstance(val, (tuple, list)):
+        out = np.empty(len(val), dtype=np.float64)
+    elif isinstance(val, np.ndarray):
+        out = np.empty(len(val), dtype=np.float64)
+    else:
+        raise ValueError("Invalid time type.")
+    for idx, v in enumerate(val):
+        out[idx] = isotime2mpltime(v)
+    return out
+
+
 def num2date(mpltime):
-    if np.ndarray in mpltime.__class__.__mro__:
+    if isinstance(mpltime, np.ndarray):
         out = np.empty(len(mpltime), dtype='O')
         for idx, val in enumerate(mpltime.flat):
             out[idx] = num2date(val)
@@ -36,7 +51,7 @@ def num2date(mpltime):
 
 
 def date2num(dt):
-    if np.ndarray in dt.__class__.__mro__:
+    if isinstance(dt, np.ndarray):
         out = np.empty(len(dt), dtype=np.float64)
         for idx, val in enumerate(dt.flat):
             out[idx] = date2num(val)

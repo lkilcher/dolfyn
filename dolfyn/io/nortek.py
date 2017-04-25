@@ -10,7 +10,7 @@ from ..tools import misc as tbx
 from struct import unpack
 from ..data.base import ma
 from . import nortek_defs
-time = nortek_defs.time
+from ..data import time
 import os.path
 import json
 import six
@@ -110,6 +110,9 @@ def _read_vecjson(jsonfname):
     for nm in ['body2head_rotmat', 'body2head_vec']:
         if nm in data:
             data[nm] = np.array(data[nm])
+    if 'time_range' in data:
+        if isinstance(data['time_range'][0], six.string_types):
+            data['time_range'] = time.isotime2mpltime(data['time_range'])
     return data
 
 
