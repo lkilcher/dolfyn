@@ -70,10 +70,13 @@ def read_nortek(filename,
     dat = rdr.data
 
     # Read the json file
-    jsonfile = filename.replace('.VEC', '.userdata') + '.json'
-    if os.path.isfile(jsonfile) and read_userdata:
-        json_props = _read_vecjson(jsonfile)
-        dat.props.update(json_props)
+    for basefile in [filename.rsplit('.', 1)[0],
+                     filename]:
+        jsonfile = basefile + '.userdata.json'
+        if os.path.isfile(jsonfile) and read_userdata:
+            json_props = _read_vecjson(jsonfile)
+            dat.props.update(json_props)
+            break
 
     # Crop the data?
     if cropdata:
