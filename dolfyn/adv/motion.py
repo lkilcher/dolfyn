@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import scipy.signal as sig
 from scipy.integrate import cumtrapz
-from .rotate import inst2earth, _rotate_vel2body, deg2rad
+from . import rotate as rot
 import warnings
 
 
@@ -54,6 +54,7 @@ class CalcMotion(object):
         self.accelvel_filtfreq = vel_filtfreq
         self.to_earth = to_earth
 
+        rot._check_declination(advo)
         self._set_Accel()
         self._set_AccelStable()
         self.AngRt = advo.AngRt  # No copy because not modified.
@@ -170,12 +171,12 @@ class CalcMotion(object):
         #   u=dz*omegaY-dy*omegaZ,v=dx*omegaZ-dz*omegaX,w=dy*omegaX-dx*omegaY
         # where vec=[dx,dy,dz], and AngRt=[omegaX,omegaY,omegaZ]
         velrot = np.array([(vec[2][:, None] * self.AngRt[1] -
-                          vec[1][:, None] * self.AngRt[2]),
-                         (vec[0][:, None] * self.AngRt[2] -
-                          vec[2][:, None] * self.AngRt[0]),
-                         (vec[1][:, None] * self.AngRt[0] -
-                          vec[0][:, None] * self.AngRt[1]),
-                         ])
+                            vec[1][:, None] * self.AngRt[2]),
+                           (vec[0][:, None] * self.AngRt[2] -
+                            vec[2][:, None] * self.AngRt[0]),
+                           (vec[1][:, None] * self.AngRt[0] -
+                            vec[0][:, None] * self.AngRt[1]),
+                           ])
 
         if to_earth:
             velrot = np.einsum('jik,jlk->ilk', self.advo['orientmat'], velrot)
@@ -201,9 +202,9 @@ def _calc_probe_pos(advo, separate_probes=False):
     if advo.make_model == 'Nortek VECTOR' and separate_probes:
         r = 0.076
         # The angle between the x-y plane and the probes
-        phi = -30 * deg2rad
+        phi = -30 * rot.deg2rad
         # The angles of the probes from the x-axis:
-        theta = np.array([0., 120., 240.]) * deg2rad
+        theta = np.array([0., 120., 240.]) * rot.deg2rad
         return (np.dot(advo.props['body2head_rotmat'].T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
@@ -322,16 +323,18 @@ def correct_motion(advo,
     """
 
     if hasattr(advo, 'velrot'):
-        raise Exception('The data object already appears to have been motion corrected.')
+        raise Exception('The data object already appears to have been '
+                        'motion corrected.')
 
     if advo.props['coord_sys'] != 'inst':
-        raise Exception('The data object must be in the instrument frame to be motion corrected.')
+        raise Exception('The data object must be in the '
+                        'instrument frame to be motion corrected.')
 
     if vel_filtfreq is None:
         vel_filtfreq = accel_filtfreq / 3
 
     # Be sure the velocity data has been rotated to the body frame.
-    _rotate_vel2body(advo)
+    rot._rotate_vel2body(advo)
 
     # Create the motion 'calculator':
     calcobj = CalcMotion(advo,
@@ -364,11 +367,10 @@ def correct_motion(advo,
         # 3) Take along beam-component (diagonal),
         # 4) Rotate back to head-coord (einsum),
         velrot = np.einsum('ij,kj->ik',
-                         transMat,
-                         np.diagonal(np.einsum('ij,jkl->ikl',
-                                               np.linalg.inv(transMat),
-                                               velrot)
-                                     ))
+                           transMat,
+                           np.diagonal(np.einsum('ij,jkl->ikl',
+                                                 np.linalg.inv(transMat),
+                                                 velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
     advo.velrot = velrot
@@ -389,14 +391,13 @@ def correct_motion(advo,
     #       calc_velacc() call.
     if to_earth:
         advo.Accel = calcobj.Accel
-        inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
-                   {'Accel', 'AccelStable', 'velacc', })
+        rot.inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
+                       {'Accel', 'AccelStable', 'velacc', })
     else:
         # rotate these variables back to the instrument frame.
-        inst2earth(advo, reverse=True,
-                   rotate_vars={'AccelStable', 'velacc', },
-                   force=True,
-                   )
+        rot.inst2earth(advo, reverse=True,
+                       rotate_vars={'AccelStable', 'velacc', },
+                       force=True, )
 
     ##########
     # Copy vel -> velraw prior to motion correction:
@@ -500,7 +501,7 @@ class CorrectMotion(object):
                       DeprecationWarning)
 
     def _rotate_vel2body(self, advo):
-        _rotate_vel2body(advo)
+        rot._rotate_vel2body(advo)
 
     def _calc_rot_vel(self, calcobj):
         """
@@ -528,11 +529,10 @@ class CorrectMotion(object):
             # 3) Take along beam-component (diagonal),
             # 4) Rotate back to head-coord (einsum),
             velrot = np.einsum('ij,kj->ik',
-                             transMat,
-                             np.diagonal(np.einsum('ij,jkl->ikl',
-                                                   np.linalg.inv(transMat),
-                                                   velrot)
-                                         ))
+                               transMat,
+                               np.diagonal(np.einsum('ij,jkl->ikl',
+                                                     np.linalg.inv(transMat),
+                                                     velrot)))
             # 5) Rotate back to body-coord.
             velrot = np.dot(rmat.T, velrot)
 
@@ -554,9 +554,9 @@ class CorrectMotion(object):
         if advo.make_model == 'Nortek VECTOR' and self.separate_probes:
             r = 0.076
             # The angle between the x-y plane and the probes
-            phi = -30 * deg2rad
+            phi = -30 * rot.deg2rad
             # The angles of the probes from the x-axis:
-            theta = np.array([0., 120., 240.]) * deg2rad
+            theta = np.array([0., 120., 240.]) * rot.deg2rad
             return (np.dot(advo.props['body2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
@@ -619,7 +619,8 @@ class CorrectMotion(object):
                                          'Accel', 'AccelStable',
                                          'AngRt', 'Mag'}
         else:
-            advo.props['rotate_vars'].update({'velrot', 'velacc', 'AccelStable', 'velraw'})
+            advo.props['rotate_vars'].update({'velrot', 'velacc',
+                                              'AccelStable', 'velraw'})
 
         self._rotate_vel2body(advo)
         self._calc_rot_vel(calcobj)
@@ -632,14 +633,13 @@ class CorrectMotion(object):
         advo.add_data('velraw', advo.vel.copy(), 'main')
         if to_earth:
             advo.Accel = calcobj.Accel
-            inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
-                       {'Accel', 'AccelStable', 'velacc', })
+            rot.inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
+                           {'Accel', 'AccelStable', 'velacc', })
         else:
             # rotate these variables back to the instrument frame.
-            inst2earth(advo, reverse=True,
-                       rotate_vars={'AccelStable', 'velacc', },
-                       force=True,
-                       )
+            rot.inst2earth(advo, reverse=True,
+                           rotate_vars={'AccelStable', 'velacc', },
+                           force=True, )
         # NOTE: The plus sign is because the measured-induced velocities
         #       are in the opposite direction of the head motion.
         #       i.e. when the head moves one way in stationary flow, it

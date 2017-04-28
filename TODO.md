@@ -35,3 +35,10 @@ Documentation
 Add some examples to the plotting tools page
 
 Add usage examples for the adp package.
+
+Document the .userdata.json files
+    - declination handling
+
+Document variables in data objects
+
+Document load vs. mmload

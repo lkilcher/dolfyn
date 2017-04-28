@@ -36,8 +36,9 @@ def orient2euler(advo):
 
     """
     if hasattr(advo, 'orientmat'):
+        _check_declination(advo)
         omat = advo.orientmat
-    elif np.ndarray in advo.__class__.__mro__ and \
+    elif isinstance(advo, np.ndarray) and \
             advo.shape[:2] == (3, 3):
         omat = advo
     # I'm pretty sure the 'yaw' is the angle from the east axis, so we
@@ -59,6 +60,44 @@ def _beam2inst(dat, transmat, reverse=False):
     if reverse:
         transmat = inv(transmat)
     return np.einsum('ij,jk->ik', transmat, dat)
+
+
+def _check_declination(advo):
+
+    if 'declination' not in advo.props:
+        # warnings.warn(
+        #     'No declination in adv object.  Assuming a declination of 0.')
+        return
+
+    if 'orientmat' in advo and \
+       not advo.props.get('declination_in_orientmat', False):
+        # Declination is defined as positive if MagN is east of
+        # TrueN. Therefore we must rotate about the z-axis by minus
+        # the declination angle to get from Mag to True.
+        cd = cos(-advo.props['declination'] * deg2rad)
+        sd = sin(-advo.props['declination'] * deg2rad)
+        # The ordering is funny here because orientmat is the
+        # transpose of the inst->earth rotation matrix:
+        Rdec = np.array([[cd, -sd, 0],
+                         [sd, cd, 0],
+                         [0, 0, 1]])
+        advo['orientmat'] = np.einsum('ij,kjl->kil',
+                                      Rdec,
+                                      advo['orientmat'])
+
+        advo.props['declination_in_orientmat'] = True
+        p, r, h = orient2euler(advo['orientmat'])
+        advo.add_data('pitch', p, 'orient')
+        advo.add_data('roll', r, 'orient')
+        advo.add_data('heading', h, 'orient')
+        advo.props['declination_in_heading'] = True
+
+    if 'heading' in advo and \
+       not advo.props.get('declination_in_heading', False):
+        advo['heading'] += advo.props['declination']
+        advo['heading'][advo['heading'] < 0] += 360
+        advo['heading'][advo['heading'] > 360] -= 360
+        advo.props['declination_in_heading'] = True
 
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
@@ -105,25 +144,9 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             print("Data must be in the '%s' frame prior to using this function" %
                    cs_now)
 
+    _check_declination(advo)
+
     if hasattr(advo, 'orientmat'):
-        if 'declination' in advo.props and not \
-                advo.props.get('declination_in_orientmat', False):
-            # Declination is defined as positive if MagN is east of
-            # TrueN. Therefore we must rotate about the z-axis by minus
-            # the declination angle to get from Mag to True.
-            cd = cos(-advo.props['declination'] * deg2rad)
-            sd = sin(-advo.props['declination'] * deg2rad)
-            # The ordering is funny here because orientmat is the
-            # transpose of the inst->earth rotation matrix:
-            Rdec = np.array([[cd, -sd, 0],
-                             [sd, cd, 0],
-                             [0, 0, 1]])
-            advo['orientmat'] = np.einsum('ij,kjl->kil',
-                                          Rdec,
-                                          advo['orientmat'])
-
-            advo.props['declination_in_orientmat'] = True
-
         # Take the transpose of the orientation to get the inst->earth rotation
         # matrix.
         rmat = np.rollaxis(advo['orientmat'], 1)
@@ -139,10 +162,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         #       being up.  This is ridiculous, but apparently a
         #       reality.
         rr[advo.orientation_down] += np.pi
-        if 'declination' in advo.props:
-            hh += (advo.props['declination'] * deg2rad)
-                   # Declination is in degrees East, so we add this to True
-                   # heading.
 
         ch = cos(hh)
         sh = sin(hh)
@@ -193,6 +212,7 @@ def _inst2earth(advo, use_mean_rotation=False):
     http://www.nortek-as.com/en/knowledge-center/forum/software/644656788
     http://www.nortek-as.com/en/knowledge-center/forum/software/644656788/resolveuid/af5dec86a5df8e7fd82a2f2aed1bc537
     """
+    _check_declination(advo)
     rr = advo.roll * deg2rad
     pp = advo.pitch * deg2rad
     hh = (advo.heading - 90) * deg2rad
@@ -200,13 +220,6 @@ def _inst2earth(advo, use_mean_rotation=False):
         rr = np.angle(np.exp(1j * rr).mean())
         pp = np.angle(np.exp(1j * pp).mean())
         hh = np.angle(np.exp(1j * hh).mean())
-    if 'declination' in advo.props:
-        hh += (advo.props['declination'] * deg2rad)
-        # Declination is in degrees East, so we add this to True
-        # heading.
-    else:
-        warnings.warn(
-            'No declination in adv object.  Assuming a declination of 0.')
     if 'heading_offset' in advo.props:
         # Offset is in CCW degrees that the case was offset relative
         # to the head.
