@@ -48,11 +48,16 @@ def _equiv_dict(d1, d2):
                 retval = False
                 if debug_level > 0:
                     if isinstance(d1[ky], np.ndarray):
-                        frac = np.float(
-                            (~np.isclose(d1[ky], d2[ky], equal_nan=True,
-                                         **arrayEQ_tols)).sum()) / d1[ky].size
-                        print('{:0.2f}% of the values in {} do not match.'
-                              .format(frac * 100, ky))
+                        if d1[ky].shape != d2[ky].shape:
+                            print('The shapes of the arrays do not match. '
+                                  '({}, vs. {}).'.format(d1[ky].shape,
+                                                         d2[ky].shape))
+                        else:
+                            frac = np.float((~np.isclose(
+                                d1[ky], d2[ky], equal_nan=True,
+                                **arrayEQ_tols)).sum()) / d1[ky].size
+                            print('{:0.2f}% of the values in {} do not match.'
+                                  .format(frac * 100, ky))
                         try:
                             assert np.allclose(d1[ky], d2[ky],
                                                rtol=1e-3, equal_nan=True)
