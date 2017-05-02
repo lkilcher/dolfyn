@@ -413,7 +413,7 @@ def correct_motion(advo,
     #       measures a velocity in the opposite direction.
     advo.vel += (advo.velrot + advo.velacc)
     advo.props['motion corrected'] = True
-    advo.props['motion accel filfreq Hz'] = accel_filtfreq
+    advo.props['motion accel_filtfreq Hz'] = accel_filtfreq
 
 
 class CorrectMotion(object):
