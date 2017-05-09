@@ -322,7 +322,7 @@ def correct_motion(advo,
 
     """
 
-    if hasattr(advo, 'velrot'):
+    if hasattr(advo, 'velrot') or advo.props.get('motion corrected', False):
         raise Exception('The data object already appears to have been '
                         'motion corrected.')
 
@@ -608,6 +608,10 @@ class CorrectMotion(object):
         (motion corrects) the input `advo`.
 
         """
+        if hasattr(advo, 'velrot') or \
+           advo.props.get('motion corrected', False):
+            raise Exception('The data object already appears to have been '
+                            'motion corrected.')
 
         calcobj = CalcMotion(advo,
                              accel_filtfreq=self.accel_filtfreq,
@@ -646,4 +650,4 @@ class CorrectMotion(object):
         #       measures a velocity in the opposite direction.
         advo.vel += (advo.velrot + advo.velacc)
         advo.props['motion corrected'] = True
-        advo.props['motion accel filfreq Hz'] = self.accel_filtfreq
+        advo.props['motion accel_filtfreq Hz'] = self.accel_filtfreq
