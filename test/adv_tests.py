@@ -14,6 +14,7 @@ pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
 dat = avm.load(test_root + 'data/vector_data01.h5', 'ALL')
 dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
+dat_imu_json = avm.load(test_root + 'data/vector_data_imu01-json.h5', 'ALL')
 dat_burst = avm.load(test_root + 'data/burst_mode01.h5', 'ALL')
 
 
@@ -43,6 +44,8 @@ def read_test(make_data=False):
                           npings=100)
     tdb = avm.read_nortek(pkg_root + 'example_data/burst_mode01.VEC',
                           npings=100)
+    tdm2 = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC',
+                           npings=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
@@ -52,6 +55,7 @@ def read_test(make_data=False):
         td.save(test_root + 'data/vector_data01.h5')
         tdm.save(test_root + 'data/vector_data_imu01.h5')
         tdb.save(test_root + 'data/burst_mode01.h5')
+        tdm2.save(test_root + 'data/vector_data_imu01-json.h5')
         return
 
     msg_form = "The output of read_nortek('{}.VEC') does not match '{}.h5'."
@@ -62,6 +66,9 @@ def read_test(make_data=False):
              msg_form.format('vector_data_imu01', 'vector_data_imu01')),
             (tdb, dat_burst,
              msg_form.format('burst_mode01', 'burst_mode01')),
+            (tdm2, dat_imu_json,
+             msg_form.format('vector_data_imu01-json',
+                             'vector_data_imu01-json')),
     ]:
         yield data_equiv, dat1, dat2, msg
 
@@ -77,10 +84,13 @@ def motion_test(make_data=False):
     # Include the declination.
     tdm0.props['declination'] = 0.0
     avm.motion.correct_motion(tdm0)
+    tdmj = dat_imu_json.copy()
+    avm.motion.correct_motion(tdmj)
 
     if make_data:
         tdm.save(test_root + 'data/vector_data_imu01_mc.h5')
         tdm10.save(test_root + 'data/vector_data_imu01_mcDeclin10.h5')
+        tdmj.save(test_root + 'data/vector_data_imu01-json_mc.h5')
         return
 
     msg_form = "Motion correction {}does not match expectations."
@@ -92,8 +102,14 @@ def motion_test(make_data=False):
             (tdm10,
              avm.load(test_root + 'data/vector_data_imu01_mcDeclin10.h5', 'ALL'),
              'with declination=10 '),
+            (tdmj,
+             avm.load(test_root + 'data/vector_data_imu01-json_mc.h5', 'ALL'),
+             'with reading userdata.json '),
     ]:
         yield data_equiv, dat1, dat2, msg_form.format(msg)
+
+    yield data_equiv, tdm10, tdmj, \
+        ".userdata.json motion correction does not match explicit expectations."
 
     yield assert_close, tdm0.orientmat, tdm.orientmat, \
         "The orientation matrix changes when declination is 0!"
