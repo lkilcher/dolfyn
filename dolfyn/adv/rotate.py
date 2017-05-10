@@ -65,6 +65,11 @@ def _beam2inst(dat, transmat, reverse=False):
 def _check_declination(advo):
 
     if 'declination' not in advo.props:
+        if 'orientmat' in advo:
+            p, r, h = orient2euler(advo['orientmat'])
+            advo.add_data('pitch', p, 'orient')
+            advo.add_data('roll', r, 'orient')
+            advo.add_data('heading', h, 'orient')
         # warnings.warn(
         #     'No declination in adv object.  Assuming a declination of 0.')
         return

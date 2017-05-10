@@ -111,8 +111,11 @@ def motion_test(make_data=False):
     yield data_equiv, tdm10, tdmj, \
         ".userdata.json motion correction does not match explicit expectations."
 
-    yield assert_close, tdm0.orientmat, tdm.orientmat, \
-        "The orientation matrix changes when declination is 0!"
+    tdm0.props.pop('declination')
+    tdm0.props.pop('declination_in_orientmat')
+    tdm0.props.pop('declination_in_heading')
+    yield data_equiv, tdm0, tdm, \
+        "The data changes when declination is specified as 0!"
 
 
 def heading_test(make_data=False):
