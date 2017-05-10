@@ -20,7 +20,7 @@ class CalcMotion(object):
 
     accel_filtfreq : float
       the frequency at which to high-pass filter the acceleration
-      signal to remove low-frequency drift.
+      signal to remove low-frequency drift. (default: 0.03 Hz)
 
     vel_filtfreq : float (optional)
       a second frequency to high-pass filter the integrated
@@ -41,23 +41,43 @@ class CalcMotion(object):
     >>> mot = mcalc([.3, .1, .06])
 
     """
+    _default_accel_filtfreq = 0.03
 
     def __init__(self, advo,
-                 accel_filtfreq=1 / 30,
+                 accel_filtfreq=None,
                  vel_filtfreq=None,
                  to_earth=True):
 
         self.advo = advo
-        self.accel_filtfreq = accel_filtfreq
-        if vel_filtfreq is None:
-            vel_filtfreq = accel_filtfreq / 3
-        self.accelvel_filtfreq = vel_filtfreq
+        self._check_filtfreqs(accel_filtfreq,
+                              vel_filtfreq)
         self.to_earth = to_earth
 
         rot._check_declination(advo)
         self._set_Accel()
         self._set_AccelStable()
         self.AngRt = advo.AngRt  # No copy because not modified.
+
+    def _check_filtfreqs(self, accel_filtfreq, vel_filtfreq):
+        datval = self.advo.props.get('motion accel_filtfreq Hz', None)
+        if datval is None:
+            if accel_filtfreq is None:
+                accel_filtfreq = self._default_accel_filtfreq
+                # else use the accel_filtfreq value
+        else:
+            if accel_filtfreq is None:
+                accel_filtfreq = datval
+            else:
+                if datval != accel_filtfreq:
+                    # Neither are None!?!
+                    warnings.warn(
+                        "The data object specifies a value for accel_filtfreq "
+                        "of {} Hz. Overriding this with the user-specified "
+                        "value: {} Hz.".format(datval, accel_filtfreq))
+        if vel_filtfreq is None:
+            vel_filtfreq = accel_filtfreq / 3.0
+        self.accel_filtfreq = accel_filtfreq
+        self.accelvel_filtfreq = vel_filtfreq
 
     def _set_Accel(self, ):
         advo = self.advo
@@ -216,7 +236,7 @@ def _calc_probe_pos(advo, separate_probes=False):
 
 
 def correct_motion(advo,
-                   accel_filtfreq=1 / 30,
+                   accel_filtfreq=None,
                    vel_filtfreq=None,
                    to_earth=True,
                    separate_probes=False, ):
@@ -323,15 +343,12 @@ def correct_motion(advo,
     """
 
     if hasattr(advo, 'velrot') or advo.props.get('motion corrected', False):
-        raise Exception('The data object already appears to have been '
+        raise Exception('The data object appears to already have been '
                         'motion corrected.')
 
     if advo.props['coord_sys'] != 'inst':
         raise Exception('The data object must be in the '
                         'instrument frame to be motion corrected.')
-
-    if vel_filtfreq is None:
-        vel_filtfreq = accel_filtfreq / 3
 
     # Be sure the velocity data has been rotated to the body frame.
     rot._rotate_vel2body(advo)
@@ -413,7 +430,7 @@ def correct_motion(advo,
     #       measures a velocity in the opposite direction.
     advo.vel += (advo.velrot + advo.velacc)
     advo.props['motion corrected'] = True
-    advo.props['motion accel_filtfreq Hz'] = accel_filtfreq
+    advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
 
 
 class CorrectMotion(object):
@@ -486,13 +503,11 @@ class CorrectMotion(object):
 
     """
 
-    def __init__(self, accel_filtfreq=1 / 30,
+    def __init__(self, accel_filtfreq=None,
                  vel_filtfreq=None,
                  separate_probes=False):
 
         self.accel_filtfreq = accel_filtfreq
-        if vel_filtfreq is None:
-            vel_filtfreq = accel_filtfreq / 3
         self.accelvel_filtfreq = vel_filtfreq
         self.separate_probes = separate_probes
         warnings.warn("The 'CorrectMotion' class is being deprecated "
@@ -610,7 +625,7 @@ class CorrectMotion(object):
         """
         if hasattr(advo, 'velrot') or \
            advo.props.get('motion corrected', False):
-            raise Exception('The data object already appears to have been '
+            raise Exception('The data object appears to already have been '
                             'motion corrected.')
 
         calcobj = CalcMotion(advo,
@@ -650,4 +665,4 @@ class CorrectMotion(object):
         #       measures a velocity in the opposite direction.
         advo.vel += (advo.velrot + advo.velacc)
         advo.props['motion corrected'] = True
-        advo.props['motion accel_filtfreq Hz'] = self.accel_filtfreq
+        advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
