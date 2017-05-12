@@ -5,7 +5,7 @@ files.
 
 import numpy as np
 from ..adv import base as adv_base
-from .. import adp
+from ..adp import base as adp_base
 from ..tools import misc as tbx
 from struct import unpack
 from ..data.base import ma
@@ -277,10 +277,15 @@ class NortekReader(object):
           how to initialize each data variable.
 
         """
+        shape_args = {'n': self.n_samp_guess}
+        try:
+            shape_args['nbins'] = self.config['user']['NBins']
+        except:
+            pass
         for nm, va in list(vardict.items()):
             if not hasattr(self.data, nm):
                 self.data.add_data(nm,
-                                   va._empty_array(self.n_samp_guess),
+                                   va._empty_array(**shape_args),
                                    va.group)
 
     def checksum(self, byts):
@@ -886,13 +891,14 @@ class NortekReader(object):
         self.n_samp_guess *= self.config.fs
 
     def init_AWAC(self,):
-        self.data = adp.adcp_raw()
+        self.data = adp_base.adcp_raw()
         self.data.add_data('config', self.config, 'config')
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'AWAC'
         self.data.props['inst_type'] = 'ADP'
         self.n_samp_guess = self.filesize / self.code_spacing('0x20') + 1
+        self.config.add_data('fs', 1. / self.config.user.AvgInterval)
         # self.n_samp_guess=1000
         # self.n_samp_guess*=self.config.fs
 

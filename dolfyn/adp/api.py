@@ -1,4 +1,4 @@
-from .base import type_map, dio
+from .base import type_map, dio, binner
 from ._readbin import adcp_loader
 from .rotate import beam2inst, inst2earth, earth2principal
 

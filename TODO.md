@@ -25,6 +25,8 @@ Add <filename.vec>.json files?
 Testing
 ======
 
+Add test for AWAC files!
+
 Add tests to confirm that all scripts work.
 
 Add tests to confirm that matlab file I/O works.
