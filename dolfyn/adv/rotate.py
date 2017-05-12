@@ -160,6 +160,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rr = advo.roll * deg2rad
         pp = advo.pitch * deg2rad
         hh = (advo.heading - 90) * deg2rad
+        if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
+            # The end of the data may not have valid orientations
+            lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
+            rr[lastgd:] = rr[lastgd]
+            pp[lastgd:] = pp[lastgd]
+            hh[lastgd:] = hh[lastgd]
         # NOTE: For Nortek Vector ADVs: 'down' configuration means the
         #       head was pointing UP!  Check the Nortek coordinate
         #       transform matlab script for more info.  The 'up'
