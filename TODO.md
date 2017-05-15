@@ -20,12 +20,12 @@ What about dropping data from averaging? Is this something we should support? Vi
 
 Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
-Add <filename.vec>.json files?
+``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
 
 Testing
 ======
 
-Add test for AWAC files!
+Add tests for ADP: earth2principal rotation, AWAC rotations
 
 Add tests to confirm that all scripts work.
 

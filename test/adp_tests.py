@@ -14,6 +14,7 @@ pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
 dat = apm.load(test_root + 'data/RDI_test01.h5', 'ALL')
 dati = apm.load(test_root + 'data/RDI_test01_rotate_beam2inst.h5', 'ALL')
+dataw = apm.load(test_root + 'data/AWAC_test01.h5', 'ALL')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -23,15 +24,20 @@ def data_equiv(dat1, dat2, message=''):
 def read_test(make_data=False):
 
     td = apm.read_rdi(pkg_root + 'example_data/RDI_test01.000')
+    awd = apm.read_nortek(pkg_root + 'example_data/AWAC_test01.wpr')
 
     if make_data:
         td.save(test_root + 'data/RDI_test01.h5')
+        awd.save(test_root + 'data/AWAC_test01.h5')
         return
 
-    msg_form = "The output of read_rdi('{}.000') does not match '{}.h5'."
+    msg_form = "The output of {} does not match {}."
     for dat1, dat2, msg in [
             (td, dat,
-             msg_form.format('RDI_test01', 'RDI_test01')),
+             msg_form.format("'read_rdi(RDI_test01.000)'", 'RDI_test01.h5')),
+            (awd, dataw,
+             msg_form.format("'read_nortek(AWAC_test01.wpr)'",
+                             'AWAC_test01.h5')),
     ]:
         yield data_equiv, dat1, dat2, msg
 

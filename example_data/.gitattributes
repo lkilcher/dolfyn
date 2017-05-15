@@ -1,1 +1,2 @@
 *.VEC filter=lfs diff=lfs merge=lfs -text
+*.wpr filter=lfs diff=lfs merge=lfs -text

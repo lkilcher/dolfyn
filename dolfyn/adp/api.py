@@ -1,6 +1,7 @@
 from .base import type_map, dio, binner
 from ._readbin import adcp_loader
 from .rotate import beam2inst, inst2earth, earth2principal
+from ..io.nortek import read_nortek
 
 
 def load(fname, data_groups=None):
