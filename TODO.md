@@ -25,7 +25,10 @@ Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 Testing
 ======
 
-Add tests for ADP: earth2principal rotation, AWAC rotations
+Add tests for ADP:
+    - averaging!
+    - earth2principal rotation
+    - AWAC rotations
 
 Add tests to confirm that all scripts work.
 

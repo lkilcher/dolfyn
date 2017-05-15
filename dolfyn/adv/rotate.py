@@ -358,7 +358,7 @@ def earth2principal(advo, reverse=False):
     # Perform the rotation:
     for nm in advo.props['rotate_vars']:
         dat = advo[nm]
-        dat[:2] = np.einsum('ij,jk', rotmat[:2, :2], dat[:2])
+        dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
 
     if hasattr(advo, 'orientmat'):
         # The orientmat does earth->inst, so the orientmat needs to

@@ -897,6 +897,7 @@ class NortekReader(object):
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'AWAC'
         self.data.props['inst_type'] = 'ADP'
+        self.data.props['rotate_vars'] = {'vel', }
         self.n_samp_guess = self.filesize / self.code_spacing('0x20') + 1
         self.config.add_data('fs', 1. / self.config.user.AvgInterval)
         # self.n_samp_guess=1000
