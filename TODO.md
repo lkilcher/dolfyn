@@ -26,6 +26,16 @@ Move example ``data/RDI_test01.000`` to LFS
 
 - ``*.[0-9][0-9][0-9] filter=lfs diff=lfs merge=lfs -text`` should be added to ``example_data/.gitattributes``
 
+- Move example_data to test folder?
+
+- Move tests to pkg folder?
+
+- Use pkg_resources for data files?
+
+- Add tools for loading test data?
+
+- Add a generalized 'read' function.
+
 Testing
 ======
 
