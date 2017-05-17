@@ -88,7 +88,5 @@ if __name__ == '__main__':
     import dolfyn.data.base
     dolfyn.data.base.debug_level = 10
 
-    pkg_root = '../'
-
     for func, dat1, dat2, msg in read_test():
         func(dat1, dat2, msg)

@@ -10,8 +10,6 @@ try:
 except:
     test_root = './'
 
-pkg_root = test_root.rsplit('/', 2)[0] + "/"
-
 dat = avm.load(test_root + 'data/vector_data01.h5', 'ALL')
 dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
 dat_imu_json = avm.load(test_root + 'data/vector_data_imu01-json.h5', 'ALL')

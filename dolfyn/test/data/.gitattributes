@@ -1,3 +1,4 @@
+*.h5 filter=lfs diff=lfs merge=lfs -text
 *.VEC filter=lfs diff=lfs merge=lfs -text
 *.wpr filter=lfs diff=lfs merge=lfs -text
 *.PD0 filter=lfs diff=lfs merge=lfs -text
