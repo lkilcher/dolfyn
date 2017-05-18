@@ -24,9 +24,7 @@ Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
 Move example ``data/RDI_test01.000`` to LFS
 
-- ``*.[0-9][0-9][0-9] filter=lfs diff=lfs merge=lfs -text`` should be added to ``example_data/.gitattributes``
-
-Use pkg_resources for data files?
+- ``*.[0-9][0-9][0-9] filter=lfs diff=lfs merge=lfs -text`` should be added to ``dolfyn/test/data/.gitattributes``
 
 Add tools for loading test data?
 
@@ -41,6 +39,8 @@ Add a generalized 'read' function.
 Add ad2cp
 ---------------
 - Handle AST-block?
+
+Default to not including test folder (or just data?) in a release.
 
 Testing
 ======

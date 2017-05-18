@@ -39,7 +39,7 @@ def int2binarray(val, n):
 
 
 def read_nortek(filename,
-                read_userdata=True,
+                userdata=True,
                 cropdata=False,
                 do_checksum=False,
                 nens=None):
@@ -50,8 +50,8 @@ def read_nortek(filename,
     ----------
     filename : string
                Filename of Nortek file to read.
-    read_userdata : True or False (default ``True``)
-                Whether to read the json 'userdata' file.
+    userdata : True or False (default ``True``)
+                Whether to read the '<base-filename>.userdata.json' file.
     cropdata : bool or string (default ``False``)
                 Use the 'inds_range', or 'time_range' field in the
                 'userdata.json' file to crop the data. This can also
@@ -67,13 +67,16 @@ def read_nortek(filename,
 
     """
     # Read the json file
-    json_props = {}
-    for basefile in [filename.rsplit('.', 1)[0],
-                     filename]:
-        jsonfile = basefile + '.userdata.json'
-        if os.path.isfile(jsonfile) and read_userdata:
-            json_props = _read_vecjson(jsonfile)
-            break
+    if userdata is True:
+        for basefile in [filename.rsplit('.', 1)[0],
+                         filename]:
+            jsonfile = basefile + '.userdata.json'
+            if os.path.isfile(jsonfile):
+                userdata = jsonfile
+                break
+    if isinstance(userdata, (six.string_types)) or hasattr(userdata, 'read'):
+        json_props = _read_vecjson(userdata)
+        dat.props.update(json_props)
 
     with NortekReader(filename, do_checksum=do_checksum, nens=nens) as rdr:
         rdr.readfile()
@@ -109,11 +112,14 @@ def read_nortek(filename,
     return dat
 
 
-def _read_vecjson(jsonfname):
+def _read_vecjson(jsonfile):
     """Reads a json file containing the rotation matrix, the vector and the t_range
        and return the items as a dictionary"""
-    with open(jsonfname) as data_file:
-        data = json.load(data_file)
+    if isinstance(jsonfile, file):
+        data = json.load(jsonfile)
+    else:
+        with open(jsonfile) as data_file:
+            data = json.load(data_file)
     if 'body2head_rotmat' in data and \
        data['body2head_rotmat'] in ['identity', 'eye', 1, 1.]:
         data['body2head_rotmat'] = np.eye(3)
