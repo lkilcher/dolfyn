@@ -42,6 +42,8 @@ Add ad2cp
 
 Default to not including test folder (or just data?) in a release.
 
+Build a conda install
+
 Testing
 ======
 
