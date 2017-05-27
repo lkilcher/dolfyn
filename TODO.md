@@ -36,6 +36,9 @@ Move example ``data/RDI_test01.000`` to LFS
 
 - Add a generalized 'read' function.
 
+- More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
+
+
 Testing
 ======
 
