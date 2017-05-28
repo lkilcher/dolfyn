@@ -228,9 +228,9 @@ def _inst2earth(advo, use_mean_rotation=False):
     pp = advo.pitch * deg2rad
     hh = (advo.heading - 90) * deg2rad
     if use_mean_rotation:
-        rr = np.angle(np.exp(1j * rr).mean())
-        pp = np.angle(np.exp(1j * pp).mean())
-        hh = np.angle(np.exp(1j * hh).mean())
+        rr = np.nanmean(np.angle(np.exp(1j * rr)))
+        pp = np.nanmean(np.angle(np.exp(1j * pp)))
+        hh = np.nanmean(np.angle(np.exp(1j * hh)))
     if 'heading_offset' in advo.props:
         # Offset is in CCW degrees that the case was offset relative
         # to the head.
