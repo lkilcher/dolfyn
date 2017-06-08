@@ -61,6 +61,10 @@ data_defs = {'number': ([], 'index', 'uint32'),
              'slongitude': ([], 'orient', 'float64'),
              'elatitude': ([], 'orient', 'float64'),
              'elongitude': ([], 'orient', 'float64'),
+             # These are the GPS times/lat/lons
+             'gtime': ([], 'main', '|S9'),
+             'glatitude': ([], 'orient', 'float64'),
+             'glongitude': ([], 'orient', 'float64'),
              'ntime': ([], 'main', 'float64'),
              'flags': ([], 'signal', 'float32'),
              }
@@ -107,7 +111,7 @@ class ensemble(object):
             navg = 1
         self.n_avg = navg
         for nm in data_defs:
-            setattr(self, nm, np.empty(get_size(nm, n=navg, ncell=n_cells)))
+            setattr(self, nm, np.zeros(get_size(nm, n=navg, ncell=n_cells)))
 
     def clean_data(self,):
         self['vel'][self['vel'] == -32.768] = np.NaN
@@ -125,7 +129,7 @@ class adcp_loader(object):
     _fixoffset = 0
     _nbyte = 0
     _winrivprob = False
-    _search_num = 3000  # Maximum distance? to search
+    _search_num = 30000  # Maximum distance? to search
     _verbose = False
     _debug7f79 = None
     vars_read = variable_setlist(['mpltime'])
@@ -167,6 +171,7 @@ class adcp_loader(object):
                         1280: (self.read_status, []),  # 0500
                         1536: (self.read_bottom, []),  # 0600
                         8192: (self.read_vmdas, []),   # 2000
+                        8226: (self.read_winriver2, []),  # 2022
                         8448: (self.read_winriver, [38]),  # 2100
                         8449: (self.read_winriver, [97]),  # 2101
                         8450: (self.read_winriver, [45]),  # 2102
@@ -195,7 +200,9 @@ class adcp_loader(object):
         if id in function_map:
             if debug >= 2:
                 print('Reading code {}...'.format(hex(id)), end='')
-            function_map.get(id)[0](*function_map[id][1])
+            retval = function_map.get(id)[0](*function_map[id][1])
+            if retval:
+                return retval
             if debug >= 2:
                 print(' success!')
         else:
@@ -448,28 +455,87 @@ class adcp_loader(object):
         fd.seek(16, 1)
         self._nbyte = 2 + 76
 
+    def read_winriver2(self, ):
+        startpos = self.f.tell()
+        self._winrivprob = True
+        self.cfg.add_data('sourceprog', 'WINRIVER')
+        ens = self.ensemble
+        k = ens.k
+        if self._source != 3:
+            print('\n***** Apparently a WINRIVER2 file\n'
+                  '*****    WARNING: Raw NMEA data '
+                  'handler not yet fully implemented\n\n')
+        self._source = 3
+        spid = self.f.read_ui16(1)
+        if spid == 104:
+            sz = self.f.read_ui16(1)
+            dtime = self.f.read_f64(1)
+            start_string = self.f.reads(7)
+            if start_string != '$GPGGA\x00':
+                warnings.warn('Invalid GPGGA string found in ensemble {},'
+                              ' skipping...'.format(k),
+                              ADCPWarning)
+                return 'FAIL'
+            ens.gtime[k] = self.f.reads(9)
+            self.f.seek(1, 1)
+            ens.glatitude[k] = self.f.read_f64(1)
+            tcNS = self.f.reads(1)
+            if tcNS == 'S':
+                ens.glatitude[k] *= -1
+            elif tcNS != 'N':
+                warnings.warn('Invalid GPGGA string found in ensemble {},'
+                              ' skipping...'.format(k),
+                              ADCPWarning)
+                return 'FAIL'
+            ens.glongitude[k] = self.f.read_f64(1)
+            tcEW = self.f.reads(1)
+            if tcEW == 'W':
+                ens.glongitude[k] *= -1
+            elif tcEW != 'E':
+                warnings.warn('Invalid GPGGA string found in ensemble {},'
+                              ' skipping...'.format(k),
+                              ADCPWarning)
+                return 'FAIL'
+            ucqual, n_sat = self.f.read_ui8(2)
+            tmp = self.f.read_float(2)
+            ens.hdop, ens.altitude = tmp
+            if self.f.reads(1) != 'M':
+                warnings.warn('Invalid GPGGA string found in ensemble {},'
+                              ' skipping...'.format(k),
+                              ADCPWarning)
+                return 'FAIL'
+            ggeoid_sep = self.f.read_float(1)
+            if self.f.reads(1) != 'M':
+                warnings.warn('Invalid GPGGA string found in ensemble {},'
+                              ' skipping...'.format(k),
+                              ADCPWarning)
+                return 'FAIL'
+            gage = self.f.read_float(1)
+            gstation_id = self.f.read_ui16(1)
+            ### For some reason this was only on the first block that
+            ### I was looking at.
+            # I believe these like the following:
+            # 4 unknown bytes (2 reserved+2 checksum?)
+            # 78 bytes for GPGGA string (including \r\n)
+            # 2 reserved + 2 checksum
+            #gpgga = self.f.reads(86)
+            self.vars_read += ['glongitude', 'glatitude', 'gtime']
+            self._nbyte = self.f.tell() - startpos + 2
+            if debug >= 5:
+                print('')
+                print(sz, ens.glongitude[k])
+
     def read_winriver(self, nbt):
         self._winrivprob = True
         self.cfg.add_data('sourceprog', 'WINRIVER')
-        if self._source != 2:
+        if self._source not in [2, 3]:
             print('\n***** Apparently a WINRIVER file - '
                   'Raw NMEA data handler not yet implemented\n\n')
-        self._source = 2
-        self._nbyte = 2 + nbt
-        # Below is Pawlowicz' $xxGGA code...
-        if nbt == 97:
-            strng = self.f.read_array('uchar', nbt)
-            l = strng.find('$GPGGA')
-            k = self.ensemble.k
-            if l != -1:
-                self.vars_read += ['stime']
-                self.ensemble.stime[k] = (int(strng[l + 7:l + 8]) +
-                                          (int(strng[l + 9:l + 10]) +
-                                           int(str[l + 11:l + 12]) / 60) / 60) / 24
-                # MATLAB CODE:
-                # (sscanf(str(l + 7:l + 8), '%d')
-                #  + (sscanf(str(l + 9:l + 10),'%d')
-                #     + sscanf(str(l + 11:l + 12), '%d') / 60) / 60) / 24;
+            self._source = 2
+        startpos = self.f.tell()
+        sz = self.f.read_ui16(1)
+        tmp = self.f.reads(sz)
+        self._nbyte = self.f.tell() - startpos + 2
 
     def skip_Ncol(self, n_skip=1):
         self.f.seek(n_skip * self.cfg['n_cells'], 1)
@@ -624,9 +690,12 @@ class adcp_loader(object):
         outd = adcp_raw()
         for nm in data_defs:
             outd.add_data(nm,
-                          np.empty(get_size(nm, self._nens, self.cfg['n_cells']),
+                          np.zeros(get_size(nm, self._nens, self.cfg['n_cells']),
                                    dtype=data_defs[nm][2]),
                           group=data_defs[nm][1])
+            if data_defs[nm][2] in ['float32', 'float64']:
+                outd[nm][:] = np.NaN
+
         self.outd = outd
 
     def load_data(self, nens=None):
@@ -742,7 +811,9 @@ class adcp_loader(object):
                 #print( "%0.4X" % id )
                 self.print_pos()
                 ##### Read the data for header "id"g
-                self.read_dat(id)
+                retval = self.read_dat(id)
+                if retval == 'FAIL':
+                    break
                 byte_offset += self._nbyte
                 if n < (len(self.hdr.dat_offsets) - 1):
                     oset = self.hdr.dat_offsets[n + 1] - byte_offset
@@ -773,7 +844,7 @@ class adcp_loader(object):
                 print(' EOF reached unexpectedly - discarding this last ensemble\n')
             else:
                 print('Adjust location by {:d} (readbytes={:d},hdr.nbyte={:d}\n'
-                      .format(offset, self.readbytes, self.hdr.nbyte))
+                      .format(offset, readbytes, self.hdr.nbyte))
                 print("""
                 NOTE - If this appears at the beginning of the file, it may be
                        a dolfyn problem. Please report this message, with details here:

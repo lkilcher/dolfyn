@@ -139,7 +139,7 @@ class bin_reader(object):
     def tell(self,):
         return self.f.tell()
 
-    def seek(self, pos, rel):
+    def seek(self, pos, rel=1):
         return self.f.seek(pos, rel)
 
     def reads(self, n):

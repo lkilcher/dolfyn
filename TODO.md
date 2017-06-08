@@ -38,12 +38,14 @@ Move example ``data/RDI_test01.000`` to LFS
 
 - More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
 
+- Average multiple GPGGA strings in a single ensemble
 
 Testing
 ======
 
 Add tests for ADP:
 
+- winriver01.PD0
 - averaging!
 - earth2principal rotation
 - AWAC rotations
