@@ -202,21 +202,24 @@ class adcp_loader(object):
             self.read_nocode(id)
 
     def read_nocode(self, id):
-        #### There appear to be codes 0340-03FC to deal with. I am not
-        #### going to decode them, but I am going to try to figure out
-        #### how many bytes to skip.
-        # Does he mean "3040-30FC", or is the code wrong?  Hopefully the
-        # former.
-        if hex(id)[2:4] == '30':
-            # I want to count the number of 1s in the middle 4 bits of the 2nd
-            # two bytes.
-            # 60 is a 0b00111100 mask
-            nflds = bin(id[3] & 60).count('1') + bin(id[4] & 60).count('1')
-            # I want to count the number of 1s in the highest 2 bits of byte 3
-            dfac = bin(id[3] & 3).count('1')  # 3 is a 0b00000011 mask
-            self.skip_Nbyte(12 * nflds * dfac)
-        else:
-            print('Unrecognized ID code: %0.4X\n' % id)
+        # #### There appear to be codes 0340-03FC to deal with. I am not
+        # #### going to decode them, but I am going to try to figure out
+        # #### how many bytes to skip.
+        # # Does he mean "3040-30FC", or is the code wrong?  Hopefully the
+        # # former.
+        # hxid = hex(id)
+        # if hxid[2:4] == '30':
+        #     raise Exception("")
+        #     # I want to count the number of 1s in the middle 4 bits of the 2nd
+        #     # two bytes.
+        #     # 60 is a 0b00111100 mask
+        #     nflds = (bin(int(hxid[3]) & 60).count('1') +
+        #              bin(int(hxid[4]) & 60).count('1'))
+        #     # I want to count the number of 1s in the highest 2 bits of byte 3
+        #     dfac = bin(int(hxid[3], 0) & 3).count('1')  # 3 is a 0b00000011 mask
+        #     self.skip_Nbyte(12 * nflds * dfac)
+        # else:
+        print('Unrecognized ID code: %0.4X\n' % id)
 
     def read_fixed(self,):
         if hasattr(self, 'configsize'):  # and False:
