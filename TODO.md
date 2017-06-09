@@ -45,7 +45,6 @@ Testing
 
 Add tests for ADP:
 
-- winriver01.PD0
 - averaging!
 - earth2principal rotation
 - AWAC rotations
