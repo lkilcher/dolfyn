@@ -12,9 +12,9 @@ import warnings
 # Four pound symbols ("####"), indicate a duplication of a comment from
 # Rich Pawlawicz' rdadcp routines.
 
-### This causes the time information to be returned in python's
-### datenum format.  See pylab's date2num and num2date functions for
-### more information.
+# ## This causes the time information to be returned in python's
+# ## datenum format.  See pylab's date2num and num2date functions for
+# ## more information.
 # matlab or python date format:
 time_offset = 0
 
@@ -122,6 +122,10 @@ class adcp_loader(object):
     _debug7f79 = None
     vars_read = variable_setlist(['mpltime'])
 
+    def _debug_print(self, lvl, msg):
+        if self._debug_level > lvl:
+            print(msg)
+
     def mean(self, dat):
         if self.n_avg == 1:
             return dat[..., 0]
@@ -133,8 +137,9 @@ class adcp_loader(object):
         if (self.f.tell() - self.progress) < 1048576:
             return
         self.progress = self.f.tell()
-        print('  pos %0.0fmb/%0.0fmb\r' %
-              (self.f.tell() / 1048576., self._filesize / 1048576.))
+        if self._debug_level > 1:
+            print('  pos %0.0fmb/%0.0fmb\r' %
+                  (self.f.tell() / 1048576., self._filesize / 1048576.))
 
     def print_pos(self, byte_offset=-1):
         """
@@ -170,10 +175,14 @@ class adcp_loader(object):
                         1794: (self.skip_Ncol, [4]),  # 0702 sum of squared vel
                         1795: (self.skip_Ncol, [4]),  # 0703 sum of velocities
                         2560: (self.skip_Ncol, []),  # 0A00 Beam 5 velocity
-                        769: (self.skip_Ncol, []),  # 0301 Beam 5 Number of good pings
-                        770: (self.skip_Ncol, []),  # 0302 Beam 5 Sum of squared velocities
-                        771: (self.skip_Ncol, []),  # 0303 Beam 5 Sum of velocities
-                        524: (self.skip_Nbyte, [4]),  # 020C Ambient sound profile
+                        # 0301 Beam 5 Number of good pings
+                        769: (self.skip_Ncol, []),
+                        # 0302 Beam 5 Sum of squared velocities
+                        770: (self.skip_Ncol, []),
+                        # 0303 Beam 5 Sum of velocities
+                        771: (self.skip_Ncol, []),
+                        # 020C Ambient sound profile
+                        524: (self.skip_Nbyte, [4]),
                         12288: (self.skip_Nbyte, [32]),
                         # 3000 Fixed attitude data format for OS-ADCPs
                         # #### This is pretty idiotic - for OS-ADCPs
@@ -184,7 +193,7 @@ class adcp_loader(object):
                         # although it works on the one example I have
                         # - caveat emptor....
                         }
-        ## Call the correct function:
+        # Call the correct function:
         if id in function_map:
             if self._debug_level >= 2:
                 print('  Reading code {}...'.format(hex(id)), end='')
@@ -205,13 +214,15 @@ class adcp_loader(object):
         # hxid = hex(id)
         # if hxid[2:4] == '30':
         #     raise Exception("")
-        #     # I want to count the number of 1s in the middle 4 bits of the 2nd
-        #     # two bytes.
+        #     # I want to count the number of 1s in the middle 4 bits
+        #     # of the 2nd two bytes.
         #     # 60 is a 0b00111100 mask
         #     nflds = (bin(int(hxid[3]) & 60).count('1') +
         #              bin(int(hxid[4]) & 60).count('1'))
-        #     # I want to count the number of 1s in the highest 2 bits of byte 3
-        #     dfac = bin(int(hxid[3], 0) & 3).count('1')  # 3 is a 0b00000011 mask
+        #     # I want to count the number of 1s in the highest
+        #     # 2 bits of byte 3
+        #     # 3 is a 0b00000011 mask:
+        #     dfac = bin(int(hxid[3], 0) & 3).count('1')
         #     self.skip_Nbyte(12 * nflds * dfac)
         # else:
         print('  Unrecognized ID code: %0.4X\n' % id)
@@ -285,15 +296,18 @@ class adcp_loader(object):
             self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
             self._nbyte += 4
             if (np.fix(cfg['prog_ver']) == [8, 16]).any():
-                if cfg['prog_ver'] >= 8.13:  # Added pressure sensor stuff in 8.13
+                if cfg['prog_ver'] >= 8.13:
+                    # Added pressure sensor stuff in 8.13
                     fd.seek(2, 1)
                     ens.pressure[k] = fd.read_ui32(1)
                     ens.pressure_std[k] = fd.read_ui32(1)
                     self._nbyte += 10
-                if cfg['prog_ver'] >= 8.24:  # Spare byte added 8.24
+                if cfg['prog_ver'] >= 8.24:
+                    # Spare byte added 8.24
                     fd.seek(1, 1)
                     self._nbyte += 1
-                if cfg['prog_ver'] >= 16.05:  # Added more fields with century in clock
+                if cfg['prog_ver'] >= 16.05:
+                    # Added more fields with century in clock
                     cent = fd.read_ui8(1)
                     ens.rtc[:, k] = fd.read_ui8(7)
                     ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
@@ -315,44 +329,50 @@ class adcp_loader(object):
 
     def read_vel(self,):
         ens = self.ensemble
-        ## if self.cfg['coord_sys'] == 'beam':
-        ##     var_nms = ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel']
-        ## else:
-        ##     var_nms = ['u', 'v', 'w', 'err_vel']
+        # if self.cfg['coord_sys'] == 'beam':
+        #     var_nms = ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel']
+        # else:
+        #     var_nms = ['u', 'v', 'w', 'err_vel']
         self.vars_read += ['vel']
         k = ens.k
-        ens['vel'][:, :, k] = np.array(self.f.read_i16(4 * self.cfg['n_cells'])
-                                       ).reshape((self.cfg['n_cells'], 4)) * .001
+        ens['vel'][:, :, k] = np.array(
+            self.f.read_i16(4 * self.cfg['n_cells'])
+        ).reshape((self.cfg['n_cells'], 4)) * .001
         self._nbyte = 2 + 4 * self.cfg['n_cells'] * 2
 
     def read_corr(self,):
         k = self.ensemble.k
         self.vars_read += ['corr']
-        self.ensemble.corr[:, :, k] = np.array(self.f.read_ui8(4 * self.cfg['n_cells'])
-                                               ).reshape((self.cfg['n_cells'], 4))
+        self.ensemble.corr[:, :, k] = np.array(
+            self.f.read_ui8(4 * self.cfg['n_cells'])
+        ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
     def read_echo(self,):
         k = self.ensemble.k
         self.vars_read += ['echo']
-        self.ensemble.echo[:, :, k] = np.array(self.f.read_ui8(4 * self.cfg['n_cells'])
-                                               ).reshape((self.cfg['n_cells'], 4))
+        self.ensemble.echo[:, :, k] = np.array(
+            self.f.read_ui8(4 * self.cfg['n_cells'])
+        ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
     def read_prcnt_gd(self,):
         self.vars_read += ['prcnt_gd']
         self.ensemble.prcnt_gd[:, :, self.ensemble.k] = np.array(
-            self.f.read_ui8(4 * self.cfg['n_cells'])).reshape((self.cfg['n_cells'], 4))
+            self.f.read_ui8(4 * self.cfg['n_cells'])
+        ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
     def read_status(self,):
         self.vars_read += ['status']
         self.ensemble.status[:, :, self.ensemble.k] = np.array(
-            self.f.read_ui8(4 * self.cfg['n_cells'])).reshape((self.cfg['n_cells'], 4))
+            self.f.read_ui8(4 * self.cfg['n_cells'])
+        ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
     def read_bottom(self,):
-        self.vars_read += ['bt_range', 'bt_vel', 'bt_corr', 'bt_ampl', 'bt_perc_gd']
+        self.vars_read += ['bt_range', 'bt_vel', 'bt_corr', 'bt_ampl',
+                           'bt_perc_gd']
         fd = self.f
         ens = self.ensemble
         k = ens.k
@@ -382,7 +402,9 @@ class adcp_loader(object):
             fd.seek(16, 1)
             qual = fd.read_ui8(1)
             if qual == 0:
-                print('  qual==%d,%f %f' % (qual, ens.slatitude[k], ens.slongitude[k]))
+                print('  qual==%d,%f %f' % (qual,
+                                            ens.slatitude[k],
+                                            ens.slongitude[k]))
                 ens.slatitude[k] = np.NaN
                 ens.slongitude[k] = np.NaN
             fd.seek(71 - 45 - 16 - 17, 1)
@@ -462,8 +484,9 @@ class adcp_loader(object):
             _ = self.f.reads(1)
             if start_string != '$GPGGA':
                 if self._debug_level > 1:
-                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
-                          ' skipping...'.format(k))
+                    print(
+                        '  WARNING: Invalid GPGGA string found in ensemble {},'
+                        ' skipping...'.format(k))
                 return 'FAIL'
             ens.gtime[k] = self.f.reads(9)
             self.f.seek(1, 1)
@@ -473,8 +496,9 @@ class adcp_loader(object):
                 ens.glatitude[k] *= -1
             elif tcNS != 'N':
                 if self._debug_level > 1:
-                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
-                          ' skipping...'.format(k))
+                    print(
+                        '  WARNING: Invalid GPGGA string found in ensemble {},'
+                        ' skipping...'.format(k))
                 return 'FAIL'
             ens.glongitude[k] = self.f.read_f64(1)
             tcEW = self.f.reads(1)
@@ -482,32 +506,34 @@ class adcp_loader(object):
                 ens.glongitude[k] *= -1
             elif tcEW != 'E':
                 if self._debug_level > 1:
-                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
-                          ' skipping...'.format(k))
+                    print(
+                        '  WARNING: Invalid GPGGA string found in ensemble {},'
+                        ' skipping...'.format(k))
                 return 'FAIL'
             ucqual, n_sat = self.f.read_ui8(2)
             tmp = self.f.read_float(2)
             ens.hdop, ens.altitude = tmp
             if self.f.reads(1) != 'M':
                 if self._debug_level > 1:
-                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
-                          ' skipping...'.format(k))
+                    print(
+                        '  WARNING: Invalid GPGGA string found in ensemble {},'
+                        ' skipping...'.format(k))
                 return 'FAIL'
             ggeoid_sep = self.f.read_float(1)
             if self.f.reads(1) != 'M':
                 if self._debug_level > 1:
-                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
-                          ' skipping...'.format(k))
+                    print(
+                        '  WARNING: Invalid GPGGA string found in ensemble {},'
+                        ' skipping...'.format(k))
                 return 'FAIL'
             gage = self.f.read_float(1)
             gstation_id = self.f.read_ui16(1)
-            ### For some reason this was only on the first block that
-            ### I was looking at.
+            # ## For some reason this was only on the first block that
+            # ## I was looking at.
             # I believe these like the following:
             # 4 unknown bytes (2 reserved+2 checksum?)
             # 78 bytes for GPGGA string (including \r\n)
             # 2 reserved + 2 checksum
-            #gpgga = self.f.reads(86)
             self.vars_read += ['glongitude', 'glatitude', 'gtime']
             self._nbyte = self.f.tell() - startpos + 2
             if self._debug_level >= 5:
@@ -553,10 +579,12 @@ class adcp_loader(object):
             cfgid[1] = cfgid[0]
             cfgid[0] = nextbyte
             if not pos % 1000:
-                print('  Still looking for valid cfgid at file position %d ...' % pos)
+                print('  Still looking for valid cfgid at file '
+                      'position %d ...' % pos)
         self._pos = self.f.tell() - 2
         if nread > 0:
-            print('  Junk found at BOF... skipping %d bytes until\ncfgid: (%x,%x) at file pos %d.'
+            print('  Junk found at BOF... skipping %d bytes until\n'
+                  '  cfgid: (%x,%x) at file pos %d.'
                   % (self._pos, cfgid[0], cfgid[1], nread))
         if self._debug_level > 0:
             print(fd.tell())
@@ -574,13 +602,20 @@ class adcp_loader(object):
         tmp = fd.read_ui8(5)
         prog_ver0 = tmp[0]
         cfg.add_data('prog_ver', tmp[0] + tmp[1] / 100.)
-        cfg.add_data('name', self._cfgnames.get(tmp[0], 'unrecognized firmware version'))
+        cfg.add_data('name',
+                     self._cfgnames.get(
+                         tmp[0],
+                         'unrecognized firmware version'))
         config = tmp[2:4]
-        cfg.add_data('config', np.binary_repr(config[1], 8) + '-' + np.binary_repr(config[0], 8))
+        cfg.add_data('config',
+                     np.binary_repr(config[1], 8) + '-' +
+                     np.binary_repr(config[0], 8))
         cfg.add_data('beam_angle', [15, 20, 30][(config[1] & 3)])
         cfg.add_data('numbeams', [4, 5][(config[1] & 16) == 16])
-        cfg.add_data('beam_freq_khz', [75, 150, 300, 600, 1200, 2400, 38][(config[0] & 7)])
-        cfg.add_data('beam_pattern', ['concave', 'convex'][(config[0] & 8) == 8])
+        cfg.add_data('beam_freq_khz', [75, 150, 300,
+                                       600, 1200, 2400, 38][(config[0] & 7)])
+        cfg.add_data('beam_pattern', ['concave',
+                                      'convex'][(config[0] & 8) == 8])
         cfg.add_data('orientation', ['down', 'up'][(config[0] & 128) == 128])
         cfg.add_data('simflag', ['real', 'simulated'][tmp[4]])
         fd.seek(1, 1)
@@ -594,10 +629,13 @@ class adcp_loader(object):
         cfg.add_data('prof_codereps', fd.read_ui8(1))
         cfg.add_data('min_pgood', fd.read_ui8(1))
         cfg.add_data('evel_threshold', fd.read_ui16(1))
-        cfg.add_data('sec_between_ping_groups', np.sum(np.array(fd.read_ui8(3)) * np.array([60., 1., .01])))
+        cfg.add_data('sec_between_ping_groups',
+                     np.sum(np.array(fd.read_ui8(3)) *
+                            np.array([60., 1., .01])))
         coord_sys = fd.read_ui8(1)
         cfg.add_data('coord', np.binary_repr(coord_sys, 8))
-        cfg.add_data('coord_sys', ['beam', 'instrument', 'ship', 'earth'][((coord_sys >> 3) & 3)])
+        cfg.add_data('coord_sys', ['beam', 'instrument',
+                                   'ship', 'earth'][((coord_sys >> 3) & 3)])
         cfg.add_data('use_pitchroll', ['no', 'yes'][(coord_sys & 4) == 4])
         cfg.add_data('use_3beam', ['no', 'yes'][(coord_sys & 2) == 2])
         cfg.add_data('bin_mapping', ['no', 'yes'][(coord_sys & 1) == 1])
@@ -674,7 +712,8 @@ class adcp_loader(object):
         self.n_avg = navg
         self.ensemble = ensemble(self.n_avg, self.cfg['n_cells'])
         self._filesize = getsize(fname)
-        self._npings = int(self._filesize / (self.hdr.nbyte + 2 + self.extrabytes))
+        self._npings = int(self._filesize / (self.hdr.nbyte + 2 +
+                                             self.extrabytes))
         if self._debug_level > 0:
             print('  %d pings estimated in this file' % self._npings)
         self.avg_func = getattr(self, avg_func)
@@ -683,7 +722,8 @@ class adcp_loader(object):
         outd = adcp_raw()
         for nm in data_defs:
             outd.add_data(nm,
-                          np.zeros(get_size(nm, self._nens, self.cfg['n_cells']),
+                          np.zeros(get_size(nm, self._nens,
+                                            self.cfg['n_cells']),
                                    dtype=data_defs[nm][2]),
                           group=data_defs[nm][1])
             if data_defs[nm][2] in ['float32', 'float64']:
@@ -695,13 +735,15 @@ class adcp_loader(object):
         if nens is None:
             self._nens = int(self._npings / self.n_avg)
             self._ens_range = (0, self._nens)
-        elif (nens.__class__ is tuple or nens.__class__ is list) and len(nens) == 2:
+        elif (nens.__class__ is tuple or nens.__class__ is list) and \
+                len(nens) == 2:
             nens = list(nens)
             if nens[1] == -1:
                 nens[1] = self._npings
             self._nens = int((nens[1] - nens[0]) / self.n_avg)
             self._ens_range = nens
-            self.f.seek((self.hdr.nbyte + 2 + self.extrabytes) * self._ens_range[0], 1)
+            self.f.seek((self.hdr.nbyte + 2 + self.extrabytes) *
+                        self._ens_range[0], 1)
         else:
             self._nens = nens
             self._ens_range = (0, nens)
@@ -711,7 +753,8 @@ class adcp_loader(object):
         self.init_data()
         self.outd.add_data('ranges',
                            self.cfg['bin1_dist_m'] +
-                           np.arange(self.cfg['n_cells']) * self.cfg['cell_size_m'],
+                           np.arange(self.cfg['n_cells']) *
+                           self.cfg['cell_size_m'],
                            '_essential')
         self.outd.add_data('config', self.cfg, 'config')
         if self.cfg['orientation'] == 1:
@@ -785,8 +828,9 @@ class adcp_loader(object):
                             .format(search_cnt, id1))
         elif search_cnt > 0:
             if self._debug_level > 0:
-                print('  WARNING: Searched {} bytes to find next valid ensemble '
-                      'start [{:x}, {:x}]'.format(search_cnt, *id1))
+                print('  WARNING: Searched {} bytes to find next '
+                      'valid ensemble start [{:x}, {:x}]'.format(search_cnt,
+                                                                 *id1))
 
     def read_buffer(self,):
         fd = self.f
