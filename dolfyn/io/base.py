@@ -126,6 +126,10 @@ class VarAtts(object):
 
     def _empty_array(self, **kwargs):
         out = np.empty(self.shape(**kwargs), dtype=self.dtype)
+        try:
+            out[:] = np.NaN
+        except:
+            pass
         if self.view_type is not None:
             out = out.view(self.view_type)
         if self.default_val is not None:

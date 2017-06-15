@@ -420,7 +420,7 @@ class NortekReader(object):
         self.config.head.add_data('system', tmp[4])
         self.config.head.add_data('TransMatrix', np.array(
             unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.)
-        self.config.head.add_data('spare', tmp[5])
+        self.config.head.add_data('spare', tmp[5].decode('utf-8'))
         self.config.head.add_data('NBeams', tmp[6])
         self.checksum(byts)
 
@@ -887,7 +887,7 @@ class NortekReader(object):
         # file, in order to initialize arrays?
         dlta = self.code_spacing('0x11')
         self.config.add_data('fs', 512 / self.config.user.AvgInterval)
-        self.n_samp_guess = self.filesize / dlta + 1
+        self.n_samp_guess = int(self.filesize / dlta + 1)
         self.n_samp_guess *= self.config.fs
 
     def init_AWAC(self,):
@@ -898,7 +898,7 @@ class NortekReader(object):
         self.data.props['inst_model'] = 'AWAC'
         self.data.props['inst_type'] = 'ADP'
         self.data.props['rotate_vars'] = {'vel', }
-        self.n_samp_guess = self.filesize / self.code_spacing('0x20') + 1
+        self.n_samp_guess = int(self.filesize / self.code_spacing('0x20') + 1)
         self.config.add_data('fs', 1. / self.config.user.AvgInterval)
         # self.n_samp_guess=1000
         # self.n_samp_guess*=self.config.fs

@@ -180,3 +180,13 @@ def subset_test(make_data=False):
                   slice(td.mpltime.shape[0] + 5, td.mpltime.shape[0] + 100)]:
         yield (check_except, td.subset, index, IndexError,
                "Attempts to subset to an empty data-object should raise an error.")
+
+
+if __name__ == '__main__':
+    import dolfyn.data.base
+    dolfyn.data.base.debug_level = 10
+
+    pkg_root = '../'
+
+    for func, dat1, dat2, msg in read_test():
+        func(dat1, dat2, msg)
