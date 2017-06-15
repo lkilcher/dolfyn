@@ -12,8 +12,6 @@ import warnings
 # Four pound symbols ("####"), indicate a duplication of a comment from
 # Rich Pawlawicz' rdadcp routines.
 
-debug = 0
-
 ### This causes the time information to be returned in python's
 ### datenum format.  See pylab's date2num and num2date functions for
 ### more information.
@@ -70,16 +68,6 @@ data_defs = {'number': ([], 'index', 'uint32'),
              }
 
 
-class ADCPWarning(UserWarning):
-    pass
-
-
-class ADCPWarningNoCode(ADCPWarning):
-
-    def __init__(self, code):
-        self.code = code
-
-
 class variable_setlist(set):
 
     def __iadd__(self, vals):
@@ -131,7 +119,6 @@ class adcp_loader(object):
     _nbyte = 0
     _winrivprob = False
     _search_num = 30000  # Maximum distance? to search
-    _verbose = False
     _debug7f79 = None
     vars_read = variable_setlist(['mpltime'])
 
@@ -146,19 +133,19 @@ class adcp_loader(object):
         if (self.f.tell() - self.progress) < 1048576:
             return
         self.progress = self.f.tell()
-        print('pos %0.0fmb/%0.0fmb\r' %
+        print('  pos %0.0fmb/%0.0fmb\r' %
               (self.f.tell() / 1048576., self._filesize / 1048576.))
 
     def print_pos(self, byte_offset=-1):
         """
         Print the position in the file, used for debugging.
         """
-        if debug > 3:
+        if self._debug_level > 3:
             if hasattr(self, 'ensemble'):
                 k = self.ensemble.k
             else:
                 k = 0
-            print('pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
+            print('  pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
                   (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
 
     def read_dat(self, id):
@@ -199,13 +186,13 @@ class adcp_loader(object):
                         }
         ## Call the correct function:
         if id in function_map:
-            if debug >= 2:
-                print('Reading code {}...'.format(hex(id)), end='')
+            if self._debug_level >= 2:
+                print('  Reading code {}...'.format(hex(id)), end='')
             retval = function_map.get(id)[0](*function_map[id][1])
             if retval:
                 return retval
-            if debug >= 2:
-                print(' success!')
+            if self._debug_level >= 2:
+                print('    success!')
         else:
             self.read_nocode(id)
 
@@ -227,7 +214,7 @@ class adcp_loader(object):
         #     dfac = bin(int(hxid[3], 0) & 3).count('1')  # 3 is a 0b00000011 mask
         #     self.skip_Nbyte(12 * nflds * dfac)
         # else:
-        print('Unrecognized ID code: %0.4X\n' % id)
+        print('  Unrecognized ID code: %0.4X\n' % id)
 
     def read_fixed(self,):
         if hasattr(self, 'configsize'):  # and False:
@@ -241,7 +228,7 @@ class adcp_loader(object):
             self._nbyte = self.configsize
         else:
             self.read_cfgseg()
-        if debug == 1:
+        if self._debug_level >= 1:
             print(self._pos)
         self._nbyte += 2
 
@@ -395,7 +382,7 @@ class adcp_loader(object):
             fd.seek(16, 1)
             qual = fd.read_ui8(1)
             if qual == 0:
-                print('qual==%d,%f %f' % (qual, ens.slatitude[k], ens.slongitude[k]))
+                print('  qual==%d,%f %f' % (qual, ens.slatitude[k], ens.slongitude[k]))
                 ens.slatitude[k] = np.NaN
                 ens.slongitude[k] = np.NaN
             fd.seek(71 - 45 - 16 - 17, 1)
@@ -423,8 +410,8 @@ class adcp_loader(object):
         self.cfg['sourceprog'] = 'VMDAS'
         ens = self.ensemble
         k = ens.k
-        if self._source != 1:
-            print('\n***** Apparently a VMDAS file \n\n')
+        if self._source != 1 and self._debug_level >= 1:
+            print('  \n***** Apparently a VMDAS file \n\n')
         self._source = 1
         self.vars_read += ['etime',
                            'slatitude',
@@ -462,8 +449,8 @@ class adcp_loader(object):
         self.cfg.add_data('sourceprog', 'WINRIVER')
         ens = self.ensemble
         k = ens.k
-        if self._source != 3:
-            print('\n***** Apparently a WINRIVER2 file\n'
+        if self._source != 3 and self._debug_level >= 1:
+            print('  \n***** Apparently a WINRIVER2 file\n'
                   '*****    WARNING: Raw NMEA data '
                   'handler not yet fully implemented\n\n')
         self._source = 3
@@ -474,9 +461,9 @@ class adcp_loader(object):
             start_string = self.f.reads(6)
             _ = self.f.reads(1)
             if start_string != '$GPGGA':
-                warnings.warn('Invalid GPGGA string found in ensemble {},'
-                              ' skipping...'.format(k),
-                              ADCPWarning)
+                if self._debug_level > 1:
+                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
+                          ' skipping...'.format(k))
                 return 'FAIL'
             ens.gtime[k] = self.f.reads(9)
             self.f.seek(1, 1)
@@ -485,32 +472,32 @@ class adcp_loader(object):
             if tcNS == 'S':
                 ens.glatitude[k] *= -1
             elif tcNS != 'N':
-                warnings.warn('Invalid GPGGA string found in ensemble {},'
-                              ' skipping...'.format(k),
-                              ADCPWarning)
+                if self._debug_level > 1:
+                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
+                          ' skipping...'.format(k))
                 return 'FAIL'
             ens.glongitude[k] = self.f.read_f64(1)
             tcEW = self.f.reads(1)
             if tcEW == 'W':
                 ens.glongitude[k] *= -1
             elif tcEW != 'E':
-                warnings.warn('Invalid GPGGA string found in ensemble {},'
-                              ' skipping...'.format(k),
-                              ADCPWarning)
+                if self._debug_level > 1:
+                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
+                          ' skipping...'.format(k))
                 return 'FAIL'
             ucqual, n_sat = self.f.read_ui8(2)
             tmp = self.f.read_float(2)
             ens.hdop, ens.altitude = tmp
             if self.f.reads(1) != 'M':
-                warnings.warn('Invalid GPGGA string found in ensemble {},'
-                              ' skipping...'.format(k),
-                              ADCPWarning)
+                if self._debug_level > 1:
+                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
+                          ' skipping...'.format(k))
                 return 'FAIL'
             ggeoid_sep = self.f.read_float(1)
             if self.f.reads(1) != 'M':
-                warnings.warn('Invalid GPGGA string found in ensemble {},'
-                              ' skipping...'.format(k),
-                              ADCPWarning)
+                if self._debug_level > 1:
+                    print('  WARNING: Invalid GPGGA string found in ensemble {},'
+                          ' skipping...'.format(k))
                 return 'FAIL'
             gage = self.f.read_float(1)
             gstation_id = self.f.read_ui16(1)
@@ -523,7 +510,7 @@ class adcp_loader(object):
             #gpgga = self.f.reads(86)
             self.vars_read += ['glongitude', 'glatitude', 'gtime']
             self._nbyte = self.f.tell() - startpos + 2
-            if debug >= 5:
+            if self._debug_level >= 5:
                 print('')
                 print(sz, ens.glongitude[k])
 
@@ -531,8 +518,9 @@ class adcp_loader(object):
         self._winrivprob = True
         self.cfg.add_data('sourceprog', 'WINRIVER')
         if self._source not in [2, 3]:
-            print('\n***** Apparently a WINRIVER file - '
-                  'Raw NMEA data handler not yet implemented\n\n')
+            if self._debug_level >= 1:
+                print('\n  ***** Apparently a WINRIVER file - '
+                      'Raw NMEA data handler not yet implemented\n\n')
             self._source = 2
         startpos = self.f.tell()
         sz = self.f.read_ui16(1)
@@ -551,9 +539,9 @@ class adcp_loader(object):
         fd = self.f
         cfgid = list(fd.read_ui8(2))
         nread = 0
-        if debug > 2:
+        if self._debug_level > 2:
             print(self.f.pos)
-            print('cfgid0: [{:x}, {:x}]'.format(*cfgid))
+            print('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
             # print(cfgid[0] not in [127] or cfgid[1] not in [127])
             # print(not self.checkheader())
         while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
@@ -565,12 +553,12 @@ class adcp_loader(object):
             cfgid[1] = cfgid[0]
             cfgid[0] = nextbyte
             if not pos % 1000:
-                print('Still looking for valid cfgid at file position %d ...' % pos)
+                print('  Still looking for valid cfgid at file position %d ...' % pos)
         self._pos = self.f.tell() - 2
         if nread > 0:
-            print('Junk found at BOF... skipping %d bytes until\ncfgid: (%x,%x) at file pos %d.'
+            print('  Junk found at BOF... skipping %d bytes until\ncfgid: (%x,%x) at file pos %d.'
                   % (self._pos, cfgid[0], cfgid[1], nread))
-        if debug:
+        if self._debug_level > 0:
             print(fd.tell())
         self.read_hdrseg()
 
@@ -653,7 +641,7 @@ class adcp_loader(object):
     def read_hdrseg(self,):
         fd = self.f
         self.hdr.nbyte = fd.read_i16(1)
-        if debug > 2:
+        if self._debug_level > 2:
             print(fd.tell())
         fd.seek(1, 1)
         ndat = fd.read_i8(1)
@@ -668,8 +656,10 @@ class adcp_loader(object):
 
     extrabytes = 0
 
-    def __init__(self, fname, navg=1, avg_func='mean'):
+    def __init__(self, fname, navg=1, avg_func='mean', debug_level=0):
         self.fname = fname
+        print('\nReading file {} ...'.format(fname))
+        self._debug_level = debug_level
         self.cfg = adcp_config('ADCP')
         self.cfg.add_data('name', 'wh-adcp')
         self.cfg.add_data('sourceprog', 'instrument')
@@ -685,7 +675,8 @@ class adcp_loader(object):
         self.ensemble = ensemble(self.n_avg, self.cfg['n_cells'])
         self._filesize = getsize(fname)
         self._npings = int(self._filesize / (self.hdr.nbyte + 2 + self.extrabytes))
-        print('%d pings estimated in this file' % self._npings)
+        if self._debug_level > 0:
+            print('  %d pings estimated in this file' % self._npings)
         self.avg_func = getattr(self, avg_func)
 
     def init_data(self,):
@@ -714,8 +705,9 @@ class adcp_loader(object):
         else:
             self._nens = nens
             self._ens_range = (0, nens)
-        print('taking data from pings %d - %d' % tuple(self._ens_range))
-        print('%d ensembles will be produced.' % self._nens)
+        if self._debug_level > 0:
+            print('  taking data from pings %d - %d' % tuple(self._ens_range))
+            print('  %d ensembles will be produced.' % self._nens)
         self.init_data()
         self.outd.add_data('ranges',
                            self.cfg['bin1_dist_m'] +
@@ -765,7 +757,7 @@ class adcp_loader(object):
 
     def remove_end(self, iens):
         if iens < self.outd.shape[-1]:
-            print('Encountered end of file.  Cleaning up data.')
+            print('  Encountered end of file.  Cleaning up data.')
             for nm in self.vars_read:
                 setattr(self.outd, nm, self.outd[nm][..., :iens])
 
@@ -778,8 +770,8 @@ class adcp_loader(object):
         id1 = list(self.f.read_ui8(2))
         search_cnt = 0
         fd = self.f
-        if debug > 3:
-            print('-->In search_buffer...')
+        if self._debug_level > 3:
+            print('  -->In search_buffer...')
         while (search_cnt < self._search_num and
                ((id1[0] != 127 or id1[1] != 127) or
                 not self.checkheader())):
@@ -788,15 +780,13 @@ class adcp_loader(object):
             id1[1] = id1[0]
             id1[0] = nextbyte
         if search_cnt == self._search_num:
-            # warnings.warn('Searched {} entries... Not a workhorse/broadband'
-            #               ' file or bad data encountered: -> {}'.format(search_cnt, id1),
-            #               ADCPWarning)  # MAKE THIS AN ERROR/EXCEPTION?
             raise Exception('Searched {} entries... Not a workhorse/broadband'
-                            ' file or bad data encountered. -> {}'.format(search_cnt, id1))
+                            ' file or bad data encountered. -> {}'
+                            .format(search_cnt, id1))
         elif search_cnt > 0:
-            warnings.warn('Searched {} bytes to find next valid ensemble start [{:x}, {:x}]'
-                          .format(search_cnt, *id1),
-                          ADCPWarning)
+            if self._debug_level > 0:
+                print('  WARNING: Searched {} bytes to find next valid ensemble '
+                      'start [{:x}, {:x}]'.format(search_cnt, *id1))
 
     def read_buffer(self,):
         fd = self.f
@@ -820,15 +810,15 @@ class adcp_loader(object):
                 if n < (len(self.hdr.dat_offsets) - 1):
                     oset = self.hdr.dat_offsets[n + 1] - byte_offset
                     if oset != 0:
-                        if self._verbose:
-                            print('%s: Adjust location by %d\n' % (id, oset))
+                        if self._debug_level > 0:
+                            print('  %s: Adjust location by %d\n' % (id, oset))
                         fd.seek(oset, 1)
                     byte_offset = self.hdr.dat_offsets[n + 1]
                 else:
                     if self.hdr.nbyte - 2 != byte_offset:
                         if not self._winrivprob:
-                            if self._verbose:
-                                print('{:s}: Adjust location by {:d}\n'
+                            if self._debug_level > 0:
+                                print('  {:s}: Adjust location by {:d}\n'
                                       .format(id, self.hdr.nbyte - 2 - byte_offset))
                             self.f.seek(self.hdr.nbyte - 2 - byte_offset, 1)
                     byte_offset = self.hdr.nbyte - 2
@@ -841,28 +831,29 @@ class adcp_loader(object):
     def check_offset(self, offset, readbytes):
         fd = self.f
         if offset != 4 and self._fixoffset == 0:
-            print('\n******************************************************\n')
-            if fd.tell() == self._filesize:
-                print(' EOF reached unexpectedly - discarding this last ensemble\n')
-            else:
-                print('Adjust location by {:d} (readbytes={:d},hdr.nbyte={:d}\n'
-                      .format(offset, readbytes, self.hdr.nbyte))
-                print("""
-                NOTE - If this appears at the beginning of the file, it may be
-                       a dolfyn problem. Please report this message, with details here:
-                       https://github.com/lkilcher/dolfyn/issues/8
+            if self._debug_level >= 1:
+                print('\n  ********************************************\n')
+                if fd.tell() == self._filesize:
+                    print(' EOF reached unexpectedly - discarding this last ensemble\n')
+                else:
+                    print('  Adjust location by {:d} (readbytes={:d},hdr.nbyte={:d}\n'
+                          .format(offset, readbytes, self.hdr.nbyte))
+                    print("""
+                    NOTE - If this appears at the beginning of the file, it may be
+                           a dolfyn problem. Please report this message, with details here:
+                           https://github.com/lkilcher/dolfyn/issues/8
 
-                     - If this appears at the end of the file it means
-                       The file is corrupted and only a partial record
-                       has been read\n
-                """)
-            print('******************************************************\n')
+                         - If this appears at the end of the file it means
+                           The file is corrupted and only a partial record
+                           has been read\n
+                    """)
+                print('\n  ********************************************\n')
             self._fixoffset = offset - 4
         fd.seek(4 + self._fixoffset, 1)
 
     def checkheader(self,):
-        if debug > 1:
-            print("###In checkheader!")
+        if self._debug_level > 1:
+            print("  ###In checkheader!")
         fd = self.f
         valid = 0
         #print(self.f.pos)
@@ -896,8 +887,8 @@ class adcp_loader(object):
         else:
             fd.seek(-2, 1)
         #print(self.f.pos)
-        if debug > 1:
-            print("###Leaving checkheader.")
+        if self._debug_level > 1:
+            print("  ###Leaving checkheader.")
         return valid
 
 
