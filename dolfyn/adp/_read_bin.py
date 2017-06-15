@@ -148,6 +148,11 @@ class bin_reader(object):
         """
         val = self.f.read(n)
         self.cs and self.cs.add(val)
+        try:
+            val = val.decode('utf-8')
+        except:
+            print("ERROR DECODING: {}".format(val))
+            pass
         return val
 
     def read(self, n, frmt):

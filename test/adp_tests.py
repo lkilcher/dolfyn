@@ -25,7 +25,7 @@ def read_test(make_data=False):
     td = apm.read_rdi(pkg_root + 'example_data/RDI_test01.000')
     awd = apm.read_nortek(pkg_root + 'example_data/AWAC_test01.wpr')
     wr1 = apm.read_rdi(pkg_root + 'example_data/winriver01.PD0')
-    wr2 = apm.read_rdi(pkg_root + 'example_data/winriver01.PD0')
+    wr2 = apm.read_rdi(pkg_root + 'example_data/winriver02.PD0')
 
     if make_data:
         td.save(test_root + 'data/RDI_test01.h5')
@@ -42,10 +42,10 @@ def read_test(make_data=False):
              msg_form.format("'read_nortek(AWAC_test01.wpr)'",
                              'AWAC_test01.h5')),
             (wr1, datwr1,
-             msg_form.format("'read_rdi(winriver01.PD)'",
+             msg_form.format("'read_rdi(winriver01.PD0)'",
                              'winriver01.h5')),
             (wr2, datwr2,
-             msg_form.format("'read_rdi(winriver02.PD)'",
+             msg_form.format("'read_rdi(winriver02.PD0)'",
                              'winriver02.h5')),
     ]:
         yield data_equiv, dat1, dat2, msg

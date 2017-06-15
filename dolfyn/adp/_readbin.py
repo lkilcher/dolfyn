@@ -62,7 +62,7 @@ data_defs = {'number': ([], 'index', 'uint32'),
              'elatitude': ([], 'orient', 'float64'),
              'elongitude': ([], 'orient', 'float64'),
              # These are the GPS times/lat/lons
-             'gtime': ([], 'main', '|S9'),
+             'gtime': ([], 'main', '<U9'),
              'glatitude': ([], 'orient', 'float64'),
              'glongitude': ([], 'orient', 'float64'),
              'ntime': ([], 'main', 'float64'),
@@ -111,7 +111,8 @@ class ensemble(object):
             navg = 1
         self.n_avg = navg
         for nm in data_defs:
-            setattr(self, nm, np.zeros(get_size(nm, n=navg, ncell=n_cells)))
+            setattr(self, nm, np.zeros(get_size(nm, n=navg, ncell=n_cells),
+                                       dtype=data_defs[nm][2]))
 
     def clean_data(self,):
         self['vel'][self['vel'] == -32.768] = np.NaN
@@ -470,8 +471,9 @@ class adcp_loader(object):
         if spid == 104:
             sz = self.f.read_ui16(1)
             dtime = self.f.read_f64(1)
-            start_string = self.f.reads(7)
-            if start_string != '$GPGGA\x00':
+            start_string = self.f.reads(6)
+            _ = self.f.reads(1)
+            if start_string != '$GPGGA':
                 warnings.warn('Invalid GPGGA string found in ensemble {},'
                               ' skipping...'.format(k),
                               ADCPWarning)
