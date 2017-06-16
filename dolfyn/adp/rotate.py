@@ -73,8 +73,14 @@ def beam2inst(adcpo, reverse=False, force=False):
     adcpo.props['coord_sys'] = cs
 
 
-def inst2earth(adcpo, reverse=False, fixed_orientation=False, force=False):
+def inst2earth(adcpo, reverse=False,
+               fixed_orientation=False, force=False):
     """Rotate velocities from the instrument to earth coordinates.
+
+    This function also rotates data from the 'ship' frame, into the
+    earth frame when it is in the ship frame (and
+    ``adcpo.config['use_pitchroll'] == 'yes'``). It does not support the
+    'reverse' rotation back into the ship frame.
 
     Parameters
     ----------
@@ -103,8 +109,9 @@ def inst2earth(adcpo, reverse=False, fixed_orientation=False, force=False):
     in the props dict than the input value *is* used.
     """
     if not force:
-        if not reverse and adcpo.props['coord_sys'] != 'inst':
-            raise ValueError('The input must be in inst coordinates.')
+        if not reverse and adcpo.props['coord_sys'] not in ['inst', 'ship']:
+            raise ValueError("The input must be in 'inst' or 'ship' "
+                             "coordinates.")
         if reverse and adcpo.props['coord_sys'] != 'earth':
             raise ValueError('The input must be in earth coordinates.')
     if (not reverse and 'declination' in adcpo.props.keys() and not
@@ -117,6 +124,10 @@ def inst2earth(adcpo, reverse=False, fixed_orientation=False, force=False):
     h = adcpo.heading_deg * deg2rad
     if adcpo.config.orientation == 'up':
         r += np.pi
+    if (adcpo.props['coord_sys'] == 'ship' and
+            adcpo.config['use_pitchroll'] == 'yes'):
+        r[:] = 0
+        p[:] = 0
     ch = np.cos(h)
     sh = np.sin(h)
     cr = np.cos(r)
@@ -134,18 +145,22 @@ def inst2earth(adcpo, reverse=False, fixed_orientation=False, force=False):
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
     # Only operate on the first 3-components, b/c the 4th is err_vel
-    ess = 'ijk,jlk->ilk'
+    ess = 'ijt,jdt->idt'
     cs = 'earth'
     if reverse:
         cs = 'inst'
-        fixed_orientation = adcpo.props.pop('inst2earth:fixed', fixed_orientation)
+        fixed_orientation = adcpo.props.pop('inst2earth:fixed',
+                                            fixed_orientation)
         ess = ess.replace('ij', 'ji')
     else:
         adcpo.props['inst2earth:fixed'] = fixed_orientation
     if fixed_orientation:
-        ess = ess.replace('k,', ',')
+        ess = ess.replace('t,', ',')
         rotmat = rotmat.mean(-1)
     adcpo['vel'][:3] = np.einsum(ess, rotmat, adcpo['vel'][:3])
+    if 'bt_vel' in adcpo:
+        adcpo['bt_vel'][:3] = np.einsum(ess.replace('d', ''),
+                                        rotmat, adcpo['bt_vel'][:3])
     adcpo.props['coord_sys'] = cs
 
 

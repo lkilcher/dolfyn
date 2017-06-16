@@ -67,14 +67,19 @@ def rotate_inst2earth_test(make_data=False):
 
     td = dati.copy()
     apm.inst2earth(td)
+    tdwr2 = datwr2.copy()
+    apm.inst2earth(tdwr2)
 
     if make_data:
         td.save(test_root + 'data/RDI_test01_rotate_inst2earth.h5')
+        tdwr2.save(test_root + 'data/winriver02_rotate_ship2earth.h5')
         return
 
     cd = apm.load(test_root + 'data/RDI_test01_rotate_inst2earth.h5', 'ALL')
+    cdwr2 = apm.load(test_root + 'data/winriver02_rotate_ship2earth.h5', 'ALL')
 
     assert td == cd, "adp.rotate.inst2earth gives unexpected results!"
+    assert tdwr2 == cdwr2, "adp.rotate.inst2earth gives unexpected results!"
 
 
 if __name__ == '__main__':
