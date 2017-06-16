@@ -387,8 +387,8 @@ class adcp_loader(object):
                 ens.slatitude[k] = np.NaN
         else:
             fd.seek(14, 1)
-        ens.bt_range[:, k] = fd.read_ui16(4) * .01
-        ens.bt_vel[:, k] = fd.read_i16(4)
+        ens.bt_range[:, k] = fd.read_ui16(4) * 0.01
+        ens.bt_vel[:, k] = fd.read_i16(4) * 0.001
         ens.bt_corr[:, k] = fd.read_ui8(4)
         ens.bt_ampl[:, k] = fd.read_ui8(4)
         ens.bt_perc_gd[:, k] = fd.read_ui8(4)
