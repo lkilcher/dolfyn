@@ -16,7 +16,7 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
   - add `n_pad` option to `TurbBinner.__init__`, or
   - Add capability for `n_fft` > `n_bin`?
 
-What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?!?
+What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
 
 Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 

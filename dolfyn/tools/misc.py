@@ -326,7 +326,7 @@ def medfiltnan(a, kernel, thresh=0):
 
     """
     nans = np.isnan(a)
-    nans = np.convolve(nans, np.ones(kernel) / kernel, 'same')
+    nans = np.convolve(nans, np.ones(kernel) / np.prod(kernel), 'same')
     bds = nans > thresh
     out = medfilt2d(a[None, :], (1, kernel))[0]
     out[bds] = np.NaN
