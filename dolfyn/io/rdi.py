@@ -4,10 +4,16 @@ import numpy as np
 import datetime
 from ..data.time import date2num
 from os.path import getsize
-from .base import adcp_header, adcp_config, adcp_raw
+from ..adp.base import adcp_header, adcp_config, adcp_raw
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
 import warnings
+
+
+def read_rdi(fname, nens=None):
+    with adcp_loader(fname) as ldr:
+        dat = ldr.load_data(nens=nens)
+    return dat
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
 # Rich Pawlawicz' rdadcp routines.
