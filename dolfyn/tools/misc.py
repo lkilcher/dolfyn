@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import medfilt2d
+from scipy.signal import medfilt2d, convolve2d
 
 
 def nans(*args, **kwargs):
@@ -304,32 +304,28 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
 
 def medfiltnan(a, kernel, thresh=0):
     """
-    Do a running median filter of the data that fills NaNs.
+    Do a running median filter of the data.
 
-    Parameters
-    ----------
-    a : |np.ndarray|
-      The array to filter.
+    Regions where more than *thresh* fraction of the points are NaN
+    are set to NaN.
 
-    kernel : int
-      The length of the median filter.
-
-    thresh : float (default: 0)
-      In a region where more than `thresh` fractionf of the values are
-      NaN, the value at the center is set to NaN.
-
-    Returns
-    -------
-
-    out : |np.ndarray|
-      The filtered array.
-
+    Currently only work for vectors.
     """
-    nans = np.isnan(a)
-    nans = np.convolve(nans, np.ones(kernel) / np.prod(kernel), 'same')
-    bds = nans > thresh
-    out = medfilt2d(a[None, :], (1, kernel))[0]
-    out[bds] = np.NaN
+    flag_1D = False
+    if a.ndim == 1:
+        a = a[None, :]
+        flag_1D = True
+    try:
+        len(kernel)
+    except:
+        kernel = [1, kernel]
+    out = medfilt2d(a, kernel)
+    if thresh > 0:
+        out[convolve2d(np.isnan(a),
+                       np.ones(kernel) / np.prod(kernel),
+                       'same') > thresh] = np.NaN
+    if flag_1D:
+        return out[0]
     return out
 
 
