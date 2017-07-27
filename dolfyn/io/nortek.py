@@ -64,19 +64,21 @@ def read_nortek(filename,
     adv_data : :class:`ADVraw <dolfyn.adv.base.ADVraw>`
 
     """
-    with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
-        rdr.readfile()
-    rdr.dat2sci()
-    dat = rdr.data
-
     # Read the json file
+    json_props = {}
     for basefile in [filename.rsplit('.', 1)[0],
                      filename]:
         jsonfile = basefile + '.userdata.json'
         if os.path.isfile(jsonfile) and read_userdata:
             json_props = _read_vecjson(jsonfile)
-            dat.props.update(json_props)
             break
+
+    with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
+        rdr.readfile()
+    rdr.dat2sci()
+    dat = rdr.data
+
+    dat.props.update(json_props)
 
     # Crop the data?
     if cropdata:
