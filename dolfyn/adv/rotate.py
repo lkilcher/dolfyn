@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 import warnings
 from numpy.linalg import det, inv
+from ..base import BadDeterminantWarning
 
 deg2rad = np.pi / 180
 
@@ -199,9 +200,13 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # [sp,  sr * cp,  cp * cr]], dtype=np.float32)
         # rmat = np.einsum('ijl,jkl->ikl', H, P)
 
-    if not _check_rotmat_det(rmat):
-        raise ValueError("Invalid orientation matrix"
-                         " (determinant != 1).")
+    _dcheck = _check_rotmat_det(rmat)
+    if not _dcheck.all():
+        warnings.warn("Invalid orientation matrix"
+                      " (determinant != 1) at"
+                      " indices: {}."
+                      .format(np.nonzero(~_dcheck)[0]),
+                      BadDeterminantWarning)
 
     for nm in rotate_vars:
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
@@ -295,10 +300,16 @@ def _inst2earth(advo, use_mean_rotation=False):
     advo.props['coord_sys'] = 'earth'
 
 
-def _check_rotmat_det(rotmat):
+def _check_rotmat_det(rotmat, thresh=1e-3):
+    """Check that the absolute error of the determinant is small.
+
+          abs(det(rotmat) - 1) < thresh
+
+    Returns a boolean array.
+    """
     if rotmat.ndim > 2:
         rotmat = np.transpose(rotmat)
-    return np.all(np.abs(det(rotmat) - 1) < 1e-3)
+    return np.abs(det(rotmat) - 1) < thresh
 
 
 def _rotate_vel2body(advo):
@@ -306,7 +317,7 @@ def _rotate_vel2body(advo):
        advo.props['vel_rotated2body'] == True:
         # Don't re-rotate the data if its already been rotated.
         return
-    if not _check_rotmat_det(advo.props['body2head_rotmat']):
+    if not _check_rotmat_det(advo.props['body2head_rotmat']).all():
         raise ValueError("Invalid body-to-head rotation matrix"
                          " (determinant != 1).")
     # The transpose should do head to body.
