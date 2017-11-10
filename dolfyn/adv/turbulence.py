@@ -336,8 +336,9 @@ class TurbBinner(VelBinnerSpec):
 
         """
         fs = self._parse_fs(fs)
-        return U_mag / fs * np.argmin((corr_vel / corr_vel[..., 0][..., None]
-                                       ) > (1 / np.e), axis=-1)
+        return (U_mag / fs *
+                np.argmin((corr_vel / corr_vel[..., :1]) >
+                          (1 / np.e), axis=-1))
 
 
 def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
