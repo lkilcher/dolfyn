@@ -11,7 +11,7 @@ class Ad2cpReader(object):
 
         self.fname = fname
         self._check_nortek(endian)
-        self._estimate_bytes_per_ping()
+        self._bytes_per_ping = self._estimate_bytes_per_ping()
         self.c = 0
         self._burst_readers = {}
         self.reopen(bufsize)
@@ -61,14 +61,23 @@ class Ad2cpReader(object):
     def readfile(self, npings=None):
         print('Reading file %s ...' % self.fname)
         retval = None
+        dout0 = []
+        dout1 = []
         while not retval:
             id, sz = self.read_hdr()
             print id
             if id in [21, 24]:
-                self.read_burst()
+                dnow = self.read_burst()
             else:
                 self.f.seek(sz, 1)
+            if id == 21:
+                dout0.append(dnow)
+            elif id == 24:
+                dout1.append(dnow)
             self.c += 1
+            print self.c
+            if self.c >= npings:
+                return (dout0, dout1)
 
     def _read(self, strct):
         nbyte = strct.size
