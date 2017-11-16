@@ -2,6 +2,12 @@ from struct import calcsize, Struct
 import bitops as bo
 
 grav = 9.81
+# The starting value for the checksum:
+cs0 = int('0xb58c', 0)
+
+
+class BadCheckSum(Exception):
+    pass
 
 
 class DataDef(object):
@@ -19,6 +25,7 @@ class DataDef(object):
                 self._N.append(itm[2])
         self._struct = Struct('<' + self.format)
         self.nbyte = calcsize(self.format)
+        self._cs_struct = Struct('<' + '{}H'.format(self.nbyte // 2))
 
     @property
     def format(self, ):
@@ -29,11 +36,23 @@ class DataDef(object):
             out += f
         return out
 
-    def read(self, fobj):
+    def read(self, fobj, cs=None):
         bytes = fobj.read(self.nbyte)
         if len(bytes) != self.nbyte:
             raise IOError("End of file.")
         data = self._struct.unpack(bytes)
+        if cs is not None:
+            if cs is True:
+                # if cs is True, then it should be the last value that
+                # was read.
+                csval = data[-1]
+                off = cs0 - csval
+            elif isinstance(cs, int):
+                csval = cs
+                off = cs0
+            cs_res = sum(self._cs_struct.unpack(bytes)) + off
+            if csval is not False and (cs_res % 65536) != csval:
+                raise BadCheckSum('Checksum failed!')
         out = []
         c = 0
         for idx, n in enumerate(self._N):
@@ -44,9 +63,9 @@ class DataDef(object):
             c += n
         return out
 
-    def read2dict(self, fobj):
+    def read2dict(self, fobj, cs=False):
         return {self._names[idx]: dat
-                for idx, dat in enumerate(self.read(fobj))}
+                for idx, dat in enumerate(self.read(fobj, cs=cs))}
 
 
 _header = DataDef([

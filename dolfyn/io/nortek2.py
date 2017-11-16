@@ -2,25 +2,58 @@ from struct import unpack, calcsize
 import nortek2_defs as defs
 import bitops as bo
 import pdb
-reload(defs)
+reload(defs)    
 
 
 class Ad2cpReader(object):
+    debug = False
 
     def __init__(self, fname, endian=None, bufsize=None):
 
         self.fname = fname
         self._check_nortek(endian)
-        self._bytes_per_ping = self._estimate_bytes_per_ping()
+        self._bytes_per_ens = self._estimate_bytes_per_ens()
         self.c = 0
         self._burst_readers = {}
         self.reopen(bufsize)
 
-    def read_hdr(self, ):
-        res = defs._header.read2dict(self.f)
+    def _ensemble_total(self, ):
+        # Open the file
+        self.reopen(10000)
+        # Move to the end of the file
+        self.f.seek(0, 2)
+        while True:
+            self._scan4sync(backward=True)
+            ptmp = self.f.tell()
+            try:
+                hdr = self.read_hdr(do_cs=True)
+            except defs.BadCheckSum:
+                print("FAIL CS")
+                continue
+            else:
+                print("DONE!")
+                break
+            finally:
+                # finally is always executed!
+                self.f.seek(ptmp, 0)
+        return hdr
+
+    def _readbyte(self, backward=False):
+        print self.f.tell()
+        if backward:
+            self.f.seek(-2, 1)
+        return self.f.read(1)
+
+    def _scan4sync(self, backward=False):
+        while self._readbyte(backward=backward) != b'\xa5':
+            pass
+        self.f.seek(-1, 1)
+
+    def read_hdr(self, do_cs=False):
+        res = defs._header.read2dict(self.f, cs=do_cs)
         if res['sync'] != 165:
             raise Exception("Out of sync!")
-        return res['id'], res['sz']
+        return res
 
     def _check_nortek(self, endian):
         self.reopen(10)
@@ -37,17 +70,19 @@ class Ad2cpReader(object):
                     "AD2CP file?")
         self.endian = endian
 
-    def _estimate_bytes_per_ping(self, npings=100):
+    def _estimate_bytes_per_ens(self, npings=100):
         self.reopen()
         idx = 0
         sizes = []
         while idx < npings:
-            id, sz = self.read_hdr()
-            sizes.append(sz)
+            hdr = self.read_hdr()
+            self.f.seek(hdr['sz'], 1)
+            if hdr['id'] not in [21, 24]:
+                continue
+            sizes.append(hdr['sz'])
             idx += 1
-            self.f.seek(sz, 1)
-            print(hex(id), sz)
-        return self.pos / npings + 1
+            print(hex(hdr['id']), hdr['sz'])
+        return sum(sizes) // len(sizes)
 
     def reopen(self, bufsize=None):
         if bufsize is None:
@@ -64,18 +99,22 @@ class Ad2cpReader(object):
         dout0 = []
         dout1 = []
         while not retval:
-            id, sz = self.read_hdr()
-            print id
+            hdr = self.read_hdr()
+            id = hdr['id']
+            #print id
             if id in [21, 24]:
                 dnow = self.read_burst()
             else:
-                self.f.seek(sz, 1)
+                # 0xa0 (i.e., 160) is a 'string data record',
+                # according to the AD2CP manual
+                # Need to catch the string at some point...
+                self.f.seek(hdr['sz'], 1)
             if id == 21:
                 dout0.append(dnow)
             elif id == 24:
                 dout1.append(dnow)
             self.c += 1
-            print self.c
+            #print self.c
             if self.c >= npings:
                 return (dout0, dout1)
 
@@ -106,14 +145,17 @@ class Ad2cpReader(object):
         reader_id = (b_hd['config'], b_hd['beam_config'])
         try:
             brdr = self._burst_readers[reader_id]
-            print("using cached reader")
+            #print("using cached reader")
         except KeyError:
             print("Loading reader")
             brdr = self._burst_readers[reader_id] = defs.calc_burst_struct(
                 b_hd['config'], b_hd['n_beams'], b_hd['n_cells'])
         dat = brdr.read2dict(self.f)
-        print 'ENS: {:016d} '.format(b_hd['ensemble'])
-        return dat
+        # Note, for some reason, the ENS counter tops out (and starts
+        # over) at 2**12 (4096). I do not know why. After all, there are 32 bits available here.
+        if self.debug == 1:
+            print 'ENS: {:016d} '.format(b_hd['ensemble'])
+        return dat, b_hd
 
     def __exit__(self, type, value, trace,):
         self.f.close()
@@ -124,6 +166,7 @@ class Ad2cpReader(object):
     @property
     def pos(self, ):
         return self.f.tell()
+
 
 if __name__ == '__main__':
 
