@@ -55,6 +55,11 @@ class Ad2cpReader(object):
             raise Exception("Out of sync!")
         return res
 
+    def ens_seek(self, ensnum):
+        for c in range(ensnum):
+            h = self.read_hdr()
+            self.f.seek(h['sz'], 1)
+
     def _check_nortek(self, endian):
         self.reopen(10)
         byts = self.f.read(2)

@@ -22,7 +22,13 @@ Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
 Add <filename.vec>.json files?
 
-Add ad2cp reader.
+Add ad2cp
+---------------
+- Create a byte-index that maps the stored ensemble counter (which is currently truncated at 4096) to an un-truncated ensemble counter.
+- guess number of ensembles.
+- Initialize data structures (just-in-time)
+- Fill data structures (use ensemble number)
+
 
 Testing
 ======
