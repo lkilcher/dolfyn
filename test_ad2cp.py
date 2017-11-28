@@ -14,8 +14,8 @@ testfile = path.expanduser('~/data/WA2017/SMB500_Signature1000_Jul2017/SMB500_Si
 #rdr._scan4sync()
 #h = rdr._ensemble_total()
 
-#nlib.indexfile(testfile, 'tmp/test_index.dat', 2000000)
-nlib.create_index(testfile, 'tmp/test_index.dat')
+#nlib.indexfile_slow(testfile, 'tmp/test_index.dat', 1000000)
+#nlib.get_index(testfile, reload=True)
 #nlib.indexfile_slow(testfile, 100)
 
-idx = np.fromfile('tmp/test_index.dat', dtype=np.uint64).reshape((-1, 2))
+idx = nlib.get_index(testfile, reload=True)
