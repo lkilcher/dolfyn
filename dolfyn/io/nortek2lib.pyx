@@ -1,63 +1,10 @@
+from __future__ import print_function
 import struct
 from libc.stdio cimport printf, fread, FILE, fopen, fseek, ftell, SEEK_CUR, fclose, fwrite
 import os.path as path
 import numpy as np
+cimport c_nortek2lib as lib
 
-cdef struct Header:
-    unsigned char  sync
-    unsigned char  hdrSize
-    unsigned char  ID
-    unsigned char  family
-    unsigned short dataSize
-    unsigned short dataChecksum
-    unsigned short hdrChecksum
-
-cdef struct BurstHead:
-    unsigned char ver
-    unsigned char DataOffset
-    unsigned short config
-    unsigned int SerialNum
-    unsigned char year
-    unsigned char month
-    unsigned char day
-    unsigned char hour
-    unsigned char minute
-    unsigned char second
-    unsigned short usec100
-    unsigned short c_sound
-    signed short temp
-    signed int pressure
-    unsigned short heading
-    unsigned short pitch
-    unsigned short roll
-    unsigned short HeadConfig
-    unsigned short CellSize
-    unsigned short Blanking
-    unsigned char NomCorr
-    unsigned char TempPress
-    unsigned short Voltage
-    unsigned short MagX
-    unsigned short MagY
-    unsigned short MagZ
-    unsigned short AccX
-    unsigned short AccY
-    unsigned short AccZ
-    unsigned short AmbigVel
-    unsigned short DataDescription
-    unsigned short TransmitEnergy
-    signed char VelScale
-    signed char PowerLevel
-    signed short TempMag
-    signed short TempClock
-    unsigned short Error
-    unsigned short Status0
-    unsigned int Status
-    unsigned int ens
-
-
-cdef struct Index:
-    unsigned long N
-    unsigned long pos
 
 hdr = struct.Struct('<BBBBhhh')
     
@@ -92,17 +39,17 @@ def create_index_slow(infile, outfile, N_ens):
 cdef create_index(str infile, str outfile, long N_ens):
     cdef FILE *fin = fopen(infile, "rb")
     cdef FILE *fout = fopen(outfile, "wb")
-    cdef Header hd
+    cdef lib.Header hd
     cdef unsigned short ens, last_ens, retval, ensemble_pos
     cdef unsigned long pos
-    cdef Index idx
-    cdef BurstHead bhead
+    cdef lib.Index idx
+    cdef lib.BurstHead bhead
     ensemble_pos = 72
     idx.N = 0
     last_ens = 0
     while idx.N < N_ens:
         idx.pos = ftell(fin)
-        retval = fread(&hd, sizeof(Header), 1, fin)
+        retval = fread(&hd, sizeof(lib.Header), 1, fin)
         if retval < 1:
             # Presumably this is the end of the file.
             # I could do more checking here with feof or ferror, if necessary.
@@ -129,7 +76,11 @@ cdef create_index(str infile, str outfile, long N_ens):
 cpdef get_index(infile, reload=False):
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
+        print("Indexing...", end='')
         if reload == 'slow':
             create_index_slow(infile, index_file, 2 ** 32)
         create_index(infile, index_file, 2 ** 32)
+        print(" Done.")
+    else:
+        print("Using saved index file.")
     return np.fromfile(index_file, dtype=np.uint64).reshape((-1, 2))

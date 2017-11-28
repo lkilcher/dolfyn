@@ -1,0 +1,55 @@
+cdef struct Header:
+    unsigned char  sync
+    unsigned char  hdrSize
+    unsigned char  ID
+    unsigned char  family
+    unsigned short dataSize
+    unsigned short dataChecksum
+    unsigned short hdrChecksum
+
+cdef struct BurstHead:
+    unsigned char ver
+    unsigned char DataOffset
+    unsigned short config
+    unsigned int SerialNum
+    unsigned char year
+    unsigned char month
+    unsigned char day
+    unsigned char hour
+    unsigned char minute
+    unsigned char second
+    unsigned short usec100
+    unsigned short c_sound
+    signed short temp
+    signed int pressure
+    unsigned short heading
+    unsigned short pitch
+    unsigned short roll
+    unsigned short HeadConfig
+    unsigned short CellSize
+    unsigned short Blanking
+    unsigned char NomCorr
+    unsigned char TempPress
+    unsigned short Voltage
+    unsigned short MagX
+    unsigned short MagY
+    unsigned short MagZ
+    unsigned short AccX
+    unsigned short AccY
+    unsigned short AccZ
+    unsigned short AmbigVel
+    unsigned short DataDescription
+    unsigned short TransmitEnergy
+    signed char VelScale
+    signed char PowerLevel
+    signed short TempMag
+    signed short TempClock
+    unsigned short Error
+    unsigned short Status0
+    unsigned int Status
+    unsigned int ens
+
+
+cdef struct Index:
+    unsigned long N
+    unsigned long pos
