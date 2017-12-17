@@ -1,6 +1,7 @@
 from __future__ import print_function
 import struct
-from libc.stdio cimport printf, fread, FILE, fopen, fseek, ftell, SEEK_CUR, fclose, fwrite
+from libc.stdio cimport printf, fread, FILE, fopen, fseek, ftell, SEEK_CUR, SEEK_SET, fclose, fwrite, feof, ferror
+from libc.stdlib cimport malloc, free
 import os.path as path
 cimport nortek2lib_defs as lib
 import numpy as np
@@ -109,14 +110,38 @@ cdef zeros_3D_int16(size):
     return narr, narr_view
     
 
-cpdef test_readfile(str infile, index, config, np.uint64_t ens_start, np.uint64_t ens_stop):
+cpdef test_readfile(str infile, config, index, np.uint64_t ens_start, np.uint64_t ens_stop):
     npings = ens_stop - ens_start
+    cdef lib.Header hd
+    cdef lib.BurstHead bhead
+    cdef np.uint64_t c = 0
+    cdef short *vel_tmp24 = <short *>malloc(config[24]['nbeams'] * config[24]['ncells'] * sizeof(short))
     if 24 in config:
         cfg = config[24]
         if cfg['vel']:
             vel_arr24, vel_arr24_v = zeros_3D_int16((cfg['nbeams'], cfg['ncells'], npings))
+    start_pos = index[ens_start]
+    stop_pos = index[ens_stop]
     cdef FILE *fin = fopen(infile, "rb")
-    
+    fseek(fin, start_pos, SEEK_SET)
+    while ftell(fin) < stop_pos:
+        retval = fread(&hd, sizeof(hd), 1, fin)
+        if retval < 1:
+            # Presumably this is the end of the file.
+            # I could do more checking here with feof or ferror, if necessary.
+            break
+        print('hello!!')
+        # Read the fixed header
+        if hd.ID == 24:
+            retval = fread(&bhead, sizeof(lib.BurstHead), 1, fin)
+            if cfg['vel']:
+                print('hello')
+                fread(&vel_tmp24, sizeof(vel_tmp24), 1, fin)
+                velarr24_v[:, :, c] = vel_tmp24
+                break
+    fclose(fin)
+    free(vel_tmp24)
+    vel_arr24_v[:, :, 10] = 1
     return dict(vel_arr24=vel_arr24)
 
 

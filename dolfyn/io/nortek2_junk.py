@@ -1,4 +1,4 @@
-
+import numpy as np
 
 # # I'm pretty sure this is unneeded, but saving it here just in case.
 # cdef struct headconfig:
@@ -18,6 +18,16 @@
 #     bint stdDev
 #     unsigned short ncells
 #     unsigned short nbeams
+
+
+def first_index(index):
+    """Condense the index to only be the first occurence of each
+    ensemble. Returns only the position (the ens number is the array
+    index).
+    """
+    dens = np.ones(index['ens'].shape, dtype='bool')
+    dens[1:] = np.diff(index['ens']) != 0
+    return index['pos'][dens]
 
 
 def getbit(val, n):

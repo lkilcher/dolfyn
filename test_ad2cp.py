@@ -12,7 +12,7 @@ pyximport.install(
 import dolfyn.io.nortek2lib as nlib
 import dolfyn.io.nortek2_junk as nlibj
 reload(nlib)
-
+reload(nlibj)
 
 testfile = os.path.expanduser('~/data/WA2017/SMB500_Signature1000_Jul2017/SMB500_Sig1000_Jul2017.ad2cp')
 
@@ -25,9 +25,9 @@ testfile = os.path.expanduser('~/data/WA2017/SMB500_Signature1000_Jul2017/SMB500
 #nlib.get_index(testfile, reload=True)
 #nlib.indexfile_slow(testfile, 100)
 
-idx = nlib.get_index(testfile, reload=True)
-#idx = nlib.get_index(testfile)
-
+#idx = nlib.get_index(testfile, reload='slow')
+#idx = nlib.get_index(testfile, reload=True)
+idx = nlib.get_index(testfile)
 #idx['beams_cy'][2] = 6
 
 
@@ -56,7 +56,9 @@ def read_ad2cp(filename, index, ens_start=None, ens_stop=None):
         config[id] = nlibj.headconfig_int2dict(_config[0])
         config[id].update(nlibj.beams_cy_int2dict(_beams_cy[0], id))
         config[id].pop('cy')
-    val = nlib.test_readfile('test', config, index, ens_start, ens_stop)
+    val = nlib.test_readfile(filename, config,
+                             nlibj.first_index(index),
+                             ens_start, ens_stop)
     return val
 
-dat = read_ad2cp('test', idx)
+dat = read_ad2cp(testfile, idx, 100, 200)
