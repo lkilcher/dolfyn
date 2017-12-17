@@ -5,6 +5,7 @@ import os.path as path
 cimport nortek2lib_defs as lib
 import numpy as np
 cimport numpy as np
+#from cpython import dict
 
 
 cdef struct Index:
@@ -100,6 +101,23 @@ cdef create_index(str infile, str outfile, long N_ens):
         #     printf('%10ld: %02X, %d, %02X, %d, %05u, %05u\n', idx.pos, hd.sync, hd.hdrSize, hd.ID, hd.dataSize, ens, last_ens)
     fclose(fin)
     fclose(fout)
+
+
+cdef zeros_3D_int16(size):
+    narr = np.zeros(size, dtype=np.dtype('int16'))
+    cdef short[:, :, :] narr_view = narr
+    return narr, narr_view
+    
+
+cpdef test_readfile(str infile, index, config, np.uint64_t ens_start, np.uint64_t ens_stop):
+    npings = ens_stop - ens_start
+    if 24 in config:
+        cfg = config[24]
+        if cfg['vel']:
+            vel_arr24, vel_arr24_v = zeros_3D_int16((cfg['nbeams'], cfg['ncells'], npings))
+    cdef FILE *fin = fopen(infile, "rb")
+    
+    return dict(vel_arr24=vel_arr24)
 
 
 cpdef get_index(infile, reload=False):
