@@ -28,10 +28,10 @@ class Ad2cpReader(object):
             self._burst_readers[rdr_id] = defs.calc_burst_struct(
                 cfg['_config'], cfg['nbeams'], cfg['ncells'])
 
-    def init_data(self, npings=None):
+    def init_data(self, nens=None):
         outdat = {}
         for ky in rdr._burst_readers():
-            outdat[ky] = rdr.init_data(npings)
+            outdat[ky] = rdr.init_data(nens)
         return outdat
 
     def read_hdr(self, do_cs=False):
@@ -64,8 +64,8 @@ class Ad2cpReader(object):
             pass
         self.f = open(self.fname, 'rb', bufsize)
 
-    def readfile(self, npings=None):
-        outdat = self.init_data(npings)
+    def readfile(self, nens=None, ):
+        outdat = self.init_data(nens)
         print('Reading file %s ...' % self.fname)
         retval = None
         dout0 = []
@@ -87,12 +87,13 @@ class Ad2cpReader(object):
                 dout1.append(dnow)
             self.c += 1
             #print self.c
-            if self.c >= npings:
+            if self.c >= nens:
                 return (dout0, dout1)
 
     def read_burst(self, id, dat, echo=False):
         b_hd = defs._burst_hdr.read2dict(self.f)
-        dat = self._burst_readers[id].read2dict(self.f)
+        rdr = self._burst_readers[id]
+        rdr.read_into(self.f, dat, 3)
         # Note, for some reason, the ENS counter tops out (and starts
         # over) at 2**12 (4096). I do not know why. After all, there
         # are 32 bits available here.
