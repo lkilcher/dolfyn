@@ -63,3 +63,13 @@ def get_index(infile, reload=False):
     else:
         print("Using saved index file.")
     return np.fromfile(index_file, dtype=index_dtype)
+
+
+def index2ens_pos(index):
+    """Condense the index to only be the first occurence of each
+    ensemble. Returns only the position (the ens number is the array
+    index).
+    """
+    dens = np.ones(index['ens'].shape, dtype='bool')
+    dens[1:] = np.diff(index['ens']) != 0
+    return index['pos'][dens]

@@ -1,6 +1,7 @@
 from struct import unpack, calcsize
 import nortek2_defs as defs
 import bitops as bo
+from nortek2lib import get_index, index2ens_pos
 import pdb
 reload(defs)    
 
@@ -8,35 +9,19 @@ reload(defs)
 class Ad2cpReader(object):
     debug = False
 
-    def __init__(self, fname, endian=None, bufsize=None):
+    def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False):
 
         self.fname = fname
         self._check_nortek(endian)
-        self._bytes_per_ens = self._estimate_bytes_per_ens()
         self.c = 0
         self._burst_readers = {}
         self.reopen(bufsize)
+        self._index = get_index(fname,
+                                reload=rebuild_index)
+        self._ens_pos = index2ens_pos(self._index)
 
-    def _ensemble_total(self, ):
-        # Open the file
-        self.reopen(10000)
-        # Move to the end of the file
-        self.f.seek(0, 2)
-        while True:
-            self._scan4sync(backward=True)
-            ptmp = self.f.tell()
-            try:
-                hdr = self.read_hdr(do_cs=True)
-            except defs.BadCheckSum:
-                print("FAIL CS")
-                continue
-            else:
-                print("DONE!")
-                break
-            finally:
-                # finally is always executed!
-                self.f.seek(ptmp, 0)
-        return hdr
+    def init_data(self, npings=None):
+        pass
 
     def _readbyte(self, backward=False):
         print self.f.tell()
@@ -74,20 +59,6 @@ class Ad2cpReader(object):
                     "of the file.  Are you sure this is a Nortek "
                     "AD2CP file?")
         self.endian = endian
-
-    def _estimate_bytes_per_ens(self, npings=100):
-        self.reopen()
-        idx = 0
-        sizes = []
-        while idx < npings:
-            hdr = self.read_hdr()
-            self.f.seek(hdr['sz'], 1)
-            if hdr['id'] not in [21, 24]:
-                continue
-            sizes.append(hdr['sz'])
-            idx += 1
-            print(hex(hdr['id']), hdr['sz'])
-        return sum(sizes) // len(sizes)
 
     def reopen(self, bufsize=None):
         if bufsize is None:
@@ -157,7 +128,8 @@ class Ad2cpReader(object):
                 b_hd['config'], b_hd['n_beams'], b_hd['n_cells'])
         dat = brdr.read2dict(self.f)
         # Note, for some reason, the ENS counter tops out (and starts
-        # over) at 2**12 (4096). I do not know why. After all, there are 32 bits available here.
+        # over) at 2**12 (4096). I do not know why. After all, there
+        # are 32 bits available here.
         if self.debug == 1:
             print 'ENS: {:016d} '.format(b_hd['ensemble'])
         return dat, b_hd
