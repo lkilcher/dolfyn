@@ -46,13 +46,18 @@ class DataDef(object):
     def init_data(self, npings):
         out = {}
         for nm, fmt, shp in zip(self._names, self._format, self._shape):
-            out[nm] = nans(shp + [npings], dtype=np.dtype(fmt))
+            # fmt[0] uses only the first format specifier
+            # (ie, skip '15x' in 'B15x')
+            out[nm] = nans(shp + [npings], dtype=np.dtype(fmt[0]))
         return out
 
     def read_into(self, fobj, data, ens, cs=None):
         dat_tuple = self.read(fobj, cs=cs)
-        for nm, d in zip(self._names, dat_tuple):
-            data[nm][..., ens] = d
+        for nm, shp, d in zip(self._names, self._shape, dat_tuple):
+            try:
+                data[nm][..., ens] = d
+            except ValueError:
+                data[nm][..., ens] = np.asarray(d).reshape(shp)
 
     @property
     def format(self, ):
