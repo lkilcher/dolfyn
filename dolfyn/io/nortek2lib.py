@@ -4,6 +4,7 @@ from __future__ import print_function
 import struct
 import os.path as path
 import numpy as np
+import warnings
 
 
 index_dtype = np.dtype([('ens', np.uint64),
@@ -110,6 +111,20 @@ def beams_cy_int2dict(val, id):
     )
 
 
+def isuniform(vec):
+    return np.all(vec == vec[0])
+
+
+def collapse(vec, name=None):
+    if name is None:
+        name = '**unkown**'
+    if not isuniform(vec):
+        warnings.warn("The variable {} is expected to be uniform,"
+                      " but it is not.".format(name))
+        return vec
+    return vec[0]
+
+
 def calc_config(index):
     ids = np.unique(index['ID'])
     config = {}
@@ -120,10 +135,10 @@ def calc_config(index):
         if id not in ids:
             continue
         # Check that these variables are consistent
-        if not np.all(_config == _config[0]):
+        if not isuniform(_config):
             raise Exception("config are not identical for id: 0x{:X}."
                             .format(id))
-        if not np.all(_beams_cy == _beams_cy[0]):
+        if not isuniform(_beams_cy):
             raise Exception("beams_cy are not identical for id: 0x{:X}."
                             .format(id))
         # Now that we've confirmed they are the same:
