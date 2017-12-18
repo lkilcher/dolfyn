@@ -34,27 +34,11 @@ class Ad2cpReader(object):
             outdat[ky] = rdr.init_data(npings)
         return outdat
 
-    def _readbyte(self, backward=False):
-        print self.f.tell()
-        if backward:
-            self.f.seek(-2, 1)
-        return self.f.read(1)
-
-    def _scan4sync(self, backward=False):
-        while self._readbyte(backward=backward) != b'\xa5':
-            pass
-        self.f.seek(-1, 1)
-
     def read_hdr(self, do_cs=False):
         res = defs._header.read2dict(self.f, cs=do_cs)
         if res['sync'] != 165:
             raise Exception("Out of sync!")
         return res
-
-    def ens_seek(self, ensnum):
-        for c in range(ensnum):
-            h = self.read_hdr()
-            self.f.seek(h['sz'], 1)
 
     def _check_nortek(self, endian):
         self.reopen(10)
@@ -105,20 +89,6 @@ class Ad2cpReader(object):
             #print self.c
             if self.c >= npings:
                 return (dout0, dout1)
-
-    def _read(self, strct):
-        nbyte = strct.size
-        byts = self.f.read(nbyte)
-        if not (len(byts) == nbyte):
-            raise EOFError('Reached the end of the file')
-        return strct.unpack(byts)
-
-    def read(self, format):
-        nbyte = calcsize(format)
-        byts = self.f.read(nbyte)
-        if not (len(byts) == nbyte):
-            raise EOFError('Reached the end of the file')
-        return unpack(self.endian + format, byts)
 
     def read_burst(self, id, dat, echo=False):
         b_hd = defs._burst_hdr.read2dict(self.f)
