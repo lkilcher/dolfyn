@@ -26,19 +26,17 @@ class DataDef(object):
         self._names = []
         self._format = []
         self._shape = []
+        self._sci_func = []
         self._N = []
         for itm in list_of_defs:
             self._names.append(itm[0])
             self._format.append(itm[1])
-            if len(itm) <= 2:
-                self._shape.append([])
+            self._shape.append(itm[2])
+            self._sci_func.append(itm[3])
+            if itm[2] == []:
                 self._N.append(1)
             else:
-                try:
-                    self._shape.append(list(itm[2]))
-                except TypeError:
-                    self._shape.append([itm[2]])
-                self._N.append(np.prod(itm[2]))
+                self._N.append(int(np.prod(itm[2])))
         self._struct = Struct('<' + self.format)
         self.nbyte = calcsize(self.format)
         self._cs_struct = Struct('<' + '{}H'.format(self.nbyte // 2))
@@ -101,52 +99,52 @@ class DataDef(object):
 
 
 _header = DataDef([
-    ('sync', 'B'),
-    ('hsz', 'B'),
-    ('id', 'B'),
-    ('fam', 'B'),
-    ('sz', 'H'),
-    ('cs', 'H'),
-    ('hcs', 'H'),
+    ('sync', 'B', [], None),
+    ('hsz', 'B', [], None),
+    ('id', 'B', [], None),
+    ('fam', 'B', [], None),
+    ('sz', 'H', [], None),
+    ('cs', 'H', [], None),
+    ('hcs', 'H', [], None),
 ])
 
 _burst_hdr = DataDef([
-    ('ver', 'B'),
-    ('DatOffset', 'B'),
-    ('config', 'H'),
-    ('SerialNum', 'I'),
-    ('year', 'B'),
-    ('month', 'B'),
-    ('day', 'B'),
-    ('hour', 'B'),
-    ('minute', 'B'),
-    ('second', 'B'),
-    ('usec', 'H'),
-    ('c_sound', 'H'),
-    ('temp', 'H'),
-    ('press', 'I'),
-    ('heading', 'H'),
-    ('pitch', 'H'),
-    ('roll', 'H'),
-    ('beam_config', 'H'),
-    ('cell_size', 'H'),
-    ('blanking', 'H'),
-    ('nom_corr', 'B', ),
-    ('press_temp', 'B'),
-    ('batt_V', 'H'),
-    ('Mag', 'h', 3),
-    ('Acc', 'h', 3),
-    ('ambig_vel', 'h'),
-    ('data_desc', 'H'),
-    ('xmit_energy', 'H'),
-    ('vel_scale', 'b'),
-    ('power_level', 'b'),
-    ('mag_temp', 'h'),
-    ('clock_temp', 'h'),
-    ('error', 'H'),
-    ('status0', 'H'),
-    ('status', 'I'),
-    ('ensemble', 'I')
+    ('ver', 'B', [], None),
+    ('DatOffset', 'B', [], None),
+    ('config', 'H', [], None),
+    ('SerialNum', 'I', [], None),
+    ('year', 'B', [], None),
+    ('month', 'B', [], None),
+    ('day', 'B', [], None),
+    ('hour', 'B', [], None),
+    ('minute', 'B', [], None),
+    ('second', 'B', [], None),
+    ('usec', 'H', [], None),
+    ('c_sound', 'H', [], None),
+    ('temp', 'H', [], None),
+    ('press', 'I', [], None),
+    ('heading', 'H', [], None),
+    ('pitch', 'H', [], None),
+    ('roll', 'H', [], None),
+    ('beam_config', 'H', [], None),
+    ('cell_size', 'H', [], None),
+    ('blanking', 'H', [], None),
+    ('nom_corr', 'B', [], None),
+    ('press_temp', 'B', [], None),
+    ('batt_V', 'H', [], None),
+    ('Mag', 'h', [3], None),
+    ('Acc', 'h', [3], None),
+    ('ambig_vel', 'h', [], None),
+    ('data_desc', 'H', [], None),
+    ('xmit_energy', 'H', [], None),
+    ('vel_scale', 'b', [], None),
+    ('power_level', 'b', [], None),
+    ('mag_temp', 'h', [], None),
+    ('clock_temp', 'h', [], None),
+    ('error', 'H', [], None),
+    ('status0', 'H', [], None),
+    ('status', 'I', [], None),
+    ('ensemble', 'I', [], None)
 ])
 
 
@@ -161,44 +159,44 @@ def calc_burst_struct(config, nb, nc):
         flags[nm] = cb[idx]
     dd = []
     if flags['vel']:
-        dd.append(('vel', 'h', (nb, nc)))
+        dd.append(('vel', 'h', [nb, nc], None))
     if flags['amp']:
-        dd.append(('amp', 'B', (nb, nc)))
+        dd.append(('amp', 'B', [nb, nc], None))
     if flags['corr']:
-        dd.append(('corr', 'B', (nb, nc)))
+        dd.append(('corr', 'B', [nb, nc], None))
     if flags['alt']:
         # There may be a problem here with reading 32bit floats if
         # nb and nc are odd?
-        dd += [('alt_dist', 'f'),
-               ('alt_quality', 'H'),
-               ('alt_status', 'H')]
+        dd += [('alt_dist', 'f', [], None),
+               ('alt_quality', 'H', [], None),
+               ('alt_status', 'H', [], None)]
     if flags['ast']:
-        dd += [('ast_dist', 'f'),
-               ('ast_quality', 'H'),
-               ('ast_offset_time', 'h'),
-               ('ast_pressure', 'f'),
+        dd += [('ast_dist', 'f', [], None),
+               ('ast_quality', 'H', [], None),
+               ('ast_offset_time', 'h', [], None),
+               ('ast_pressure', 'f', [], None),
                # This use of 'x' here is a hack
-               ('alt_spare', 'B7x')]
+               ('alt_spare', 'B7x', [], None)]
     if flags['alt_raw']:
-        dd += [('altraw_nsamp', 'L'),
-               ('altraw_dist', 'H'),
-               ('altraw_samp', 'h')]
+        dd += [('altraw_nsamp', 'L', [], None),
+               ('altraw_dist', 'H', [], None),
+               ('altraw_samp', 'h', [], None)]
     if flags['echo']:
-        dd += [('echo', 'H', nc)]
+        dd += [('echo', 'H', [nc], None)]
     if flags['ahrs']:
-        dd += [('orientmat', 'f', (3, 3)),
+        dd += [('orientmat', 'f', [3, 3], None),
                # This use of 'x' here is a hack
-               ('ahrs_spare', 'B15x'),
-               ('ahrs_gyro', 'f', 3)]
+               ('ahrs_spare', 'B15x', [], None),
+               ('ahrs_gyro', 'f', [3], None)]
     if flags['p_gd']:
-        dd += [('percent_good', 'B', nc)]
+        dd += [('percent_good', 'B', [nc], None)]
     if flags['std']:
-        dd += [('std_pitch', 'h'),
-               ('std_roll', 'h'),
-               ('std_heading', 'h'),
-               ('std_press', 'h'),
+        dd += [('std_pitch', 'h', [], None),
+               ('std_roll', 'h', [], None),
+               ('std_heading', 'h', [], None),
+               ('std_press', 'h', [], None),
                # This use of 'x' here is a hack
-               ('std_spare', 'H22x')]
+               ('std_spare', 'H22x', [], None)]
     return DataDef(dd)
 
 """
