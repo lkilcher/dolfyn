@@ -9,6 +9,6 @@ testfile = path.expanduser('~/data/WA2017/SMB500_Signature1000_Jul2017/SMB500_Si
 idx = lib.get_index(testfile)
 
 rdr = nrtk.Ad2cpReader(testfile)
-d = rdr.readfile(0, 1000)
+d = rdr.readfile(0, 10000)
 #rdr._scan4sync()
 #h = rdr._ensemble_total()

@@ -89,16 +89,8 @@ class Ad2cpReader(object):
                 return outdat
 
     def read_burst(self, id, dat, c, echo=False):
-        b_hd = defs._burst_hdr.read2dict(self.f)
         rdr = self._burst_readers[id]
         rdr.read_into(self.f, dat, c)
-        # Note, for some reason, the ENS counter tops out (and starts
-        # over) at 2**12 (4096). I do not know why. After all, there
-        # are 32 bits available here.
-        #pdb.set_trace()
-        if self.debug == 1:
-            print 'ENS: {:016d} '.format(b_hd['ensemble'])
-        return dat, b_hd
 
     def __exit__(self, type, value, trace,):
         self.f.close()

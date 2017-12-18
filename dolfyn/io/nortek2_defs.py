@@ -197,7 +197,14 @@ def calc_burst_struct(config, nb, nc):
                ('std_press', 'h', [], None),
                # This use of 'x' here is a hack
                ('std_spare', 'H22x', [], None)]
-    return DataDef(dd)
+    # Now join this with the _burst_hdr
+    out = DataDef(
+        zip(_burst_hdr._names,
+            _burst_hdr._format,
+            _burst_hdr._shape,
+            _burst_hdr._sci_func) +
+        dd)
+    return out
 
 """
 Note on "This use of 'x' is a hack": I'm afraid that using a larger
