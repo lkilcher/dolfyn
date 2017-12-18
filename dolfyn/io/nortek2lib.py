@@ -129,5 +129,8 @@ def calc_config(index):
         # Now that we've confirmed they are the same:
         config[id] = headconfig_int2dict(_config[0])
         config[id].update(beams_cy_int2dict(_beams_cy[0], id))
+        config[id]['_config'] = _config[0]
+        config[id]['_beams_cy'] = _beams_cy[0]
         config[id].pop('cy')
     return config
+

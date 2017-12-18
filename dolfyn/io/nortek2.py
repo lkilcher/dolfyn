@@ -2,6 +2,7 @@ from struct import unpack, calcsize
 import nortek2_defs as defs
 import bitops as bo
 from nortek2lib import get_index, index2ens_pos, calc_config
+from ..adp.base import adcp_raw
 import pdb
 reload(defs)    
 
@@ -14,15 +15,24 @@ class Ad2cpReader(object):
         self.fname = fname
         self._check_nortek(endian)
         self.c = 0
-        self._burst_readers = {}
         self.reopen(bufsize)
         self._index = get_index(fname,
                                 reload=rebuild_index)
         self._ens_pos = index2ens_pos(self._index)
         self._config = calc_config(self._index)
+        self._init_burst_readers()
+
+    def _init_burst_readers(self, ):
+        self._burst_readers = {}
+        for rdr_id, cfg in self._config.items():
+            self._burst_readers[rdr_id] = defs.calc_burst_struct(
+                cfg['_config'], cfg['nbeams'], cfg['ncells'])
 
     def init_data(self, npings=None):
-        pass
+        outdat = {}
+        for ky in rdr._burst_readers():
+            outdat[ky] = rdr.init_data(npings)
+        return outdat
 
     def _readbyte(self, backward=False):
         print self.f.tell()
@@ -71,6 +81,7 @@ class Ad2cpReader(object):
         self.f = open(self.fname, 'rb', bufsize)
 
     def readfile(self, npings=None):
+        outdat = self.init_data(npings)
         print('Reading file %s ...' % self.fname)
         retval = None
         dout0 = []
@@ -80,7 +91,7 @@ class Ad2cpReader(object):
             id = hdr['id']
             #print id
             if id in [21, 24]:
-                dnow = self.read_burst()
+                dnow = self.read_burst(id, outdat[id])
             else:
                 # 0xa0 (i.e., 160) is a 'string data record',
                 # according to the AD2CP manual
@@ -109,28 +120,13 @@ class Ad2cpReader(object):
             raise EOFError('Reached the end of the file')
         return unpack(self.endian + format, byts)
 
-    def read_burst(self, echo=False):
+    def read_burst(self, id, dat, echo=False):
         b_hd = defs._burst_hdr.read2dict(self.f)
-        if not echo:
-            bcfg = bo.bs16(b_hd['beam_config'])
-            b_hd['n_cells'] = int(bcfg[-10:], 2)
-            b_hd['coord_sys'] = ['ENU', 'XYZ',
-                                 'BEAM', None][int(bcfg[-12:-10], 2)]
-            b_hd['n_beams'] = int(bcfg[-16:-12], 2)
-        else:
-            b_hd['n_cells'] = b_hd['beam_config']
-        reader_id = (b_hd['config'], b_hd['beam_config'])
-        try:
-            brdr = self._burst_readers[reader_id]
-            #print("using cached reader")
-        except KeyError:
-            print("Loading reader")
-            brdr = self._burst_readers[reader_id] = defs.calc_burst_struct(
-                b_hd['config'], b_hd['n_beams'], b_hd['n_cells'])
-        dat = brdr.read2dict(self.f)
+        dat = self._burst_readers[id].read2dict(self.f)
         # Note, for some reason, the ENS counter tops out (and starts
         # over) at 2**12 (4096). I do not know why. After all, there
         # are 32 bits available here.
+        #pdb.set_trace()
         if self.debug == 1:
             print 'ENS: {:016d} '.format(b_hd['ensemble'])
         return dat, b_hd

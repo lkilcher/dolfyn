@@ -1,9 +1,19 @@
 from struct import calcsize, Struct
 import bitops as bo
+import numpy as np
 
 grav = 9.81
 # The starting value for the checksum:
 cs0 = int('0xb58c', 0)
+
+
+def nans(*args, **kwargs):
+    out = np.empty(*args, **kwargs)
+    if out.dtype.kind == 'f':
+        out[:] = np.NaN
+    else:
+        out[:] = 0
+    return out
 
 
 class BadCheckSum(Exception):
@@ -15,17 +25,29 @@ class DataDef(object):
     def __init__(self, list_of_defs):
         self._names = []
         self._format = []
+        self._shape = []
         self._N = []
         for itm in list_of_defs:
             self._names.append(itm[0])
             self._format.append(itm[1])
             if len(itm) <= 2:
+                self._shape.append([])
                 self._N.append(1)
             else:
-                self._N.append(itm[2])
+                try:
+                    self._shape.append(list(itm[2]))
+                except TypeError:
+                    self._shape.append([itm[2]])
+                self._N.append(np.prod(itm[2]))
         self._struct = Struct('<' + self.format)
         self.nbyte = calcsize(self.format)
         self._cs_struct = Struct('<' + '{}H'.format(self.nbyte // 2))
+
+    def init_data(self, npings):
+        out = {}
+        for nm, fmt, shp in zip(self._names, self._format, self._shape):
+            out[nm] = nans(shp + [npings], dtype=np.dtype(fmt))
+        return out
 
     @property
     def format(self, ):
@@ -102,12 +124,8 @@ _burst_hdr = DataDef([
     ('nom_corr', 'B', ),
     ('press_temp', 'B'),
     ('batt_V', 'H'),
-    ('MagX', 'h'),
-    ('MagY', 'h'),
-    ('MagZ', 'h'),
-    ('AccX', 'h'),
-    ('AccY', 'h'),
-    ('AccZ', 'h'),
+    ('Mag', 'h', 3),
+    ('Acc', 'h', 3),
     ('ambig_vel', 'h'),
     ('data_desc', 'H'),
     ('xmit_energy', 'H'),
@@ -133,11 +151,11 @@ def calc_burst_struct(config, nb, nc):
         flags[nm] = cb[idx]
     dd = []
     if flags['vel']:
-        dd.append(('vel', 'h', nb * nc))
+        dd.append(('vel', 'h', (nb, nc)))
     if flags['amp']:
-        dd.append(('amp', 'B', nb * nc))
+        dd.append(('amp', 'B', (nb, nc)))
     if flags['corr']:
-        dd.append(('corr', 'B', nb * nc))
+        dd.append(('corr', 'B', (nb, nc)))
     if flags['alt']:
         # There may be a problem here with reading 32bit floats if
         # nb and nc are odd?
@@ -158,7 +176,7 @@ def calc_burst_struct(config, nb, nc):
     if flags['echo']:
         dd += [('echo', 'H', nc)]
     if flags['ahrs']:
-        dd += [('orientmat', 'f', 9),
+        dd += [('orientmat', 'f', (3, 3)),
                # This use of 'x' here is a hack
                ('ahrs_spare', 'B15x'),
                ('ahrs_gyro', 'f', 3)]
