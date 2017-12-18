@@ -1,7 +1,7 @@
 from struct import unpack, calcsize
 import nortek2_defs as defs
 import bitops as bo
-from nortek2lib import get_index, index2ens_pos
+from nortek2lib import get_index, index2ens_pos, calc_config
 import pdb
 reload(defs)    
 
@@ -19,6 +19,7 @@ class Ad2cpReader(object):
         self._index = get_index(fname,
                                 reload=rebuild_index)
         self._ens_pos = index2ens_pos(self._index)
+        self._config = calc_config(self._index)
 
     def init_data(self, npings=None):
         pass

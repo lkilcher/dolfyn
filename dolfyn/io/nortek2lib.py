@@ -73,3 +73,61 @@ def index2ens_pos(index):
     dens = np.ones(index['ens'].shape, dtype='bool')
     dens[1:] = np.diff(index['ens']) != 0
     return index['pos'][dens]
+
+
+def getbit(val, n):
+    return bool((val >> n) & 1)
+
+
+def headconfig_int2dict(val):
+    return dict(
+        press_valid=getbit(val, 0),
+        temp_valid=getbit(val, 1),
+        compass_valid=getbit(val, 2),
+        tilt_valid=getbit(val, 3),
+        # bit 4 is unused
+        vel=getbit(val, 5),
+        amp=getbit(val, 6),
+        corr=getbit(val, 7),
+        alti=getbit(val, 8),
+        altiRaw=getbit(val, 9),
+        AST=getbit(val, 10),
+        Echo=getbit(val, 11),
+        ahrs=getbit(val, 12),
+        PGood=getbit(val, 13),
+        stdDev=getbit(val, 14),
+        # bit 15 is unused
+    )
+
+
+def beams_cy_int2dict(val, id):
+    if id == 28:  # 0x1C (echosounder)
+        return dict(ncells=val)
+    return dict(
+        ncells=val & (2 ** 10 - 1),
+        cy=['ENU', 'XYZ', 'BEAM', None][val >> 10 & 3],
+        nbeams=val >> 12
+    )
+
+
+def calc_config(index):
+    ids = np.unique(index['ID'])
+    config = {}
+    for id in [21, 24]:
+        inds = index['ID'] == id
+        _config = index['config'][inds]
+        _beams_cy = index['beams_cy'][inds]
+        if id not in ids:
+            continue
+        # Check that these variables are consistent
+        if not np.all(_config == _config[0]):
+            raise Exception("config are not identical for id: 0x{:X}."
+                            .format(id))
+        if not np.all(_beams_cy == _beams_cy[0]):
+            raise Exception("beams_cy are not identical for id: 0x{:X}."
+                            .format(id))
+        # Now that we've confirmed they are the same:
+        config[id] = headconfig_int2dict(_config[0])
+        config[id].update(beams_cy_int2dict(_beams_cy[0], id))
+        config[id].pop('cy')
+    return config
