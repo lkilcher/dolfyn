@@ -14,7 +14,6 @@ class Ad2cpReader(object):
 
         self.fname = fname
         self._check_nortek(endian)
-        self.c = 0
         self.reopen(bufsize)
         self._index = get_index(fname,
                                 reload=rebuild_index)
@@ -28,10 +27,10 @@ class Ad2cpReader(object):
             self._burst_readers[rdr_id] = defs.calc_burst_struct(
                 cfg['_config'], cfg['nbeams'], cfg['ncells'])
 
-    def init_data(self, nens=None):
+    def init_data(self, nens):
         outdat = {}
-        for ky in rdr._burst_readers():
-            outdat[ky] = rdr.init_data(nens)
+        for ky in self._burst_readers:
+            outdat[ky] = self._burst_readers[ky].init_data(nens)
         return outdat
 
     def read_hdr(self, do_cs=False):
@@ -64,36 +63,35 @@ class Ad2cpReader(object):
             pass
         self.f = open(self.fname, 'rb', bufsize)
 
-    def readfile(self, nens=None, ):
+    def readfile(self, ens_start=0, ens_stop=None):
+        if ens_stop is None:
+            ens_stop = len(self._ens_pos)
+        nens = ens_stop - ens_start
         outdat = self.init_data(nens)
         print('Reading file %s ...' % self.fname)
         retval = None
-        dout0 = []
-        dout1 = []
+        c = 0
+        if ens_start > 0:
+            self.f.seek(self._ens_pos[ens_start], 0)
         while not retval:
             hdr = self.read_hdr()
             id = hdr['id']
-            #print id
             if id in [21, 24]:
-                dnow = self.read_burst(id, outdat[id])
+                self.read_burst(id, outdat[id], c)
             else:
                 # 0xa0 (i.e., 160) is a 'string data record',
                 # according to the AD2CP manual
                 # Need to catch the string at some point...
                 self.f.seek(hdr['sz'], 1)
-            if id == 21:
-                dout0.append(dnow)
-            elif id == 24:
-                dout1.append(dnow)
-            self.c += 1
-            #print self.c
-            if self.c >= nens:
-                return (dout0, dout1)
+            while self.f.tell() >= self._ens_pos[c + ens_start + 1]:
+                c += 1
+            if c >= nens:
+                return outdat
 
-    def read_burst(self, id, dat, echo=False):
+    def read_burst(self, id, dat, c, echo=False):
         b_hd = defs._burst_hdr.read2dict(self.f)
         rdr = self._burst_readers[id]
-        rdr.read_into(self.f, dat, 3)
+        rdr.read_into(self.f, dat, c)
         # Note, for some reason, the ENS counter tops out (and starts
         # over) at 2**12 (4096). I do not know why. After all, there
         # are 32 bits available here.
@@ -107,10 +105,6 @@ class Ad2cpReader(object):
 
     def __enter__(self,):
         return self
-
-    @property
-    def pos(self, ):
-        return self.f.tell()
 
 
 if __name__ == '__main__':
