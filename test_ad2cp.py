@@ -10,5 +10,6 @@ idx = lib.get_index(testfile)
 
 rdr = nrtk.Ad2cpReader(testfile)
 d = rdr.readfile(0, 10000)
+rdr.sci_data(d)
 #rdr._scan4sync()
 #h = rdr._ensemble_total()

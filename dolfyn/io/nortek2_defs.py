@@ -97,6 +97,33 @@ class DataDef(object):
         return {self._names[idx]: dat
                 for idx, dat in enumerate(self.read(fobj, cs=cs))}
 
+    def sci_data(self, data):
+        for ky, func in zip(self._names,
+                            self._sci_func):
+            if func is None:
+                continue
+            data[ky] = func(data[ky])
+
+
+class LinFunc(object):
+    """A simple linear offset and scaling object.
+
+    Usage:
+       scale_func = LinFunc(scale=3, offset=5)
+
+       new_data = scale_func(old_data)
+
+    This will do:
+       new_data = (old_data + 5) * 3
+    """
+
+    def __init__(self, scale=1, offset=0):
+        self.scale = scale
+        self.offset = offset
+
+    def __call__(self, array):
+        return (array + self.offset) * self.scale
+
 
 _header = DataDef([
     ('sync', 'B', [], None),
@@ -120,27 +147,27 @@ _burst_hdr = DataDef([
     ('minute', 'B', [], None),
     ('second', 'B', [], None),
     ('usec', 'H', [], None),
-    ('c_sound', 'H', [], None),
-    ('temp', 'H', [], None),
-    ('press', 'I', [], None),
-    ('heading', 'H', [], None),
-    ('pitch', 'H', [], None),
-    ('roll', 'H', [], None),
+    ('c_sound', 'H', [], LinFunc(0.1)),  # m/s
+    ('temp', 'H', [], LinFunc(0.01)),  # Celsius
+    ('press', 'I', [], LinFunc(0.001)),  # dBar
+    ('heading', 'H', [], LinFunc(0.01)),  # degrees
+    ('pitch', 'H', [], LinFunc(0.01)),  # degrees
+    ('roll', 'H', [], LinFunc(0.01)),  # degrees
     ('beam_config', 'H', [], None),
-    ('cell_size', 'H', [], None),
-    ('blanking', 'H', [], None),
-    ('nom_corr', 'B', [], None),
-    ('press_temp', 'B', [], None),
-    ('batt_V', 'H', [], None),
+    ('cell_size', 'H', [], LinFunc(0.001)),  # m
+    ('blanking', 'H', [], LinFunc(0.01)),  # m
+    ('nom_corr', 'B', [], None),  # percent
+    ('press_temp', 'B', [], LinFunc(0.2, -20)),  # Celsius
+    ('batt_V', 'H', [], LinFunc(0.1)),  # Volts
     ('Mag', 'h', [3], None),
-    ('Acc', 'h', [3], None),
+    ('Acc', 'h', [3], LinFunc(1. / 16384)),
     ('ambig_vel', 'h', [], None),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None),
     ('vel_scale', 'b', [], None),
     ('power_level', 'b', [], None),
     ('mag_temp', 'h', [], None),
-    ('clock_temp', 'h', [], None),
+    ('clock_temp', 'h', [], LinFunc(0.01)),
     ('error', 'H', [], None),
     ('status0', 'H', [], None),
     ('status', 'I', [], None),
@@ -161,25 +188,26 @@ def calc_burst_struct(config, nb, nc):
     if flags['vel']:
         dd.append(('vel', 'h', [nb, nc], None))
     if flags['amp']:
-        dd.append(('amp', 'B', [nb, nc], None))
+        dd.append(('amp', 'B', [nb, nc],
+                   LinFunc(0.5)))  # dB
     if flags['corr']:
-        dd.append(('corr', 'B', [nb, nc], None))
+        dd.append(('corr', 'B', [nb, nc], None))  # percent
     if flags['alt']:
         # There may be a problem here with reading 32bit floats if
         # nb and nc are odd?
-        dd += [('alt_dist', 'f', [], None),
+        dd += [('alt_dist', 'f', [], None),  # m
                ('alt_quality', 'H', [], None),
                ('alt_status', 'H', [], None)]
     if flags['ast']:
-        dd += [('ast_dist', 'f', [], None),
+        dd += [('ast_dist', 'f', [], None),  # m
                ('ast_quality', 'H', [], None),
-               ('ast_offset_time', 'h', [], None),
-               ('ast_pressure', 'f', [], None),
+               ('ast_offset_time', 'h', [], LinFunc(0.0001)),  # seconds
+               ('ast_pressure', 'f', [], None),  # dbar
                # This use of 'x' here is a hack
                ('alt_spare', 'B7x', [], None)]
     if flags['alt_raw']:
         dd += [('altraw_nsamp', 'L', [], None),
-               ('altraw_dist', 'H', [], None),
+               ('altraw_dist', 'H', [], LinFunc(0.0001)),  # m
                ('altraw_samp', 'h', [], None)]
     if flags['echo']:
         dd += [('echo', 'H', [nc], None)]
@@ -187,14 +215,14 @@ def calc_burst_struct(config, nb, nc):
         dd += [('orientmat', 'f', [3, 3], None),
                # This use of 'x' here is a hack
                ('ahrs_spare', 'B15x', [], None),
-               ('ahrs_gyro', 'f', [3], None)]
+               ('ahrs_gyro', 'f', [3], None)]  # degrees per second
     if flags['p_gd']:
-        dd += [('percent_good', 'B', [nc], None)]
+        dd += [('percent_good', 'B', [nc], None)]  # percent
     if flags['std']:
-        dd += [('std_pitch', 'h', [], None),
-               ('std_roll', 'h', [], None),
-               ('std_heading', 'h', [], None),
-               ('std_press', 'h', [], None),
+        dd += [('std_pitch', 'h', [], LinFunc(0.01)),  # degrees
+               ('std_roll', 'h', [], LinFunc(0.01)),  # degrees
+               ('std_heading', 'h', [], LinFunc(0.01)),  # degrees
+               ('std_press', 'h', [], LinFunc(0.1)),  # dbar
                # This use of 'x' here is a hack
                ('std_spare', 'H22x', [], None)]
     # Now join this with the _burst_hdr

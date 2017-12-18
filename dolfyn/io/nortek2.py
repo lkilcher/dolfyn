@@ -92,6 +92,14 @@ class Ad2cpReader(object):
         rdr = self._burst_readers[id]
         rdr.read_into(self.f, dat, c)
 
+    def sci_data(self, outdat):
+        for id in outdat:
+            dnow = outdat[id]
+            rdr = self._burst_readers[id]
+            rdr.sci_data(dnow)
+            if 'vel' in dnow and 'vel_scale' in dnow:
+                dnow['vel'] = dnow['vel'] * 10.0 ** dnow['vel_scale']
+
     def __exit__(self, type, value, trace,):
         self.f.close()
 
