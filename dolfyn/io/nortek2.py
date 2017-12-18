@@ -98,6 +98,15 @@ class Ad2cpReader(object):
             if 'vel' in dnow and 'vel_scale' in dnow:
                 dnow['vel'] = dnow['vel'] * 10.0 ** dnow['vel_scale']
 
+    def organize2dolfyn(self, dat):
+        outdat = adcp_raw()
+        cfg = outdat['config'] = adcp_config('Nortek AD2CP')
+        if 21 in dat:
+            dnow = dat[21]
+            outdat['vel'] = dnow['vel']
+            cfg['config'] = lib.collapse(dnow['config'])
+        return outdat
+
     def __exit__(self, type, value, trace,):
         self.f.close()
 
