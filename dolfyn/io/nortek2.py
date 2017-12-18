@@ -1,9 +1,7 @@
-from struct import unpack, calcsize
+from struct import unpack
 import nortek2_defs as defs
-import bitops as bo
-from nortek2lib import get_index, index2ens_pos, calc_config
-from ..adp.base import adcp_raw
-import pdb
+import nortek2lib as lib
+from ..adp.base import adcp_raw, adcp_config
 reload(defs)    
 
 
@@ -15,10 +13,10 @@ class Ad2cpReader(object):
         self.fname = fname
         self._check_nortek(endian)
         self.reopen(bufsize)
-        self._index = get_index(fname,
-                                reload=rebuild_index)
-        self._ens_pos = index2ens_pos(self._index)
-        self._config = calc_config(self._index)
+        self._index = lib.get_index(fname,
+                                    reload=rebuild_index)
+        self._ens_pos = lib.index2ens_pos(self._index)
+        self._config = lib.calc_config(self._index)
         self._init_burst_readers()
 
     def _init_burst_readers(self, ):
@@ -92,9 +90,9 @@ class Ad2cpReader(object):
         rdr = self._burst_readers[id]
         rdr.read_into(self.f, dat, c)
 
-    def sci_data(self, outdat):
-        for id in outdat:
-            dnow = outdat[id]
+    def sci_data(self, dat):
+        for id in dat:
+            dnow = dat[id]
             rdr = self._burst_readers[id]
             rdr.sci_data(dnow)
             if 'vel' in dnow and 'vel_scale' in dnow:
