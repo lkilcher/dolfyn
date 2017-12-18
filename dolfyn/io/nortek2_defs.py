@@ -49,6 +49,11 @@ class DataDef(object):
             out[nm] = nans(shp + [npings], dtype=np.dtype(fmt))
         return out
 
+    def read_into(self, fobj, data, ens, cs=None):
+        dat_tuple = self.read(fobj, cs=cs)
+        for nm, d in zip(self._names, dat_tuple):
+            data[nm][..., ens] = d
+
     @property
     def format(self, ):
         out = ''
