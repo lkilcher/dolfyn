@@ -157,7 +157,7 @@ _burst_hdr = DataDef([
     ('cell_size', 'H', [], LinFunc(0.001)),  # m
     ('blanking', 'H', [], LinFunc(0.01)),  # m
     ('nom_corr', 'B', [], None),  # percent
-    ('press_temp', 'B', [], LinFunc(0.2, -20)),  # Celsius
+    ('temp_press', 'B', [], LinFunc(0.2, -20)),  # Celsius
     ('batt_V', 'H', [], LinFunc(0.1)),  # Volts
     ('Mag', 'h', [3], None),
     ('Acc', 'h', [3], LinFunc(1. / 16384)),
@@ -166,8 +166,8 @@ _burst_hdr = DataDef([
     ('xmit_energy', 'H', [], None),
     ('vel_scale', 'b', [], None),
     ('power_level', 'b', [], None),
-    ('mag_temp', 'h', [], None),
-    ('clock_temp', 'h', [], LinFunc(0.01)),
+    ('temp_mag', 'h', [], None),
+    ('temp_clock', 'h', [], LinFunc(0.01)),
     ('error', 'H', [], None),
     ('status0', 'H', [], None),
     ('status', 'I', [], None),
@@ -204,7 +204,7 @@ def calc_burst_struct(config, nb, nc):
                ('ast_offset_time', 'h', [], LinFunc(0.0001)),  # seconds
                ('ast_pressure', 'f', [], None),  # dbar
                # This use of 'x' here is a hack
-               ('alt_spare', 'B7x', [], None)]
+               ('ast_spare', 'B7x', [], None)]
     if flags['alt_raw']:
         dd += [('altraw_nsamp', 'L', [], None),
                ('altraw_dist', 'H', [], LinFunc(0.0001)),  # m

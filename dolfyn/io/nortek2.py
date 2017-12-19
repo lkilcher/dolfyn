@@ -103,8 +103,8 @@ class Ad2cpReader(object):
         cfg = outdat['config'] = adcp_config('Nortek AD2CP')
         if 21 in dat:
             dnow = dat[21]
-            outdat['vel'] = dnow['vel']
-            cfg['config'] = lib.collapse(dnow['config'])
+            bcfg = cfg['burst_config'] = lib.headconfig_int2dict(
+                lib.collapse(dnow['config']))
             cfg['serialNum'] = lib.collapse(dnow['SerialNum'])
             outdat['mpltime'] = lib.calc_time(
                 dnow['year'] + 1900,
@@ -114,6 +114,47 @@ class Ad2cpReader(object):
                 dnow['minute'],
                 dnow['second'],
                 dnow['usec100'].astype('uint32') * 100)
+            outdat['c_sound'] = dnow['c_sound']
+            outdat['temp'] = dnow['temp']
+            outdat['press'] = dnow['press']
+            outdat['heading'] = dnow['heading']
+            outdat['pitch'] = dnow['pitch']
+            outdat['roll'] = dnow['roll']
+            tmp = lib.beams_cy_int2dict(
+                lib.collapse(dnow['beam_config']), 21)
+            cfg['ncells'] = tmp['ncells']
+            cfg['coord_sys'] = tmp['cy']
+            cfg['nbeams'] = tmp['nbeams']
+            cfg['cell_size'] = lib.collapse(dnow['cell_size'])
+            cfg['blanking'] = lib.collapse(dnow['blanking'])
+            cfg['nom_corr'] = lib.collapse(dnow['nom_corr'])
+            outdat['temp_press'] = dnow['temp_press']
+            outdat['batt_V'] = dnow['batt_V']
+            outdat['Mag'] = dnow['Mag']
+            outdat['Acc'] = dnow['Acc']
+            outdat['ambig_vel'] = lib.collapse(dnow['ambig_vel'])
+            cfg['data_desc'] = lib.collapse(dnow['data_desc'])
+            outdat['xmit_energy'] = dnow['xmit_energy']
+            cfg['vel_scale'] = lib.collapse(dnow['vel_scale'])
+            cfg['power_level'] = lib.collapse(dnow['power_level'])
+            outdat['temp_mag'] = dnow['temp_mag']
+            outdat['temp_clock'] = dnow['temp_clock']
+            outdat['error'] = dnow['error']
+            outdat['status0'] = dnow['status0']
+            outdat['ensemble'] = dnow['ensemble']
+            for ky in [
+                    'vel', 'amp', 'corr',
+                    'alt_dist', 'alt_quality', 'alt_status',
+                    'ast_dist', 'ast_quality', 'ast_offset_time',
+                    'ast_pressure',
+                    'altraw_nsamp', 'altraw_dist', 'altraw_samp',
+                    'echo',
+                    'orientmat', 'ahrs_gyro',
+                    'percent_good',
+                    'std_pitch', 'std_roll', 'std_heading', 'std_press'
+            ]:
+                if ky in dnow:
+                    outdat[ky] = dnow[ky]
         return outdat
 
     def __exit__(self, type, value, trace,):
