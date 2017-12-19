@@ -10,7 +10,10 @@ def readfile(nens):
     rdr = nrtk.Ad2cpReader(testfile)
     d = rdr.readfile(0, nens)
     rdr.sci_data(d)
-    return nrtk.reorg(d), d
+    out = nrtk.reorg(d)
+    nrtk.reduce(out)
+    return out, d
 
 
-dat, d = readfile(1000)
+dat, d = readfile(None)
+dat.save('/Users/lkilcher/tmp/test.h5')

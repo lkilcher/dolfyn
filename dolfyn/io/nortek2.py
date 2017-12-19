@@ -5,6 +5,10 @@ from ..adp.base import adcp_raw, adcp_config
 reload(defs)    
 
 
+# TODO
+######
+# - Add ensemble counter
+
 class Ad2cpReader(object):
     debug = False
 
@@ -165,6 +169,24 @@ def reorg(dat):
                     outdat.groups.add(ky + tag, grp)
     outdat.props['coord_sys'] = cfg['coord_sys']
     return outdat
+
+
+def reduce_by_average(data, ky0, ky1):
+    if ky1 in data:
+        tmp = data.pop_data(ky1)
+        if ky0 in data:
+            data[ky0] += tmp
+            data[ky0] /= 2
+        else:
+            data[ky0] = tmp
+
+
+def reduce(data):
+    for ky in ['mpltime', 'heading', 'pitch', 'roll',
+               'c_sound', 'temp', 'press',
+               'temp_press', 'temp_clock', 'temp_mag', 'batt_V',
+               'ensemble']:
+        reduce_by_average(data, ky, ky + '_b5')
 
 
 if __name__ == '__main__':
