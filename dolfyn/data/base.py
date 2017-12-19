@@ -503,6 +503,9 @@ class config(Dgroups, dict):
     def __setattr__(self, nm, val):
         self[nm] = val
 
+    def items(self, ):
+        return dict(self).items()
+
     def __copy__(self, ):
         out = self.__class__(self.config_type)
         for nm in self:
