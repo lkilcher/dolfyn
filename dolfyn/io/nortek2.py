@@ -67,8 +67,9 @@ class Ad2cpReader(object):
         self.f = open(self.fname, 'rb', bufsize)
 
     def readfile(self, ens_start=0, ens_stop=None):
-        if ens_stop is None:
-            ens_stop = len(self._ens_pos)
+        nens_total = len(self._ens_pos)
+        if ens_stop is None or ens_stop > nens_total:
+            ens_stop = nens_total - 1
         nens = ens_stop - ens_start
         outdat = self.init_data(nens)
         print('Reading file %s ...' % self.fname)
@@ -77,7 +78,10 @@ class Ad2cpReader(object):
         if ens_start > 0:
             self.f.seek(self._ens_pos[ens_start], 0)
         while not retval:
-            hdr = self.read_hdr()
+            try:
+                hdr = self.read_hdr()
+            except IOError:
+                return outdat
             id = hdr['id']
             if id in [21, 24]:
                 self.read_burst(id, outdat[id], c)
@@ -91,8 +95,16 @@ class Ad2cpReader(object):
                 else:
                     self.unknown_ID_count[id] += 1
                 self.f.seek(hdr['sz'], 1)
-            while self.f.tell() >= self._ens_pos[c + ens_start + 1]:
+            # It's unfortunate that all of this count checking is so
+            # complex, but this is the best I could right now.
+            if c + ens_start + 1 >= nens_total:
+                # Make sure we're not at the end of the count list.
+                continue
+            while (self.f.tell() >= self._ens_pos[c + ens_start + 1]):
                 c += 1
+                if c + ens_start + 1 >= nens_total:
+                    # Again check end of count list
+                    break
             if c >= nens:
                 return outdat
 
