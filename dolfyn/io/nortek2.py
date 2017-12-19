@@ -22,6 +22,7 @@ class Ad2cpReader(object):
         self._ens_pos = lib.index2ens_pos(self._index)
         self._config = lib.calc_config(self._index)
         self._init_burst_readers()
+        self.unknown_ID_count = {}
 
     def _init_burst_readers(self, ):
         self._burst_readers = {}
@@ -84,6 +85,11 @@ class Ad2cpReader(object):
                 # 0xa0 (i.e., 160) is a 'string data record',
                 # according to the AD2CP manual
                 # Need to catch the string at some point...
+                if id not in self.unknown_ID_count:
+                    self.unknown_ID_count[id] = 1
+                    print('Unknown ID: {:02X}'.format(id))
+                else:
+                    self.unknown_ID_count[id] += 1
                 self.f.seek(hdr['sz'], 1)
             while self.f.tell() >= self._ens_pos[c + ens_start + 1]:
                 c += 1
