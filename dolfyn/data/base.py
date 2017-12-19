@@ -217,7 +217,7 @@ class groups(dict):
 
     def add(self, name, group='main'):
         """
-        Add *name* to *group* in self.
+        Add *name* (or list of names )to *group* in self.
 
         If *group* is not in self.groups, it is initialized.
 
