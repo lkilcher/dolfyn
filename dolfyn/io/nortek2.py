@@ -105,6 +105,15 @@ class Ad2cpReader(object):
             dnow = dat[21]
             outdat['vel'] = dnow['vel']
             cfg['config'] = lib.collapse(dnow['config'])
+            cfg['serialNum'] = lib.collapse(dnow['SerialNum'])
+            outdat['mpltime'] = lib.calc_time(
+                dnow['year'] + 1900,
+                dnow['month'],
+                dnow['day'],
+                dnow['hour'],
+                dnow['minute'],
+                dnow['second'],
+                dnow['usec100'].astype('uint32') * 100)
         return outdat
 
     def __exit__(self, type, value, trace,):

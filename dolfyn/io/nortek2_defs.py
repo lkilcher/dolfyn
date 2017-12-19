@@ -146,7 +146,7 @@ _burst_hdr = DataDef([
     ('hour', 'B', [], None),
     ('minute', 'B', [], None),
     ('second', 'B', [], None),
-    ('usec', 'H', [], None),
+    ('usec100', 'H', [], None),
     ('c_sound', 'H', [], LinFunc(0.1)),  # m/s
     ('temp', 'H', [], LinFunc(0.01)),  # Celsius
     ('press', 'I', [], LinFunc(0.001)),  # dBar

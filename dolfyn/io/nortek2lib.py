@@ -5,6 +5,7 @@ import struct
 import os.path as path
 import numpy as np
 import warnings
+from ..data import time
 
 
 index_dtype = np.dtype([('ens', np.uint64),
@@ -16,6 +17,15 @@ index_dtype = np.dtype([('ens', np.uint64),
                         ])
 
 hdr = struct.Struct('<BBBBhhh')
+
+
+def calc_time(year, month, day, hour, minute, second, usec):
+    dt = np.empty(year.shape, dtype='O')
+    for idx, (y, mo, d, h, mi, s, u) in enumerate(
+            zip(year, month, day,
+                hour, minute, second, usec)):
+        dt[idx] = time.datetime(y, mo, d, h, mi, s, u)
+    return time.time_array(time.date2num(dt))
 
 
 def create_index_slow(infile, outfile, N_ens):
