@@ -174,6 +174,25 @@ _burst_hdr = DataDef([
     ('ensemble', 'I', [], None)
 ])
 
+_burst_group_org = {
+    # Everything else will be in 'main'
+    'signal': ['amp', 'corr'],
+    'alt': ['alt_dist', 'alt_quality', 'alt_status',
+            'ast_dist', 'ast_quality',
+            'ast_offset_time', 'ast_pressure',
+            'altraw_nsamp', 'altraw_dist', 'altraw_samp'],
+    'echo': ['echo'],
+    'orient': ['orientmat',
+               'heading', 'pitch', 'roll',
+               'ahrs_gyro', 'Mag', 'Acc'],
+    'env': ['c_sound', 'temp', 'press'],
+    '#sys': ['temp_press', 'temp_mag', 'temp_clock',
+             'batt_V', 'ambig_vel', 'xmit_energy',
+             'error', 'status0', 'status', 'ensemble',
+             'std_pitch', 'std_roll', 'std_heading',
+             'std_press'],
+}
+
 
 def calc_burst_struct(config, nb, nc):
     cb = bo.i16ba(config)[::-1]

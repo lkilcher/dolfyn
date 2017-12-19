@@ -101,6 +101,7 @@ class Ad2cpReader(object):
     def organize2dolfyn(self, dat):
         outdat = adcp_raw()
         cfg = outdat['config'] = adcp_config('Nortek AD2CP')
+        outdat.groups.add('config', 'config')
         if 21 in dat:
             dnow = dat[21]
             cfg['burst_config'] = lib.headconfig_int2dict(
@@ -113,6 +114,7 @@ class Ad2cpReader(object):
                 dnow['minute'],
                 dnow['second'],
                 dnow['usec100'].astype('uint32') * 100)
+            outdat.groups.add('mpltime', '_essential')
             tmp = lib.beams_cy_int2dict(
                 lib.collapse(dnow['beam_config']), 21)
             cfg['ncells'] = tmp['ncells']
@@ -144,6 +146,10 @@ class Ad2cpReader(object):
             ]:
                 if ky in dnow:
                     outdat[ky] = dnow[ky]
+            for grp, keys in defs._burst_group_org.items():
+                for ky in keys:
+                    if ky in outdat:
+                        outdat.groups.add(ky, grp)
         return outdat
 
     def __exit__(self, type, value, trace,):
