@@ -10,7 +10,7 @@ def readfile(nens):
     rdr = nrtk.Ad2cpReader(testfile)
     d = rdr.readfile(0, nens)
     rdr.sci_data(d)
-    return rdr.organize2dolfyn(d), d
+    return nrtk.reorg(d), d
 
 
 dat, d = readfile(1000)
