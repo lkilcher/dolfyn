@@ -530,7 +530,8 @@ class config(Dgroups, dict):
 
     def __repr_level__(self, level=0):
         string = level * (self._lvl_spaces) * ' ' + '%s Configuration:\n' % self.config_type
-        for nm, dt in list(self.items()):
+        for nm in sorted(self.keys()):
+            dt = self[nm]
             if nm in ['system', 'config_type']:
                 pass
             elif config in dt.__class__.__mro__:
