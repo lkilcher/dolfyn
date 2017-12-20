@@ -190,22 +190,15 @@ def reorg(dat):
     return outdat
 
 
-def reduce_by_average(data, ky0, ky1):
-    if ky1 in data:
-        tmp = data.pop_data(ky1)
-        if ky0 in data:
-            data[ky0] += tmp
-            data[ky0] /= 2
-        else:
-            data[ky0] = tmp
-
-
 def reduce(data):
-    for ky in ['mpltime', 'heading', 'pitch', 'roll',
+    for ky in ['mpltime',
                'c_sound', 'temp', 'press',
                'temp_press', 'temp_clock', 'temp_mag', 'batt_V',
                'ensemble']:
-        reduce_by_average(data, ky, ky + '_b5')
+        lib.reduce_by_average(data, ky, ky + '_b5')
+
+    for ky in ['heading', 'pitch', 'roll']:
+        lib.reduce_by_average_angle(data, ky, ky + '_b5')
 
 
 if __name__ == '__main__':

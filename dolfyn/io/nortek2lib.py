@@ -8,6 +8,30 @@ import warnings
 from ..data import time
 
 
+def reduce_by_average(data, ky0, ky1):
+    if ky1 in data:
+        tmp = data.pop_data(ky1)
+        if ky0 in data:
+            data[ky0] += tmp
+            data[ky0] /= 2
+        else:
+            data[ky0] = tmp
+
+
+def reduce_by_average_angle(data, ky0, ky1, degrees=True):
+    if degrees:
+        rad_fact = np.pi / 180
+    else:
+        rad_fact = 1
+    if ky1 in data:
+        if ky0 in data:
+            data[ky0] = np.angle(
+                np.exp(1j * data.pop_data(ky0) * rad_fact) +
+                np.exp(1j * data.pop_data(ky1) * rad_fact)) / rad_fact
+        else:
+            data[ky0] = data.pop_data(ky1)
+
+
 index_dtype = np.dtype([('ens', np.uint64),
                         ('pos', np.uint64),
                         ('ID', np.uint16),
