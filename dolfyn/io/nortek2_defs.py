@@ -2,6 +2,10 @@ from struct import calcsize, Struct
 import bitops as bo
 import numpy as np
 
+dt16 = 'float16'
+dt32 = 'float32'
+dt64 = 'float64'
+
 grav = 9.81
 # The starting value for the checksum:
 cs0 = int('0xb58c', 0)
@@ -117,12 +121,17 @@ class LinFunc(object):
        new_data = (old_data + 5) * 3
     """
 
-    def __init__(self, scale=1, offset=0):
+    def __init__(self, scale=1, offset=0, dtype=None):
         self.scale = scale
         self.offset = offset
+        self.dtype = dtype
 
     def __call__(self, array):
-        return (array + self.offset) * self.scale
+        if self.scale != 1 or self.offset != 0:
+            array = (array + self.offset) * self.scale
+        if self.dtype is not None:
+            array = array.astype(self.dtype)
+        return array
 
 
 _header = DataDef([
@@ -147,27 +156,27 @@ _burst_hdr = DataDef([
     ('minute', 'B', [], None),
     ('second', 'B', [], None),
     ('usec100', 'H', [], None),
-    ('c_sound', 'H', [], LinFunc(0.1)),  # m/s
-    ('temp', 'H', [], LinFunc(0.01)),  # Celsius
-    ('press', 'I', [], LinFunc(0.001)),  # dBar
-    ('heading', 'H', [], LinFunc(0.01)),  # degrees
-    ('pitch', 'H', [], LinFunc(0.01)),  # degrees
-    ('roll', 'H', [], LinFunc(0.01)),  # degrees
+    ('c_sound', 'H', [], LinFunc(0.1, dtype=dt32)),  # m/s
+    ('temp', 'H', [], LinFunc(0.01, dtype=dt32)),  # Celsius
+    ('press', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
+    ('heading', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('pitch', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('roll', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('beam_config', 'H', [], None),
     ('cell_size', 'H', [], LinFunc(0.001)),  # m
     ('blanking', 'H', [], LinFunc(0.01)),  # m
     ('nom_corr', 'B', [], None),  # percent
-    ('temp_press', 'B', [], LinFunc(0.2, -20)),  # Celsius
-    ('batt_V', 'H', [], LinFunc(0.1)),  # Volts
+    ('temp_press', 'B', [], LinFunc(0.2, -20, dtype=dt16)),  # Celsius
+    ('batt_V', 'H', [], LinFunc(0.1, dtype=dt16)),  # Volts
     ('Mag', 'h', [3], None),
-    ('Acc', 'h', [3], LinFunc(1. / 16384)),
+    ('Acc', 'h', [3], LinFunc(1. / 16384, dtype=dt32)),
     ('ambig_vel', 'h', [], None),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None),
     ('vel_scale', 'b', [], None),
     ('power_level', 'b', [], None),
     ('temp_mag', 'h', [], None),
-    ('temp_clock', 'h', [], LinFunc(0.01)),
+    ('temp_clock', 'h', [], LinFunc(0.01, dtype=dt16)),
     ('error', 'H', [], None),
     ('status0', 'H', [], None),
     ('status', 'I', [], None),
@@ -208,25 +217,26 @@ def calc_burst_struct(config, nb, nc):
         dd.append(('vel', 'h', [nb, nc], None))
     if flags['amp']:
         dd.append(('amp', 'B', [nb, nc],
-                   LinFunc(0.5)))  # dB
+                   LinFunc(0.5, dtype=dt16)))  # dB
     if flags['corr']:
         dd.append(('corr', 'B', [nb, nc], None))  # percent
     if flags['alt']:
         # There may be a problem here with reading 32bit floats if
         # nb and nc are odd?
-        dd += [('alt_dist', 'f', [], None),  # m
+        dd += [('alt_dist', 'f', [], LinFunc(dtype=dt16)),  # m
                ('alt_quality', 'H', [], None),
                ('alt_status', 'H', [], None)]
     if flags['ast']:
-        dd += [('ast_dist', 'f', [], None),  # m
+        dd += [('ast_dist', 'f', [], LinFunc(dtype=dt16)),  # m
                ('ast_quality', 'H', [], None),
-               ('ast_offset_time', 'h', [], LinFunc(0.0001)),  # seconds
+               ('ast_offset_time', 'h', [],
+                LinFunc(0.0001, dtype=dt32)),  # seconds
                ('ast_pressure', 'f', [], None),  # dbar
                # This use of 'x' here is a hack
                ('ast_spare', 'B7x', [], None)]
     if flags['alt_raw']:
         dd += [('altraw_nsamp', 'L', [], None),
-               ('altraw_dist', 'H', [], LinFunc(0.0001)),  # m
+               ('altraw_dist', 'H', [], LinFunc(0.0001, dtype=dt32)),  # m
                ('altraw_samp', 'h', [], None)]
     if flags['echo']:
         dd += [('echo', 'H', [nc], None)]
@@ -238,10 +248,14 @@ def calc_burst_struct(config, nb, nc):
     if flags['p_gd']:
         dd += [('percent_good', 'B', [nc], None)]  # percent
     if flags['std']:
-        dd += [('std_pitch', 'h', [], LinFunc(0.01)),  # degrees
-               ('std_roll', 'h', [], LinFunc(0.01)),  # degrees
-               ('std_heading', 'h', [], LinFunc(0.01)),  # degrees
-               ('std_press', 'h', [], LinFunc(0.1)),  # dbar
+        dd += [('std_pitch', 'h', [],
+                LinFunc(0.01, dtype=dt32)),  # degrees
+               ('std_roll', 'h', [],
+                LinFunc(0.01, dtype=dt32)),  # degrees
+               ('std_heading', 'h', [],
+                LinFunc(0.01, dtype=dt32)),  # degrees
+               ('std_press', 'h', [],
+                LinFunc(0.1, dtype=dt32)),  # dbar
                # This use of 'x' here is a hack
                ('std_spare', 'H22x', [], None)]
     # Now join this with the _burst_hdr

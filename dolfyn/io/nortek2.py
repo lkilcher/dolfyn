@@ -118,7 +118,8 @@ class Ad2cpReader(object):
             rdr = self._burst_readers[id]
             rdr.sci_data(dnow)
             if 'vel' in dnow and 'vel_scale' in dnow:
-                dnow['vel'] = dnow['vel'] * 10.0 ** dnow['vel_scale']
+                dnow['vel'] = (dnow['vel'] *
+                               10.0 ** dnow['vel_scale']).astype('float32')
 
     def __exit__(self, type, value, trace,):
         self.f.close()
