@@ -1,5 +1,6 @@
 import dolfyn.io.nortek2 as nrtk
 import os.path as path
+import dolfyn.io.nortek2lib as lib
 import warnings
 reload(nrtk)
 
@@ -7,17 +8,12 @@ reload(nrtk)
 
 testfile = path.expanduser('~/data/WA2017/SMB500_Signature1000_Jul2017/'
                            'SMB500_Sig1000_Jul2017.ad2cp')
+# testfile = path.expanduser('~/data/wp2017/adp/signature/'
+#                            'S100259A012_WPdeploy.ad2cp')
 
 
-def readfile(e_start=0, e_stop=None):
-    rdr = nrtk.Ad2cpReader(testfile)
-    d = rdr.readfile(e_start, e_stop)
-    rdr.sci_data(d)
-    out = nrtk.reorg(d)
-    nrtk.reduce(out)
-    return out, d
+#idx = lib.get_index(testfile, reload=True)
 
-
-#dat, d = readfile(0, 1000)
-dat, d = readfile(0, None)
-dat.save('/Users/lkilcher/tmp/test.h5')
+dat = nrtk.read_signature(testfile, 0, 10000)
+#dat, d = readfile(0, None)
+#dat.save('/Users/lkilcher/tmp/test.h5')

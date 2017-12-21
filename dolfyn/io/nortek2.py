@@ -9,6 +9,16 @@ reload(defs)
 # TODO
 ######
 
+
+def read_signature(filename, ens_start=0, ens_stop=None):
+    rdr = Ad2cpReader(filename)
+    d = rdr.readfile(ens_start, ens_stop)
+    rdr.sci_data(d)
+    out = reorg(d)
+    reduce(out)
+    return out
+
+
 class Ad2cpReader(object):
     debug = False
 
