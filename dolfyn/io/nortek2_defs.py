@@ -180,7 +180,7 @@ _burst_hdr = DataDef([
     ('error', 'H', [], None),
     ('status0', 'H', [], None),
     ('status', 'I', [], None),
-    ('ensemble', 'I', [], None)
+    ('_ensemble', 'I', [], None)
 ])
 
 _burst_group_org = {
@@ -197,7 +197,9 @@ _burst_group_org = {
     'env': ['c_sound', 'temp', 'press'],
     '#sys': ['temp_press', 'temp_mag', 'temp_clock',
              'batt_V', 'ambig_vel', 'xmit_energy',
-             'error', 'status0', 'status', 'ensemble',
+             'error', 'status0', 'status',
+             # 'ensemble' is added in Ad2cpReader.init_data
+             '_ensemble', 'ensemble',
              'std_pitch', 'std_roll', 'std_heading',
              'std_press'],
 }

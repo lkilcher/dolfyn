@@ -2,12 +2,12 @@ from struct import unpack
 import nortek2_defs as defs
 import nortek2lib as lib
 from ..adp.base import adcp_raw, adcp_config
+import numpy as np
 reload(defs)    
 
 
 # TODO
 ######
-# - Add ensemble counter
 
 class Ad2cpReader(object):
     debug = False
@@ -30,10 +30,13 @@ class Ad2cpReader(object):
             self._burst_readers[rdr_id] = defs.calc_burst_struct(
                 cfg['_config'], cfg['nbeams'], cfg['ncells'])
 
-    def init_data(self, nens):
+    def init_data(self, ens_start, ens_stop):
         outdat = {}
+        nens = ens_stop - ens_start
         for ky in self._burst_readers:
             outdat[ky] = self._burst_readers[ky].init_data(nens)
+            outdat[ky]['ensemble'] = np.arange(ens_start,
+                                               ens_stop).astype('uint32')
         return outdat
 
     def read_hdr(self, do_cs=False):
@@ -71,7 +74,7 @@ class Ad2cpReader(object):
         if ens_stop is None or ens_stop > nens_total:
             ens_stop = nens_total - 1
         nens = ens_stop - ens_start
-        outdat = self.init_data(nens)
+        outdat = self.init_data(ens_start, ens_stop)
         print('Reading file %s ...' % self.fname)
         retval = None
         c = 0
@@ -166,7 +169,8 @@ def reorg(dat):
                    'temp_mag', 'temp_clock',
                    'Mag', 'Acc',
                    'ambig_vel', 'xmit_energy',
-                   'error', 'status0', 'status', 'ensemble']:
+                   'error', 'status0', 'status',
+                   '_ensemble', 'ensemble']:
             # No if statement here
             outdat[ky + tag] = dnow[ky]
         for ky in [
@@ -193,12 +197,16 @@ def reorg(dat):
 def reduce(data):
     for ky in ['mpltime',
                'c_sound', 'temp', 'press',
-               'temp_press', 'temp_clock', 'temp_mag', 'batt_V',
-               'ensemble']:
+               'temp_press', 'temp_clock', 'temp_mag',
+               'batt_V']:
         lib.reduce_by_average(data, ky, ky + '_b5')
 
     for ky in ['heading', 'pitch', 'roll']:
         lib.reduce_by_average_angle(data, ky, ky + '_b5')
+
+    for ky in ['_ensemble', 'ensemble']:
+        if ky + '_b5' in data:
+            data[ky] = data.pop_data(ky + '_b5')
 
 
 if __name__ == '__main__':
