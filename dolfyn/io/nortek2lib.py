@@ -58,21 +58,21 @@ def create_index_slow(infile, outfile, N_ens):
     ens = 0
     N = 0
     config = 0
-    last_ens = 1
+    last_ens = -1
     while N < N_ens:
         pos = fin.tell()
         try:
             dat = hdr.unpack(fin.read(hdr.size))
         except:
             break
-        if dat[2] in [21, 24]:
+        if dat[2] in [21, 24, 26]:
             fin.seek(2, 1)
             config = struct.unpack('<H', fin.read(2))[0]
             fin.seek(26, 1)
             beams_cy = struct.unpack('<H', fin.read(2))[0]
             fin.seek(40, 1)
             ens = struct.unpack('<I', fin.read(4))[0]
-            if last_ens != ens:
+            if last_ens > 0 and last_ens != ens:
                 N += 1
             fout.write(struct.pack('<QQ4H', N, pos, dat[2],
                                    config, beams_cy, 0))
@@ -84,6 +84,8 @@ def create_index_slow(infile, outfile, N_ens):
         #     print('%10d: %02X, %d, %02X, %d, %d, %d, %d\n' %
         #           (pos, dat[0], dat[1], dat[2], dat[4],
         #            N, ens, last_ens))
+        # else:
+        #     break
     fin.close()
     fout.close()
 
@@ -92,8 +94,7 @@ def get_index(infile, reload=False):
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
         print("Indexing...", end='')
-        if reload:
-            create_index_slow(infile, index_file, 2 ** 32)
+        create_index_slow(infile, index_file, 2 ** 32)
         print(" Done.")
     else:
         print("Using saved index file.")
