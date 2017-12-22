@@ -81,7 +81,7 @@ class Ad2cpReader(object):
 
     def init_data(self, ens_start, ens_stop):
         outdat = {}
-        nens = ens_stop - ens_start
+        nens = int(ens_stop - ens_start)
         for ky in self._burst_readers:
             outdat[ky] = self._burst_readers[ky].init_data(nens)
             outdat[ky]['ensemble'] = np.arange(ens_start,
@@ -122,7 +122,7 @@ class Ad2cpReader(object):
         nens_total = len(self._ens_pos)
         if ens_stop is None or ens_stop > nens_total:
             ens_stop = nens_total - 1
-        nens = ens_stop - ens_start
+        nens = int(ens_stop - ens_start)
         outdat = self.init_data(ens_start, ens_stop)
         print('Reading file %s ...' % self.fname)
         retval = None
