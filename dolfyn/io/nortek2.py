@@ -9,6 +9,45 @@ reload(defs)
 # TODO
 ######
 
+def split_to_hdf(infile, nens_per_file, outfile=None,
+                 ens_start=0, ens_stop=None):
+    """Split a Nortek .ad2cp file into multiple hdf5 format files.
+
+    Parameters
+    ==========
+    infile : string
+        The input .ad2cp filename.
+    nens_per_file : int
+        number of ensembles to include in each output file.
+    outfile : string
+        The output file format. This should include a '{:d}' format
+        specifier. By default, this is the input file path and prefix,
+        but with the ending '{:03d}.h5'.
+    ens_start : int
+        The ensemble number to start with.
+    ens_stop : int
+        The ensemble number to stop at.
+    """
+    if not infile.lower().endswith('.ad2cp'):
+        raise Exception("This function only works on "
+                        "Nortek '.ad2cp' format files.")
+    idx = lib.get_index(infile)
+    if ens_stop is None:
+        ens_stop = idx['ens'][-1]
+    ens_now = ens_start
+    file_count = 0
+    if outfile is None:
+        outfile = infile.rsplit('.')[0] + '.{:03d}.h5'
+    elif '{' not in outfile and 'd}' not in outfile:
+        raise Exception("The output file must include a "
+                        "integer format specifier.")
+    while ens_now < ens_stop:
+        dat = read_signature(infile, ens_now,
+                             min(ens_now + nens_per_file, ens_stop))
+        dat.save(outfile.format(file_count))
+        file_count += 1
+        ens_now += nens_per_file
+
 
 def read_signature(filename, ens_start=0, ens_stop=None):
     rdr = Ad2cpReader(filename)
