@@ -96,8 +96,8 @@ def get_index(infile, reload=False):
         print("Indexing...", end='')
         create_index_slow(infile, index_file, 2 ** 32)
         print(" Done.")
-    else:
-        print("Using saved index file.")
+    # else:
+    #     print("Using saved index file.")
     return np.fromfile(index_file, dtype=index_dtype)
 
 
