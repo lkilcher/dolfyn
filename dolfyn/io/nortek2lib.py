@@ -55,7 +55,8 @@ def calc_time(year, month, day, hour, minute, second, usec):
     for idx, (y, mo, d, h, mi, s, u) in enumerate(
             zip(year, month, day,
                 hour, minute, second, usec)):
-        dt[idx] = time.datetime(y, mo, d, h, mi, s, u)
+        # Note that month is zero-based
+        dt[idx] = time.datetime(y, mo + 1, d, h, mi, s, u)
     return time.time_array(time.date2num(dt))
 
 
