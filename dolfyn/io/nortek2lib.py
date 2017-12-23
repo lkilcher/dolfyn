@@ -38,6 +38,13 @@ index_dtype = np.dtype([('ens', np.uint64),
                         ('config', np.uint16),
                         ('beams_cy', np.uint16),
                         ('_blank', np.uint16),
+                        ('year', np.uint8),
+                        ('month', np.uint8),
+                        ('day', np.uint8),
+                        ('hour', np.uint8),
+                        ('minute', np.uint8),
+                        ('second', np.uint8),
+                        ('usec100', np.uint16),
                         ])
 
 hdr = struct.Struct('<BBBBhhh')
@@ -68,14 +75,17 @@ def create_index_slow(infile, outfile, N_ens):
         if dat[2] in [21, 24, 26]:
             fin.seek(2, 1)
             config = struct.unpack('<H', fin.read(2))[0]
-            fin.seek(26, 1)
+            fin.seek(4, 1)
+            yr, mo, dy, h, m, s, u = struct.unpack('6BH', fin.read(8))
+            fin.seek(14, 1)
             beams_cy = struct.unpack('<H', fin.read(2))[0]
             fin.seek(40, 1)
             ens = struct.unpack('<I', fin.read(4))[0]
             if last_ens > 0 and last_ens != ens:
                 N += 1
-            fout.write(struct.pack('<QQ4H', N, pos, dat[2],
-                                   config, beams_cy, 0))
+            fout.write(struct.pack('<QQ4H6BH', N, pos, dat[2],
+                                   config, beams_cy, 0,
+                                   yr, mo, dy, h, m, s, u))
             fin.seek(dat[4] - 76, 1)
             last_ens = ens
         else:
@@ -183,4 +193,3 @@ def calc_config(index):
         config[id]['_beams_cy'] = _beams_cy[0]
         config[id].pop('cy')
     return config
-
