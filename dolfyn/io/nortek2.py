@@ -10,7 +10,8 @@ reload(defs)
 ######
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
-                 ens_start=0, ens_stop=None):
+                 ens_start=0, ens_stop=None,
+                 start_file_num=0):
     """Split a Nortek .ad2cp file into multiple hdf5 format files.
 
     Parameters
@@ -27,6 +28,8 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
         The ensemble number to start with.
     ens_stop : int
         The ensemble number to stop at.
+    start_file_num : int
+        The number to start the file-count with (default: 0).
     """
     if not infile.lower().endswith('.ad2cp'):
         raise Exception("This function only works on "
@@ -35,7 +38,7 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
     if ens_stop is None:
         ens_stop = idx['ens'][-1]
     ens_now = ens_start
-    file_count = 0
+    file_count = start_file_num
     if outfile is None:
         outfile = infile.rsplit('.')[0] + '.{:03d}.h5'
     elif '{' not in outfile and 'd}' not in outfile:
@@ -122,7 +125,9 @@ class Ad2cpReader(object):
         nens_total = len(self._ens_pos)
         if ens_stop is None or ens_stop > nens_total:
             ens_stop = nens_total - 1
-        nens = int(ens_stop - ens_start)
+        ens_start = int(ens_start)
+        ens_stop = int(ens_stop)
+        nens = ens_stop - ens_start
         outdat = self.init_data(ens_start, ens_stop)
         print('Reading file %s ...' % self.fname)
         retval = None
