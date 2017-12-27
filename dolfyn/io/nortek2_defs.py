@@ -160,8 +160,8 @@ _burst_hdr = DataDef([
     ('temp', 'H', [], LinFunc(0.01, dtype=dt32)),  # Celsius
     ('press', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
     ('heading', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
-    ('pitch', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
-    ('roll', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('pitch', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('roll', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('beam_config', 'H', [], None),
     ('cell_size', 'H', [], LinFunc(0.001)),  # m
     ('blanking', 'H', [], LinFunc(0.01)),  # m
