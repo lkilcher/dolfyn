@@ -8,6 +8,8 @@ reload(defs)
 
 # TODO
 ######
+# - Handle 0xA0 (String, e.g., NMEA or comment)
+# - Handle 0x1A (Burst Alt raw record)
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
                  ens_start=0, ens_stop=None,
