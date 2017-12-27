@@ -272,8 +272,9 @@ class Dgroups(Dbase):
     @property
     def groups(self,):
         if not hasattr(self, '__data_groups__'):
-            self.__data_groups__ = groups(
-                {'main': oset([]), '_essential': oset([])})
+            object.__setattr__(self, '__data_groups__',
+                               groups({'main': oset([]),
+                                       '_essential': oset([])}))
         return self.__data_groups__
 
     @groups.setter
@@ -341,7 +342,8 @@ class Dgroups(Dbase):
         if self.__class__ is not other.__class__:
             raise Exception('Classes must match to join objects.')
         n = len(self)
-        for (nm, dat), (onm, odat) in zip(self, other):
+        for (nm, dat) in self.items():
+            odat = other[nm]
             try:
                 dim = self._time_dim(dat, n)
             except (ValueError, AttributeError):
@@ -498,6 +500,7 @@ class config(Dgroups, dict):
         return dict.__getitem__(self, indx)
 
     def __setitem__(self, indx, dat):
+        self.groups.add(indx, 'main')
         dict.__setitem__(self, indx, dat)
 
     def __setattr__(self, nm, val):
