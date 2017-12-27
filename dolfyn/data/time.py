@@ -27,11 +27,16 @@ def _fullyear(year):
 
 def num2date(mpltime):
     if np.ndarray in mpltime.__class__.__mro__:
-        out = np.empty(len(mpltime), dtype='O')
-        for idx, val in enumerate(mpltime.flat):
-            out[idx] = num2date(val)
-        out.shape = mpltime.shape
-        return out
+        try:
+            n = len(mpltime)
+        except TypeError:
+            pass
+        else:
+            out = np.empty(n, dtype='O')
+            for idx, val in enumerate(mpltime.flat):
+                out[idx] = num2date(val)
+            out.shape = mpltime.shape
+            return out
     return datetime.fromordinal(int(mpltime)) + timedelta(days=mpltime % 1)
 
 
