@@ -14,6 +14,7 @@ time = nortek_defs.time
 import os.path
 import json
 import six
+from nortek2 import read_signature
 
 
 def recatenate(obj):

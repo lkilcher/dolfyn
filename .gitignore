@@ -21,6 +21,8 @@ debug/
 \.#*
 *flymake.py
 
+example_data/*.index
+
 tmp/
 
 .DS_Store
