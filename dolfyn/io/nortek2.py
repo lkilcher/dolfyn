@@ -3,12 +3,11 @@ import nortek2_defs as defs
 import nortek2lib as lib
 from ..adp.base import adcp_raw, adcp_config
 import numpy as np
-reload(defs)    
+reload(defs)
 
 
 # TODO
 ######
-# - Handle 0xA0 (String, e.g., NMEA or comment)
 # - Handle 0x1A (Burst Alt raw record)
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -70,9 +69,10 @@ class Ad2cpReader(object):
 
         self.fname = fname
         self._check_nortek(endian)
-        self.reopen(bufsize)
         self._index = lib.get_index(fname,
                                     reload=rebuild_index)
+        self.reopen(bufsize)
+        self.filehead_config = self.read_filehead_config_string()
         self._ens_pos = lib.index2ens_pos(self._index)
         self._config = lib.calc_config(self._index)
         self._init_burst_readers()
@@ -123,6 +123,24 @@ class Ad2cpReader(object):
             pass
         self.f = open(self.fname, 'rb', bufsize)
 
+    def read_filehead_config_string(self, ):
+        hdr = self.read_hdr()
+        # This is the instrument config string.
+        out = {}
+        s_id, string = self.read_string(hdr['sz'])
+        for ln in string.splitlines():
+            ky, val = ln.split(',', 1)
+            if ky in out:
+                # There are more than one of this key
+                if not isinstance(out[ky], list):
+                    tmp = out[ky]
+                    out[ky] = []
+                    out[ky].append(tmp)
+                out[ky].append(val)
+            else:
+                out[ky] = val
+        return out
+
     def readfile(self, ens_start=0, ens_stop=None):
         nens_total = len(self._ens_pos)
         if ens_stop is None or ens_stop > nens_total:
@@ -131,11 +149,11 @@ class Ad2cpReader(object):
         ens_stop = int(ens_stop)
         nens = ens_stop - ens_start
         outdat = self.init_data(ens_start, ens_stop)
+        outdat['filehead config'] = self.filehead_config
         print('Reading file %s ...' % self.fname)
         retval = None
         c = 0
-        if ens_start > 0:
-            self.f.seek(self._ens_pos[ens_start], 0)
+        self.f.seek(self._ens_pos[ens_start], 0)
         while not retval:
             try:
                 hdr = self.read_hdr()
@@ -149,7 +167,8 @@ class Ad2cpReader(object):
                 # 0xa0 (i.e., 160) is a 'string data record'
                 if id not in outdat:
                     outdat[id] = dict()
-                self.read_string(hdr['sz'], outdat[id], c)
+                s_id, s = self.read_string(hdr['sz'], )
+                outdat[id][(c, s_id)] = s
             else:
                 if id not in self.unknown_ID_count:
                     self.unknown_ID_count[id] = 1
@@ -175,31 +194,18 @@ class Ad2cpReader(object):
         rdr = self._burst_readers[id]
         rdr.read_into(self.f, dat, c)
 
-    def read_string(self, size, dat, c):
+    def read_string(self, size):
         string = self.f.read(size)
         id = string[0]
         #end = string[-1]
         string = string[1:-1]
-        if id == '\x10':
-            # This is the instrument config string.
-            out = {}
-            for ln in string.splitlines():
-                ky, val = ln.split(',', 1)
-                if 'LIST' in ky:
-                    if ky not in out:
-                        out[ky] = []
-                    out[ky].append(val)
-                elif ky in out:
-                    print("Over-writing '{}' in config-string.".format(ky))
-                else:
-                    out[ky] = val
-            dat['config @ens{:010d}'.format(c)] = out
-        else:
-            dat[id + ' @ens{:010d}'.format(c)] = string
+        return id, string
 
     def sci_data(self, dat):
         for id in dat:
             dnow = dat[id]
+            if id not in self._burst_readers:
+                continue
             rdr = self._burst_readers[id]
             rdr.sci_data(dnow)
             if 'vel' in dnow and 'vel_scale' in dnow:
@@ -217,6 +223,7 @@ def reorg(dat):
     outdat = adcp_raw()
     cfg = outdat['config'] = adcp_config('Nortek AD2CP')
     outdat.groups.add('config', 'config')
+    cfg['filehead config'] = dat['filehead config']
 
     for id, tag in [(21, ''), (24, '_b5')]:
         if id not in dat:
