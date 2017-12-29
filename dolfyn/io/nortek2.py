@@ -144,10 +144,13 @@ class Ad2cpReader(object):
             id = hdr['id']
             if id in [21, 24]:
                 self.read_burst(id, outdat[id], c)
+            elif id == 160:
+                print("Hello!")
+                # 0xa0 (i.e., 160) is a 'string data record'
+                if id not in outdat:
+                    outdat[id] = dict()
+                self.read_string(hdr['sz'], outdat[id], c)
             else:
-                # 0xa0 (i.e., 160) is a 'string data record',
-                # according to the AD2CP manual
-                # Need to catch the string at some point...
                 if id not in self.unknown_ID_count:
                     self.unknown_ID_count[id] = 1
                     print('Unknown ID: {:02X}'.format(id))
@@ -155,7 +158,8 @@ class Ad2cpReader(object):
                     self.unknown_ID_count[id] += 1
                 self.f.seek(hdr['sz'], 1)
             # It's unfortunate that all of this count checking is so
-            # complex, but this is the best I could right now.
+            # complex, but this is the best I could come up with right
+            # now.
             if c + ens_start + 1 >= nens_total:
                 # Make sure we're not at the end of the count list.
                 continue
@@ -170,6 +174,28 @@ class Ad2cpReader(object):
     def read_burst(self, id, dat, c, echo=False):
         rdr = self._burst_readers[id]
         rdr.read_into(self.f, dat, c)
+
+    def read_string(self, size, dat, c):
+        string = self.f.read(size)
+        id = string[0]
+        #end = string[-1]
+        string = string[1:-1]
+        if id == '\x10':
+            # This is the instrument config string.
+            out = {}
+            for ln in string.splitlines():
+                ky, val = ln.split(',', 1)
+                if 'LIST' in ky:
+                    if ky not in out:
+                        out[ky] = []
+                    out[ky].append(val)
+                elif ky in out:
+                    print("Over-writing '{}' in config-string.".format(ky))
+                else:
+                    out[ky] = val
+            dat['config @ens{:010d}'.format(c)] = out
+        else:
+            dat[id + ' @ens{:010d}'.format(c)] = string
 
     def sci_data(self, dat):
         for id in dat:
