@@ -229,17 +229,21 @@ def calc_burst_struct(config, nb, nc):
                ('alt_quality', 'H', [], None),
                ('alt_status', 'H', [], None)]
     if flags['ast']:
-        dd += [('ast_dist', 'f', [], LinFunc(dtype=dt16)),  # m
-               ('ast_quality', 'H', [], None),
-               ('ast_offset_time', 'h', [],
-                LinFunc(0.0001, dtype=dt32)),  # seconds
-               ('ast_pressure', 'f', [], None),  # dbar
-               # This use of 'x' here is a hack
-               ('ast_spare', 'B7x', [], None)]
+        dd += [
+            ('ast_dist', 'f', [], LinFunc(dtype=dt16)),  # m
+            ('ast_quality', 'H', [], None),
+            ('ast_offset_time', 'h', [],
+             LinFunc(0.0001, dtype=dt32)),  # seconds
+            ('ast_pressure', 'f', [], None),  # dbar
+            # This use of 'x' here is a hack
+            ('ast_spare', 'B7x', [], None),
+        ]
     if flags['alt_raw']:
-        dd += [('altraw_nsamp', 'L', [], None),
-               ('altraw_dist', 'H', [], LinFunc(0.0001, dtype=dt32)),  # m
-               ('altraw_samp', 'h', [], None)]
+        dd += [
+            ('altraw_nsamp', 'I', [], None),
+            ('altraw_dist', 'H', [], LinFunc(0.0001, dtype=dt32)),  # m
+            ('altraw_samp', 'h', [], None),
+        ]
     if flags['echo']:
         dd += [('echo', 'H', [nc], None)]
     if flags['ahrs']:

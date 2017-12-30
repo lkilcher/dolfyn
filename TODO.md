@@ -24,8 +24,6 @@ Add <filename.vec>.json files?
 
 Add ad2cp
 ---------------
-- Add test
-- Handle string block
 - Handle AST-block?
 
 

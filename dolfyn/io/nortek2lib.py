@@ -174,12 +174,12 @@ def collapse(vec, name=None):
 def calc_config(index):
     ids = np.unique(index['ID'])
     config = {}
-    for id in [21, 24]:
+    for id in ids:
+        if id not in [21, 24, 26]:
+            continue
         inds = index['ID'] == id
         _config = index['config'][inds]
         _beams_cy = index['beams_cy'][inds]
-        if id not in ids:
-            continue
         # Check that these variables are consistent
         if not isuniform(_config):
             raise Exception("config are not identical for id: 0x{:X}."
