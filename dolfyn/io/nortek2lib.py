@@ -137,12 +137,12 @@ def headconfig_int2dict(val):
         amp=getbit(val, 6),
         corr=getbit(val, 7),
         alt=getbit(val, 8),
-        altRaw=getbit(val, 9),
-        AST=getbit(val, 10),
-        Echo=getbit(val, 11),
+        alt_raw=getbit(val, 9),
+        ast=getbit(val, 10),
+        echo=getbit(val, 11),
         ahrs=getbit(val, 12),
-        PGood=getbit(val, 13),
-        stdDev=getbit(val, 14),
+        p_gd=getbit(val, 13),
+        std=getbit(val, 14),
         # bit 15 is unused
     )
 

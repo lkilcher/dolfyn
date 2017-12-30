@@ -14,7 +14,7 @@ pkg_root = test_root.rsplit('/', 2)[0] + "/"
 
 dat_rdi = apm.load(test_root + 'data/RDI_test01.h5', 'ALL')
 dat_rdi_i = apm.load(test_root + 'data/RDI_test01_rotate_beam2inst.h5', 'ALL')
-dat_sig = apm.load(test_root + 'data/BenchFile01.ad2cp', 'ALL')
+dat_sig = apm.load(test_root + 'data/BenchFile01.h5', 'ALL')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -28,13 +28,13 @@ def read_test(make_data=False):
 
     if make_data:
         td_rdi.save(test_root + 'data/RDI_test01.h5')
-        td_sig.save(test_root + 'data/BenchFile01.ad2cp')
+        td_sig.save(test_root + 'data/BenchFile01.h5')
         return
 
-    msg_form = "The output of read_rdi('{}.000') does not match '{}.h5'."
+    msg_form = "The output of read_rdi('{}') does not match '{}'."
     for dat1, dat2, msg in [
             (td_rdi, dat_rdi,
-             msg_form.format('RDI_test01', 'RDI_test01')),
+             msg_form.format('RDI_test01.000', 'RDI_test01.h5')),
             (td_sig, dat_sig,
              msg_form.format('BenchFile01.ad2cp', 'BenchFile01.h5')),
     ]:

@@ -1,5 +1,5 @@
 from struct import calcsize, Struct
-import bitops as bo
+import nortek2lib as lib
 import numpy as np
 
 dt16 = 'float16'
@@ -206,14 +206,7 @@ _burst_group_org = {
 
 
 def calc_burst_struct(config, nb, nc):
-    cb = bo.i16ba(config)[::-1]
-    flags = {}
-    for idx, nm in enumerate([
-            'press', 'temp', 'compass', 'tilt',
-            None, 'vel', 'amp', 'corr',
-            'alt', 'alt_raw', 'ast', 'echo',
-            'ahrs', 'p_gd', 'std', None]):
-        flags[nm] = cb[idx]
+    flags = lib.headconfig_int2dict(config)
     dd = []
     if flags['vel']:
         dd.append(('vel', 'h', [nb, nc], None))
@@ -272,6 +265,7 @@ def calc_burst_struct(config, nb, nc):
             _burst_hdr._sci_func) +
         dd)
     return out
+
 
 """
 Note on "This use of 'x' is a hack": I'm afraid that using a larger
