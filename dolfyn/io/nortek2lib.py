@@ -9,6 +9,7 @@ from ..data import time
 
 
 def reduce_by_average(data, ky0, ky1):
+    # Average two arrays together, if they both exist.
     if ky1 in data:
         tmp = data.pop_data(ky1)
         if ky0 in data:
@@ -19,6 +20,7 @@ def reduce_by_average(data, ky0, ky1):
 
 
 def reduce_by_average_angle(data, ky0, ky1, degrees=True):
+    # Average two arrays of angles together, if they both exist.
     if degrees:
         rad_fact = np.pi / 180
     else:
@@ -32,6 +34,8 @@ def reduce_by_average_angle(data, ky0, ky1, degrees=True):
             data[ky0] = data.pop_data(ky1)
 
 
+# This is the data-type of the index file.
+# This must match what is written-out by the create_index function.
 index_dtype = np.dtype([('ens', np.uint64),
                         ('pos', np.uint64),
                         ('ID', np.uint16),
@@ -127,6 +131,8 @@ def getbit(val, n):
 
 
 def headconfig_int2dict(val):
+    """Convert the burst Configuration bit-mask to a dict of bools.
+    """
     return dict(
         press_valid=getbit(val, 0),
         temp_valid=getbit(val, 1),
@@ -148,6 +154,8 @@ def headconfig_int2dict(val):
 
 
 def beams_cy_int2dict(val, id):
+    """Convert the beams/coordinate-system bytes to a dict of values.
+    """
     if id == 28:  # 0x1C (echosounder)
         return dict(ncells=val)
     return dict(
@@ -162,6 +170,9 @@ def isuniform(vec):
 
 
 def collapse(vec, name=None):
+    """Check that the input vector is uniform, then collapse it to a
+    single value, otherwise raise a warning.
+    """
     if name is None:
         name = '**unkown**'
     if not isuniform(vec):
@@ -172,6 +183,14 @@ def collapse(vec, name=None):
 
 
 def calc_config(index):
+    """Calculate the configuration information (e.g., number of pings,
+    number of beams, struct types, etc.) from the index data.
+
+    Returns
+    =======
+    config : dict
+        A dict containing the key information for initializing arrays.
+    """
     ids = np.unique(index['ID'])
     config = {}
     for id in ids:

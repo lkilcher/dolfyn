@@ -1,14 +1,13 @@
+"""This is the top-level module for reading Nortek Signature (.ad2cp)
+files. It relies heavily on the `nortek2_defs` and `nortek2lib`
+modules.
+"""
 from struct import unpack
 import nortek2_defs as defs
 import nortek2lib as lib
 from ..adp.base import adcp_raw, adcp_config
 import numpy as np
-reload(defs)
 
-
-# TODO
-######
-# - Handle 0x1A (Burst Alt raw record)
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
                  ens_start=0, ens_stop=None,
@@ -54,6 +53,23 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
 
 
 def read_signature(filename, ens_start=0, ens_stop=None):
+    """Read a Nortek Signature (.ad2cp) file.
+
+    Parameters
+    ==========
+    filename : string
+        The filename of the file to load.
+    ens_start : int
+        The first ensemble to load (default: 0)
+    ens_stop : int
+        The ensemble to stop at (default: None, i.e., load to the last
+        ensemble)
+
+    Returns
+    =======
+    dat : :class:`dolfyn.adp.base.adcp_raw` object
+        An ADCP data object containing the loaded data.
+    """
     rdr = Ad2cpReader(filename)
     d = rdr.readfile(ens_start, ens_stop)
     rdr.sci_data(d)
@@ -63,6 +79,12 @@ def read_signature(filename, ens_start=0, ens_stop=None):
 
 
 class Ad2cpReader(object):
+    """This is the reader-object for reading AD2CP files.
+
+    This should only be used explicitly for debugging
+    purposes. Instead, a user should generally rely on the
+    `read_signature` function.
+    """
     debug = False
 
     def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False):
@@ -235,6 +257,9 @@ class Ad2cpReader(object):
 
 
 def reorg(dat):
+    """This function grabs the data from the dictionary of data types
+    (organized by ID), and combines them into the adcp_raw object.
+    """
     outdat = adcp_raw()
     cfg = outdat['config'] = adcp_config('Nortek AD2CP')
     outdat.groups.add('config', 'config')
@@ -299,15 +324,23 @@ def reorg(dat):
 
 
 def reduce(data):
+    """This function takes the adcp_raw object output from `reorg`,
+    and further simplifies the data. Mostly this is combining system,
+    environmental, and orientation data --- from different data
+    structures within the same ensemble --- by averaging.
+    """
+    # Average these fields
     for ky in ['mpltime',
                'c_sound', 'temp', 'press',
                'temp_press', 'temp_clock', 'temp_mag',
                'batt_V']:
         lib.reduce_by_average(data, ky, ky + '_b5')
 
+    # Angle-averaging is treated separately
     for ky in ['heading', 'pitch', 'roll']:
         lib.reduce_by_average_angle(data, ky, ky + '_b5')
 
+    # Drop the ensemble count from other data structures
     for ky in ['_ensemble', 'ensemble']:
         if ky + '_b5' in data:
             data[ky] = data.pop_data(ky + '_b5')
