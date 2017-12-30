@@ -1,5 +1,7 @@
 from .base import type_map, dio, binner
 from ..io.rdi import read_rdi
+from ..io.nortek import read_nortek
+from ..io.nortek2 import read_signature
 from .rotate import beam2inst, inst2earth, earth2principal
 from ..io.nortek import read_nortek
 

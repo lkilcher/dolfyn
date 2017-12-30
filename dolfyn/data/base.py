@@ -230,7 +230,7 @@ class groups(dict):
 
     def add(self, name, group='main'):
         """
-        Add *name* to *group* in self.
+        Add *name* (or list of names )to *group* in self.
 
         If *group* is not in self.groups, it is initialized.
 
@@ -285,8 +285,9 @@ class Dgroups(Dbase):
     @property
     def groups(self,):
         if not hasattr(self, '__data_groups__'):
-            self.__data_groups__ = groups(
-                {'main': oset([]), '_essential': oset([])})
+            object.__setattr__(self, '__data_groups__',
+                               groups({'main': oset([]),
+                                       '_essential': oset([])}))
         return self.__data_groups__
 
     @groups.setter
@@ -354,7 +355,8 @@ class Dgroups(Dbase):
         if self.__class__ is not other.__class__:
             raise Exception('Classes must match to join objects.')
         n = len(self)
-        for (nm, dat), (onm, odat) in zip(self, other):
+        for (nm, dat) in self.items():
+            odat = other[nm]
             try:
                 dim = self._time_dim(dat, n)
             except (ValueError, AttributeError):
@@ -511,10 +513,14 @@ class config(Dgroups, dict):
         return dict.__getitem__(self, indx)
 
     def __setitem__(self, indx, dat):
+        self.groups.add(indx, 'main')
         dict.__setitem__(self, indx, dat)
 
     def __setattr__(self, nm, val):
         self[nm] = val
+
+    def items(self, ):
+        return dict(self).items()
 
     def __copy__(self, ):
         out = self.__class__(self.config_type)
@@ -540,7 +546,8 @@ class config(Dgroups, dict):
 
     def __repr_level__(self, level=0):
         string = level * (self._lvl_spaces) * ' ' + '%s Configuration:\n' % self.config_type
-        for nm, dt in list(self.items()):
+        for nm in sorted(self.keys()):
+            dt = self[nm]
             if nm in ['system', 'config_type']:
                 pass
             elif config in dt.__class__.__mro__:

@@ -40,6 +40,11 @@ Move example ``data/RDI_test01.000`` to LFS
 
 - Average multiple GPGGA strings in a single ensemble
 
+Add ad2cp
+---------------
+- Handle AST-block?
+
+
 Testing
 ======
 
