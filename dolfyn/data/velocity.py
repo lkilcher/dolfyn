@@ -19,17 +19,31 @@ class Velocity(TimeBased, Saveable):
         else:
             tm = [self.mpltime[0], self.mpltime[-1]]
             dt = num2date(tm[0])
-        burst_str = ''
+        out = "%s data record%s" % (
+            self.props.get('inst_type', '*unknown*'),
+            mmstr
+        )
+        out += '\n  {duration:0.2f} hours ' \
+               '@{fs:0.2g}Hz, started: {start}'.format(
+                   duration=(tm[-1] - tm[0]) * 24,
+                   fs=self.props['fs'],
+                   start=dt.strftime('%b %d, %Y %H:%M')
+               )
         if 'DutyCycle_NBurst' in self.props:
-            burst_str = (' (Burst Mode: {:.2g}% duty cycle)'.format(
-                100. * self.props['DutyCycle_NBurst'] / self.props['DutyCycle_NCycle']))
-        return ("%0.2fh @%0.2gHz %s record%s, started: %s%s" %
-                ((tm[-1] - tm[0]) * 24,
-                 self.props['fs'],
-                 self.props.get('inst_type', '*unknown*'),
-                 burst_str,
-                 dt.strftime('%b %d, %Y %H:%M'),
-                 mmstr,))
+            out += ('\n  Burst Mode, {:.2g}% duty cycle'.format(
+                100. * self.props['DutyCycle_NBurst'] /
+                self.props['DutyCycle_NCycle']))
+        if 'n_bin' in self.props:
+            out = 'Binned ' + out
+            out += '\n  {:0.1f} minute averaging windows ({} points)'.format(
+                float(self.props['n_bin']) / (self.fs * 60),
+                self.props['n_bin']
+            )
+        if self.has_imu:
+            out += '\n  IMU: Yes, Motion Corrected: {}'.format(
+                self.props.get('motion corrected', False))
+        out += '\n  Coordinate System: {}'.format(self.props['coord_sys'])
+        return out
 
     def _pre_mat_save(self, outdict):
         # The config object often has characters that cause problems.
@@ -39,6 +53,14 @@ class Velocity(TimeBased, Saveable):
             outdict.pop('mpltime')
         if hasattr(self, 'ranges'):
             outdict['ranges'] = self.ranges.reshape([-1, 1])
+
+    @property
+    def has_imu(self,):
+        """
+        Test whether this data object contains Inertial Motion Unit
+        (IMU) data.
+        """
+        return hasattr(self, 'Accel') | hasattr(self, 'Veloc')
 
     @property
     def shape(self,):

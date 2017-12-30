@@ -339,6 +339,9 @@ class TimeBinner(object):
         if 'DutyCycle_NBurst' in rawdat.props and rawdat.props['DutyCycle_NBurst'] < self.n_bin:
             print("Warning: The averaging interval (n_bin = {}) is larger than the burst interval "
                   "(NBurst = {})!".format(self.n_bin, rawdat.props['DutyCycle_NBurst']))
+        if rawdat.fs != self.fs:
+            raise Exception("The input data sample rate (dat.fs) does not "
+                            "match the sample rate of this binning-object!")
 
     def cohere(self, dat1, dat2, window='hann', debias=True,
                noise=(0, 0), n_fft=None, n_bin1=None, n_bin2=None,):

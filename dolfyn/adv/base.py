@@ -38,13 +38,6 @@ class ADVraw(dbvel.Velocity):
         # Currently only the Nortek VECTOR has an IMU.
         return body2imu[self.make_model]
 
-    def has_imu(self,):
-        """
-        Test whether this data object contains Inertial Motion Unit
-        (IMU) data.
-        """
-        return hasattr(self, 'Accel') | hasattr(self, 'Veloc')
-
 
 class ADVbinned(dbvel.VelBindatSpec, ADVraw):
 

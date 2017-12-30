@@ -43,11 +43,10 @@ def psd_freq(nfft, fs, full=False):
     """
     fs = np.float64(fs)
     f = np.fft.fftfreq(nfft, 1 / fs)
-    f[nfft // 2] *= -1
     if full:
         return f
     else:
-        return f[1:int(nfft / 2. + 1)]
+        return np.abs(f[1:int(nfft / 2. + 1)])
 
 
 def _getwindow(window, nfft):

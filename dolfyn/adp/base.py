@@ -147,14 +147,22 @@ class binner(dbvel.VelBinnerTke):
 
     def __call__(self, indat, out_type=adcp_binned):
         out = dbvel.VelBinnerTke.__call__(self, indat, out_type=out_type)
-        self.set_bindata(indat, out)
+        self.do_avg(indat, out)
         out.add_data('tke_vec',
                      self.calc_tke(indat['vel'], noise=indat.noise),
                      'main')
         out.add_data('sigma_Uh',
-                     np.std(self.reshape(indat.U_mag), -1, dtype=np.float64) -
-                     (indat.noise[0] + indat.noise[1]) / 2,
+                     np.sqrt(np.var(
+                         self.reshape(indat.U_mag), -1, dtype=np.float64) -
+                         (indat.noise[0] ** 2 + indat.noise[1] ** 2) / 2),
                      'main')
+        # This means it is a workhorse, created with adcp.readbin.  Need to
+        # generalize this...
+        # Currently this doesn't happen because the functions below
+        # need beamvel and angles.
+        #if hasattr(indat.config, 'beam_angle') and hasattr(indat, 'beam1vel'):
+        if False:
+            out.calc_stresses(indat)
         return out
 
     # def calc_tke(self, advr):

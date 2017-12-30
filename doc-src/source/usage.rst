@@ -4,13 +4,13 @@ Usage
 =====
 
 |dlfn| is a library of tools for reading, processing, and analyzing
-data from oceanographic instrumentation such as acoustic Doppler
-velocimeters (ADVs) and acoustic Doppler profilers (ADPs). It also
-includes tools for reading buoy data from the `National Data Buoy
-Center <http://www.ndbc.noaa.gov/>`_ (NDBC).
-
-|dlfn| is organized into subpackages for working with each data type
+data from oceanographic velocity measurement instruments such as
+acoustic Doppler velocimeters (ADVs) and acoustic Doppler profilers
+(ADPs). |dlfn| is organized into subpackages for working with each data type
 it supports, as well as base packages
+
+
+.. It also includes tools for reading buoy data from the `National Data Buoy Center <http://www.ndbc.noaa.gov/>`_ (NDBC).
 
 This page documents general and basic usage of the |dlfn| package, for
 detailed information on more specific uses of the package see the

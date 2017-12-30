@@ -109,15 +109,27 @@ class VarAtts(object):
         self.units = units
         self.dim_names = dim_names
 
-    def shape(self, n):
-        if 'n' in self.dims:
-            a = list(self.dims)
-            a[self.dims.index('n')] = n
+    def shape(self, **kwargs):
+        a = list(self.dims)
+        hit = False
+        for ky in kwargs:
+            if ky in self.dims:
+                hit = True
+                a[a.index(ky)] = kwargs[ky]
+        if hit:
+            return a
         else:
-            return self.dims + [n]
+            try:
+                return self.dims + [kwargs['n']]
+            except:
+                return self.dims
 
-    def _empty_array(self, n):
-        out = np.empty(self.shape(n), dtype=self.dtype)
+    def _empty_array(self, **kwargs):
+        out = np.empty(self.shape(**kwargs), dtype=self.dtype)
+        try:
+            out[:] = np.NaN
+        except:
+            pass
         if self.view_type is not None:
             out = out.view(self.view_type)
         if self.default_val is not None:

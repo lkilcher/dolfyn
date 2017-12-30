@@ -107,7 +107,7 @@ class bin_reader(object):
     def __exit__(self, type, value, traceback):
         self.close()
 
-    def __init__(self, fname, endian='<', checksum_size=None):
+    def __init__(self, fname, endian='<', checksum_size=None, debug_level=0):
         """
         Default to little-endian '<'...
         *checksum_size* is in bytes, if it is None or False, this
@@ -125,6 +125,7 @@ class bin_reader(object):
             self.cs = checksum(self, 0, checksum_size)
         else:
             self.cs = checksum_size
+        self.debug_level = debug_level
 
     def checksum(self,):
         """
@@ -139,7 +140,7 @@ class bin_reader(object):
     def tell(self,):
         return self.f.tell()
 
-    def seek(self, pos, rel):
+    def seek(self, pos, rel=1):
         return self.f.seek(pos, rel)
 
     def reads(self, n):
@@ -148,6 +149,12 @@ class bin_reader(object):
         """
         val = self.f.read(n)
         self.cs and self.cs.add(val)
+        try:
+            val = val.decode('utf-8')
+        except:
+            if self.debug_level > 5:
+                print("ERROR DECODING: {}".format(val))
+            pass
         return val
 
     def read(self, n, frmt):

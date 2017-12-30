@@ -7,7 +7,7 @@ from ..tools.misc import nans
 oset = set
 
 debug_level = 0
-objEQ_allclose_tols = dict(rtol=1e-3, atol=1e-6)
+arrayEQ_tols = dict(rtol=1e-3, atol=1e-6)
 
 
 class DataError(Exception):
@@ -35,10 +35,11 @@ def _equiv_dict(d1, d2):
                     assert type(d1[ky]) is type(d2[ky])  # nopep8
                     assert d1[ky].shape == d2[ky].shape
                     if (not np.issubdtype(d1[ky].dtype, np.inexact)) or \
-                       objEQ_allclose_tols == dict(rtol=0, atol=0):
+                       arrayEQ_tols == dict(rtol=0, atol=0):
                         nptest.assert_equal(d1[ky], d2[ky])
                     else:
-                        assert np.allclose(d1[ky], d2[ky], equal_nan=True, **objEQ_allclose_tols)
+                        assert np.allclose(d1[ky], d2[ky],
+                                           equal_nan=True, **arrayEQ_tols)
                 elif isinstance(d1[ky], dict):
                     assert _equiv_dict(d1[ky], d2[ky])
                 else:
@@ -46,14 +47,26 @@ def _equiv_dict(d1, d2):
             except AssertionError:
                 retval = False
                 if debug_level > 0:
-                    print('The values in {} do not match between the data objects.'
-                          .format(ky, d1, d2))
                     if isinstance(d1[ky], np.ndarray):
+                        if d1[ky].shape != d2[ky].shape:
+                            print('The shapes of the arrays do not match. '
+                                  '({}, vs. {}).'.format(d1[ky].shape,
+                                                         d2[ky].shape))
+                        else:
+                            frac = np.float((~np.isclose(
+                                d1[ky], d2[ky], equal_nan=True,
+                                **arrayEQ_tols)).sum()) / d1[ky].size
+                            print('{:0.2f}% of the values in {} do not match.'
+                                  .format(frac * 100, ky))
                         try:
-                            assert np.allclose(d1[ky], d2[ky], rtol=1e-3, equal_nan=True)
+                            assert np.allclose(d1[ky], d2[ky],
+                                               rtol=1e-3, equal_nan=True)
                             print(' ... but they are close.')
                         except:
                             pass
+                    else:
+                        print('The values in {} do not match.'
+                              .format(ky))
                 else:
                     return False
         return retval

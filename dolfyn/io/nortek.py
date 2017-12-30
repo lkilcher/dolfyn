@@ -5,12 +5,12 @@ files.
 
 import numpy as np
 from ..adv import base as adv_base
-from .. import adp
+from ..adp import base as adp_base
 from ..tools import misc as tbx
 from struct import unpack
 from ..data.base import ma
 from . import nortek_defs
-time = nortek_defs.time
+from ..data import time
 import os.path
 import json
 import six
@@ -65,16 +65,21 @@ def read_nortek(filename,
     adv_data : :class:`ADVraw <dolfyn.adv.base.ADVraw>`
 
     """
+    # Read the json file
+    json_props = {}
+    for basefile in [filename.rsplit('.', 1)[0],
+                     filename]:
+        jsonfile = basefile + '.userdata.json'
+        if os.path.isfile(jsonfile) and read_userdata:
+            json_props = _read_vecjson(jsonfile)
+            break
+
     with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
         rdr.readfile()
     rdr.dat2sci()
     dat = rdr.data
 
-    # Read the json file
-    jsonfile = filename.replace('.VEC', '.userdata') + '.json'
-    if os.path.isfile(jsonfile) and read_userdata:
-        json_props = _read_vecjson(jsonfile)
-        dat.props.update(json_props)
+    dat.props.update(json_props)
 
     # Crop the data?
     if cropdata:
@@ -108,9 +113,15 @@ def _read_vecjson(jsonfname):
        and return the items as a dictionary"""
     with open(jsonfname) as data_file:
         data = json.load(data_file)
+    if 'body2head_rotmat' in data and \
+       data['body2head_rotmat'] in ['identity', 'eye', 1, 1.]:
+        data['body2head_rotmat'] = np.eye(3)
     for nm in ['body2head_rotmat', 'body2head_vec']:
         if nm in data:
             data[nm] = np.array(data[nm])
+    if 'time_range' in data:
+        if isinstance(data['time_range'][0], six.string_types):
+            data['time_range'] = time.isotime2mpltime(data['time_range'])
     return data
 
 
@@ -269,10 +280,15 @@ class NortekReader(object):
           how to initialize each data variable.
 
         """
+        shape_args = {'n': self.n_samp_guess}
+        try:
+            shape_args['nbins'] = self.config['user']['NBins']
+        except:
+            pass
         for nm, va in list(vardict.items()):
             if not hasattr(self.data, nm):
                 self.data.add_data(nm,
-                                   va._empty_array(self.n_samp_guess),
+                                   va._empty_array(**shape_args),
                                    va.group)
 
     def checksum(self, byts):
@@ -407,7 +423,7 @@ class NortekReader(object):
         self.config.head.add_data('system', tmp[4])
         self.config.head.add_data('TransMatrix', np.array(
             unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.)
-        self.config.head.add_data('spare', tmp[5])
+        self.config.head.add_data('spare', tmp[5].decode('utf-8'))
         self.config.head.add_data('NBeams', tmp[6])
         self.checksum(byts)
 
@@ -874,17 +890,19 @@ class NortekReader(object):
         # file, in order to initialize arrays?
         dlta = self.code_spacing('0x11')
         self.config.add_data('fs', 512 / self.config.user.AvgInterval)
-        self.n_samp_guess = self.filesize / dlta + 1
+        self.n_samp_guess = int(self.filesize / dlta + 1)
         self.n_samp_guess *= self.config.fs
 
     def init_AWAC(self,):
-        self.data = adp.adcp_raw()
+        self.data = adp_base.adcp_raw()
         self.data.add_data('config', self.config, 'config')
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'AWAC'
         self.data.props['inst_type'] = 'ADP'
-        self.n_samp_guess = self.filesize / self.code_spacing('0x20') + 1
+        self.data.props['rotate_vars'] = {'vel', }
+        self.n_samp_guess = int(self.filesize / self.code_spacing('0x20') + 1)
+        self.config.add_data('fs', 1. / self.config.user.AvgInterval)
         # self.n_samp_guess=1000
         # self.n_samp_guess*=self.config.fs
 

@@ -8,7 +8,6 @@ import inspect
 from ..data.base import Dgroups
 from . import hdf5
 from . import mat
-import json
 
 # These define the default.
 loader = hdf5.Loader
