@@ -69,7 +69,7 @@ def rotate_inst2earth_test(make_data=False):
 
     td = dat_rdi_i.copy()
     apm.inst2earth(td)
-    tdwr2 = datwr2.copy()
+    tdwr2 = dat_wr2.copy()
     apm.inst2earth(tdwr2)
 
     if make_data:
