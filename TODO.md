@@ -22,10 +22,6 @@ Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
 ``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
 
-Move example ``data/RDI_test01.000`` to LFS
-
-- ``*.[0-9][0-9][0-9] filter=lfs diff=lfs merge=lfs -text`` should be added to ``example_data/.gitattributes``
-
 - Move example_data to test folder?
 
 - Move tests to pkg folder?
