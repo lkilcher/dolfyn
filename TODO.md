@@ -34,8 +34,6 @@ Move example ``data/RDI_test01.000`` to LFS
 
 - Add tools for loading test data?
 
-- Add a generalized 'read' function.
-
 - More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
 
 - Average multiple GPGGA strings in a single ensemble
@@ -71,3 +69,5 @@ Document the .userdata.json files
 Document variables in data objects
 
 Document load vs. mmload
+
+Document generic read function (io.api.read)

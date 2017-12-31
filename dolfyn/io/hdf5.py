@@ -10,9 +10,9 @@ this approach.
 
 import h5py as h5
 import numpy as np
-from .base import DataFactory
-from ..data.base import Dgroups, ma, config
-from ..data.time import time_array
+import base
+from ..data import base as db
+from ..data import time as dt
 import copy
 from six import string_types
 import sys
@@ -36,7 +36,7 @@ else:  # Python 2
         return pkl.loads(s)
 
 
-class Saver(DataFactory):
+class Saver(base.DataFactory):
 
     """
     A save data_factory object.  This class saves data in DOLFYN
@@ -151,7 +151,7 @@ class Saver(DataFactory):
 
         """
         self.get_group(where).attrs.create('_object_type', str(obj.__class__))
-        if isinstance(obj, config) and obj.config_type not in [None, '*UNKNOWN*']:
+        if isinstance(obj, db.config) and obj.config_type not in [None, '*UNKNOWN*']:
             self.get_group(where).attrs.create('_config_type', obj.config_type.encode('ascii'))
 
     def write_dict(self, name, dct, where='/'):
@@ -214,7 +214,7 @@ class Saver(DataFactory):
                 val = getattr(obj, ky)
                 if isinstance(val, np.ndarray) and val.dtype.name.startswith('unicode'):
                     val = val.astype('S')
-                if Dgroups in val.__class__.__mro__:
+                if db.Dgroups in val.__class__.__mro__:
                     self.write(val,
                                where + '/' + grp_nm + '/_' + ky,
                                nosplit_file=True)
@@ -229,10 +229,10 @@ class Saver(DataFactory):
                         if ky in d:
                             nd.attrs.create(str(kw), d[ky])
 
-                    if val.__class__ is time_array:
+                    if val.__class__ is dt.time_array:
                         nd.attrs.create('time_var', 'True')
 
-                    if ma.valid and val.__class__ is ma.marray:
+                    if db.ma.valid and val.__class__ is db.ma.marray:
                         nd = grp.get(str(ky))
                         # print( 'writing meta data for %s' % ky )
                         for nm, val in list(val.meta.__dict__.items()):
@@ -246,7 +246,7 @@ class Saver(DataFactory):
                     grp.attrs.create(ky, pkl.dumps(val))
 
 
-# class UpdateTool(DataFactory):
+# class UpdateTool(base.DataFactory):
 
 # """
 # A class for updating data files when the format specification
@@ -274,7 +274,7 @@ class Saver(DataFactory):
 # str(obj.__class__))
 
 
-class Loader(DataFactory):
+class Loader(base.DataFactory):
 
     """
     A save data_factory object.  This class saves data in DOLFYN
@@ -301,7 +301,8 @@ class Loader(DataFactory):
                           # fly if necessary (e.g. _fix_name)
         self.close = self.fd.close
         self.type_map = type_map
-        self.ver = _ver.ver2tuple(pkl.loads(self.fd.attrs.get('DataSaveVersion', 'I0\n.')))
+        self.ver = _ver.ver2tuple(pkl.loads(
+            self.fd.attrs.get('DataSaveVersion', 'I0\n.')))
 
     def get_group(self, where=None):
         """
@@ -440,7 +441,7 @@ class Loader(DataFactory):
                 out.add_data(nm, nd, self.get_name(nd.parent))
             if (self.ver <= (0, 1, 2) and nm == 'mpltime') or \
                     nd.attrs.get('time_var', False) == b'True':
-                out[nm] = time_array(out[nm])
+                out[nm] = dt.time_array(out[nm])
         self.read_attrs(out, groups=groups, where=where)
         return out
 
@@ -469,15 +470,15 @@ class Loader(DataFactory):
                     out[nm] = out[nm].astype('<U')
                 if (self.ver <= (0, 1, 2) and nm == 'mpltime') or \
                         nd.attrs.get('time_var', False) == b'True':
-                    out[nm] = out[nm].view(time_array)
-                if ma.valid and self.ver == (0, 0, 0):
+                    out[nm] = out[nm].view(dt.time_array)
+                if db.ma.valid and self.ver == (0, 0, 0):
                     if '_label' in nd.attrs:
                         # This is a deprecated file structure.
                         setattr(out, nm,
-                                ma.marray(getattr(out, nm),
-                                          meta=ma.varMeta(
-                                              nd.attrs.get('_label'),
-                                              pkl_loads(nd.attrs.get('_units'))
+                                db.ma.marray(getattr(out, nm),
+                                             meta=db.ma.varMeta(
+                                                 nd.attrs.get('_label'),
+                                                 pkl_loads(nd.attrs.get('_units'))
                                 )))
                     if 'label' in nd.attrs:
                         s = nd.attrs.get('units')
@@ -494,16 +495,16 @@ class Loader(DataFactory):
                                 u = pkl_loads(
                                     s.replace('cdata_base', 'cdata.marray'))
                         setattr(out, nm,
-                                ma.marray(getattr(out, nm),
-                                          meta=ma.varMeta(
-                                              nd.attrs.get('label'),
-                                              u,
-                                              pkl_loads(
-                                                  nd.attrs.get('dim_names'))
-                                          )
-                                          )
+                                db.ma.marray(getattr(out, nm),
+                                             meta=db.ma.varMeta(
+                                                 nd.attrs.get('label'),
+                                                 u,
+                                                 pkl_loads(
+                                                     nd.attrs.get('dim_names'))
+                                             )
                                 )
-                elif ma.valid:
+                                )
+                elif db.ma.valid:
                     if '_name' in nd.attrs:
                         # Confirm this is a meta array
                         s = nd.attrs.get('_units')
@@ -512,14 +513,14 @@ class Loader(DataFactory):
                         except ImportError:
                             # This is to catch a redefinition of data objects.
                             u = pkl_loads(s.replace('cdata_base', 'cdata'))
-                        meta = ma.varMeta(pkl_loads(nd.attrs.get('_name')),
-                                          u,
-                                          pkl_loads(nd.attrs.get('dim_names'))
-                                          )
+                        meta = db.ma.varMeta(pkl_loads(nd.attrs.get('_name')),
+                                             u,
+                                             pkl_loads(nd.attrs.get('dim_names'))
+                        )
                         for atnm in nd.attrs:
                             if atnm not in ['_name', '_units', 'dim_names']:
                                 setattr(meta, atnm, pkl_loads(nd.attrs.get(atnm)))
-                        setattr(out, nm, ma.marray(getattr(out, nm), meta=meta))
+                        setattr(out, nm, db.ma.marray(getattr(out, nm), meta=meta))
         self.read_attrs(out, groups=groups, where=where)
         self._check_compat(out)
         out.__postload__()
@@ -581,7 +582,7 @@ class Loader(DataFactory):
                     if typestr.endswith("config'>"):
                         # This is a catch for deleted module-specific config
                         # objects
-                        out = config()
+                        out = db.config()
                         nd = self.get_group(where)
                         if '_config_type' in nd.attrs:
                             out.config_type = nd.attrs.get('_config_type').decode('utf-8')

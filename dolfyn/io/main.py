@@ -2,19 +2,19 @@
 Holds the primary high-level interfaces for the io (read/write)
 package.
 """
-
 import sys
 import inspect
-from ..data.base import Dgroups
+from ..data import base as db
 from . import hdf5
 from . import mat
+
 
 # These define the default.
 loader = hdf5.Loader
 saver = hdf5.Saver
 
 
-class Saveable(Dgroups):
+class Saveable(db.Dgroups):
 
     """
     An abstract base class for writing objects that are 'Saveable'.
@@ -77,39 +77,6 @@ class Saveable(Dgroups):
         # Don't need a typemap, because we are using the current object:
         with hdf5.loader(filename, None) as ldr:
             ldr.load(groups=groups, where=where, out=self)
-
-
-def get_typemap(space):
-    """
-    Find the classes in the namespace that have :class:`Saveable` in
-    their class heirarchy.
-
-    Parameters
-    ----------
-
-    space : namespace
-      The namespace in which to find classes that subclass Saveable.
-
-    Returns
-    -------
-
-    types : list(types)
-      A list containing the types (classes) that subclass Saveable.
-
-
-    Notes
-    -----
-
-    This function is used within a module that defines new data types
-    for the DOLfYN package to auto-detect which objects in the
-    namespace are types that can be saved.
-
-    """
-    type_map = {}
-    for name, obj in inspect.getmembers(sys.modules[space]):
-        if hasattr(obj, '__mro__') and Saveable in obj.__mro__:
-            type_map[str(obj)] = obj
-    return type_map
 
 
 def load(fname, type_map, data_groups=None,):
@@ -184,3 +151,37 @@ def probeFile(fname):
         tp = ldr.read_type()
         print('Object type: %s' % tp)
     return tp, out
+
+
+def get_typemap(space):
+    """
+    Find the classes in the namespace that have :class:`Saveable` in
+    their class heirarchy.
+
+    Parameters
+    ----------
+
+    space : namespace
+      The namespace in which to find classes that subclass Saveable.
+
+    Returns
+    -------
+
+    types : list(types)
+      A list containing the types (classes) that subclass Saveable.
+
+
+    Notes
+    -----
+
+    This function is used within a module that defines new data types
+    for the DOLfYN package to auto-detect which objects in the
+    namespace are types that can be saved.
+
+    """
+    type_map = {}
+    for name, obj in inspect.getmembers(sys.modules[space]):
+        if hasattr(obj, '__mro__') and Saveable in obj.__mro__:
+            type_map[str(obj)] = obj
+    return type_map
+

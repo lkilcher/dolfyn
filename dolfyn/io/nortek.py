@@ -14,7 +14,8 @@ from ..data import time
 import os.path
 import json
 import six
-from nortek2 import read_signature
+from .base import WrongFileType
+import warnings
 
 
 def recatenate(obj):
@@ -41,7 +42,7 @@ def read_nortek(filename,
                 read_userdata=True,
                 cropdata=False,
                 do_checksum=False,
-                **kwargs):
+                nens=None):
     """
     Read a nortek file.
 
@@ -56,9 +57,9 @@ def read_nortek(filename,
                 'userdata.json' file to crop the data. This can also
                 be ``'inds_range'``, or ``'time_range'``, to specify
                 which property to use.
-    npings : int
-          Number of pings to read from the file
-    **kwargs : keyword arguments to :class:`NortekReader`
+    nens : None (default: read entire file), int, or
+           2-element tuple (start, stop)
+              Number of pings to read from the file
 
     Returns
     -------
@@ -74,7 +75,7 @@ def read_nortek(filename,
             json_props = _read_vecjson(jsonfile)
             break
 
-    with NortekReader(filename, do_checksum=do_checksum, **kwargs) as rdr:
+    with NortekReader(filename, do_checksum=do_checksum, nens=nens) as rdr:
         rdr.readfile()
     rdr.dat2sci()
     dat = rdr.data
@@ -161,7 +162,8 @@ class NortekReader(object):
                   Specifies whether to perform the checksum.
     bufsize : int (default 100000)
               The size of the read buffer to use.
-    npings : int or None (default: None)
+    nens : None (default: None, read all files), int,
+           or 2-element tuple (start, stop).
              The number of pings to read from the file. By default,
     the entire file is read.
 
@@ -181,7 +183,7 @@ class NortekReader(object):
                }
 
     def __init__(self, fname, endian=None, debug=False,
-                 do_checksum=True, bufsize=100000, npings=None, ):
+                 do_checksum=True, bufsize=100000, nens=None):
         self.fname = fname
         self._bufsize = bufsize
         self.f = open(fname, 'rb', 1000)
@@ -190,14 +192,28 @@ class NortekReader(object):
         self.debug = debug
         self.c = 0
         self._dtypes = []
-        self._npings = npings
+        self._n_start = 0
+        try:
+            len(nens)
+        except TypeError:
+            # not a tuple, so we assume None or int
+            self._npings = nens
+        else:
+            # TODO: add a check that nens is len(2)
+            # passes: nens is tuple
+            warnings.warn("a 'start ensemble' is not yet supported "
+                          "for the Nortek reader. This function will read "
+                          "the entire file, then crop the beginning at "
+                          "nens[0].")
+            self._npings = nens[1]
+            self._n_start = nens[0]
         if endian is None:
             if unpack('<HH', self.read(4)) == (1445, 24):
                 endian = '<'
             elif unpack('>HH', self.read(4)) == (1445, 24):
                 endian = '>'
             else:
-                raise Exception("I/O error: could not determine the \
+                raise WrongFileType("I/O error: could not determine the \
                 'endianness' of the file.  Are you sure this is a Nortek \
                 file?")
         self.endian = endian
@@ -234,8 +250,8 @@ class NortekReader(object):
         self.f.close()  # This has a small buffer, so close it.
         self.f = open(fname, 'rb', bufsize)  # This has a large buffer...
         self.close = self.f.close
-        if npings is not None:
-            self.n_samp_guess = npings + 1
+        if self._npings is not None:
+            self.n_samp_guess = self._npings + 1
         self.f.seek(pnow, 0)  # Seek to the previous position.
         if self.config.user.NBurst > 0:
             self.data.props['DutyCycle_NBurst'] = self.config.user.NBurst
@@ -1022,7 +1038,7 @@ class NortekReader(object):
         for nm, dat in self.data.iter():
             if hasattr(getattr(self.data, nm), 'shape') and \
                (getattr(self.data, nm).shape[-1] == self.n_samp_guess):
-                setattr(self.data, nm, dat[..., :self.c])
+                setattr(self.data, nm, dat[..., self._n_start:self.c])
 
     def dat2sci(self,):
         for nm in self._dtypes:

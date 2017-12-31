@@ -5,6 +5,7 @@ import datetime
 from ..data.time import date2num
 from os.path import getsize
 from ..adp.base import adcp_header, adcp_config, adcp_raw
+from .base import WrongFileType
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
 import warnings
@@ -829,9 +830,10 @@ class adcp_loader(object):
             id1[1] = id1[0]
             id1[0] = nextbyte
         if search_cnt == self._search_num:
-            raise Exception('Searched {} entries... Not a workhorse/broadband'
-                            ' file or bad data encountered. -> {}'
-                            .format(search_cnt, id1))
+            raise WrongFileType(
+                'Searched {} entries... Not a workhorse/broadband'
+                ' file or bad data encountered. -> {}'
+                .format(search_cnt, id1))
         elif search_cnt > 0:
             if self._debug_level > 0:
                 print('  WARNING: Searched {} bytes to find next '

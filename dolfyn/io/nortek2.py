@@ -5,8 +5,9 @@ modules.
 from struct import unpack
 import nortek2_defs as defs
 import nortek2lib as lib
-from ..adp.base import adcp_raw, adcp_config
+from ..adp import base as apb
 import numpy as np
+from .base import WrongFileType
 
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -45,14 +46,15 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
         raise Exception("The output file must include a "
                         "integer format specifier.")
     while ens_now < ens_stop:
-        dat = read_signature(infile, ens_now,
-                             min(ens_now + nens_per_file, ens_stop))
+        dat = read_signature(infile, (ens_now,
+                                      min(ens_now + nens_per_file,
+                                          ens_stop)))
         dat.save(outfile.format(file_count))
         file_count += 1
         ens_now += nens_per_file
 
 
-def read_signature(filename, ens_start=0, ens_stop=None):
+def read_signature(filename, nens=None):
     """Read a Nortek Signature (.ad2cp) file.
 
     Parameters
@@ -70,8 +72,19 @@ def read_signature(filename, ens_start=0, ens_stop=None):
     dat : :class:`dolfyn.adp.base.adcp_raw` object
         An ADCP data object containing the loaded data.
     """
+    if nens is None:
+        nens = [0, None]
+    else:
+        try:
+            n = len(nens)
+        except TypeError:
+            nens = [0, nens]
+        else:
+            # passes: it's a list/tuple/array
+            if n != 2:
+                raise TypeError('nens must be: None (), int, or len 2')
     rdr = Ad2cpReader(filename)
-    d = rdr.readfile(ens_start, ens_stop)
+    d = rdr.readfile(nens[0], nens[1])
     rdr.sci_data(d)
     out = reorg(d)
     reduce(out)
@@ -130,7 +143,7 @@ class Ad2cpReader(object):
             elif unpack('>' + 'BB', byts) == (165, 10):
                 endian = '>'
             else:
-                raise Exception(
+                raise WrongFileType(
                     "I/O error: could not determine the 'endianness' "
                     "of the file.  Are you sure this is a Nortek "
                     "AD2CP file?")
@@ -260,8 +273,8 @@ def reorg(dat):
     """This function grabs the data from the dictionary of data types
     (organized by ID), and combines them into the adcp_raw object.
     """
-    outdat = adcp_raw()
-    cfg = outdat['config'] = adcp_config('Nortek AD2CP')
+    outdat = apb.adcp_raw()
+    cfg = outdat['config'] = apb.adcp_config('Nortek AD2CP')
     outdat.groups.add('config', 'config')
     cfg['filehead config'] = dat['filehead config']
 

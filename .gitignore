@@ -24,9 +24,8 @@ debug/
 example_data/*.index
 
 tmp/
+tmp*.py
 
 .DS_Store
-
-tmp/
 
 test*.py

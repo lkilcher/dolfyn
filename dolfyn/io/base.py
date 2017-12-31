@@ -7,6 +7,10 @@ import numpy as np
 from ..data import base as db
 
 
+class WrongFileType(Exception):
+    pass
+
+
 class DataFactory(object):
 
     """
