@@ -4,6 +4,7 @@ import numpy as np
 from base import ResourceFilename
 
 rfnm = ResourceFilename('dolfyn.test')
+exdt = ResourceFilename('dolfyn')
 
 dolfyn.data.base.debug_level = 1
 
@@ -32,14 +33,14 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def read_test(make_data=False):
 
-    td = avm.read_nortek(rfnm('data/vector_data01.VEC'), npings=100)
-    tdm = avm.read_nortek(rfnm('data/vector_data_imu01.VEC'),
+    td = avm.read_nortek(exdt('example_data/vector_data01.VEC'), npings=100)
+    tdm = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
                           userdata=False,
                           npings=100)
-    tdb = avm.read_nortek(rfnm('data/burst_mode01.VEC'),
+    tdb = avm.read_nortek(exdt('example_data/burst_mode01.VEC'),
                           npings=100)
-    tdm2 = avm.read_nortek(rfnm('data/vector_data_imu01.VEC'),
-                           userdata=rfnm('data/vector_data_imu01.userdata.json'),
+    tdm2 = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
+                           userdata=exdt('example_data/vector_data_imu01.userdata.json'),
                            npings=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.

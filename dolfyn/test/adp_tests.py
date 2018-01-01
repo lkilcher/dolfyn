@@ -3,6 +3,7 @@ import dolfyn.data.base
 from base import ResourceFilename
 
 rfnm = ResourceFilename('dolfyn.test')
+exdt = ResourceFilename('dolfyn')
 
 dolfyn.data.base.debug_level = 1
 
@@ -20,11 +21,11 @@ def data_equiv(dat1, dat2, message=''):
 
 def read_test(make_data=False):
 
-    td_rdi = apm.read_rdi(rfnm('data/RDI_test01.000'))
-    td_sig = apm.read_signature(rfnm('data/BenchFile01.ad2cp'))
-    td_awac = apm.read_nortek(rfnm('data/AWAC_test01.wpr'))
-    td_wr1 = apm.read_rdi(rfnm('data/winriver01.PD0'))
-    td_wr2 = apm.read_rdi(rfnm('data/winriver02.PD0'))
+    td_rdi = apm.read_rdi(exdt('example_data/RDI_test01.000'))
+    td_sig = apm.read_signature(exdt('example_data/BenchFile01.ad2cp'))
+    td_awac = apm.read_nortek(exdt('example_data/AWAC_test01.wpr'))
+    td_wr1 = apm.read_rdi(exdt('example_data/winriver01.PD0'))
+    td_wr2 = apm.read_rdi(exdt('example_data/winriver02.PD0'))
 
     if make_data:
         td_rdi.save(rfnm('data/RDI_test01.h5'))
