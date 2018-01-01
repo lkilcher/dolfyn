@@ -1,8 +1,3 @@
-General
-=======
-
-- Add tools for loading example_data (use `pkg_resources`)?
-
 Documentation
 ====
 
@@ -18,19 +13,6 @@ Document variables in data objects
 Document load vs. mmload
 
 Document generic read function (io.api.read)
-
-Testing Reorg
-======
-
-### Approach 1
-Move testing folder into dolfyn library (e.g., `dolfyn.test`). This apparently is standard practice now? It probably has some advantages that aren't clear to me right now. This would entail:
-
-- Move tests to pkg folder
-- Use pkg_resources for data files?
-- Use tools for loading example_data
-
-### Approach 2
-This would mean keeping the tests in the same place, and separating them from the pip distribution, such that they are only included in the git distro.
 
 General Test Updates
 -------
