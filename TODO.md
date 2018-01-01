@@ -1,61 +1,7 @@
 General
 =======
 
-File format:
-- Switch to pycoda formatted hdf5 files? --Use git's submodule functionality?
-- Or, switch to default to matlab files?
-- Best option: write matlab-compatible hdf5 files?!
-
-Add support for csv files? What do these look like?
-
-Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
-
-ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts".
-
-What if I want 30-minute turbulence averages spaced 15-minutes apart?
-  - add `n_pad` option to `TurbBinner.__init__`, or
-  - Add capability for `n_fft` > `n_bin`?
-
-What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
-
-Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
-
-``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
-
-Move example ``data/RDI_test01.000`` to LFS
-
-- ``*.[0-9][0-9][0-9] filter=lfs diff=lfs merge=lfs -text`` should be added to ``dolfyn/test/data/.gitattributes``
-
-Add tools for loading test data?
-
-Add a generalized 'read' function.
-
-- Add tools for loading test data?
-
-- More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
-
-- Average multiple GPGGA strings in a single ensemble
-
-Add ad2cp
----------------
-- Handle AST-block?
-
-Default to not including test folder (or just data?) in a release.
-
-Build a conda install
-
-Testing
-======
-
-Add tests for ADP:
-
-- averaging!
-- earth2principal rotation
-- AWAC rotations
-
-Add tests to confirm that all scripts work.
-
-Add tests to confirm that matlab file I/O works.
+- Add tools for loading example_data (use `pkg_resources`)?
 
 Documentation
 ====
@@ -72,3 +18,76 @@ Document variables in data objects
 Document load vs. mmload
 
 Document generic read function (io.api.read)
+
+Testing Reorg
+======
+
+### Approach 1
+Move testing folder into dolfyn library (e.g., `dolfyn.test`). This apparently is standard practice now? It probably has some advantages that aren't clear to me right now. This would entail:
+
+- Move tests to pkg folder
+- Use pkg_resources for data files?
+- Use tools for loading example_data
+
+### Approach 2
+This would mean keeping the tests in the same place, and separating them from the pip distribution, such that they are only included in the git distro.
+
+General Test Updates
+-------
+
+Add tests for ADP:
+
+- averaging!
+- earth2principal rotation
+- AWAC rotations
+
+Data Processing
+========
+
+Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
+
+ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts".
+
+What if I want 30-minute turbulence averages spaced 15-minutes apart?
+  - add `n_pad` option to `TurbBinner.__init__`, or
+  - Add capability for `n_fft` > `n_bin`?
+
+What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
+
+``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
+
+- Add tools for loading test data?
+
+Binary Reading
+---------------
+
+- Handle AST-block (`io.nortek2.read_signature`)?
+
+- Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
+
+Default to not including test folder (or just data?) in a release.
+
+Build a conda install
+
+Testing
+======
+
+Add tests to confirm that all scripts work.
+
+Add tests to confirm that matlab file I/O works.
+
+Low Priority
+======
+Add support for csv files? What do these look like?
+
+File format:
+- Switch to pycoda formatted hdf5 files? --Use git's submodule functionality?
+- Or, switch to default to matlab files?
+- Best option: write matlab-compatible hdf5 files?!
+
+
+Testing Framework
+--------
+
+- More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
+
