@@ -1,21 +1,17 @@
 import dolfyn.adv.api as avm
 import dolfyn.data.base
 import numpy as np
-from os import path
+from base import ResourceFilename
+
+rfnm = ResourceFilename('dolfyn.test')
+exdt = ResourceFilename('dolfyn')
 
 dolfyn.data.base.debug_level = 1
 
-try:
-    test_root = path.realpath(__file__).replace("\\", "/").rsplit('/', 1)[0] + '/'
-except:
-    test_root = './'
-
-pkg_root = test_root.rsplit('/', 2)[0] + "/"
-
-dat = avm.load(test_root + 'data/vector_data01.h5', 'ALL')
-dat_imu = avm.load(test_root + 'data/vector_data_imu01.h5', 'ALL')
-dat_imu_json = avm.load(test_root + 'data/vector_data_imu01-json.h5', 'ALL')
-dat_burst = avm.load(test_root + 'data/burst_mode01.h5', 'ALL')
+dat = avm.load(rfnm('data/vector_data01.h5'), 'ALL')
+dat_imu = avm.load(rfnm('data/vector_data_imu01.h5'), 'ALL')
+dat_imu_json = avm.load(rfnm('data/vector_data_imu01-json.h5'), 'ALL')
+dat_burst = avm.load(rfnm('data/burst_mode01.h5'), 'ALL')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -37,14 +33,14 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def read_test(make_data=False):
 
-    td = avm.read_nortek(pkg_root + 'example_data/vector_data01.VEC',
-                         nens=100)
-    tdm = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC',
-                          read_userdata=False,
+    td = avm.read_nortek(exdt('example_data/vector_data01.VEC'), nens=100)
+    tdm = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
+                          userdata=False,
                           nens=100)
-    tdb = avm.read_nortek(pkg_root + 'example_data/burst_mode01.VEC',
+    tdb = avm.read_nortek(exdt('example_data/burst_mode01.VEC'),
                           nens=100)
-    tdm2 = avm.read_nortek(pkg_root + 'example_data/vector_data_imu01.VEC',
+    tdm2 = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
+                           userdata=exdt('example_data/vector_data_imu01.userdata.json'),
                            nens=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
@@ -52,10 +48,10 @@ def read_test(make_data=False):
     tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
-        td.save(test_root + 'data/vector_data01.h5')
-        tdm.save(test_root + 'data/vector_data_imu01.h5')
-        tdb.save(test_root + 'data/burst_mode01.h5')
-        tdm2.save(test_root + 'data/vector_data_imu01-json.h5')
+        td.save(rfnm('data/vector_data01.h5'))
+        tdm.save(rfnm('data/vector_data_imu01.h5'))
+        tdb.save(rfnm('data/burst_mode01.h5'))
+        tdm2.save(rfnm('data/vector_data_imu01-json.h5'))
         return
 
     msg_form = "The output of read_nortek('{}.VEC') does not match '{}.h5'."
@@ -88,22 +84,25 @@ def motion_test(make_data=False):
     avm.motion.correct_motion(tdmj)
 
     if make_data:
-        tdm.save(test_root + 'data/vector_data_imu01_mc.h5')
-        tdm10.save(test_root + 'data/vector_data_imu01_mcDeclin10.h5')
-        tdmj.save(test_root + 'data/vector_data_imu01-json_mc.h5')
+        tdm.save(rfnm('data/vector_data_imu01_mc.h5'))
+        tdm10.save(rfnm('data/vector_data_imu01_mcDeclin10.h5'))
+        tdmj.save(rfnm('data/vector_data_imu01-json_mc.h5'))
         return
 
     msg_form = "Motion correction {}does not match expectations."
 
     for dat1, dat2, msg in [
             (tdm,
-             avm.load(test_root + 'data/vector_data_imu01_mc.h5', 'ALL'),
+             avm.load(rfnm('data/vector_data_imu01_mc.h5'),
+                      'ALL'),
              ''),
             (tdm10,
-             avm.load(test_root + 'data/vector_data_imu01_mcDeclin10.h5', 'ALL'),
+             avm.load(rfnm('data/vector_data_imu01_mcDeclin10.h5'),
+                      'ALL'),
              'with declination=10 '),
             (tdmj,
-             avm.load(test_root + 'data/vector_data_imu01-json_mc.h5', 'ALL'),
+             avm.load(rfnm('data/vector_data_imu01-json_mc.h5'),
+                      'ALL'),
              'with reading userdata.json '),
     ]:
         yield data_equiv, dat1, dat2, msg_form.format(msg)
@@ -127,10 +126,11 @@ def heading_test(make_data=False):
     td.add_data('heading', head, 'orient')
 
     if make_data:
-        td.save(test_root + 'data/vector_data_imu01_head_pitch_roll.h5')
+        td.save(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
         return
 
-    cd = avm.load(test_root + 'data/vector_data_imu01_head_pitch_roll.h5', 'ALL')
+    cd = avm.load(rfnm('data/vector_data_imu01_head_pitch_roll.h5'),
+                  'ALL')
 
     assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
 
@@ -141,10 +141,10 @@ def turbulence_test(make_data=False):
     td = bnr(tmp)
 
     if make_data:
-        td.save(test_root + 'data/vector_data01_bin.h5')
+        td.save(rfnm('data/vector_data01_bin.h5'))
         return
 
-    cd = avm.load(test_root + 'data/vector_data01_bin.h5', 'ALL')
+    cd = avm.load(rfnm('data/vector_data01_bin.h5'), 'ALL')
 
     assert cd == td, "TurbBinner gives unexpected results!"
 
@@ -154,10 +154,10 @@ def clean_test(make_data=False):
     avm.clean.GN2002(td.u, 20)
 
     if make_data:
-        td.save(test_root + 'data/vector_data01_uclean.h5')
+        td.save(rfnm('data/vector_data01_uclean.h5'))
         return
 
-    cd = avm.load(test_root + 'data/vector_data01_uclean.h5', 'ALL')
+    cd = avm.load(rfnm('data/vector_data01_uclean.h5'), 'ALL')
 
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"
 
@@ -166,10 +166,10 @@ def subset_test(make_data=False):
     td = dat.copy().subset(slice(10, 20))
 
     if make_data:
-        td.save(test_root + 'data/vector_data01_subset.h5')
+        td.save(rfnm('data/vector_data01_subset.h5'))
         return
 
-    cd = avm.load(test_root + 'data/vector_data01_subset.h5', 'ALL')
+    cd = avm.load(rfnm('data/vector_data01_subset.h5'), 'ALL')
 
     # First check that subsetting works correctly
     yield data_equiv, cd, td, "ADV data object `subset` method gives unexpected results."

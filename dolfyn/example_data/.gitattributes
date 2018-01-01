@@ -3,3 +3,4 @@
 *.PD0 filter=lfs diff=lfs merge=lfs -text
 *.ad2cp filter=lfs diff=lfs merge=lfs -text
 *.000 filter=lfs diff=lfs merge=lfs -text
+*.index filter=lfs diff=lfs merge=lfs -text

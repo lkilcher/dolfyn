@@ -22,11 +22,13 @@ Add updated Nortek ``.dep`` files, and document the Vector SW version somewhere.
 
 ``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
 
-- Move example_data to test folder?
+Move example ``data/RDI_test01.000`` to LFS
 
-- Move tests to pkg folder?
+- ``*.[0-9][0-9][0-9] filter=lfs diff=lfs merge=lfs -text`` should be added to ``dolfyn/test/data/.gitattributes``
 
-- Use pkg_resources for data files?
+Add tools for loading test data?
+
+Add a generalized 'read' function.
 
 - Add tools for loading test data?
 
@@ -38,6 +40,9 @@ Add ad2cp
 ---------------
 - Handle AST-block?
 
+Default to not including test folder (or just data?) in a release.
+
+Build a conda install
 
 Testing
 ======
