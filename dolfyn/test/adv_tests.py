@@ -33,15 +33,15 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def read_test(make_data=False):
 
-    td = avm.read_nortek(exdt('example_data/vector_data01.VEC'), npings=100)
+    td = avm.read_nortek(exdt('example_data/vector_data01.VEC'), nens=100)
     tdm = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
                           userdata=False,
-                          npings=100)
+                          nens=100)
     tdb = avm.read_nortek(exdt('example_data/burst_mode01.VEC'),
-                          npings=100)
+                          nens=100)
     tdm2 = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
                            userdata=exdt('example_data/vector_data_imu01.userdata.json'),
-                           npings=100)
+                           nens=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)

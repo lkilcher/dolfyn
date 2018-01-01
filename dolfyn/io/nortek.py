@@ -67,16 +67,15 @@ def read_nortek(filename,
 
     """
     # Read the json file
-    if userdata is True:
-        for basefile in [filename.rsplit('.', 1)[0],
-                         filename]:
-            jsonfile = basefile + '.userdata.json'
-            if os.path.isfile(jsonfile):
-                userdata = jsonfile
-                break
+    json_props = {}
+    for basefile in [filename.rsplit('.', 1)[0],
+                     filename]:
+        jsonfile = basefile + '.userdata.json'
+        if os.path.isfile(jsonfile) and userdata is True:
+            json_props = _read_vecjson(jsonfile)
+            break
     if isinstance(userdata, (six.string_types)) or hasattr(userdata, 'read'):
         json_props = _read_vecjson(userdata)
-        dat.props.update(json_props)
 
     with NortekReader(filename, do_checksum=do_checksum, nens=nens) as rdr:
         rdr.readfile()
