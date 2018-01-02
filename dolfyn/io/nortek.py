@@ -16,6 +16,8 @@ import json
 import six
 from .base import WrongFileType
 import warnings
+from pycoda.base import data
+from ..data.base import config
 
 
 def recatenate(obj):
@@ -25,9 +27,10 @@ def recatenate(obj):
             continue
         val0 = obj[0][ky]
         if isinstance(val0, np.ndarray) and val0.size > 1:
-            out.add_data(ky, np.concatenate([val[ky][..., None] for val in obj], axis=-1))
+            out[ky] = np.concatenate([val[ky][..., None] for val in obj],
+                                     axis=-1)
         else:
-            out.add_data(ky, np.array([val[ky] for val in obj]))
+            out[ky] = np.array([val[ky] for val in obj])
     return out
 
 
@@ -308,9 +311,7 @@ class NortekReader(object):
             pass
         for nm, va in list(vardict.items()):
             if not hasattr(self.data, nm):
-                self.data.add_data(nm,
-                                   va._empty_array(**shape_args),
-                                   va.group)
+                self.data[nm] = va._empty_array(**shape_args)
 
     def checksum(self, byts):
         """
@@ -352,69 +353,66 @@ class NortekReader(object):
         # ID: '0x00 = 00
         if self.debug:
             print('Reading user configuration (0x00) ping #{} @ {}...'.format(self.c, self.pos))
-        self.config.add_data('user', adv_base.ADVconfig('USER'))
+        self.config['user'] = config(_type='USER')
         byts = self.read(508)
         tmp = unpack(self.endian + '2x5H13H6s4HI8H2x90H180s6H4xH2x2H2xH30x8H', byts)
         # the first two are the size.
-        self.config.user.add_data(
-            'Transmit', {'pulse length': tmp[0],
+        self.config.user['Transmit'] = {'pulse length': tmp[0],
                          'blank distance': tmp[1],
                          'receive length': tmp[2],
                          'time_between_pings': tmp[3],
                          'time_between_bursts': tmp[4],
-                         })
-        self.config.user.add_data('Npings', tmp[5])
-        self.config.user.add_data('AvgInterval', tmp[6])
-        self.config.user.add_data('NBeams', tmp[7])
-        self.config.user.add_data('TimCtrlReg', int2binarray(tmp[8], 16))
+                         }
+        self.config.user['Npings'] = tmp[5]
+        self.config.user['AvgInterval'] = tmp[6]
+        self.config.user['NBeams'] = tmp[7]
+        self.config.user['TimCtrlReg'] = int2binarray(tmp[8], 16)
         # From the nortek system integrator manual
         # (note: bit numbering is zero-based)
         treg = self.config.user.TimCtrlReg
-        self.config.user.add_data('Profile Timing', ['single', 'continuous'][treg[1]])
-        self.config.user.add_data('Burst Mode', ~treg[2])
+        self.config.user['Profile Timing'] = ['single', 'continuous'][treg[1]]
+        self.config.user['Burst Mode'] = ~treg[2]
         # How is this different from the power level in PwrCtrlReg?
-        #self.config.user.add_data('Power Level', treg[5] + 2 * treg[6] + 1)
-        self.config.user.add_data('sync-out',
-                                  ['middle', 'end', ][treg[7]])
-        self.config.user.add_data('Sample on Sync', treg[8])
-        self.config.user.add_data('Start on Sync', treg[9])
-        self.config.user.add_data('PwrCtrlReg', int2binarray(tmp[9], 16))
-        self.config.user.add_data('A1', tmp[10])
-        self.config.user.add_data('B0', tmp[11])
-        self.config.user.add_data('B1', tmp[12])
-        self.config.user.add_data('CompassUpdRate', tmp[13])
-        self.config.user.add_data(
-            'CoordSystem', ['ENU', 'XYZ', 'BEAM'][tmp[14]])
-        self.config.user.add_data('NBins', tmp[15])
-        self.config.user.add_data('BinLength', tmp[16])
-        self.config.user.add_data('MeasInterval', tmp[17])
-        self.config.user.add_data('DeployName', tmp[18].partition(b'\x00')[0].decode('utf-8'))
-        self.config.user.add_data('WrapMode', tmp[19])
-        self.config.user.add_data('ClockDeploy', np.array(tmp[20:23]))
-        self.config.user.add_data('DiagInterval', tmp[23])
-        self.config.user.add_data('Mode0', int2binarray(tmp[24], 16))
-        self.config.user.add_data('AdjSoundSpeed', tmp[25])
-        self.config.user.add_data('NSampDiag', tmp[26])
-        self.config.user.add_data('NBeamsCellDiag', tmp[27])
-        self.config.user.add_data('NPingsDiag', tmp[28])
-        self.config.user.add_data('ModeTest', int2binarray(tmp[29], 16))
-        self.config.user.add_data('AnaInAddr', tmp[30])
-        self.config.user.add_data('SWVersion', tmp[31])
-        self.config.user.add_data('VelAdjTable', np.array(tmp[32:122]))
-        self.config.user.add_data('Comments', tmp[122].partition(b'\x00')[0].decode('utf-8'))
-        self.config.user.add_data('Mode1', int2binarray(tmp[123], 16))
-        self.config.user.add_data('DynPercPos', tmp[124])
-        self.config.user.add_data('T1w', tmp[125])
-        self.config.user.add_data('T2w', tmp[126])
-        self.config.user.add_data('T3w', tmp[127])
-        self.config.user.add_data('NSamp', tmp[128])
-        self.config.user.add_data('NBurst', tmp[129])
-        self.config.user.add_data('AnaOutScale', tmp[130])
-        self.config.user.add_data('CorrThresh', tmp[131])
-        self.config.user.add_data('TiLag2', tmp[132])
-        self.config.user.add_data('QualConst', np.array(tmp[133:141]))
+        #self.config.user['Power Level']= treg[5] + 2 * treg[6] + 1
+        self.config.user['sync-out'] = ['middle', 'end', ][treg[7]]
+        self.config.user['Sample on Sync'] = treg[8]
+        self.config.user['Start on Sync'] = treg[9]
+        self.config.user['PwrCtrlReg'] = int2binarray(tmp[9], 16)
+        self.config.user['A1'] = tmp[10]
+        self.config.user['B0'] = tmp[11]
+        self.config.user['B1'] = tmp[12]
+        self.config.user['CompassUpdRate'] = tmp[13]
+        self.config.user['CoordSystem'] = ['ENU', 'XYZ', 'BEAM'][tmp[14]]
+        self.config.user['NBins'] = tmp[15]
+        self.config.user['BinLength'] = tmp[16]
+        self.config.user['MeasInterval'] = tmp[17]
+        self.config.user['DeployName'] = tmp[18].partition(b'\x00')[0].decode('utf-8')
+        self.config.user['WrapMode'] = tmp[19]
+        self.config.user['ClockDeploy'] = np.array(tmp[20:23])
+        self.config.user['DiagInterval'] = tmp[23]
+        self.config.user['Mode0'] = int2binarray(tmp[24], 16)
+        self.config.user['AdjSoundSpeed'] = tmp[25]
+        self.config.user['NSampDiag'] = tmp[26]
+        self.config.user['NBeamsCellDiag'] = tmp[27]
+        self.config.user['NPingsDiag'] = tmp[28]
+        self.config.user['ModeTest'] = int2binarray(tmp[29], 16)
+        self.config.user['AnaInAddr'] = tmp[30]
+        self.config.user['SWVersion'] = tmp[31]
+        self.config.user['VelAdjTable'] = np.array(tmp[32:122])
+        self.config.user['Comments'] = tmp[122].partition(b'\x00')[0].decode('utf-8')
+        self.config.user['Mode1'] = int2binarray(tmp[123], 16)
+        self.config.user['DynPercPos'] = tmp[124]
+        self.config.user['T1w'] = tmp[125]
+        self.config.user['T2w'] = tmp[126]
+        self.config.user['T3w'] = tmp[127]
+        self.config.user['NSamp'] = tmp[128]
+        self.config.user['NBurst'] = tmp[129]
+        self.config.user['AnaOutScale'] = tmp[130]
+        self.config.user['CorrThresh'] = tmp[131]
+        self.config.user['TiLag2'] = tmp[132]
+        self.config.user['QualConst'] = np.array(tmp[133:141])
         self.checksum(byts)
-        self.config.user.add_data('mode', {})
+        self.config.user['mode'] = {}
         self.config.user['mode']['user_sound'] = self.config.user['Mode0'][0]
         self.config.user['mode']['diagnostics_mode'] = self.config.user['Mode0'][1]
         self.config.user['mode']['analog_output_mode'] = self.config.user['Mode0'][2]
@@ -434,48 +432,48 @@ class NortekReader(object):
         # ID: '0x04 = 04
         if self.debug:
             print('Reading head configuration (0x04) ping #{} @ {}...'.format(self.c, self.pos))
-        self.config.add_data('head', adv_base.ADVconfig('HEAD'))
+        self.config['head'] = config(_type='HEAD')
         byts = self.read(220)
         tmp = unpack(self.endian + '2x3H12s176s22sH', byts)
-        self.config.head.add_data('config', tmp[0])
-        self.config.head.add_data('freq', tmp[1])
-        self.config.head.add_data('type', tmp[2])
-        self.config.head.add_data('serialNum', tmp[3].decode('utf-8'))
-        self.config.head.add_data('system', tmp[4])
-        self.config.head.add_data('TransMatrix', np.array(
-            unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.)
-        self.config.head.add_data('spare', tmp[5].decode('utf-8'))
-        self.config.head.add_data('NBeams', tmp[6])
+        self.config.head['config'] = tmp[0]
+        self.config.head['freq'] = tmp[1]
+        self.config.head['type'] = tmp[2]
+        self.config.head['serialNum'] = tmp[3].decode('utf-8')
+        self.config.head['system'] = tmp[4]
+        self.config.head['TransMatrix'] = np.array(
+            unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.
+        self.config.head['spare'] = tmp[5].decode('utf-8')
+        self.config.head['NBeams'] = tmp[6]
         self.checksum(byts)
 
     def read_hw_cfg(self,):
         # ID 0x05 = 05
         if self.debug:
             print('Reading hardware configuration (0x05) ping #{} @ {}...'.format(self.c, self.pos))
-        self.config.add_data('hardware', adv_base.ADVconfig('HARDWARE'))
+        self.config['hardware'] = config(_type='HARDWARE')
         byts = self.read(44)
         tmp = unpack(self.endian + '2x14s6H12xI', byts)
-        self.config.hardware.add_data('serialNum', tmp[0][:8].decode('utf-8'))
-        self.config.hardware.add_data('ProLogID', unpack('B', tmp[0][8:9])[0])
-        self.config.hardware.add_data('ProLogFWver', tmp[0][10:].decode('utf-8'))
-        self.config.hardware.add_data('config', tmp[1])
-        self.config.hardware.add_data('freq', tmp[2])
-        self.config.hardware.add_data('PICversion', tmp[3])
-        self.config.hardware.add_data('HWrevision', tmp[4])
-        self.config.hardware.add_data('recSize', tmp[5] * 65536)
-        self.config.hardware.add_data('status', tmp[6])
-        self.config.hardware.add_data('FWversion', tmp[7])
+        self.config.hardware['serialNum'] = tmp[0][:8].decode('utf-8')
+        self.config.hardware['ProLogID'] = unpack('B', tmp[0][8:9])[0]
+        self.config.hardware['ProLogFWver'] = tmp[0][10:].decode('utf-8')
+        self.config.hardware['config'] = tmp[1]
+        self.config.hardware['freq'] = tmp[2]
+        self.config.hardware['PICversion'] = tmp[3]
+        self.config.hardware['HWrevision'] = tmp[4]
+        self.config.hardware['recSize'] = tmp[5] * 65536
+        self.config.hardware['status'] = tmp[6]
+        self.config.hardware['FWversion'] = tmp[7]
         # tmp=unpack(self.endian+'2x8sBx4s6H12xI',byts)
-        # self.config.hardware.add_data('serialNum',tmp[0][:8])
-        # self.config.hardware.add_data('ProLogID',unpack('B',tmp[0][8])[0])
-        # self.config.hardware.add_data('ProLogFWver',tmp[0][10:])
-        # self.config.hardware.add_data('config',tmp[1])
-        # self.config.hardware.add_data('freq',tmp[2])
-        # self.config.hardware.add_data('PICversion',tmp[3])
-        # self.config.hardware.add_data('HWrevision',tmp[4])
-        # self.config.hardware.add_data('recSize',tmp[5]*65536)
-        # self.config.hardware.add_data('status',tmp[6])
-        # self.config.hardware.add_data('FWversion',tmp[7])
+        # self.config.hardware['serialNum']=tmp[0][:8]
+        # self.config.hardware['ProLogID']=unpack('B',tmp[0][8])[0]
+        # self.config.hardware['ProLogFWver']=tmp[0][10:]
+        # self.config.hardware['config']=tmp[1]
+        # self.config.hardware['freq']=tmp[2]
+        # self.config.hardware['PICversion']=tmp[3]
+        # self.config.hardware['HWrevision']=tmp[4]
+        # self.config.hardware['recSize']=tmp[5]*65536
+        # self.config.hardware['status']=tmp[6]
+        # self.config.hardware['FWversion']=tmp[7]
         self.checksum(byts)
 
     def read_vec_checkdata(self,):
@@ -485,19 +483,19 @@ class NortekReader(object):
         byts0 = self.read(6)
         checknow = adv_base.ADVconfig('CHECKDATA')
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
-        checknow.add_data('Samples', tmp[0])
+        checknow['Samples'] = tmp[0]
         n = checknow.Samples
-        checknow.add_data('First_samp', tmp[1])
-        # checknow.add_data('Amp1', tbx.nans(n, dtype=np.uint8) + 8)
-        # checknow.add_data('Amp2', tbx.nans(n, dtype=np.uint8) + 8)
-        # checknow.add_data('Amp3', tbx.nans(n, dtype=np.uint8) + 8)
+        checknow['First_samp'] = tmp[1]
+        # checknow['Amp1']= tbx.nans(n, dtype=np.uint8) + 8
+        # checknow['Amp2']= tbx.nans(n, dtype=np.uint8) + 8
+        # checknow['Amp3']= tbx.nans(n, dtype=np.uint8) + 8
         byts1 = self.read(3 * n)
         tmp = unpack(self.endian + (3 * n * 'B'), byts1)
         for idx, nm in enumerate(['Amp1', 'Amp2', 'Amp3']):
-            checknow.add_data(nm, np.array(tmp[idx * n:(idx + 1) * n], dtype=np.uint8))
+            checknow[nm] = np.array(tmp[idx * n:(idx + 1) * n], dtype=np.uint8)
         self.checksum(byts0 + byts1)
         if 'checkdata' not in self.config:
-            self.config.add_data('checkdata', checknow)
+            self.config['checkdata'] = checknow
         else:
             if not isinstance(self.config.checkdata, list):
                 self.config.checkdata = [self.config.checkdata, ]
@@ -506,12 +504,11 @@ class NortekReader(object):
     def sci_vec_data(self,):
         self._sci_data(nortek_defs.vec_data)
 
-        self.data.add_data(
-            'pressure', (self.data.PressureMSB.astype('float32') * 65536 +
-                         self.data.PressureLSW.astype('float32')) / 1000.,
-            None, 'env')
+        self.data.env['pressure'] = (
+            self.data.PressureMSB.astype('float32') * 65536 +
+            self.data.PressureLSW.astype('float32')) / 1000.
 
-        self.data.pressure = ma.marray(
+        self.data.env.pressure = ma.marray(
             self.data.pressure,
             ma.varMeta('P', ma.unitsDict({'dbar': 1}), ['time'])
         )
@@ -541,12 +538,12 @@ class NortekReader(object):
             self._dtypes += ['vec_data']
 
         byts = self.read(20)
-        (self.data['AnaIn2LSB'][c],
-         self.data['Count'][c],
-         self.data['PressureMSB'][c],
-         self.data['AnaIn2MSB'][c],
-         self.data['PressureLSW'][c],
-         self.data['AnaIn1'][c],
+        (self.data.extra['AnaIn2LSB'][c],
+         self.data.sys['Count'][c],
+         self.data.env['PressureMSB'][c],
+         self.data.extra['AnaIn2MSB'][c],
+         self.data.env['PressureLSW'][c],
+         self.data.extra['AnaIn1'][c],
          self.data['vel'][0, c],
          self.data['vel'][1, c],
          self.data['vel'][2, c],
@@ -631,15 +628,15 @@ class NortekReader(object):
         byts = self.read(24)
         # The first two are size (skip them).
         self.data.mpltime[c] = self.rd_time(byts[2:8])
-        (self.data.batt[c],
-         self.data.c_sound[c],
-         self.data.heading[c],
-         self.data.pitch[c],
-         self.data.roll[c],
-         self.data.temp[c],
-         self.data.error[c],
-         self.data.status[c],
-         self.data.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
+        (self.data.sys.batt[c],
+         self.data.env.c_sound[c],
+         self.data.orient.heading[c],
+         self.data.orient.pitch[c],
+         self.data.orient.roll[c],
+         self.data.env.temp[c],
+         self.data.sys.error[c],
+         self.data.sys.status[c],
+         self.data.extra.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
         self.checksum(byts)
 
     def sci_microstrain(self,):
@@ -834,18 +831,18 @@ class NortekReader(object):
                          # There is a 'fill' byte at the end, if nbins is odd.
         c = self.c
         self.data.mpltime[c] = self.rd_time(byts[2:8])
-        (self.data.Error[c],
-         self.data.AnaIn1[c],
-         self.data.batt[c],
-         self.data.c_sound[c],
-         self.data.heading[c],
-         self.data.pitch[c],
-         self.data.roll[c],
+        (self.data.sys.Error[c],
+         self.data.extra.AnaIn1[c],
+         self.data.sys.batt[c],
+         self.data.env.c_sound[c],
+         self.data.orient.heading[c],
+         self.data.orient.pitch[c],
+         self.data.orient.roll[c],
          p_msb,
-         self.data.status[c],
+         self.data.sys.status[c],
          p_lsw,
-         self.data.temp[c],) = unpack(self.endian + '7HBB2H', byts[8:28])
-        self.data.pressure[c] = (65536 * p_msb + p_lsw)
+         self.data.env.temp[c],) = unpack(self.endian + '7HBB2H', byts[8:28])
+        self.data.env.pressure[c] = (65536 * p_msb + p_lsw)
         # The nortek system integrator manual specifies an 88byte 'spare'
         # field, therefore we start at 116.
         tmp = unpack(self.endian + str(3 * nbins) + 'h' +
@@ -901,7 +898,11 @@ class NortekReader(object):
 
     def init_ADV(self,):
         self.data = adv_base.ADVraw()
-        self.data.add_data('config', self.config, 'config')
+        self.data['orient'] = data()
+        self.data['sys'] = data()
+        self.data['env'] = data()
+        self.data['extra'] = data()
+        self.data['config'] = self.config
         self.data.props = {}
         self.data.props['inst_make'] = 'Nortek'
         self.data.props['inst_model'] = 'VECTOR'

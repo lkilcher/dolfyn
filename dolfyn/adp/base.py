@@ -263,6 +263,3 @@ class binner(dbvel.VelBinnerTke):
         # self.add_data('vpwp_',stress.imag,'stress')
         # self.meta['upwp_']=db.varMeta("u'w'",{2:'m',-2:'s'})
         # self.meta['vpwp_']=db.varMeta("v'w'",{2:'m',-2:'s'})
-
-
-type_map = dio.get_typemap(__name__)

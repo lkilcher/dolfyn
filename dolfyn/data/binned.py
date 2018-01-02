@@ -2,11 +2,12 @@ from __future__ import division
 import numpy as np
 from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd, phase_angle
 from ..tools.misc import slice1d_along_axis, detrend
-from .base import ma, rad_hz, TimeBased
+from .base import ma, rad_hz
 from h5py._hl.dataset import Dataset
+from pycoda.base import data
 
 
-class TimeBindat(TimeBased):
+class TimeBindat(data):
 
     """
     A base, abstract class for binned data.
