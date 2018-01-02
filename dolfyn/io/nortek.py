@@ -18,6 +18,7 @@ from .base import WrongFileType
 import warnings
 from pycoda.base import data
 from ..data.base import config
+reload(nortek_defs) # remove
 
 
 def recatenate(obj):
@@ -311,8 +312,10 @@ class NortekReader(object):
         except KeyError:
             pass
         for nm, va in list(vardict.items()):
-            if not hasattr(self.data, nm):
+            if va.group is None and nm not in self.data:
                 self.data[nm] = va._empty_array(**shape_args)
+            elif nm not in self.data[va.group]:
+                self.data[va.group][nm] = va._empty_array(**shape_args)
 
     def checksum(self, byts):
         """
@@ -481,7 +484,7 @@ class NortekReader(object):
             print('Reading vector check data (0x07) ping #{} @ {}...'
                   .format(self.c, self.pos))
         byts0 = self.read(6)
-        checknow = adv_base.ADVconfig('CHECKDATA')
+        checknow = config(_type='CHECKDATA')
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
         checknow['Samples'] = tmp[0]
         n = checknow.Samples
@@ -541,12 +544,12 @@ class NortekReader(object):
             self._dtypes += ['vec_data']
 
         byts = self.read(20)
-        (dat.extra['AnaIn2LSB'][c],
-         dat.sys['Count'][c],
+        (dat._extra['AnaIn2LSB'][c],
+         dat._extra['Count'][c],
          dat.env['PressureMSB'][c],
-         dat.extra['AnaIn2MSB'][c],
+         dat._extra['AnaIn2MSB'][c],
          dat.env['PressureLSW'][c],
-         dat.extra['AnaIn1'][c],
+         dat._extra['AnaIn1'][c],
          dat['vel'][0, c],
          dat['vel'][1, c],
          dat['vel'][2, c],
@@ -639,7 +642,7 @@ class NortekReader(object):
          dat.env.temp[c],
          dat.sys.error[c],
          dat.sys.status[c],
-         dat.extra.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
+         dat._extra.AnaIn[c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
         self.checksum(byts)
 
     def sci_microstrain(self,):
@@ -776,7 +779,7 @@ class NortekReader(object):
         byts = self.read(38)
         # The first two are size, the next 6 are time.
         tmp = unpack(self.endian + '8xH7B21x', byts)
-        hdrnow = adv_base.ADVconfig('DATA HEADER')
+        hdrnow = config(_type='DATA HEADER')
         hdrnow['time'] = self.rd_time(byts[2:8])
         hdrnow['NRecords'] = tmp[0]
         hdrnow['Noise1'] = tmp[1]
@@ -811,7 +814,7 @@ class NortekReader(object):
         c = self.c
         dat.mpltime[c] = self.rd_time(byts[2:8])
         (dat.sys.Error[c],
-         dat.extra.AnaIn1[c],
+         dat._extra.AnaIn1[c],
          dat.sys.batt[c],
          dat.env.c_sound[c],
          dat.orient.heading[c],
@@ -873,11 +876,11 @@ class NortekReader(object):
         return (self.pos - p0) / (i + 1)
 
     def init_ADV(self,):
-        dat = adv_base.ADVraw()
+        dat = self.data = adv_base.ADVraw()
         dat['orient'] = data()
         dat['sys'] = data()
         dat['env'] = data()
-        dat['extra'] = data()
+        dat['_extra'] = data()
         dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
@@ -892,7 +895,7 @@ class NortekReader(object):
         self.n_samp_guess *= self.config['fs']
 
     def init_AWAC(self,):
-        dat = adp_base.adcp_raw()
+        dat = self.data = adp_base.adcp_raw()
         dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
@@ -1016,7 +1019,7 @@ class NortekReader(object):
         else:
             print(' stopped at {} bytes.'.format(self.pos))
         self.c -= 1
-        for nm, dat in self.data.iter():
+        for nm, dat in self.data.items():
             if hasattr(getattr(dat, nm), 'shape') and \
                (getattr(dat, nm).shape[-1] == self.n_samp_guess):
                 setattr(dat, nm, dat[..., self._n_start:self.c])
