@@ -567,14 +567,12 @@ class NortekReader(object):
         dat = self.data
         fs = dat.config.fs
         self._sci_data(nortek_defs.vec_sysdata)
-        dat.add_data('_sysi', ~np.isnan(dat.mpltime), '_essential')
+        dat['_sysi'] = ~np.isnan(dat.mpltime), '_essential'
         # These are the indices in the sysdata variables
         # that are not interpolated.
         #pdb.set_trace()
         nburst = self.config.user.NBurst
-        dat.add_data('orientation_down',
-                     tbx.nans(len(dat.mpltime), dtype='bool'),
-                     '_essential')
+        dat['orientation_down'] = tbx.nans(len(dat.mpltime), dtype='bool')
         if nburst == 0:
             num_bursts = 1
             nburst = len(dat.mpltime)
@@ -706,89 +704,63 @@ class NortekReader(object):
         #print(byts0)
         c = self.c
         dat = self.data
+        dat_o = dat['orient']
         if not (hasattr(dat, 'Accel')):
             self._dtypes += ['microstrain']
             if ahrsid == 195:
                 self._orient_dnames = ['Accel', 'AngRt', 'orientmat']
-                dat.add_data(
-                    'Accel',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                dat.add_data(
-                    'AngRt',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                dat.add_data(
-                    'orientmat',
-                    tbx.nans((3, 3, self.n_samp_guess),
-                             dtype=np.float32),
-                    'orient'
-                )
+                dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
+                                          dtype=np.float32)
+                dat_o['AngRt'] = tbx.nans((3, self.n_samp_guess),
+                                          dtype=np.float32)
+                dat_o['orientmat'] = tbx.nans((3, 3, self.n_samp_guess),
+                                              dtype=np.float32)
                 dat.props['rotate_vars'].update({'Accel', 'AngRt', })
             if ahrsid in [204, 210]:
                 self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'orientmat']
-                dat.add_data(
-                    'Accel',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                dat.add_data(
-                    'AngRt',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient')
-                dat.add_data(
-                    'Mag',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
+                dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
+                                          dtype=np.float32)
+                dat_o['AngRt'] = tbx.nans((3, self.n_samp_guess),
+                                          dtype=np.float32)
+                dat_o['Mag'] = tbx.nans((3, self.n_samp_guess),
+                                        dtype=np.float32)
                 dat.props['rotate_vars'].update(
                     {'Accel', 'AngRt', 'Mag'})
                 if ahrsid == 204:
-                    dat.add_data('orientmat', tbx.nans(
-                        (3, 3, self.n_samp_guess), dtype=np.float32), 'orient')
+                    dat_o['orientmat'] = tbx.nans((3, 3, self.n_samp_guess),
+                                                  dtype=np.float32)
             elif ahrsid == 211:
                 self._orient_dnames = ['AngRt', 'Accel', 'Mag']
-                dat.add_data(
-                    'AngRt',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                dat.add_data(
-                    'Accel',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
-                dat.add_data(
-                    'Mag',
-                    tbx.nans((3, self.n_samp_guess), dtype=np.float32),
-                    'orient'
-                )
+                dat_o['AngRt'] = tbx.nans((3, self.n_samp_guess),
+                                          dtype=np.float32)
+                dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
+                                          dtype=np.float32)
+                dat_o['Mag'] = tbx.nans((3, self.n_samp_guess),
+                                        dtype=np.float32)
                 dat.props['rotate_vars'].update(
                     {'AngRt', 'Accel', 'Mag'})
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
             dt = unpack(self.endian + '6f9f4x', byts)
-            (dat.AngRt[:, c],
-             dat.Accel[:, c]) = (dt[0:3], dt[3:6],)
-            dat.orientmat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
+            (dat_o.AngRt[:, c],
+             dat_o.Accel[:, c]) = (dt[0:3], dt[3:6],)
+            dat_o.orientmat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
         elif ahrsid == 204:  # 0xcc
             byts = self.read(78)
             # This skips the "DWORD" (4 bytes) and the AHRS checksum
             # (2 bytes)
             dt = unpack(self.endian + '18f6x', byts)
-            (dat.Accel[:, c],
-             dat.AngRt[:, c],
-             dat.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
-            dat.orientmat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
+            (dat_o.Accel[:, c],
+             dat_o.AngRt[:, c],
+             dat_o.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            dat_o.orientmat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
         elif ahrsid == 211:
             byts = self.read(42)
             dt = unpack(self.endian + '9f6x', byts)
-            (dat.AngRt[:, c],
-             dat.Accel[:, c],
-             dat.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            (dat_o.AngRt[:, c],
+             dat_o.Accel[:, c],
+             dat_o.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
         else:
             print('Unrecognized IMU identifier: ' + str(ahrsid))
             self.f.seek(-2, 1)
@@ -805,19 +777,19 @@ class NortekReader(object):
         # The first two are size, the next 6 are time.
         tmp = unpack(self.endian + '8xH7B21x', byts)
         hdrnow = adv_base.ADVconfig('DATA HEADER')
-        hdrnow.add_data('time', self.rd_time(byts[2:8]))
-        hdrnow.add_data('NRecords', tmp[0])
-        hdrnow.add_data('Noise1', tmp[1])
-        hdrnow.add_data('Noise2', tmp[2])
-        hdrnow.add_data('Noise3', tmp[3])
-        hdrnow.add_data('Spare0', byts[13:14].decode('utf-8'))
-        hdrnow.add_data('Corr1', tmp[5])
-        hdrnow.add_data('Corr2', tmp[6])
-        hdrnow.add_data('Corr3', tmp[7])
-        hdrnow.add_data('Spare1', byts[17:].decode('utf-8'))
+        hdrnow['time'] = self.rd_time(byts[2:8])
+        hdrnow['NRecords'] = tmp[0]
+        hdrnow['Noise1'] = tmp[1]
+        hdrnow['Noise2'] = tmp[2]
+        hdrnow['Noise3'] = tmp[3]
+        hdrnow['Spare0'] = byts[13:14].decode('utf-8')
+        hdrnow['Corr1'] = tmp[5]
+        hdrnow['Corr2'] = tmp[6]
+        hdrnow['Corr3'] = tmp[7]
+        hdrnow['Spare1'] = byts[17:].decode('utf-8')
         self.checksum(byts)
         if 'data_header' not in self.config:
-            self.config.add_data('data_header', hdrnow)
+            self.config['data_header'] = hdrnow
         else:
             if not isinstance(self.config.data_header, list):
                 self.config.data_header = [self.config.data_header, ]
@@ -877,14 +849,11 @@ class NortekReader(object):
             0.0229 * np.cos(h_ang) - cs
 
         # These are the centers of the cells:
-        self.data.add_data(
-            'range',
-            ma.marray(
-                np.float32(np.arange(self.config.user.NBins) + cs / 2 + bd),
-                ma.varMeta('range', {'m': 1}, ['depth'])), '_essential')
-        self.config.add_data('cell_size', cs)
-        self.config.add_data('blank_dist', bd)
-        # self.
+        self.data['range'] = ma.marray(
+            np.float32(np.arange(self.config.user.NBins) + cs / 2 + bd),
+            ma.varMeta('range', {'m': 1}, ['depth']))
+        self.config['cell_size'] = cs
+        self.config['blank_dist'] = bd
 
     def code_spacing(self, searchcode, iternum=50):
         """
@@ -918,22 +887,20 @@ class NortekReader(object):
         # Question to Nortek: How do they determine how many samples are in a
         # file, in order to initialize arrays?
         dlta = self.code_spacing('0x11')
-        self.config.add_data('fs', 512 / self.config.user.AvgInterval)
+        self.config['fs'] = 512 / self.config.user.AvgInterval
         self.n_samp_guess = int(self.filesize / dlta + 1)
-        self.n_samp_guess *= self.config.fs
+        self.n_samp_guess *= self.config['fs']
 
     def init_AWAC(self,):
         dat = adp_base.adcp_raw()
-        dat.add_data('config', self.config, 'config')
+        dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
         dat.props['inst_model'] = 'AWAC'
         dat.props['inst_type'] = 'ADP'
         dat.props['rotate_vars'] = {'vel', }
         self.n_samp_guess = int(self.filesize / self.code_spacing('0x20') + 1)
-        self.config.add_data('fs', 1. / self.config.user.AvgInterval)
-        # self.n_samp_guess=1000
-        # self.n_samp_guess*=self.config.fs
+        self.config['fs'] = 1. / self.config.user.AvgInterval
 
     @property
     def filesize(self,):
