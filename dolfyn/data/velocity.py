@@ -1,58 +1,10 @@
 from __future__ import division
-from .base import np, TimeBased, ma, DataError
-from ..io.main import Saveable
-import h5py as h5
+from .base import np, ma
 from .binned import TimeBindat, TimeBinner, rad_hz
-from .time import num2date
+from pycoda.base import data
 
 
-class Velocity(TimeBased, Saveable):
-
-    def __repr__(self,):
-        mmstr = ''
-        if self.mpltime.__class__ is h5._hl.dataset.Dataset:
-            mmstr = ' - (!memory mapped!)'
-        if (not hasattr(self, 'mpltime')) or self.mpltime[0] < 1:
-            print('Warning: no time information!')
-            dt = num2date(693596)
-            tm = np.array([0, 0])
-        else:
-            tm = [self.mpltime[0], self.mpltime[-1]]
-            dt = num2date(tm[0])
-        out = "%s data record%s" % (
-            self.props.get('inst_type', '*unknown*'),
-            mmstr
-        )
-        out += '\n  {duration:0.2f} hours ' \
-               '@{fs:0.2g}Hz, started: {start}'.format(
-                   duration=(tm[-1] - tm[0]) * 24,
-                   fs=self.props['fs'],
-                   start=dt.strftime('%b %d, %Y %H:%M')
-               )
-        if 'DutyCycle_NBurst' in self.props:
-            out += ('\n  Burst Mode, {:.2g}% duty cycle'.format(
-                100. * self.props['DutyCycle_NBurst'] /
-                self.props['DutyCycle_NCycle']))
-        if 'n_bin' in self.props:
-            out = 'Binned ' + out
-            out += '\n  {:0.1f} minute averaging windows ({} points)'.format(
-                float(self.props['n_bin']) / (self.fs * 60),
-                self.props['n_bin']
-            )
-        if self.has_imu:
-            out += '\n  IMU: Yes, Motion Corrected: {}'.format(
-                self.props.get('motion corrected', False))
-        out += '\n  Coordinate System: {}'.format(self.props['coord_sys'])
-        return out
-
-    def _pre_mat_save(self, outdict):
-        # The config object often has characters that cause problems.
-        outdict.pop('config', None)
-        if ('datenum' not in outdict) and 'mpltime' in outdict:
-            outdict['datenum'] = self.mpltime.reshape((1, -1)) + 366
-            outdict.pop('mpltime')
-        if hasattr(self, 'ranges'):
-            outdict['ranges'] = self.ranges.reshape([-1, 1])
+class Velocity(data):
 
     @property
     def has_imu(self,):
@@ -65,10 +17,6 @@ class Velocity(TimeBased, Saveable):
     @property
     def shape(self,):
         return self.u.shape
-
-    @property
-    def noise(self,):
-        return self.props.get('doppler_noise', [0., 0., 0.])
 
     @property
     def U_mag(self,):
@@ -89,8 +37,9 @@ class Velocity(TimeBased, Saveable):
         Compute the principal angle of the horizontal velocity.
         """
         if not self.props['coord_sys'] in ['earth', 'inst']:
-            raise DataError("The principal angle should only be estimated \
-            if the coordinate system is either 'earth' or 'inst'.")
+            raise Exception("The principal angle should only be estimated "
+                            "if the coordinate system is either 'earth' or "
+                            "'inst'.")
         self.props['coord_sys_principal_ref'] = self.props['coord_sys']
         dt = self.U
         if bin is None:
@@ -112,34 +61,6 @@ class Velocity(TimeBased, Saveable):
         # add pi to the negative ones.
         if self.props['principal_angle'] < 0:
             self.props['principal_angle'] += np.pi
-
-    # def earth2principal(self,var='_u'):
-    # """
-    # Rotate the data into its principal axes.
-    # """
-    # dat=getattr(self,var)
-    # if ma.valid and dat.__class__ is ma.marray:
-    # if hasattr(dat.meta,'coordsys') and dat.meta.coordsys=='principal':
-    # return # Do nothing.
-    # else:
-    # dat.meta.coordsys='principal' # Set the coordsys.
-    # sang=np.sin(-self.principal_angle)
-    # cang=np.cos(-self.principal_angle)
-    # Rotate the data using a rotation matrix:
-    # dat[:2]=np.tensordot(np.array([[cang,-sang],[sang,cang]],dtype='float32')
-    # ,np.array(dat[:2]),([1],[0]))
-    # self.props['coord_sys']='principal'
-
-    def _init(self, nm, shape, dtype='float32',
-              meta=None, clear_fromGrp=None, group='main'):
-        """
-        This is a backwards-compatability hack to make it possible to
-        load older-version data files.
-        """
-        if not hasattr(self, nm):
-            self.add_data(nm, np.empty(shape, dtype=dtype), group, meta=meta)
-        if clear_fromGrp:
-            self.groups.remove(clear_fromGrp)
 
     @property
     def u(self,):
@@ -211,7 +132,7 @@ class Velocity(TimeBased, Saveable):
         return self.u[:] + self.v[:] * 1j
 
 
-class VelBindatTke(Velocity, TimeBindat):
+class VelBindatTke(data):
 
     @property
     def Ecoh(self,):
