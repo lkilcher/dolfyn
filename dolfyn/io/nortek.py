@@ -18,13 +18,12 @@ from .base import WrongFileType
 import warnings
 from pycoda.base import data
 from ..data.base import config
-reload(nortek_defs) # remove
 
 
 def recatenate(obj):
-    out = obj[0].__class__(obj[0]['config_type'])
+    out = obj[0].__class__(_type=obj[0]['_type'])
     for ky in list(obj[0].keys()):
-        if ky in ['__data_groups__', 'config_type']:
+        if ky in ['__data_groups__', '_type']:
             continue
         val0 = obj[0][ky]
         if isinstance(val0, np.ndarray) and val0.size > 1:
@@ -229,7 +228,7 @@ class NortekReader(object):
         self.f.seek(0, 0)
         # print( unpack(self.endian+'HH',self.read(4)) )
         # This is the configuration data:
-        self.config = adv_base.db.config(config_type='NORTEK Header Data')
+        self.config = config(_type='NORTEK Header Data')
         # Now read the header:
         err_msg = ("I/O error: The file does not "
                    "appear to be a Nortek data file.")
