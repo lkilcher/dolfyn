@@ -31,46 +31,46 @@ time_offset = 0
 #century=1900
 century = 2000
 
-data_defs = {'number': ([], 'index', 'uint32'),
-             'rtc': ([7], 'index', 'uint16'),
-             'BIT': ([], 'index', 'bool'),
-             'ssp': ([], 'index', 'uint16'),
-             'depth_m': ([], 'main', 'float32'),
+data_defs = {'number': ([], 'sys', 'uint32'),
+             'rtc': ([7], 'sys', 'uint16'),
+             'BIT': ([], 'sys', 'bool'),
+             'ssp': ([], 'sys', 'uint16'),
+             'depth_m': ([], None, 'float32'),
              'pitch_deg': ([], 'orient', 'float32'),
              'roll_deg': ([], 'orient', 'float32'),
              'heading_deg': ([], 'orient', 'float32'),
              'temperature_C': ([], 'envir', 'float32'),
              'salinity': ([], 'envir', 'float32'),
-             'mpt_sec': ([], 'index', 'float32'),
+             'mpt_sec': ([], 'sys', 'float32'),
              'heading_std': ([], 'orient', 'float32'),
              'pitch_std': ([], 'orient', 'float32'),
              'roll_std': ([], 'orient', 'float32'),
-             'adc': ([8], 'index', 'uint16'),
+             'adc': ([8], 'sys', 'uint16'),
              'error_status_wd': ([], 'signal', 'float32'),
-             'pressure': ([], 'main', 'float32'),
-             'pressure_std': ([], 'main', 'float32'),
-             'vel': (['nc', 4], 'main', 'float32'),
+             'pressure': ([], None, 'float32'),
+             'pressure_std': ([], None, 'float32'),
+             'vel': (['nc', 4], None, 'float32'),
              'echo': (['nc', 4], 'signal', 'uint8'),
              'corr': (['nc', 4], 'signal', 'uint8'),
              'prcnt_gd': (['nc', 4], 'signal', 'uint8'),
              'status': (['nc', 4], 'signal', 'float32'),
-             'bt_range': ([4], 'main', 'float32'),
-             'bt_vel': ([4], 'main', 'float32'),
+             'bt_range': ([4], None, 'float32'),
+             'bt_vel': ([4], None, 'float32'),
              'bt_corr': ([4], 'signal', 'uint8'),
              'bt_ampl': ([4], 'signal', 'uint8'),
              'bt_perc_gd': ([4], 'signal', 'uint8'),
-             'stime': ([], 'main', 'float64'),
-             'etime': ([], 'main', 'float64'),
-             'mpltime': ([], '_essential', 'float64'),
+             'stime': ([], None, 'float64'),
+             'etime': ([], None, 'float64'),
+             'mpltime': ([], None, 'float64'),
              'slatitude': ([], 'orient', 'float64'),
              'slongitude': ([], 'orient', 'float64'),
              'elatitude': ([], 'orient', 'float64'),
              'elongitude': ([], 'orient', 'float64'),
              # These are the GPS times/lat/lons
-             'gtime': ([], 'main', '<U9'),
+             'gtime': ([], None, '<U9'),
              'glatitude': ([], 'orient', 'float64'),
              'glongitude': ([], 'orient', 'float64'),
-             'ntime': ([], 'main', 'float64'),
+             'ntime': ([], 'sys', 'float64'),
              'flags': ([], 'signal', 'float32'),
              }
 
@@ -106,8 +106,9 @@ class ensemble(object):
             navg = 1
         self.n_avg = navg
         for nm in data_defs:
-            setattr(self, nm, np.zeros(get_size(nm, n=navg, ncell=n_cells),
-                                       dtype=data_defs[nm][2]))
+            setattr(self, nm,
+                    np.zeros(get_size(nm, n=navg, ncell=n_cells),
+                             dtype=data_defs[nm][2]))
 
     def clean_data(self,):
         self['vel'][self['vel'] == -32.768] = np.NaN
@@ -762,7 +763,7 @@ class adcp_loader(object):
                            self.cfg['bin1_dist_m'] +
                            np.arange(self.cfg['n_cells']) *
                            self.cfg['cell_size_m'],
-                           '_essential')
+                           None)
         self.outd.add_data('config', self.cfg, 'config')
         if self.cfg['orientation'] == 1:
             self.outd.ranges *= -1
