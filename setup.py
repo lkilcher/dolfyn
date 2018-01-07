@@ -12,7 +12,7 @@ try:
     # This deals with a bug where the tests aren't excluded due to not
     # rebuilding the files in this folder.
     shutil.rmtree('dolfyn.egg-info')
-except:
+except OSError:
     pass
 
 
@@ -34,7 +34,7 @@ config = dict(
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.meta', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
-    install_requires=['numpy', 'scipy', 'h5py', ],
+    install_requires=['numpy', 'scipy', 'h5py', 'pycoda'],
     provides=['dolfyn', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],
     # entry_points = {
@@ -42,7 +42,8 @@ config = dict(
     #    ['motcorrect_vector = dolfyn.adv.scripts:motcorrect_vector',
     #     ],
     #    },
-    dependency_links=['https://pypi.python.org/pypi/'],
+    dependency_links=['https://pypi.python.org/pypi/',
+                      'https://github.com/lkilcher/pycoda.git#egg=pycoda'],
     # cmdclass =
     # {'install_data':chmod_install_data,'install':chmod_install,},
 )
