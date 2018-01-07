@@ -659,38 +659,38 @@ class NortekReader(object):
         Rotate orientation data into ADV coordinate system.
         """
         # MS = MicroStrain
-        dat = self.data
+        dat_o = self.data.orient
         for nm in self._orient_dnames:
             # Rotate the MS orientation data (in MS coordinate system)
             # to be consistent with the ADV coordinate system.
             # (x,y,-z)_ms = (z,y,x)_adv
-            (dat[nm][2],
-             dat[nm][0]) = (dat[nm][0],
-                            -dat[nm][2].copy())
-            # tmp=dat[nm][2].copy()
-            # dat[nm][2]=dat[nm][0]
-            # dat[nm][0]=tmp
-            # dat[nm][2]*=-1
-            # dat[nm]=np.roll(dat[nm],-1,axis=0) # I think this is
+            (dat_o[nm][2],
+             dat_o[nm][0]) = (dat_o[nm][0],
+                              -dat_o[nm][2].copy())
+            # tmp=dat_o[nm][2].copy()
+            # dat_o[nm][2]=dat_o[nm][0]
+            # dat_o[nm][0]=tmp
+            # dat_o[nm][2]*=-1
+            # dat_o[nm]=np.roll(dat_o[nm],-1,axis=0) # I think this is
             # wrong.
         if 'orientmat' in self._orient_dnames:
             # MS coordinate system is in North-East-Down (NED),
             # we want East-North-Up (ENU)
-            dat.orientmat[:, 2] *= -1
-            (dat.orientmat[:, 0],
-             dat.orientmat[:, 1]) = (dat.orientmat[:, 1],
-                                     dat.orientmat[:, 0].copy())
-        if 'Accel' in dat:
+            dat_o.orientmat[:, 2] *= -1
+            (dat_o.orientmat[:, 0],
+             dat_o.orientmat[:, 1]) = (dat_o.orientmat[:, 1],
+                                       dat_o.orientmat[:, 0].copy())
+        if 'Accel' in dat_o:
             # This value comes from the MS 3DM-GX3 MIP manual.
-            dat.Accel *= 9.80665
-            dat.Accel = ma.marray(dat.Accel, ma.varMeta(
+            dat_o.Accel *= 9.80665
+            dat_o.Accel = ma.marray(dat_o.Accel, ma.varMeta(
                 'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
-            dat.AngRt = ma.marray(dat.AngRt, ma.varMeta(
+            dat_o.AngRt = ma.marray(dat_o.AngRt, ma.varMeta(
                 'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
         if self._ahrsid in [195, 211]:
             # These are DAng and DVel, so we convert them to AngRt, Accel here
-            dat.AngRt *= self.config.fs
-            dat.Accel *= self.config.fs
+            dat_o.AngRt *= self.config.fs
+            dat_o.Accel *= self.config.fs
 
     def read_microstrain(self,):
         """
@@ -717,7 +717,7 @@ class NortekReader(object):
         c = self.c
         dat = self.data
         dat_o = dat['orient']
-        if not (hasattr(dat, 'Accel')):
+        if not (hasattr(dat_o, 'Accel')):
             self._dtypes += ['microstrain']
             if ahrsid == 195:
                 self._orient_dnames = ['Accel', 'AngRt', 'orientmat']
