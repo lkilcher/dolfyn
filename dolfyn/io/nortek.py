@@ -316,10 +316,13 @@ class NortekReader(object):
         except KeyError:
             pass
         for nm, va in list(vardict.items()):
-            if va.group is None and nm not in self.data:
-                self.data[nm] = va._empty_array(**shape_args)
-            elif nm not in self.data[va.group]:
-                self.data[va.group][nm] = va._empty_array(**shape_args)
+            if va.group is None:
+                # These have to stay separated.
+                if nm not in self.data:
+                    self.data[nm] = va._empty_array(**shape_args)
+            else:
+                if nm not in self.data[va.group]:
+                    self.data[va.group][nm] = va._empty_array(**shape_args)
 
     def checksum(self, byts):
         """
@@ -902,6 +905,10 @@ class NortekReader(object):
 
     def init_AWAC(self,):
         dat = self.data = adp_base.adcp_raw()
+        dat['orient'] = data()
+        dat['sys'] = data()
+        dat['env'] = data()
+        dat['_extra'] = data()
         dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
