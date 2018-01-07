@@ -290,11 +290,15 @@ class NortekReader(object):
 
         """
         for nm, vd in list(vardict.items()):
-            retval = vd.sci_func(getattr(self.data, nm))
+            if vd.group is None:
+                dat = self.data
+            else:
+                dat = self.data[vd.group]
+            retval = vd.sci_func(dat[nm])
             # This checks whether a new data object was created:
             # sci_func returns None if it modifies the existing data.
             if retval is not None:
-                setattr(self.data, nm, retval)
+                dat[nm] = retval
 
     def _init_data(self, vardict):
         """Initialize the data object according to vardict.
@@ -509,19 +513,20 @@ class NortekReader(object):
         dat = self.data
 
         dat.env['pressure'] = (
-            dat.PressureMSB.astype('float32') * 65536 +
-            dat.PressureLSW.astype('float32')) / 1000.
+            dat.env.PressureMSB.astype('float32') * 65536 +
+            dat.env.PressureLSW.astype('float32')) / 1000.
 
         dat.env.pressure = ma.marray(
-            dat.pressure,
+            dat.env.pressure,
             ma.varMeta('P', ma.unitsDict({'dbar': 1}), ['time'])
         )
 
-        dat.pop('PressureMSB')
-        dat.pop('PressureLSW')
+        dat.env.pop('PressureMSB')
+        dat.env.pop('PressureLSW')
 
-        # I must be able to calculate this here, right? # !!!TODO!!!
-        dat.props['doppler_noise'] = [0, 0, 0]
+        # # I must be able to calculate this here, right?
+        # # Answer: NO. Nortek can't tell me how to do that. :(
+        # dat.props['doppler_noise'] = [0, 0, 0]
         # Apply velocity scaling (1 or 0.1)
         dat['vel'] *= self.config['user']['mode']['vel_scale']
 
@@ -570,12 +575,13 @@ class NortekReader(object):
         dat = self.data
         fs = dat.config.fs
         self._sci_data(nortek_defs.vec_sysdata)
-        dat['_sysi'] = ~np.isnan(dat.mpltime), '_essential'
+        dat['_sysi'] = ~np.isnan(dat.mpltime)
         # These are the indices in the sysdata variables
         # that are not interpolated.
         #pdb.set_trace()
         nburst = self.config.user.NBurst
-        dat['orientation_down'] = tbx.nans(len(dat.mpltime), dtype='bool')
+        dat.orient['orientation_down'] = tbx.nans(len(dat.mpltime),
+                                                  dtype='bool')
         if nburst == 0:
             num_bursts = 1
             nburst = len(dat.mpltime)
@@ -599,20 +605,20 @@ class NortekReader(object):
                 dat.mpltime[iburst] = (dat.mpltime[iburst][0] +
                                        arng / (fs * 24 * 3600))
 
-            tmpd = tbx.nans_like(dat.heading[iburst])
+            tmpd = tbx.nans_like(dat.orient.heading[iburst])
             # The first status bit should be the orientation.
-            tmpd[sysi] = dat.status[iburst][sysi] & 1
+            tmpd[sysi] = dat.sys.status[iburst][sysi] & 1
             tbx.fillgaps(tmpd, extrapFlg=True)
             slope = np.diff(tmpd)
             tmpd[1:][slope < 0] = 1
             tmpd[:-1][slope > 0] = 0
-            dat.orientation_down[iburst] = tmpd.astype('bool')
-        tbx.interpgaps(dat.batt, dat.mpltime)
-        tbx.interpgaps(dat.c_sound, dat.mpltime)
-        tbx.interpgaps(dat.heading, dat.mpltime)
-        tbx.interpgaps(dat.pitch, dat.mpltime)
-        tbx.interpgaps(dat.roll, dat.mpltime)
-        tbx.interpgaps(dat.temp, dat.mpltime)
+            dat.orient.orientation_down[iburst] = tmpd.astype('bool')
+        tbx.interpgaps(dat.sys.batt, dat.mpltime)
+        tbx.interpgaps(dat.env.c_sound, dat.mpltime)
+        tbx.interpgaps(dat.orient.heading, dat.mpltime)
+        tbx.interpgaps(dat.orient.pitch, dat.mpltime)
+        tbx.interpgaps(dat.orient.roll, dat.mpltime)
+        tbx.interpgaps(dat.env.temp, dat.mpltime)
         dat.mpltime = dat.mpltime.view(time.time_array)
 
     def read_vec_sysdata(self,):
@@ -1019,10 +1025,7 @@ class NortekReader(object):
         else:
             print(' stopped at {} bytes.'.format(self.pos))
         self.c -= 1
-        for nm, dat in self.data.items():
-            if hasattr(getattr(dat, nm), 'shape') and \
-               (getattr(dat, nm).shape[-1] == self.n_samp_guess):
-                setattr(dat, nm, dat[..., self._n_start:self.c])
+        crop_data(self.data, slice(0, self.c), self.n_samp_guess)
 
     def dat2sci(self,):
         for nm in self._dtypes:
@@ -1036,3 +1039,12 @@ class NortekReader(object):
 
     def __enter__(self,):
         return self
+
+
+def crop_data(obj, range, n_lastdim):
+    for nm, dat in obj.iteritems():
+        if isinstance(dat, np.ndarray) and \
+           (dat.shape[-1] == n_lastdim):
+            obj[nm] = dat[..., range]
+        if isinstance(dat, data):
+            crop_data(dat, range, n_lastdim)
