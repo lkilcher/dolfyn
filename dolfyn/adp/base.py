@@ -1,5 +1,3 @@
-from ..data import base as db
-from ..io import main as dio
 from ..data import velocity as dbvel
 from ..data.time import num2date
 import numpy as np
@@ -7,17 +5,9 @@ import numpy as np
 # !!!FIXTHIS:
 # This whole package needs to be rewritten in the 'new' style.
 
-# import pylab as plb
-# from pylab import plot,show
-
 from . import rotate
 
 deg2rad = np.pi / 180
-
-
-# These may need to be a data_base object, and it would be good to
-# give it a __save__ method, which can be incorporated into my
-# data_base methods.
 
 
 class adcp_header(object):
@@ -25,26 +15,9 @@ class adcp_header(object):
     dat_offsets = 0
 
 
-class adcp_config(db.config):
-    # Is this needed anymore?
-    pass
-
-    # def __init__(self,):
-    #     self.config_type = 'ADCP'
-    #     # self._data_groups={}
-    #     # self.setattr('_data_groups',{'main':data_base.oset([])})
-    #     # Legacy setattr
-    #     # super(adcp_config,self).__init__() # I Don't think this is necessary.
-    #     self.name = 'wh-adcp'
-    #     self.sourceprog = 'instrument'
-    #     self.prog_ver = 0
-
-
 def diffz_first(dat, z, axis=0):
     return np.diff(dat, axis=0) / (np.diff(z)[:, None])
 
-# Need to add this at some point...
-# Get it from my ddz.m file
 # def diffz_centered(dat,z,axis=0):
 #    return np.diff(dat,axis=0)/(np.diff(z)[:,None])
 
@@ -55,8 +28,6 @@ class adcp_raw(dbvel.Velocity):
     The base 'adcp' class.
 
     """
-    # meta=adcp_raw_meta()
-    inds = slice(1000)
     diff_style = 'first'
 
     def iter_n(self, names, nbin):
@@ -77,10 +48,14 @@ class adcp_raw(dbvel.Velocity):
     def _diff_func(self, nm):
         if self.diff_style == 'first':
             return diffz_first(getattr(self, nm), self.z)
-        else:
-            pass
-            #!!!FIXTHIS. Need the diffz_centered operator.
-            # return diffz_centered(getattr(self, nm), self.z)
+        # else:
+        #     pass
+        #     #!!!FIXTHIS. Need the diffz_centered operator.
+        #     # return diffz_centered(getattr(self, nm), self.z)
+
+    @property
+    def z(self, ):
+        return self['range']
 
     @property
     def zd(self,):
@@ -105,21 +80,6 @@ class adcp_raw(dbvel.Velocity):
     def S2(self,):
         return self.dudz ** 2 + self.dvdz ** 2
 
-    @property
-    def time(self,):
-        return self.mpltime[:] - self.toff
-
-    @time.setter
-    def time(self, val):
-        self.add_data('mpltime', val)
-
-    # def __getitem__(self, indx):
-    #     dat = getattr(self, indx)
-    #     if hasattr(self, 'mask'):
-    #         return np.ma.masked_array(dat, mask=self.mask)
-    #     else:
-    #         return np.ma.masked_array(dat, mask=np.isnan(dat))
-
     def __repr__(self,):
         mmstr = ''
         if (not hasattr(self, 'mpltime')) or self.mpltime[0] < 1:
@@ -139,7 +99,6 @@ class adcp_raw(dbvel.Velocity):
 
 
 class adcp_binned(dbvel.VelBindatTke, adcp_raw):
-    # meta=adcp_binned_meta()
     inds = slice(None)
 
 
