@@ -1,18 +1,9 @@
 from ..data import velocity as dbvel
 from ..data.time import num2date
 import numpy as np
-
-# !!!FIXTHIS:
-# This whole package needs to be rewritten in the 'new' style.
-
 from . import rotate
 
 deg2rad = np.pi / 180
-
-
-class adcp_header(object):
-    header_id = 0
-    dat_offsets = 0
 
 
 def diffz_first(dat, z, axis=0):
@@ -29,21 +20,6 @@ class adcp_raw(dbvel.Velocity):
 
     """
     diff_style = 'first'
-
-    def iter_n(self, names, nbin):
-        """
-        Iterate over the list of variables *names*, yielding chunks of
-        *nbin* profiles.
-        """
-        i = 0
-        if names.__class__ is not list:
-            names = [names]
-        outs = []
-        while i + nbin < self.shape[1]:
-            for nm in names:
-                outs.append(getattr(self, nm)[:, i:(i + nbin)])
-            yield tuple(outs)
-            i += nbin
 
     def _diff_func(self, nm):
         if self.diff_style == 'first':
@@ -89,7 +65,8 @@ class adcp_raw(dbvel.Velocity):
         else:
             tm = [self.mpltime[0], self.mpltime[-1]]
             dt = num2date(tm[0])
-        return ("%0.2f hour %s-frame %sADP record (%s bins, %s pings), started: %s"
+        return ("%0.2f hour %s-frame %sADP record "
+                "(%s bins, %s pings), started: %s"
                 % ((tm[-1] - tm[0]) * 24,
                    self.props['coord_sys'],
                    mmstr,
