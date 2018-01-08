@@ -3,11 +3,13 @@ from __future__ import print_function
 import numpy as np
 import datetime
 from ..data.time import date2num
+from ..data.base import config
 from os.path import getsize
-from ..adp.base import adcp_header, adcp_config, adcp_raw
+from ..adp.base import adcp_header, adcp_raw
 from .base import WrongFileType
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
+import pycoda.base as p_base
 import warnings
 
 
@@ -73,6 +75,46 @@ data_defs = {'number': ([], 'sys', 'uint32'),
              'ntime': ([], 'sys', 'float64'),
              'flags': ([], 'signal', 'float32'),
              }
+
+
+# These are shortcut functions (so that I don't have to do this `if
+# grp` over and over)
+def get(dat, nm):
+    grp = data_defs[nm][1]
+    if grp is None:
+        return dat[nm]
+    else:
+        return dat[grp][nm]
+
+
+def pop(dat, nm):
+    grp = data_defs[nm][1]
+    if grp is None:
+        dat.pop(nm)
+    else:
+        dat[grp].pop(nm)
+
+
+def setd(dat, nm, val):
+    grp = data_defs[nm][1]
+    if grp is None:
+        dat[nm] = val
+    else:
+        dat[grp][nm] = val
+
+
+def idata(dat, nm, sz):
+    group = data_defs[nm][1]
+    dtype = data_defs[nm][2]
+    arr = np.empty(sz, dtype=dtype)
+    if dtype in ['float32', 'float64']:
+        arr[:] = np.NaN
+    if group is None:
+        dat[nm] = arr
+    else:
+        if group not in dat:
+            dat[group] = p_base.data()
+        dat[group][nm] = arr
 
 
 class variable_setlist(set):
@@ -476,7 +518,7 @@ class adcp_loader(object):
     def read_winriver2(self, ):
         startpos = self.f.tell()
         self._winrivprob = True
-        self.cfg.add_data('sourceprog', 'WINRIVER')
+        self.cfg['sourceprog'] = 'WINRIVER'
         ens = self.ensemble
         k = ens.k
         if self._source != 3 and self._debug_level >= 1:
@@ -550,7 +592,7 @@ class adcp_loader(object):
 
     def read_winriver(self, nbt):
         self._winrivprob = True
-        self.cfg.add_data('sourceprog', 'WINRIVER')
+        self.cfg['sourceprog'] = 'WINRIVER'
         if self._source not in [2, 3]:
             if self._debug_level >= 1:
                 print('\n  ***** Apparently a WINRIVER file - '
@@ -609,78 +651,75 @@ class adcp_loader(object):
         fd = self.f
         tmp = fd.read_ui8(5)
         prog_ver0 = tmp[0]
-        cfg.add_data('prog_ver', tmp[0] + tmp[1] / 100.)
-        cfg.add_data('name',
-                     self._cfgnames.get(
-                         tmp[0],
-                         'unrecognized firmware version'))
+        cfg['prog_ver'] = tmp[0] + tmp[1] / 100.
+        cfg['name'] = self._cfgnames.get(tmp[0],
+                                         'unrecognized firmware version')
         config = tmp[2:4]
-        cfg.add_data('config',
-                     np.binary_repr(config[1], 8) + '-' +
-                     np.binary_repr(config[0], 8))
-        cfg.add_data('beam_angle', [15, 20, 30][(config[1] & 3)])
-        cfg.add_data('numbeams', [4, 5][(config[1] & 16) == 16])
-        cfg.add_data('beam_freq_khz', [75, 150, 300,
-                                       600, 1200, 2400, 38][(config[0] & 7)])
-        cfg.add_data('beam_pattern', ['concave',
-                                      'convex'][(config[0] & 8) == 8])
-        cfg.add_data('orientation', ['down', 'up'][(config[0] & 128) == 128])
-        cfg.add_data('simflag', ['real', 'simulated'][tmp[4]])
+        cfg['config'] = (np.binary_repr(config[1], 8) + '-' +
+                         np.binary_repr(config[0], 8))
+        cfg['beam_angle'] = [15, 20, 30][(config[1] & 3)]
+        cfg['numbeams'] = [4, 5][(config[1] & 16) == 16]
+        cfg['beam_freq_khz'] = ([75, 150, 300,
+                                600, 1200, 2400, 38][(config[0] & 7)])
+        cfg['beam_pattern'] = (['concave',
+                                'convex'][(config[0] & 8) == 8])
+        cfg['orientation'] = ['down', 'up'][(config[0] & 128) == 128]
+        cfg['simflag'] = ['real', 'simulated'][tmp[4]]
         fd.seek(1, 1)
-        cfg.add_data('n_beam', fd.read_ui8(1))
-        cfg.add_data('n_cells', fd.read_ui8(1))
-        cfg.add_data('pings_per_ensemble', fd.read_ui16(1))
-        cfg.add_data('cell_size_m', fd.read_ui16(1) * .01)
-        cfg.add_data('blank_m', fd.read_ui16(1) * .01)
-        cfg.add_data('prof_mode', fd.read_ui8(1))
-        cfg.add_data('corr_threshold', fd.read_ui8(1))
-        cfg.add_data('prof_codereps', fd.read_ui8(1))
-        cfg.add_data('min_pgood', fd.read_ui8(1))
-        cfg.add_data('evel_threshold', fd.read_ui16(1))
-        cfg.add_data('sec_between_ping_groups',
-                     np.sum(np.array(fd.read_ui8(3)) *
-                            np.array([60., 1., .01])))
+        cfg['n_beam'] = fd.read_ui8(1)
+        cfg['n_cells'] = fd.read_ui8(1)
+        cfg['pings_per_ensemble'] = fd.read_ui16(1)
+        cfg['cell_size_m'] = fd.read_ui16(1) * .01
+        cfg['blank_m'] = fd.read_ui16(1) * .01
+        cfg['prof_mode'] = fd.read_ui8(1)
+        cfg['corr_threshold'] = fd.read_ui8(1)
+        cfg['prof_codereps'] = fd.read_ui8(1)
+        cfg['min_pgood'] = fd.read_ui8(1)
+        cfg['evel_threshold'] = fd.read_ui16(1)
+        cfg['sec_between_ping_groups'] = (
+            np.sum(np.array(fd.read_ui8(3)) *
+                   np.array([60., 1., .01])))
         coord_sys = fd.read_ui8(1)
-        cfg.add_data('coord', np.binary_repr(coord_sys, 8))
-        cfg.add_data('coord_sys', ['beam', 'instrument',
-                                   'ship', 'earth'][((coord_sys >> 3) & 3)])
-        cfg.add_data('use_pitchroll', ['no', 'yes'][(coord_sys & 4) == 4])
-        cfg.add_data('use_3beam', ['no', 'yes'][(coord_sys & 2) == 2])
-        cfg.add_data('bin_mapping', ['no', 'yes'][(coord_sys & 1) == 1])
-        cfg.add_data('xducer_misalign_deg', fd.read_i16(1) * .01)
-        cfg.add_data('magnetic_var_deg', fd.read_i16(1) * .01)
-        cfg.add_data('sensors_src', np.binary_repr(fd.read_ui8(1), 8))
-        cfg.add_data('sensors_avail', np.binary_repr(fd.read_ui8(1), 8))
-        cfg.add_data('bin1_dist_m', fd.read_ui16(1) * .01)
-        cfg.add_data('xmit_pulse', fd.read_ui16(1) * .01)
-        cfg.add_data('water_ref_cells', fd.read_ui8(2))
-        cfg.add_data('fls_target_threshold', fd.read_ui8(1))
+        cfg['coord'] = np.binary_repr(coord_sys, 8)
+        cfg['coord_sys'] = (['beam', 'instrument',
+                             'ship', 'earth'][((coord_sys >> 3) & 3)])
+        cfg['use_pitchroll'] = ['no', 'yes'][(coord_sys & 4) == 4]
+        cfg['use_3beam'] = ['no', 'yes'][(coord_sys & 2) == 2]
+        cfg['bin_mapping'] = ['no', 'yes'][(coord_sys & 1) == 1]
+        cfg['xducer_misalign_deg'] = fd.read_i16(1) * .01
+        cfg['magnetic_var_deg'] = fd.read_i16(1) * .01
+        cfg['sensors_src'] = np.binary_repr(fd.read_ui8(1), 8)
+        cfg['sensors_avail'] = np.binary_repr(fd.read_ui8(1), 8)
+        cfg['bin1_dist_m'] = fd.read_ui16(1) * .01
+        cfg['xmit_pulse'] = fd.read_ui16(1) * .01
+        cfg['water_ref_cells'] = fd.read_ui8(2)
+        cfg['fls_target_threshold'] = fd.read_ui8(1)
         fd.seek(1, 1)
-        cfg.add_data('xmit_lag_m', fd.read_ui16(1) * .01)
+        cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
 
         if prog_ver0 in [8, 16]:
             if cfg['prog_ver'] >= 8.14:
-                cfg.add_data('serialnum', fd.read_ui8(8))
+                cfg['serialnum'] = fd.read_ui8(8)
                 self._nbyte += 8
             if cfg['prog_ver'] >= 8.24:
-                cfg.add_data('sysbandwidth', fd.read_ui8(2))
+                cfg['sysbandwidth'] = fd.read_ui8(2)
                 self._nbyte += 2
             if cfg['prog_ver'] >= 16.05:
-                cfg.add_data('syspower', fd.read_ui8(1))
+                cfg['syspower'] = fd.read_ui8(1)
                 self._nbyte += 1
             if cfg['prog_ver'] >= 16.27:
-                cfg.add_data('navigator_basefreqindex', fd.read_ui8(1))
-                cfg.add_data('remus_serialnum', fd.reaadcpd('uint8', 4))
-                cfg.add_data('h_adcp_beam_angle', fd.read_ui8(1))
+                cfg['navigator_basefreqindex'] = fd.read_ui8(1)
+                cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
+                cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
                 self._nbyte += 6
         elif prog_ver0 == 9:
             if cfg['prog_ver'] >= 9.10:
-                cfg.add_data('serialnum', fd.read_ui8(8))
-                cfg.add_data('sysbandwidth', fd.read_ui8(2))
+                cfg['serialnum'] = fd.read_ui8(8)
+                cfg['sysbandwidth'] = fd.read_ui8(2)
                 self._nbyte += 10
         elif prog_ver0 in [14, 23]:
-            cfg.add_data('serialnum', fd.read_ui8(8))
+            cfg['serialnum'] = fd.read_ui8(8)
             self._nbyte += 8
         self.configsize = self.f.tell() - cfgstart
 
@@ -706,9 +745,9 @@ class adcp_loader(object):
         self.fname = fname
         print('\nReading file {} ...'.format(fname))
         self._debug_level = debug_level
-        self.cfg = adcp_config('ADCP')
-        self.cfg.add_data('name', 'wh-adcp')
-        self.cfg.add_data('sourceprog', 'instrument')
+        self.cfg = config(_type='ADCP')
+        self.cfg['name'] = 'wh-adcp'
+        self.cfg['sourceprog'] = 'instrument'
         self.cfg.prog_ver = 0
         self.hdr = adcp_header()
         #self.f=io.npfile(fname,'r','l')
@@ -728,15 +767,15 @@ class adcp_loader(object):
 
     def init_data(self,):
         outd = adcp_raw()
+        outd.props = {}
+        outd.props['inst_make'] = 'RDI'
+        outd.props['inst_model'] = '<WORKHORSE?>'
+        outd.props['inst_type'] = 'ADP'
+        outd.props['rotate_vars'] = {'vel', }
         for nm in data_defs:
-            outd.add_data(nm,
-                          np.zeros(get_size(nm, self._nens,
-                                            self.cfg['n_cells']),
-                                   dtype=data_defs[nm][2]),
-                          group=data_defs[nm][1])
-            if data_defs[nm][2] in ['float32', 'float64']:
-                outd[nm][:] = np.NaN
-
+            idata(outd, nm,
+                  sz=get_size(nm, self._nens,
+                              self.cfg['n_cells']))
         self.outd = outd
 
     def load_data(self, nens=None):
@@ -759,21 +798,20 @@ class adcp_loader(object):
             print('  taking data from pings %d - %d' % tuple(self._ens_range))
             print('  %d ensembles will be produced.' % self._nens)
         self.init_data()
-        self.outd.add_data('ranges',
-                           self.cfg['bin1_dist_m'] +
-                           np.arange(self.cfg['n_cells']) *
-                           self.cfg['cell_size_m'],
-                           None)
-        self.outd.add_data('config', self.cfg, 'config')
+        dat = self.outd
+        dat['range'] = (self.cfg['bin1_dist_m'] +
+                        np.arange(self.cfg['n_cells']) *
+                        self.cfg['cell_size_m'])
+        dat['config'] = self.cfg
         if self.cfg['orientation'] == 1:
-            self.outd.ranges *= -1
+            dat['range'] *= -1
         for iens in range(self._nens):
             try:
                 self.read_buffer()
             except eofException:
                 self.remove_end(iens)
                 self.finalize()
-                return self.outd
+                return dat
             self.ensemble.clean_data()
             if self.ensemble.rtc[0, 0] < 100:
                 self.ensemble.rtc[0, :] += century
@@ -786,31 +824,33 @@ class adcp_loader(object):
                                               1e4 * self.ensemble.rtc[6, :]))
             #print( self.ensemble.bt_range )
             for nm in self.vars_read:
-                getattr(self.outd, nm)[..., iens] = self.avg_func(self.ensemble[nm])
-            self.outd.mpltime[iens] = np.median(dats)
+                get(dat, nm)[..., iens] = self.avg_func(self.ensemble[nm])
+            dat['mpltime'][iens] = np.median(dats)
         self.finalize()
-        return self.outd
+        return dat
 
     def finalize(self, ):
         """
         Remove the attributes from the data that were never loaded.
         """
+        dat = self.outd
         for nm in set(data_defs.keys()) - self.vars_read:
-            self.outd.pop_data(nm)
-        self.outd.config = self.cfg
-        self.outd.props['fs'] = (self.outd.config['sec_between_ping_groups'] *
-                                 self.outd.config['pings_per_ensemble']) ** -1
-        self.outd.props['coord_sys'] = self.outd.config.coord_sys
+            pop(dat, nm)
+        dat.config = self.cfg
+        dat.props['fs'] = (dat.config['sec_between_ping_groups'] *
+                           dat.config['pings_per_ensemble']) ** -1
+        dat.props['coord_sys'] = dat.config.coord_sys
         for nm in data_defs:
             shp = data_defs[nm][0]
-            if len(shp) and shp[0] == 'nc' and nm in self.outd:
-                self.outd[nm] = np.swapaxes(self.outd[nm], 0, 1)
+            if len(shp) and shp[0] == 'nc' and nm in dat:
+                setd(dat, nm, np.swapaxes(get(dat, nm), 0, 1))
 
     def remove_end(self, iens):
-        if iens < self.outd.shape[-1]:
+        dat = self.outd
+        if iens < dat.shape[-1]:
             print('  Encountered end of file.  Cleaning up data.')
             for nm in self.vars_read:
-                setattr(self.outd, nm, self.outd[nm][..., :iens])
+                setd(dat, nm, get(dat, nm)[..., :iens])
 
     def search_buffer(self):
         """
