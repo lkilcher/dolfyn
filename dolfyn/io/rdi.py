@@ -5,7 +5,7 @@ import datetime
 from ..data.time import date2num
 from ..data.base import config
 from os.path import getsize
-from ..adp.base import adcp_header, adcp_raw
+from ..adp.base import adcp_raw
 from .base import WrongFileType
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
@@ -725,12 +725,13 @@ class adcp_loader(object):
 
     def read_hdrseg(self,):
         fd = self.f
-        self.hdr.nbyte = fd.read_i16(1)
+        hdr = self.hdr
+        hdr['nbyte'] = fd.read_i16(1)
         if self._debug_level > 2:
             print(fd.tell())
         fd.seek(1, 1)
         ndat = fd.read_i8(1)
-        self.hdr.dat_offsets = fd.read_i16(ndat)
+        hdr['dat_offsets'] = fd.read_i16(ndat)
         self._nbyte = 4 + ndat * 2
 
     def __exit__(self, type, value, traceback):
@@ -749,7 +750,7 @@ class adcp_loader(object):
         self.cfg['name'] = 'wh-adcp'
         self.cfg['sourceprog'] = 'instrument'
         self.cfg.prog_ver = 0
-        self.hdr = adcp_header()
+        self.hdr = config(_type='RDI-HEADER')
         #self.f=io.npfile(fname,'r','l')
         self.f = bin_reader(fname)
         self.read_hdr()
@@ -885,12 +886,13 @@ class adcp_loader(object):
         fd = self.f
         self.ensemble.k = -1  # so that k+=1 gives 0 on the first loop.
         self.print_progress()
+        hdr = self.hdr
         while self.ensemble.k < self.ensemble.n_avg - 1:
             self.search_buffer()
             startpos = fd.tell() - 2
             self.read_hdrseg()
             byte_offset = self._nbyte + 2
-            for n in range(len(self.hdr.dat_offsets)):
+            for n in range(len(hdr['dat_offsets'])):
                 id = fd.read_ui16(1)
                 self._winrivprob = False
                 #print( "%0.4X" % id )
@@ -900,24 +902,24 @@ class adcp_loader(object):
                 if retval == 'FAIL':
                     break
                 byte_offset += self._nbyte
-                if n < (len(self.hdr.dat_offsets) - 1):
-                    oset = self.hdr.dat_offsets[n + 1] - byte_offset
+                if n < (len(hdr['dat_offsets']) - 1):
+                    oset = hdr['dat_offsets'][n + 1] - byte_offset
                     if oset != 0:
                         if self._debug_level > 0:
                             print('  %s: Adjust location by %d\n' % (id, oset))
                         fd.seek(oset, 1)
-                    byte_offset = self.hdr.dat_offsets[n + 1]
+                    byte_offset = hdr['dat_offsets'][n + 1]
                 else:
-                    if self.hdr.nbyte - 2 != byte_offset:
+                    if hdr['nbyte'] - 2 != byte_offset:
                         if not self._winrivprob:
                             if self._debug_level > 0:
                                 print('  {:s}: Adjust location by {:d}\n'
-                                      .format(id, self.hdr.nbyte - 2 - byte_offset))
-                            self.f.seek(self.hdr.nbyte - 2 - byte_offset, 1)
-                    byte_offset = self.hdr.nbyte - 2
+                                      .format(id, hdr['nbyte'] - 2 - byte_offset))
+                            self.f.seek(hdr['nbyte'] - 2 - byte_offset, 1)
+                    byte_offset = hdr['nbyte'] - 2
             readbytes = fd.tell() - startpos
             #### The 2 is for the checksum:
-            offset = self.hdr.nbyte + 2 - byte_offset
+            offset = hdr['nbyte'] + 2 - byte_offset
             self.check_offset(offset, readbytes)
             self.print_pos(byte_offset=byte_offset)
 
@@ -929,8 +931,8 @@ class adcp_loader(object):
                 if fd.tell() == self._filesize:
                     print(' EOF reached unexpectedly - discarding this last ensemble\n')
                 else:
-                    print('  Adjust location by {:d} (readbytes={:d},hdr.nbyte={:d}\n'
-                          .format(offset, readbytes, self.hdr.nbyte))
+                    print("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
+                          .format(offset, readbytes, self.hdr['nbyte']))
                     print("""
                     NOTE - If this appears at the beginning of the file, it may be
                            a dolfyn problem. Please report this message, with details here:
