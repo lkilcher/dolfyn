@@ -87,6 +87,14 @@ def get(dat, nm):
         return dat[grp][nm]
 
 
+def in_group(dat, nm):
+    grp = data_defs[nm][1]
+    if grp is None:
+        return nm in dat
+    else:
+        return nm in dat[grp]
+
+
 def pop(dat, nm):
     grp = data_defs[nm][1]
     if grp is None:
@@ -107,7 +115,7 @@ def idata(dat, nm, sz):
     group = data_defs[nm][1]
     dtype = data_defs[nm][2]
     arr = np.empty(sz, dtype=dtype)
-    if dtype in ['float32', 'float64']:
+    if dtype.startswith('float'):
         arr[:] = np.NaN
     if group is None:
         dat[nm] = arr
@@ -843,7 +851,7 @@ class adcp_loader(object):
         dat.props['coord_sys'] = dat.config.coord_sys
         for nm in data_defs:
             shp = data_defs[nm][0]
-            if len(shp) and shp[0] == 'nc' and nm in dat:
+            if len(shp) and shp[0] == 'nc' and in_group(dat, nm):
                 setd(dat, nm, np.swapaxes(get(dat, nm), 0, 1))
 
     def remove_end(self, iens):
