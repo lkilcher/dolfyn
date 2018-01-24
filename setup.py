@@ -34,7 +34,7 @@ config = dict(
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.meta', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
-    install_requires=['numpy', 'scipy', 'h5py', 'pycoda'],
+    install_requires=['numpy', 'scipy', 'h5py', 'pyDictH5'],
     provides=['dolfyn', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],
     # entry_points = {
@@ -43,7 +43,7 @@ config = dict(
     #     ],
     #    },
     dependency_links=['https://pypi.python.org/pypi/',
-                      'https://github.com/lkilcher/pycoda.git#egg=pycoda'],
+                      'https://github.com/lkilcher/pyDictH5.git#egg=pyDictH5'],
     # cmdclass =
     # {'install_data':chmod_install_data,'install':chmod_install,},
 )

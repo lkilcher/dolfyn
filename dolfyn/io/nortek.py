@@ -16,7 +16,7 @@ import json
 import six
 from .base import WrongFileType
 import warnings
-from pycoda.base import data
+from pyDictH5.base import data
 from ..data.base import config
 
 
@@ -245,9 +245,9 @@ class NortekReader(object):
         else:
             raise Exception(err_msg)
         if self.config.hardware.serialNum[0:3].upper() == 'WPR':
-            self.config.config_type = 'AWAC'
+            self.config['config_type'] = 'AWAC'
         elif self.config.hardware.serialNum[0:3].upper() == 'VEC':
-            self.config.config_type = 'ADV'
+            self.config['config_type'] = 'ADV'
         # Initialize the instrument type:
         self._inst = self.config.config_type
         # This is the position after reading the 'hardware',
@@ -813,7 +813,7 @@ class NortekReader(object):
             print('Reading AWAC velocity data (0x20) ping #{} @ {}...'
                   .format(self.c, self.pos))
         nbins = self.config.user.NBins
-        if not hasattr(dat, 'temp'):
+        if not hasattr(dat['env'], 'temp'):
             self._init_data(nortek_defs.awac_profile)
             self._dtypes += ['awac_profile']
 
