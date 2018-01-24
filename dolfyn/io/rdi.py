@@ -9,7 +9,7 @@ from ..adp.base import adcp_raw
 from .base import WrongFileType
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
-import pycoda.base as p_base
+import pyDictH5.base as p_base
 import warnings
 
 
