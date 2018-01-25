@@ -4,8 +4,8 @@ package.
 """
 import sys
 import inspect
-from ..data import base as db
-from . import hdf5
+from ..data import base_legacy as db
+from . import hdf5_legacy as hdf5
 from . import mat
 
 

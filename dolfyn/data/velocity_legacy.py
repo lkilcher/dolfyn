@@ -1,8 +1,8 @@
 from __future__ import division
-from .base import np, TimeBased, ma, DataError
-from ..io.main import Saveable
+from .base_legacy import np, TimeBased, ma, DataError
+from ..io.main_legacy import Saveable
 import h5py as h5
-from .binned import TimeBindat, TimeBinner, rad_hz
+from .binned_legacy import TimeBindat, TimeBinner, rad_hz
 from .time import num2date
 
 

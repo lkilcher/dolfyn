@@ -2,9 +2,9 @@
 The base module for the adv package.
 """
 
-from ..data import base as db
-from ..io import main as dio
-from ..data import velocity as dbvel
+from ..data import base_legacy as db
+from ..io import main_legacy as dio
+from ..data import velocity_legacy as dbvel
 import numpy as np
 # import turbulence as turb
 ma = db.ma
@@ -53,13 +53,16 @@ type_map = dio.get_typemap(__name__)
 # This is for backward compatability (I changed the names of these
 # classes to conform with PEP8 standards):
 type_map.update(
-    {'adv_raw': ADVraw,
-     'adv_config': ADVconfig,
-     'adv_binned': ADVbinned,
-     })
+    {
+        'adv_raw': ADVraw,
+        'adv_config': ADVconfig,
+        'adv_binned': ADVbinned,
+        "<class 'dolfyn.data.base.config'>": db.config,
+        "<class 'dolfyn.adv.base.ADVconfig'>": ADVconfig,
+    })
 
 
-def load(fname, data_groups=None, type_map=type_map):
+def load_legacy(fname, data_groups=None, type_map=type_map):
     """
     Load ADV objects from hdf5 format.
 
@@ -83,7 +86,7 @@ def load(fname, data_groups=None, type_map=type_map):
         return ldr.load(data_groups)
 
 
-def mmload(fname, type_map=type_map):
+def mmload_legacy(fname, type_map=type_map):
     """
     Memory-map load ADV objects from hdf5 format.
 
