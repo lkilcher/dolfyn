@@ -8,7 +8,6 @@ import nortek2lib as lib
 from ..adp import base as apb
 import numpy as np
 from .base import WrongFileType
-from pyDictH5.base import data
 from ..data import base as db
 
 
@@ -278,7 +277,7 @@ def reorg(dat):
     outdat = apb.adcp_raw()
     cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
     cfg['filehead config'] = dat['filehead config']
-    outdat['props'] = data()
+    outdat['props'] = db.data()
     outdat['props']['inst_make'] = 'Nortek'
     outdat['props']['inst_model'] = 'Signature'
     outdat['props']['inst_type'] = 'ADP'
@@ -335,13 +334,14 @@ def reorg(dat):
         for grp, keys in defs._burst_group_org.items():
             for ky in keys:
                 if grp not in outdat:
-                    outdat[grp] = data()
-                elif ky == grp and not isinstance(outdat[grp], data):
+                    outdat[grp] = db.data()
+                elif ky == grp and not isinstance(outdat[grp], db.data):
                     tmp = outdat.pop(grp)
-                    outdat[grp] = data()
+                    outdat[grp] = db.data()
                     outdat[grp][ky] = tmp
                     print(ky, tmp)
-                if ky + tag in outdat and not isinstance(outdat[ky + tag], data):
+                if ky + tag in outdat and not \
+                   isinstance(outdat[ky + tag], db.data):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
     outdat.props['coord_sys'] = cfg['coord_sys']
     return outdat

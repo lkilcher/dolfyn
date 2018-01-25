@@ -16,7 +16,7 @@ import json
 import six
 from .base import WrongFileType
 import warnings
-from pyDictH5.base import data
+from ..data.base import data
 from ..data.base import config
 
 

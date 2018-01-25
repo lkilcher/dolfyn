@@ -4,7 +4,7 @@ from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd, phase_angle
 from ..tools.misc import slice1d_along_axis, detrend
 from .base import ma, rad_hz
 from h5py._hl.dataset import Dataset
-from pyDictH5.base import data
+from .base import data
 
 
 class TimeBindat(data):

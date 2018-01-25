@@ -1,7 +1,7 @@
 from __future__ import division
 from .base import np, ma
 from .binned import TimeBindat, TimeBinner, rad_hz
-from pyDictH5.base import data
+from .base import data
 
 
 class Velocity(data):

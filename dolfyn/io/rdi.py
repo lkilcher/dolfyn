@@ -3,13 +3,12 @@ from __future__ import print_function
 import numpy as np
 import datetime
 from ..data.time import date2num
-from ..data.base import config
+from ..data.base import config, data
 from os.path import getsize
 from ..adp.base import adcp_raw
 from .base import WrongFileType
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
-import pyDictH5.base as p_base
 import warnings
 
 
@@ -121,7 +120,7 @@ def idata(dat, nm, sz):
         dat[nm] = arr
     else:
         if group not in dat:
-            dat[group] = p_base.data()
+            dat[group] = data()
         dat[group][nm] = arr
 
 
