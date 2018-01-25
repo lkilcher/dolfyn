@@ -8,6 +8,8 @@ import nortek2lib as lib
 from ..adp import base as apb
 import numpy as np
 from .base import WrongFileType
+from pyDictH5.base import data
+from ..data import base as db
 
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -274,9 +276,12 @@ def reorg(dat):
     (organized by ID), and combines them into the adcp_raw object.
     """
     outdat = apb.adcp_raw()
-    cfg = outdat['config'] = apb.adcp_config('Nortek AD2CP')
-    outdat.groups.add('config', 'config')
+    cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
     cfg['filehead config'] = dat['filehead config']
+    outdat['props'] = data()
+    outdat['props']['inst_make'] = 'Nortek'
+    outdat['props']['inst_model'] = 'Signature'
+    outdat['props']['inst_type'] = 'ADP'
 
     for id, tag in [(21, ''), (24, '_b5')]:
         if id not in dat:
@@ -292,7 +297,6 @@ def reorg(dat):
             dnow['minute'],
             dnow['second'],
             dnow['usec100'].astype('uint32') * 100)
-        outdat.groups.add('mpltime' + tag, '_essential')
         tmp = lib.beams_cy_int2dict(
             lib.collapse(dnow['beam_config']), 21)
         cfg['ncells' + tag] = tmp['ncells']
@@ -330,8 +334,15 @@ def reorg(dat):
                 outdat[ky + tag] = dnow[ky]
         for grp, keys in defs._burst_group_org.items():
             for ky in keys:
-                if ky + tag in outdat:
-                    outdat.groups.add(ky + tag, grp)
+                if grp not in outdat:
+                    outdat[grp] = data()
+                elif ky == grp and not isinstance(outdat[grp], data):
+                    tmp = outdat.pop(grp)
+                    outdat[grp] = data()
+                    outdat[grp][ky] = tmp
+                    print(ky, tmp)
+                if ky + tag in outdat and not isinstance(outdat[ky + tag], data):
+                    outdat[grp][ky + tag] = outdat.pop(ky + tag)
     outdat.props['coord_sys'] = cfg['coord_sys']
     return outdat
 
@@ -347,16 +358,21 @@ def reduce(data):
                'c_sound', 'temp', 'press',
                'temp_press', 'temp_clock', 'temp_mag',
                'batt_V']:
-        lib.reduce_by_average(data, ky, ky + '_b5')
+        grp = defs.get_group(ky)
+        if grp is None:
+            dnow = data
+        else:
+            dnow = data[grp]
+        lib.reduce_by_average(dnow, ky, ky + '_b5')
 
     # Angle-averaging is treated separately
     for ky in ['heading', 'pitch', 'roll']:
-        lib.reduce_by_average_angle(data, ky, ky + '_b5')
+        lib.reduce_by_average_angle(data['orient'], ky, ky + '_b5')
 
     # Drop the ensemble count from other data structures
     for ky in ['_ensemble', 'ensemble']:
-        if ky + '_b5' in data:
-            data[ky] = data.pop_data(ky + '_b5')
+        if ky + '_b5' in data['sys']:
+            data[ky] = data['sys'].pop(ky + '_b5')
 
 
 if __name__ == '__main__':

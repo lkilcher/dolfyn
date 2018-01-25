@@ -184,7 +184,7 @@ _burst_hdr = DataDef([
 ])
 
 _burst_group_org = {
-    # Everything else will be in 'main'
+    # Anything not specified here will be in the root group
     'signal': ['amp', 'corr'],
     'alt': ['alt_dist', 'alt_quality', 'alt_status',
             'ast_dist', 'ast_quality',
@@ -195,14 +195,21 @@ _burst_group_org = {
                'heading', 'pitch', 'roll',
                'ahrs_gyro', 'Mag', 'Acc'],
     'env': ['c_sound', 'temp', 'press'],
-    '#sys': ['temp_press', 'temp_mag', 'temp_clock',
-             'batt_V', 'ambig_vel', 'xmit_energy',
-             'error', 'status0', 'status',
-             # 'ensemble' is added in Ad2cpReader.init_data
-             '_ensemble', 'ensemble',
-             'std_pitch', 'std_roll', 'std_heading',
-             'std_press'],
+    'sys': ['temp_press', 'temp_mag', 'temp_clock',
+            'batt_V', 'ambig_vel', 'xmit_energy',
+            'error', 'status0', 'status',
+            # 'ensemble' is added in Ad2cpReader.init_data
+            '_ensemble', 'ensemble',
+            'std_pitch', 'std_roll', 'std_heading',
+            'std_press'],
 }
+
+
+def get_group(ky, ):
+    for grp in _burst_group_org:
+        if ky in _burst_group_org[grp]:
+            return grp
+    return None
 
 
 def calc_burst_struct(config, nb, nc):
