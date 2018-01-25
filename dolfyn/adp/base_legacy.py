@@ -1,6 +1,6 @@
-from ..data import base as db
-from ..io import main as dio
-from ..data import velocity as dbvel
+from ..data import base_legacy as db
+from ..io import main_legacy as dio
+from ..data import velocity_legacy as dbvel
 from ..data.time import num2date
 import numpy as np
 

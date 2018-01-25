@@ -11,12 +11,13 @@ this approach.
 import h5py as h5
 import numpy as np
 import base
-from ..data import base as db
+from ..data import base_legacy as db
 from ..data import time as dt
 import copy
 from six import string_types
 import sys
 from .. import _version as _ver
+import pdb
 
 
 if sys.version_info >= (3, 0):
@@ -574,8 +575,11 @@ class Loader(base.DataFactory):
         the basic type is used.
         """
         if out is None:
+            nd = self.get_group(where)
             if self.type_map.__class__ is dict:
                 typestr = self.read_type(where=where).decode('utf-8')
+                # print(typestr)
+                # pdb.set_trace()
                 if typestr in self.type_map:
                     out = self.type_map[typestr]()
                 else:
@@ -583,13 +587,11 @@ class Loader(base.DataFactory):
                         # This is a catch for deleted module-specific config
                         # objects
                         out = db.config()
-                        nd = self.get_group(where)
-                        if '_config_type' in nd.attrs:
-                            out.config_type = nd.attrs.get('_config_type').decode('utf-8')
                     else:
                         try:
-                            out = self.type_map[typestr.split('.')[-1].rstrip("'>")]()
-                        except:
+                            out = self.type_map[typestr.split('.')[-1]
+                                                .rstrip("'>")]()
+                        except KeyError:
                             for ky in self.type_map:
                                 #print(ky)
                                 if ky.endswith(typestr.split('.')[-1]):
@@ -597,6 +599,8 @@ class Loader(base.DataFactory):
 
             else:  # Then it is a type itself.
                 out = self.type_map()
+            if '_config_type' in nd.attrs:
+                out.config_type = nd.attrs.get('_config_type').decode('utf-8')
         return out
 
     def iter_groups(self, groups=None, where='/', no_essential=False):
@@ -639,6 +643,9 @@ class Loader(base.DataFactory):
 
                 elif gnm in groups or (gnm[0] == '_' and not no_essential):
                     yield grp
+
+
+# def convert_from_legacy(dat):
 
 
 if __name__ == '__main__':
