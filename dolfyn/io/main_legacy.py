@@ -184,4 +184,3 @@ def get_typemap(space):
         if hasattr(obj, '__mro__') and Saveable in obj.__mro__:
             type_map[str(obj)] = obj
     return type_map
-

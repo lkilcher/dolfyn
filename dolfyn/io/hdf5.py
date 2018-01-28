@@ -90,7 +90,8 @@ class Saver(base.DataFactory):
         self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)
         self.close = self.fd.close
         self.node = self.fd.get(where)
-        self.node.attrs.create('DataSaveVersion', pkl.dumps(_ver.ver2tuple(self.ver)))
+        self.node.attrs.create('DataSaveVersion',
+                               pkl.dumps(_ver.ver2tuple(self.ver)))
         self._extrafiles = []
 
     def get_group(self, where=None, nosplit=False):
@@ -639,6 +640,48 @@ class Loader(base.DataFactory):
 
                 elif gnm in groups or (gnm[0] == '_' and not no_essential):
                     yield grp
+
+
+def load(fname, data_groups=None,):
+    """
+    Load data from `fname` into class `type_map`.
+
+    Parameters
+    ----------
+
+    fname : string
+      The filename to read.
+
+    type : type or list(types)
+
+    """
+    with Loader(fname) as ldr:
+        return ldr.load(data_groups)
+
+
+def mmload(fname):
+    """
+    Load data from `fname` into class `type_map` as memory mapped
+    arrays.
+
+    Parameters
+    ----------
+
+    fname : string
+      The filename to read.
+
+    type : type or list(types)
+
+    Returns
+    -------
+    data : A DOLfYN data type.
+      The type will match the '_object_type' attribute at the root of
+      the file. All data in the file will be accessible as
+      memory-mapped arrays.
+
+    """
+    with Loader(fname) as ldr:
+        return ldr.mmload('ALL')
 
 
 if __name__ == '__main__':
