@@ -91,7 +91,8 @@ class Saver(base.DataFactory):
         self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)
         self.close = self.fd.close
         self.node = self.fd.get(where)
-        self.node.attrs.create('DataSaveVersion', pkl.dumps(_ver.ver2tuple(self.ver)))
+        self.node.attrs.create('DataSaveVersion',
+                               pkl.dumps(_ver.ver2tuple(self.ver)))
         self._extrafiles = []
 
     def get_group(self, where=None, nosplit=False):
@@ -643,9 +644,6 @@ class Loader(base.DataFactory):
 
                 elif gnm in groups or (gnm[0] == '_' and not no_essential):
                     yield grp
-
-
-# def convert_from_legacy(dat):
 
 
 if __name__ == '__main__':
