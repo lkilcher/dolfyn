@@ -181,6 +181,6 @@ def get_typemap(space):
     """
     type_map = {}
     for name, obj in inspect.getmembers(sys.modules[space]):
-        if hasattr(obj, '__mro__') and Saveable in obj.__mro__:
+        if isinstance(obj, type) and issubclass(obj, Saveable):
             type_map[str(obj)] = obj
     return type_map
