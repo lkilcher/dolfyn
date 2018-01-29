@@ -249,7 +249,7 @@ class NortekReader(object):
         elif self.config.hardware.serialNum[0:3].upper() == 'VEC':
             self.config['config_type'] = 'ADV'
         # Initialize the instrument type:
-        self._inst = self.config.config_type
+        self._inst = self.config.pop('config_type')
         # This is the position after reading the 'hardware',
         # 'head', and 'user' configuration.
         pnow = self.pos
