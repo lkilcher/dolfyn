@@ -56,8 +56,8 @@ class adcp_raw(dbvel.Velocity):
     def S2(self,):
         return self.dudz ** 2 + self.dvdz ** 2
 
-    def __repr__(self,):
-        mmstr = ''
+    @property
+    def _repr_header(self, ):
         if (not hasattr(self, 'mpltime')) or self.mpltime[0] < 1:
             print('Warning: no time information!')
             dt = num2date(693596)
@@ -65,14 +65,15 @@ class adcp_raw(dbvel.Velocity):
         else:
             tm = [self.mpltime[0], self.mpltime[-1]]
             dt = num2date(tm[0])
-        return ("%0.2f hour %s-frame %sADP record "
-                "(%s bins, %s pings), started: %s"
-                % ((tm[-1] - tm[0]) * 24,
-                   self.props['coord_sys'],
-                   mmstr,
-                   self.shape[0],
-                   self.shape[1],
-                   dt.strftime('%b %d, %Y %H:%M')))
+        return ("<ADP data object>\n"
+                "  . %0.2f hours (started: %s)\n"
+                "  . %s-frame\n"
+                "  . (%s bins, %s pings)\n" %
+                ((tm[-1] - tm[0]) * 24,
+                 dt.strftime('%b %d, %Y %H:%M'),
+                 self.props['coord_sys'],
+                 self.shape[0],
+                 self.shape[1]))
 
 
 class adcp_binned(dbvel.VelBindatTke, adcp_raw):
