@@ -551,6 +551,7 @@ class NortekReader(object):
             self._dtypes += ['vec_data']
 
         byts = self.read(20)
+        sig = dat['signal']
         (dat._extra['AnaIn2LSB'][c],
          dat._extra['Count'][c],
          dat.env['PressureMSB'][c],
@@ -560,12 +561,12 @@ class NortekReader(object):
          dat['vel'][0, c],
          dat['vel'][1, c],
          dat['vel'][2, c],
-         dat['amp'][0, c],
-         dat['amp'][1, c],
-         dat['amp'][2, c],
-         dat['corr'][0, c],
-         dat['corr'][1, c],
-         dat['corr'][2, c]) = unpack(self.endian + '4B2H3h6B', byts)
+         sig['amp'][0, c],
+         sig['amp'][1, c],
+         sig['amp'][2, c],
+         sig['corr'][0, c],
+         sig['corr'][1, c],
+         sig['corr'][2, c]) = unpack(self.endian + '4B2H3h6B', byts)
 
         self.checksum(byts)
         self.c += 1
@@ -839,8 +840,8 @@ class NortekReader(object):
                      str(3 * nbins) + 'B', byts[116:116 + 9 * nbins])
         for idx in range(3):
             dat['vel'][idx, :, c] = tmp[idx * nbins: (idx + 1) * nbins]
-            dat['amp'][idx, :, c] = tmp[(idx + 3) * nbins:
-                                        (idx + 4) * nbins]
+            dat['signal']['amp'][idx, :, c] = tmp[(idx + 3) * nbins:
+                                                  (idx + 4) * nbins]
         self.checksum(byts)
         self.c += 1
 
@@ -886,6 +887,7 @@ class NortekReader(object):
     def init_ADV(self,):
         dat = self.data = adv_base.ADVraw()
         dat['orient'] = data()
+        dat['signal'] = data()
         dat['sys'] = data()
         dat['env'] = data()
         dat['_extra'] = data()
@@ -905,6 +907,7 @@ class NortekReader(object):
     def init_AWAC(self,):
         dat = self.data = adp_base.adcp_raw()
         dat['orient'] = data()
+        dat['signal'] = data()
         dat['sys'] = data()
         dat['env'] = data()
         dat['_extra'] = data()
