@@ -20,12 +20,17 @@ def _format_repr(dat, level=0, show_all=False, skip=[]):
             continue
         if isinstance(dat[ky], dict):
             if level > 0:
-                s_grp += ' > + {}\n'.format(ky)
+                s_grp += ' > + {: <23}: {}\n'.format(ky, '+ DATA GROUP')
                 s_grp += indent(_format_repr(dat[ky], level - 1), '  ')
             else:
-                s_grp += ' + {}\n'.format(ky)
+                s_grp += ' + {: <25}: {}\n'.format(ky, '+ DATA GROUP')
         else:
-            s_ky += ' | {}\n'.format(ky)
+            val = dat[ky]
+            sval = str(type(val))
+            if isinstance(val, np.ndarray):
+                sval = '<np.ndarray: {}; dtype={}>'.format(val.shape,
+                                                           val.dtype)
+            s_ky += ' | {: <25}: {}\n'.format(ky, sval)
     s = s_ky + s_grp
     return s
 
@@ -66,6 +71,7 @@ class data(SourceDataType):
     This is just an abstract class so that we directly import the
     SourceDataType in one place.
     """
+
     @property
     def _repr_header(self, ):
         return (
