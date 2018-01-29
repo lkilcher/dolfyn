@@ -17,6 +17,9 @@ import copy
 from six import string_types
 import sys
 from .. import _version as _ver
+import hdf5_legacy as legacy
+reload(legacy)
+#import pdb
 
 
 if sys.version_info >= (3, 0):
@@ -655,8 +658,11 @@ def load(fname, data_groups=None,):
     type : type or list(types)
 
     """
-    with Loader(fname) as ldr:
-        return ldr.load(data_groups)
+    if get_DataSaveVersion(fname) >= (0, 9):
+        with Loader(fname) as ldr:
+            return ldr.load(data_groups)
+    else:
+        return legacy.load(fname, data_groups)
 
 
 def mmload(fname):
@@ -682,6 +688,14 @@ def mmload(fname):
     """
     with Loader(fname) as ldr:
         return ldr.mmload('ALL')
+
+
+def get_DataSaveVersion(fname):
+    fd = h5.File(fname, mode='r')
+    ver = _ver.ver2tuple(pkl.loads(
+        fd.attrs.get('DataSaveVersion', 'I0\n.')))
+    fd.close()
+    return ver
 
 
 if __name__ == '__main__':
