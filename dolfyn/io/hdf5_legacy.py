@@ -759,6 +759,9 @@ def convert_rdi(dat, out):
     out['props']['inst_model'] = dat.props.get('inst_model', '<WORKHORSE?>')
     out['props']['inst_type'] = dat.props.get('inst_type', 'ADP')
     out['props']['rotate_vars'] = dat.props.get('rotate_vars', {'vel'})
+    odat = out['orient']
+    for ky in ['roll', 'pitch', 'heading']:
+        odat[ky] = odat.pop(ky + '_deg')
 
 
 if __name__ == '__main__':

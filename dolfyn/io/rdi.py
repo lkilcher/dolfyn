@@ -37,9 +37,9 @@ data_defs = {'number': ([], 'sys', 'uint32'),
              'BIT': ([], 'sys', 'bool'),
              'ssp': ([], 'sys', 'uint16'),
              'depth_m': ([], None, 'float32'),
-             'pitch_deg': ([], 'orient', 'float32'),
-             'roll_deg': ([], 'orient', 'float32'),
-             'heading_deg': ([], 'orient', 'float32'),
+             'pitch': ([], 'orient', 'float32'),
+             'roll': ([], 'orient', 'float32'),
+             'heading': ([], 'orient', 'float32'),
              'temperature_C': ([], 'env', 'float32'),
              'salinity': ([], 'env', 'float32'),
              'mpt_sec': ([], 'sys', 'float32'),
@@ -312,9 +312,9 @@ class adcp_loader(object):
                            'BIT',
                            'ssp',
                            'depth_m',
-                           'heading_deg',
-                           'pitch_deg',
-                           'roll_deg',
+                           'heading',
+                           'pitch',
+                           'roll',
                            'salinity',
                            'temperature_C',
                            'mpt_sec',
@@ -328,9 +328,9 @@ class adcp_loader(object):
         ens.BIT[k] = fd.read_ui16(1)
         ens.ssp[k] = fd.read_ui16(1)
         ens.depth_m[k] = fd.read_ui16(1) * 0.1
-        ens.heading_deg[k] = fd.read_ui16(1) * 0.01
-        ens.pitch_deg[k] = fd.read_i16(1) * 0.01
-        ens.roll_deg[k] = fd.read_i16(1) * 0.01
+        ens.heading[k] = fd.read_ui16(1) * 0.01
+        ens.pitch[k] = fd.read_i16(1) * 0.01
+        ens.roll[k] = fd.read_i16(1) * 0.01
         ens.salinity[k] = fd.read_i16(1)
         ens.temperature_C[k] = fd.read_i16(1) * 0.01
         ens.mpt_sec[k] = (fd.read_ui8(3) * np.array([60, 1, .01])).sum()
