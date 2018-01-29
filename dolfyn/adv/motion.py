@@ -56,7 +56,7 @@ class CalcMotion(object):
         rot._check_declination(advo)
         self._set_Accel()
         self._set_AccelStable()
-        self.AngRt = advo.AngRt  # No copy because not modified.
+        self.AngRt = advo['orient']['AngRt']  # No copy because not modified.
 
     def _check_filtfreqs(self, accel_filtfreq, vel_filtfreq):
         datval = self.advo.props.get('motion accel_filtfreq Hz', None)
@@ -83,10 +83,10 @@ class CalcMotion(object):
         advo = self.advo
         if advo.props['coord_sys'] == 'inst':
             self.Accel = np.einsum('ijk,ik->jk',
-                                   advo.orientmat,
-                                   advo.Accel)
+                                   advo['orient']['orientmat'],
+                                   advo['orient']['Accel'])
         elif self.advo.props['coord_sys'] == 'earth':
-            self.Accel = advo.Accel.copy()
+            self.Accel = advo['orient']['Accel'].copy()
         else:
             raise Exception(("Invalid coordinate system '%s'. The coordinate "
                              "system must either be 'earth' or 'inst' to "
@@ -100,7 +100,7 @@ class CalcMotion(object):
         if self.accel_filtfreq == 0:
             acc[:] = acc.mean(-1)[..., None]
         else:
-            flt = sig.butter(1, self.accel_filtfreq / (self.advo.fs / 2))
+            flt = sig.butter(1, self.accel_filtfreq / (self.advo['props']['fs'] / 2))
             for idx in range(3):
                 acc[idx] = sig.filtfilt(flt[0], flt[1], acc[idx])
 
@@ -135,7 +135,7 @@ class CalcMotion(object):
         velacc : |np.ndarray| (3 x n_time)
                The acceleration-induced velocity array (3, n_time).
         """
-        samp_freq = self.advo.fs
+        samp_freq = self.advo['props']['fs']
 
         hp = self.Accel - self.AccelStable
 
@@ -361,11 +361,9 @@ def correct_motion(advo,
 
     ##########
     # Calculate the translational velocity (from the Accel):
-    advo.groups['orient'].add('velacc')
-    advo.velacc = calcobj.calc_velacc()
+    advo['orient']['velacc'] = calcobj.calc_velacc()
     # Copy AccelStable to the adv-object.
-    advo.groups['orient'].add('AccelStable')
-    advo.AccelStable = calcobj.AccelStable
+    advo['orient']['AccelStable'] = calcobj.AccelStable
 
     ##########
     # Calculate rotational velocity (from AngRt):
@@ -390,35 +388,37 @@ def correct_motion(advo,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    advo.velrot = velrot
-    advo.groups['orient'].add('velrot')
+    advo['orient']['velrot'] = velrot
 
     ##########
     # Rotate the data into the correct coordinate system.
     # inst2earth expects a 'rotate_vars' property.
     # Add velrot, velacc, AccelStable, to it.
     if 'rotate_vars' not in advo.props:
-        advo.props['rotate_vars'] = {'vel', 'velrot', 'velacc',
-                                     'Accel', 'AccelStable',
-                                     'AngRt', 'Mag'}
+        advo.props['rotate_vars'] = {'vel', 'orient.velrot', 'orient.velacc',
+                                     'orient.Accel', 'orient.AccelStable',
+                                     'orient.AngRt', 'orient.Mag'}
     else:
-        advo.props['rotate_vars'].update({'velrot', 'velacc', 'AccelStable'})
+        advo.props['rotate_vars'].update({'orient.velrot',
+                                          'orient.velacc',
+                                          'orient.AccelStable'})
 
     # NOTE: Accel, AccelStable, and velacc are in the earth-frame after
     #       calc_velacc() call.
     if to_earth:
-        advo.Accel = calcobj.Accel
+        advo['orient']['Accel'] = calcobj.Accel
         rot.inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
-                       {'Accel', 'AccelStable', 'velacc', })
+                       {'orient.Accel', 'orient.AccelStable',
+                        'orient.velacc', })
     else:
         # rotate these variables back to the instrument frame.
         rot.inst2earth(advo, reverse=True,
-                       rotate_vars={'AccelStable', 'velacc', },
+                       rotate_vars={'orient.AccelStable', 'orient.velacc', },
                        force=True, )
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    advo.add_data('velraw', advo.vel.copy(), 'main')
+    advo['velraw'] = advo.vel.copy()
     # Add it to rotate_vars:
     advo.props['rotate_vars'].update({'velraw', })
 
@@ -428,7 +428,7 @@ def correct_motion(advo,
     #       are in the opposite direction of the head motion.
     #       i.e. when the head moves one way in stationary flow, it
     #       measures a velocity in the opposite direction.
-    advo.vel += (advo.velrot + advo.velacc)
+    advo['vel'] += (advo['orient']['velrot'] + advo['orient']['velacc'])
     advo.props['motion corrected'] = True
     advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
 
@@ -551,8 +551,7 @@ class CorrectMotion(object):
             # 5) Rotate back to body-coord.
             velrot = np.dot(rmat.T, velrot)
 
-        advo.velrot = velrot
-        advo.groups['orient'].add('velrot')
+        advo['orient']['velrot'] = velrot
 
     def _calc_probe_pos(self, advo):
         """
@@ -583,8 +582,7 @@ class CorrectMotion(object):
 
     def _calc_accel_vel(self, calcobj):
         advo = calcobj.advo
-        advo.groups['orient'].add('velacc')
-        advo.velacc = calcobj.calc_velacc()
+        advo['orient']['velacc'] = calcobj.calc_velacc()
 
     def __call__(self, advo, to_earth=True):
         """
@@ -634,12 +632,14 @@ class CorrectMotion(object):
                              to_earth=to_earth)
 
         if 'rotate_vars' not in advo.props:
-            advo.props['rotate_vars'] = {'vel', 'velrot', 'velacc', 'velraw',
-                                         'Accel', 'AccelStable',
-                                         'AngRt', 'Mag'}
+            advo.props['rotate_vars'] = {'vel', 'velraw',
+                                         'orient.velrot', 'orient.velacc',
+                                         'orient.Accel', 'orient.AccelStable',
+                                         'orient.AngRt', 'orient.Mag'}
         else:
-            advo.props['rotate_vars'].update({'velrot', 'velacc',
-                                              'AccelStable', 'velraw'})
+            advo.props['rotate_vars'].update({'orient.velrot', 'orient.velacc',
+                                              'orient.AccelStable',
+                                              'orient.velraw'})
 
         self._rotate_vel2body(advo)
         self._calc_rot_vel(calcobj)
@@ -647,22 +647,23 @@ class CorrectMotion(object):
 
         # calcobj.Accel, calcobj.AccelStable, and velacc are already in
         # the earth frame.
-        advo.groups['orient'].add('AccelStable')
-        advo.AccelStable = calcobj.AccelStable
-        advo.add_data('velraw', advo.vel.copy(), 'main')
+        advo['orient']['AccelStable'] = calcobj.AccelStable
+        advo['velraw'] = advo.vel.copy()
         if to_earth:
-            advo.Accel = calcobj.Accel
+            advo['orient']['Accel'] = calcobj.Accel
             rot.inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
-                           {'Accel', 'AccelStable', 'velacc', })
+                           {'orient.Accel', 'orient.AccelStable',
+                            'orient.velacc', })
         else:
             # rotate these variables back to the instrument frame.
             rot.inst2earth(advo, reverse=True,
-                           rotate_vars={'AccelStable', 'velacc', },
+                           rotate_vars={'orient.AccelStable',
+                                        'orient.velacc', },
                            force=True, )
         # NOTE: The plus sign is because the measured-induced velocities
         #       are in the opposite direction of the head motion.
         #       i.e. when the head moves one way in stationary flow, it
         #       measures a velocity in the opposite direction.
-        advo.vel += (advo.velrot + advo.velacc)
+        advo['vel'] += (advo['orient']['velrot'] + advo['orient']['velacc'])
         advo.props['motion corrected'] = True
         advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq

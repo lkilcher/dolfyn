@@ -715,6 +715,13 @@ def convert_from_legacy(dat):
             out['Spec'] = db.FreqData()
             out['Spec']['vel'] = tmp['Spec']
             out['Spec']['omega'] = out.pop('omega')
+        if 'rotate_vars' in p:
+            for ky in ['velrot', 'velacc',
+                       'Accel', 'AccelStable',
+                       'AngRt', 'Mag']:
+                if ky in p['rotate_vars']:
+                    p['rotate_vars'].remove(ky)
+                    p['rotate_vars'].add('orient.' + ky)
     else:
         convert_rdi(dat, out)
     return out

@@ -727,7 +727,8 @@ class NortekReader(object):
                                           dtype=np.float32)
                 dat_o['orientmat'] = tbx.nans((3, 3, self.n_samp_guess),
                                               dtype=np.float32)
-                dat.props['rotate_vars'].update({'Accel', 'AngRt', })
+                dat.props['rotate_vars'].update({'orient.Accel',
+                                                 'orient.AngRt', })
             if ahrsid in [204, 210]:
                 self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'orientmat']
                 dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
@@ -737,7 +738,7 @@ class NortekReader(object):
                 dat_o['Mag'] = tbx.nans((3, self.n_samp_guess),
                                         dtype=np.float32)
                 dat.props['rotate_vars'].update(
-                    {'Accel', 'AngRt', 'Mag'})
+                    {'orient.Accel', 'orient.AngRt', 'orient.Mag'})
                 if ahrsid == 204:
                     dat_o['orientmat'] = tbx.nans((3, 3, self.n_samp_guess),
                                                   dtype=np.float32)
@@ -750,7 +751,7 @@ class NortekReader(object):
                 dat_o['Mag'] = tbx.nans((3, self.n_samp_guess),
                                         dtype=np.float32)
                 dat.props['rotate_vars'].update(
-                    {'AngRt', 'Accel', 'Mag'})
+                    {'orient.AngRt', 'orient.Accel', 'orient.Mag'})
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
