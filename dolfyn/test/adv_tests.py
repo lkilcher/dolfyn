@@ -122,9 +122,10 @@ def heading_test(make_data=False):
     td = dat_imu.copy()
 
     pitch, roll, head = avm.rotate.orient2euler(td)
-    td.add_data('pitch', pitch, 'orient')
-    td.add_data('roll', roll, 'orient')
-    td.add_data('heading', head, 'orient')
+    od = td['orient']
+    od['pitch'] = pitch
+    od['roll'] = roll
+    od['heading'] = head
 
     if make_data:
         td.save(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
