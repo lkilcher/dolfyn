@@ -710,6 +710,11 @@ def convert_from_legacy(dat):
             convert_signature(dat, out)
         elif p['inst_model'] == 'AWAC':
             convert_awac(dat, out)
+        if '.ADVbinned' in typestr:
+            tmp = out.pop('spec')
+            out['Spec'] = db.FreqData()
+            out['Spec']['vel'] = tmp['Spec']
+            out['Spec']['omega'] = out.pop('omega')
     else:
         convert_rdi(dat, out)
     return out
