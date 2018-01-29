@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 from ..data.velocity import VelBinnerSpec
 from .base import ADVbinned
+from ..data import base as db
 from ..tools.misc import slice1d_along_axis, nans_like
 from scipy.special import cbrt
 
@@ -92,20 +93,25 @@ class TurbBinner(VelBinnerSpec):
         #               " is being deprecated. Use the functional form, e.g. '"
         #               "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
         #               .format(self.n_bin))
-        out = VelBinnerSpec.__call__(self, advr, out_type=out_type)
+        out = out_type()
+        self.check_indata(advr)
         self.do_avg(advr, out)
-        out.add_data('tke_vec', self.calc_tke(advr['vel'], noise=advr.noise), 'main')
-        out.add_data('stress', self.calc_stress(advr['vel']), 'main')
-        out.add_data('sigma_Uh',
-                     np.std(self.reshape(advr.U_mag), -1, dtype=np.float64) -
-                     (advr.noise[0] + advr.noise[1]) / 2, 'main')
+        noise = advr.get('doppler_noise', [0, 0, 0])
+        out['tke_vec'] = self.calc_tke(advr['vel'], noise=noise)
+        out['stress'] = self.calc_stress(advr['vel'])
+        out['sigma_Uh'] = (np.std(self.reshape(advr.U_mag),
+                                  -1,
+                                  dtype=np.float64) -
+                           (noise[0] + noise[1]) / 2)
         out.props['Itke_thresh'] = Itke_thresh
-        out.add_data('Spec',
-                     self.calc_vel_psd(advr['vel'],
-                                       noise=advr.noise,
-                                       window=window),
-                     'spec')
-        out.add_data('omega', self.calc_omega(), '_essential')
+        out['Spec'] = db.FreqData()
+        out['Spec']['vel'] = self.calc_vel_psd(advr['vel'],
+                                               noise=noise,
+                                               window=window)
+        out['Spec']['omega'] = self.calc_omega()
+        out.props['n_bin'] = self.n_bin
+        out.props['n_fft'] = self.n_fft
+        out.props['n_fft_coh'] = self.n_fft_coh
 
         # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,
         # out.U_mag,omega_range=omega_range_epsilon),'main')
