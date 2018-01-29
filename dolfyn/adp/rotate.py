@@ -117,11 +117,12 @@ def inst2earth(adcpo, reverse=False,
     if (not reverse and 'declination' in adcpo.props.keys() and not
             adcpo.props.get('declination_in_heading', False)):
         # Only do this if making the forward rotation.
-        adcpo.heading_deg += adcpo.props['declination']
+        adcpo.heading += adcpo.props['declination']
         adcpo.props['declination_in_heading'] = True
-    r = adcpo.roll_deg * deg2rad
-    p = np.arctan(np.tan(adcpo.pitch_deg * deg2rad) * np.cos(r))
-    h = adcpo.heading_deg * deg2rad
+    odat = adcpo.orient
+    r = odat.roll * deg2rad
+    p = np.arctan(np.tan(odat.pitch * deg2rad) * np.cos(r))
+    h = odat.heading * deg2rad
     if adcpo.config.orientation == 'up':
         r += np.pi
     if (adcpo.props['coord_sys'] == 'ship' and
@@ -165,7 +166,7 @@ def inst2earth(adcpo, reverse=False,
 
 
 def inst2earth_heading(adpo):
-    h = adpo.heading_deg[:] * deg2rad
+    h = adpo.orient.heading[:] * deg2rad
     if 'heading_offset' in adpo.props.keys():
         h += adpo.props['heading_offset'] * deg2rad
     if 'declination' in adpo.props.keys():
