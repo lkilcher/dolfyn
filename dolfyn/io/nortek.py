@@ -16,7 +16,7 @@ import json
 import six
 from .base import WrongFileType
 import warnings
-from ..data.base import data
+from ..data.base import TimeData
 from ..data.base import config
 
 
@@ -886,11 +886,11 @@ class NortekReader(object):
 
     def init_ADV(self,):
         dat = self.data = adv_base.ADVraw()
-        dat['orient'] = data()
-        dat['signal'] = data()
-        dat['sys'] = data()
-        dat['env'] = data()
-        dat['_extra'] = data()
+        dat['orient'] = TimeData()
+        dat['signal'] = TimeData()
+        dat['sys'] = TimeData()
+        dat['env'] = TimeData()
+        dat['_extra'] = TimeData()
         dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
@@ -906,11 +906,11 @@ class NortekReader(object):
 
     def init_AWAC(self,):
         dat = self.data = adp_base.adcp_raw()
-        dat['orient'] = data()
-        dat['signal'] = data()
-        dat['sys'] = data()
-        dat['env'] = data()
-        dat['_extra'] = data()
+        dat['orient'] = TimeData()
+        dat['signal'] = TimeData()
+        dat['sys'] = TimeData()
+        dat['env'] = TimeData()
+        dat['_extra'] = TimeData()
         dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
@@ -1055,5 +1055,5 @@ def crop_data(obj, range, n_lastdim):
         if isinstance(dat, np.ndarray) and \
            (dat.shape[-1] == n_lastdim):
             obj[nm] = dat[..., range]
-        if isinstance(dat, data):
+        if isinstance(dat, TimeData):
             crop_data(dat, range, n_lastdim)

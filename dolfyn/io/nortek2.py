@@ -334,17 +334,17 @@ def reorg(dat):
         for grp, keys in defs._burst_group_org.items():
             if grp not in outdat and \
                len(set(defs._burst_group_org[grp])
-                       .intersection(outdat.keys())):
-                    outdat[grp] = db.data()
+                   .intersection(outdat.keys())):
+                    outdat[grp] = db.TimeData()
             for ky in keys:
                 if ky == grp and ky in outdat and \
-                   not isinstance(outdat[grp], db.data):
+                   not isinstance(outdat[grp], db.TimeData):
                     tmp = outdat.pop(grp)
-                    outdat[grp] = db.data()
+                    outdat[grp] = db.TimeData()
                     outdat[grp][ky] = tmp
                     #print(ky, tmp)
                 if ky + tag in outdat and not \
-                   isinstance(outdat[ky + tag], db.data):
+                   isinstance(outdat[ky + tag], db.TimeData):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
     outdat.props['coord_sys'] = cfg['coord_sys']
     return outdat

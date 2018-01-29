@@ -3,7 +3,7 @@ from __future__ import print_function
 import numpy as np
 import datetime
 from ..data.time import date2num
-from ..data.base import config, data
+from ..data.base import config, TimeData as data
 from os.path import getsize
 from ..adp.base import adcp_raw
 from .base import WrongFileType
