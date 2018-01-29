@@ -672,7 +672,6 @@ def convert_from_legacy(dat):
     out = TypeNow()
     out['config'] = db.config()
     out['config'].update(**dat.config)
-    out['config']['_type'] = out['config'].pop('config_type')
     # out = compare_config(old['config'], new['config'])
     for g, ky in dat.groups.iter():
         if g == 'config':
@@ -698,11 +697,48 @@ def convert_from_legacy(dat):
             dnow = out[g]
         dnow[ky] = dat[ky]
     out['props'] = dict(copy.deepcopy(dat.props))
-    convert_rdi(dat, out)
+    p = out['props']
+    if 'inst_make' in p and p['inst_make'] == 'Nortek':
+        if p['inst_model'] == 'VECTOR':
+            convert_vector(dat, out)
+        elif p['inst_model'] == 'Signature':
+            convert_signature(dat, out)
+        elif p['inst_model'] == 'AWAC':
+            convert_awac(dat, out)
+        print("HELLO?!")
+        convert_config(out['config'])
+    else:
+        convert_rdi(dat, out)
     return out
 
 
+def convert_awac(dat, out):
+    out['config']['_type'] = 'NORTEK Header Data'
+    out['props'].pop('toff')
+
+
+def convert_signature(dat, out):
+    pass
+
+
+def convert_vector(dat, out):
+    out['props'].pop('doppler_noise')
+    out['props'].pop('toff')
+    out['config']['_type'] = 'NORTEK Header Data'
+
+
+def convert_config(config):
+    from ..data import base as dbnew
+    for ky in config:
+        if isinstance(config[ky], db.config):
+            config[ky] = dbnew.config(**config[ky])
+            if 'config_type' in config[ky]:
+                config[ky]['_type'] = config[ky].pop('config_type')
+            convert_config(config[ky])
+
+
 def convert_rdi(dat, out):
+    out['config']['_type'] = out['config'].pop('config_type')
     if 'ranges' in out:
         out['range'] = out.pop('ranges')
     if 'envir' in out:
