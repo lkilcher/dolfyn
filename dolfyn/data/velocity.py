@@ -1,10 +1,10 @@
 from __future__ import division
 from .base import np, ma
 from .binned import TimeBindat, TimeBinner, rad_hz
-from .base import data
+from .base import TimeData
 
 
-class Velocity(data):
+class Velocity(TimeData):
 
     @property
     def has_imu(self,):
@@ -132,7 +132,7 @@ class Velocity(data):
         return self.u[:] + self.v[:] * 1j
 
 
-class VelBindatTke(data):
+class VelBindatTke(TimeData):
 
     @property
     def Ecoh(self,):

@@ -693,7 +693,7 @@ def convert_from_legacy(dat):
             dnow = out
         else:
             if g not in out:
-                out[g] = db.data()
+                out[g] = db.TimeData()
             dnow = out[g]
         dnow[ky] = dat[ky]
     out['props'] = dict(copy.deepcopy(dat.props))

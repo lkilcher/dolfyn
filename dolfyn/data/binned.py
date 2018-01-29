@@ -2,12 +2,12 @@ from __future__ import division
 import numpy as np
 from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd, phase_angle
 from ..tools.misc import slice1d_along_axis, detrend
-from .base import ma, rad_hz
+from .base import ma, rad_hz, TimeData
 from h5py._hl.dataset import Dataset
-from .base import data
+import copy
 
 
-class TimeBindat(data):
+class TimeBindat(TimeData):
 
     """
     A base, abstract class for binned data.
@@ -243,7 +243,7 @@ class TimeBinner(object):
                     n_bin2)[..., None]
         return out
 
-    def do_avg(self, rawdat, outdat, names=None):
+    def do_avg(self, rawdat, outdat):
         """
 
         Parameters
@@ -258,13 +258,14 @@ class TimeBinner(object):
            all data in `rawdat` will be binned.
 
         """
-        n = len(rawdat)
-        for nm, dat, grp in rawdat.iter_wg():
-            mro = dat.__class__.__mro__
-            if ((names is None) or (nm in names)) and \
-               ((np.ndarray in mro) or (Dataset in mro)) and \
-               (dat.shape[-1] == n):
-                outdat.add_data(nm, self.mean(dat), grp)
+        for ky in rawdat:
+            if isinstance(rawdat[ky], TimeData):
+                outdat[ky] = TimeData()
+                self.do_avg(rawdat[ky], outdat[ky])
+            elif isinstance(rawdat[ky], np.ndarray):
+                outdat[ky] = self.mean(rawdat[ky])
+            else:
+                outdat[ky] = copy.deepcopy(rawdat[ky])
 
     def do_var(self, rawdat, outdat, names=None, suffix='_var'):
         """Calculate the variance of data attributes.
@@ -289,7 +290,8 @@ class TimeBinner(object):
             if ((names is None) or (nm in names)) and \
                ((np.ndarray in mro) or (Dataset in mro)) and \
                (dat.shape[-1] == n):
-                outdat.add_data(nm + suffix, self.reshape(dat).var(-1), grp)
+                print(grp)
+                outdat[nm + suffix] = self.reshape(dat).var(-1)
 
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None):
         """
@@ -324,14 +326,10 @@ class TimeBinner(object):
                   "setting n_fft_coh=n_bin / 6")
 
     def __call__(self, rawdat, out_type=TimeBindat):
-        self.check_indata(rawdat)
-        outdat = out_type()
-        outdat.props['n_bin'] = self.n_bin
-        outdat.props['n_fft'] = self.n_fft
-        outdat.props['n_fft_coh'] = self.n_fft_coh
         outdat.props.update(rawdat.props)
+        print(outdat.props)
         if hasattr(rawdat, 'config'):
-            outdat.add_data('config', rawdat['config'].copy(), 'config')
+            outdat['config'] = copy.deepcopy(rawdat['config'])
         return outdat
 
     def check_indata(self, rawdat):
@@ -340,7 +338,7 @@ class TimeBinner(object):
         if 'DutyCycle_NBurst' in rawdat.props and rawdat.props['DutyCycle_NBurst'] < self.n_bin:
             print("Warning: The averaging interval (n_bin = {}) is larger than the burst interval "
                   "(NBurst = {})!".format(self.n_bin, rawdat.props['DutyCycle_NBurst']))
-        if rawdat.fs != self.fs:
+        if rawdat['props']['fs'] != self.fs:
             raise Exception("The input data sample rate (dat.fs) does not "
                             "match the sample rate of this binning-object!")
 

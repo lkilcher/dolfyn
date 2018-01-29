@@ -179,7 +179,7 @@ def subset_test(make_data=False):
     for index in [slice(0),
                   td.mpltime < 0,
                   slice(td.mpltime.shape[0] + 5, td.mpltime.shape[0] + 100)]:
-        yield (check_except, td.subset, index, IndexError,
+        yield (check_except, td._subset, index, IndexError,
                "Attempts to subset to an empty data-object should raise an error.")
 
 

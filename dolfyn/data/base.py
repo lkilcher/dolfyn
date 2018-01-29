@@ -2,6 +2,7 @@ from ..meta import api_dumb as ma
 import numpy as np
 from pyDictH5.base import data as SourceDataType
 import six
+import copy
 
 rad_hz = ma.marray(2 * np.pi, ma.varMeta('', {'s': -1, 'hz': -1}))
 
@@ -84,6 +85,34 @@ class data(SourceDataType):
                 indent(_format_repr(self), ' '))
 
 
+class TimeData(data):
+    """
+    This is a base class that contains arrays where time is the last
+    dimension.
+    """
+    _time_dim = -1
+
+    def _subset(self, indx):
+        if not isinstance(indx, tuple):
+            indx = (Ellipsis, indx)
+        return SourceDataType._subset(self, indx,
+                                      raise_on_empty_array=True)
+
+
+class FreqData(TimeData):
+    """
+    This is a base class that contains arrays where frequency is the
+    last dimension, and time is the second to last dimension.
+    """
+    _time_dim = -2
+
+    def _subset(self, indx):
+        if not isinstance(indx, tuple):
+            indx = (Ellipsis, indx, slice(None))
+        return SourceDataType._subset(self, indx,
+                                      raise_on_empty_array=True)
+
+
 class config(data):
 
     @property
@@ -96,3 +125,7 @@ class config(data):
         return (self._repr_header +
                 '  *------------\n' +
                 indent(_format_repr_config(self, level=2), ' '))
+
+    def _subset(self, indx):
+        # Don't subset config objects.
+        return copy.deepcopy(self)
