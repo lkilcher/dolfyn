@@ -17,8 +17,7 @@ import copy
 from six import string_types
 import sys
 from .. import _version as _ver
-import pdb
-
+#import pdb
 
 if sys.version_info >= (3, 0):
     import pickle as pkl
@@ -581,6 +580,7 @@ class Loader(base.DataFactory):
                 typestr = self.read_type(where=where).decode('utf-8')
                 # print(typestr)
                 # pdb.set_trace()
+
                 if typestr in self.type_map:
                     out = self.type_map[typestr]()
                 else:
@@ -644,6 +644,73 @@ class Loader(base.DataFactory):
 
                 elif gnm in groups or (gnm[0] == '_' and not no_essential):
                     yield grp
+
+
+def load(fname, data_groups=None):
+    from ..adp import base_legacy as adp_base_legacy
+    from ..adv import base_legacy as adv_base_legacy
+    #pdb.set_trace()
+    type_map = dict(**adp_base_legacy.type_map)
+    type_map.update(adv_base_legacy.type_map)
+    with Loader(fname, type_map) as ldr:
+        dat = ldr.load(data_groups)
+    out = convert_from_legacy(dat)
+    return dat, out
+
+
+def convert_from_legacy(dat):
+    from ..data import base as db
+    typestr = str(type(dat))
+    if '.adcp_raw' in typestr:
+        from ..adp.base import adcp_raw as TypeNow
+    elif '.adcp_binned' in typestr:
+        from ..adp.base import adcp_binned as TypeNow
+    elif '.ADVraw' in typestr:
+        from ..adv.base import ADVraw as TypeNow
+    elif '.ADVbinned' in typestr:
+        from ..adv.base import ADVbinned as TypeNow
+    out = TypeNow()
+    out['config'] = db.config()
+    out['config'].update(**dat.config)
+    out['config']['_type'] = out['config'].pop('config_type')
+    # out = compare_config(old['config'], new['config'])
+    for g, ky in dat.groups.iter():
+        if g == 'config':
+            # This is handled above.
+            continue
+        if g.startswith('#'):
+            g = g[1:]
+        if g == 'extra':
+            g = '_extra'
+        if g == 'index':
+            g = 'sys'
+        if ky == 'pressure':
+            g = 'env'
+        if ky == 'AnaIn2MSB':
+            g = '_extra'
+        if ky == 'orientation_down':
+            g = 'orient'
+        if g in ['main', '_essential']:
+            dnow = out
+        else:
+            if g not in out:
+                out[g] = db.data()
+            dnow = out[g]
+        dnow[ky] = dat[ky]
+    out['props'] = dict(copy.deepcopy(dat.props))
+    convert_rdi(dat, out)
+    return out
+
+
+def convert_rdi(dat, out):
+    if 'ranges' in out:
+        out['range'] = out.pop('ranges')
+    if 'envir' in out:
+        out['env'] = out.pop('envir')
+    out['props']['inst_make'] = dat.props.get('inst_make', 'RDI')
+    out['props']['inst_model'] = dat.props.get('inst_model', '<WORKHORSE?>')
+    out['props']['inst_type'] = dat.props.get('inst_type', 'ADP')
+    out['props']['rotate_vars'] = dat.props.get('rotate_vars', {'vel'})
 
 
 if __name__ == '__main__':
