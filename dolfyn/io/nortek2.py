@@ -277,7 +277,7 @@ def reorg(dat):
     outdat = apb.adcp_raw()
     cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
     cfg['filehead config'] = dat['filehead config']
-    outdat['props'] = db.data()
+    outdat['props'] = {}
     outdat['props']['inst_make'] = 'Nortek'
     outdat['props']['inst_model'] = 'Signature'
     outdat['props']['inst_type'] = 'ADP'
@@ -332,14 +332,17 @@ def reorg(dat):
             if ky in dnow:
                 outdat[ky + tag] = dnow[ky]
         for grp, keys in defs._burst_group_org.items():
-            for ky in keys:
-                if grp not in outdat:
+            if grp not in outdat and \
+               len(set(defs._burst_group_org[grp])
+                       .intersection(outdat.keys())):
                     outdat[grp] = db.data()
-                elif ky == grp and not isinstance(outdat[grp], db.data):
+            for ky in keys:
+                if ky == grp and ky in outdat and \
+                   not isinstance(outdat[grp], db.data):
                     tmp = outdat.pop(grp)
                     outdat[grp] = db.data()
                     outdat[grp][ky] = tmp
-                    print(ky, tmp)
+                    #print(ky, tmp)
                 if ky + tag in outdat and not \
                    isinstance(outdat[ky + tag], db.data):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
@@ -372,7 +375,7 @@ def reduce(data):
     # Drop the ensemble count from other data structures
     for ky in ['_ensemble', 'ensemble']:
         if ky + '_b5' in data['sys']:
-            data[ky] = data['sys'].pop(ky + '_b5')
+            data['sys'].pop(ky + '_b5')
 
 
 if __name__ == '__main__':

@@ -17,7 +17,7 @@ import copy
 from six import string_types
 import sys
 from .. import _version as _ver
-#import pdb
+
 
 if sys.version_info >= (3, 0):
     import pickle as pkl
@@ -698,14 +698,18 @@ def convert_from_legacy(dat):
         dnow[ky] = dat[ky]
     out['props'] = dict(copy.deepcopy(dat.props))
     p = out['props']
+    if out['config']['config_type'] == 'Nortek AD2CP':
+        p['inst_make'] = "Nortek"
+        p['inst_model'] = 'Signature'
+        p['inst_type'] = 'ADP'
     if 'inst_make' in p and p['inst_make'] == 'Nortek':
+        convert_config(out['config'])
         if p['inst_model'] == 'VECTOR':
             convert_vector(dat, out)
         elif p['inst_model'] == 'Signature':
             convert_signature(dat, out)
         elif p['inst_model'] == 'AWAC':
             convert_awac(dat, out)
-        convert_config(out['config'])
     else:
         convert_rdi(dat, out)
     return out
@@ -717,7 +721,11 @@ def convert_awac(dat, out):
 
 
 def convert_signature(dat, out):
-    pass
+    out['config']['_type'] = 'Nortek AD2CP'
+    ornt = out['orient']
+    for ky in ['heading', 'pitch', 'roll']:
+        ornt[ky] = out.pop(ky)
+    out.props.pop('fs')
 
 
 def convert_vector(dat, out):
@@ -728,11 +736,11 @@ def convert_vector(dat, out):
 
 def convert_config(config):
     from ..data import base as dbnew
+    if 'config_type' in config:
+        config['_type'] = config.pop('config_type')
     for ky in config:
         if isinstance(config[ky], db.config):
             config[ky] = dbnew.config(**config[ky])
-            if 'config_type' in config[ky]:
-                config[ky]['_type'] = config[ky].pop('config_type')
             convert_config(config[ky])
 
 
