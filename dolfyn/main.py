@@ -1,5 +1,5 @@
 import pkg_resources
-from io.api import read
+from .io.api import read
 
 
 def load_example(name):

@@ -2,16 +2,17 @@ import dolfyn.adv.api as avm
 import dolfyn.data.base
 import numpy as np
 from base import ResourceFilename
+from dolfyn.io.hdf5 import load
 
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
 
 dolfyn.data.base.debug_level = 1
 
-dat = avm.load(rfnm('data/vector_data01.h5'), 'ALL')
-dat_imu = avm.load(rfnm('data/vector_data_imu01.h5'), 'ALL')
-dat_imu_json = avm.load(rfnm('data/vector_data_imu01-json.h5'), 'ALL')
-dat_burst = avm.load(rfnm('data/burst_mode01.h5'), 'ALL')
+dat = load(rfnm('data/vector_data01.h5'), 'ALL')
+dat_imu = load(rfnm('data/vector_data_imu01.h5'), 'ALL')
+dat_imu_json = load(rfnm('data/vector_data_imu01-json.h5'), 'ALL')
+dat_burst = load(rfnm('data/burst_mode01.h5'), 'ALL')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -93,16 +94,16 @@ def motion_test(make_data=False):
 
     for dat1, dat2, msg in [
             (tdm,
-             avm.load(rfnm('data/vector_data_imu01_mc.h5'),
-                      'ALL'),
+             load(rfnm('data/vector_data_imu01_mc.h5'),
+                  'ALL'),
              ''),
             (tdm10,
-             avm.load(rfnm('data/vector_data_imu01_mcDeclin10.h5'),
-                      'ALL'),
+             load(rfnm('data/vector_data_imu01_mcDeclin10.h5'),
+                  'ALL'),
              'with declination=10 '),
             (tdmj,
-             avm.load(rfnm('data/vector_data_imu01-json_mc.h5'),
-                      'ALL'),
+             load(rfnm('data/vector_data_imu01-json_mc.h5'),
+                  'ALL'),
              'with reading userdata.json '),
     ]:
         yield data_equiv, dat1, dat2, msg_form.format(msg)
@@ -129,22 +130,22 @@ def heading_test(make_data=False):
         td.save(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
         return
 
-    cd = avm.load(rfnm('data/vector_data_imu01_head_pitch_roll.h5'),
-                  'ALL')
+    cd = load(rfnm('data/vector_data_imu01_head_pitch_roll.h5'),
+              'ALL')
 
     assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
 
 
 def turbulence_test(make_data=False):
     tmp = dat.copy()
-    bnr = avm.TurbBinner(20, tmp.fs)
+    bnr = avm.TurbBinner(20, tmp['props']['fs'])
     td = bnr(tmp)
 
     if make_data:
         td.save(rfnm('data/vector_data01_bin.h5'))
         return
 
-    cd = avm.load(rfnm('data/vector_data01_bin.h5'), 'ALL')
+    cd = load(rfnm('data/vector_data01_bin.h5'), 'ALL')
 
     assert cd == td, "TurbBinner gives unexpected results!"
 
@@ -157,19 +158,19 @@ def clean_test(make_data=False):
         td.save(rfnm('data/vector_data01_uclean.h5'))
         return
 
-    cd = avm.load(rfnm('data/vector_data01_uclean.h5'), 'ALL')
+    cd = load(rfnm('data/vector_data01_uclean.h5'), 'ALL')
 
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"
 
 
 def subset_test(make_data=False):
-    td = dat.copy().subset(slice(10, 20))
+    td = dat.copy().subset[10:20]
 
     if make_data:
         td.save(rfnm('data/vector_data01_subset.h5'))
         return
 
-    cd = avm.load(rfnm('data/vector_data01_subset.h5'), 'ALL')
+    cd = load(rfnm('data/vector_data01_subset.h5'), 'ALL')
 
     # First check that subsetting works correctly
     yield data_equiv, cd, td, "ADV data object `subset` method gives unexpected results."

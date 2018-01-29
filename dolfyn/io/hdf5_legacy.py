@@ -655,7 +655,7 @@ def load(fname, data_groups=None):
     with Loader(fname, type_map) as ldr:
         dat = ldr.load(data_groups)
     out = convert_from_legacy(dat)
-    return dat, out
+    return out
 
 
 def convert_from_legacy(dat):
@@ -705,7 +705,6 @@ def convert_from_legacy(dat):
             convert_signature(dat, out)
         elif p['inst_model'] == 'AWAC':
             convert_awac(dat, out)
-        print("HELLO?!")
         convert_config(out['config'])
     else:
         convert_rdi(dat, out)

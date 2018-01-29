@@ -1,6 +1,6 @@
-from nortek import read_nortek
-from nortek2 import read_signature
-from rdi import read_rdi
+from .nortek import read_nortek
+from .nortek2 import read_signature
+from .rdi import read_rdi
 from .base import WrongFileType as _WTF
 # These are included here for use in the API
 from .main import load, mmload

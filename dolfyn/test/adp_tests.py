@@ -1,18 +1,19 @@
 import dolfyn.adp.api as apm
 import dolfyn.data.base
 from base import ResourceFilename
+from dolfyn.io.hdf5 import load
 
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
 
 dolfyn.data.base.debug_level = 1
 
-dat_rdi = apm.load(rfnm('data/RDI_test01.h5'), 'ALL')
-dat_rdi_i = apm.load(rfnm('data/RDI_test01_rotate_beam2inst.h5'), 'ALL')
-dat_awac = apm.load(rfnm('data/AWAC_test01.h5'), 'ALL')
-dat_sig = apm.load(rfnm('data/BenchFile01.h5'), 'ALL')
-dat_wr1 = apm.load(rfnm('data/winriver01.h5'), 'ALL')
-dat_wr2 = apm.load(rfnm('data/winriver02.h5'), 'ALL')
+dat_rdi = load(rfnm('data/RDI_test01.h5'), 'ALL')
+dat_rdi_i = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'), 'ALL')
+dat_awac = load(rfnm('data/AWAC_test01.h5'), 'ALL')
+dat_sig = load(rfnm('data/BenchFile01.h5'), 'ALL')
+dat_wr1 = load(rfnm('data/winriver01.h5'), 'ALL')
+dat_wr2 = load(rfnm('data/winriver02.h5'), 'ALL')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -75,8 +76,8 @@ def rotate_inst2earth_test(make_data=False):
         tdwr2.save(rfnm('data/winriver02_rotate_ship2earth.h5'))
         return
 
-    cd = apm.load(rfnm('data/RDI_test01_rotate_inst2earth.h5'), 'ALL')
-    cdwr2 = apm.load(rfnm('data/winriver02_rotate_ship2earth.h5'), 'ALL')
+    cd = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'), 'ALL')
+    cdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'), 'ALL')
 
     assert td == cd, "adp.rotate.inst2earth gives unexpected results!"
     assert tdwr2 == cdwr2, "adp.rotate.inst2earth gives unexpected results!"
