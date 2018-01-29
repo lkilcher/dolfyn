@@ -655,7 +655,10 @@ def load(fname, data_groups=None,):
     fname : string
       The filename to read.
 
-    type : type or list(types)
+    data_groups : string or list of strings
+      The data groups to load (default: all groups not starting with
+      '_').
+
 
     """
     if get_DataSaveVersion(fname) >= (0, 9):
