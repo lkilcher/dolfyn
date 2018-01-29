@@ -89,7 +89,7 @@ def _check_declination(advo):
                          [0, 0, 1]])
         odata['orientmat'] = np.einsum('ij,kjl->kil',
                                        Rdec,
-                                       advo['orientmat'])
+                                       odata['orientmat'])
 
         advo.props['declination_in_orientmat'] = True
         p, r, h = orient2euler(odata['orientmat'])
@@ -152,15 +152,16 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     _check_declination(advo)
 
-    if hasattr(advo, 'orientmat'):
+    odata = advo['orient']
+    if hasattr(odata, 'orientmat'):
         # Take the transpose of the orientation to get the inst->earth rotation
         # matrix.
-        rmat = np.rollaxis(advo['orientmat'], 1)
+        rmat = np.rollaxis(odata['orientmat'], 1)
 
     else:
-        rr = advo.roll * deg2rad
-        pp = advo.pitch * deg2rad
-        hh = (advo.heading - 90) * deg2rad
+        rr = odata['roll'] * deg2rad
+        pp = odata.pitch * deg2rad
+        hh = (odata.heading - 90) * deg2rad
         if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
             # The end of the data may not have valid orientations
             lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
@@ -173,7 +174,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         #       orientation corresponds to the communication cable
         #       being up.  This is ridiculous, but apparently a
         #       reality.
-        rr[advo.orientation_down] += np.pi
+        rr[odata['orientation_down']] += np.pi
 
         ch = cos(hh)
         sh = sin(hh)
