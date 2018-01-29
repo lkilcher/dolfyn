@@ -36,12 +36,12 @@ def orient2euler(advo):
     Communications Protocol", (Rev 15).
 
     """
-    if hasattr(advo, 'orientmat'):
-        _check_declination(advo)
-        omat = advo.orientmat
-    elif isinstance(advo, np.ndarray) and \
+    if isinstance(advo, np.ndarray) and \
             advo.shape[:2] == (3, 3):
         omat = advo
+    elif hasattr(advo['orient'], 'orientmat'):
+        _check_declination(advo)
+        omat = advo['orient'].orientmat
     # I'm pretty sure the 'yaw' is the angle from the east axis, so we
     # correct this for 'deg_true':
     return (np.arcsin(omat[0, 2]) / deg2rad,
@@ -64,18 +64,18 @@ def _beam2inst(dat, transmat, reverse=False):
 
 
 def _check_declination(advo):
-
+    odata = advo['orient']
     if 'declination' not in advo.props:
-        if 'orientmat' in advo:
-            p, r, h = orient2euler(advo['orientmat'])
-            advo.add_data('pitch', p, 'orient')
-            advo.add_data('roll', r, 'orient')
-            advo.add_data('heading', h, 'orient')
+        if 'orientmat' in odata:
+            p, r, h = orient2euler(odata['orientmat'])
+            odata['pitch'] = p
+            odata['roll'] = r
+            odata['heading'] = h
         # warnings.warn(
         #     'No declination in adv object.  Assuming a declination of 0.')
         return
 
-    if 'orientmat' in advo and \
+    if 'orientmat' in odata and \
        not advo.props.get('declination_in_orientmat', False):
         # Declination is defined as positive if MagN is east of
         # TrueN. Therefore we must rotate about the z-axis by minus
@@ -87,22 +87,22 @@ def _check_declination(advo):
         Rdec = np.array([[cd, -sd, 0],
                          [sd, cd, 0],
                          [0, 0, 1]])
-        advo['orientmat'] = np.einsum('ij,kjl->kil',
-                                      Rdec,
-                                      advo['orientmat'])
+        odata['orientmat'] = np.einsum('ij,kjl->kil',
+                                       Rdec,
+                                       advo['orientmat'])
 
         advo.props['declination_in_orientmat'] = True
-        p, r, h = orient2euler(advo['orientmat'])
-        advo.add_data('pitch', p, 'orient')
-        advo.add_data('roll', r, 'orient')
-        advo.add_data('heading', h, 'orient')
+        p, r, h = orient2euler(odata['orientmat'])
+        odata['pitch'] = p
+        odata['roll'] = r
+        odata['heading'] = h
         advo.props['declination_in_heading'] = True
 
-    if 'heading' in advo and \
+    if 'heading' in odata and \
        not advo.props.get('declination_in_heading', False):
-        advo['heading'] += advo.props['declination']
-        advo['heading'][advo['heading'] < 0] += 360
-        advo['heading'][advo['heading'] > 360] -= 360
+        odata['heading'] += advo.props['declination']
+        odata['heading'][odata['heading'] < 0] += 360
+        odata['heading'][odata['heading'] > 360] -= 360
         advo.props['declination_in_heading'] = True
 
 
