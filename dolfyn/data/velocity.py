@@ -1,7 +1,6 @@
 from __future__ import division
-from .base import np, ma
-from .binned import TimeBindat, TimeBinner, rad_hz
-from .base import TimeData
+from .base import np, ma, TimeData, rad_hz
+from .binned import TimeBinner
 
 
 class Velocity(TimeData):

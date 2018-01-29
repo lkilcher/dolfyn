@@ -1,25 +1,10 @@
 from __future__ import division
 import numpy as np
-from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, cpsd, phase_angle
+from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, \
+    cpsd, phase_angle
 from ..tools.misc import slice1d_along_axis, detrend
-from .base import ma, rad_hz, TimeData
-from h5py._hl.dataset import Dataset
+from .base import ma, TimeData
 import copy
-
-
-class TimeBindat(TimeData):
-
-    """
-    A base, abstract class for binned data.
-
-    """
-    @property
-    def freq(self,):
-        return self.omega[:] / rad_hz
-
-    @freq.setter
-    def freq(self, val):
-        self.omega = val * rad_hz
 
 
 class TimeBinner(object):
@@ -243,14 +228,13 @@ class TimeBinner(object):
                     n_bin2)[..., None]
         return out
 
-    def do_avg(self, rawdat, outdat):
+    def do_avg(self, rawdat, outdat, names=None):
         """
 
         Parameters
         ----------
         rawdat : raw_data_object
-           The raw data structure to be binned (if None, a basic
-           TimeBindat class is created).
+           The raw data structure to be binned
         outdat : avg_data_object
            The bin'd (output) data object to which averaged data is added.
         names : list of strings
@@ -258,7 +242,9 @@ class TimeBinner(object):
            all data in `rawdat` will be binned.
 
         """
-        for ky in rawdat:
+        if names is None:
+            names = rawdat.keys()
+        for ky in names:
             if isinstance(rawdat[ky], TimeData):
                 outdat[ky] = TimeData()
                 self.do_avg(rawdat[ky], outdat[ky])
@@ -273,8 +259,7 @@ class TimeBinner(object):
         Parameters
         ----------
         rawdat : raw_data_object
-           The raw data structure to be binned (if None, a basic
-           TimeBindat class is created).
+           The raw data structure to be binned.
 
         outdat : avg_data_object
            The bin'd (output) data object to which variance data is added.
@@ -284,14 +269,16 @@ class TimeBinner(object):
            `names` is None, all data in `rawdat` will be binned.
 
         """
-        n = len(rawdat)
-        for nm, dat, grp in rawdat.iter_wg():
-            mro = dat.__class__.__mro__
-            if ((names is None) or (nm in names)) and \
-               ((np.ndarray in mro) or (Dataset in mro)) and \
-               (dat.shape[-1] == n):
-                print(grp)
-                outdat[nm + suffix] = self.reshape(dat).var(-1)
+        if names is None:
+            names = rawdat.keys()
+        for ky in names:
+            if isinstance(rawdat[ky], TimeData):
+                outdat[ky] = TimeData()
+                self.do_avg(rawdat[ky], outdat[ky])
+            elif isinstance(rawdat[ky], np.ndarray):
+                outdat[ky] = self.reshape(rawdat[ky]).var(-1)
+            else:
+                outdat[ky] = copy.deepcopy(rawdat[ky])
 
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None):
         """
@@ -325,12 +312,9 @@ class TimeBinner(object):
             print("n_fft_coh must be smaller than n_bin, "
                   "setting n_fft_coh=n_bin / 6")
 
-    def __call__(self, rawdat, out_type=TimeBindat):
-        outdat.props.update(rawdat.props)
-        print(outdat.props)
-        if hasattr(rawdat, 'config'):
-            outdat['config'] = copy.deepcopy(rawdat['config'])
-        return outdat
+    def __call__(self, rawdat, out_type=TimeData):
+        self.check_indata(rawdat)
+        return out_type()
 
     def check_indata(self, rawdat):
         if np.any(np.array(rawdat.shape) == 0):
