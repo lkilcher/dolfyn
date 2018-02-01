@@ -5,6 +5,7 @@ from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, \
 from ..tools.misc import slice1d_along_axis, detrend
 from .base import ma, TimeData
 import copy
+import warnings
 
 
 class TimeBinner(object):
@@ -99,7 +100,8 @@ class TimeBinner(object):
             dtype=arr.dtype)
         if np.mod(n_bin, 1) == 0:
             # If n_bin is an integer, we can do this simply.
-            out[..., npd0: n_bin + npd0] = (arr[..., :(shp[-2] * shp[-1])]).reshape(shp, order='C')
+            out[..., npd0: n_bin + npd0] = (
+                arr[..., :(shp[-2] * shp[-1])]).reshape(shp, order='C')
         else:
             inds = (np.arange(np.prod(shp[-2:])) * n_bin // int(n_bin)
                     ).astype(int)
@@ -111,7 +113,10 @@ class TimeBinner(object):
             out[..., 1:, :npd0] = out[..., :-1, n_bin:n_bin + npd0]
             out[..., :-1, -npd1:] = out[..., 1:, npd0:npd0 + npd1]
         if isinstance(arr, np.ma.MaskedArray):
-            out = np.ma.masked_where(self.reshape(arr.mask, n_pad=n_pad, n_bin=n_bin), out)
+            out = np.ma.masked_where(self.reshape(arr.mask,
+                                                  n_pad=n_pad,
+                                                  n_bin=n_bin),
+                                     out)
         if ma.valid and isinstance(out, ma.marray):
             out.meta.dim_names += ['time2']
         return out
@@ -313,18 +318,24 @@ class TimeBinner(object):
                   "setting n_fft_coh=n_bin / 6")
 
     def __call__(self, rawdat, out_type=TimeData):
-        self.check_indata(rawdat)
+        self._check_indata(rawdat)
         return out_type()
 
-    def check_indata(self, rawdat):
+    def _check_indata(self, rawdat):
         if np.any(np.array(rawdat.shape) == 0):
-            raise RuntimeError("The input data cannot be averaged because it is empty.")
-        if 'DutyCycle_NBurst' in rawdat.props and rawdat.props['DutyCycle_NBurst'] < self.n_bin:
-            print("Warning: The averaging interval (n_bin = {}) is larger than the burst interval "
-                  "(NBurst = {})!".format(self.n_bin, rawdat.props['DutyCycle_NBurst']))
+            raise RuntimeError(
+                "The input data cannot be averaged "
+                "because it is empty.")
+        if 'DutyCycle_NBurst' in rawdat.props and \
+           rawdat.props['DutyCycle_NBurst'] < self.n_bin:
+            warnings.warn(
+                "The averaging interval (n_bin = {}) is "
+                "larger than the burst interval (NBurst = {})!"
+                .format(self.n_bin, rawdat.props['DutyCycle_NBurst']))
         if rawdat['props']['fs'] != self.fs:
-            raise Exception("The input data sample rate (dat.fs) does not "
-                            "match the sample rate of this binning-object!")
+            raise Exception(
+                "The input data sample rate (dat.fs) does not "
+                "match the sample rate of this binning-object!")
 
     def cohere(self, dat1, dat2, window='hann', debias=True,
                noise=(0, 0), n_fft=None, n_bin1=None, n_bin2=None,):
