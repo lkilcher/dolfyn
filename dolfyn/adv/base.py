@@ -29,7 +29,7 @@ class ADVraw(dbvel.Velocity):
         return body2imu[self.make_model]
 
 
-class ADVbinned(dbvel.VelBindatSpec, ADVraw):
+class ADVbinned(dbvel.VelTkeData, ADVraw):
 
     """
     A base class for binned ADV objects.

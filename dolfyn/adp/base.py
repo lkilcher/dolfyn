@@ -76,11 +76,11 @@ class adcp_raw(dbvel.Velocity):
                  self.shape[1]))
 
 
-class adcp_binned(dbvel.VelBindatTke, adcp_raw):
+class adcp_binned(dbvel.VelTkeData, adcp_raw):
     inds = slice(None)
 
 
-class binner(dbvel.VelBinnerTke):
+class binner(dbvel.VelBinner):
 
     def __call__(self, indat, out_type=adcp_binned):
         out = dbvel.VelBinnerTke.__call__(self, indat, out_type=out_type)
