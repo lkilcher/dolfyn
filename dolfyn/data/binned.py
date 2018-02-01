@@ -233,7 +233,7 @@ class TimeBinner(object):
                     n_bin2)[..., None]
         return out
 
-    def do_avg(self, rawdat, outdat, names=None):
+    def do_avg(self, rawdat, outdat=None, names=None):
         """
 
         Parameters
@@ -247,6 +247,8 @@ class TimeBinner(object):
            all data in `rawdat` will be binned.
 
         """
+        if outdat is None:
+            outdat = TimeData()
         if names is None:
             names = rawdat.keys()
         for ky in names:
@@ -257,8 +259,9 @@ class TimeBinner(object):
                 outdat[ky] = self.mean(rawdat[ky])
             else:
                 outdat[ky] = copy.deepcopy(rawdat[ky])
+        return outdat
 
-    def do_var(self, rawdat, outdat, names=None, suffix='_var'):
+    def do_var(self, rawdat, outdat=None, names=None, suffix='_var'):
         """Calculate the variance of data attributes.
 
         Parameters
@@ -274,6 +277,8 @@ class TimeBinner(object):
            `names` is None, all data in `rawdat` will be binned.
 
         """
+        if outdat is None:
+            outdat = TimeData()
         if names is None:
             names = rawdat.keys()
         for ky in names:
@@ -284,6 +289,7 @@ class TimeBinner(object):
                 outdat[ky] = self.reshape(rawdat[ky]).var(-1)
             else:
                 outdat[ky] = copy.deepcopy(rawdat[ky])
+        return outdat
 
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None):
         """
@@ -316,10 +322,6 @@ class TimeBinner(object):
             self.n_fft_coh = n_bin // 6
             print("n_fft_coh must be smaller than n_bin, "
                   "setting n_fft_coh=n_bin / 6")
-
-    def __call__(self, rawdat, out_type=TimeData):
-        self._check_indata(rawdat)
-        return out_type()
 
     def _check_indata(self, rawdat):
         if np.any(np.array(rawdat.shape) == 0):
