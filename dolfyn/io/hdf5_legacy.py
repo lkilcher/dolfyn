@@ -695,7 +695,10 @@ def convert_from_legacy(dat):
             if g not in out:
                 out[g] = db.TimeData()
             dnow = out[g]
-        dnow[ky] = dat[ky]
+        try:
+            dnow[ky] = dat[ky]
+        except KeyError:
+            dnow[ky + '_'] = dat[ky]
     out['props'] = dict(copy.deepcopy(dat.props))
     p = out['props']
     if out['config']['config_type'] == 'Nortek AD2CP':
