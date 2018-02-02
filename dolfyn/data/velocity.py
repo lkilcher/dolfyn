@@ -15,6 +15,13 @@ class Velocity(TimeData):
         return self.props['has imu']
 
     @property
+    def n_time(self, ):
+        try:
+            return self['mpltime'].shape[-1]
+        except KeyError:
+            return self['vel'].shape[-1]
+
+    @property
     def shape(self,):
         return self.u.shape
 
