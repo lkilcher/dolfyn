@@ -35,9 +35,8 @@ Examples
 """
 
 
-from .base_legacy import load_legacy, mmload_legacy
 from .turbulence import calc_turbulence, TurbBinner
 from . import clean
-from ..io.nortek import read_nortek
 from . import rotate
 from . import motion
+from ..io.api import read, load

@@ -2,7 +2,8 @@ import dolfyn.adv.api as avm
 import dolfyn.data.base
 import numpy as np
 from base import ResourceFilename
-from dolfyn.io.hdf5 import load
+
+load = avm.load
 
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
@@ -34,15 +35,15 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def read_test(make_data=False):
 
-    td = avm.read_nortek(exdt('example_data/vector_data01.VEC'), nens=100)
-    tdm = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
-                          userdata=False,
-                          nens=100)
-    tdb = avm.read_nortek(exdt('example_data/burst_mode01.VEC'),
-                          nens=100)
-    tdm2 = avm.read_nortek(exdt('example_data/vector_data_imu01.VEC'),
-                           userdata=exdt('example_data/vector_data_imu01.userdata.json'),
-                           nens=100)
+    td = avm.read(exdt('example_data/vector_data01.VEC'), nens=100)
+    tdm = avm.read(exdt('example_data/vector_data_imu01.VEC'),
+                   userdata=False,
+                   nens=100)
+    tdb = avm.read(exdt('example_data/burst_mode01.VEC'),
+                   nens=100)
+    tdm2 = avm.read(exdt('example_data/vector_data_imu01.VEC'),
+                    userdata=exdt('example_data/vector_data_imu01.userdata.json'),
+                    nens=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
@@ -55,7 +56,7 @@ def read_test(make_data=False):
         tdm2.save(rfnm('data/vector_data_imu01-json.h5'))
         return
 
-    msg_form = "The output of read_nortek('{}.VEC') does not match '{}.h5'."
+    msg_form = "The output of read('{}.VEC') does not match '{}.h5'."
     for dat1, dat2, msg in [
             (td, dat,
              msg_form.format('vector_data01', 'vector_data01')),
@@ -185,10 +186,6 @@ def subset_test(make_data=False):
 
 
 if __name__ == '__main__':
-    import dolfyn.data.base
-    dolfyn.data.base.debug_level = 10
-
-    pkg_root = '../'
 
     for func, dat1, dat2, msg in read_test():
         func(dat1, dat2, msg)

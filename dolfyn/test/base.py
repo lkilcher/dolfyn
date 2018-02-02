@@ -1,5 +1,8 @@
 import pkg_resources
 import atexit
+import pyDictH5.base as pb
+
+pb.debug_level = 10
 
 atexit.register(pkg_resources.cleanup_resources)
 
