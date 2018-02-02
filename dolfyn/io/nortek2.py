@@ -377,6 +377,13 @@ def reduce(data):
         if ky + '_b5' in data['sys']:
             data['sys'].pop(ky + '_b5')
 
+    data['range'] = (np.arange(data['vel'].shape[1]) *
+                     data['config']['cell_size'] +
+                     data['config']['blanking'])
+    data['range_b5'] = (np.arange(data['vel_b5'].shape[1]) *
+                        data['config']['cell_size_b5'] +
+                        data['config']['blanking_b5'])
+
 
 if __name__ == '__main__':
 
