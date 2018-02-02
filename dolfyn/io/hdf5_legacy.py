@@ -17,6 +17,7 @@ import copy
 from six import string_types
 import sys
 from .. import _version as _ver
+import warnings
 
 
 if sys.version_info >= (3, 0):
@@ -646,7 +647,7 @@ class Loader(base.DataFactory):
                     yield grp
 
 
-def load(fname, data_groups=None):
+def load(fname, data_groups=None, fix_by_overwrite=False):
     from ..adp import base_legacy as adp_base_legacy
     from ..adv import base_legacy as adv_base_legacy
     #pdb.set_trace()
@@ -655,6 +656,14 @@ def load(fname, data_groups=None):
     with Loader(fname, type_map) as ldr:
         dat = ldr.load(data_groups)
     out = convert_from_legacy(dat)
+    if fix_by_overwrite:
+        out.to_hdf5(fname)
+        warnings.warn("Updating the data format...")
+    else:
+        warnings.warn("The data format is old and will be deprecated in the "
+                      "future. Consider updating the format of '{}' by "
+                      "overwriting the file with the loaded object."
+                      .format(fname))
     return out
 
 
