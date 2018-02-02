@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from ..data.velocity import VelBinnerSpec
+from ..data.velocity import VelBinner
 from .base import ADVbinned
 from ..data import base as db
 from ..tools.misc import slice1d_along_axis, nans_like
@@ -10,7 +10,7 @@ from scipy.special import cbrt
 kappa = 0.41
 
 
-class TurbBinner(VelBinnerSpec):
+class TurbBinner(VelBinner):
 
     """
     Computes various averages and turbulence statistics from cleaned
@@ -94,7 +94,7 @@ class TurbBinner(VelBinnerSpec):
         #               "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
         #               .format(self.n_bin))
         out = out_type()
-        self.check_indata(advr)
+        self._check_indata(advr)
         self.do_avg(advr, out)
         noise = advr.get('doppler_noise', [0, 0, 0])
         out['tke_vec'] = self.calc_tke(advr['vel'], noise=noise)
