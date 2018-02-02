@@ -136,7 +136,7 @@ class TimeBinner(object):
         dt = self.reshape(dat, n_pad=n_pad, n_bin=n_bin)
         return dt - (dt.mean(-1)[..., None])
 
-    def mean(self, dat, n_bin=None, mask_thresh=None):
+    def mean(self, dat, axis=-1, n_bin=None, mask_thresh=None):
         """Average an array object.
 
         Parameters
@@ -148,11 +148,16 @@ class TimeBinner(object):
             not None mask the averaged values where the fraction of
             bad points is greater than mask_thresh
         """
+        # Can I turn this 'swapaxes' stuff into a decorator?
+        if axis != -1:
+            dat = np.swapaxes(dat, axis, -1)
         n_bin = self._parse_nbin(n_bin)
         tmp = self.reshape(dat, n_bin=n_bin)
         out = tmp.mean(-1)
         if isinstance(dat, np.ma.MaskedArray) and mask_thresh is not None:
             out.mask = tmp.mask.sum(-1).astype(np.float) > mask_thresh * n_bin
+        if axis != -1:
+            np.swapaxes(out, axis, -1)
         if dat.__class__ is np.ndarray:
             return out
         return out.view(dat.__class__)
@@ -233,7 +238,7 @@ class TimeBinner(object):
                     n_bin2)[..., None]
         return out
 
-    def do_avg(self, rawdat, outdat=None, names=None):
+    def do_avg(self, rawdat, outdat=None, names=None, n_time=None):
         """
 
         Parameters
@@ -247,18 +252,26 @@ class TimeBinner(object):
            all data in `rawdat` will be binned.
 
         """
+        props = {}
+        if n_time is None:
+            n_time = rawdat.n_time
         if outdat is None:
-            outdat = TimeData()
+            outdat = type(rawdat)()
+            props['n_bin'] = self.n_bin
+            props['n_fft'] = self.n_fft
         if names is None:
             names = rawdat.keys()
         for ky in names:
             if isinstance(rawdat[ky], TimeData):
                 outdat[ky] = TimeData()
-                self.do_avg(rawdat[ky], outdat[ky])
-            elif isinstance(rawdat[ky], np.ndarray):
-                outdat[ky] = self.mean(rawdat[ky])
+                self.do_avg(rawdat[ky], outdat[ky], n_time=n_time)
+            elif (isinstance(rawdat[ky], np.ndarray) and
+                  rawdat[ky].shape[rawdat._time_dim] == n_time):
+                outdat[ky] = self.mean(rawdat[ky], axis=rawdat._time_dim)
             else:
                 outdat[ky] = copy.deepcopy(rawdat[ky])
+        if 'props' in outdat:
+            outdat['props'].update(props)
         return outdat
 
     def do_var(self, rawdat, outdat=None, names=None, suffix='_var'):
