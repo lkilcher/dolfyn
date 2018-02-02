@@ -271,6 +271,8 @@ class NortekReader(object):
         props['coord_sys'] = {'XYZ': 'inst',
                               'ENU': 'earth',
                               'BEAM': 'beam'}[self.config.user.CoordSystem]
+        # This just initializes it; this gets overwritten in read_microstrain
+        props['has imu'] = False
 
     def read(self, nbyte):
         byts = self.f.read(nbyte)
@@ -717,6 +719,7 @@ class NortekReader(object):
         c = self.c
         dat = self.data
         dat_o = dat['orient']
+        dat.props['has imu'] = True
         if not (hasattr(dat_o, 'Accel')):
             self._dtypes += ['microstrain']
             if ahrsid == 195:

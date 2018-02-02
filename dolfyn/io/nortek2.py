@@ -384,6 +384,11 @@ def reduce(data):
                         data['config']['cell_size_b5'] +
                         data['config']['blanking_b5'])
 
+    if 'Acc' in data['orient']:
+        data['props']['has imu'] = True
+    else:
+        data['props']['has imu'] = False
+
 
 if __name__ == '__main__':
 

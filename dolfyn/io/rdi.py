@@ -780,6 +780,8 @@ class adcp_loader(object):
         outd.props['inst_model'] = '<WORKHORSE?>'
         outd.props['inst_type'] = 'ADP'
         outd.props['rotate_vars'] = {'vel', }
+        # Currently RDI doesn't use IMUs
+        outd.props['has imu'] = False
         for nm in data_defs:
             idata(outd, nm,
                   sz=get_size(nm, self._nens,
