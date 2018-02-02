@@ -28,9 +28,15 @@ def _format_repr(dat, level=0, show_all=False, skip=[]):
         else:
             val = dat[ky]
             sval = str(type(val))
-            if isinstance(val, np.ndarray):
-                sval = '<np.ndarray: {}; dtype={}>'.format(val.shape,
-                                                           val.dtype)
+            if type(val) is np.ndarray:
+                sval = '<array; {}; {}>'.format(val.shape,
+                                                val.dtype)
+            elif isinstance(val, np.ndarray):
+                sval = '<{}; {}; {}>'.format(
+                    str(type(val))
+                    .rsplit('.')[-1].rstrip("'>"),
+                    val.shape,
+                    val.dtype)
             s_ky += ' | {: <25}: {}\n'.format(ky, sval)
     s = s_ky + s_grp
     return s
