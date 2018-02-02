@@ -12,7 +12,7 @@ class Velocity(TimeData):
         Test whether this data object contains Inertial Motion Unit
         (IMU) data.
         """
-        return hasattr(self, 'Accel') | hasattr(self, 'Veloc')
+        return self.props['has imu']
 
     @property
     def shape(self,):
