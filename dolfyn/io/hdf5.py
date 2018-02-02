@@ -18,8 +18,6 @@ from six import string_types
 import sys
 from .. import _version as _ver
 import hdf5_legacy as legacy
-reload(legacy)
-#import pdb
 
 
 if sys.version_info >= (3, 0):

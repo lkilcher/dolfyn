@@ -6,8 +6,6 @@ from dolfyn.io.hdf5 import load
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
 
-dolfyn.data.base.debug_level = 1
-
 dat_rdi = load(rfnm('data/RDI_test01.h5'), 'ALL')
 dat_rdi_i = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'), 'ALL')
 dat_awac = load(rfnm('data/AWAC_test01.h5'), 'ALL')
@@ -22,11 +20,11 @@ def data_equiv(dat1, dat2, message=''):
 
 def read_test(make_data=False):
 
-    td_rdi = apm.read_rdi(exdt('example_data/RDI_test01.000'))
-    td_sig = apm.read_signature(exdt('example_data/BenchFile01.ad2cp'))
-    td_awac = apm.read_nortek(exdt('example_data/AWAC_test01.wpr'))
-    td_wr1 = apm.read_rdi(exdt('example_data/winriver01.PD0'))
-    td_wr2 = apm.read_rdi(exdt('example_data/winriver02.PD0'))
+    td_rdi = apm.read(exdt('example_data/RDI_test01.000'))
+    td_sig = apm.read(exdt('example_data/BenchFile01.ad2cp'))
+    td_awac = apm.read(exdt('example_data/AWAC_test01.wpr'))
+    td_wr1 = apm.read(exdt('example_data/winriver01.PD0'))
+    td_wr2 = apm.read(exdt('example_data/winriver02.PD0'))
 
     if make_data:
         td_rdi.save(rfnm('data/RDI_test01.h5'))
@@ -36,7 +34,7 @@ def read_test(make_data=False):
         td_wr2.save(rfnm('data/winriver02.h5'))
         return
 
-    msg_form = "The output of read_rdi('{}') does not match '{}'."
+    msg_form = "The output of read('{}') does not match '{}'."
     for dat1, dat2, msg in [
             (td_rdi, dat_rdi,
              msg_form.format('RDI_test01.000', 'RDI_test01.h5')),
@@ -84,8 +82,6 @@ def rotate_inst2earth_test(make_data=False):
 
 
 if __name__ == '__main__':
-    import dolfyn.data.base
-    dolfyn.data.base.debug_level = 10
 
     for func, dat1, dat2, msg in read_test():
         func(dat1, dat2, msg)

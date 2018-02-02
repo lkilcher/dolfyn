@@ -266,3 +266,13 @@ class binner(dbvel.VelBinnerTke):
 
 
 type_map = dio.get_typemap(__name__)
+
+
+def load_legacy(fname, data_groups=None):
+    with dio.loader(fname, type_map) as ldr:
+        return ldr.load(data_groups)
+
+
+def mmload_legacy(fname, data_groups=None):
+    with dio.loader(fname, type_map) as ldr:
+        return ldr.mmload(data_groups)
