@@ -55,18 +55,18 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
         ens_now += nens_per_file
 
 
-def read_signature(filename, nens=None):
+def read_signature(filename, userdata=True, nens=None):
     """Read a Nortek Signature (.ad2cp) file.
 
     Parameters
     ==========
     filename : string
         The filename of the file to load.
-    ens_start : int
-        The first ensemble to load (default: 0)
-    ens_stop : int
-        The ensemble to stop at (default: None, i.e., load to the last
-        ensemble)
+    userdata : filename
+        **currently unused, just a placeholder.
+    nens : int, or tuple of 2 ints
+        The number of ensembles to read, if int (starting at the
+        beginning); or the range of ensembles to read, if tuple.
 
     Returns
     =======

@@ -12,7 +12,8 @@ from scipy import nanmean
 import warnings
 
 
-def read_rdi(fname, nens=None):
+def read_rdi(fname, userdata=None, nens=None):
+    # userdata is not used here.
     with adcp_loader(fname) as ldr:
         dat = ldr.load_data(nens=nens)
     return dat
