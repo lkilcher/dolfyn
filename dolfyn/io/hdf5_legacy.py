@@ -701,6 +701,16 @@ def convert_from_legacy(dat):
             dnow[ky + '_'] = dat[ky]
     out['props'] = dict(copy.deepcopy(dat.props))
     p = out['props']
+    if 'Acc' in out['orient']:
+        out['orient']['Accel'] = out['orient'].pop('Acc') * 9.81
+    if 'Acc_b5' in out['orient']:
+        out['orient']['Accel_b5'] = out['orient'].pop('Acc_b5') * 9.81
+    if 'ahrs_gyro' in out['orient']:
+        out['orient']['AngRt'] = out['orient'].pop('ahrs_gyro') * np.pi / 180
+    if 'Accel' in out['orient']:
+        p['has imu'] = True
+    else:
+        p['has imu'] = False
     if out['config']['config_type'] == 'Nortek AD2CP':
         p['inst_make'] = "Nortek"
         p['inst_model'] = 'Signature'
@@ -741,6 +751,12 @@ def convert_signature(dat, out):
     for ky in ['heading', 'pitch', 'roll']:
         ornt[ky] = out.pop(ky)
     out.props.pop('fs')
+    out['range'] = (np.arange(out['vel'].shape[1]) *
+                    out['config']['cell_size'] +
+                    out['config']['blanking'])
+    out['range_b5'] = (np.arange(out['vel_b5'].shape[1]) *
+                       out['config']['cell_size_b5'] +
+                       out['config']['blanking_b5'])
 
 
 def convert_vector(dat, out):

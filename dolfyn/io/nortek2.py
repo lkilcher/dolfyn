@@ -312,7 +312,7 @@ def reorg(dat):
                    'heading', 'pitch', 'roll',
                    'temp_press', 'batt_V',
                    'temp_mag', 'temp_clock',
-                   'Mag', 'Acc',
+                   'Mag', 'Accel',
                    'ambig_vel', 'xmit_energy',
                    'error', 'status0', 'status',
                    '_ensemble', 'ensemble']:
@@ -325,7 +325,7 @@ def reorg(dat):
                 'ast_pressure',
                 'altraw_nsamp', 'altraw_dist', 'altraw_samp',
                 'echo',
-                'orientmat', 'ahrs_gyro',
+                'orientmat', 'AngRt',
                 'percent_good',
                 'std_pitch', 'std_roll', 'std_heading', 'std_press'
         ]:
@@ -384,7 +384,7 @@ def reduce(data):
                         data['config']['cell_size_b5'] +
                         data['config']['blanking_b5'])
 
-    if 'Acc' in data['orient']:
+    if 'Accel' in data['orient']:
         data['props']['has imu'] = True
     else:
         data['props']['has imu'] = False
