@@ -9,7 +9,7 @@ from ..adp import base as apb
 import numpy as np
 from .base import WrongFileType
 from ..data import base as db
-
+import warnings
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
                  ens_start=0, ens_stop=None,
@@ -199,20 +199,22 @@ class Ad2cpReader(object):
             if id in [21, 24]:
                 self.read_burst(id, outdat[id], c)
             elif id in [26]:
-                print("Unhandled ID: 0x1A (26)\n"
-                      "    There still seems to be a discrepancy between\n"
-                      "    the '0x1A' data format, and the specification\n"
-                      "    in the System Integrator Manual.")
+                warnings.warn(
+                    "Unhandled ID: 0x1A (26)\n"
+                    "    There still seems to be a discrepancy between\n"
+                    "    the '0x1A' data format, and the specification\n"
+                    "    in the System Integrator Manual.")
                 # Question posted at:
                 # http://www.nortek-as.com/en/knowledge-center/forum/system-integration-and-telemetry/538802891
                 self.f.seek(hdr['sz'], 1)
             elif id in [22, 23, 27, 28, 29, 30, 31]:
-                print("Unhandled ID: 0x{:02X} ({:02d})\n"
-                      "    This ID is not yet handled by DOLfYN.\n"
-                      "    If possible, please file an issue and share a\n"
-                      "    portion of your data file:\n"
-                      "      http://github.com/lkilcher/dolfyn/issues/"
-                      .format(id, id))
+                warnings.warn(
+                    "Unhandled ID: 0x{:02X} ({:02d})\n"
+                    "    This ID is not yet handled by DOLfYN.\n"
+                    "    If possible, please file an issue and share a\n"
+                    "    portion of your data file:\n"
+                    "      http://github.com/lkilcher/dolfyn/issues/"
+                    .format(id, id))
                 self.f.seek(hdr['sz'], 1)
             elif id == 160:
                 # 0xa0 (i.e., 160) is a 'string data record'
