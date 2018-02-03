@@ -6,12 +6,12 @@ from dolfyn.io.hdf5 import load
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
 
-dat_rdi = load(rfnm('data/RDI_test01.h5'), 'ALL')
-dat_rdi_i = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'), 'ALL')
-dat_awac = load(rfnm('data/AWAC_test01.h5'), 'ALL')
-dat_sig = load(rfnm('data/BenchFile01.h5'), 'ALL')
-dat_wr1 = load(rfnm('data/winriver01.h5'), 'ALL')
-dat_wr2 = load(rfnm('data/winriver02.h5'), 'ALL')
+dat_rdi = load(rfnm('data/RDI_test01.h5'))
+dat_rdi_i = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
+dat_awac = load(rfnm('data/AWAC_test01.h5'))
+dat_sig = load(rfnm('data/BenchFile01.h5'))
+dat_wr1 = load(rfnm('data/winriver01.h5'))
+dat_wr2 = load(rfnm('data/winriver02.h5'))
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -27,11 +27,11 @@ def read_test(make_data=False):
     td_wr2 = apm.read(exdt('example_data/winriver02.PD0'))
 
     if make_data:
-        td_rdi.save(rfnm('data/RDI_test01.h5'))
-        td_sig.save(rfnm('data/BenchFile01.h5'))
-        td_awac.save(rfnm('data/AWAC_test01.h5'))
-        td_wr1.save(rfnm('data/winriver01.h5'))
-        td_wr2.save(rfnm('data/winriver02.h5'))
+        td_rdi.to_hdf5(rfnm('data/RDI_test01.h5'))
+        td_sig.to_hdf5(rfnm('data/BenchFile01.h5'))
+        td_awac.to_hdf5(rfnm('data/AWAC_test01.h5'))
+        td_wr1.to_hdf5(rfnm('data/winriver01.h5'))
+        td_wr2.to_hdf5(rfnm('data/winriver02.h5'))
         return
 
     msg_form = "The output of read('{}') does not match '{}'."
@@ -56,7 +56,7 @@ def rotate_beam2inst_test(make_data=False):
     apm.beam2inst(td)
 
     if make_data:
-        td.save(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
+        td.to_hdf5(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
         return
 
     assert td == dat_rdi_i, "adp.rotate.beam2inst gives unexpected results!"
@@ -70,12 +70,12 @@ def rotate_inst2earth_test(make_data=False):
     apm.inst2earth(tdwr2)
 
     if make_data:
-        td.save(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
-        tdwr2.save(rfnm('data/winriver02_rotate_ship2earth.h5'))
+        td.to_hdf5(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
+        tdwr2.to_hdf5(rfnm('data/winriver02_rotate_ship2earth.h5'))
         return
 
-    cd = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'), 'ALL')
-    cdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'), 'ALL')
+    cd = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
+    cdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
 
     assert td == cd, "adp.rotate.inst2earth gives unexpected results!"
     assert tdwr2 == cdwr2, "adp.rotate.inst2earth gives unexpected results!"
