@@ -10,10 +10,10 @@ exdt = ResourceFilename('dolfyn')
 
 dolfyn.data.base.debug_level = 1
 
-dat = load(rfnm('data/vector_data01.h5'), 'ALL')
-dat_imu = load(rfnm('data/vector_data_imu01.h5'), 'ALL')
-dat_imu_json = load(rfnm('data/vector_data_imu01-json.h5'), 'ALL')
-dat_burst = load(rfnm('data/burst_mode01.h5'), 'ALL')
+dat = load(rfnm('data/vector_data01.h5'))
+dat_imu = load(rfnm('data/vector_data_imu01.h5'))
+dat_imu_json = load(rfnm('data/vector_data_imu01-json.h5'))
+dat_burst = load(rfnm('data/burst_mode01.h5'))
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -50,10 +50,10 @@ def read_test(make_data=False):
     tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
-        td.save(rfnm('data/vector_data01.h5'))
-        tdm.save(rfnm('data/vector_data_imu01.h5'))
-        tdb.save(rfnm('data/burst_mode01.h5'))
-        tdm2.save(rfnm('data/vector_data_imu01-json.h5'))
+        td.to_hdf5(rfnm('data/vector_data01.h5'))
+        tdm.to_hdf5(rfnm('data/vector_data_imu01.h5'))
+        tdb.to_hdf5(rfnm('data/burst_mode01.h5'))
+        tdm2.to_hdf5(rfnm('data/vector_data_imu01-json.h5'))
         return
 
     msg_form = "The output of read('{}.VEC') does not match '{}.h5'."
@@ -86,25 +86,22 @@ def motion_test(make_data=False):
     avm.motion.correct_motion(tdmj)
 
     if make_data:
-        tdm.save(rfnm('data/vector_data_imu01_mc.h5'))
-        tdm10.save(rfnm('data/vector_data_imu01_mcDeclin10.h5'))
-        tdmj.save(rfnm('data/vector_data_imu01-json_mc.h5'))
+        tdm.to_hdf5(rfnm('data/vector_data_imu01_mc.h5'))
+        tdm10.to_hdf5(rfnm('data/vector_data_imu01_mcDeclin10.h5'))
+        tdmj.to_hdf5(rfnm('data/vector_data_imu01-json_mc.h5'))
         return
 
     msg_form = "Motion correction {}does not match expectations."
 
     for dat1, dat2, msg in [
             (tdm,
-             load(rfnm('data/vector_data_imu01_mc.h5'),
-                  'ALL'),
+             load(rfnm('data/vector_data_imu01_mc.h5')),
              ''),
             (tdm10,
-             load(rfnm('data/vector_data_imu01_mcDeclin10.h5'),
-                  'ALL'),
+             load(rfnm('data/vector_data_imu01_mcDeclin10.h5')),
              'with declination=10 '),
             (tdmj,
-             load(rfnm('data/vector_data_imu01-json_mc.h5'),
-                  'ALL'),
+             load(rfnm('data/vector_data_imu01-json_mc.h5')),
              'with reading userdata.json '),
     ]:
         yield data_equiv, dat1, dat2, msg_form.format(msg)
@@ -129,11 +126,10 @@ def heading_test(make_data=False):
     od['heading'] = head
 
     if make_data:
-        td.save(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
+        td.to_hdf5(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
         return
 
-    cd = load(rfnm('data/vector_data_imu01_head_pitch_roll.h5'),
-              'ALL')
+    cd = load(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
 
     assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
 
@@ -144,10 +140,10 @@ def turbulence_test(make_data=False):
     td = bnr(tmp)
 
     if make_data:
-        td.save(rfnm('data/vector_data01_bin.h5'))
+        td.to_hdf5(rfnm('data/vector_data01_bin.h5'))
         return
 
-    cd = load(rfnm('data/vector_data01_bin.h5'), 'ALL')
+    cd = load(rfnm('data/vector_data01_bin.h5'))
 
     assert cd == td, "TurbBinner gives unexpected results!"
 
@@ -157,10 +153,10 @@ def clean_test(make_data=False):
     avm.clean.GN2002(td.u, 20)
 
     if make_data:
-        td.save(rfnm('data/vector_data01_uclean.h5'))
+        td.to_hdf5(rfnm('data/vector_data01_uclean.h5'))
         return
 
-    cd = load(rfnm('data/vector_data01_uclean.h5'), 'ALL')
+    cd = load(rfnm('data/vector_data01_uclean.h5'))
 
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"
 
@@ -169,10 +165,10 @@ def subset_test(make_data=False):
     td = dat.copy().subset[10:20]
 
     if make_data:
-        td.save(rfnm('data/vector_data01_subset.h5'))
+        td.to_hdf5(rfnm('data/vector_data01_subset.h5'))
         return
 
-    cd = load(rfnm('data/vector_data01_subset.h5'), 'ALL')
+    cd = load(rfnm('data/vector_data01_subset.h5'))
 
     # First check that subsetting works correctly
     yield data_equiv, cd, td, "ADV data object `subset` method gives unexpected results."
