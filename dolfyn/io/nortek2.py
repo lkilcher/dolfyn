@@ -176,6 +176,20 @@ class Ad2cpReader(object):
                 out[ky].append(val)
             else:
                 out[ky] = val
+        for ky in out:
+            if ky.startswith('GET'):
+                dat = out.pop(ky)
+                d = out[ky.lstrip('GET')] = dict()
+                for itm in dat.split(','):
+                    ky, val = itm.split('=')
+                    try:
+                        val = int(val)
+                    except ValueError:
+                        try:
+                            val = float(val)
+                        except ValueError:
+                            pass
+                    d[ky] = val
         return out
 
     def readfile(self, ens_start=0, ens_stop=None):
@@ -391,6 +405,14 @@ def reduce(data):
         data['props']['has imu'] = True
     else:
         data['props']['has imu'] = False
+    data.config['fs'] = data.config['filehead config']['BURST'].pop('SR')
+    data['props']['fs'] = data.config['fs']
+    tmat = data.config['filehead config'].pop('XFBURST')
+    tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)
+    for irow in range(tmat['ROWS']):
+        for icol in range(tmat['COLS']):
+            tm[irow, icol] = tmat['M' + str(irow + 1) + str(icol + 1)]
+    data.config['TransMatrix'] = tm
 
 
 if __name__ == '__main__':
