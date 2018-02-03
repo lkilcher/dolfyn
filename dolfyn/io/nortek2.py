@@ -11,6 +11,7 @@ from .base import WrongFileType
 from ..data import base as db
 import warnings
 
+
 def split_to_hdf(infile, nens_per_file, outfile=None,
                  ens_start=0, ens_stop=None,
                  start_file_num=0):
@@ -47,10 +48,10 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
         raise Exception("The output file must include a "
                         "integer format specifier.")
     while ens_now < ens_stop:
-        dat = read_signature(infile, (ens_now,
-                                      min(ens_now + nens_per_file,
-                                          ens_stop)))
-        dat.save(outfile.format(file_count))
+        dat = read_signature(infile, nens=(ens_now,
+                                           min(ens_now + nens_per_file,
+                                               ens_stop)))
+        dat.to_hdf5(outfile.format(file_count))
         file_count += 1
         ens_now += nens_per_file
 
