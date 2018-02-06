@@ -130,6 +130,58 @@ def getbit(val, n):
     return bool((val >> n) & 1)
 
 
+class BitIndexer(object):
+
+    def __init__(self, data):
+        self.data = data
+
+    @property
+    def _data_is_array(self, ):
+        return isinstance(self.data, np.ndarray)
+
+    @property
+    def nbits(self, ):
+        if self._data_is_array:
+            return self.data.dtype.itemsize * 8
+        else:
+            raise ValueError("You must specify the end-range "
+                             "for non-ndarray input data.")
+
+    def _get_out_type(self, mask):
+        # The mask indicates how big this item is.
+        if not self._data_is_array:
+            return None
+        if mask < 2:
+            return np.bool
+        if mask < 2 ** 8:
+            return np.uint8
+        elif mask < 2 ** 16:
+            return np.uint16
+        elif mask < 2 ** 32:
+            return np.uint32
+        else:
+            return np.uint64
+
+    def __getitem__(self, slc):
+        if isinstance(slc, int):
+            slc = slice(slc, slc + 1)
+        if slc.step not in [1, None]:
+            raise ValueError("Slice syntax for `getbits` does "
+                             "not support steps")
+        start = slc.start
+        stop = slc.stop
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = self.nbits
+        mask = 2 ** (stop - start) - 1
+        out = (self.data >> start) & mask
+        ot = self._get_out_type(mask)
+        if ot is not None:
+            out = out.astype(ot)
+        return out
+
+
 def headconfig_int2dict(val):
     """Convert the burst Configuration bit-mask to a dict of bools.
     """
@@ -151,6 +203,27 @@ def headconfig_int2dict(val):
         std=getbit(val, 14),
         # bit 15 is unused
     )
+
+
+def status2data(val):
+    # This is detailed in the 6.1.2 of the Nortek Signature
+    # Integrators Guide (2017)
+    bi = BitIndexer(val)
+    out = {}
+    out['wakeup state'] = bi[28:32]
+    out['orient_up'] = bi[25:28]
+    out['auto orientation'] = bi[22:25]
+    out['previous wakeup state'] = bi[18:22]
+    out['last meas low voltage skip'] = bi[17]
+    out['active config'] = bi[16]
+    out['echo sounder index'] = bi[12:16]
+    out['telemetry data'] = bi[11]
+    out['boost running'] = bi[10]
+    out['echo sounder freq bin'] = bi[5:10]
+    # 2,3,4 unused
+    out['bd scaling'] = bi[1]  # if True: cm scaling of blanking dist
+    # 0 unused
+    return out
 
 
 def beams_cy_int2dict(val, id):
