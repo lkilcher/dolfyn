@@ -6,13 +6,11 @@ from . import rotate as rot
 import warnings
 
 
-def get_body2imu(p):
-    if p['inst_make'].lower() == 'nortek' and \
-       p['inst_model'].lower() == 'vector':
+def get_body2imu(make_model):
+    if make_model == 'nortek vector':
         # In inches it is: (0.25, 0.25, 5.9)
         return np.array([0.00635, 0.00635, 0.14986])
-    elif p['inst_make'].lower() == 'nortek' and \
-            p['inst_model'].lower() == 'signature':
+    elif make_model.startswith('nortek signature'):
         return np.array([0.0, 0.0, 0.0])
     else:
         raise Exception("The imu->body vector is unknown for this instrument.")
@@ -196,7 +194,7 @@ class CalcMotion(object):
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - get_body2imu(self.advo.props)[:, None]
+        vec = vec - get_body2imu(self.advo.make_model)[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -442,7 +440,14 @@ def correct_motion(advo,
     #       are in the opposite direction of the head motion.
     #       i.e. when the head moves one way in stationary flow, it
     #       measures a velocity in the opposite direction.
-    advo['vel'] += (advo['orient']['velrot'] + advo['orient']['velacc'])
+    velmot = advo['orient']['velrot'] + advo['orient']['velacc']
+    if advo.props['inst_type'] == 'ADP':
+        velmot = velmot[:, None]
+    advo['vel'][:3] += velmot
+    if advo.make_model.startswith('nortek signature') and \
+       advo['vel'].shape[0] > 3:
+        # This assumes these are w.
+        advo['vel'][3:] += velmot[2:]
     advo.props['motion corrected'] = True
     advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
 
