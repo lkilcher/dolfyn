@@ -32,13 +32,6 @@ def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
                      [d, d, -d, -d]])
 
 
-def _cat4rot(tpl):
-    tmp = []
-    for vl in tpl:
-        tmp.append(vl[:, None, :])
-    return np.concatenate(tuple(tmp), axis=1)
-
-
 def beam2inst(adcpo, reverse=False, force=False):
     """Rotate velocitiesfrom beam to instrument coordinates.
 
@@ -110,14 +103,13 @@ def inst2earth(adcpo, reverse=False,
     `fixed_orientation` has no effect. If `'inst2earth:fixed'` is not
     in the props dict than the input value *is* used.
     """
-    if not force:
-        if (not reverse and
-                adcpo.props['coord_sys'] not in ['inst', 'ship']):
-            raise ValueError("The input must be in 'inst' or 'ship' "
-                             "coordinates.")
-        if (reverse and
-                adcpo.props['coord_sys'].lower() not in ['earth', 'enu']):
-            raise ValueError('The input must be in earth coordinates.')
+    cs_allowed = ['inst', 'ship']
+    csin = adcpo.props['coord_sys']
+    if reverse:
+        cs_allowed = ['earth', 'enu']
+    if not force and csin not in cs_allowed:
+        raise ValueError("Invalid rotation for data in {}-frame "
+                         "coordinate system.".format(csin))
     if (not reverse and 'declination' in adcpo.props.keys() and not
             adcpo.props.get('declination_in_heading', False)):
         # Only do this if making the forward rotation.
