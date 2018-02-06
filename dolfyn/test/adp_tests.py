@@ -76,17 +76,26 @@ def rotate_inst2earth_test(make_data=False):
     apm.inst2earth(td)
     tdwr2 = dat_wr2.copy()
     apm.inst2earth(tdwr2)
+    td_awac = dat_awac.copy()
+    apm.inst2earth(td_awac, reverse=True)
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
         tdwr2.to_hdf5(rfnm('data/winriver02_rotate_ship2earth.h5'))
+        td_awac.to_hdf5(rfnm('data/AWAC_test01_inst2earth-reverse.h5'))
         return
 
     cd = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
     cdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
+    cd_awac = load(rfnm('data/AWAC_test01_inst2earth-reverse.h5'))
 
-    assert td == cd, "adp.rotate.inst2earth gives unexpected results!"
-    assert tdwr2 == cdwr2, "adp.rotate.inst2earth gives unexpected results!"
+    msg = "adp.rotate.inst2earth gives unexpected results for {}"
+    for t, c, msg in (
+            (td, cd, msg.format('RDI_test01')),
+            (tdwr2, cdwr2, msg.format('winriver02')),
+            (td_awac, cd_awac, msg.format('AWAC_test01-reverse')),
+    ):
+        yield data_equiv, t, c, msg
 
 
 if __name__ == '__main__':
