@@ -6,6 +6,18 @@ from . import rotate as rot
 import warnings
 
 
+def get_body2imu(p):
+    if p['inst_make'].lower() == 'nortek' and \
+       p['inst_model'].lower() == 'vector':
+        # In inches it is: (0.25, 0.25, 5.9)
+        return np.array([0.00635, 0.00635, 0.14986])
+    elif p['inst_make'].lower() == 'nortek' and \
+            p['inst_model'].lower() == 'signature':
+        return np.array([0.0, 0.0, 0.0])
+    else:
+        raise Exception("The imu->body vector is unknown for this instrument.")
+
+
 class CalcMotion(object):
 
     """
@@ -184,7 +196,7 @@ class CalcMotion(object):
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - self.advo.body2imu_vec[:, None]
+        vec = vec - get_body2imu(self.advo.props)[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -219,7 +231,9 @@ def _calc_probe_pos(advo, separate_probes=False):
     # (!!!checkthis) to get acoustic receiver center, this is
     # 7.6cm.  In the coordinate sys of the center of the probe
     # then, the positions of the centers of the receivers is:
-    if advo.make_model == 'Nortek VECTOR' and separate_probes:
+    p = advo.props
+    if separate_probes and p['inst_make'].lower() == 'nortek' and\
+       p['inst_model'].lower == 'vector':
         r = 0.076
         # The angle between the x-y plane and the probes
         phi = -30 * rot.deg2rad
@@ -565,7 +579,9 @@ class CorrectMotion(object):
         # (!!!checkthis) to get acoustic receiver center, this is
         # 7.6cm.  In the coordinate sys of the center of the probe
         # then, the positions of the centers of the receivers is:
-        if advo.make_model == 'Nortek VECTOR' and self.separate_probes:
+        p = advo.props
+        if self.separate_probes and p['inst_make'].lower() == 'nortek' and \
+           p['inst_model'].lower == 'vector':
             r = 0.076
             # The angle between the x-y plane and the probes
             phi = -30 * rot.deg2rad
