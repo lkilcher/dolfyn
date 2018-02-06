@@ -3,7 +3,7 @@ from .io.api import read
 from io.hdf5 import load
 
 
-def load_example(name):
+def read_example(name):
     """Read an example data file.
 
     Parameters
