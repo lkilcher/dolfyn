@@ -364,6 +364,10 @@ def reorg(dat):
                    isinstance(outdat[ky + tag], db.TimeData):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
     outdat.props['coord_sys'] = cfg['coord_sys']
+    dat = lib.status2data(outdat.sys.status)  # returns a dict
+    outdat.orient['orient_up'] = dat['orient_up']
+    # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
+    # Heding is: 0,1: Z; 4,5: X
     return outdat
 
 
