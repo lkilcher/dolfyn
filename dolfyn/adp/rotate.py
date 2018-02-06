@@ -60,6 +60,8 @@ def beam2inst(adcpo, reverse=False, force=False):
             raise ValueError('The input must be in inst coordinates.')
     if hasattr(adcpo.config, 'rotmat'):
         rotmat = adcpo.config.rotmat
+    elif 'TransMatrix' in adcpo.config:
+        rotmat = adcpo.config['TransMatrix']
     else:
         rotmat = calc_beam_rotmatrix(adcpo.config.beam_angle,
                                      adcpo.config.beam_pattern == 'convex')
@@ -109,10 +111,12 @@ def inst2earth(adcpo, reverse=False,
     in the props dict than the input value *is* used.
     """
     if not force:
-        if not reverse and adcpo.props['coord_sys'] not in ['inst', 'ship']:
+        if (not reverse and
+                adcpo.props['coord_sys'] not in ['inst', 'ship']):
             raise ValueError("The input must be in 'inst' or 'ship' "
                              "coordinates.")
-        if reverse and adcpo.props['coord_sys'] != 'earth':
+        if (reverse and
+                adcpo.props['coord_sys'].lower() not in ['earth', 'enu']):
             raise ValueError('The input must be in earth coordinates.')
     if (not reverse and 'declination' in adcpo.props.keys() and not
             adcpo.props.get('declination_in_heading', False)):
@@ -123,12 +127,13 @@ def inst2earth(adcpo, reverse=False,
     r = odat.roll * deg2rad
     p = np.arctan(np.tan(odat.pitch * deg2rad) * np.cos(r))
     h = odat.heading * deg2rad
-    if adcpo.config.orientation == 'up':
-        r += np.pi
-    if (adcpo.props['coord_sys'] == 'ship' and
-            adcpo.config['use_pitchroll'] == 'yes'):
-        r[:] = 0
-        p[:] = 0
+    if not adcpo.props['inst_model'].lower() == 'signature':
+        if adcpo.config.orientation == 'up':
+            r += np.pi
+        if (adcpo.props['coord_sys'] == 'ship' and
+                adcpo.config['use_pitchroll'] == 'yes'):
+            r[:] = 0
+            p[:] = 0
     ch = np.cos(h)
     sh = np.sin(h)
     cr = np.cos(r)
@@ -145,6 +150,17 @@ def inst2earth(adcpo, reverse=False,
     rotmat[2, 0, :] = -cp * sr
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
+    if adcpo.props['inst_model'].lower() == 'signature':
+        if np.any(odat['orient_up'] != 4):
+            raise Exception("Orientations other than 'ZUP' are "
+                            "not yet supported.")
+        # # 0: 'XUP', heading: Z
+        # inds = odat['orient_up'] == 0
+        # # 1: 'XDOWN', heading: Z
+        # inds = odat['orient_up'] == 1
+        # # 4: 'ZUP', heading: X
+        # # This is the ENU case, I think.
+
     # Only operate on the first 3-components, b/c the 4th is err_vel
     ess = 'ijt,jdt->idt'
     cs = 'earth'
