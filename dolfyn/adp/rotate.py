@@ -127,7 +127,7 @@ def inst2earth(adcpo, reverse=False,
     r = odat.roll * deg2rad
     p = np.arctan(np.tan(odat.pitch * deg2rad) * np.cos(r))
     h = odat.heading * deg2rad
-    if not adcpo.props['inst_model'].lower() == 'signature':
+    if adcpo.props['inst_make'].lower() == 'rdi':
         if adcpo.config.orientation == 'up':
             r += np.pi
         if (adcpo.props['coord_sys'] == 'ship' and

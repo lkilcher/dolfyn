@@ -24,4 +24,4 @@ def rungen(gen):
 
 # rungen(adpt.read_test(make_data=True))
 # adpt.rotate_beam2inst_test(make_data=True)
-# adpt.rotate_inst2earth_test(make_data=True)
+# rungen(adpt.rotate_inst2earth_test(make_data=True))
