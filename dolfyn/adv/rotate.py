@@ -50,13 +50,6 @@ def orient2euler(advo):
             )
 
 
-def _cat4rot(tpl):
-    tmp = []
-    for vl in tpl:
-        tmp.append(vl[None, :])
-    return np.concatenate(tuple(tmp), axis=0)
-
-
 def _beam2inst(dat, transmat, reverse=False):
     if reverse:
         transmat = inv(transmat)
