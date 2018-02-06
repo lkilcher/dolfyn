@@ -314,8 +314,10 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
 
 
 def _rotate_vel2body(advo):
+    if (np.diag(np.eye(3)) == 1).all():
+        advo.props['vel_rotated2body'] = True
     if 'vel_rotated2body' in advo.props and \
-       advo.props['vel_rotated2body'] == True:
+       advo.props['vel_rotated2body'] is True:
         # Don't re-rotate the data if its already been rotated.
         return
     if not _check_rotmat_det(advo.props['body2head_rotmat']).all():

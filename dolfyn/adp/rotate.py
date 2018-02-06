@@ -54,7 +54,7 @@ def beam2inst(adcpo, reverse=False, force=False):
         prior to performing this rotation.
     """
     if not force:
-        if not reverse and adcpo.props['coord_sys'] != 'beam':
+        if not reverse and adcpo.props['coord_sys'].lower() != 'beam':
             raise ValueError('The input must be in beam coordinates.')
         if reverse and adcpo.props['coord_sys'] != 'inst':
             raise ValueError('The input must be in inst coordinates.')
