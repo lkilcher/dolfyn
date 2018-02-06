@@ -293,10 +293,11 @@ def reorg(dat):
     """
     outdat = apb.adcp_raw()
     cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
-    cfg['filehead config'] = dat['filehead config']
+    cfh = cfg['filehead config'] = dat['filehead config']
+    cfg['model'] = (cfh['ID'].split(',')[0][5:-1])
     outdat['props'] = {}
     outdat['props']['inst_make'] = 'Nortek'
-    outdat['props']['inst_model'] = 'Signature'
+    outdat['props']['inst_model'] = cfg['model']
     outdat['props']['inst_type'] = 'ADP'
 
     for id, tag in [(21, ''), (24, '_b5')]:

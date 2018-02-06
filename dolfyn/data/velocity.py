@@ -7,6 +7,11 @@ import warnings
 class Velocity(TimeData):
 
     @property
+    def make_model(self, ):
+        return '{} {}'.format(self.props['inst_make'].lower(),
+                              self.props['inst_model'].lower())
+
+    @property
     def has_imu(self,):
         """
         Test whether this data object contains Inertial Motion Unit
