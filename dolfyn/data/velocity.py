@@ -191,6 +191,10 @@ class VelBinner(TimeBinner):
     def do_spec(self, indat, out=None, names=['vel']):
         if out is None:
             out = FreqData()
+            out['props'] = dict(fs=indat['props']['fs'],
+                                n_fft=self.n_fft,
+                                n_bin=self.n_bin)
+            out['omega'] = self.calc_omega()
         for nm in names:
             out[nm] = self.calc_vel_psd(indat[nm])
         return out
