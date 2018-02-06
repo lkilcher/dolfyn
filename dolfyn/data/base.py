@@ -116,7 +116,8 @@ class FreqData(TimeData):
         if not isinstance(indx, tuple):
             indx = (Ellipsis, indx, slice(None))
         return SourceDataType._subset(self, indx,
-                                      raise_on_empty_array=True)
+                                      raise_on_empty_array=True,
+                                      copy=['omega', 'freq'])
 
 
 class config(data):
