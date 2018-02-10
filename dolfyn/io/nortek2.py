@@ -402,9 +402,10 @@ def reduce(data):
     data['range'] = (np.arange(data['vel'].shape[1]) *
                      data['config']['cell_size'] +
                      data['config']['blanking'])
-    data['range_b5'] = (np.arange(data['vel_b5'].shape[1]) *
-                        data['config']['cell_size_b5'] +
-                        data['config']['blanking_b5'])
+    if 'vel_b5' in data:
+        data['range_b5'] = (np.arange(data['vel_b5'].shape[1]) *
+                            data['config']['cell_size_b5'] +
+                            data['config']['blanking_b5'])
 
     if 'Accel' in data['orient']:
         data['props']['has imu'] = True
