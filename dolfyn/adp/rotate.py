@@ -103,8 +103,9 @@ def inst2earth(adcpo, reverse=False,
     `fixed_orientation` has no effect. If `'inst2earth:fixed'` is not
     in the props dict than the input value *is* used.
     """
+
+    csin = adcpo.props['coord_sys'].lower()
     cs_allowed = ['inst', 'ship']
-    csin = adcpo.props['coord_sys']
     if reverse:
         cs_allowed = ['earth', 'enu']
     if not force and csin not in cs_allowed:
@@ -115,6 +116,8 @@ def inst2earth(adcpo, reverse=False,
         # Only do this if making the forward rotation.
         adcpo.heading += adcpo.props['declination']
         adcpo.props['declination_in_heading'] = True
+
+    # Now calculate the rotation matrix.
     odat = adcpo.orient
     r = odat.roll * deg2rad
     p = np.arctan(np.tan(odat.pitch * deg2rad) * np.cos(r))
@@ -142,6 +145,9 @@ def inst2earth(adcpo, reverse=False,
     rotmat[2, 0, :] = -cp * sr
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
+
+    # Nortek 'signature' instruments have a couple defs
+    # of the coordinate system.
     if adcpo.props['inst_model'].lower() == 'signature':
         if np.any(odat['orient_up'] != 4):
             raise Exception("Orientations other than 'ZUP' are "
