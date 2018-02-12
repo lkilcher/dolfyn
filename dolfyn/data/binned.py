@@ -162,6 +162,29 @@ class TimeBinner(object):
             return out
         return out.view(dat.__class__)
 
+    def mean_angle(self, dat, axis=-1, units='radians',
+                   n_bin=None, mask_thresh=None):
+        """Average an angle array.
+
+        Parameters
+        ----------
+        units : {'radians' | 'degrees'}
+
+        n_bin : int (default is self.n_bin)
+
+        mask_thresh : float (between 0 and 1)
+            if the input data is a masked array, and mask_thresh is
+            not None mask the averaged values where the fraction of
+            bad points is greater than mask_thresh
+        """
+        if units.lower().startswith('deg'):
+            dat = dat * np.pi / 180
+        elif units.lower().startswith('rad'):
+            pass
+        else:
+            raise ValueError("Units must be either 'rad' or 'deg'.")
+        return np.angle(self.mean(np.exp(1j * dat)))
+
     def var(self, dat, n_bin=None):
         return self.reshape(dat, n_bin=n_bin).var(-1)
 
