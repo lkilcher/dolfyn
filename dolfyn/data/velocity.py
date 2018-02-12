@@ -104,6 +104,22 @@ class Velocity(TimeData):
 class VelTkeData(TimeData):
 
     @property
+    def tauij(self, ):
+        n = self.tke_vec
+        s = self.stress
+        return np.array([[n[0], s[0], s[1]],
+                         [s[0], n[1], s[2]],
+                         [s[1], s[2], n[2]]])
+
+    def rotate(self, rmat):
+        # Transpose second index of rmat for rotation
+        t = np.einsum('ij...,jlm...,nl...->inm...', rmat, self.tauij, rmat)
+        out = type(self)()
+        out['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
+        out['stress'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
+        return out
+
+    @property
     def Ecoh(self,):
         """
         Niel Kelley's "coherent energy", i.e. the rms of the stresses.
@@ -136,7 +152,7 @@ class VelTkeData(TimeData):
         """
         The turbulent kinetic energy (sum of the three components).
         """
-        return self.tke_vec.sum(0)
+        return self.tke_vec.sum(0) / 2
 
     @property
     def upvp_(self,):
