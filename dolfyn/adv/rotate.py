@@ -206,14 +206,20 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     return
 
 
-def euler2orient(pitch, roll, heading, mode='zup', units='degrees'):
+def euler2orient(pitch, roll, heading, units='degrees'):
     # Heading input is clockwise from North
     # Returns a rotation matrix that rotates earth (ENU) -> inst.
+    # This is based on the Nortek `Transforms.m` file, available in
+    # the refs folder.
     if units.lower() == 'degrees':
         pitch = pitch * deg2rad
         roll = roll * deg2rad
         heading = heading * deg2rad
-    heading = (heading - np.pi / 2)
+    # I've fixed the definition of heading to be consistent with
+    # typical definitions.
+    # This also involved swapping the sign on sh in the def of omat
+    # below from the values provided in the Nortek Matlab script
+    heading = (np.pi / 2 - heading)
 
     ch = cos(heading)
     sh = sin(heading)
@@ -222,15 +228,16 @@ def euler2orient(pitch, roll, heading, mode='zup', units='degrees'):
     cr = cos(roll)
     sr = sin(roll)
 
-    # Note that I've transposed these values, so that this is
-    # earth->inst (as orientation matrices are typically defined)
+    # Note that I've transposed these values (from what is defined in
+    # Nortek matlab script), so that this is earth->inst (as
+    # orientation matrices are typically defined)
     omat = np.empty((3, 3, len(sh)), dtype=np.float32)
     omat[0, 0, :] = ch * cp
-    omat[1, 0, :] = -ch * sp * sr + sh * cr
-    omat[2, 0, :] = -ch * cr * sp - sh * sr
-    omat[0, 1, :] = -sh * cp
-    omat[1, 1, :] = sh * sp * sr + ch * cr
-    omat[2, 1, :] = sh * cr * sp - ch * sr
+    omat[1, 0, :] = -ch * sp * sr - sh * cr
+    omat[2, 0, :] = -ch * cr * sp + sh * sr
+    omat[0, 1, :] = sh * cp
+    omat[1, 1, :] = -sh * sp * sr + ch * cr
+    omat[2, 1, :] = -sh * cr * sp - ch * sr
     omat[0, 2, :] = sp
     omat[1, 2, :] = sr * cp
     omat[2, 2, :] = cp * cr
