@@ -152,9 +152,9 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rmat = np.rollaxis(odata['orientmat'], 1)
 
     else:
-        rr = odata['roll'] * deg2rad
-        pp = odata.pitch * deg2rad
-        hh = (odata.heading - 90) * deg2rad
+        rr = odata['roll']
+        pp = odata['pitch']
+        hh = odata['heading']
         if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
             # The end of the data may not have valid orientations
             lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
@@ -167,32 +167,11 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         #       orientation corresponds to the communication cable
         #       being up.  This is ridiculous, but apparently a
         #       reality.
-        rr[odata['orientation_down']] += np.pi
+        rr[odata['orientation_down']] += 180
 
-        ch = cos(hh)
-        sh = sin(hh)
-        cp = cos(pp)
-        sp = sin(pp)
-        cr = cos(rr)
-        sr = sin(rr)
-
-        rmat = np.empty((3, 3, len(sh)), dtype=np.float32)
-        rmat[0, 0, :] = ch * cp
-        rmat[0, 1, :] = -ch * sp * sr + sh * cr
-        rmat[0, 2, :] = -ch * cr * sp - sh * sr
-        rmat[1, 0, :] = -sh * cp
-        rmat[1, 1, :] = sh * sp * sr + ch * cr
-        rmat[1, 2, :] = sh * cr * sp - ch * sr
-        rmat[2, 0, :] = sp
-        rmat[2, 1, :] = sr * cp
-        rmat[2, 2, :] = cp * cr
-        # H = np.array([[ch,  sh, 0],
-        # [-sh, ch, 0],
-        # [0,    0, 1]], dtype=np.float32)
-        # P = np.array([[cp, -sp * sr, -cr * sp],
-        # [0,        cr,      -sr],
-        # [sp,  sr * cp,  cp * cr]], dtype=np.float32)
-        # rmat = np.einsum('ijl,jkl->ikl', H, P)
+        # Take the transpose of the orientation to get the inst->earth rotation
+        # matrix.
+        rmat = np.rollaxis(euler2orient(pp, rr, hh), 1)
 
     _dcheck = _check_rotmat_det(rmat)
     if not _dcheck.all():
@@ -227,6 +206,38 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     return
 
 
+def euler2orient(pitch, roll, heading, mode='zup', units='degrees'):
+    # Heading input is clockwise from North
+    # Returns a rotation matrix that rotates earth (ENU) -> inst.
+    if units.lower() == 'degrees':
+        pitch = pitch * deg2rad
+        roll = roll * deg2rad
+        heading = heading * deg2rad
+    heading = (heading - np.pi / 2)
+
+    ch = cos(heading)
+    sh = sin(heading)
+    cp = cos(pitch)
+    sp = sin(pitch)
+    cr = cos(roll)
+    sr = sin(roll)
+
+    # Note that I've transposed these values, so that this is
+    # earth->inst (as orientation matrices are typically defined)
+    omat = np.empty((3, 3, len(sh)), dtype=np.float32)
+    omat[0, 0, :] = ch * cp
+    omat[1, 0, :] = -ch * sp * sr + sh * cr
+    omat[2, 0, :] = -ch * cr * sp - sh * sr
+    omat[0, 1, :] = -sh * cp
+    omat[1, 1, :] = sh * sp * sr + ch * cr
+    omat[2, 1, :] = sh * cr * sp - ch * sr
+    omat[0, 2, :] = sp
+    omat[1, 2, :] = sr * cp
+    omat[2, 2, :] = cp * cr
+
+    return omat
+
+
 def _inst2earth(advo, use_mean_rotation=False):
     """
     Rotate the data from the instrument frame to the earth frame.
@@ -244,9 +255,9 @@ def _inst2earth(advo, use_mean_rotation=False):
     pp = advo.pitch * deg2rad
     hh = (advo.heading - 90) * deg2rad
     if use_mean_rotation:
-        rr = np.nanmean(np.angle(np.exp(1j * rr)))
-        pp = np.nanmean(np.angle(np.exp(1j * pp)))
-        hh = np.nanmean(np.angle(np.exp(1j * hh)))
+        rr = np.angle(np.nanmean(np.exp(1j * rr)))
+        pp = np.angle(np.nanmean(np.exp(1j * pp)))
+        hh = np.angle(np.nanmean(np.exp(1j * hh)))
     if 'heading_offset' in advo.props:
         # Offset is in CCW degrees that the case was offset relative
         # to the head.
