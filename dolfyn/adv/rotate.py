@@ -125,23 +125,28 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # The transpose of the rotation matrix gives the inverse
         # rotation, so we simply reverse the order of the einsum:
         sumstr = 'jik,j...k->i...k'
-        cs_now = 'earth'
-        cs_new = 'inst'
+        cs_now = ['earth', 'enu']
+        cs_new = ['inst', 'xyz']
     else:
         sumstr = 'ijk,j...k->i...k'
-        cs_now = 'inst'
-        cs_new = 'earth'
+        cs_now = ['inst', 'xyz']
+        cs_new = ['earth', 'enu']
 
     if rotate_vars is None:
-        rotate_vars = advo.props['rotate_vars']
+        if 'rotate_vars' in advo.props:
+            rotate_vars = advo.props['rotate_vars']
+        else:
+            rotate_vars = ['vel']
 
+    cs = advo.props['coord_sys'].lower()
     if not force:
-        if advo.props['coord_sys'] == cs_new:
-            print("Data is already in the '%s' coordinate system" % cs_new)
+        if cs in cs_new:
+            print("Data is already in the '%s' coordinate system" % cs_new[0])
             return
-        elif not advo.props['coord_sys'] == cs_now:
-            print("Data must be in the '%s' frame prior to using this function" %
-                   cs_now)
+        elif cs not in cs_now:
+            raise ValueError(
+                "Data must be in the '%s' frame when using this function" %
+                cs_now[0])
 
     _check_declination(advo)
 
@@ -161,13 +166,14 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             rr[lastgd:] = rr[lastgd]
             pp[lastgd:] = pp[lastgd]
             hh[lastgd:] = hh[lastgd]
-        # NOTE: For Nortek Vector ADVs: 'down' configuration means the
-        #       head was pointing UP!  Check the Nortek coordinate
-        #       transform matlab script for more info.  The 'up'
-        #       orientation corresponds to the communication cable
-        #       being up.  This is ridiculous, but apparently a
-        #       reality.
-        rr[odata['orientation_down']] += 180
+        if advo.make_model.lower().startswith('nortek vector'):
+            # NOTE: For Nortek Vector ADVs: 'down' configuration means the
+            #       head was pointing UP!  Check the Nortek coordinate
+            #       transform matlab script for more info.  The 'up'
+            #       orientation corresponds to the communication cable
+            #       being up.  This is ridiculous, but apparently a
+            #       reality.
+            rr[odata['orientation_down']] += 180
 
         # Take the transpose of the orientation to get the inst->earth rotation
         # matrix.
@@ -201,7 +207,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # subsample the orientation matrix depending on the size of the object.
         advo[nm] = np.einsum(sumstr, rmat[:n, :n], advo[nm])
 
-    advo.props['coord_sys'] = cs_new
+    advo.props['coord_sys'] = cs_new[0]
 
     return
 
@@ -378,18 +384,21 @@ def earth2principal(advo, reverse=False):
 
     if reverse:
         ang = advo.principal_angle
-        cs_now = 'principal'
-        cs_new = 'earth'
+        cs_now = ['principal']
+        cs_new = ['earth', 'enu']
     else:
         ang = -advo.principal_angle
-        cs_now = 'earth'
-        cs_new = 'principal'
-    if advo.props['coord_sys'] == cs_new:
-        print('Data is already in the %s coordinate system' % cs_new)
+        cs_now = ['earth', 'enu']
+        cs_new = ['principal']
+
+    cs = advo.props['coord_sys'].lower()
+    if cs in cs_new:
+        print('Data is already in the %s coordinate system' % cs_new[0])
         return
-    elif not advo.props['coord_sys'] == cs_now:
-        raise Exception('Data must be in the {} frame prior '
-                        'to using this function'.format(cs_now))
+    elif cs not in cs_now:
+        raise ValueError(
+            'Data must be in the {} frame '
+            'to use this function'.format(cs_now[0]))
 
     # Calculate the rotation matrix:
     cp, sp = cos(ang), sin(ang)
@@ -413,4 +422,4 @@ def earth2principal(advo, reverse=False):
                                       rotmat, )
 
     # Finalize the output.
-    advo.props['coord_sys'] = cs_new
+    advo.props['coord_sys'] = cs_new[0]
