@@ -119,6 +119,13 @@ class VelTkeData(TimeData):
         out['stress'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
         return out
 
+    def tau_is_pd(self, ):
+        t = np.moveaxis(self.tauij, [0, 1], [-2, -1])
+        val = t[..., 0, 0] > 0
+        for idx in [2, 3]:
+            val &= np.linalg.det(t[..., :idx, :idx]) > 0
+        return val
+
     @property
     def Ecoh(self,):
         """
