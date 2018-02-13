@@ -6,6 +6,7 @@ from ..tools.misc import slice1d_along_axis, detrend
 from .base import ma, TimeData
 import copy
 import warnings
+import six
 
 
 class TimeBinner(object):
@@ -285,7 +286,13 @@ class TimeBinner(object):
         if names is None:
             names = rawdat.keys()
         for ky in names:
-            if isinstance(rawdat[ky], TimeData):
+            if isinstance(ky, six.string_types) and '.' in ky:
+                g, nm = ky.split('.', 1)
+                if g not in outdat:
+                    outdat[g] = type(rawdat[g])()
+                outdat[g][nm] = self.mean(rawdat[g][nm],
+                                          axis=rawdat[g]._time_dim)
+            elif isinstance(rawdat[ky], TimeData):
                 outdat[ky] = TimeData()
                 self.do_avg(rawdat[ky], outdat[ky], n_time=n_time)
             elif (isinstance(rawdat[ky], np.ndarray) and
