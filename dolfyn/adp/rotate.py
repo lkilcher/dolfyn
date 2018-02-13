@@ -1,5 +1,5 @@
 import numpy as np
-from ..adv.rotate import earth2principal
+from ..adv.rotate import earth2principal, inst2earth as nortek_inst2earth
 
 deg2rad = np.pi / 180.
 
@@ -103,7 +103,9 @@ def inst2earth(adcpo, reverse=False,
     `fixed_orientation` has no effect. If `'inst2earth:fixed'` is not
     in the props dict than the input value *is* used.
     """
-
+    if adcpo.props['inst_make'].lower() == 'nortek':
+        # Handle nortek rotations with the nortek (adv) rotate fn.
+        return nortek_inst2earth(adcpo, reverse=reverse, force=force)
     csin = adcpo.props['coord_sys'].lower()
     cs_allowed = ['inst', 'ship']
     if reverse:
