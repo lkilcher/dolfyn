@@ -70,6 +70,14 @@ def rotate_beam2inst_test(make_data=False):
     assert td == dat_rdi_i, "adp.rotate.beam2inst gives unexpected results!"
 
 
+def rotate_earth2inst_test(make_data=False):
+    td = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
+    apm.inst2earth(td, reverse=True)
+
+    assert td == dat_rdi_i, ("adp.rotate.inst2earth gives unexpected results "
+                             "for RDI_test01-reverse")
+
+
 def rotate_inst2earth_test(make_data=False):
 
     td = dat_rdi_i.copy()
@@ -100,5 +108,5 @@ def rotate_inst2earth_test(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in read_test():
+    for func, dat1, dat2, msg in rotate_inst2earth_test():
         func(dat1, dat2, msg)

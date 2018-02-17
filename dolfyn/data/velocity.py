@@ -48,7 +48,8 @@ class Velocity(TimeData):
         """
         Compute the principal angle of the horizontal velocity.
         """
-        if not self.props['coord_sys'] in ['earth', 'inst']:
+        if self.props['coord_sys'].lower() not in ['earth', 'inst',
+                                                   'enu', 'xyz']:
             raise Exception("The principal angle should only be estimated "
                             "if the coordinate system is either 'earth' or "
                             "'inst'.")

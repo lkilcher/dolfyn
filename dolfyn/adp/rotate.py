@@ -120,12 +120,34 @@ def inst2earth(adcpo, reverse=False,
         adcpo.props['declination_in_heading'] = True
 
     # Now calculate the rotation matrix.
+    """
+    ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
+    The internal tilt sensors do not measure exactly the same
+    pitch as a set of gimbals would (the roll is the same). Only in
+    the case of the internal pitch sensor being selected (EZxxx1xxx),
+    the measured pitch is modified using the following algorithm.
+
+        P = arctan[tan(Tilt1)*cos(Tilt2)]    (Equation 18)
+
+    Where: Tilt1 is the measured pitch from the internal sensor, and
+    Tilt2 is the measured roll from the internal sensor The raw pitch
+    (Tilt 1) is recorded in the variable leader. P is set to 0 if the
+    "use tilt" bit of the EX command is not set."""
     odat = adcpo.orient
     r = odat.roll * deg2rad
     p = np.arctan(np.tan(odat.pitch * deg2rad) * np.cos(r))
     h = odat.heading * deg2rad
     if adcpo.props['inst_make'].lower() == 'rdi':
         if adcpo.config.orientation == 'up':
+            """
+            ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
+            Since the roll describes the ship axes rather than the
+            instrument axes, in the case of upward-looking
+            orientation, 180 degrees must be added to the measured
+            roll before it is used to calculate M. This is equivalent
+            to negating the first and third columns of M. R is set
+            to 0 if the "use tilt" bit of the EX command is not set.
+            """
             r += np.pi
         if (adcpo.props['coord_sys'] == 'ship' and
                 adcpo.config['use_pitchroll'] == 'yes'):
