@@ -23,7 +23,7 @@ def rungen(gen):
 # rungen(advt.subset_test(make_data=True))
 
 # rungen(adpt.read_test(make_data=True))
-# adpt.rotate_beam2inst_test(make_data=True)
+# rungen(adpt.rotate_beam2inst_test(make_data=True))
 # rungen(adpt.rotate_inst2earth_test(make_data=True))
 # rungen(adpt.rotate_earth2inst_test(make_data=True))
 # rungen(adpt.rotate_inst2beam_test(make_data=True))

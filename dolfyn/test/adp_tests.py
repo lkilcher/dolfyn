@@ -64,12 +64,26 @@ def rotate_beam2inst_test(make_data=False):
 
     td = dat_rdi.copy()
     apm.beam2inst(td)
+    td_sig = dat_sig.copy()
+    apm.beam2inst(td_sig)
+    td_sigi = dat_sigi.copy()
+    apm.beam2inst(td_sigi)
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
-        return
+        td_sig.to_hdf5(rfnm('data/BenchFile01_rotate_beam2inst.h5'))
+        td_sigi.to_hdf5(rfnm('data/Sig1000_IMU_rotate_beam2inst.h5'))
 
-    assert td == dat_rdi_i, "adp.rotate.beam2inst gives unexpected results!"
+    cd_sig = load(rfnm('data/BenchFile01_rotate_beam2inst.h5'))
+    cd_sigi = load(rfnm('data/Sig1000_IMU_rotate_beam2inst.h5'))
+
+    msg = "adp.rotate.beam2inst gives unexpected results for {}"
+    for t, c, msg in (
+            (td, dat_rdi_i, msg.format('RDI_test01')),
+            (td_sig, cd_sig, msg.format('BenchFile01')),
+            (td_sigi, cd_sigi, msg.format('Sig1000_IMU')),
+    ):
+        yield data_equiv, t, c, msg
 
 
 def rotate_inst2beam_test(make_data=False):
@@ -83,7 +97,6 @@ def rotate_inst2beam_test(make_data=False):
 
     if make_data:
         td_awac.to_hdf5(rfnm('data/AWAC_test01_inst2beam.h5'))
-        return
 
     cd_awac = load(rfnm('data/AWAC_test01_inst2beam.h5'))
 
