@@ -1,14 +1,14 @@
 import dolfyn.adv.api as avm
-import dolfyn.data.base
 import numpy as np
 from base import ResourceFilename
+import pyDictH5.base as pdh5_base
 
 load = avm.load
 
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
 
-dolfyn.data.base.debug_level = 1
+pdh5_base.debug_level = 1
 
 dat = load(rfnm('data/vector_data01.h5'))
 dat_imu = load(rfnm('data/vector_data_imu01.h5'))

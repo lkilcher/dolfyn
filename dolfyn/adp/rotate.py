@@ -55,6 +55,9 @@ def beam2inst(adcpo, reverse=False, force=False):
         rotmat = adcpo.config.rotmat
     elif 'TransMatrix' in adcpo.config:
         rotmat = adcpo.config['TransMatrix']
+    elif 'head' in adcpo.config and 'TransMatrix' in adcpo.config['head']:
+        # This is for AWACs.
+        rotmat = adcpo.config['head']['TransMatrix']
     else:
         rotmat = calc_beam_rotmatrix(adcpo.config.beam_angle,
                                      adcpo.config.beam_pattern == 'convex')

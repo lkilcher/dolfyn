@@ -1,10 +1,12 @@
 import dolfyn.adp.api as apm
-import dolfyn.data.base
 from base import ResourceFilename
 from dolfyn.io.hdf5 import load
+import pyDictH5.base as pdh5_base
 
 rfnm = ResourceFilename('dolfyn.test')
 exdt = ResourceFilename('dolfyn')
+
+pdh5_base.debug_level = 1
 
 dat_rdi = load(rfnm('data/RDI_test01.h5'))
 dat_rdi_i = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
@@ -70,6 +72,29 @@ def rotate_beam2inst_test(make_data=False):
     assert td == dat_rdi_i, "adp.rotate.beam2inst gives unexpected results!"
 
 
+def rotate_inst2beam_test(make_data=False):
+
+    # # The reverse RDI rotation doesn't work b/c of NaN's in one beam
+    # # that propagate to others.
+    # td = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
+    # apm.beam2inst(td, reverse=True)
+    td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
+    apm.beam2inst(td_awac, reverse=True)
+
+    if make_data:
+        td_awac.to_hdf5(rfnm('data/AWAC_test01_inst2beam.h5'))
+        return
+
+    cd_awac = load(rfnm('data/AWAC_test01_inst2beam.h5'))
+
+    msg = "adp.rotate.beam2inst gives unexpected REVERSE results for {}"
+    for t, c, msg in (
+            # (td, dat_rdi, msg.format('RDI_test01')),
+            (td_awac, cd_awac, msg.format('AWAC_test01')),
+    ):
+        yield data_equiv, t, c, msg
+
+
 def rotate_earth2inst_test(make_data=False):
     td = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
     apm.inst2earth(td, reverse=True)
@@ -84,7 +109,7 @@ def rotate_earth2inst_test(make_data=False):
 
     cd_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
 
-    msg = "adp.rotate.earth2inst gives unexpected results for {}"
+    msg = "adp.rotate.inst2earth gives unexpected REVERSE results for {}"
     for t, c, msg in (
             (td, dat_rdi_i, msg.format('RDI_test01')),
             #(tdwr2, dat_wr2, msg.format('winriver02')),
@@ -122,5 +147,5 @@ def rotate_inst2earth_test(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in rotate_earth2inst_test():
+    for func, dat1, dat2, msg in rotate_inst2beam_test():
         func(dat1, dat2, msg)
