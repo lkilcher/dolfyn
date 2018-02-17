@@ -137,23 +137,33 @@ def rotate_inst2earth_test(make_data=False):
     apm.inst2earth(td)
     tdwr2 = dat_wr2.copy()
     apm.inst2earth(tdwr2)
+    td_sig = load(rfnm('data/BenchFile01_rotate_beam2inst.h5'))
+    apm.inst2earth(td_sig)
+    td_sigi = load(rfnm('data/Sig1000_IMU_rotate_beam2inst.h5'))
+    apm.inst2earth(td_sigi)
     td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
     apm.inst2earth(td_awac)
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
+        td_sig.to_hdf5(rfnm('data/BenchFile01_rotate_inst2earth.h5'))
+        td_sigi.to_hdf5(rfnm('data/Sig1000_IMU_rotate_inst2earth.h5'))
         tdwr2.to_hdf5(rfnm('data/winriver02_rotate_ship2earth.h5'))
         return
 
     cd = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
     cdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
+    cd_sig = load(rfnm('data/BenchFile01_rotate_inst2earth.h5'))
+    cd_sigi = load(rfnm('data/Sig1000_IMU_rotate_inst2earth.h5'))
     cd_awac = dat_awac
 
     msg = "adp.rotate.inst2earth gives unexpected results for {}"
     for t, c, msg in (
             (td, cd, msg.format('RDI_test01')),
             (tdwr2, cdwr2, msg.format('winriver02')),
-            (td_awac, cd_awac, msg.format('AWAC_test01-reverse')),
+            (td_awac, cd_awac, msg.format('AWAC_test01')),
+            (td_sig, cd_sig, msg.format('BenchFile01')),
+            (td_sigi, cd_sigi, msg.format('Sig1000_IMU')),
     ):
         yield data_equiv, t, c, msg
 
