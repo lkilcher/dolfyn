@@ -27,7 +27,7 @@ def read_test(make_data=False):
     td_awac = apm.read(exdt('example_data/AWAC_test01.wpr'))
     td_wr1 = apm.read(exdt('example_data/winriver01.PD0'))
     td_wr2 = apm.read(exdt('example_data/winriver02.PD0'))
-    
+
     if make_data:
         td_rdi.to_hdf5(rfnm('data/RDI_test01.h5'))
         td_sig.to_hdf5(rfnm('data/BenchFile01.h5'))
@@ -73,9 +73,24 @@ def rotate_beam2inst_test(make_data=False):
 def rotate_earth2inst_test(make_data=False):
     td = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
     apm.inst2earth(td, reverse=True)
+    # tdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
+    # apm.inst2earth(tdwr2, reverse=True)
+    # This AWAC is in earth coords.
+    td_awac = dat_awac.copy()
+    apm.inst2earth(td_awac, reverse=True)
 
-    assert td == dat_rdi_i, ("adp.rotate.inst2earth gives unexpected results "
-                             "for RDI_test01-reverse")
+    if make_data:
+        td_awac.to_hdf5(rfnm('data/AWAC_test01_earth2inst.h5'))
+
+    cd_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
+
+    msg = "adp.rotate.earth2inst gives unexpected results for {}"
+    for t, c, msg in (
+            (td, dat_rdi_i, msg.format('RDI_test01')),
+            #(tdwr2, dat_wr2, msg.format('winriver02')),
+            (td_awac, cd_awac, msg.format('AWAC_test01')),
+    ):
+        yield data_equiv, t, c, msg
 
 
 def rotate_inst2earth_test(make_data=False):
@@ -84,18 +99,17 @@ def rotate_inst2earth_test(make_data=False):
     apm.inst2earth(td)
     tdwr2 = dat_wr2.copy()
     apm.inst2earth(tdwr2)
-    td_awac = dat_awac.copy()
-    apm.inst2earth(td_awac, reverse=True)
+    td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
+    apm.inst2earth(td_awac)
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
         tdwr2.to_hdf5(rfnm('data/winriver02_rotate_ship2earth.h5'))
-        td_awac.to_hdf5(rfnm('data/AWAC_test01_inst2earth-reverse.h5'))
         return
 
     cd = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
     cdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
-    cd_awac = load(rfnm('data/AWAC_test01_inst2earth-reverse.h5'))
+    cd_awac = dat_awac
 
     msg = "adp.rotate.inst2earth gives unexpected results for {}"
     for t, c, msg in (
@@ -108,5 +122,5 @@ def rotate_inst2earth_test(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in rotate_inst2earth_test():
+    for func, dat1, dat2, msg in rotate_earth2inst_test():
         func(dat1, dat2, msg)
