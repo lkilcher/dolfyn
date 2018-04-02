@@ -1,0 +1,6 @@
+numpy
+h5py
+matplotlib
+scipy
+six
+-e git://github.com/lkilcher/pyDictH5.git#egg=master

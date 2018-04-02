@@ -1,0 +1,10 @@
+name: dolfyn-dev
+
+dependencies:
+  - numpy
+  - h5py
+  - matplotlib
+  - scipy
+  - six
+  - pip:
+    - pydicth5
