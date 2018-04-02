@@ -14,7 +14,7 @@ def reduce_by_average(data, ky0, ky1):
         tmp = data.pop(ky1)
         if ky0 in data:
             data[ky0] += tmp
-            data[ky0] /= 2
+            data[ky0] = data[ky0] / 2
         else:
             data[ky0] = tmp
 

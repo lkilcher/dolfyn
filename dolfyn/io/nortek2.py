@@ -3,8 +3,8 @@ files. It relies heavily on the `nortek2_defs` and `nortek2lib`
 modules.
 """
 from struct import unpack
-import nortek2_defs as defs
-import nortek2lib as lib
+from . import nortek2_defs as defs
+from . import nortek2lib as lib
 from ..adp import base as apb
 import numpy as np
 from .base import WrongFileType
@@ -165,6 +165,7 @@ class Ad2cpReader(object):
         # This is the instrument config string.
         out = {}
         s_id, string = self.read_string(hdr['sz'])
+        string = string.decode('utf-8')
         for ln in string.splitlines():
             ky, val = ln.split(',', 1)
             if ky in out:

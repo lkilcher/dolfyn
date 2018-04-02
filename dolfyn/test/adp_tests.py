@@ -1,5 +1,8 @@
 import dolfyn.adp.api as apm
-from base import ResourceFilename
+try:
+    from .base import ResourceFilename
+except ImportError:
+    from base import ResourceFilename
 from dolfyn.io.hdf5 import load
 import pyDictH5.base as pdh5_base
 

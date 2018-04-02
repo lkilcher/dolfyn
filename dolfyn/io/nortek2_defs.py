@@ -1,5 +1,5 @@
 from struct import calcsize, Struct
-import nortek2lib as lib
+from . import nortek2lib as lib
 import numpy as np
 
 dt16 = 'float16'
@@ -267,10 +267,10 @@ def calc_burst_struct(config, nb, nc):
                ('std_spare', 'H22x', [], None)]
     # Now join this with the _burst_hdr
     out = DataDef(
-        zip(_burst_hdr._names,
-            _burst_hdr._format,
-            _burst_hdr._shape,
-            _burst_hdr._sci_func) +
+        list(zip(_burst_hdr._names,
+                 _burst_hdr._format,
+                 _burst_hdr._shape,
+                 _burst_hdr._sci_func)) +
         dd)
     return out
 

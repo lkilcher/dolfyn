@@ -1,6 +1,9 @@
 import dolfyn.adv.api as avm
 import numpy as np
-from base import ResourceFilename
+try:
+    from .base import ResourceFilename
+except ImportError:
+    from base import ResourceFilename
 import pyDictH5.base as pdh5_base
 
 load = avm.load

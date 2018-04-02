@@ -9,4 +9,3 @@ from . import hdf5
 from . import mat
 
 load = hdf5.load
-mmload = hdf5.mmload

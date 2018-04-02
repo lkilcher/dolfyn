@@ -18,6 +18,12 @@ from .base import WrongFileType
 import warnings
 from ..data.base import TimeData
 from ..data.base import config
+import io
+try:
+    file_types = (file, io.IOBase)
+
+except NameError:
+    file_types = io.IOBase
 
 
 def recatenate(obj):
@@ -117,7 +123,7 @@ def read_nortek(filename,
 def _read_vecjson(jsonfile):
     """Reads a json file containing the rotation matrix, the vector and the t_range
        and return the items as a dictionary"""
-    if isinstance(jsonfile, file):
+    if isinstance(jsonfile, file_types):
         data = json.load(jsonfile)
     else:
         with open(jsonfile) as data_file:
@@ -1055,7 +1061,7 @@ class NortekReader(object):
 
 
 def crop_data(obj, range, n_lastdim):
-    for nm, dat in obj.iteritems():
+    for nm, dat in obj.items():
         if isinstance(dat, np.ndarray) and \
            (dat.shape[-1] == n_lastdim):
             obj[nm] = dat[..., range]
