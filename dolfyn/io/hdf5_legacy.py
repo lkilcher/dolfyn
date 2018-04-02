@@ -10,7 +10,7 @@ this approach.
 
 import h5py as h5
 import numpy as np
-import base
+from . import base
 from ..data import base_legacy as db
 from ..data import time as dt
 import copy
@@ -91,7 +91,7 @@ class Saver(base.DataFactory):
         self.fd = h5.File(self.filename, mode=self.file_mode, **kwargs)
         self.close = self.fd.close
         self.node = self.fd.get(where)
-        self.node.attrs.create('DataSaveVersion',
+        self.node.attrs.create(b'DataSaveVersion',
                                pkl.dumps(_ver.ver2tuple(self.ver)))
         self._extrafiles = []
 
@@ -304,7 +304,7 @@ class Loader(base.DataFactory):
         self.close = self.fd.close
         self.type_map = type_map
         self.ver = _ver.ver2tuple(pkl.loads(
-            self.fd.attrs.get('DataSaveVersion', 'I0\n.')))
+            self.fd.attrs.get(b'DataSaveVersion', b'I0\n.')))
 
     def get_group(self, where=None):
         """
