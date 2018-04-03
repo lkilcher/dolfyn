@@ -1,7 +1,7 @@
 # The setup script for installing DOLfYN.
 # from distutils.core import setup
 from setuptools import setup, find_packages
-import dolfyn._version as ver
+import os
 import shutil
 
 # Change this to True if you want to include the tests and test data
@@ -15,10 +15,17 @@ try:
 except OSError:
     pass
 
+# Get the version info We do this to avoid importing __init__, which
+# depends on other packages that may not yet be installed.
+base_dir = os.path.abspath(os.path.dirname(__file__))
+version = {}
+with open(base_dir + "/dolfyn/_version.py") as fp:
+    exec(fp.read(), version)
+
 
 config = dict(
     name='dolfyn',
-    version=ver.__version__,
+    version=version['__version__'],
     description='Doppler Ocean Library for pYthoN.',
     author='Levi Kilcher',
     author_email='levi.kilcher@nrel.gov',
