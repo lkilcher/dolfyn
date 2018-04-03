@@ -10,7 +10,7 @@ Document the .userdata.json files
 
 Document variables in data objects
 
-Document load vs. mmload
+Document load vs. mmload (remove mmload!?)
 
 Document generic read function (io.api.read)
 
@@ -20,8 +20,6 @@ General Test Updates
 Add tests for ADP:
 
 - averaging!
-- earth2principal rotation
-- AWAC rotations
 
 Data Processing
 ========
@@ -63,7 +61,6 @@ Low Priority
 Add support for csv files? What do these look like?
 
 File format:
-- Switch to pycoda formatted hdf5 files? --Use git's submodule functionality?
 - Or, switch to default to matlab files?
 - Best option: write matlab-compatible hdf5 files?!
 
@@ -72,4 +69,3 @@ Testing Framework
 --------
 
 - More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
-

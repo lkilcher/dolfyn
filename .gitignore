@@ -13,6 +13,9 @@ dist
 dolfyn.egg-info
 
 debug/
+.cache/
+.pytest_cache
+src/
 
 *.pyc
 *~
