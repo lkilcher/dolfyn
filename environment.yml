@@ -1,4 +1,4 @@
-name: dolfyn-dev
+name: dolfyn
 
 dependencies:
   - numpy
@@ -7,4 +7,4 @@ dependencies:
   - scipy
   - six
   - pip:
-    - pydicth5
+     - "--editable=git+https://github.com/lkilcher/pyDictH5.git@v0.2.0#egg=pyDictH5"
