@@ -177,12 +177,13 @@ class Ad2cpReader(object):
                 out[ky].append(val)
             else:
                 out[ky] = val
+        out2 = {}
         for ky in out:
             if ky.startswith('GET'):
-                dat = out.pop(ky)
-                d = out[ky.lstrip('GET')] = dict()
+                dat = out[ky]
+                d = out2[ky.lstrip('GET')] = dict()
                 for itm in dat.split(','):
-                    ky, val = itm.split('=')
+                    k, val = itm.split('=')
                     try:
                         val = int(val)
                     except ValueError:
@@ -190,8 +191,10 @@ class Ad2cpReader(object):
                             val = float(val)
                         except ValueError:
                             pass
-                    d[ky] = val
-        return out
+                    d[k] = val
+            else:
+                out2[ky] = out[ky]
+        return out2
 
     def readfile(self, ens_start=0, ens_stop=None):
         nens_total = len(self._ens_pos)
