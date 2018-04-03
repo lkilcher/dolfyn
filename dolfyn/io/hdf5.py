@@ -55,7 +55,7 @@ def load(fname, data_groups=None,):
 def is_pydicth5(fname):
     retval = False
     fd = h5.File(fname, mode='r')
-    if fd.attrs.get('__package_name__', None) == b'pyDictH5':
+    if fd.attrs.get('__package_name__', None) in [b'pyDictH5', 'pyDictH5']:
         retval = True
     fd.close()
     return retval
