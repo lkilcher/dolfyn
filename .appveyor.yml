@@ -19,7 +19,7 @@ install:
   - conda info -a
   - "conda env create -q -n test-environment python=%PYTHON_VERSION% -f environment.yml"
   - activate test-environment
-  - pip install coverage
+  - conda install nose coverage
 
 test_script:
   - nosetests
