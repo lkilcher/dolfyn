@@ -3,20 +3,20 @@ Welcome to the DOLfYN home page
 
 DOLfYN is the Doppler Oceanography Library for pYthoN.
 
-DOLfYN includes libraries for reading binary Nortek(tm) and
-Teledyne-RDI(tm) data files.  At this point it is designed to read and
-work with Acoustic Doppler Velocimeter (ADV) and Acoustic Doppler
-Profiler (ADP/ADCP) data.
+It is designed to read and work with Acoustic Doppler Velocimeter
+(ADV) and Acoustic Doppler Profiler (ADP/ADCP) data. DOLfYN includes
+libraries for reading binary Nortek(tm) and Teledyne-RDI(tm) data
+files.
 
 Please document any issues and submit feature requests via the |dlfn|
 :repo:`issues page<issues/>`.
 
-DOLfYN includes a data abstraction and input/output layer that enables
+DOLfYN utilizes a data abstraction and input/output layer that enables
 saving and loading of data after it has been read from the binary
 files. This data abstraction layer is designed to allow easy
-input/output (loading/saving) of data along the data processing and
+input/output ('saving' and 'loading') data along the data processing and
 analysis chain. The data is written to disk in HDF5 format using the
-`h5py <www.h5py.org>`_ library. Data can also be written to Matlab\
+`h5py <www.h5py.org>`_ library. Data can also be written in Matlab\
 :sup:`TM` format.
 
 

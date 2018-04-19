@@ -12,6 +12,14 @@ class Velocity(TimeData):
                               self.props['inst_model'].lower())
 
     @property
+    def make(self, ):
+        return self.props['inst_make'].lower()
+
+    @property
+    def model(self, ):
+        return self.props['inst_model'].lower()
+
+    @property
     def has_imu(self,):
         """
         Test whether this data object contains Inertial Motion Unit
