@@ -6,15 +6,15 @@ Usage
 |dlfn| is a library of tools for reading, processing, and analyzing
 data from oceanographic velocity measurement instruments such as
 acoustic Doppler velocimeters (ADVs) and acoustic Doppler profilers
-(ADPs). |dlfn| is organized into subpackages for working with each data type
-it supports, as well as base packages
-
-
-.. It also includes tools for reading buoy data from the `National Data Buoy Center <http://www.ndbc.noaa.gov/>`_ (NDBC).
-
-This page documents general and basic usage of the |dlfn| package, for
+(ADPs). This page documents general and basic usage of the |dlfn| package, for
 detailed information on more specific uses of the package see the
 [usage-specific]_ page.
+
+To begin, we load the dolfyn module and read a data file::
+
+  import dolfyn as dlfn
+  dat = dlfn.read(<path/to/my_data_file>)
+  
 
 Working with ADV data
 ---------------------
