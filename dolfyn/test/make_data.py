@@ -6,8 +6,10 @@ set.
 """
 print(__doc__)
 
-import adv_tests as advt
-import adp_tests as adpt
+import test_adv as advt
+import test_rotate_adv as advro
+import test_read_adp as adpr
+import test_rotate_adp as adpro
 
 
 def rungen(gen):
@@ -21,9 +23,12 @@ def rungen(gen):
 # advt.turbulence_test(make_data=True)
 # advt.clean_test(make_data=True)
 # rungen(advt.subset_test(make_data=True))
+# rungen(advro.test_rotate_inst2earth(make_data=True))
+# rungen(advro.test_rotate_inst2beam(make_data=True))
 
-# rungen(adpt.read_test(make_data=True))
-# rungen(adpt.rotate_beam2inst_test(make_data=True))
-# rungen(adpt.rotate_inst2earth_test(make_data=True))
-# rungen(adpt.rotate_earth2inst_test(make_data=True))
-# rungen(adpt.rotate_inst2beam_test(make_data=True))
+
+# rungen(adpr.test_read(make_data=True))
+# rungen(adpro.test_rotate_beam2inst(make_data=True))
+# rungen(adpro.test_rotate_inst2earth(make_data=True))
+# rungen(adpro.test_rotate_earth2inst(make_data=True))
+# rungen(adpro.test_rotate_inst2beam(make_data=True))

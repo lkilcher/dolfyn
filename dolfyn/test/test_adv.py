@@ -2,7 +2,7 @@ import dolfyn.adv.api as avm
 import numpy as np
 try:
     from .base import ResourceFilename
-except ImportError:
+except (ValueError, ImportError):
     from base import ResourceFilename
 import pyDictH5.base as pdh5_base
 
@@ -36,7 +36,7 @@ def check_except(fn, args, errors=Exception, message=''):
         raise Exception(message)
 
 
-def read_test(make_data=False):
+def test_read(make_data=False):
 
     td = avm.read(exdt('example_data/vector_data01.VEC'), nens=100)
     tdm = avm.read(exdt('example_data/vector_data_imu01.VEC'),
@@ -74,7 +74,7 @@ def read_test(make_data=False):
         yield data_equiv, dat1, dat2, msg
 
 
-def motion_test(make_data=False):
+def test_motion(make_data=False):
     tdm = dat_imu.copy()
     avm.motion.correct_motion(tdm)
     tdm10 = dat_imu.copy()
@@ -119,7 +119,7 @@ def motion_test(make_data=False):
         "The data changes when declination is specified as 0!"
 
 
-def heading_test(make_data=False):
+def test_heading(make_data=False):
     td = dat_imu.copy()
 
     pitch, roll, head = avm.rotate.orient2euler(td)
@@ -137,7 +137,7 @@ def heading_test(make_data=False):
     assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
 
 
-def turbulence_test(make_data=False):
+def test_turbulence(make_data=False):
     tmp = dat.copy()
     bnr = avm.TurbBinner(20, tmp['props']['fs'])
     td = bnr(tmp)
@@ -151,7 +151,7 @@ def turbulence_test(make_data=False):
     assert cd == td, "TurbBinner gives unexpected results!"
 
 
-def clean_test(make_data=False):
+def test_clean(make_data=False):
     td = dat.copy()
     avm.clean.GN2002(td.u, 20)
 
@@ -164,7 +164,7 @@ def clean_test(make_data=False):
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"
 
 
-def subset_test(make_data=False):
+def test_subset(make_data=False):
     td = dat.copy().subset[10:20]
 
     if make_data:
@@ -186,5 +186,5 @@ def subset_test(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in read_test():
+    for func, dat1, dat2, msg in test_read():
         func(dat1, dat2, msg)
