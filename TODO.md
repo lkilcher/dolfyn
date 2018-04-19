@@ -14,6 +14,8 @@ Document load vs. mmload (remove mmload!?)
 
 Document generic read function (io.api.read)
 
+Document changed location of tests.
+
 General Test Updates
 -------
 
@@ -47,8 +49,6 @@ Binary Reading
 
 Default to not including test folder (or just data?) in a release.
 
-Build a conda install
-
 Testing
 ======
 
@@ -64,6 +64,7 @@ File format:
 - Or, switch to default to matlab files?
 - Best option: write matlab-compatible hdf5 files?!
 
+Build a conda install
 
 Testing Framework
 --------
