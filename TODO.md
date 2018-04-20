@@ -8,6 +8,9 @@ Add usage examples for the adp package.
 Document the .userdata.json files
     - declination handling
 
+Document rotations (note: beam coordinate system is only variables
+that start with 'vel')
+
 Document variables in data objects
 
 Document load vs. mmload (remove mmload!?)

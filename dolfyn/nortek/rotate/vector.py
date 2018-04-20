@@ -50,7 +50,24 @@ def orient2euler(advo):
             )
 
 
-def beam2inst(advo, reverse=False):
+def beam2inst(advo, reverse=False, force=False):
+    """
+    Rotate data in an ADV object from beam coordinates to instrument
+    coordinates (or vice-versa). NOTE: this only rotates variables
+    starting with `'vel'` in `advo.props['rotate_vars']`.
+
+    Parameters
+    ----------
+    advo : The adv object containing the data.
+
+    reverse : bool (default: False)
+           If True, this function performs the inverse rotation
+           (principal->earth).
+
+    force : Do not check which frame the data is in prior to
+      performing this rotation.
+
+    """
     transmat = advo.config.head.TransMatrix
     csin = 'beam'
     csout = 'inst'
@@ -58,11 +75,13 @@ def beam2inst(advo, reverse=False):
         transmat = inv(transmat)
         csin = 'inst'
         csout = 'beam'
-    if advo.props['coord_sys'] != csin:
+    if not force and advo.props['coord_sys'] != csin:
         raise ValueError(
             "Data must be in the '%s' frame when using this function" %
             csin)
     for ky in advo.props['rotate_vars']:
+        if not ky.startswith('vel'):
+            continue
         advo[ky] = np.einsum('ij,jk->ik', transmat, advo[ky])
     advo.props['coord_sys'] = csout
 
