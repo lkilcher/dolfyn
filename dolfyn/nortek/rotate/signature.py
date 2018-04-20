@@ -1,1 +1,2 @@
-from .vector import beam2inst, inst2earth, earth2principal
+from .vector import inst2earth, earth2principal
+from dolfyn.rdi.rotate import beam2inst
