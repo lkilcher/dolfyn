@@ -50,10 +50,12 @@ def orient2euler(advo):
             )
 
 
-def _beam2inst(dat, transmat, reverse=False):
+def beam2inst(advo, reverse=False):
+    transmat = advo.config.head.TransMatrix
     if reverse:
         transmat = inv(transmat)
-    return np.einsum('ij,jk->ik', transmat, dat)
+    for ky in advo.props['rotate_vars']:
+        advo[ky] = np.einsum('ij,jk->ik', transmat, advo[ky])
 
 
 def _check_declination(advo):
