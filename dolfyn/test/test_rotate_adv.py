@@ -1,5 +1,5 @@
 from dolfyn.test import test_adv as tr
-import dolfyn.adv.api as avm
+from dolfyn.rotate import rotate
 from dolfyn.io.hdf5 import load
 
 rfnm = tr.rfnm
@@ -8,9 +8,9 @@ data_equiv = tr.data_equiv
 
 def test_rotate_inst2earth(make_data=False):
     td = tr.dat.copy()
-    avm.rotate.inst2earth(td)
+    rotate(td, 'earth', inplace=True)
     tdm = tr.dat_imu.copy()
-    avm.rotate.inst2earth(tdm)
+    rotate(tdm, 'earth', inplace=True)
 
     if make_data:
         td.to_hdf5(rfnm('data/vector_data01_rotate_inst2earth.h5'))
@@ -30,9 +30,9 @@ def test_rotate_inst2earth(make_data=False):
 
 def test_rotate_earth2inst(make_data=False):
     td = load(rfnm('data/vector_data01_rotate_inst2earth.h5'))
-    avm.rotate.inst2earth(td, reverse=True)
+    rotate(td, 'inst', inplace=True)
     tdm = load(rfnm('data/vector_data_imu01_rotate_inst2earth.h5'))
-    avm.rotate.inst2earth(tdm, reverse=True)
+    rotate(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy()
     cdm = tr.dat_imu.copy()
@@ -51,9 +51,9 @@ def test_rotate_earth2inst(make_data=False):
 
 def test_rotate_inst2beam(make_data=False):
     td = tr.dat.copy()
-    avm.rotate.beam2inst(td, reverse=True)
+    rotate(td, 'beam', inplace=True)
     tdm = tr.dat_imu.copy()
-    avm.rotate.beam2inst(tdm, reverse=True)
+    rotate(tdm, 'beam', inplace=True)
 
     if make_data:
         td.to_hdf5(rfnm('data/vector_data01_rotate_inst2beam.h5'))
@@ -73,9 +73,9 @@ def test_rotate_inst2beam(make_data=False):
 
 def test_rotate_beam2inst(make_data=False):
     td = load(rfnm('data/vector_data01_rotate_inst2beam.h5'))
-    avm.rotate.beam2inst(td)
+    rotate(td, 'inst', inplace=True)
     tdm = load(rfnm('data/vector_data_imu01_rotate_inst2beam.h5'))
-    avm.rotate.beam2inst(tdm)
+    rotate(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy()
     cdm = tr.dat_imu.copy()
@@ -90,9 +90,9 @@ def test_rotate_beam2inst(make_data=False):
 
 def test_rotate_earth2principal(make_data=False):
     td = load(rfnm('data/vector_data01_rotate_inst2earth.h5'))
-    avm.rotate.earth2principal(td)
+    rotate(td, 'principal', inplace=True)
     tdm = load(rfnm('data/vector_data_imu01_rotate_inst2earth.h5'))
-    avm.rotate.earth2principal(tdm)
+    rotate(tdm, 'principal', inplace=True)
 
     if make_data:
         td.to_hdf5(rfnm('data/vector_data01_rotate_earth2principal.h5'))
