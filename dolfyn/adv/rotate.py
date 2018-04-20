@@ -157,9 +157,9 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rmat = np.rollaxis(odata['orientmat'], 1)
 
     else:
-        rr = odata['roll']
-        pp = odata['pitch']
-        hh = odata['heading']
+        rr = odata['roll'].copy()
+        pp = odata['pitch'].copy()
+        hh = odata['heading'].copy()
         if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
             # The end of the data may not have valid orientations
             lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
