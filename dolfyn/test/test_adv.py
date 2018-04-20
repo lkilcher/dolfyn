@@ -20,6 +20,10 @@ dat_burst = load(rfnm('data/burst_mode01.h5'))
 
 
 def data_equiv(dat1, dat2, message=''):
+    if 'props' in dat1 and 'principal_angle' in dat1['props']:
+        pa1 = dat1['props'].pop('principal_angle')
+        pa2 = dat2['props'].pop('principal_angle')
+        assert np.abs(pa1 - pa2) < 1e-4
     assert dat1 == dat2, message
 
 
