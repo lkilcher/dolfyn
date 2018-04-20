@@ -9,8 +9,8 @@ rc = ['beam', 'inst', 'earth', 'principal']
 rot_module_dict = {
     # Nortek instruments
     'nortek vector': r_vec,
-#    'nortek awac': r_awac,
-#    'nortek signature': r_sig,
+    'nortek awac': r_awac,
+    'nortek signature': r_sig,
 
     # RDI insturments
     'rdi workhorse': r_rdi,

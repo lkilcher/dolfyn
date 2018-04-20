@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import scipy.signal as sig
 from scipy.integrate import cumtrapz
-from . import rotate as rot
+from ..nortek.rotate import vector as rot
 import warnings
 
 
