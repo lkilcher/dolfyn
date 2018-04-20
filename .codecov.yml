@@ -1,0 +1,4 @@
+ignore:
+ - "dolfyn/test/make_data.py"
+ - "dolfyn/meta/*"
+ - "dolfyn/buoy/*"
