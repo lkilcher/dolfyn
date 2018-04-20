@@ -23,8 +23,9 @@ def rungen(gen):
 # advt.turbulence_test(make_data=True)
 # advt.clean_test(make_data=True)
 # rungen(advt.subset_test(make_data=True))
-# rungen(advro.test_rotate_inst2earth(make_data=True))
 # rungen(advro.test_rotate_inst2beam(make_data=True))
+# rungen(advro.test_rotate_inst2earth(make_data=True))
+# rungen(advro.test_rotate_earth2principal(make_data=True))
 
 
 # rungen(adpr.test_read(make_data=True))
