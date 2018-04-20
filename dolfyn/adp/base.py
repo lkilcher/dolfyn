@@ -1,7 +1,7 @@
 from ..data import velocity as dbvel
 from ..data.time import num2date
 import numpy as np
-from . import rotate
+from dolfyn.rdi import rotate
 
 deg2rad = np.pi / 180
 

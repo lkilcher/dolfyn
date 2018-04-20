@@ -12,28 +12,35 @@ rot_module_dict = {
     'nortek awac': r_awac,
     'nortek signature': r_sig,
 
-    # RDI insturments
-    'rdi workhorse': r_rdi,
+    # RDI instruments
+    'rdi': r_rdi,
 }
 
 
 def rotate(advo, out_frame='earth', inplace=False):
-    try:
-        rmod = rot_module_dict[advo.make_model]
-    except KeyError:
+    rmod = None
+    for ky in rot_module_dict:
+        if advo.make_model.startswith(ky):
+            rmod = rot_module_dict[ky]
+            break
+    if rmod is None:
         raise ValueError("Rotations are not defined for "
                          "instrument '{}'.".format(advo.make_model))
     if not inplace:
         advo = advo.copy()
 
     # Get the 'indices' of the rotation chain
+    csin = advo.props['coord_sys'].lower()
+    if csin == 'ship':
+        csin = 'inst'
     try:
-        iframe_in = rc.index(advo.props['coord_sys'])
+        iframe_in = rc.index(csin)
     except ValueError:
         raise Exception("The coordinate system of the input "
-                        "data object is invalid.")
+                        "data object, '{}', is invalid."
+                        .format(advo.props['coord_sys']))
     try:
-        iframe_out = rc.index(out_frame)
+        iframe_out = rc.index(out_frame.lower())
     except ValueError:
         raise Exception("The specifid output coordinate system "
                         "is invalid, please select one of: 'beam', 'inst', "
@@ -49,7 +56,7 @@ def rotate(advo, out_frame='earth', inplace=False):
         reverse = True
 
     while advo.props['coord_sys'] != out_frame:
-        inow = rc.index(advo.props['coord_sys'].lower())
+        inow = rc.index(csin)
         if reverse:
             func = getattr(rmod, rc[inow - 1] + '2' + rc[inow])
         else:
