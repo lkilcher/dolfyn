@@ -112,28 +112,40 @@ class Velocity(TimeData):
 
     @property
     def _repr_header(self, ):
+        time_string = '{:.2f} {} (started: {})'
         if (not hasattr(self, 'mpltime')) or self.mpltime[0] < 1:
-            print('Warning: no time information!')
-            dt = num2date(693596)
-            tm = np.array([0, 0])
+            time_string = '-->No Time Information!<--'
         else:
             tm = [self.mpltime[0], self.mpltime[-1]]
             dt = num2date(tm[0])
-        shape_string = ''
+            delta = (tm[-1] - tm[0])
+            if delta > 1:
+                units = 'days'
+            elif delta * 24 > 1:
+                units = 'hours'
+                delta *= 24
+            elif delta * 24 * 60 > 1:
+                delta *= 24 * 60
+                units = 'minutes'
+            else:
+                delta *= 24 * 3600
+                units = 'seconds'
+            time_string = time_string.format(delta, units,
+                                             dt.strftime('%b %d, %Y %H:%M'))
+
         if len(self.shape) > 1:
-            shape_string = '({} bins, {} pings)'.format(
-                self.shape[0], self.shape[1])
+            shape_string = '({} bins, {} pings @ {}Hz)'.format(
+                self.shape[0], self.shape[1], self.props['fs'])
         else:
-            shape_string = '({} pings)'.format(
-                self.shape[0])
+            shape_string = '({} pings @ {}Hz)'.format(
+                self.shape[0], self.props['fs'])
         return ("<%s data object>\n"
-                "  . %0.2f hours (started: %s)\n"
+                "  . %s\n"
                 "  . %s-frame\n"
                 "  . %s\n" %
                 (self.props['inst_type'],
-                 (tm[-1] - tm[0]) * 24,
-                 dt.strftime('%b %d, %Y %H:%M'),
-                 self.props['coord_sys'],
+                 time_string,
+                 self.props['coord_sys'].upper(),
                  shape_string))
 
 
