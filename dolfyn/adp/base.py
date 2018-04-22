@@ -1,5 +1,4 @@
 from ..data import velocity as dbvel
-from ..data.time import num2date
 import numpy as np
 from dolfyn.rdi import rotate
 
@@ -55,25 +54,6 @@ class adcp_raw(dbvel.Velocity):
     @property
     def S2(self,):
         return self.dudz ** 2 + self.dvdz ** 2
-
-    @property
-    def _repr_header(self, ):
-        if (not hasattr(self, 'mpltime')) or self.mpltime[0] < 1:
-            print('Warning: no time information!')
-            dt = num2date(693596)
-            tm = np.array([0, 0])
-        else:
-            tm = [self.mpltime[0], self.mpltime[-1]]
-            dt = num2date(tm[0])
-        return ("<ADP data object>\n"
-                "  . %0.2f hours (started: %s)\n"
-                "  . %s-frame\n"
-                "  . (%s bins, %s pings)\n" %
-                ((tm[-1] - tm[0]) * 24,
-                 dt.strftime('%b %d, %Y %H:%M'),
-                 self.props['coord_sys'],
-                 self.shape[0],
-                 self.shape[1]))
 
 
 class adcp_binned(dbvel.VelTkeData, adcp_raw):
