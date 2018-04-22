@@ -2,6 +2,7 @@ from __future__ import division
 from .base import np, ma, TimeData, FreqData
 from .binned import TimeBinner
 import warnings
+from .time import num2date
 
 
 class Velocity(TimeData):
@@ -108,6 +109,32 @@ class Velocity(TimeData):
     def U(self,):
         "Horizontal velocity as a complex quantity."
         return self.u[:] + self.v[:] * 1j
+
+    @property
+    def _repr_header(self, ):
+        if (not hasattr(self, 'mpltime')) or self.mpltime[0] < 1:
+            print('Warning: no time information!')
+            dt = num2date(693596)
+            tm = np.array([0, 0])
+        else:
+            tm = [self.mpltime[0], self.mpltime[-1]]
+            dt = num2date(tm[0])
+        shape_string = ''
+        if len(self.shape) > 1:
+            shape_string = '({} bins, {} pings)'.format(
+                self.shape[0], self.shape[1])
+        else:
+            shape_string = '({} pings)'.format(
+                self.shape[0])
+        return ("<%s data object>\n"
+                "  . %0.2f hours (started: %s)\n"
+                "  . %s-frame\n"
+                "  . %s\n" %
+                (self.props['inst_type'],
+                 (tm[-1] - tm[0]) * 24,
+                 dt.strftime('%b %d, %Y %H:%M'),
+                 self.props['coord_sys'],
+                 shape_string))
 
 
 class VelTkeData(TimeData):
