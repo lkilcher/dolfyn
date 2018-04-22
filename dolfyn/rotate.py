@@ -17,20 +17,41 @@ rot_module_dict = {
 }
 
 
-def rotate(advo, out_frame='earth', inplace=False):
+def rotate(obj, out_frame='earth', inplace=False):
+    """Rotate a data object into a new coordinate system.
+
+    Parameters
+    ----------
+
+    obj : :class:`Velocity <data.velocity.Velocity>`
+      The dolfyn velocity-data (ADV or ADP) object to rotate.
+
+    out_frame : string {'beam', 'inst', 'earth', 'principal'}
+      The coordinate system to rotate the data into.
+
+    inplace : bool
+      Operate on the input data object (True), or return a copy that
+      has been rotated (False, default).
+
+    Returns
+    -------
+    objout : :class:`Velocity <data.velocity.Velocity>`
+      The rotated data object. This is `obj` if inplace is True.
+
+    """
     rmod = None
     for ky in rot_module_dict:
-        if advo.make_model.startswith(ky):
+        if obj.make_model.startswith(ky):
             rmod = rot_module_dict[ky]
             break
     if rmod is None:
         raise ValueError("Rotations are not defined for "
-                         "instrument '{}'.".format(advo.make_model))
+                         "instrument '{}'.".format(obj.make_model))
     if not inplace:
-        advo = advo.copy()
+        obj = obj.copy()
 
     # Get the 'indices' of the rotation chain
-    csin = advo.props['coord_sys'].lower()
+    csin = obj.props['coord_sys'].lower()
     if csin == 'ship':
         csin = 'inst'
     try:
@@ -38,7 +59,7 @@ def rotate(advo, out_frame='earth', inplace=False):
     except ValueError:
         raise Exception("The coordinate system of the input "
                         "data object, '{}', is invalid."
-                        .format(advo.props['coord_sys']))
+                        .format(obj.props['coord_sys']))
     try:
         iframe_out = rc.index(out_frame.lower())
     except ValueError:
@@ -48,19 +69,19 @@ def rotate(advo, out_frame='earth', inplace=False):
 
     if iframe_out == iframe_in:
         # Should this generate an error?
-        return advo
+        return obj
 
     if iframe_out > iframe_in:
         reverse = False
     else:
         reverse = True
 
-    while advo.props['coord_sys'] != out_frame:
+    while obj.props['coord_sys'].lower() != out_frame.lower():
         inow = rc.index(csin)
         if reverse:
             func = getattr(rmod, rc[inow - 1] + '2' + rc[inow])
         else:
             func = getattr(rmod, rc[inow] + '2' + rc[inow + 1])
-        func(advo, reverse=reverse)
+        func(obj, reverse=reverse)
 
-    return advo
+    return obj
