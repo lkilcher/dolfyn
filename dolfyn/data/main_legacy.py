@@ -1,4 +1,4 @@
-from ..io import Saveable, get_typemap, loader
+from ..io.main_legacy import Saveable, get_typemap, loader
 from .base import Dprops
 # from binned import bindat
 
@@ -11,7 +11,7 @@ class basic(Saveable, Dprops):
 
 
 type_map = get_typemap(__name__)
-                       # Get the data classes in the current namespace.
+# Get the data classes in the current namespace.
 
 
 def load(fname, type_map=type_map, data_groups=None):

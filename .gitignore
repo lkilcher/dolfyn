@@ -24,6 +24,8 @@ src/
 \.#*
 *flymake.py
 
+docs/.buildinfo
+
 example_data/*.index
 
 tmp/
