@@ -1,8 +1,9 @@
-from .base import Dgroups, np, oset, ma
+from .base import SourceDataType, np, ma
+from ..OrderedSet import OrderedSet as oset
 
 
 # In general, these are not savable objects (for now?).
-class specobj(Dgroups):
+class specobj(SourceDataType):
 
     @property
     def _data_groups(self,):

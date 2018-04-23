@@ -64,7 +64,7 @@ def read_signature(filename, userdata=True, nens=None):
     filename : string
         The filename of the file to load.
     userdata : filename
-        **currently unused, just a placeholder.
+        <<currently unused, just a placeholder.>>
     nens : int, or tuple of 2 ints
         The number of ensembles to read, if int (starting at the
         beginning); or the range of ensembles to read, if tuple.

@@ -47,7 +47,7 @@ help:
 
 
 api:
-	$(SPHINXBUILDAPI) -f -o source/api -T -H 'DOLfYN API' ../dolfyn/ ../dolfyn/meta ../dolfyn/plot
+	$(SPHINXBUILDAPI) -f -T -H 'DOLfYN API' -o source/api ../dolfyn/ ../dolfyn/meta ../dolfyn/plot ../dolfyn/test ../dolfyn/buoy ../dolfyn/*_legacy.py ../dolfyn/*/*_legacy.py 
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)
@@ -149,3 +149,10 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR2)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR2)/doctest/output.txt."
+
+clean:
+	rm -fdr ../doc-build
+	rm -fdr source/api
+	rm -fdr ../docs
+	mkdir ../docs
+	touch ../docs/.nojekyll
