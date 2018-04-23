@@ -3,6 +3,7 @@ from .base import np, ma, TimeData, FreqData
 from .binned import TimeBinner
 import warnings
 from .time import num2date
+from ..rotate import rotate
 
 
 class Velocity(TimeData):
@@ -52,6 +53,27 @@ class Velocity(TimeData):
         Angle of velocity vector.
         """
         return np.angle(self.U)
+
+    def rotate(self, out_frame='earth', inplace=False):
+        """Rotate the data object into a new coordinate system.
+
+        Parameters
+        ----------
+
+        out_frame : string {'beam', 'inst', 'earth', 'principal'}
+          The coordinate system to rotate the data into.
+
+        inplace : bool
+          Operate on self (True), or return a copy that
+          has been rotated (False, default).
+
+        Returns
+        -------
+        objout : :class:`Velocity <data.velocity.Velocity>`
+          The rotated data object. This is `self` if inplace is True.
+
+        """
+        return rotate(self, out_frame=out_frame, inplace=inplace)
 
     def calc_principal_angle(self, bin=None):
         """

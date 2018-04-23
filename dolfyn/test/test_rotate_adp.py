@@ -1,5 +1,4 @@
 from dolfyn.test import test_read_adp as tr
-from dolfyn.rotate import rotate
 from dolfyn.io.hdf5 import load
 
 rfnm = tr.rfnm
@@ -8,12 +7,9 @@ data_equiv = tr.data_equiv
 
 def test_rotate_beam2inst(make_data=False):
 
-    td = tr.dat_rdi.copy()
-    rotate(td, 'inst', inplace=True)
-    td_sig = tr.dat_sig.copy()
-    rotate(td_sig, 'inst', inplace=True)
-    td_sigi = tr.dat_sigi.copy()
-    rotate(td_sigi, 'inst', inplace=True)
+    td = tr.dat_rdi.rotate('inst')
+    td_sig = tr.dat_sig.rotate('inst')
+    td_sigi = tr.dat_sigi.rotate('inst')
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
@@ -38,9 +34,9 @@ def test_rotate_inst2beam(make_data=False):
     # # The reverse RDI rotation doesn't work b/c of NaN's in one beam
     # # that propagate to others.
     # td = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
-    # rotate(td, 'beam', inplace=True)
+    # td.rotate('beam', inplace=True)
     td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
-    rotate(td_awac, 'beam', inplace=True)
+    td_awac.rotate('beam', inplace=True)
 
     if make_data:
         td_awac.to_hdf5(rfnm('data/AWAC_test01_inst2beam.h5'))
@@ -57,13 +53,12 @@ def test_rotate_inst2beam(make_data=False):
 
 
 def test_rotate_earth2inst(make_data=False):
-    td = load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
-    rotate(td, 'inst', inplace=True)
+    td = (load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
+          .rotate('inst', inplace=True))
     # tdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
-    # rotate(tdwr2, 'inst', inplace=True)
+    # tdwr2.rotate('inst', inplace=True)
     # This AWAC is in earth coords.
-    td_awac = tr.dat_awac.copy()
-    rotate(td_awac, 'inst', inplace=True)
+    td_awac = tr.dat_awac.rotate('inst')
 
     if make_data:
         td_awac.to_hdf5(rfnm('data/AWAC_test01_earth2inst.h5'))
@@ -82,16 +77,14 @@ def test_rotate_earth2inst(make_data=False):
 
 def test_rotate_inst2earth(make_data=False):
 
-    td = tr.dat_rdi_i.copy()
-    rotate(td, 'earth', inplace=True)
-    tdwr2 = tr.dat_wr2.copy()
-    rotate(tdwr2, 'earth', inplace=True)
+    td = tr.dat_rdi_i.rotate('earth')
+    tdwr2 = tr.dat_wr2.rotate('earth')
     td_sig = load(rfnm('data/BenchFile01_rotate_beam2inst.h5'))
-    rotate(td_sig, 'earth', inplace=True)
+    td_sig.rotate('earth', inplace=True)
     td_sigi = load(rfnm('data/Sig1000_IMU_rotate_beam2inst.h5'))
-    rotate(td_sigi, 'earth', inplace=True)
+    td_sigi.rotate('earth', inplace=True)
     td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
-    rotate(td_awac, 'earth', inplace=True)
+    td_awac.rotate('earth', inplace=True)
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
