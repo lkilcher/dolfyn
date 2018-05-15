@@ -1,3 +1,5 @@
+% Nortek Coordinate Transformations definition.
+% Downloaded from: http://www.nortek.com.cn/lib/forum-attachments/coordinate-transformation/view
 % Transform.m is a Matlab script that shows how velocity data can be 
 % transformed between beam coordinates and ENU coordinates. Beam 
 % coordinates are defined as the velocity measured along the three 

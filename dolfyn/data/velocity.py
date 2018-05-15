@@ -78,6 +78,23 @@ class Velocity(TimeData):
     def calc_principal_angle(self, bin=None):
         """
         Compute the principal angle of the horizontal velocity.
+
+        Parameters
+        ----------
+
+        bin : {int or None}
+          For ADP objects, this is the depth bin where the principal
+          angle is calculated. If it is None (default), the
+          depth-averaged velocity is used.
+
+        Notes
+        -----
+
+        This function sets (overwrites) the values of
+        ``self.props['principal_angle']``, and
+        ``self.props['coord_sys_principal_ref']``.
+
+        This function calculates the principal direction 
         """
         if self.props['coord_sys'].lower() not in ['earth', 'inst',
                                                    'enu', 'xyz']:
@@ -85,13 +102,13 @@ class Velocity(TimeData):
                             "if the coordinate system is either 'earth' or "
                             "'inst'.")
         self.props['coord_sys_principal_ref'] = self.props['coord_sys']
-        dt = self.U
+        dt = self.U  # horizontal velocity as a complex number
         if bin is None:
             if dt.ndim > 1:
                 dt = dt.mean(0)
         else:
             dt = dt[bin]
-        dt[dt.imag <= 0] *= np.exp(1j * np.pi)
+        dt[dt.imag <= 0] *= -1
         # Now double the angle, so that angles near pi and 0 get averaged
         # together correctly:
         dt *= np.exp(1j * np.angle(dt))
