@@ -5,7 +5,7 @@
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
-BUILDDIR      = ../docs
+BUILDDIR      = ../doc-build/html
 BUILDDIR2      = ../doc-build
 SPHINXBUILDAPI  = sphinx-apidoc
 PYSOURCEDIR   = ../dolfyn/
@@ -151,8 +151,5 @@ doctest:
 	      "results in $(BUILDDIR2)/doctest/output.txt."
 
 clean:
-	rm -fdr ../doc-build
-	rm -fdr source/api
-	rm -fdr ../docs
-	mkdir ../docs
-	touch ../docs/.nojekyll
+	find ../doc-build -type f -not -path "*/.git*" -not -path "../doc-build/html/.nojekyll" -delete
+	find ../doc-build -type d -not -path "../doc-build/html*" -not -path "../doc-build" -delete
