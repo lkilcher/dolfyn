@@ -1,7 +1,11 @@
 Documentation
 ====
 
+Check spelling of 'principal' vs. 'principle'
+
 Add some examples to the plotting tools page
+
+Add a units section.
 
 Add usage examples for the adp package.
 
@@ -16,11 +20,14 @@ Document variables in data objects
 Document load vs. mmload (remove mmload!?)
 
 Document generic read function (io.api.read)
+    - What types of data files does this function read?
 
 Document changed location of tests.
 
 General Test Updates
 -------
+
+Add check for `coord_sys_principal_ref` in `earth2principal` fn's.
 
 Add tests for ADP:
 
@@ -68,6 +75,10 @@ File format:
 - Best option: write matlab-compatible hdf5 files?!
 
 Build a conda install
+
+Handle units (use Pint?).
+
+Add array-dim labels.
 
 Testing Framework
 --------

@@ -2,11 +2,9 @@
 
 .. |pm|   unicode:: U+00B1 .. PLUS-MINUS SIGN
 
-Usage - Specific Cases
-======================
-
+.. _motion-correction
 Motion Correcting ADV-IMU measurements
---------------------------------------
+===============
 
 The Nortek Vector ADV can be purchased with an Inertial Motion Unit
 (IMU) that measures the ADV motion. These measurements can be used to
