@@ -1,0 +1,603 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.data.binned &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.data.binned</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">..tools.psd</span> <span class="k">import</span> <span class="n">psd_freq</span><span class="p">,</span> <span class="n">cohere</span><span class="p">,</span> <span class="n">psd</span><span class="p">,</span> <span class="n">cpsd_quasisync</span><span class="p">,</span> \
+    <span class="n">cpsd</span><span class="p">,</span> <span class="n">phase_angle</span>
+<span class="kn">from</span> <span class="nn">..tools.misc</span> <span class="k">import</span> <span class="n">slice1d_along_axis</span><span class="p">,</span> <span class="n">detrend</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">ma</span><span class="p">,</span> <span class="n">TimeData</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+
+<div class="viewcode-block" id="TimeBinner"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner">[docs]</a><span class="k">class</span> <span class="nc">TimeBinner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TimeBinner.calc_omega"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.calc_omega">[docs]</a>    <span class="k">def</span> <span class="nf">calc_omega</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">coh</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the radial-frequency vector for the psd&#39;s.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fs : float (optional)</span>
+<span class="sd">          The sample rate (Hz).</span>
+<span class="sd">        coh : bool</span>
+<span class="sd">          Calculate the frequency vector for coherence/cross-spectra</span>
+<span class="sd">          (default: False) i.e. use self.n_fft_coh instead of</span>
+<span class="sd">          self.n_fft.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span>
+        <span class="n">freq_dim</span> <span class="o">=</span> <span class="s1">&#39;freq&#39;</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_fs</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">coh</span><span class="p">:</span>
+            <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span>
+            <span class="n">freq_dim</span> <span class="o">=</span> <span class="s1">&#39;coh_freq&#39;</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span><span class="n">psd_freq</span><span class="p">(</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">fs</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+                        <span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span><span class="s1">&#39;\omega&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="p">[</span><span class="n">freq_dim</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">dat</span></div>
+
+    <span class="k">def</span> <span class="nf">_outshape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inshape</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns `outshape` (the &#39;reshape&#39;d shape) for an `inshape` array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_bin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">inshape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="p">[</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n_bin</span><span class="p">,</span> <span class="n">n_bin</span> <span class="o">+</span> <span class="n">n_pad</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_outshape_fft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inshape</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns `outshape` (the fft &#39;reshape&#39;d shape) for an `inshape` array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nfft</span><span class="p">(</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">n_bin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">inshape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="p">[</span><span class="n">inshape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n_bin</span><span class="p">,</span> <span class="n">n_fft</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_parse_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fs</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+
+    <span class="k">def</span> <span class="nf">_parse_nbin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n_bin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span>
+        <span class="k">return</span> <span class="n">n_bin</span>
+
+    <span class="k">def</span> <span class="nf">_parse_nfft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n_fft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span>
+        <span class="k">return</span> <span class="n">n_fft</span>
+
+<div class="viewcode-block" id="TimeBinner.reshape"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.reshape">[docs]</a>    <span class="k">def</span> <span class="nf">reshape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reshape the array `arr` to shape (...,n,n_bin+n_pad).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arr : np.ndarray</span>
+<span class="sd">        n_pad : int</span>
+<span class="sd">          Is used to add `n_pad`/2 points from the end of the previous</span>
+<span class="sd">          ensemble to the top of the current, and `n_pad`/2 points</span>
+<span class="sd">          from the top of the next ensemble to the bottom of the</span>
+<span class="sd">          current.  Zeros are padded in the upper-left and lower-right</span>
+<span class="sd">          corners of the matrix (beginning/end of timeseries).  In</span>
+<span class="sd">          this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)</span>
+<span class="sd">        n_bin : float, int (optional)</span>
+<span class="sd">          Override this binner&#39;s n_bin.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        `n_bin` can be non-integer, in which case the output array</span>
+<span class="sd">        size will be `n_pad`+`n_bin`, and the decimal will</span>
+<span class="sd">        cause skipping of some data points in `arr`.  In particular,</span>
+<span class="sd">        every mod(`n_bin`,1) bins will have a skipped point. For</span>
+<span class="sd">        example:</span>
+<span class="sd">        - for n_bin=2048.2 every 1/5 bins will have a skipped point.</span>
+<span class="sd">        - for n_bin=4096.9 every 9/10 bins will have a skipped point.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_bin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="n">npd0</span> <span class="o">=</span> <span class="n">n_pad</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">npd1</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_pad</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">shp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outshape</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outshape</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_pad</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">n_bin</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># If n_bin is an integer, we can do this simply.</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">npd0</span><span class="p">:</span> <span class="n">n_bin</span> <span class="o">+</span> <span class="n">npd0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">arr</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:(</span><span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">*</span> <span class="n">n_bin</span> <span class="o">//</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">npd0</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span> <span class="o">+</span> <span class="n">npd0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">inds</span><span class="p">]</span>
+                                                <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+            <span class="c1"># n_bin needs to be int for the n_pad operation.</span>
+            <span class="n">n_bin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_pad</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:,</span> <span class="p">:</span><span class="n">npd0</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_bin</span><span class="p">:</span><span class="n">n_bin</span> <span class="o">+</span> <span class="n">npd0</span><span class="p">]</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">npd1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:,</span> <span class="n">npd0</span><span class="p">:</span><span class="n">npd0</span> <span class="o">+</span> <span class="n">npd1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">MaskedArray</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
+                                                  <span class="n">n_pad</span><span class="o">=</span><span class="n">n_pad</span><span class="p">,</span>
+                                                  <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">),</span>
+                                     <span class="n">out</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;time2&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="TimeBinner.detrend"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.detrend">[docs]</a>    <span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reshape the array `dat` and remove the best-fit trend line.</span>
+
+<span class="sd">        ... Need to fix this to deal with NaNs...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">detrend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_pad</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TimeBinner.demean"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.demean">[docs]</a>    <span class="k">def</span> <span class="nf">demean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reshape the array `dat` and remove the mean from each ensemble.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_pad</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dt</span> <span class="o">-</span> <span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="TimeBinner.mean"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.mean">[docs]</a>    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask_thresh</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Average an array object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_bin : int (default is self.n_bin)</span>
+
+<span class="sd">        mask_thresh : float (between 0 and 1)</span>
+<span class="sd">            if the input data is a masked array, and mask_thresh is</span>
+<span class="sd">            not None mask the averaged values where the fraction of</span>
+<span class="sd">            bad points is greater than mask_thresh</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Can I turn this &#39;swapaxes&#39; stuff into a decorator?</span>
+        <span class="k">if</span> <span class="n">axis</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">dat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">n_bin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">MaskedArray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">mask_thresh</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">mask_thresh</span> <span class="o">*</span> <span class="n">n_bin</span>
+        <span class="k">if</span> <span class="n">axis</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dat</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">out</span>
+        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TimeBinner.mean_angle"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.mean_angle">[docs]</a>    <span class="k">def</span> <span class="nf">mean_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;radians&#39;</span><span class="p">,</span>
+                   <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask_thresh</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Average an angle array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        units : {&#39;radians&#39; | &#39;degrees&#39;}</span>
+
+<span class="sd">        n_bin : int (default is self.n_bin)</span>
+
+<span class="sd">        mask_thresh : float (between 0 and 1)</span>
+<span class="sd">            if the input data is a masked array, and mask_thresh is</span>
+<span class="sd">            not None mask the averaged values where the fraction of</span>
+<span class="sd">            bad points is greater than mask_thresh</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">units</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;deg&#39;</span><span class="p">):</span>
+            <span class="n">dat</span> <span class="o">=</span> <span class="n">dat</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+        <span class="k">elif</span> <span class="n">units</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;rad&#39;</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Units must be either &#39;rad&#39; or &#39;deg&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">dat</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="TimeBinner.var"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.var">[docs]</a>    <span class="k">def</span> <span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">)</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TimeBinner.std"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.std">[docs]</a>    <span class="k">def</span> <span class="nf">std</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">)</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TimeBinner.calc_acov"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.calc_acov">[docs]</a>    <span class="k">def</span> <span class="nf">calc_acov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the auto-covariance of the raw-signal `indat`.</span>
+
+<span class="sd">        As opposed to calc_xcov, which returns the full</span>
+<span class="sd">        cross-covariance between two arrays, this function only</span>
+<span class="sd">        returns a quarter of the full auto-covariance. It computes the</span>
+<span class="sd">        auto-covariance over half of the range, then averages the two</span>
+<span class="sd">        sides (to return a &#39;quartered&#39; covariance).</span>
+
+<span class="sd">        This has the advantage that the 0 index is actually zero-lag.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_bin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outshape</span><span class="p">(</span><span class="n">indat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span>
+                       <span class="p">[</span><span class="n">n_bin</span> <span class="o">//</span> <span class="mi">4</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">indat</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">dt1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">indat</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_bin</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># Here we de-mean only on the &#39;valid&#39; range:</span>
+        <span class="n">dt1</span> <span class="o">=</span> <span class="n">dt1</span> <span class="o">-</span> <span class="n">dt1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:,</span> <span class="p">(</span><span class="n">n_bin</span> <span class="o">//</span> <span class="mi">4</span><span class="p">):(</span><span class="o">-</span><span class="n">n_bin</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">dt2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demean</span><span class="p">(</span><span class="n">indat</span><span class="p">)</span>  <span class="c1"># Don&#39;t pad the second variable.</span>
+        <span class="n">dt2</span> <span class="o">=</span> <span class="n">dt2</span> <span class="o">-</span> <span class="n">dt2</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">se</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_bin</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">sb</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_bin</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">dt1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">dt1</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">dt2</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="s1">&#39;valid&#39;</span><span class="p">)</span>
+            <span class="c1"># The zero-padding in reshape means we compute coherence</span>
+            <span class="c1"># from one-sided time-series for first and last points.</span>
+            <span class="k">if</span> <span class="n">slc</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">se</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">slc</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">dt2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">sb</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># For the others we take the average of the two sides.</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">se</span><span class="p">]</span> <span class="o">+</span> <span class="n">tmp</span><span class="p">[</span><span class="n">sb</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="TimeBinner.calc_lag"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.calc_lag">[docs]</a>    <span class="k">def</span> <span class="nf">calc_lag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">npt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">one_sided</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">npt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">npt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span>
+        <span class="k">if</span> <span class="n">one_sided</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npt</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npt</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-</span> <span class="n">npt</span> <span class="o">//</span> <span class="mi">2</span></div>
+
+<div class="viewcode-block" id="TimeBinner.calc_xcov"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.calc_xcov">[docs]</a>    <span class="k">def</span> <span class="nf">calc_xcov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indt1</span><span class="p">,</span> <span class="n">indt2</span><span class="p">,</span> <span class="n">npt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">n_bin1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the cross-covariance between arrays indt1 and indt2</span>
+<span class="sd">        for each bin.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_bin1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">n_bin2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin2</span><span class="p">)</span>
+        <span class="n">shp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outshape</span><span class="p">(</span><span class="n">indt1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outshape</span><span class="p">(</span><span class="n">indt2</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin2</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shp</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">npt</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">indt1</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_bin2</span><span class="p">)</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_bin1</span><span class="p">)</span> <span class="o">+</span> <span class="n">npt</span>
+        <span class="n">dt1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">indt1</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">tmp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="c1"># Note here I am demeaning only on the &#39;valid&#39; range:</span>
+        <span class="n">dt1</span> <span class="o">=</span> <span class="n">dt1</span> <span class="o">-</span> <span class="n">dt1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:,</span> <span class="p">(</span><span class="n">tmp</span> <span class="o">//</span> <span class="mi">2</span><span class="p">):(</span><span class="o">-</span><span class="n">tmp</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="c1"># Don&#39;t need to pad the second variable:</span>
+        <span class="n">dt2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demean</span><span class="p">(</span><span class="n">indt2</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin2</span><span class="p">)</span>
+        <span class="n">dt2</span> <span class="o">=</span> <span class="n">dt2</span> <span class="o">-</span> <span class="n">dt2</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">dt1</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">dt2</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="s1">&#39;valid&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">normed</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">/=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">indt1</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]]</span> <span class="o">*</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">indt2</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin2</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">shp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]]</span> <span class="o">*</span>
+                    <span class="n">n_bin2</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="TimeBinner.do_avg"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.do_avg">[docs]</a>    <span class="k">def</span> <span class="nf">do_avg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdat</span><span class="p">,</span> <span class="n">outdat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rawdat : raw_data_object</span>
+<span class="sd">           The raw data structure to be binned</span>
+<span class="sd">        outdat : avg_data_object</span>
+<span class="sd">           The bin&#39;d (output) data object to which averaged data is added.</span>
+<span class="sd">        names : list of strings</span>
+<span class="sd">           The names of variables to be averaged.  If `names` is None,</span>
+<span class="sd">           all data in `rawdat` will be binned.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">n_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_time</span> <span class="o">=</span> <span class="n">rawdat</span><span class="o">.</span><span class="n">n_time</span>
+        <span class="k">if</span> <span class="n">outdat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outdat</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">rawdat</span><span class="p">)()</span>
+            <span class="n">props</span><span class="p">[</span><span class="s1">&#39;n_bin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span>
+            <span class="n">props</span><span class="p">[</span><span class="s1">&#39;n_fft&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">rawdat</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">ky</span><span class="p">:</span>
+                <span class="n">g</span><span class="p">,</span> <span class="n">nm</span> <span class="o">=</span> <span class="n">ky</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">g</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outdat</span><span class="p">:</span>
+                    <span class="n">outdat</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">g</span><span class="p">])()</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">nm</span><span class="p">],</span>
+                                          <span class="n">axis</span><span class="o">=</span><span class="n">rawdat</span><span class="p">[</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">_time_dim</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">TimeData</span><span class="p">):</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">TimeData</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_avg</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">n_time</span><span class="o">=</span><span class="n">n_time</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span>
+                  <span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">rawdat</span><span class="o">.</span><span class="n">_time_dim</span><span class="p">]</span> <span class="o">==</span> <span class="n">n_time</span><span class="p">):</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="n">rawdat</span><span class="o">.</span><span class="n">_time_dim</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s1">&#39;props&#39;</span> <span class="ow">in</span> <span class="n">outdat</span><span class="p">:</span>
+            <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outdat</span></div>
+
+<div class="viewcode-block" id="TimeBinner.do_var"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.do_var">[docs]</a>    <span class="k">def</span> <span class="nf">do_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdat</span><span class="p">,</span> <span class="n">outdat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_var&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the variance of data attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rawdat : raw_data_object</span>
+<span class="sd">           The raw data structure to be binned.</span>
+
+<span class="sd">        outdat : avg_data_object</span>
+<span class="sd">           The bin&#39;d (output) data object to which variance data is added.</span>
+
+<span class="sd">        names : list of strings</span>
+<span class="sd">           The names of variables of which to calculate variance.  If</span>
+<span class="sd">           `names` is None, all data in `rawdat` will be binned.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">outdat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outdat</span> <span class="o">=</span> <span class="n">TimeData</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">rawdat</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">TimeData</span><span class="p">):</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">TimeData</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_avg</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">rawdat</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">outdat</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_bin</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_fft_coh</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize an averaging object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_bin : int</span>
+<span class="sd">          the number of data points to include in a &#39;bin&#39; (average).</span>
+<span class="sd">        n_fft : int</span>
+<span class="sd">          the number of data points to use for fft (`n_fft`&lt;=`n_bin`).</span>
+<span class="sd">          Default: `n_fft`=`n_bin`</span>
+<span class="sd">        n_fft_coh : int</span>
+<span class="sd">          the number of data points to use for coherence and cross-spectra ffts</span>
+<span class="sd">          (`n_fft_coh`&lt;=`n_bin`). Default: `n_fft_coh`=`n_bin`/6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span> <span class="o">=</span> <span class="n">n_bin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span> <span class="o">=</span> <span class="n">n_fft</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span> <span class="o">=</span> <span class="n">n_fft_coh</span>
+        <span class="k">if</span> <span class="n">n_fft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span> <span class="o">=</span> <span class="n">n_bin</span>
+        <span class="k">elif</span> <span class="n">n_fft</span> <span class="o">&gt;</span> <span class="n">n_bin</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span> <span class="o">=</span> <span class="n">n_bin</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;n_fft larger than n_bin </span><span class="se">\</span>
+<span class="s2">            doesn&#39;t make sense, setting n_fft=n_bin&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_fft_coh</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span> <span class="o">//</span> <span class="mi">6</span>
+        <span class="k">elif</span> <span class="n">n_fft_coh</span> <span class="o">&gt;=</span> <span class="n">n_bin</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span> <span class="o">=</span> <span class="n">n_bin</span> <span class="o">//</span> <span class="mi">6</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;n_fft_coh must be smaller than n_bin, &quot;</span>
+                  <span class="s2">&quot;setting n_fft_coh=n_bin / 6&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_indata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdat</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rawdat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;The input data cannot be averaged &quot;</span>
+                <span class="s2">&quot;because it is empty.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;DutyCycle_NBurst&#39;</span> <span class="ow">in</span> <span class="n">rawdat</span><span class="o">.</span><span class="n">props</span> <span class="ow">and</span> \
+           <span class="n">rawdat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;DutyCycle_NBurst&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;The averaging interval (n_bin = </span><span class="si">{}</span><span class="s2">) is &quot;</span>
+                <span class="s2">&quot;larger than the burst interval (NBurst = </span><span class="si">{}</span><span class="s2">)!&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span><span class="p">,</span> <span class="n">rawdat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;DutyCycle_NBurst&#39;</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">rawdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;The input data sample rate (dat.fs) does not &quot;</span>
+                <span class="s2">&quot;match the sample rate of this binning-object!&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TimeBinner.cohere"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.cohere">[docs]</a>    <span class="k">def</span> <span class="nf">cohere</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat1</span><span class="p">,</span> <span class="n">dat2</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">,</span> <span class="n">debias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+               <span class="n">noise</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin2</span><span class="o">=</span><span class="kc">None</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate coherence between `dat1` and `dat2`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n_fft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span>
+        <span class="n">n_bin1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">n_bin2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin2</span><span class="p">)</span>
+        <span class="n">oshp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outshape_fft</span><span class="p">(</span><span class="n">dat1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">oshp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">oshp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">dat2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n_bin2</span><span class="p">])</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">oshp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dat1</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="c1"># The data is detrended in psd, so we don&#39;t need to do it here.</span>
+        <span class="n">dat1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat1</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">dat2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat2</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">cohere</span><span class="p">(</span><span class="n">dat1</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">dat2</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span>
+                              <span class="n">n_fft</span><span class="p">,</span> <span class="n">debias</span><span class="o">=</span><span class="n">debias</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="TimeBinner.cpsd"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.cpsd">[docs]</a>    <span class="k">def</span> <span class="nf">cpsd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat1</span><span class="p">,</span> <span class="n">dat2</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">,</span>
+             <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin2</span><span class="o">=</span><span class="kc">None</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the &#39;cross power spectral density&#39; of `dat`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dat1    : np.ndarray</span>
+<span class="sd">          The first raw-data array of which to calculate the cpsd.</span>
+<span class="sd">        dat2    : np.ndarray</span>
+<span class="sd">          The second raw-data array of which to calculate the cpsd.</span>
+<span class="sd">        window : string</span>
+<span class="sd">          String indicating the window function to use (default: &#39;hanning&#39;).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : np.ndarray</span>
+<span class="sd">          The cross-spectral density of `dat1` and `dat2`</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_fs</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_fft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span>
+        <span class="n">n_bin1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">n_bin2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin2</span><span class="p">)</span>
+        <span class="n">oshp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outshape_fft</span><span class="p">(</span><span class="n">dat1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">oshp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">oshp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">dat2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n_bin2</span><span class="p">])</span>
+        <span class="c1"># The data is detrended in psd, so we don&#39;t need to do it here:</span>
+        <span class="n">dat1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat1</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">dat2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat2</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">oshp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;c</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dat1</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">dat1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">dat2</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="n">cross</span> <span class="o">=</span> <span class="n">cpsd</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cross</span> <span class="o">=</span> <span class="n">cpsd_quasisync</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># PSD&#39;s are computed in radian units:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">dat1</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">dat2</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">n_fft</span><span class="p">,</span>
+                             <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">fs</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="TimeBinner.phase_angle"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.phase_angle">[docs]</a>    <span class="k">def</span> <span class="nf">phase_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat1</span><span class="p">,</span> <span class="n">dat2</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">,</span>
+                    <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_bin2</span><span class="o">=</span><span class="kc">None</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the phase difference between two signals as a</span>
+<span class="sd">        function of frequency (complimentary to coherence).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dat1    : np.ndarray</span>
+<span class="sd">          The first raw-data array of which to calculate the cpsd.</span>
+<span class="sd">        dat2    : np.ndarray</span>
+<span class="sd">          The second raw-data array of which to calculate the cpsd.</span>
+<span class="sd">        window : string</span>
+<span class="sd">          String indicating the window function to use (default: &#39;hanning&#39;).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : np.ndarray</span>
+<span class="sd">          The phase difference between signal dat1 and dat2.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n_fft</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fft_coh</span>
+        <span class="n">n_bin1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">n_bin2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin2</span><span class="p">)</span>
+        <span class="n">oshp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outshape_fft</span><span class="p">(</span><span class="n">dat1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin1</span><span class="p">)</span>
+        <span class="n">oshp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">oshp</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">dat2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n_bin2</span><span class="p">])</span>
+        <span class="c1"># The data is detrended in psd, so we don&#39;t need to do it here:</span>
+        <span class="n">dat1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat1</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">dat2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat2</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">oshp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;c</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dat1</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># PSD&#39;s are computed in radian units:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">phase_angle</span><span class="p">(</span><span class="n">dat1</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">dat2</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">n_fft</span><span class="p">,</span>
+                                   <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="TimeBinner.psd"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.binned.TimeBinner.psd">[docs]</a>    <span class="k">def</span> <span class="nf">psd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate &#39;power spectral density&#39; of `dat`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dat    : data_object</span>
+<span class="sd">          The raw-data array of which to calculate the psd.</span>
+<span class="sd">        window : string</span>
+<span class="sd">          String indicating the window function to use (default: &#39;hanning&#39;).</span>
+<span class="sd">        noise  : float</span>
+<span class="sd">          The white-noise level of the measurement (in the same units</span>
+<span class="sd">          as `dat`).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_fs</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">n_bin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nbin</span><span class="p">(</span><span class="n">n_bin</span><span class="p">)</span>
+        <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nfft</span><span class="p">(</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_pad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_pad</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_bin</span> <span class="o">-</span> <span class="n">n_fft</span><span class="p">,</span> <span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outshape_fft</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">))</span>
+        <span class="c1"># The data is detrended in psd, so we don&#39;t need to do it here.</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="n">n_pad</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slc</span> <span class="ow">in</span> <span class="n">slice1d_along_axis</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># PSD&#39;s are computed in radian units:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span> <span class="o">=</span> <span class="n">psd</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="n">slc</span><span class="p">],</span> <span class="n">n_fft</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">fs</span><span class="p">,</span>
+                           <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span> <span class="ow">and</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span> <span class="ow">in</span> <span class="n">dat</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span><span class="s1">&#39;S(</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">dat</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">ma</span><span class="o">.</span><span class="n">unitsDict</span><span class="p">({</span><span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span> <span class="o">*</span> <span class="n">dat</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">_units</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+                           <span class="n">dim_names</span><span class="o">=</span><span class="n">dat</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;freq&#39;</span><span class="p">])</span>
+                <span class="p">)</span>
+            <span class="c1"># The dat.meta.dim_names[:-1] drops the &#39;time2&#39; dim_name.</span>
+
+        <span class="k">if</span> <span class="n">noise</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># the two in 2*np.pi cancels with the two in &#39;self.fs/2&#39;:</span>
+            <span class="n">out</span> <span class="o">-=</span> <span class="n">noise</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+            <span class="c1"># Make sure all values of the PSD are &gt;0 (but still small):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">out</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">out</span><span class="p">))</span> <span class="o">/</span> <span class="mi">100</span>
+        <span class="k">return</span> <span class="n">out</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

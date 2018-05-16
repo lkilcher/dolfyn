@@ -1,0 +1,1036 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.data package &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dolfyn.example_data package" href="dolfyn.example_data.html" />
+    <link rel="prev" title="dolfyn.adv package" href="dolfyn.adv.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dolfyn-data-package">
+<h1>dolfyn.data package<a class="headerlink" href="#dolfyn-data-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-dolfyn.data.base">
+<span id="dolfyn-data-base-module"></span><h2>dolfyn.data.base module<a class="headerlink" href="#module-dolfyn.data.base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dolfyn.data.base.FreqData">
+<em class="property">class </em><code class="descclassname">dolfyn.data.base.</code><code class="descname">FreqData</code><a class="reference internal" href="../_modules/dolfyn/data/base.html#FreqData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.base.FreqData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.base.TimeData" title="dolfyn.data.base.TimeData"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.base.TimeData</span></code></a></p>
+<p>This is a base class that contains arrays where frequency is the
+last dimension, and time is the second to last dimension.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.base.TimeData">
+<em class="property">class </em><code class="descclassname">dolfyn.data.base.</code><code class="descname">TimeData</code><a class="reference internal" href="../_modules/dolfyn/data/base.html#TimeData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.base.TimeData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.base.data" title="dolfyn.data.base.data"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.base.data</span></code></a></p>
+<p>This is a base class that contains arrays where time is the last
+dimension.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.base.config">
+<em class="property">class </em><code class="descclassname">dolfyn.data.base.</code><code class="descname">config</code><a class="reference internal" href="../_modules/dolfyn/data/base.html#config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.base.config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.base.data" title="dolfyn.data.base.data"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.base.data</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.base.data">
+<em class="property">class </em><code class="descclassname">dolfyn.data.base.</code><code class="descname">data</code><a class="reference internal" href="../_modules/dolfyn/data/base.html#data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.base.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyDictH5.base.data</span></code></p>
+<p>This is just an abstract class so that we directly import the
+SourceDataType in one place.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.base.indent">
+<code class="descclassname">dolfyn.data.base.</code><code class="descname">indent</code><span class="sig-paren">(</span><em>text</em>, <em>padding='    '</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/base.html#indent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.base.indent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-dolfyn.data.binned">
+<span id="dolfyn-data-binned-module"></span><h2>dolfyn.data.binned module<a class="headerlink" href="#module-dolfyn.data.binned" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dolfyn.data.binned.TimeBinner">
+<em class="property">class </em><code class="descclassname">dolfyn.data.binned.</code><code class="descname">TimeBinner</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.calc_acov">
+<code class="descname">calc_acov</code><span class="sig-paren">(</span><em>indat</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.calc_acov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.calc_acov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the auto-covariance of the raw-signal <cite>indat</cite>.</p>
+<p>As opposed to calc_xcov, which returns the full
+cross-covariance between two arrays, this function only
+returns a quarter of the full auto-covariance. It computes the
+auto-covariance over half of the range, then averages the two
+sides (to return a ‘quartered’ covariance).</p>
+<p>This has the advantage that the 0 index is actually zero-lag.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.calc_lag">
+<code class="descname">calc_lag</code><span class="sig-paren">(</span><em>npt=None</em>, <em>one_sided=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.calc_lag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.calc_lag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.calc_omega">
+<code class="descname">calc_omega</code><span class="sig-paren">(</span><em>fs=None</em>, <em>coh=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.calc_omega"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.calc_omega" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the radial-frequency vector for the psd’s.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>fs</strong> : float (optional)</p>
+<blockquote>
+<div><p>The sample rate (Hz).</p>
+</div></blockquote>
+<p><strong>coh</strong> : bool</p>
+<blockquote class="last">
+<div><p>Calculate the frequency vector for coherence/cross-spectra
+(default: False) i.e. use self.n_fft_coh instead of
+self.n_fft.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.calc_xcov">
+<code class="descname">calc_xcov</code><span class="sig-paren">(</span><em>indt1</em>, <em>indt2</em>, <em>npt=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em>, <em>normed=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.calc_xcov"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.calc_xcov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the cross-covariance between arrays indt1 and indt2
+for each bin.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.cohere">
+<code class="descname">cohere</code><span class="sig-paren">(</span><em>dat1</em>, <em>dat2</em>, <em>window='hann'</em>, <em>debias=True</em>, <em>noise=(0</em>, <em>0)</em>, <em>n_fft=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.cohere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.cohere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate coherence between <cite>dat1</cite> and <cite>dat2</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.cpsd">
+<code class="descname">cpsd</code><span class="sig-paren">(</span><em>dat1</em>, <em>dat2</em>, <em>fs=None</em>, <em>window='hann'</em>, <em>n_fft=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.cpsd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.cpsd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the ‘cross power spectral density’ of <cite>dat</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dat1</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The first raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>dat2</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The second raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>window</strong> : string</p>
+<blockquote>
+<div><p>String indicating the window function to use (default: ‘hanning’).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : np.ndarray</p>
+<blockquote class="last">
+<div><p>The cross-spectral density of <cite>dat1</cite> and <cite>dat2</cite></p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.demean">
+<code class="descname">demean</code><span class="sig-paren">(</span><em>dat</em>, <em>n_pad=0</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.demean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.demean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reshape the array <cite>dat</cite> and remove the mean from each ensemble.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.detrend">
+<code class="descname">detrend</code><span class="sig-paren">(</span><em>dat</em>, <em>n_pad=0</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.detrend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reshape the array <cite>dat</cite> and remove the best-fit trend line.</p>
+<p>… Need to fix this to deal with NaNs…</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.do_avg">
+<code class="descname">do_avg</code><span class="sig-paren">(</span><em>rawdat</em>, <em>outdat=None</em>, <em>names=None</em>, <em>n_time=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.do_avg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.do_avg" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>rawdat</strong> : raw_data_object</p>
+<blockquote>
+<div><p>The raw data structure to be binned</p>
+</div></blockquote>
+<p><strong>outdat</strong> : avg_data_object</p>
+<blockquote>
+<div><p>The bin’d (output) data object to which averaged data is added.</p>
+</div></blockquote>
+<p><strong>names</strong> : list of strings</p>
+<blockquote class="last">
+<div><p>The names of variables to be averaged.  If <cite>names</cite> is None,
+all data in <cite>rawdat</cite> will be binned.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.do_var">
+<code class="descname">do_var</code><span class="sig-paren">(</span><em>rawdat</em>, <em>outdat=None</em>, <em>names=None</em>, <em>suffix='_var'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.do_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.do_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the variance of data attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>rawdat</strong> : raw_data_object</p>
+<blockquote>
+<div><p>The raw data structure to be binned.</p>
+</div></blockquote>
+<p><strong>outdat</strong> : avg_data_object</p>
+<blockquote>
+<div><p>The bin’d (output) data object to which variance data is added.</p>
+</div></blockquote>
+<p><strong>names</strong> : list of strings</p>
+<blockquote class="last">
+<div><p>The names of variables of which to calculate variance.  If
+<cite>names</cite> is None, all data in <cite>rawdat</cite> will be binned.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.mean">
+<code class="descname">mean</code><span class="sig-paren">(</span><em>dat</em>, <em>axis=-1</em>, <em>n_bin=None</em>, <em>mask_thresh=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average an array object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>n_bin</strong> : int (default is self.n_bin)</p>
+<p><strong>mask_thresh</strong> : float (between 0 and 1)</p>
+<blockquote class="last">
+<div><p>if the input data is a masked array, and mask_thresh is
+not None mask the averaged values where the fraction of
+bad points is greater than mask_thresh</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.mean_angle">
+<code class="descname">mean_angle</code><span class="sig-paren">(</span><em>dat</em>, <em>axis=-1</em>, <em>units='radians'</em>, <em>n_bin=None</em>, <em>mask_thresh=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.mean_angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.mean_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average an angle array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>units</strong> : {‘radians’ | ‘degrees’}</p>
+<p><strong>n_bin</strong> : int (default is self.n_bin)</p>
+<p><strong>mask_thresh</strong> : float (between 0 and 1)</p>
+<blockquote class="last">
+<div><p>if the input data is a masked array, and mask_thresh is
+not None mask the averaged values where the fraction of
+bad points is greater than mask_thresh</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.phase_angle">
+<code class="descname">phase_angle</code><span class="sig-paren">(</span><em>dat1</em>, <em>dat2</em>, <em>window='hann'</em>, <em>n_fft=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.phase_angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.phase_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the phase difference between two signals as a
+function of frequency (complimentary to coherence).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dat1</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The first raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>dat2</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The second raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>window</strong> : string</p>
+<blockquote>
+<div><p>String indicating the window function to use (default: ‘hanning’).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : np.ndarray</p>
+<blockquote class="last">
+<div><p>The phase difference between signal dat1 and dat2.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.psd">
+<code class="descname">psd</code><span class="sig-paren">(</span><em>dat</em>, <em>fs=None</em>, <em>window='hann'</em>, <em>noise=0</em>, <em>n_bin=None</em>, <em>n_fft=None</em>, <em>step=None</em>, <em>n_pad=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.psd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.psd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate ‘power spectral density’ of <cite>dat</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dat</strong> : data_object</p>
+<blockquote>
+<div><p>The raw-data array of which to calculate the psd.</p>
+</div></blockquote>
+<p><strong>window</strong> : string</p>
+<blockquote>
+<div><p>String indicating the window function to use (default: ‘hanning’).</p>
+</div></blockquote>
+<p><strong>noise</strong> : float</p>
+<blockquote class="last">
+<div><p>The white-noise level of the measurement (in the same units
+as <cite>dat</cite>).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.reshape">
+<code class="descname">reshape</code><span class="sig-paren">(</span><em>arr</em>, <em>n_pad=0</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.reshape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.reshape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reshape the array <cite>arr</cite> to shape (…,n,n_bin+n_pad).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>arr</strong> : np.ndarray</p>
+<p><strong>n_pad</strong> : int</p>
+<blockquote>
+<div><p>Is used to add <cite>n_pad</cite>/2 points from the end of the previous
+ensemble to the top of the current, and <cite>n_pad</cite>/2 points
+from the top of the next ensemble to the bottom of the
+current.  Zeros are padded in the upper-left and lower-right
+corners of the matrix (beginning/end of timeseries).  In
+this case, the array shape will be (…,`n`,`n_pad`+`n_bin`)</p>
+</div></blockquote>
+<p><strong>n_bin</strong> : float, int (optional)</p>
+<blockquote class="last">
+<div><p>Override this binner’s n_bin.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><cite>n_bin</cite> can be non-integer, in which case the output array
+size will be <cite>n_pad`+`n_bin</cite>, and the decimal will
+cause skipping of some data points in <cite>arr</cite>.  In particular,
+every mod(<cite>n_bin</cite>,1) bins will have a skipped point. For
+example:
+- for n_bin=2048.2 every 1/5 bins will have a skipped point.
+- for n_bin=4096.9 every 9/10 bins will have a skipped point.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.std">
+<code class="descname">std</code><span class="sig-paren">(</span><em>dat</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.std" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.binned.TimeBinner.var">
+<code class="descname">var</code><span class="sig-paren">(</span><em>dat</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/binned.html#TimeBinner.var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.binned.TimeBinner.var" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dolfyn.data.spec">
+<span id="dolfyn-data-spec-module"></span><h2>dolfyn.data.spec module<a class="headerlink" href="#module-dolfyn.data.spec" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dolfyn.data.spec.cohereobj">
+<em class="property">class </em><code class="descclassname">dolfyn.data.spec.</code><code class="descname">cohereobj</code><a class="reference internal" href="../_modules/dolfyn/data/spec.html#cohereobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.cohereobj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.spec.specobj" title="dolfyn.data.spec.specobj"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.spec.specobj</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.spec.denoise_specobj">
+<code class="descclassname">dolfyn.data.spec.</code><code class="descname">denoise_specobj</code><span class="sig-paren">(</span><em>obj</em>, <em>vals</em>, <em>renoise=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#denoise_specobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.denoise_specobj" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.spec.ind_specobj">
+<code class="descclassname">dolfyn.data.spec.</code><code class="descname">ind_specobj</code><span class="sig-paren">(</span><em>dat</em>, <em>inds=slice(None</em>, <em>None</em>, <em>None)</em>, <em>typeobj=&lt;class 'dolfyn.data.spec.specobj'&gt;</em>, <em>names=None</em>, <em>freqvar='omega'</em>, <em>dflt_ax=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#ind_specobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.ind_specobj" title="Permalink to this definition">¶</a></dt>
+<dd><p>A specobj constructor.</p>
+<p>The object <em>dat</em> must contain the attributes in <em>names</em>, and the <em>freqvar</em>.</p>
+<p>It takes the indices from <em>dat</em> along the “time” axis to include in the
+returned <em>specobj</em>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.spec.mean_specobj">
+<code class="descclassname">dolfyn.data.spec.</code><code class="descname">mean_specobj</code><span class="sig-paren">(</span><em>dat</em>, <em>inds=slice(None</em>, <em>None</em>, <em>None)</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#mean_specobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.mean_specobj" title="Permalink to this definition">¶</a></dt>
+<dd><p>A specobj constructor, that returns an average over the <em>inds</em>.</p>
+<p>See also:
+ind_specobj</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.spec.specobj">
+<em class="property">class </em><code class="descclassname">dolfyn.data.spec.</code><code class="descname">specobj</code><a class="reference internal" href="../_modules/dolfyn/data/spec.html#specobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.specobj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyDictH5.base.data</span></code></p>
+<dl class="method">
+<dt id="dolfyn.data.spec.specobj.iter4axgroup">
+<code class="descname">iter4axgroup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#specobj.iter4axgroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.specobj.iter4axgroup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.spec.specobj.iter_wd">
+<code class="descname">iter_wd</code><a class="headerlink" href="#dolfyn.data.spec.specobj.iter_wd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.spec.specobj.mean">
+<code class="descname">mean</code><span class="sig-paren">(</span><em>axis='time'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#specobj.mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.specobj.mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.spec.specobj.shape">
+<code class="descname">shape</code><a class="headerlink" href="#dolfyn.data.spec.specobj.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.spec.specobj.specvars">
+<code class="descname">specvars</code><a class="headerlink" href="#dolfyn.data.spec.specobj.specvars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.spec.specobj.trapz">
+<code class="descname">trapz</code><span class="sig-paren">(</span><em>inds=slice(None</em>, <em>None</em>, <em>None)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#specobj.trapz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.specobj.trapz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.spec.specobj_hz2rad">
+<code class="descclassname">dolfyn.data.spec.</code><code class="descname">specobj_hz2rad</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#specobj_hz2rad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.specobj_hz2rad" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.spec.specobj_rad2hz">
+<code class="descclassname">dolfyn.data.spec.</code><code class="descname">specobj_rad2hz</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/spec.html#specobj_rad2hz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.spec.specobj_rad2hz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-dolfyn.data.time">
+<span id="dolfyn-data-time-module"></span><h2>dolfyn.data.time module<a class="headerlink" href="#module-dolfyn.data.time" title="Permalink to this headline">¶</a></h2>
+<p>This modules is a reimplemntation of the ‘mpltime’ format (ordinal +
+fractional time).</p>
+<p>This is an independent implementation of that format so that the
+DOLfYN module does not depend on matplotlib (&gt;30MB).</p>
+<p>In the future I’d like to move away from this to np.datetime64 once
+that comes online, but apparently it has several issues so I’m going
+to simply use this for now.</p>
+<dl class="function">
+<dt id="dolfyn.data.time.date2num">
+<code class="descclassname">dolfyn.data.time.</code><code class="descname">date2num</code><span class="sig-paren">(</span><em>dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/time.html#date2num"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.time.date2num" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.time.isotime2mpltime">
+<code class="descclassname">dolfyn.data.time.</code><code class="descname">isotime2mpltime</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/time.html#isotime2mpltime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.time.isotime2mpltime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.time.mpltime2matlab_datenum">
+<code class="descclassname">dolfyn.data.time.</code><code class="descname">mpltime2matlab_datenum</code><span class="sig-paren">(</span><em>time</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/time.html#mpltime2matlab_datenum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.time.mpltime2matlab_datenum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.data.time.num2date">
+<code class="descclassname">dolfyn.data.time.</code><code class="descname">num2date</code><span class="sig-paren">(</span><em>mpltime</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/time.html#num2date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.time.num2date" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.time.time_array">
+<em class="property">class </em><code class="descclassname">dolfyn.data.time.</code><code class="descname">time_array</code><a class="reference internal" href="../_modules/dolfyn/data/time.html#time_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.time.time_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></p>
+<p>This class uses time in matplotlib’s mpltime format (ordinal +
+fractional-day).</p>
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.datetime">
+<code class="descname">datetime</code><a class="headerlink" href="#dolfyn.data.time.time_array.datetime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.day">
+<code class="descname">day</code><a class="headerlink" href="#dolfyn.data.time.time_array.day" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.hour">
+<code class="descname">hour</code><a class="headerlink" href="#dolfyn.data.time.time_array.hour" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.matlab_datenum">
+<code class="descname">matlab_datenum</code><a class="headerlink" href="#dolfyn.data.time.time_array.matlab_datenum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.time.time_array.minmax">
+<code class="descname">minmax</code><span class="sig-paren">(</span><em>round_to=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/time.html#time_array.minmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.time.time_array.minmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the minimum and maximum values in the time object.</p>
+<p>The value <cite>round_to</cite> specifies that the <cite>min</cite>/<cite>max</cite> values
+should be rounded down/up (respectively) to the nearest:
+‘second’, ‘s’
+‘minute’, ‘M’
+‘hour’, ‘h’
+‘day’, ‘d’
+‘month’, ‘m’
+‘year’, ‘y’</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.minute">
+<code class="descname">minute</code><a class="headerlink" href="#dolfyn.data.time.time_array.minute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.month">
+<code class="descname">month</code><a class="headerlink" href="#dolfyn.data.time.time_array.month" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.second">
+<code class="descname">second</code><a class="headerlink" href="#dolfyn.data.time.time_array.second" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.time.time_array.year">
+<code class="descname">year</code><a class="headerlink" href="#dolfyn.data.time.time_array.year" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dolfyn.data.velocity">
+<span id="dolfyn-data-velocity-module"></span><h2>dolfyn.data.velocity module<a class="headerlink" href="#module-dolfyn.data.velocity" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dolfyn.data.velocity.VelBinner">
+<em class="property">class </em><code class="descclassname">dolfyn.data.velocity.</code><code class="descname">VelBinner</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.binned.TimeBinner" title="dolfyn.data.binned.TimeBinner"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.binned.TimeBinner</span></code></a></p>
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.calc_stress">
+<code class="descname">calc_stress</code><span class="sig-paren">(</span><em>veldat</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.calc_stress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.calc_stress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the stresses (cross-covariances of u,v,w).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : a velocity data array. The last dimension is assumed</p>
+<blockquote>
+<div><p>to be time.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>out</strong> : An array of stress values.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.calc_tke">
+<code class="descname">calc_tke</code><span class="sig-paren">(</span><em>veldat, noise=[0, 0, 0]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.calc_tke"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.calc_tke" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the tke (variances of u,v,w).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : a velocity data array. The last dimension is assumed</p>
+<blockquote>
+<div><p>to be time.</p>
+</div></blockquote>
+<p><strong>noise</strong> : a three-element vector of the noise levels of the</p>
+<blockquote>
+<div><p>velocity data for ach component of velocity.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>out</strong> : An array of tke values.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.calc_vel_cpsd">
+<code class="descname">calc_vel_cpsd</code><span class="sig-paren">(</span><em>veldat</em>, <em>rotate_u=False</em>, <em>fs=None</em>, <em>window='hann'</em>, <em>n_bin=None</em>, <em>n_fft=None</em>, <em>n_pad=None</em>, <em>step=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.calc_vel_cpsd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.calc_vel_cpsd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the cross-spectra of velocity components.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The raw velocity data.</p>
+</div></blockquote>
+<p><strong>rotate_u</strong> : bool (optional)</p>
+<blockquote>
+<div><p>If True, each ‘bin’ of horizontal velocity is rotated into
+its principal axis prior to calculating the psd.  (default:
+False).</p>
+</div></blockquote>
+<p><strong>fs</strong> : float (optional)</p>
+<blockquote>
+<div><p>The sample rate (default: from the binner).</p>
+</div></blockquote>
+<p><strong>window</strong> : string or array</p>
+<blockquote>
+<div><p>Specify the window function.</p>
+</div></blockquote>
+<p><strong>n_bin</strong> : int (optional)</p>
+<blockquote>
+<div><p>The bin-size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_fft</strong> : int (optional)</p>
+<blockquote>
+<div><p>The fft size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_pad</strong> : int (optional)</p>
+<blockquote>
+<div><p>The number of values to pad with zero (default: 0)</p>
+</div></blockquote>
+<p><strong>step</strong> : int (optional)</p>
+<blockquote>
+<div><p>Controls amount of overlap in fft (default: the step size is
+chosen to maximize data use, minimize nens, and have a
+minimum of 50% overlap.).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>CSpec</strong> : np.ndarray (3, M, N_FFT)</p>
+<blockquote class="last">
+<div><p>The first-dimension of the cross-spectrum is the three
+different cross-spectra: ‘uv’, ‘uw’, ‘vw’ (in that order).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.calc_vel_psd">
+<code class="descname">calc_vel_psd</code><span class="sig-paren">(</span><em>veldat, rotate_u=False, fs=None, window='hann', noise=[0, 0, 0], n_bin=None, n_fft=None, n_pad=None, step=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.calc_vel_psd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.calc_vel_psd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the psd of velocity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The raw velocity data.</p>
+</div></blockquote>
+<p><strong>rotate_u</strong> : bool (optional)</p>
+<blockquote>
+<div><p>If True, each ‘bin’ of horizontal velocity is rotated into
+its principal axis prior to calculating the psd.  (default:
+False).</p>
+</div></blockquote>
+<p><strong>fs</strong> : float (optional)</p>
+<blockquote>
+<div><p>The sample rate (default: from the binner).</p>
+</div></blockquote>
+<p><strong>window</strong> : string or array</p>
+<blockquote>
+<div><p>Specify the window function.</p>
+</div></blockquote>
+<p><strong>noise</strong> : list(3 floats) (optional)</p>
+<blockquote>
+<div><p>Noise level of each component’s velocity measurement
+(default 0).</p>
+</div></blockquote>
+<p><strong>n_bin</strong> : int (optional)</p>
+<blockquote>
+<div><p>The bin-size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_fft</strong> : int (optional)</p>
+<blockquote>
+<div><p>The fft size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_pad</strong> : int (optional)</p>
+<blockquote>
+<div><p>The number of values to pad with zero (default: 0)</p>
+</div></blockquote>
+<p><strong>step</strong> : int (optional)</p>
+<blockquote>
+<div><p>Controls amount of overlap in fft (default: the step size is
+chosen to maximize data use, minimize nens, and have a
+minimum of 50% overlap.).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Spec</strong> : np.ndarray (3, M, N_FFT)</p>
+<blockquote class="last">
+<div><p>The first-dimension of the spectrum is the three
+different spectra: ‘uu’, ‘vv’, ‘ww’.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.do_cross_spec">
+<code class="descname">do_cross_spec</code><span class="sig-paren">(</span><em>indat, out=None, names=['vel']</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.do_cross_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.do_cross_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.do_spec">
+<code class="descname">do_spec</code><span class="sig-paren">(</span><em>indat, out=None, names=['vel']</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.do_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.do_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelBinner.do_tke">
+<code class="descname">do_tke</code><span class="sig-paren">(</span><em>indat</em>, <em>out=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner.do_tke"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelBinner.do_tke" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.velocity.VelTkeData">
+<em class="property">class </em><code class="descclassname">dolfyn.data.velocity.</code><code class="descname">VelTkeData</code><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelTkeData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.base.TimeData" title="dolfyn.data.base.TimeData"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.base.TimeData</span></code></a></p>
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.Ecoh">
+<code class="descname">Ecoh</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.Ecoh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Niel Kelley’s “coherent energy”, i.e. the rms of the stresses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelTkeData.I">
+<code class="descname">I</code><span class="sig-paren">(</span><em>thresh=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelTkeData.I"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.I" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turbulence intensity.</p>
+<p>Ratio of standard deviation of horizontal velocity magnitude
+to horizontal velocity magnitude.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelTkeData.Itke">
+<code class="descname">Itke</code><span class="sig-paren">(</span><em>thresh=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelTkeData.Itke"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.Itke" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turbulence kinetic energy intensity.</p>
+<p>Ratio of sqrt(tke) to velocity magnitude.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelTkeData.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>rmat</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelTkeData.rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.rotate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.VelTkeData.tau_is_pd">
+<code class="descname">tau_is_pd</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelTkeData.tau_is_pd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.tau_is_pd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.tauij">
+<code class="descname">tauij</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.tauij" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.tke">
+<code class="descname">tke</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.tke" title="Permalink to this definition">¶</a></dt>
+<dd><p>The turbulent kinetic energy (sum of the three components).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.upup_">
+<code class="descname">upup_</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.upup_" title="Permalink to this definition">¶</a></dt>
+<dd><p>u’u’ component of the tke.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.upvp_">
+<code class="descname">upvp_</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.upvp_" title="Permalink to this definition">¶</a></dt>
+<dd><p>u’v’ Reynolds stress</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.upwp_">
+<code class="descname">upwp_</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.upwp_" title="Permalink to this definition">¶</a></dt>
+<dd><p>u’w’ Reynolds stress</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.vpvp_">
+<code class="descname">vpvp_</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.vpvp_" title="Permalink to this definition">¶</a></dt>
+<dd><p>v’v’ component of the tke.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.vpwp_">
+<code class="descname">vpwp_</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.vpwp_" title="Permalink to this definition">¶</a></dt>
+<dd><p>v’w’ Reynolds stress</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.VelTkeData.wpwp_">
+<code class="descname">wpwp_</code><a class="headerlink" href="#dolfyn.data.velocity.VelTkeData.wpwp_" title="Permalink to this definition">¶</a></dt>
+<dd><p>w’w’ component of the tke.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dolfyn.data.velocity.Velocity">
+<em class="property">class </em><code class="descclassname">dolfyn.data.velocity.</code><code class="descname">Velocity</code><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#Velocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.Velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dolfyn.data.base.TimeData" title="dolfyn.data.base.TimeData"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.data.base.TimeData</span></code></a></p>
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.U">
+<code class="descname">U</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.U" title="Permalink to this definition">¶</a></dt>
+<dd><p>Horizontal velocity as a complex quantity.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.U_angle">
+<code class="descname">U_angle</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.U_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Angle of velocity vector.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.U_mag">
+<code class="descname">U_mag</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.U_mag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Velocity magnitude</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.Velocity.calc_principal_angle">
+<code class="descname">calc_principal_angle</code><span class="sig-paren">(</span><em>bin=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#Velocity.calc_principal_angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.Velocity.calc_principal_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the principal angle of the horizontal velocity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>bin</strong> : {int or None}</p>
+<blockquote class="last">
+<div><p>For ADP objects, this is the depth bin where the principal
+angle is calculated. If it is None (default), the
+depth-averaged velocity is used.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This function sets (overwrites) the values of
+<code class="docutils literal notranslate"><span class="pre">self.props['principal_angle']</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">self.props['coord_sys_principal_ref']</span></code>.</p>
+<p>This function calculates the principal direction</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.has_imu">
+<code class="descname">has_imu</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.has_imu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test whether this data object contains Inertial Motion Unit
+(IMU) data.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.make">
+<code class="descname">make</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.make" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.make_model">
+<code class="descname">make_model</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.make_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.model">
+<code class="descname">model</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.n_time">
+<code class="descname">n_time</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.n_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.principal_angle">
+<code class="descname">principal_angle</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.principal_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the principal angle of the data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dolfyn.data.velocity.Velocity.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>out_frame='earth'</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#Velocity.rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.data.velocity.Velocity.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the data object into a new coordinate system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>out_frame</strong> : string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</p>
+<blockquote>
+<div><p>The coordinate system to rotate the data into.</p>
+</div></blockquote>
+<p><strong>inplace</strong> : bool</p>
+<blockquote>
+<div><p>Operate on self (True), or return a copy that
+has been rotated (False, default).</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>objout</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></p>
+<blockquote class="last">
+<div><p>The rotated data object. This is <cite>self</cite> if inplace is True.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.shape">
+<code class="descname">shape</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.u">
+<code class="descname">u</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.u" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.v">
+<code class="descname">v</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.v" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dolfyn.data.velocity.Velocity.w">
+<code class="descname">w</code><a class="headerlink" href="#dolfyn.data.velocity.Velocity.w" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dolfyn.data">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dolfyn.data" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">dolfyn.data package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-dolfyn.data.base">dolfyn.data.base module</a></li>
+<li><a class="reference internal" href="#module-dolfyn.data.binned">dolfyn.data.binned module</a></li>
+<li><a class="reference internal" href="#module-dolfyn.data.spec">dolfyn.data.spec module</a></li>
+<li><a class="reference internal" href="#module-dolfyn.data.time">dolfyn.data.time module</a></li>
+<li><a class="reference internal" href="#module-dolfyn.data.velocity">dolfyn.data.velocity module</a></li>
+<li><a class="reference internal" href="#module-dolfyn.data">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="dolfyn.html">dolfyn package</a><ul>
+      <li>Previous: <a href="dolfyn.adv.html" title="previous chapter">dolfyn.adv package</a></li>
+      <li>Next: <a href="dolfyn.example_data.html" title="next chapter">dolfyn.example_data package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/dolfyn.data.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/api/dolfyn.data.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

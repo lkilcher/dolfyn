@@ -1,0 +1,10 @@
+dolfyn.example\_data package
+============================
+
+Module contents
+---------------
+
+.. automodule:: dolfyn.example_data
+    :members:
+    :undoc-members:
+    :show-inheritance:

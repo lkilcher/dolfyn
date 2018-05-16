@@ -1,0 +1,132 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.turbulence &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.turbulence</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="calc_epsilon_LT83"><a class="viewcode-back" href="../../api/dolfyn.html#dolfyn.turbulence.calc_epsilon_LT83">[docs]</a><span class="k">def</span> <span class="nf">calc_epsilon_LT83</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">omega</span><span class="p">,</span> <span class="n">U_mag</span><span class="p">,</span> <span class="n">omega_range</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">]):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the dissipation rate from the spectrum.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    spec : |np.ndarray| (...,n_time,n_f)</span>
+<span class="sd">      The spectrum array [m^2/s]</span>
+
+<span class="sd">    omega : |np.ndarray| (n_f)</span>
+<span class="sd">      The frequency array [rad/s]</span>
+
+<span class="sd">    U_mag : |np.ndarray| (...,n_time)</span>
+<span class="sd">      The velocity magnitude [m/s]</span>
+
+<span class="sd">    omega_range : iterable(2)</span>
+<span class="sd">      The range over which to integrate/average the spectrum.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    epsilon : np.ndarray (...,n_time)</span>
+<span class="sd">      The dissipation rate.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    This uses the `standard` formula for dissipation:</span>
+
+<span class="sd">    .. math:: S(k) = \alpha \epsilon^{2/3} k^{-5/3}</span>
+
+<span class="sd">    where :math:`\alpha = 0.5` (1.5 for all three velocity</span>
+<span class="sd">    components), `k` is wavenumber and `S(k)` is the turbulent</span>
+<span class="sd">    kinetic energy spectrum.</span>
+
+<span class="sd">    With :math:`k \rightarrow \omega / U` then--to preserve variance--</span>
+<span class="sd">    :math:`S(k) = U S(\omega)` and so this becomes:</span>
+
+<span class="sd">    .. math:: S(\omega) = \alpha \epsilon^{2/3} \omega^{-5/3} U^{2/3}</span>
+
+<span class="sd">    LT83 : Lumley and Terray &quot;Kinematics of turbulence convected</span>
+<span class="sd">    by a random wave field&quot; JPO, 1983, 13, 2000-2007.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">omega_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">omega</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">omega</span> <span class="o">&lt;</span> <span class="n">omega_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">f_shp</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">inds</span><span class="o">.</span><span class="n">sum</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">inds</span><span class="p">]</span> <span class="o">*</span>
+                   <span class="p">(</span><span class="n">omega</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">f_shp</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="mi">5</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span><span class="p">,</span>
+                   <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">U_mag</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

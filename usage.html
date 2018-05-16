@@ -1,0 +1,290 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The Basics &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Motion Correcting ADV-IMU measurements" href="usage-specific.html" />
+    <link rel="prev" title="Download and Install" href="install.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-basics">
+<span id="usage"></span><h1>The Basics<a class="headerlink" href="#the-basics" title="Permalink to this headline">¶</a></h1>
+<p>DOLfYN is a library of tools for reading, processing, and analyzing
+data from oceanographic velocity measurement instruments such as
+acoustic Doppler velocimeters (ADVs) and acoustic Doppler profilers
+(ADPs). This page documents general and basic usage of the DOLfYN package.</p>
+<div class="section" id="reading-data">
+<h2>Reading data<a class="headerlink" href="#reading-data" title="Permalink to this headline">¶</a></h2>
+<p>To begin, we load the DOLfYN module and read a data file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">dolfyn</span> <span class="k">as</span> <span class="nn">dlfn</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span> <span class="o">=</span> <span class="n">dlfn</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="o">&lt;</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">my_data_file</span><span class="o">&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In an interactive shell, typing the variable name and hitting enter will display information about the data object, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span>
+<span class="go">&lt;ADV data object&gt;</span>
+<span class="go">  . 1.05 hours (started: Jun 12, 2012 12:00)</span>
+<span class="go">  . INST-frame</span>
+<span class="go">  . (120530 pings @ 32Hz)</span>
+<span class="go">  *------------</span>
+<span class="go">  | mpltime                  : &lt;time_array; (120530,); float64&gt;</span>
+<span class="go">  | vel                      : &lt;array; (3, 120530); float32&gt;</span>
+<span class="go">  + config                   : + DATA GROUP</span>
+<span class="go">  + env                      : + DATA GROUP</span>
+<span class="go">  + orient                   : + DATA GROUP</span>
+<span class="go">  + props                    : + DATA GROUP</span>
+<span class="go">  + signal                   : + DATA GROUP</span>
+<span class="go">  + sys                      : + DATA GROUP</span>
+</pre></div>
+</div>
+<p>This view reveals a few detailed attributes of the data object (above line), and the underlying data structure (below). The attributes indicate that this ADV dataset is 3.02 seconds long, started at noon on June 12, 2012, is in the ‘instrument’ reference-frame, and contains 99 pings at a 32Hz sample-rate. The information below the line shows the variable names in the ADV dataset. <code class="docutils literal notranslate"><span class="pre">mpltime</span></code> is a <cite>&lt;~dolfyn.data.time.time_array&gt;</cite> that contains the time information in MatPlotLib time format. <code class="docutils literal notranslate"><span class="pre">vel</span></code> is the velocity data. The other entries (with <cite>+</cite> next to them) are ‘data groups’, which contain additional data. These variables can be accessed using dict-style syntax, <em>or</em> attribute-style syntax. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span><span class="p">[</span><span class="s1">&#39;mpltime&#39;</span><span class="p">]</span>
+<span class="go">time_array([734666.50003436, 734666.50003472, 734666.50003509, ...,</span>
+<span class="go">            734666.54362775, 734666.54362811, 734666.54362847])</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span><span class="o">.</span><span class="n">vel</span>
+<span class="go">array([[-1.0020001 , -1.008     , -0.94400007, ...,  0.83100003,</span>
+<span class="go">        -2.305     ,  5.177     ],</span>
+<span class="go">       [ 0.097     ,  0.068     ,  0.066     , ..., -2.275     ,</span>
+<span class="go">         0.86300004, -3.6950002 ],</span>
+<span class="go">       [ 0.115     ,  0.12400001,  0.12200001, ...,  0.596     ,</span>
+<span class="go">         0.22700001,  0.16600001]], dtype=float32)</span>
+</pre></div>
+</div>
+<p>Interactive display of a data group will reveal the variables the group contains:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span><span class="o">.</span><span class="n">orient</span>
+<span class="go">&lt;class &#39;dolfyn.data.base.TimeData&#39;&gt;: Data Object with Keys:</span>
+<span class="go">  *------------</span>
+<span class="go">  | heading                  : &lt;array; (120530,); float32&gt;</span>
+<span class="go">  | orientation_down         : &lt;array; (120530,); bool&gt;</span>
+<span class="go">  | pitch                    : &lt;array; (120530,); float32&gt;</span>
+<span class="go">  | roll                     : &lt;array; (120530,); float32&gt;</span>
+</pre></div>
+</div>
+<p>Note here that the display information includes the size of each array, and its data-type. The units of most variables are in the <em>MKS</em> system (e.g., velocity is in meters-per-second), and angles are in degrees. See the [units] section for a complete list of the units of variables handled by DOLfYN.</p>
+</div>
+<div class="section" id="data-groups">
+<h2>Data Groups<a class="headerlink" href="#data-groups" title="Permalink to this headline">¶</a></h2>
+<p>The data in data objects is organized into data groups to facilitate easier viewing, and to streamline file I/O during advanced processing steps (i.e., so that you only load the data you need). The</p>
+<ul>
+<li><p class="first"><strong>``config``</strong>: this data group contains instrument-configuration data that was loaded from the source file. This is a long list of information that (<em>mostly</em>) inherits attribute names from the manufacturers documentation (i.e., see that documentation for info on these variables).</p>
+</li>
+<li><dl class="first docutils">
+<dt><strong>``env``</strong>: contains <em>environmental</em> data such as temperature, pressure, or the speed of sound::</dt>
+<dd><dl class="first last docutils">
+<dt>&lt;class ‘dolfyn.data.base.TimeData’&gt;: Data Object with Keys:</dt>
+<dd><p class="first last"><a href="#id2"><span class="problematic" id="id3">*</span></a>————
+| c_sound                  : &lt;array; (120530,); float32&gt;
+| pressure                 : &lt;array; (120530,); float64&gt;
+| temp                     : &lt;array; (120530,); float32&gt;</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>``orient``</strong>: contains orientation data such as pitch, roll, and heading (shown above).</p>
+</li>
+<li><p class="first"><strong>``props``</strong>: is a dictionary containing information about the data object that is used and modified by/within DOLfYN:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span><span class="o">.</span><span class="n">props</span>
+<span class="go">{&#39;coord_sys&#39;: &#39;inst&#39;,</span>
+<span class="go"> &#39;fs&#39;: 32,</span>
+<span class="go"> &#39;has imu&#39;: False,</span>
+<span class="go"> &#39;inst_make&#39;: &#39;Nortek&#39;,</span>
+<span class="go"> &#39;inst_model&#39;: &#39;VECTOR&#39;,</span>
+<span class="go"> &#39;inst_type&#39;: &#39;ADV&#39;,</span>
+<span class="go"> &#39;rotate_vars&#39;: {&#39;vel&#39;}}</span>
+</pre></div>
+</div>
+<p>Here we see that the <code class="docutils literal notranslate"><span class="pre">props</span></code> attribute contains the <cite>‘coord_sys’</cite> entry, which is the ‘coordinate system’ or ‘reference frame’ of the data (see the [rotations] section for more information on coordinate systems). It also includes the data sample-rate (32 Hz), and indicates whether this instrument has an ‘inertial motion unit’ or ‘IMU’ (it doesn’t). The instrument manufacturer, model, and type are also included here. The last entry in this dictionary is the <cite>‘rotate_vars’</cite> entry, which lists the vector-variables that should be rotated when rotating this data object.</p>
+</li>
+<li><p class="first"><strong>``signal``</strong>: contains information about the amplitude and quality (e.g., correlation) of the acoustic signal:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;class &#39;dolfyn.data.base.TimeData&#39;&gt;: Data Object with Keys:
+  *------------
+  | amp                      : &lt;array; (3, 120530); uint8&gt;
+  | corr                     : &lt;array; (3, 120530); uint8&gt;
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>``sys``</strong>: contains system status information such as battery levels, and error codes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;class &#39;dolfyn.data.base.TimeData&#39;&gt;: Data Object with Keys:
+  *------------
+  | batt                     : &lt;array; (120530,); float32&gt;
+  | error                    : &lt;array; (120530,); uint8&gt;
+  | status                   : &lt;array; (120530,); uint8&gt;
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="saving-data">
+<h2>Saving Data<a class="headerlink" href="#saving-data" title="Permalink to this headline">¶</a></h2>
+<p>Finally, note that a data object can be saved for later use using the <code class="docutils literal notranslate"><span class="pre">to_hdf5</span></code> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span><span class="o">.</span><span class="n">to_hdf5</span><span class="p">(</span><span class="s1">&#39;my_data_file.h5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To load this data from the data file, use DOLfYN’s load function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat2</span> <span class="o">=</span> <span class="n">dlfn</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;my_data_file.h5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="rotations-and-coordinate-systems">
+<h2>Rotations and Coordinate Systems<a class="headerlink" href="#rotations-and-coordinate-systems" title="Permalink to this headline">¶</a></h2>
+<p>Coordinate systems (a.k.a. reference frames) specify the coordinate directions of vector data in the data object. The values in the list <cite>dat.props[‘rotate_vars’]</cite> specifies the vectors that are rotated when changing between different coordinate systems. The first dimension of these vectors are the coordinate systems. DOLfYN supports four primary coordinate systems:</p>
+<ul>
+<li><p class="first"><strong>BEAM</strong>: this is the coordinate system of the ‘along-beam’ velocities. When a data object is in this coordinate system, only the velocity data (i.e., the variables in <cite>dat.props[‘rotate_vars’]</cite> starting with ‘<cite>vel’</cite>) is in beam coordinates. Other variables in the data object (e.g., <cite>dat.orient.AngRt</cite>, for instruments with IMUs) are in the INST frame. This coordinate system is <em>not</em> ortho-normal. When the data object is in BEAM coordinates, the first dimension of the velocity vectors are: [beam1, beam2, … beamN].</p>
+</li>
+<li><p class="first"><strong>INST</strong>: this is the ‘instrument’ coordinate system defined by the manufacturer. This coordinate system is orth-normal,  but is not necessarily fixed. That is, if the instrument is rotating, then this coordinate system changes relative to the earth. When the data object is in INST coordinates, the first dimension of the vectors are: [X, Y, Z, …].</p>
+<p>Note: instruments with more than three beams will have more than three coordinate directions. See the documentation for your specific instrument to see how ‘extra’ dimensions are handled by DOLfYN. <strong>I need to update this more</strong>.</p>
+</li>
+<li><p class="first"><strong>EARTH</strong>: the earth coordinate system is the ‘rotationally-fixed’ coordinate system. This coordinate system is ‘fixed’ in the sense that it does not rotate, but it may not be ‘stationary’ if the instrument slides around translationally (see the [motion-correction] section for details on how to correct for translational motion). When the data object is in EARTH coordinates, the first dimension of the vectors are: [East, North, Up, …].</p>
+</li>
+<li><p class="first"><strong>PRINCIPAL</strong>: the principal coordinate system is similar to the earth coordinate system (it is fixed), but it has been rotated in the horizontal plane to align with the flow in one way or another. In this coordinate system the first dimension of the vectors are: [Stream-wise, Cross-stream, Up]. By default, the stream-wise direction is determined using the <cite>:func:&lt;data.velocity.calc_principal_angle&gt;</cite> function. Or, you can specify the rotation direction directly by setting <cite>dat.props[‘principal_angle’]</cite> to the rotation angle by which you want to rotate the horizontal velocity, in units of radians. This direction (positive counter-clockwise from east) will be the first row of vectors (i.e., the <em>Streamwise</em> direction).</p>
+</li>
+</ul>
+<p>To rotate a data object into one of these coordinate systems, simply use the rotate method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat_earth</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="s1">&#39;earth&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dat_earth</span>
+<span class="go">&lt;ADV data object&gt;</span>
+<span class="go">  . 1.05 hours (started: Jun 12, 2012 12:00)</span>
+<span class="go">  . EARTH-frame</span>
+<span class="go">  . (120530 pings @ 32Hz)</span>
+<span class="go">  *------------</span>
+<span class="go">  | mpltime                  : &lt;time_array; (120530,); float64&gt;</span>
+<span class="go">  | vel                      : &lt;array; (3, 120530); float32&gt;</span>
+<span class="go">  + config                   : + DATA GROUP</span>
+<span class="go">  + env                      : + DATA GROUP</span>
+<span class="go">  + orient                   : + DATA GROUP</span>
+<span class="go">  + props                    : + DATA GROUP</span>
+<span class="go">  + signal                   : + DATA GROUP</span>
+<span class="go">  + sys                      : + DATA GROUP</span>
+</pre></div>
+</div>
+<div class="section" id="working-with-adv-data">
+<h3>Working with ADV data<a class="headerlink" href="#working-with-adv-data" title="Permalink to this headline">¶</a></h3>
+<p>DOLfYN has several tools for performing useful and common operations
+on ADV data. Most of these are available via the ADV
+<a class="reference internal" href="api/dolfyn.adv.html#module-dolfyn.adv.api" title="dolfyn.adv.api"><code class="xref py py-mod docutils literal notranslate"><span class="pre">api</span></code></a>. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># To use this module, import it:</span>
+<span class="kn">from</span> <span class="nn">dolfyn.adv</span> <span class="k">import</span> <span class="n">api</span> <span class="k">as</span> <span class="n">adv</span>
+
+<span class="c1"># Then read a file containing adv data:</span>
+<span class="n">dat</span> <span class="o">=</span> <span class="n">adv</span><span class="o">.</span><span class="n">read_nortek</span><span class="p">(</span><span class="s1">&#39;../../../data/vector_data01.VEC&#39;</span><span class="p">)</span>
+
+<span class="c1"># Then clean the file using the Goring+Nikora method:</span>
+<span class="n">adv</span><span class="o">.</span><span class="n">clean</span><span class="o">.</span><span class="n">GN2002</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+
+<span class="c1"># Then rotate that data from the instrument to earth frame:</span>
+<span class="n">adv</span><span class="o">.</span><span class="n">rotate</span><span class="o">.</span><span class="n">inst2earth</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+
+<span class="c1"># Then rotate it into a &#39;principal axes frame&#39;:</span>
+<span class="n">adv</span><span class="o">.</span><span class="n">rotate</span><span class="o">.</span><span class="n">earth2principal</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+
+<span class="c1"># Define an averaging object, and create an &#39;averaged&#39; data set:</span>
+<span class="n">binner</span> <span class="o">=</span> <span class="n">adv</span><span class="o">.</span><span class="n">TurbBinner</span><span class="p">(</span><span class="n">n_bin</span><span class="o">=</span><span class="mi">40000</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">dat</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="mi">4096</span><span class="p">)</span>
+<span class="n">dat_bin</span> <span class="o">=</span> <span class="n">binner</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+
+<span class="c1"># At any point you can save the data:</span>
+<span class="n">dat_bin</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;adv_data_rotated2principal.h5&#39;</span><span class="p">)</span>
+
+<span class="c1"># And reload the data:</span>
+<span class="n">dat_bin_copy</span> <span class="o">=</span> <span class="n">adv</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;adv_data_rotated2principal.h5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The Basics</a><ul>
+<li><a class="reference internal" href="#reading-data">Reading data</a></li>
+<li><a class="reference internal" href="#data-groups">Data Groups</a></li>
+<li><a class="reference internal" href="#saving-data">Saving Data</a></li>
+<li><a class="reference internal" href="#rotations-and-coordinate-systems">Rotations and Coordinate Systems</a><ul>
+<li><a class="reference internal" href="#working-with-adv-data">Working with ADV data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="install.html" title="previous chapter">Download and Install</a></li>
+      <li>Next: <a href="usage-specific.html" title="next chapter">Motion Correcting ADV-IMU measurements</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,510 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.io.nortek2 &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.io.nortek2</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;This is the top-level module for reading Nortek Signature (.ad2cp)</span>
+<span class="sd">files. It relies heavily on the `nortek2_defs` and `nortek2lib`</span>
+<span class="sd">modules.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">struct</span> <span class="k">import</span> <span class="n">unpack</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">nortek2_defs</span> <span class="k">as</span> <span class="n">defs</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">nortek2lib</span> <span class="k">as</span> <span class="n">lib</span>
+<span class="kn">from</span> <span class="nn">..adp</span> <span class="k">import</span> <span class="n">base</span> <span class="k">as</span> <span class="n">apb</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">WrongFileType</span>
+<span class="kn">from</span> <span class="nn">..data</span> <span class="k">import</span> <span class="n">base</span> <span class="k">as</span> <span class="n">db</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<div class="viewcode-block" id="split_to_hdf"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.split_to_hdf">[docs]</a><span class="k">def</span> <span class="nf">split_to_hdf</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">nens_per_file</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">ens_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ens_stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">start_file_num</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Split a Nortek .ad2cp file into multiple hdf5 format files.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ==========</span>
+<span class="sd">    infile : string</span>
+<span class="sd">        The input .ad2cp filename.</span>
+<span class="sd">    nens_per_file : int</span>
+<span class="sd">        number of ensembles to include in each output file.</span>
+<span class="sd">    outfile : string</span>
+<span class="sd">        The output file format. This should include a &#39;{:d}&#39; format</span>
+<span class="sd">        specifier. By default, this is the input file path and prefix,</span>
+<span class="sd">        but with the ending &#39;{:03d}.h5&#39;.</span>
+<span class="sd">    ens_start : int</span>
+<span class="sd">        The ensemble number to start with.</span>
+<span class="sd">    ens_stop : int</span>
+<span class="sd">        The ensemble number to stop at.</span>
+<span class="sd">    start_file_num : int</span>
+<span class="sd">        The number to start the file-count with (default: 0).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">infile</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.ad2cp&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;This function only works on &quot;</span>
+                        <span class="s2">&quot;Nortek &#39;.ad2cp&#39; format files.&quot;</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get_index</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ens_stop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ens_stop</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="s1">&#39;ens&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ens_now</span> <span class="o">=</span> <span class="n">ens_start</span>
+    <span class="n">file_count</span> <span class="o">=</span> <span class="n">start_file_num</span>
+    <span class="k">if</span> <span class="n">outfile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="n">infile</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">{:03d}</span><span class="s1">.h5&#39;</span>
+    <span class="k">elif</span> <span class="s1">&#39;{&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outfile</span> <span class="ow">and</span> <span class="s1">&#39;d}&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outfile</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The output file must include a &quot;</span>
+                        <span class="s2">&quot;integer format specifier.&quot;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">ens_now</span> <span class="o">&lt;</span> <span class="n">ens_stop</span><span class="p">:</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">read_signature</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">nens</span><span class="o">=</span><span class="p">(</span><span class="n">ens_now</span><span class="p">,</span>
+                                           <span class="nb">min</span><span class="p">(</span><span class="n">ens_now</span> <span class="o">+</span> <span class="n">nens_per_file</span><span class="p">,</span>
+                                               <span class="n">ens_stop</span><span class="p">)))</span>
+        <span class="n">dat</span><span class="o">.</span><span class="n">to_hdf5</span><span class="p">(</span><span class="n">outfile</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_count</span><span class="p">))</span>
+        <span class="n">file_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">ens_now</span> <span class="o">+=</span> <span class="n">nens_per_file</span></div>
+
+
+<div class="viewcode-block" id="read_signature"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.read_signature">[docs]</a><span class="k">def</span> <span class="nf">read_signature</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">userdata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nens</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a Nortek Signature (.ad2cp) file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ==========</span>
+<span class="sd">    filename : string</span>
+<span class="sd">        The filename of the file to load.</span>
+<span class="sd">    userdata : filename</span>
+<span class="sd">        &lt;&lt;currently unused, just a placeholder.&gt;&gt;</span>
+<span class="sd">    nens : int, or tuple of 2 ints</span>
+<span class="sd">        The number of ensembles to read, if int (starting at the</span>
+<span class="sd">        beginning); or the range of ensembles to read, if tuple.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    =======</span>
+<span class="sd">    dat : :class:`dolfyn.adp.base.adcp_raw` object</span>
+<span class="sd">        An ADCP data object containing the loaded data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">nens</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nens</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nens</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">nens</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">nens</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># passes: it&#39;s a list/tuple/array</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;nens must be: None (), int, or len 2&#39;</span><span class="p">)</span>
+    <span class="n">rdr</span> <span class="o">=</span> <span class="n">Ad2cpReader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">rdr</span><span class="o">.</span><span class="n">readfile</span><span class="p">(</span><span class="n">nens</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nens</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">rdr</span><span class="o">.</span><span class="n">sci_data</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">reorg</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">reduce</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="Ad2cpReader"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader">[docs]</a><span class="k">class</span> <span class="nc">Ad2cpReader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This is the reader-object for reading AD2CP files.</span>
+
+<span class="sd">    This should only be used explicitly for debugging</span>
+<span class="sd">    purposes. Instead, a user should generally rely on the</span>
+<span class="sd">    `read_signature` function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">endian</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bufsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rebuild_index</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fname</span> <span class="o">=</span> <span class="n">fname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_nortek</span><span class="p">(</span><span class="n">endian</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get_index</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span>
+                                    <span class="n">reload</span><span class="o">=</span><span class="n">rebuild_index</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reopen</span><span class="p">(</span><span class="n">bufsize</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filehead_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_filehead_config_string</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ens_pos</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">index2ens_pos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">calc_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_burst_readers</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unknown_ID_count</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">_init_burst_readers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">rdr_id</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span><span class="p">[</span><span class="n">rdr_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">defs</span><span class="o">.</span><span class="n">calc_burst_struct</span><span class="p">(</span>
+                <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;_config&#39;</span><span class="p">],</span> <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;nbeams&#39;</span><span class="p">],</span> <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;ncells&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Ad2cpReader.init_data"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.init_data">[docs]</a>    <span class="k">def</span> <span class="nf">init_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ens_start</span><span class="p">,</span> <span class="n">ens_stop</span><span class="p">):</span>
+        <span class="n">outdat</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">nens</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ens_stop</span> <span class="o">-</span> <span class="n">ens_start</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span><span class="p">:</span>
+            <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">init_data</span><span class="p">(</span><span class="n">nens</span><span class="p">)</span>
+            <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span><span class="p">][</span><span class="s1">&#39;ensemble&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ens_start</span><span class="p">,</span>
+                                               <span class="n">ens_stop</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint32&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outdat</span></div>
+
+<div class="viewcode-block" id="Ad2cpReader.read_hdr"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.read_hdr">[docs]</a>    <span class="k">def</span> <span class="nf">read_hdr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_cs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">defs</span><span class="o">.</span><span class="n">_header</span><span class="o">.</span><span class="n">read2dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">cs</span><span class="o">=</span><span class="n">do_cs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;sync&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">165</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Out of sync!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_nortek</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endian</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reopen</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">byts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">endian</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;&#39;</span> <span class="o">+</span> <span class="s1">&#39;BB&#39;</span><span class="p">,</span> <span class="n">byts</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mi">165</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+                <span class="n">endian</span> <span class="o">=</span> <span class="s1">&#39;&lt;&#39;</span>
+            <span class="k">elif</span> <span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span> <span class="o">+</span> <span class="s1">&#39;BB&#39;</span><span class="p">,</span> <span class="n">byts</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mi">165</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+                <span class="n">endian</span> <span class="o">=</span> <span class="s1">&#39;&gt;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">WrongFileType</span><span class="p">(</span>
+                    <span class="s2">&quot;I/O error: could not determine the &#39;endianness&#39; &quot;</span>
+                    <span class="s2">&quot;of the file.  Are you sure this is a Nortek &quot;</span>
+                    <span class="s2">&quot;AD2CP file?&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">endian</span> <span class="o">=</span> <span class="n">endian</span>
+
+<div class="viewcode-block" id="Ad2cpReader.reopen"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.reopen">[docs]</a>    <span class="k">def</span> <span class="nf">reopen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bufsize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">bufsize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bufsize</span> <span class="o">=</span> <span class="mi">1000000</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">,</span> <span class="n">bufsize</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Ad2cpReader.read_filehead_config_string"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.read_filehead_config_string">[docs]</a>    <span class="k">def</span> <span class="nf">read_filehead_config_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="n">hdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_hdr</span><span class="p">()</span>
+        <span class="c1"># This is the instrument config string.</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">s_id</span><span class="p">,</span> <span class="n">string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_string</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">])</span>
+        <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+            <span class="n">ky</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">ln</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+                <span class="c1"># There are more than one of this key</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="n">out2</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ky</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">):</span>
+                <span class="n">dat</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">out2</span><span class="p">[</span><span class="n">ky</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">itm</span> <span class="ow">in</span> <span class="n">dat</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+                    <span class="n">k</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">itm</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                    <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out2</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">out2</span></div>
+
+<div class="viewcode-block" id="Ad2cpReader.readfile"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.readfile">[docs]</a>    <span class="k">def</span> <span class="nf">readfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ens_start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ens_stop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">nens_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ens_pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ens_stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ens_stop</span> <span class="o">&gt;</span> <span class="n">nens_total</span><span class="p">:</span>
+            <span class="n">ens_stop</span> <span class="o">=</span> <span class="n">nens_total</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">ens_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ens_start</span><span class="p">)</span>
+        <span class="n">ens_stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ens_stop</span><span class="p">)</span>
+        <span class="n">nens</span> <span class="o">=</span> <span class="n">ens_stop</span> <span class="o">-</span> <span class="n">ens_start</span>
+        <span class="n">outdat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_data</span><span class="p">(</span><span class="n">ens_start</span><span class="p">,</span> <span class="n">ens_stop</span><span class="p">)</span>
+        <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;filehead config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filehead_config</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading file </span><span class="si">%s</span><span class="s1"> ...&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">fname</span><span class="p">)</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ens_pos</span><span class="p">[</span><span class="n">ens_start</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">retval</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">hdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_hdr</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">outdat</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">id</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">24</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">read_burst</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">outdat</span><span class="p">[</span><span class="nb">id</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">id</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">26</span><span class="p">]:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">&quot;Unhandled ID: 0x1A (26)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    There still seems to be a discrepancy between</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    the &#39;0x1A&#39; data format, and the specification</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    in the System Integrator Manual.&quot;</span><span class="p">)</span>
+                <span class="c1"># Question posted at:</span>
+                <span class="c1"># http://www.nortek-as.com/en/knowledge-center/forum/system-integration-and-telemetry/538802891</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">id</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">31</span><span class="p">]:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">&quot;Unhandled ID: 0x</span><span class="si">{:02X}</span><span class="s2"> (</span><span class="si">{:02d}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    This ID is not yet handled by DOLfYN.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    If possible, please file an issue and share a</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    portion of your data file:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;      http://github.com/lkilcher/dolfyn/issues/&quot;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="nb">id</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">id</span> <span class="o">==</span> <span class="mi">160</span><span class="p">:</span>
+                <span class="c1"># 0xa0 (i.e., 160) is a &#39;string data record&#39;</span>
+                <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outdat</span><span class="p">:</span>
+                    <span class="n">outdat</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+                <span class="n">s_id</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_string</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">],</span> <span class="p">)</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="nb">id</span><span class="p">][(</span><span class="n">c</span><span class="p">,</span> <span class="n">s_id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unknown_ID_count</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">unknown_ID_count</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Unknown ID: 0x</span><span class="si">{:02X}</span><span class="s1">!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">unknown_ID_count</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sz&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># It&#39;s unfortunate that all of this count checking is so</span>
+            <span class="c1"># complex, but this is the best I could come up with right</span>
+            <span class="c1"># now.</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="o">+</span> <span class="n">ens_start</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="n">nens_total</span><span class="p">:</span>
+                <span class="c1"># Make sure we&#39;re not at the end of the count list.</span>
+                <span class="k">continue</span>
+            <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ens_pos</span><span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="n">ens_start</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]):</span>
+                <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">+</span> <span class="n">ens_start</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="n">nens_total</span><span class="p">:</span>
+                    <span class="c1"># Again check end of count list</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;=</span> <span class="n">nens</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">outdat</span></div>
+
+<div class="viewcode-block" id="Ad2cpReader.read_burst"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.read_burst">[docs]</a>    <span class="k">def</span> <span class="nf">read_burst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">echo</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">rdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="n">rdr</span><span class="o">.</span><span class="n">read_into</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">dat</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Ad2cpReader.read_string"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.read_string">[docs]</a>    <span class="k">def</span> <span class="nf">read_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="n">string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">string</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1">#end = string[-1]</span>
+        <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">id</span><span class="p">,</span> <span class="n">string</span></div>
+
+<div class="viewcode-block" id="Ad2cpReader.sci_data"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.Ad2cpReader.sci_data">[docs]</a>    <span class="k">def</span> <span class="nf">sci_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dat</span><span class="p">):</span>
+        <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">dat</span><span class="p">:</span>
+            <span class="n">dnow</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">rdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_burst_readers</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+            <span class="n">rdr</span><span class="o">.</span><span class="n">sci_data</span><span class="p">(</span><span class="n">dnow</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;vel&#39;</span> <span class="ow">in</span> <span class="n">dnow</span> <span class="ow">and</span> <span class="s1">&#39;vel_scale&#39;</span> <span class="ow">in</span> <span class="n">dnow</span><span class="p">:</span>
+                <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]</span> <span class="o">*</span>
+                               <span class="mf">10.0</span> <span class="o">**</span> <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;vel_scale&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">trace</span><span class="p">,):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="reorg"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.reorg">[docs]</a><span class="k">def</span> <span class="nf">reorg</span><span class="p">(</span><span class="n">dat</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This function grabs the data from the dictionary of data types</span>
+<span class="sd">    (organized by ID), and combines them into the adcp_raw object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">outdat</span> <span class="o">=</span> <span class="n">apb</span><span class="o">.</span><span class="n">adcp_raw</span><span class="p">()</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">_type</span><span class="o">=</span><span class="s1">&#39;Nortek AD2CP&#39;</span><span class="p">)</span>
+    <span class="n">cfh</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;filehead config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;filehead config&#39;</span><span class="p">]</span>
+    <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cfh</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;inst_make&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nortek&#39;</span>
+    <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;inst_model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span>
+    <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;inst_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ADP&#39;</span>
+
+    <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">21</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;_b5&#39;</span><span class="p">)]:</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dat</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">dnow</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;burst_config&#39;</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">headconfig_int2dict</span><span class="p">(</span>
+            <span class="n">lib</span><span class="o">.</span><span class="n">collapse</span><span class="p">(</span><span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]))</span>
+        <span class="n">outdat</span><span class="p">[</span><span class="s1">&#39;mpltime&#39;</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">calc_time</span><span class="p">(</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1900</span><span class="p">,</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;month&#39;</span><span class="p">],</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">],</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">],</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;minute&#39;</span><span class="p">],</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;second&#39;</span><span class="p">],</span>
+            <span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;usec100&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint32&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">beams_cy_int2dict</span><span class="p">(</span>
+            <span class="n">lib</span><span class="o">.</span><span class="n">collapse</span><span class="p">(</span><span class="n">dnow</span><span class="p">[</span><span class="s1">&#39;beam_config&#39;</span><span class="p">]),</span> <span class="mi">21</span><span class="p">)</span>
+        <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;ncells&#39;</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;ncells&#39;</span><span class="p">]</span>
+        <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;cy&#39;</span><span class="p">]</span>
+        <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;nbeams&#39;</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;nbeams&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;SerialNum&#39;</span><span class="p">,</span> <span class="s1">&#39;cell_size&#39;</span><span class="p">,</span> <span class="s1">&#39;blanking&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;nom_corr&#39;</span><span class="p">,</span> <span class="s1">&#39;data_desc&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;vel_scale&#39;</span><span class="p">,</span> <span class="s1">&#39;power_level&#39;</span><span class="p">]:</span>
+            <span class="c1"># These ones should &#39;collapse&#39;</span>
+            <span class="c1"># (i.e., all values should be the same)</span>
+            <span class="c1"># So we only need that one value.</span>
+            <span class="n">cfg</span><span class="p">[</span><span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">collapse</span><span class="p">(</span><span class="n">dnow</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;c_sound&#39;</span><span class="p">,</span> <span class="s1">&#39;temp&#39;</span><span class="p">,</span> <span class="s1">&#39;press&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;heading&#39;</span><span class="p">,</span> <span class="s1">&#39;pitch&#39;</span><span class="p">,</span> <span class="s1">&#39;roll&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;temp_press&#39;</span><span class="p">,</span> <span class="s1">&#39;batt_V&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;temp_mag&#39;</span><span class="p">,</span> <span class="s1">&#39;temp_clock&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;Mag&#39;</span><span class="p">,</span> <span class="s1">&#39;Accel&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;ambig_vel&#39;</span><span class="p">,</span> <span class="s1">&#39;xmit_energy&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="s1">&#39;status0&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;_ensemble&#39;</span><span class="p">,</span> <span class="s1">&#39;ensemble&#39;</span><span class="p">]:</span>
+            <span class="c1"># No if statement here</span>
+            <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">dnow</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="s1">&#39;vel&#39;</span><span class="p">,</span> <span class="s1">&#39;amp&#39;</span><span class="p">,</span> <span class="s1">&#39;corr&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;alt_dist&#39;</span><span class="p">,</span> <span class="s1">&#39;alt_quality&#39;</span><span class="p">,</span> <span class="s1">&#39;alt_status&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;ast_dist&#39;</span><span class="p">,</span> <span class="s1">&#39;ast_quality&#39;</span><span class="p">,</span> <span class="s1">&#39;ast_offset_time&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;ast_pressure&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;altraw_nsamp&#39;</span><span class="p">,</span> <span class="s1">&#39;altraw_dist&#39;</span><span class="p">,</span> <span class="s1">&#39;altraw_samp&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;echo&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;orientmat&#39;</span><span class="p">,</span> <span class="s1">&#39;AngRt&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;percent_good&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;std_pitch&#39;</span><span class="p">,</span> <span class="s1">&#39;std_roll&#39;</span><span class="p">,</span> <span class="s1">&#39;std_heading&#39;</span><span class="p">,</span> <span class="s1">&#39;std_press&#39;</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">dnow</span><span class="p">:</span>
+                <span class="n">outdat</span><span class="p">[</span><span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">dnow</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">grp</span><span class="p">,</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">defs</span><span class="o">.</span><span class="n">_burst_group_org</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">grp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outdat</span> <span class="ow">and</span> \
+               <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">defs</span><span class="o">.</span><span class="n">_burst_group_org</span><span class="p">[</span><span class="n">grp</span><span class="p">])</span>
+                   <span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">outdat</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+                    <span class="n">outdat</span><span class="p">[</span><span class="n">grp</span><span class="p">]</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">TimeData</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ky</span> <span class="o">==</span> <span class="n">grp</span> <span class="ow">and</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">outdat</span> <span class="ow">and</span> \
+                   <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outdat</span><span class="p">[</span><span class="n">grp</span><span class="p">],</span> <span class="n">db</span><span class="o">.</span><span class="n">TimeData</span><span class="p">):</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">outdat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span>
+                    <span class="n">outdat</span><span class="p">[</span><span class="n">grp</span><span class="p">]</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">TimeData</span><span class="p">()</span>
+                    <span class="n">outdat</span><span class="p">[</span><span class="n">grp</span><span class="p">][</span><span class="n">ky</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span>
+                    <span class="c1">#print(ky, tmp)</span>
+                <span class="k">if</span> <span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">outdat</span> <span class="ow">and</span> <span class="ow">not</span> \
+                   <span class="nb">isinstance</span><span class="p">(</span><span class="n">outdat</span><span class="p">[</span><span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span><span class="p">],</span> <span class="n">db</span><span class="o">.</span><span class="n">TimeData</span><span class="p">):</span>
+                    <span class="n">outdat</span><span class="p">[</span><span class="n">grp</span><span class="p">][</span><span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">outdat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ky</span> <span class="o">+</span> <span class="n">tag</span><span class="p">)</span>
+    <span class="n">outdat</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span>
+    <span class="n">dat</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">status2data</span><span class="p">(</span><span class="n">outdat</span><span class="o">.</span><span class="n">sys</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>  <span class="c1"># returns a dict</span>
+    <span class="n">outdat</span><span class="o">.</span><span class="n">orient</span><span class="p">[</span><span class="s1">&#39;orient_up&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;orient_up&#39;</span><span class="p">]</span>
+    <span class="c1"># 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN</span>
+    <span class="c1"># Heding is: 0,1: Z; 4,5: X</span>
+    <span class="k">return</span> <span class="n">outdat</span></div>
+
+
+<div class="viewcode-block" id="reduce"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2.reduce">[docs]</a><span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This function takes the adcp_raw object output from `reorg`,</span>
+<span class="sd">    and further simplifies the data. Mostly this is combining system,</span>
+<span class="sd">    environmental, and orientation data --- from different data</span>
+<span class="sd">    structures within the same ensemble --- by averaging.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Average these fields</span>
+    <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mpltime&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;c_sound&#39;</span><span class="p">,</span> <span class="s1">&#39;temp&#39;</span><span class="p">,</span> <span class="s1">&#39;press&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;temp_press&#39;</span><span class="p">,</span> <span class="s1">&#39;temp_clock&#39;</span><span class="p">,</span> <span class="s1">&#39;temp_mag&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;batt_V&#39;</span><span class="p">]:</span>
+        <span class="n">grp</span> <span class="o">=</span> <span class="n">defs</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">ky</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">grp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dnow</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dnow</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">grp</span><span class="p">]</span>
+        <span class="n">lib</span><span class="o">.</span><span class="n">reduce_by_average</span><span class="p">(</span><span class="n">dnow</span><span class="p">,</span> <span class="n">ky</span><span class="p">,</span> <span class="n">ky</span> <span class="o">+</span> <span class="s1">&#39;_b5&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Angle-averaging is treated separately</span>
+    <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;heading&#39;</span><span class="p">,</span> <span class="s1">&#39;pitch&#39;</span><span class="p">,</span> <span class="s1">&#39;roll&#39;</span><span class="p">]:</span>
+        <span class="n">lib</span><span class="o">.</span><span class="n">reduce_by_average_angle</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;orient&#39;</span><span class="p">],</span> <span class="n">ky</span><span class="p">,</span> <span class="n">ky</span> <span class="o">+</span> <span class="s1">&#39;_b5&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Drop the ensemble count from other data structures</span>
+    <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;_ensemble&#39;</span><span class="p">,</span> <span class="s1">&#39;ensemble&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">ky</span> <span class="o">+</span> <span class="s1">&#39;_b5&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sys&#39;</span><span class="p">]:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sys&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ky</span> <span class="o">+</span> <span class="s1">&#39;_b5&#39;</span><span class="p">)</span>
+
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span>
+                     <span class="n">data</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">][</span><span class="s1">&#39;cell_size&#39;</span><span class="p">]</span> <span class="o">+</span>
+                     <span class="n">data</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">][</span><span class="s1">&#39;blanking&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="s1">&#39;vel_b5&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;range_b5&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;vel_b5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span>
+                            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">][</span><span class="s1">&#39;cell_size_b5&#39;</span><span class="p">]</span> <span class="o">+</span>
+                            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">][</span><span class="s1">&#39;blanking_b5&#39;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="s1">&#39;Accel&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;orient&#39;</span><span class="p">]:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;has imu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;has imu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;filehead config&#39;</span><span class="p">][</span><span class="s1">&#39;BURST&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;SR&#39;</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span>
+    <span class="n">tmat</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;filehead config&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;XFBURST&#39;</span><span class="p">)</span>
+    <span class="n">tm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">tmat</span><span class="p">[</span><span class="s1">&#39;ROWS&#39;</span><span class="p">],</span> <span class="n">tmat</span><span class="p">[</span><span class="s1">&#39;COLS&#39;</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">irow</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tmat</span><span class="p">[</span><span class="s1">&#39;ROWS&#39;</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">icol</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tmat</span><span class="p">[</span><span class="s1">&#39;COLS&#39;</span><span class="p">]):</span>
+            <span class="n">tm</span><span class="p">[</span><span class="n">irow</span><span class="p">,</span> <span class="n">icol</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmat</span><span class="p">[</span><span class="s1">&#39;M&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">irow</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">icol</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;TransMatrix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tm</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="n">rdr</span> <span class="o">=</span> <span class="n">Ad2cpReader</span><span class="p">(</span><span class="s1">&#39;../../example_data/BenchFile01.ad2cp&#39;</span><span class="p">)</span>
+    <span class="n">rdr</span><span class="o">.</span><span class="n">readfile</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

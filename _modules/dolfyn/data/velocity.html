@@ -1,0 +1,576 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.data.velocity &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.data.velocity</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">np</span><span class="p">,</span> <span class="n">ma</span><span class="p">,</span> <span class="n">TimeData</span><span class="p">,</span> <span class="n">FreqData</span>
+<span class="kn">from</span> <span class="nn">.binned</span> <span class="k">import</span> <span class="n">TimeBinner</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">.time</span> <span class="k">import</span> <span class="n">num2date</span>
+<span class="kn">from</span> <span class="nn">..rotate</span> <span class="k">import</span> <span class="n">rotate</span>
+
+
+<div class="viewcode-block" id="Velocity"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.Velocity">[docs]</a><span class="k">class</span> <span class="nc">Velocity</span><span class="p">(</span><span class="n">TimeData</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">make_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;inst_make&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;inst_model&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">make</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;inst_make&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;inst_model&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_imu</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test whether this data object contains Inertial Motion Unit</span>
+<span class="sd">        (IMU) data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;has imu&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;mpltime&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">U_mag</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Velocity magnitude</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">U</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">U_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Angle of velocity vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">U</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Velocity.rotate"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.Velocity.rotate">[docs]</a>    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_frame</span><span class="o">=</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Rotate the data object into a new coordinate system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        out_frame : string {&#39;beam&#39;, &#39;inst&#39;, &#39;earth&#39;, &#39;principal&#39;}</span>
+<span class="sd">          The coordinate system to rotate the data into.</span>
+
+<span class="sd">        inplace : bool</span>
+<span class="sd">          Operate on self (True), or return a copy that</span>
+<span class="sd">          has been rotated (False, default).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        objout : :class:`Velocity &lt;data.velocity.Velocity&gt;`</span>
+<span class="sd">          The rotated data object. This is `self` if inplace is True.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_frame</span><span class="o">=</span><span class="n">out_frame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Velocity.calc_principal_angle"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.Velocity.calc_principal_angle">[docs]</a>    <span class="k">def</span> <span class="nf">calc_principal_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the principal angle of the horizontal velocity.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        bin : {int or None}</span>
+<span class="sd">          For ADP objects, this is the depth bin where the principal</span>
+<span class="sd">          angle is calculated. If it is None (default), the</span>
+<span class="sd">          depth-averaged velocity is used.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+
+<span class="sd">        This function sets (overwrites) the values of</span>
+<span class="sd">        ``self.props[&#39;principal_angle&#39;]``, and</span>
+<span class="sd">        ``self.props[&#39;coord_sys_principal_ref&#39;]``.</span>
+
+<span class="sd">        This function calculates the principal direction </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="s1">&#39;inst&#39;</span><span class="p">,</span>
+                                                   <span class="s1">&#39;enu&#39;</span><span class="p">,</span> <span class="s1">&#39;xyz&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The principal angle should only be estimated &quot;</span>
+                            <span class="s2">&quot;if the coordinate system is either &#39;earth&#39; or &quot;</span>
+                            <span class="s2">&quot;&#39;inst&#39;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys_principal_ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">U</span>  <span class="c1"># horizontal velocity as a complex number</span>
+        <span class="k">if</span> <span class="nb">bin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="nb">bin</span><span class="p">]</span>
+        <span class="n">dt</span><span class="p">[</span><span class="n">dt</span><span class="o">.</span><span class="n">imag</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="c1"># Now double the angle, so that angles near pi and 0 get averaged</span>
+        <span class="c1"># together correctly:</span>
+        <span class="n">dt</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">dt</span><span class="p">))</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+        <span class="c1"># Divide the angle by 2 to remove the doubling done on the previous</span>
+        <span class="c1"># line.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="c1"># Angle returns values between -pi and pi.  I want the</span>
+        <span class="c1"># principal angle always to be between 0 and pi.  Therefore,</span>
+        <span class="c1"># add pi to the negative ones.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">u</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">v</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">w</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">principal_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the principal angle of the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;principal_angle&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calc_principal_angle</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">U</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="s2">&quot;Horizontal velocity as a complex quantity.&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">[:]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">[:]</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_repr_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="n">time_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> (started: </span><span class="si">{}</span><span class="s1">)&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mpltime&#39;</span><span class="p">))</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mpltime</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">time_string</span> <span class="o">=</span> <span class="s1">&#39;--&gt;No Time Information!&lt;--&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tm</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mpltime</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">mpltime</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">num2date</span><span class="p">(</span><span class="n">tm</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">tm</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">tm</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">delta</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="s1">&#39;days&#39;</span>
+            <span class="k">elif</span> <span class="n">delta</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="s1">&#39;hours&#39;</span>
+                <span class="n">delta</span> <span class="o">*=</span> <span class="mi">24</span>
+            <span class="k">elif</span> <span class="n">delta</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">delta</span> <span class="o">*=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">60</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="s1">&#39;minutes&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">delta</span> <span class="o">*=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="s1">&#39;seconds&#39;</span>
+            <span class="n">time_string</span> <span class="o">=</span> <span class="n">time_string</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span>
+                                             <span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%b </span><span class="si">%d</span><span class="s1">, %Y %H:%M&#39;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">shape_string</span> <span class="o">=</span> <span class="s1">&#39;(</span><span class="si">{}</span><span class="s1"> bins, </span><span class="si">{}</span><span class="s1"> pings @ </span><span class="si">{}</span><span class="s1">Hz)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape_string</span> <span class="o">=</span> <span class="s1">&#39;(</span><span class="si">{}</span><span class="s1"> pings @ </span><span class="si">{}</span><span class="s1">Hz)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2"> data object&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;  . </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;  . </span><span class="si">%s</span><span class="s2">-frame</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;  . </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;inst_type&#39;</span><span class="p">],</span>
+                 <span class="n">time_string</span><span class="p">,</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
+                 <span class="n">shape_string</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="VelTkeData"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelTkeData">[docs]</a><span class="k">class</span> <span class="nc">VelTkeData</span><span class="p">(</span><span class="n">TimeData</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tauij</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tke_vec</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stress</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+                         <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span>
+                         <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">n</span><span class="p">[</span><span class="mi">2</span><span class="p">]]])</span>
+
+<div class="viewcode-block" id="VelTkeData.rotate"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelTkeData.rotate">[docs]</a>    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rmat</span><span class="p">):</span>
+        <span class="c1"># Transpose second index of rmat for rotation</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij...,jlm...,nl...-&gt;inm...&#39;</span><span class="p">,</span> <span class="n">rmat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tauij</span><span class="p">,</span> <span class="n">rmat</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)()</span>
+        <span class="n">out</span><span class="p">[</span><span class="s1">&#39;tke_vec&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="s1">&#39;stress&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelTkeData.tau_is_pd"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelTkeData.tau_is_pd">[docs]</a>    <span class="k">def</span> <span class="nf">tau_is_pd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tauij</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]:</span>
+            <span class="n">val</span> <span class="o">&amp;=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">idx</span><span class="p">,</span> <span class="p">:</span><span class="n">idx</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">val</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Ecoh</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Niel Kelley&#39;s &quot;coherent energy&quot;, i.e. the rms of the stresses.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Why did he do it this way, instead of the sum of the magnitude of the</span>
+        <span class="c1"># stresses?</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upwp_</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">upvp_</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">vpwp_</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VelTkeData.Itke"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelTkeData.Itke">[docs]</a>    <span class="k">def</span> <span class="nf">Itke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turbulence kinetic energy intensity.</span>
+
+<span class="sd">        Ratio of sqrt(tke) to velocity magnitude.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">U_mag</span> <span class="o">&lt;</span> <span class="n">thresh</span><span class="p">,</span>
+                                  <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tke</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">U_mag</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VelTkeData.I"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelTkeData.I">[docs]</a>    <span class="k">def</span> <span class="nf">I</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turbulence intensity.</span>
+
+<span class="sd">        Ratio of standard deviation of horizontal velocity magnitude</span>
+<span class="sd">        to horizontal velocity magnitude.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">U_mag</span> <span class="o">&lt;</span> <span class="n">thresh</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">sigma_Uh</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">U_mag</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tke</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The turbulent kinetic energy (sum of the three components).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tke_vec</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">upvp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        u&#39;v&#39; Reynolds stress</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stress</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">upwp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        u&#39;w&#39; Reynolds stress</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stress</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">vpwp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        v&#39;w&#39; Reynolds stress</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stress</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">upup_</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        u&#39;u&#39; component of the tke.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tke_vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">vpvp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        v&#39;v&#39; component of the tke.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tke_vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">wpwp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        w&#39;w&#39; component of the tke.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tke_vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="VelBinner"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner">[docs]</a><span class="k">class</span> <span class="nc">VelBinner</span><span class="p">(</span><span class="n">TimeBinner</span><span class="p">):</span>
+
+    <span class="c1"># This defines how cross-spectra and stresses are computed.</span>
+    <span class="n">_cross_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="VelBinner.do_tke"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.do_tke">[docs]</a>    <span class="k">def</span> <span class="nf">do_tke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">VelTkeData</span><span class="p">()</span>
+        <span class="n">out</span><span class="p">[</span><span class="s1">&#39;tke_vec&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_tke</span><span class="p">(</span><span class="n">indat</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">])</span>
+        <span class="n">out</span><span class="p">[</span><span class="s1">&#39;stress&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_stress</span><span class="p">(</span><span class="n">indat</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelBinner.do_spec"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.do_spec">[docs]</a>    <span class="k">def</span> <span class="nf">do_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">FreqData</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">indat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;fs&#39;</span><span class="p">],</span>
+                                <span class="n">n_fft</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_fft</span><span class="p">,</span>
+                                <span class="n">n_bin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bin</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;omega&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_omega</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_vel_psd</span><span class="p">(</span><span class="n">indat</span><span class="p">[</span><span class="n">nm</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelBinner.do_cross_spec"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.do_cross_spec">[docs]</a>    <span class="k">def</span> <span class="nf">do_cross_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">FreqData</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">nm</span> <span class="o">+</span> <span class="s1">&#39;_cross&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_vel_cpsd</span><span class="p">(</span><span class="n">indat</span><span class="p">[</span><span class="n">nm</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelBinner.calc_tke"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.calc_tke">[docs]</a>    <span class="k">def</span> <span class="nf">calc_tke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">veldat</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the tke (variances of u,v,w).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        veldat : a velocity data array. The last dimension is assumed</span>
+<span class="sd">                 to be time.</span>
+
+<span class="sd">        noise : a three-element vector of the noise levels of the</span>
+<span class="sd">                velocity data for ach component of velocity.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : An array of tke values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="n">veldat</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                      <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">noise</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">out</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">noise</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">out</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-=</span> <span class="n">noise</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelBinner.calc_stress"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.calc_stress">[docs]</a>    <span class="k">def</span> <span class="nf">calc_stress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">veldat</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the stresses (cross-covariances of u,v,w).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        veldat : a velocity data array. The last dimension is assumed</span>
+<span class="sd">                 to be time.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : An array of stress values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outshape</span><span class="p">(</span><span class="n">veldat</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                       <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cross_pairs</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="n">veldat</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span> <span class="o">*</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="n">veldat</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]]),</span>
+                <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelBinner.calc_vel_psd"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.calc_vel_psd">[docs]</a>    <span class="k">def</span> <span class="nf">calc_vel_psd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">veldat</span><span class="p">,</span>
+                     <span class="n">rotate_u</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                     <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the psd of velocity.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        veldat   : np.ndarray</span>
+<span class="sd">          The raw velocity data.</span>
+<span class="sd">        rotate_u : bool (optional)</span>
+<span class="sd">          If True, each &#39;bin&#39; of horizontal velocity is rotated into</span>
+<span class="sd">          its principal axis prior to calculating the psd.  (default:</span>
+<span class="sd">          False).</span>
+<span class="sd">        fs : float (optional)</span>
+<span class="sd">          The sample rate (default: from the binner).</span>
+<span class="sd">        window : string or array</span>
+<span class="sd">          Specify the window function.</span>
+<span class="sd">        noise : list(3 floats) (optional)</span>
+<span class="sd">          Noise level of each component&#39;s velocity measurement</span>
+<span class="sd">          (default 0).</span>
+<span class="sd">        n_bin : int (optional)</span>
+<span class="sd">          The bin-size (default: from the binner).</span>
+<span class="sd">        n_fft : int (optional)</span>
+<span class="sd">          The fft size (default: from the binner).</span>
+<span class="sd">        n_pad : int (optional)</span>
+<span class="sd">          The number of values to pad with zero (default: 0)</span>
+<span class="sd">        step : int (optional)</span>
+<span class="sd">          Controls amount of overlap in fft (default: the step size is</span>
+<span class="sd">          chosen to maximize data use, minimize nens, and have a</span>
+<span class="sd">          minimum of 50% overlap.).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Spec    : np.ndarray (3, M, N_FFT)</span>
+<span class="sd">          The first-dimension of the spectrum is the three</span>
+<span class="sd">          different spectra: &#39;uu&#39;, &#39;vv&#39;, &#39;ww&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">veldat</span> <span class="o">=</span> <span class="n">veldat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rotate_u</span><span class="p">:</span>
+            <span class="n">tmpdat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">veldat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">veldat</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">tmpdat</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">tmpdat</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+            <span class="n">veldat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmpdat</span><span class="o">.</span><span class="n">real</span>
+            <span class="n">veldat</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmpdat</span><span class="o">.</span><span class="n">imag</span>
+            <span class="k">if</span> <span class="n">noise</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">noise</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s1">&#39;Noise levels different for u,v. This means &#39;</span>
+                    <span class="s1">&#39;noise-correction cannot be done here when &#39;</span>
+                    <span class="s1">&#39;rotating velocity.&#39;</span><span class="p">)</span>
+                <span class="n">noise</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outshape_fft</span><span class="p">(</span><span class="n">veldat</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">),</span>
+                       <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psd</span><span class="p">(</span><span class="n">veldat</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+                                <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">n_bin</span><span class="o">=</span><span class="n">n_bin</span><span class="p">,</span>
+                                <span class="n">n_pad</span><span class="o">=</span><span class="n">n_pad</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,)</span>
+        <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hz</span><span class="p">:</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">unitsDict</span><span class="p">({</span><span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;hz&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">unitsDict</span><span class="p">({</span><span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">})</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span><span class="n">out</span><span class="p">,</span>
+                            <span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span><span class="s1">&#39;S_{</span><span class="si">%s%s</span><span class="s1">}&#39;</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span>
+                                       <span class="n">veldat</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;freq&#39;</span><span class="p">])</span>
+                            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="VelBinner.calc_vel_cpsd"><a class="viewcode-back" href="../../../api/dolfyn.data.html#dolfyn.data.velocity.VelBinner.calc_vel_cpsd">[docs]</a>    <span class="k">def</span> <span class="nf">calc_vel_cpsd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">veldat</span><span class="p">,</span>
+                      <span class="n">rotate_u</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                      <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">,</span>
+                      <span class="n">n_bin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_pad</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the cross-spectra of velocity components.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        veldat   : np.ndarray</span>
+<span class="sd">          The raw velocity data.</span>
+<span class="sd">        rotate_u : bool (optional)</span>
+<span class="sd">          If True, each &#39;bin&#39; of horizontal velocity is rotated into</span>
+<span class="sd">          its principal axis prior to calculating the psd.  (default:</span>
+<span class="sd">          False).</span>
+<span class="sd">        fs : float (optional)</span>
+<span class="sd">          The sample rate (default: from the binner).</span>
+<span class="sd">        window : string or array</span>
+<span class="sd">          Specify the window function.</span>
+<span class="sd">        n_bin : int (optional)</span>
+<span class="sd">          The bin-size (default: from the binner).</span>
+<span class="sd">        n_fft : int (optional)</span>
+<span class="sd">          The fft size (default: from the binner).</span>
+<span class="sd">        n_pad : int (optional)</span>
+<span class="sd">          The number of values to pad with zero (default: 0)</span>
+<span class="sd">        step : int (optional)</span>
+<span class="sd">          Controls amount of overlap in fft (default: the step size is</span>
+<span class="sd">          chosen to maximize data use, minimize nens, and have a</span>
+<span class="sd">          minimum of 50% overlap.).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        CSpec    : np.ndarray (3, M, N_FFT)</span>
+<span class="sd">          The first-dimension of the cross-spectrum is the three</span>
+<span class="sd">          different cross-spectra: &#39;uv&#39;, &#39;uw&#39;, &#39;vw&#39; (in that order).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_fft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_nfft</span><span class="p">(</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="n">veldat</span> <span class="o">=</span> <span class="n">veldat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rotate_u</span><span class="p">:</span>
+            <span class="n">tmpdat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">veldat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">veldat</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">tmpdat</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">tmpdat</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+            <span class="n">veldat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmpdat</span><span class="o">.</span><span class="n">real</span>
+            <span class="n">veldat</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmpdat</span><span class="o">.</span><span class="n">imag</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outshape_fft</span><span class="p">(</span><span class="n">veldat</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;complex&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">ipair</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cross_pairs</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpsd</span><span class="p">(</span><span class="n">veldat</span><span class="p">[</span><span class="n">ipair</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                                <span class="n">veldat</span><span class="p">[</span><span class="n">ipair</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+                                <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ma</span><span class="o">.</span><span class="n">valid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hz</span><span class="p">:</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">unitsDict</span><span class="p">({</span><span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;hz&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">units</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">unitsDict</span><span class="p">({</span><span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">})</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">marray</span><span class="p">(</span><span class="n">out</span><span class="p">,</span>
+                            <span class="n">ma</span><span class="o">.</span><span class="n">varMeta</span><span class="p">(</span><span class="s1">&#39;S_{</span><span class="si">%s%s</span><span class="s1">}&#39;</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span>
+                                       <span class="n">veldat</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">dim_names</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;freq&#39;</span><span class="p">])</span>
+                            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

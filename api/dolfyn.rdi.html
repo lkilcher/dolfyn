@@ -1,0 +1,208 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.rdi package &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dolfyn.tools package" href="dolfyn.tools.html" />
+    <link rel="prev" title="dolfyn.nortek.rotate package" href="dolfyn.nortek.rotate.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dolfyn-rdi-package">
+<h1>dolfyn.rdi package<a class="headerlink" href="#dolfyn-rdi-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-dolfyn.rdi.rotate">
+<span id="dolfyn-rdi-rotate-module"></span><h2>dolfyn.rdi.rotate module<a class="headerlink" href="#module-dolfyn.rdi.rotate" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="dolfyn.rdi.rotate.beam2inst">
+<code class="descclassname">dolfyn.rdi.rotate.</code><code class="descname">beam2inst</code><span class="sig-paren">(</span><em>adcpo</em>, <em>reverse=False</em>, <em>force=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/rdi/rotate.html#beam2inst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rdi.rotate.beam2inst" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate velocitiesfrom beam to instrument coordinates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>adpo</strong> : The ADP object containing the data.</p>
+<p><strong>reverse</strong> : bool (default: False)</p>
+<blockquote>
+<div><p>If True, this function performs the inverse rotation
+(inst-&gt;beam).</p>
+</div></blockquote>
+<p><strong>force</strong> : bool (default: False)</p>
+<blockquote class="last">
+<div><p>When true do not check which coordinate system the data is in
+prior to performing this rotation.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.rdi.rotate.calc_beam_rotmatrix">
+<code class="descclassname">dolfyn.rdi.rotate.</code><code class="descname">calc_beam_rotmatrix</code><span class="sig-paren">(</span><em>theta=20</em>, <em>convex=True</em>, <em>degrees=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/rdi/rotate.html#calc_beam_rotmatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rdi.rotate.calc_beam_rotmatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the rotation matrix from beam coordinates to
+instrument head coordinates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>theta</strong> : is the angle of the heads (usually 20 or 30 degrees)</p>
+<p><strong>convex</strong> : is a flag for convex or concave head configuration.</p>
+<p><strong>degrees</strong> : is a flag which specifies whether theta is in degrees</p>
+<blockquote class="last">
+<div><p>or radians (default: degrees=True)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.rdi.rotate.inst2earth">
+<code class="descclassname">dolfyn.rdi.rotate.</code><code class="descname">inst2earth</code><span class="sig-paren">(</span><em>adcpo</em>, <em>reverse=False</em>, <em>fixed_orientation=False</em>, <em>force=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/rdi/rotate.html#inst2earth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rdi.rotate.inst2earth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate velocities from the instrument to earth coordinates.</p>
+<p>This function also rotates data from the ‘ship’ frame, into the
+earth frame when it is in the ship frame (and
+<code class="docutils literal notranslate"><span class="pre">adcpo.config['use_pitchroll']</span> <span class="pre">==</span> <span class="pre">'yes'</span></code>). It does not support the
+‘reverse’ rotation back into the ship frame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>adpo</strong> : The ADP object containing the data.</p>
+<p><strong>reverse</strong> : bool (default: False)</p>
+<blockquote>
+<div><p>If True, this function performs the inverse rotation
+(earth-&gt;inst).</p>
+</div></blockquote>
+<p><strong>fixed_orientation</strong> : bool (default: False)</p>
+<blockquote>
+<div><p>When true, take the average orientation and apply it over the
+whole record.</p>
+</div></blockquote>
+<p><strong>force</strong> : bool (default: False)</p>
+<blockquote class="last">
+<div><p>When true do not check which coordinate system the data is in
+prior to performing this rotation.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The rotation matrix is taken from the Teledyne RDI ADCP Coordinate
+Transformation manual January 2008</p>
+<p>When performing the forward rotation, this function sets the
+‘inst2earth:fixed’ flag to the value of <cite>fixed_orientation</cite>. When
+performing the reverse rotation, that value is ‘popped’ from the
+props dict and the input value to this function
+<cite>fixed_orientation</cite> has no effect. If <cite>‘inst2earth:fixed’</cite> is not
+in the props dict than the input value <em>is</em> used.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dolfyn.rdi.rotate.inst2earth_heading">
+<code class="descclassname">dolfyn.rdi.rotate.</code><code class="descname">inst2earth_heading</code><span class="sig-paren">(</span><em>adpo</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/rdi/rotate.html#inst2earth_heading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rdi.rotate.inst2earth_heading" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-dolfyn.rdi">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dolfyn.rdi" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">dolfyn.rdi package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-dolfyn.rdi.rotate">dolfyn.rdi.rotate module</a></li>
+<li><a class="reference internal" href="#module-dolfyn.rdi">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="dolfyn.html">dolfyn package</a><ul>
+      <li>Previous: <a href="dolfyn.nortek.rotate.html" title="previous chapter">dolfyn.nortek.rotate package</a></li>
+      <li>Next: <a href="dolfyn.tools.html" title="next chapter">dolfyn.tools package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/dolfyn.rdi.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/api/dolfyn.rdi.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

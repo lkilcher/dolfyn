@@ -1,0 +1,38 @@
+dolfyn.nortek.rotate package
+============================
+
+Submodules
+----------
+
+dolfyn.nortek.rotate.awac module
+--------------------------------
+
+.. automodule:: dolfyn.nortek.rotate.awac
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.nortek.rotate.signature module
+-------------------------------------
+
+.. automodule:: dolfyn.nortek.rotate.signature
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.nortek.rotate.vector module
+----------------------------------
+
+.. automodule:: dolfyn.nortek.rotate.vector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: dolfyn.nortek.rotate
+    :members:
+    :undoc-members:
+    :show-inheritance:

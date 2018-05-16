@@ -1,0 +1,102 @@
+dolfyn.io package
+=================
+
+Submodules
+----------
+
+dolfyn.io.api module
+--------------------
+
+.. automodule:: dolfyn.io.api
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.base module
+---------------------
+
+.. automodule:: dolfyn.io.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.hdf5 module
+---------------------
+
+.. automodule:: dolfyn.io.hdf5
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.main module
+---------------------
+
+.. automodule:: dolfyn.io.main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.mat module
+--------------------
+
+.. automodule:: dolfyn.io.mat
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.nortek module
+-----------------------
+
+.. automodule:: dolfyn.io.nortek
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.nortek2 module
+------------------------
+
+.. automodule:: dolfyn.io.nortek2
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.nortek2\_defs module
+------------------------------
+
+.. automodule:: dolfyn.io.nortek2_defs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.nortek2lib module
+---------------------------
+
+.. automodule:: dolfyn.io.nortek2lib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.nortek\_defs module
+-----------------------------
+
+.. automodule:: dolfyn.io.nortek_defs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+dolfyn.io.rdi module
+--------------------
+
+.. automodule:: dolfyn.io.rdi
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: dolfyn.io
+    :members:
+    :undoc-members:
+    :show-inheritance:

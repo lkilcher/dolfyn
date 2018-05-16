@@ -1,0 +1,367 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.io.nortek2lib &#8212; DOLfYN 0.9.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dolfyn.io.nortek2lib</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Branch read_signature-cython has the attempt to do this in Cython.</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">path</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">..data</span> <span class="k">import</span> <span class="n">time</span>
+
+
+<div class="viewcode-block" id="reduce_by_average"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.reduce_by_average">[docs]</a><span class="k">def</span> <span class="nf">reduce_by_average</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ky0</span><span class="p">,</span> <span class="n">ky1</span><span class="p">):</span>
+    <span class="c1"># Average two arrays together, if they both exist.</span>
+    <span class="k">if</span> <span class="n">ky1</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ky1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ky0</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ky0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">tmp</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ky0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ky0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ky0</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span></div>
+
+
+<div class="viewcode-block" id="reduce_by_average_angle"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.reduce_by_average_angle">[docs]</a><span class="k">def</span> <span class="nf">reduce_by_average_angle</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ky0</span><span class="p">,</span> <span class="n">ky1</span><span class="p">,</span> <span class="n">degrees</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1"># Average two arrays of angles together, if they both exist.</span>
+    <span class="k">if</span> <span class="n">degrees</span><span class="p">:</span>
+        <span class="n">rad_fact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rad_fact</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">ky1</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ky0</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ky0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ky0</span><span class="p">)</span> <span class="o">*</span> <span class="n">rad_fact</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ky1</span><span class="p">)</span> <span class="o">*</span> <span class="n">rad_fact</span><span class="p">))</span> <span class="o">/</span> <span class="n">rad_fact</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ky0</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ky1</span><span class="p">)</span></div>
+
+
+<span class="c1"># This is the data-type of the index file.</span>
+<span class="c1"># This must match what is written-out by the create_index function.</span>
+<span class="n">index_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([(</span><span class="s1">&#39;ens&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;pos&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;beams_cy&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;_blank&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;day&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;hour&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;usec100&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">),</span>
+                        <span class="p">])</span>
+
+<span class="n">hdr</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span><span class="s1">&#39;&lt;BBBBhhh&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="calc_time"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.calc_time">[docs]</a><span class="k">def</span> <span class="nf">calc_time</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">usec</span><span class="p">):</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">year</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;O&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">mo</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">mi</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span>
+                <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">usec</span><span class="p">)):</span>
+        <span class="c1"># Note that month is zero-based</span>
+        <span class="n">dt</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">mo</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">mi</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">time_array</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">date2num</span><span class="p">(</span><span class="n">dt</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="create_index_slow"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.create_index_slow">[docs]</a><span class="k">def</span> <span class="nf">create_index_slow</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">N_ens</span><span class="p">):</span>
+    <span class="n">fin</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+    <span class="n">ens</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">last_ens</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">while</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="n">N_ens</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">fin</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dat</span> <span class="o">=</span> <span class="n">hdr</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">hdr</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="n">dat</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">26</span><span class="p">]:</span>
+            <span class="n">fin</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;H&#39;</span><span class="p">,</span> <span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">fin</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">yr</span><span class="p">,</span> <span class="n">mo</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;6BH&#39;</span><span class="p">,</span> <span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+            <span class="n">fin</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">beams_cy</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;H&#39;</span><span class="p">,</span> <span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">fin</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">ens</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">last_ens</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">last_ens</span> <span class="o">!=</span> <span class="n">ens</span><span class="p">:</span>
+                <span class="n">N</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;QQ4H6BH&#39;</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">dat</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                   <span class="n">config</span><span class="p">,</span> <span class="n">beams_cy</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                                   <span class="n">yr</span><span class="p">,</span> <span class="n">mo</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">u</span><span class="p">))</span>
+            <span class="n">fin</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">last_ens</span> <span class="o">=</span> <span class="n">ens</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fin</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">dat</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># if N &lt; 5:</span>
+        <span class="c1">#     print(&#39;%10d: %02X, %d, %02X, %d, %d, %d, %d\n&#39; %</span>
+        <span class="c1">#           (pos, dat[0], dat[1], dat[2], dat[4],</span>
+        <span class="c1">#            N, ens, last_ens))</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     break</span>
+    <span class="n">fin</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_index"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.get_index">[docs]</a><span class="k">def</span> <span class="nf">get_index</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">reload</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">index_file</span> <span class="o">=</span> <span class="n">infile</span> <span class="o">+</span> <span class="s1">&#39;.index&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">index_file</span><span class="p">)</span> <span class="ow">or</span> <span class="n">reload</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Indexing...&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">create_index_slow</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">index_file</span><span class="p">,</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Done.&quot;</span><span class="p">)</span>
+    <span class="c1"># else:</span>
+    <span class="c1">#     print(&quot;Using saved index file.&quot;)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">index_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">index_dtype</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="index2ens_pos"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.index2ens_pos">[docs]</a><span class="k">def</span> <span class="nf">index2ens_pos</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Condense the index to only be the first occurence of each</span>
+<span class="sd">    ensemble. Returns only the position (the ens number is the array</span>
+<span class="sd">    index).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dens</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s1">&#39;ens&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;bool&#39;</span><span class="p">)</span>
+    <span class="n">dens</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s1">&#39;ens&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">[</span><span class="s1">&#39;pos&#39;</span><span class="p">][</span><span class="n">dens</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="getbit"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.getbit">[docs]</a><span class="k">def</span> <span class="nf">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">((</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="n">n</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BitIndexer"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.BitIndexer">[docs]</a><span class="k">class</span> <span class="nc">BitIndexer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_data_is_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nbits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_is_array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="mi">8</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You must specify the end-range &quot;</span>
+                             <span class="s2">&quot;for non-ndarray input data.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_out_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+        <span class="c1"># The mask indicates how big this item is.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_is_array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">mask</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">bool</span>
+        <span class="k">if</span> <span class="n">mask</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span>
+        <span class="k">elif</span> <span class="n">mask</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span>
+        <span class="k">elif</span> <span class="n">mask</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">uint32</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">slc</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">slc</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">slc</span><span class="p">,</span> <span class="n">slc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slc</span><span class="o">.</span><span class="n">step</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Slice syntax for `getbits` does &quot;</span>
+                             <span class="s2">&quot;not support steps&quot;</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">slc</span><span class="o">.</span><span class="n">start</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">slc</span><span class="o">.</span><span class="n">stop</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nbits</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">stop</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;&gt;</span> <span class="n">start</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">mask</span>
+        <span class="n">ot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_out_type</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">ot</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="headconfig_int2dict"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.headconfig_int2dict">[docs]</a><span class="k">def</span> <span class="nf">headconfig_int2dict</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert the burst Configuration bit-mask to a dict of bools.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">press_valid</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">temp_valid</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">compass_valid</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">tilt_valid</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="c1"># bit 4 is unused</span>
+        <span class="n">vel</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="n">amp</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="n">corr</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+        <span class="n">alt</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+        <span class="n">alt_raw</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+        <span class="n">ast</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="n">echo</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span>
+        <span class="n">ahrs</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+        <span class="n">p_gd</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+        <span class="n">std</span><span class="o">=</span><span class="n">getbit</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span>
+        <span class="c1"># bit 15 is unused</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="status2data"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.status2data">[docs]</a><span class="k">def</span> <span class="nf">status2data</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="c1"># This is detailed in the 6.1.2 of the Nortek Signature</span>
+    <span class="c1"># Integrators Guide (2017)</span>
+    <span class="n">bi</span> <span class="o">=</span> <span class="n">BitIndexer</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;wakeup state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">28</span><span class="p">:</span><span class="mi">32</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;orient_up&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">25</span><span class="p">:</span><span class="mi">28</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;auto orientation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">22</span><span class="p">:</span><span class="mi">25</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;previous wakeup state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">18</span><span class="p">:</span><span class="mi">22</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;last meas low voltage skip&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;active config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;echo sounder index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;telemetry data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;boost running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;echo sounder freq bin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+    <span class="c1"># 2,3,4 unused</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;bd scaling&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># if True: cm scaling of blanking dist</span>
+    <span class="c1"># 0 unused</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="beams_cy_int2dict"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.beams_cy_int2dict">[docs]</a><span class="k">def</span> <span class="nf">beams_cy_int2dict</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert the beams/coordinate-system bytes to a dict of values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">id</span> <span class="o">==</span> <span class="mi">28</span><span class="p">:</span>  <span class="c1"># 0x1C (echosounder)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ncells</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">ncells</span><span class="o">=</span><span class="n">val</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">10</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">cy</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ENU&#39;</span><span class="p">,</span> <span class="s1">&#39;XYZ&#39;</span><span class="p">,</span> <span class="s1">&#39;BEAM&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">][</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="mi">10</span> <span class="o">&amp;</span> <span class="mi">3</span><span class="p">],</span>
+        <span class="n">nbeams</span><span class="o">=</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="mi">12</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="isuniform"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.isuniform">[docs]</a><span class="k">def</span> <span class="nf">isuniform</span><span class="p">(</span><span class="n">vec</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">vec</span> <span class="o">==</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="collapse"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.collapse">[docs]</a><span class="k">def</span> <span class="nf">collapse</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that the input vector is uniform, then collapse it to a</span>
+<span class="sd">    single value, otherwise raise a warning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;**unkown**&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">isuniform</span><span class="p">(</span><span class="n">vec</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The variable </span><span class="si">{}</span><span class="s2"> is expected to be uniform,&quot;</span>
+                      <span class="s2">&quot; but it is not.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">vec</span>
+    <span class="k">return</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="calc_config"><a class="viewcode-back" href="../../../api/dolfyn.io.html#dolfyn.io.nortek2lib.calc_config">[docs]</a><span class="k">def</span> <span class="nf">calc_config</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the configuration information (e.g., number of pings,</span>
+<span class="sd">    number of beams, struct types, etc.) from the index data.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    =======</span>
+<span class="sd">    config : dict</span>
+<span class="sd">        A dict containing the key information for initializing arrays.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">])</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">26</span><span class="p">]:</span>
+            <span class="k">continue</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">id</span>
+        <span class="n">_config</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">][</span><span class="n">inds</span><span class="p">]</span>
+        <span class="n">_beams_cy</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="s1">&#39;beams_cy&#39;</span><span class="p">][</span><span class="n">inds</span><span class="p">]</span>
+        <span class="c1"># Check that these variables are consistent</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isuniform</span><span class="p">(</span><span class="n">_config</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;config are not identical for id: 0x</span><span class="si">{:X}</span><span class="s2">.&quot;</span>
+                            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isuniform</span><span class="p">(</span><span class="n">_beams_cy</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;beams_cy are not identical for id: 0x</span><span class="si">{:X}</span><span class="s2">.&quot;</span>
+                            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+        <span class="c1"># Now that we&#39;ve confirmed they are the same:</span>
+        <span class="n">config</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">headconfig_int2dict</span><span class="p">(</span><span class="n">_config</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">config</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">beams_cy_int2dict</span><span class="p">(</span><span class="n">_beams_cy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">id</span><span class="p">))</span>
+        <span class="n">config</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="s1">&#39;_config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">config</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="s1">&#39;_beams_cy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_beams_cy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">config</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;cy&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

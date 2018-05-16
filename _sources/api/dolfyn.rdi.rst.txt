@@ -1,0 +1,22 @@
+dolfyn.rdi package
+==================
+
+Submodules
+----------
+
+dolfyn.rdi.rotate module
+------------------------
+
+.. automodule:: dolfyn.rdi.rotate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: dolfyn.rdi
+    :members:
+    :undoc-members:
+    :show-inheritance:
