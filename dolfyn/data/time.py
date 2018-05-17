@@ -52,6 +52,8 @@ def num2date(mpltime):
                 out[idx] = num2date(val)
             out.shape = mpltime.shape
             return out
+    if np.isnan(mpltime):
+        return None
     return datetime.fromordinal(int(mpltime)) + timedelta(days=mpltime % 1)
 
 
@@ -62,6 +64,8 @@ def date2num(dt):
             out[idx] = date2num(val)
         out.shape = dt.shape
         return out
+    if dt is None:
+        return np.NaN
     return (dt.toordinal() +
             (((dt.microsecond / 1e6 +
                dt.second) / 60 +

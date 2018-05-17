@@ -218,14 +218,48 @@ class Ad2cpReader(object):
             if id in [21, 24]:
                 self.read_burst(id, outdat[id], c)
             elif id in [26]:
-                warnings.warn(
-                    "Unhandled ID: 0x1A (26)\n"
-                    "    There still seems to be a discrepancy between\n"
-                    "    the '0x1A' data format, and the specification\n"
-                    "    in the System Integrator Manual.")
+                # warnings.warn(
+                #     "Unhandled ID: 0x1A (26)\n"
+                #     "    There still seems to be a discrepancy between\n"
+                #     "    the '0x1A' data format, and the specification\n"
+                #     "    in the System Integrator Manual.")
                 # Question posted at:
                 # http://www.nortek-as.com/en/knowledge-center/forum/system-integration-and-telemetry/538802891
-                self.f.seek(hdr['sz'], 1)
+                rdr = self._burst_readers[26]
+                if not hasattr(rdr, '_nsamp_index'):
+                    first_pass = True
+                    tmp_idx = rdr._nsamp_index = rdr._names.index('altraw_nsamp')  # noqa
+                    shift = rdr._nsamp_shift = defs.calcsize(
+                        defs._format(rdr._format[:tmp_idx],
+                                     rdr._N[:tmp_idx]))
+                else:
+                    first_pass = False
+                    tmp_idx = rdr._nsamp_index
+                    shift = rdr._nsamp_shift
+                tmp_idx = tmp_idx + 2  # Don't add in-place
+                self.f.seek(shift, 1)
+                # Now read the num_samples
+                sz = unpack('<I', self.f.read(4))[0]
+                self.f.seek(-shift - 4, 1)
+                if first_pass:
+                    # Fix the reader
+                    rdr._shape[tmp_idx].append(sz)
+                    rdr._N[tmp_idx] = sz
+                    rdr._struct = defs.Struct('<' + rdr.format)
+                    rdr.nbyte = defs.calcsize(rdr.format)
+                    rdr._cs_struct = defs.Struct('<' + '{}H'.format(rdr.nbyte // 2))
+                    # Initialize the array
+                    outdat[26]['altraw_samp'] = defs.nans(
+                        [rdr._N[tmp_idx],
+                         len(outdat[26]['altraw_samp'])],
+                        dtype=np.uint16)
+                else:
+                    if sz != rdr._N[tmp_idx]:
+                        raise Exception(
+                            "The number of samples in this 'Altimeter Raw' "
+                            "burst is different from prior bursts.")
+                self.read_burst(id, outdat[id], c)
+
             elif id in [22, 23, 27, 28, 29, 30, 31]:
                 warnings.warn(
                     "Unhandled ID: 0x{:02X} ({:02d})\n"
@@ -303,13 +337,18 @@ def reorg(dat):
     outdat['props']['inst_make'] = 'Nortek'
     outdat['props']['inst_model'] = cfg['model']
     outdat['props']['inst_type'] = 'ADP'
-
-    for id, tag in [(21, ''), (24, '_b5')]:
+    
+    for id, tag in [(21, ''), (24, '_b5'), (26, '_ar')]:
+        if id == 26:
+            collapse_exclude = [0]
+        else:
+            collapse_exclude = []
         if id not in dat:
             continue
         dnow = dat[id]
         cfg['burst_config' + tag] = lib.headconfig_int2dict(
-            lib.collapse(dnow['config']))
+            lib.collapse(dnow['config'], exclude=collapse_exclude,
+                         name='config'))
         outdat['mpltime' + tag] = lib.calc_time(
             dnow['year'] + 1900,
             dnow['month'],
@@ -319,7 +358,8 @@ def reorg(dat):
             dnow['second'],
             dnow['usec100'].astype('uint32') * 100)
         tmp = lib.beams_cy_int2dict(
-            lib.collapse(dnow['beam_config']), 21)
+            lib.collapse(dnow['beam_config'], exclude=collapse_exclude,
+                         name='beam_config'), 21)
         cfg['ncells' + tag] = tmp['ncells']
         cfg['coord_sys' + tag] = tmp['cy']
         cfg['nbeams' + tag] = tmp['nbeams']
@@ -329,7 +369,8 @@ def reorg(dat):
             # These ones should 'collapse'
             # (i.e., all values should be the same)
             # So we only need that one value.
-            cfg[ky + tag] = lib.collapse(dnow[ky])
+            cfg[ky + tag] = lib.collapse(dnow[ky], exclude=collapse_exclude,
+                                         name=ky)
         for ky in ['c_sound', 'temp', 'press',
                    'heading', 'pitch', 'roll',
                    'temp_press', 'batt_V',
@@ -368,9 +409,26 @@ def reorg(dat):
                 if ky + tag in outdat and not \
                    isinstance(outdat[ky + tag], db.TimeData):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
+
+    # Move 'altimeter raw' data to it's own down-sampled structure
+    if 26 in dat:
+        ard = outdat['altraw'] = db.TimeData()
+        gds = ~np.isnan(outdat['mpltime_ar'])
+        for ky in list(outdat.iter_data()):
+            if ky.endswith('_ar'):
+                if '.' in ky:
+                    grp = ky.split('.')[0]
+                    if grp not in ard:
+                        ard[grp] = db.TimeData()
+                dnow = outdat.pop(ky)
+                if isinstance(dnow, np.ndarray):
+                    dtmp = dnow[..., gds]
+                else:
+                    dtmp = dnow
+                ard[ky.rstrip('_ar')] = dtmp
     outdat.props['coord_sys'] = cfg['coord_sys']
-    dat = lib.status2data(outdat.sys.status)  # returns a dict
-    outdat.orient['orient_up'] = dat['orient_up']
+    tmp = lib.status2data(outdat.sys.status)  # returns a dict
+    outdat.orient['orient_up'] = tmp['orient_up']
     # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
     # Heding is: 0,1: Z; 4,5: X
     return outdat
