@@ -97,12 +97,49 @@ class TimeData(data):
     dimension.
     """
     _time_dim = -1
+    _subset_copy_vars = ['range', 'range_b5']
 
-    def _subset(self, indx):
+    def _subset(self, indx, raise_on_empty_array=True, copy=[]):
         if not isinstance(indx, tuple):
             indx = (Ellipsis, indx)
         return SourceDataType._subset(self, indx,
-                                      raise_on_empty_array=True)
+                                      raise_on_empty_array=raise_on_empty_array,
+                                      copy=copy + self._subset_copy_vars)
+
+    def append(self, other, array_axis=-1):
+        shapes = {}
+        for ky in self._subset_copy_vars:
+            if ky in self:
+                shapes[ky] = self[ky].shape[array_axis]
+        data.append(self, other, array_axis=array_axis)
+        for ky in self._subset_copy_vars:
+            if ky in self:
+                self[ky] = self[ky][..., :shapes[ky]]
+
+
+class MappedTime(TimeData):
+
+    def _subset(self, indx, raise_on_empty_array=True, copy=[]):
+        if not isinstance(indx, tuple):
+            indx = [Ellipsis, indx]
+        else:
+            indx = list(indx)
+        N = self.pop('_map_N')
+        parent_map = np.arange(N)[indx[-1]]
+        indx[-1] = np.in1d(self['_map'], parent_map)
+        out = TimeData._subset(self, tuple(indx),
+                               raise_on_empty_array=False, copy=copy)
+        self['_map_N'] = N
+        out['_map_N'] = len(parent_map)
+        out['_map'] -= parent_map[0]
+        return out
+
+    def append(self, other):
+        Ns = self.pop('_map_N')
+        No = other.pop('_map_N')
+        self['_map'] = np.hstack((self['_map'], other['_map'] + Ns))
+        self['_map_N'] = Ns + No
+        other['_map_N'] = No
 
 
 class FreqData(TimeData):
@@ -111,13 +148,14 @@ class FreqData(TimeData):
     last dimension, and time is the second to last dimension.
     """
     _time_dim = -2
+    _subset_copy_vars = ['omega', 'freq']
 
-    def _subset(self, indx):
+    def _subset(self, indx, raise_on_empty_array=True, copy=[]):
         if not isinstance(indx, tuple):
             indx = (Ellipsis, indx, slice(None))
         return SourceDataType._subset(self, indx,
-                                      raise_on_empty_array=True,
-                                      copy=['omega', 'freq'])
+                                      raise_on_empty_array=raise_on_empty_array,
+                                      copy=copy + self._subset_copy_vars)
 
 
 class config(data):
@@ -133,6 +171,6 @@ class config(data):
                 '  *------------\n' +
                 indent(_format_repr_config(self, level=2), ' '))
 
-    def _subset(self, indx):
+    def _subset(self, indx, **kwargs):
         # Don't subset config objects.
         return copy.deepcopy(self)
