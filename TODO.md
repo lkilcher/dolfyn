@@ -51,9 +51,6 @@ What about dropping data from averaging? Is this something we should support? Vi
 Binary Reading
 ---------------
 
-- Handle AST-block (`io.nortek2.read_signature`)?
-  - Fix indexing of down-sampled altraw structure.
-
 - Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
 
 - Fix Signature rotations.

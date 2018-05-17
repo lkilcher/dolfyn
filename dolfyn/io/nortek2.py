@@ -124,10 +124,19 @@ class Ad2cpReader(object):
     def init_data(self, ens_start, ens_stop):
         outdat = {}
         nens = int(ens_stop - ens_start)
+        n26 = ((self._index['ID'] == 26) &
+               (self._index['ens'] >= ens_start) &
+               (self._index['ens'] < ens_stop)).sum()
         for ky in self._burst_readers:
-            outdat[ky] = self._burst_readers[ky].init_data(nens)
-            outdat[ky]['ensemble'] = np.arange(ens_start,
-                                               ens_stop).astype('uint32')
+            if ky == 26:
+                n = n26
+                ens = np.zeros(n, dtype='uint32')
+            else:
+                ens = np.arange(ens_start,
+                                ens_stop).astype('uint32')
+                n = nens
+            outdat[ky] = self._burst_readers[ky].init_data(n)
+            outdat[ky]['ensemble'] = ens
         return outdat
 
     def read_hdr(self, do_cs=False):
@@ -208,6 +217,7 @@ class Ad2cpReader(object):
         print('Reading file %s ...' % self.fname)
         retval = None
         c = 0
+        c26 = 0
         self.f.seek(self._ens_pos[ens_start], 0)
         while not retval:
             try:
@@ -258,7 +268,9 @@ class Ad2cpReader(object):
                         raise Exception(
                             "The number of samples in this 'Altimeter Raw' "
                             "burst is different from prior bursts.")
-                self.read_burst(id, outdat[id], c)
+                self.read_burst(id, outdat[id], c26)
+                outdat[id]['ensemble'][c26] = c
+                c26 += 1
 
             elif id in [22, 23, 27, 28, 29, 30, 31]:
                 warnings.warn(
@@ -412,20 +424,17 @@ def reorg(dat):
 
     # Move 'altimeter raw' data to it's own down-sampled structure
     if 26 in dat:
-        ard = outdat['altraw'] = db.TimeData()
-        gds = ~np.isnan(outdat['mpltime_ar'])
-        for ky in list(outdat.iter_data()):
+        ard = outdat['altraw'] = db.MappedTime()
+        for ky in list(outdat.iter_data(include_hidden=True)):
             if ky.endswith('_ar'):
-                if '.' in ky:
-                    grp = ky.split('.')[0]
-                    if grp not in ard:
-                        ard[grp] = db.TimeData()
-                dnow = outdat.pop(ky)
-                if isinstance(dnow, np.ndarray):
-                    dtmp = dnow[..., gds]
-                else:
-                    dtmp = dnow
-                ard[ky.rstrip('_ar')] = dtmp
+                grp = ky.split('.')[0]
+                if '.' in ky and grp not in ard:
+                    ard[grp] = db.TimeData()
+                ard[ky.rstrip('_ar')] = outdat.pop(ky)
+        N = ard['_map_N'] = len(outdat['mpltime'])
+        parent_map = np.arange(N)
+        ard['_map'] = parent_map[np.in1d(outdat.sys.ensemble, ard.sys.ensemble)]
+        outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
     outdat.props['coord_sys'] = cfg['coord_sys']
     tmp = lib.status2data(outdat.sys.status)  # returns a dict
     outdat.orient['orient_up'] = tmp['orient_up']
