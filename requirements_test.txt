@@ -1,7 +1,0 @@
-numpy
-h5py
-matplotlib
-scipy
-six
--e git://github.com/lkilcher/pyDictH5.git@v0.2.0#egg=pyDictH5
-nose

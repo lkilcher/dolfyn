@@ -24,6 +24,15 @@ class BadCheckSum(Exception):
     pass
 
 
+def _format(form, N):
+    out = ''
+    for f, n in zip(form, N):
+        if n > 1:
+            out += '{}'.format(n)
+        out += f
+    return out
+
+
 class DataDef(object):
 
     def __init__(self, list_of_defs):
@@ -63,12 +72,7 @@ class DataDef(object):
 
     @property
     def format(self, ):
-        out = ''
-        for f, n in zip(self._format, self._N):
-            if n >= 1:
-                out += '{}'.format(n)
-            out += f
-        return out
+        return _format(self._format, self._N)
 
     def read(self, fobj, cs=None):
         bytes = fobj.read(self.nbyte)

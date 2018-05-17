@@ -54,11 +54,15 @@ index_dtype = np.dtype([('ens', np.uint64),
 hdr = struct.Struct('<BBBBhhh')
 
 
-def calc_time(year, month, day, hour, minute, second, usec):
+def calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
     dt = np.empty(year.shape, dtype='O')
     for idx, (y, mo, d, h, mi, s, u) in enumerate(
             zip(year, month, day,
                 hour, minute, second, usec)):
+        if (zero_is_bad and mo == 0 and d == 0 and
+                h == 0 and mi == 0 and
+                s == 0 and u == 0):
+            continue
         # Note that month is zero-based
         dt[idx] = time.datetime(y, mo + 1, d, h, mi, s, u)
     return time.time_array(time.date2num(dt))
@@ -238,21 +242,26 @@ def beams_cy_int2dict(val, id):
     )
 
 
-def isuniform(vec):
+def isuniform(vec, exclude=[]):
+    if len(exclude):
+        return len(set(np.unique(vec)) - set(exclude)) <= 1
     return np.all(vec == vec[0])
 
 
-def collapse(vec, name=None):
+def collapse(vec, name=None, exclude=[]):
     """Check that the input vector is uniform, then collapse it to a
     single value, otherwise raise a warning.
     """
     if name is None:
         name = '**unkown**'
-    if not isuniform(vec):
+    if isuniform(vec):
+        return vec[0]
+    elif isuniform(vec, exclude=exclude):
+        return list(set(np.unique(vec)) - set(exclude))[0]
+    else:
         warnings.warn("The variable {} is expected to be uniform,"
                       " but it is not.".format(name))
         return vec
-    return vec[0]
 
 
 def calc_config(index):

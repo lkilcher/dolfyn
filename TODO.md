@@ -1,8 +1,6 @@
 Documentation
 ====
 
-Check spelling of 'principal' vs. 'principle'
-
 Add some examples to the plotting tools page
 
 Add a units section.
@@ -54,8 +52,11 @@ Binary Reading
 ---------------
 
 - Handle AST-block (`io.nortek2.read_signature`)?
+  - Fix indexing of down-sampled altraw structure.
 
 - Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
+
+- Fix Signature rotations.
 
 Default to not including test folder (or just data?) in a release.
 
