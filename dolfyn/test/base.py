@@ -7,6 +7,11 @@ pb.debug_level = 10
 atexit.register(pkg_resources.cleanup_resources)
 
 
+def rungen(gen):
+    for g in gen:
+        pass
+
+
 class ResourceFilename(object):
 
     def __init__(self, package_or_requirement):

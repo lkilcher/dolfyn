@@ -190,5 +190,11 @@ def test_subset(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in test_read():
-        func(dat1, dat2, msg)
+    from base import rungen
+
+    rungen(test_read())
+    rungen(test_motion())
+    test_heading()
+    test_turbulence()
+    test_clean()
+    rungen(test_subset())

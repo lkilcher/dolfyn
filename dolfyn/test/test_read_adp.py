@@ -65,5 +65,5 @@ def read_test(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in rotate_inst2beam_test():
+    for func, dat1, dat2, msg in read_test():
         func(dat1, dat2, msg)

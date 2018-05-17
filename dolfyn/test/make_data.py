@@ -10,12 +10,7 @@ import test_adv as advt
 import test_rotate_adv as advro
 import test_read_adp as adpr
 import test_rotate_adp as adpro
-
-
-def rungen(gen):
-    for g in gen:
-        pass
-
+from base import rungen
 
 # rungen(advt.read_test(make_data=True))
 # rungen(advt.motion_test(make_data=True))
@@ -28,7 +23,7 @@ def rungen(gen):
 # rungen(advro.test_rotate_earth2principal(make_data=True))
 
 
-# rungen(adpr.test_read(make_data=True))
+# rungen(adpr.read_test(make_data=True))
 # rungen(adpro.test_rotate_beam2inst(make_data=True))
 # rungen(adpro.test_rotate_inst2earth(make_data=True))
 # rungen(adpro.test_rotate_earth2inst(make_data=True))
