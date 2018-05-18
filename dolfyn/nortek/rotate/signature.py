@@ -56,34 +56,15 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     _check_declination(advo)
 
-    odata = advo['orient']
-    if hasattr(odata, 'orientmat'):
-        # Take the transpose of the orientation to get the inst->earth rotation
-        # matrix.
-        rmat = np.rollaxis(odata['orientmat'], 1)
+    od = advo['orient']
+    if hasattr(od, 'orientmat'):
+        rmat = od['orientmat']
 
     else:
-        rr = odata['roll'].copy()
-        pp = odata['pitch'].copy()
-        hh = odata['heading'].copy()
-        if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
-            # The end of the data may not have valid orientations
-            lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
-            rr[lastgd:] = rr[lastgd]
-            pp[lastgd:] = pp[lastgd]
-            hh[lastgd:] = hh[lastgd]
-        if advo.make_model.lower().startswith('nortek vector'):
-            # NOTE: For Nortek Vector ADVs: 'down' configuration means the
-            #       head was pointing UP!  Check the Nortek coordinate
-            #       transform matlab script for more info.  The 'up'
-            #       orientation corresponds to the communication cable
-            #       being up.  This is ridiculous, but apparently a
-            #       reality.
-            rr[odata['orientation_down']] += 180
-
-        # Take the transpose of the orientation to get the inst->earth rotation
-        # matrix.
-        rmat = np.rollaxis(euler2orient(pp, rr, hh), 1)
+        rmat = euler2orient(od['pitch'], od['roll'], od['heading'])
+    # Take the transpose of the orientation to get the inst->earth rotation
+    # matrix.
+    rmat = np.rollaxis(rmat, 1)
 
     _dcheck = _check_rotmat_det(rmat)
     if not _dcheck.all():
@@ -92,17 +73,16 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                       " indices: {}."
                       .format(np.nonzero(~_dcheck)[0]),
                       BadDeterminantWarning)
-    if advo.make_model.startswith('nortek signature'):
-        rmatt = np.zeros((5, 5, rmat.shape[-1]), dtype=np.float64)
-        rmatt[:3, :3] = rmat
-        # This assumes the extra rows are all w. Therefore, we copy
-        # the orientation matrix into those dims...
-        # !!!FIXTHIS: Is this correct?
-        rmatt[3, :2] = rmat[2, :2]
-        rmatt[4, :2] = rmat[2, :2]
-        rmatt[3, 3] = rmat[2, 2]
-        rmatt[4, 4] = rmat[2, 2]
-        rmat = rmatt
+    rmatt = np.zeros((5, 5, rmat.shape[-1]), dtype=np.float64)
+    rmatt[:3, :3] = rmat
+    # This assumes the extra rows are all w. Therefore, we copy
+    # the orientation matrix into those dims...
+    # !!!FIXTHIS: Is this correct?
+    rmatt[3, :2] = rmat[2, :2]
+    rmatt[4, :2] = rmat[2, :2]
+    rmatt[3, 3] = rmat[2, 2]
+    rmatt[4, 4] = rmat[2, 2]
+    rmat = rmatt
 
     for nm in rotate_vars:
         n = advo[nm].shape[0]
