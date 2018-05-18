@@ -129,26 +129,15 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                       " indices: {}."
                       .format(np.nonzero(~_dcheck)[0]),
                       BadDeterminantWarning)
-    if advo.make_model.startswith('nortek signature'):
-        rmatt = np.zeros((5, 5, rmat.shape[-1]), dtype=np.float64)
-        rmatt[:3, :3] = rmat
-        # This assumes the extra rows are all w. Therefore, we copy
-        # the orientation matrix into those dims...
-        # !!!FIXTHIS: Is this correct?
-        rmatt[3, :2] = rmat[2, :2]
-        rmatt[4, :2] = rmat[2, :2]
-        rmatt[3, 3] = rmat[2, 2]
-        rmatt[4, 4] = rmat[2, 2]
-        rmat = rmatt
 
     for nm in rotate_vars:
         n = advo[nm].shape[0]
-        if n < 3 or n > 5:
+        if n != 3:
             # size 5 vectors are the Signature.
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
         # subsample the orientation matrix depending on the size of the object.
-        advo[nm] = np.einsum(sumstr, rmat[:n, :n], advo[nm])
+        advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
     advo.props['coord_sys'] = cs_new[0]
 
