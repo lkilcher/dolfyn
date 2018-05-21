@@ -349,7 +349,7 @@ def reorg(dat):
     outdat['props']['inst_make'] = 'Nortek'
     outdat['props']['inst_model'] = cfg['model']
     outdat['props']['inst_type'] = 'ADP'
-    
+
     for id, tag in [(21, ''), (24, '_b5'), (26, '_ar')]:
         if id == 26:
             collapse_exclude = [0]
@@ -435,7 +435,9 @@ def reorg(dat):
         parent_map = np.arange(N)
         ard['_map'] = parent_map[np.in1d(outdat.sys.ensemble, ard.sys.ensemble)]
         outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
-    outdat.props['coord_sys'] = cfg['coord_sys']
+    outdat.props['coord_sys'] = {'XYZ': 'inst',
+                                 'ENU': 'earth',
+                                 'BEAM': 'beam'}[cfg['coord_sys'].upper()]
     tmp = lib.status2data(outdat.sys.status)  # returns a dict
     outdat.orient['orient_up'] = tmp['orient_up']
     # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
@@ -478,7 +480,7 @@ def reduce(data):
                             data['config']['cell_size_b5'] +
                             data['config']['blanking_b5'])
 
-    if 'Accel' in data['orient']:
+    if 'orientmat' in data['orient']:
         data['props']['has imu'] = True
     else:
         data['props']['has imu'] = False

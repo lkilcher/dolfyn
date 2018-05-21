@@ -7,9 +7,9 @@ data_equiv = tr.data_equiv
 
 def test_rotate_beam2inst(make_data=False):
 
-    td = tr.dat_rdi.rotate('inst')
-    td_sig = tr.dat_sig.rotate('inst')
-    td_sigi = tr.dat_sigi.rotate('inst')
+    td = tr.dat_rdi.rotate2('inst')
+    td_sig = tr.dat_sig.rotate2('inst')
+    td_sigi = tr.dat_sigi.rotate2('inst')
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
@@ -36,7 +36,7 @@ def test_rotate_inst2beam(make_data=False):
     # td = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
     # td.rotate('beam', inplace=True)
     td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
-    td_awac.rotate('beam', inplace=True)
+    td_awac.rotate2('beam', inplace=True)
 
     if make_data:
         td_awac.to_hdf5(rfnm('data/AWAC_test01_inst2beam.h5'))
@@ -54,11 +54,11 @@ def test_rotate_inst2beam(make_data=False):
 
 def test_rotate_earth2inst(make_data=False):
     td = (load(rfnm('data/RDI_test01_rotate_inst2earth.h5'))
-          .rotate('inst', inplace=True))
+          .rotate2('inst', inplace=True))
     # tdwr2 = load(rfnm('data/winriver02_rotate_ship2earth.h5'))
-    # tdwr2.rotate('inst', inplace=True)
+    # tdwr2.rotate2('inst', inplace=True)
     # This AWAC is in earth coords.
-    td_awac = tr.dat_awac.rotate('inst')
+    td_awac = tr.dat_awac.rotate2('inst')
 
     if make_data:
         td_awac.to_hdf5(rfnm('data/AWAC_test01_earth2inst.h5'))
@@ -77,14 +77,14 @@ def test_rotate_earth2inst(make_data=False):
 
 def test_rotate_inst2earth(make_data=False):
 
-    td = tr.dat_rdi_i.rotate('earth')
-    tdwr2 = tr.dat_wr2.rotate('earth')
+    td = tr.dat_rdi_i.rotate2('earth')
+    tdwr2 = tr.dat_wr2.rotate2('earth')
     td_sig = load(rfnm('data/BenchFile01_rotate_beam2inst.h5'))
-    td_sig.rotate('earth', inplace=True)
+    td_sig.rotate2('earth', inplace=True)
     td_sigi = load(rfnm('data/Sig1000_IMU_rotate_beam2inst.h5'))
-    td_sigi.rotate('earth', inplace=True)
+    td_sigi.rotate2('earth', inplace=True)
     td_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
-    td_awac.rotate('earth', inplace=True)
+    td_awac.rotate2('earth', inplace=True)
 
     if make_data:
         td.to_hdf5(rfnm('data/RDI_test01_rotate_inst2earth.h5'))

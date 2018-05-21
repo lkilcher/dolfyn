@@ -3,7 +3,7 @@ from .base import np, ma, TimeData, FreqData
 from .binned import TimeBinner
 import warnings
 from .time import num2date
-from ..rotate import rotate
+from ..rotate import rotate2
 
 
 class Velocity(TimeData):
@@ -54,7 +54,7 @@ class Velocity(TimeData):
         """
         return np.angle(self.U)
 
-    def rotate(self, out_frame='earth', inplace=False):
+    def rotate2(self, out_frame='earth', inplace=False):
         """Rotate the data object into a new coordinate system.
 
         Parameters
@@ -73,7 +73,7 @@ class Velocity(TimeData):
           The rotated data object. This is `self` if inplace is True.
 
         """
-        return rotate(self, out_frame=out_frame, inplace=inplace)
+        return rotate2(self, out_frame=out_frame, inplace=inplace)
 
     def calc_principal_angle(self, bin=None):
         """
