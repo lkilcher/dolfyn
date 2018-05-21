@@ -1,5 +1,5 @@
 from dolfyn.test import test_adv as tr
-from dolfyn.rotate import rotate
+from dolfyn.rotate import rotate2 as rotate
 from dolfyn.io.hdf5 import load
 
 rfnm = tr.rfnm

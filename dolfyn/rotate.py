@@ -17,8 +17,8 @@ rot_module_dict = {
 }
 
 
-def rotate(obj, out_frame='earth', inplace=False):
-    """Rotate a data object into a new coordinate system.
+def rotate2(obj, out_frame='earth', inplace=False):
+    """Rotate a data object to ('rotate-2') a new coordinate system.
 
     Parameters
     ----------
@@ -77,6 +77,7 @@ def rotate(obj, out_frame='earth', inplace=False):
         reverse = True
 
     while obj.props['coord_sys'].lower() != out_frame.lower():
+        csin = obj['props']['coord_sys']
         inow = rc.index(csin)
         if reverse:
             func = getattr(rmod, rc[inow - 1] + '2' + rc[inow])
