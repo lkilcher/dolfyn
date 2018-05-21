@@ -1,8 +1,10 @@
 from .vector import earth2principal
 from dolfyn.rdi.rotate import beam2inst
-from .base import _check_declination, euler2orient, _check_rotmat_det
+from .base import _check_declination, euler2orient, _check_rotmat_det, \
+    BadDeterminantWarning
 import numpy as np
 import warnings
+from numpy.linalg import inv
 
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
@@ -58,7 +60,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     od = advo['orient']
     if hasattr(od, 'orientmat'):
-        rmat = od['orientmat']
+        rmat = od['orientmat'].copy()
 
     else:
         rmat = euler2orient(od['pitch'], od['roll'], od['heading'])
@@ -73,25 +75,52 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                       " indices: {}."
                       .format(np.nonzero(~_dcheck)[0]),
                       BadDeterminantWarning)
-    rmatt = np.zeros((5, 5, rmat.shape[-1]), dtype=np.float64)
-    rmatt[:3, :3] = rmat
-    # This assumes the extra rows are all w. Therefore, we copy
-    # the orientation matrix into those dims...
-    # !!!FIXTHIS: Is this correct?
-    rmatt[3, :2] = rmat[2, :2]
-    rmatt[4, :2] = rmat[2, :2]
-    rmatt[3, 3] = rmat[2, 2]
-    rmatt[4, 4] = rmat[2, 2]
-    rmat = rmatt
+
+    # The dictionary of rotation matrices for different sized arrays.
+    rmd = {3: rmat, }
+
+    # The 4-row rotation matrix assume that rows 0,1 are u,v,
+    # and 2,3 are independent estimates of w.
+    # Confirmed this rotation matrix with Nortek:
+    # https://nortek.zendesk.com/attachments/token/g3Xal028bJkYclRph8hRdlIR2/?name=signatureAD2CP_beam2xyz_enu.m
+    tmp = rmd[4] = np.zeros((4, 4, rmat.shape[-1]), dtype=np.float64)
+    tmp[:3, :3] = rmat
+    # Copy row 2 to 3
+    tmp[3, :2] = rmat[2, :2]
+    tmp[3, 3] = rmat[2, 2]
+    # Extend rows 0,1
+    tmp[0, 2:] = rmat[0, 2] / 2
+    tmp[1, 2:] = rmat[1, 2] / 2
+
+    # # This gets into tricky territory, because Nortek handles the
+    # # 5th beam separately. Leave it out for now?
+    # # The 5-row rotation matrix assume that rows 0,1 are u,v,
+    # # and 2,3,4 are independent estimates of w.
+    # tmp = rmd[5] = np.zeros((5, 5, rmat.shape[-1]), dtype=np.float64)
+    # tmp[:3, :3] = rmat
+    # # Copy row 2 to 3
+    # tmp[3, :2] = rmat[2, :2]
+    # tmp[3, 3] = rmat[2, 2]
+    # # Copy row 2 to 4
+    # tmp[4, :2] = rmat[2, :2]
+    # tmp[4, 4] = rmat[2, 2]
+    # # Extend rows 0,1
+    # tmp[0, 2:] = rmat[0, 2] / 3
+    # tmp[1, 2:] = rmat[1, 2] / 3
+
+    if reverse:
+        # 3-element inverse handled by sumstr definition (transpose)
+        rmd[4] = np.moveaxis(inv(np.moveaxis(rmd[4], -1, 0)), 0, -1)
 
     for nm in rotate_vars:
         n = advo[nm].shape[0]
-        if n < 3 or n > 5:
-            # size 5 vectors are the Signature.
+        if n == 3:
+            advo[nm] = np.einsum(sumstr, rmd[3], advo[nm])
+        elif n == 4:
+            advo[nm] = np.einsum('ijk,j...k->i...k', rmd[4], advo[nm])
+        else:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
-        # subsample the orientation matrix depending on the size of the object.
-        advo[nm] = np.einsum(sumstr, rmat[:n, :n], advo[nm])
 
     advo.props['coord_sys'] = cs_new[0]
 
