@@ -78,6 +78,8 @@ def rotate2(obj, out_frame='earth', inplace=False):
 
     while obj.props['coord_sys'].lower() != out_frame.lower():
         csin = obj['props']['coord_sys']
+        if csin == 'ship':
+            csin = 'inst'
         inow = rc.index(csin)
         if reverse:
             func = getattr(rmod, rc[inow - 1] + '2' + rc[inow])
