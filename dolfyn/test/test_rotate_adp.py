@@ -59,18 +59,26 @@ def test_rotate_earth2inst(make_data=False):
     # tdwr2.rotate2('inst', inplace=True)
     # This AWAC is in earth coords.
     td_awac = tr.dat_awac.rotate2('inst')
+    td_sig = load(rfnm('data/BenchFile01_rotate_inst2earth.h5'))
+    td_sig.rotate2('inst', inplace=True)
+    td_sigi = load(rfnm('data/Sig1000_IMU_rotate_inst2earth.h5'))
+    td_sigi.rotate2('inst', inplace=True)
 
     if make_data:
         td_awac.to_hdf5(rfnm('data/AWAC_test01_earth2inst.h5'))
         return
 
     cd_awac = load(rfnm('data/AWAC_test01_earth2inst.h5'))
+    cd_sig = load(rfnm('data/BenchFile01_rotate_beam2inst.h5'))
+    cd_sigi = load(rfnm('data/Sig1000_IMU_rotate_beam2inst.h5'))
 
     msg = "adp.rotate.inst2earth gives unexpected REVERSE results for {}"
     for t, c, msg in (
             (td, tr.dat_rdi_i, msg.format('RDI_test01')),
             #(tdwr2, dat_wr2, msg.format('winriver02')),
             (td_awac, cd_awac, msg.format('AWAC_test01')),
+            (td_sig, cd_sig, msg.format('BenchFile01')),
+            (td_sigi, cd_sigi, msg.format('Sig1000_IMU')),
     ):
         yield data_equiv, t, c, msg
 
