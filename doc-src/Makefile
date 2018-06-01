@@ -47,7 +47,7 @@ help:
 
 
 api:
-	$(SPHINXBUILDAPI) -f -T -H 'DOLfYN API' -o source/api ../dolfyn/ ../dolfyn/meta ../dolfyn/plot ../dolfyn/test ../dolfyn/buoy ../dolfyn/*_legacy.py ../dolfyn/*/*_legacy.py 
+	$(SPHINXBUILDAPI) -f -T -H 'DOLfYN API' -o source/api ../dolfyn/ ../dolfyn/meta ../dolfyn/plot ../dolfyn/test ../dolfyn/*_legacy.py ../dolfyn/*/*_legacy.py 
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)
