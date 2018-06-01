@@ -25,6 +25,8 @@ Document changed location of tests.
 General Test Updates
 -------
 
+Add `earth2principal` rotation tests for ADVs?
+
 Add check for `coord_sys_principal_ref` in `earth2principal` fn's.
 
 Add tests for ADP:

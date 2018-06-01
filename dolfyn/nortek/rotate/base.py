@@ -88,7 +88,9 @@ def orient2euler(advo):
 def _check_declination(advo):
     odata = advo['orient']
     if 'declination' not in advo.props:
-        if 'orientmat' in odata:
+        if 'orientmat' in odata and \
+           advo.make_model.lower().startswith('nortek vector'):
+            # Vector's don't have p,r,h when they have an orientmat.
             p, r, h = orient2euler(odata['orientmat'])
             odata['pitch'] = p
             odata['roll'] = r
