@@ -1,45 +1,37 @@
-import dolfyn.adp.api as apm
+from dolfyn.main import read_example as read
 try:
-    from .base import ResourceFilename
+    from . import base as tb
 except (ValueError, ImportError):
-    from base import ResourceFilename
-from dolfyn.io.hdf5 import load
-import pyDictH5.base as pdh5_base
+    import base as tb
 
-rfnm = ResourceFilename('dolfyn.test')
-exdt = ResourceFilename('dolfyn')
+load = tb.load_tdata
+save = tb.save_tdata
 
-pdh5_base.debug_level = 1
-
-dat_rdi = load(rfnm('data/RDI_test01.h5'))
-dat_rdi_i = load(rfnm('data/RDI_test01_rotate_beam2inst.h5'))
-dat_awac = load(rfnm('data/AWAC_test01.h5'))
-dat_sig = load(rfnm('data/BenchFile01.h5'))
-dat_sigi = load(rfnm('data/Sig1000_IMU.h5'))
-dat_wr1 = load(rfnm('data/winriver01.h5'))
-dat_wr2 = load(rfnm('data/winriver02.h5'))
-
-
-def data_equiv(dat1, dat2, message=''):
-    assert dat1 == dat2, message
+dat_rdi = load('RDI_test01.h5')
+dat_rdi_i = load('RDI_test01_rotate_beam2inst.h5')
+dat_awac = load('AWAC_test01.h5')
+dat_sig = load('BenchFile01.h5')
+dat_sigi = load('Sig1000_IMU.h5')
+dat_wr1 = load('winriver01.h5')
+dat_wr2 = load('winriver02.h5')
 
 
 def read_test(make_data=False):
 
-    td_rdi = apm.read(exdt('example_data/RDI_test01.000'))
-    td_sig = apm.read(exdt('example_data/BenchFile01.ad2cp'))
-    td_sigi = apm.read(exdt('example_data/Sig1000_IMU.ad2cp'))
-    td_awac = apm.read(exdt('example_data/AWAC_test01.wpr'))
-    td_wr1 = apm.read(exdt('example_data/winriver01.PD0'))
-    td_wr2 = apm.read(exdt('example_data/winriver02.PD0'))
+    td_rdi = read('RDI_test01.000')
+    td_sig = read('BenchFile01.ad2cp')
+    td_sigi = read('Sig1000_IMU.ad2cp')
+    td_awac = read('AWAC_test01.wpr')
+    td_wr1 = read('winriver01.PD0')
+    td_wr2 = read('winriver02.PD0')
 
     if make_data:
-        td_rdi.to_hdf5(rfnm('data/RDI_test01.h5'))
-        td_sig.to_hdf5(rfnm('data/BenchFile01.h5'))
-        td_sigi.to_hdf5(rfnm('data/Sig1000_IMU.h5'))
-        td_awac.to_hdf5(rfnm('data/AWAC_test01.h5'))
-        td_wr1.to_hdf5(rfnm('data/winriver01.h5'))
-        td_wr2.to_hdf5(rfnm('data/winriver02.h5'))
+        save(td_rdi, 'RDI_test01.h5')
+        save(td_sig, 'BenchFile01.h5')
+        save(td_sigi, 'Sig1000_IMU.h5')
+        save(td_awac, 'AWAC_test01.h5')
+        save(td_wr1, 'winriver01.h5')
+        save(td_wr2, 'winriver02.h5')
         return
 
     def msg(infile):
@@ -60,7 +52,7 @@ def read_test(make_data=False):
             (td_wr2, dat_wr2,
              msg('winriver02.PD0')),
     ]:
-        yield data_equiv, dat1, dat2, msg
+        yield tb.data_equiv, dat1, dat2, msg
 
 
 if __name__ == '__main__':

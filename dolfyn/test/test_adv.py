@@ -1,22 +1,18 @@
-import dolfyn.adv.api as avm
 import numpy as np
+import dolfyn.adv.api as avm
+from dolfyn.main import read_example as read
 try:
-    from .base import ResourceFilename
+    from . import base as tb
 except (ValueError, ImportError):
-    from base import ResourceFilename
-import pyDictH5.base as pdh5_base
+    import base as tb
 
-load = avm.load
+load = tb.load_tdata
+save = tb.save_tdata
 
-rfnm = ResourceFilename('dolfyn.test')
-exdt = ResourceFilename('dolfyn')
-
-pdh5_base.debug_level = 1
-
-dat = load(rfnm('data/vector_data01.h5'))
-dat_imu = load(rfnm('data/vector_data_imu01.h5'))
-dat_imu_json = load(rfnm('data/vector_data_imu01-json.h5'))
-dat_burst = load(rfnm('data/burst_mode01.h5'))
+dat = load('vector_data01.h5')
+dat_imu = load('vector_data_imu01.h5')
+dat_imu_json = load('vector_data_imu01-json.h5')
+dat_burst = load('burst_mode01.h5')
 
 
 def data_equiv(dat1, dat2, message=''):
@@ -25,10 +21,6 @@ def data_equiv(dat1, dat2, message=''):
         pa2 = dat2['props'].pop('principal_angle')
         assert np.abs(pa1 - pa2) < 1e-4
     assert dat1 == dat2, message
-
-
-def assert_close(dat1, dat2, message='', *args):
-    assert np.allclose(dat1, dat2, *args), message
 
 
 def check_except(fn, args, errors=Exception, message=''):
@@ -42,25 +34,25 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def test_read(make_data=False):
 
-    td = avm.read(exdt('example_data/vector_data01.VEC'), nens=100)
-    tdm = avm.read(exdt('example_data/vector_data_imu01.VEC'),
-                   userdata=False,
-                   nens=100)
-    tdb = avm.read(exdt('example_data/burst_mode01.VEC'),
-                   nens=100)
-    tdm2 = avm.read(exdt('example_data/vector_data_imu01.VEC'),
-                    userdata=exdt('example_data/vector_data_imu01.userdata.json'),
-                    nens=100)
+    td = read('vector_data01.VEC', nens=100)
+    tdm = read('vector_data_imu01.VEC',
+               userdata=False,
+               nens=100)
+    tdb = read('burst_mode01.VEC',
+               nens=100)
+    tdm2 = read('vector_data_imu01.VEC',
+                userdata=tb.exdt('vector_data_imu01.userdata.json'),
+                nens=100)
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
     tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01.h5'))
-        tdm.to_hdf5(rfnm('data/vector_data_imu01.h5'))
-        tdb.to_hdf5(rfnm('data/burst_mode01.h5'))
-        tdm2.to_hdf5(rfnm('data/vector_data_imu01-json.h5'))
+        save(td, 'vector_data01.h5')
+        save(tdm, 'vector_data_imu01.h5')
+        save(tdb, 'burst_mode01.h5')
+        save(tdm2, 'vector_data_imu01-json.h5')
         return
 
     msg_form = "The output of read('{}.VEC') does not match '{}.h5'."
@@ -93,22 +85,22 @@ def test_motion(make_data=False):
     avm.motion.correct_motion(tdmj)
 
     if make_data:
-        tdm.to_hdf5(rfnm('data/vector_data_imu01_mc.h5'))
-        tdm10.to_hdf5(rfnm('data/vector_data_imu01_mcDeclin10.h5'))
-        tdmj.to_hdf5(rfnm('data/vector_data_imu01-json_mc.h5'))
+        save(tdm, 'vector_data_imu01_mc.h5')
+        save(tdm10, 'vector_data_imu01_mcDeclin10.h5')
+        save(tdmj, 'vector_data_imu01-json_mc.h5')
         return
 
     msg_form = "Motion correction {}does not match expectations."
 
     for dat1, dat2, msg in [
             (tdm,
-             load(rfnm('data/vector_data_imu01_mc.h5')),
+             load('vector_data_imu01_mc.h5'),
              ''),
             (tdm10,
-             load(rfnm('data/vector_data_imu01_mcDeclin10.h5')),
+             load('vector_data_imu01_mcDeclin10.h5'),
              'with declination=10 '),
             (tdmj,
-             load(rfnm('data/vector_data_imu01-json_mc.h5')),
+             load('vector_data_imu01-json_mc.h5'),
              'with reading userdata.json '),
     ]:
         yield data_equiv, dat1, dat2, msg_form.format(msg)
@@ -133,10 +125,10 @@ def test_heading(make_data=False):
     od['heading'] = head
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
+        save(td, 'vector_data_imu01_head_pitch_roll.h5')
         return
 
-    cd = load(rfnm('data/vector_data_imu01_head_pitch_roll.h5'))
+    cd = load('vector_data_imu01_head_pitch_roll.h5')
 
     assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
 
@@ -147,10 +139,10 @@ def test_turbulence(make_data=False):
     td = bnr(tmp)
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01_bin.h5'))
+        save(td, 'vector_data01_bin.h5')
         return
 
-    cd = load(rfnm('data/vector_data01_bin.h5'))
+    cd = load('vector_data01_bin.h5')
 
     assert cd == td, "TurbBinner gives unexpected results!"
 
@@ -160,10 +152,10 @@ def test_clean(make_data=False):
     avm.clean.GN2002(td.u, 20)
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01_uclean.h5'))
+        save(td, 'vector_data01_uclean.h5')
         return
 
-    cd = load(rfnm('data/vector_data01_uclean.h5'))
+    cd = load('vector_data01_uclean.h5')
 
     assert cd == td, "adv.clean.GN2002 gives unexpected results!"
 
@@ -172,10 +164,10 @@ def test_subset(make_data=False):
     td = dat.copy().subset[10:20]
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01_subset.h5'))
+        save(td, 'vector_data01_subset.h5')
         return
 
-    cd = load(rfnm('data/vector_data01_subset.h5'))
+    cd = load('vector_data01_subset.h5')
 
     # First check that subsetting works correctly
     yield data_equiv, cd, td, "ADV data object `subset` method gives unexpected results."

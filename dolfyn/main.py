@@ -3,7 +3,7 @@ from .io.api import read
 from .io.hdf5 import load
 
 
-def read_example(name):
+def read_example(name, **kwargs):
     """Read an example data file.
 
     Parameters
@@ -28,4 +28,4 @@ def read_example(name):
     filename = pkg_resources.resource_filename(
         'dolfyn',
         'example_data/' + name)
-    return read(filename)
+    return read(filename, **kwargs)

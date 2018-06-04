@@ -1,8 +1,7 @@
 from dolfyn.test import test_adv as tr
 from dolfyn.rotate import rotate2 as rotate
-from dolfyn.io.hdf5 import load
+from .base import load_tdata as load, save_tdata as save
 
-rfnm = tr.rfnm
 data_equiv = tr.data_equiv
 
 
@@ -13,12 +12,12 @@ def test_rotate_inst2earth(make_data=False):
     rotate(tdm, 'earth', inplace=True)
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01_rotate_inst2earth.h5'))
-        tdm.to_hdf5(rfnm('data/vector_data_imu01_rotate_inst2earth.h5'))
+        td.to_hdf5('vector_data01_rotate_inst2earth.h5')
+        tdm.to_hdf5('vector_data_imu01_rotate_inst2earth.h5')
         return
 
-    cd = load(rfnm('data/vector_data01_rotate_inst2earth.h5'))
-    cdm = load(rfnm('data/vector_data_imu01_rotate_inst2earth.h5'))
+    cd = load('vector_data01_rotate_inst2earth.h5')
+    cdm = load('vector_data_imu01_rotate_inst2earth.h5')
 
     msg = "adv.rotate.inst2earth gives unexpected results for {}"
     for t, c, msg in (
@@ -29,9 +28,9 @@ def test_rotate_inst2earth(make_data=False):
 
 
 def test_rotate_earth2inst(make_data=False):
-    td = load(rfnm('data/vector_data01_rotate_inst2earth.h5'))
+    td = load('vector_data01_rotate_inst2earth.h5')
     rotate(td, 'inst', inplace=True)
-    tdm = load(rfnm('data/vector_data_imu01_rotate_inst2earth.h5'))
+    tdm = load('vector_data_imu01_rotate_inst2earth.h5')
     rotate(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy()
@@ -56,12 +55,12 @@ def test_rotate_inst2beam(make_data=False):
     rotate(tdm, 'beam', inplace=True)
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01_rotate_inst2beam.h5'))
-        tdm.to_hdf5(rfnm('data/vector_data_imu01_rotate_inst2beam.h5'))
+        save(td, 'vector_data01_rotate_inst2beam.h5')
+        save(tdm, 'vector_data_imu01_rotate_inst2beam.h5')
         return
 
-    cd = load(rfnm('data/vector_data01_rotate_inst2beam.h5'))
-    cdm = load(rfnm('data/vector_data_imu01_rotate_inst2beam.h5'))
+    cd = load('vector_data01_rotate_inst2beam.h5')
+    cdm = load('vector_data_imu01_rotate_inst2beam.h5')
 
     msg = "adv.rotate.beam2inst gives unexpected REVERSE results for {}"
     for t, c, msg in (
@@ -72,9 +71,9 @@ def test_rotate_inst2beam(make_data=False):
 
 
 def test_rotate_beam2inst(make_data=False):
-    td = load(rfnm('data/vector_data01_rotate_inst2beam.h5'))
+    td = load('vector_data01_rotate_inst2beam.h5')
     rotate(td, 'inst', inplace=True)
-    tdm = load(rfnm('data/vector_data_imu01_rotate_inst2beam.h5'))
+    tdm = load('vector_data_imu01_rotate_inst2beam.h5')
     rotate(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy()
@@ -89,18 +88,18 @@ def test_rotate_beam2inst(make_data=False):
 
 
 def test_rotate_earth2principal(make_data=False):
-    td = load(rfnm('data/vector_data01_rotate_inst2earth.h5'))
+    td = load('vector_data01_rotate_inst2earth.h5')
     rotate(td, 'principal', inplace=True)
-    tdm = load(rfnm('data/vector_data_imu01_rotate_inst2earth.h5'))
+    tdm = load('vector_data_imu01_rotate_inst2earth.h5')
     rotate(tdm, 'principal', inplace=True)
 
     if make_data:
-        td.to_hdf5(rfnm('data/vector_data01_rotate_earth2principal.h5'))
-        tdm.to_hdf5(rfnm('data/vector_data_imu01_rotate_earth2principal.h5'))
+        save(td, 'vector_data01_rotate_earth2principal.h5')
+        save(tdm, 'vector_data_imu01_rotate_earth2principal.h5')
         return
 
-    cd = load(rfnm('data/vector_data01_rotate_earth2principal.h5'))
-    cdm = load(rfnm('data/vector_data_imu01_rotate_earth2principal.h5'))
+    cd = load('vector_data01_rotate_earth2principal.h5')
+    cdm = load('vector_data_imu01_rotate_earth2principal.h5')
 
     msg = "adv.rotate.earth2principal gives unexpected results for {}"
     for t, c, msg in (
