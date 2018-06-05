@@ -20,7 +20,8 @@ Table of Contents
    about
    install
    usage
-   usage-specific
+   data-structure
+   motion-correction
    plotting-tools
    api/dolfyn
    glossary

@@ -8,19 +8,20 @@ Add a units section.
 Add usage examples for the adp package.
 
 Document the .userdata.json files
-    - declination handling
 
-Document rotations (note: beam coordinate system is only variables
-that start with 'vel')
+- declination handling
 
 Document variables in data objects
 
-Document load vs. mmload (remove mmload!?)
+- document `props` attribute.
 
 Document generic read function (io.api.read)
-    - What types of data files does this function read?
+- What types of data files does this function read?
 
-Document changed location of tests.
+Create a 'developing/contributing to DOLfYN' page.
+- Document need for git-lfs. (Are there other options? Maybe a `get_test_data.py`?)
+- Document how to run tests. (switch to `py.test`?)
+
 
 General Test Updates
 -------
