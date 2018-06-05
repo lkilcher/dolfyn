@@ -35,7 +35,7 @@ century = 2000
 
 data_defs = {'number': ([], 'sys', 'uint32'),
              'rtc': ([7], 'sys', 'uint16'),
-             'BIT': ([], 'sys', 'bool'),
+             'bit': ([], 'sys', 'bool'),
              'ssp': ([], 'sys', 'uint16'),
              'depth_m': ([], None, 'float32'),
              'pitch': ([], 'orient', 'float32'),
@@ -310,7 +310,7 @@ class adcp_loader(object):
         self.vars_read += ['number',
                            'rtc',
                            'number',
-                           'BIT',
+                           'bit',
                            'ssp',
                            'depth_m',
                            'heading',
@@ -326,7 +326,7 @@ class adcp_loader(object):
         ens.number[k] = fd.read_ui16(1)
         ens.rtc[:, k] = fd.read_ui8(7)
         ens.number[k] += 65535 * fd.read_ui8(1)
-        ens.BIT[k] = fd.read_ui16(1)
+        ens.bit[k] = fd.read_ui16(1)
         ens.ssp[k] = fd.read_ui16(1)
         ens.depth_m[k] = fd.read_ui16(1) * 0.1
         ens.heading[k] = fd.read_ui16(1) * 0.01

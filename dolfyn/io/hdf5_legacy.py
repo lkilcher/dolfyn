@@ -711,12 +711,12 @@ def convert_from_legacy(dat):
     out['props'] = dict(copy.deepcopy(dat.props))
     p = out['props']
     if 'Acc' in out['orient']:
-        out['orient']['Accel'] = out['orient'].pop('Acc') * 9.81
+        out['orient']['accel'] = out['orient'].pop('Acc') * 9.81
     if 'Acc_b5' in out['orient']:
-        out['orient']['Accel_b5'] = out['orient'].pop('Acc_b5') * 9.81
+        out['orient']['accel_b5'] = out['orient'].pop('Acc_b5') * 9.81
     if 'ahrs_gyro' in out['orient']:
-        out['orient']['AngRt'] = out['orient'].pop('ahrs_gyro') * np.pi / 180
-    if 'Accel' in out['orient']:
+        out['orient']['angrt'] = out['orient'].pop('ahrs_gyro') * np.pi / 180
+    if 'accel' in out['orient']:
         p['has imu'] = True
     else:
         p['has imu'] = False
@@ -739,8 +739,8 @@ def convert_from_legacy(dat):
             out['Spec']['omega'] = out.pop('omega')
         if 'rotate_vars' in p:
             for ky in ['velrot', 'velacc',
-                       'Accel', 'AccelStable',
-                       'AngRt', 'Mag']:
+                       'accel', 'acclow',
+                       'angrt', 'mag']:
                 if ky in p['rotate_vars']:
                     p['rotate_vars'].remove(ky)
                     p['rotate_vars'].add('orient.' + ky)

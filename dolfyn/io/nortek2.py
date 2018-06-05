@@ -387,7 +387,7 @@ def reorg(dat):
                    'heading', 'pitch', 'roll',
                    'temp_press', 'batt_V',
                    'temp_mag', 'temp_clock',
-                   'Mag', 'Accel',
+                   'mag', 'accel',
                    'ambig_vel', 'xmit_energy',
                    'error', 'status0', 'status',
                    '_ensemble', 'ensemble']:
@@ -400,7 +400,7 @@ def reorg(dat):
                 'ast_pressure',
                 'altraw_nsamp', 'altraw_dist', 'altraw_samp',
                 'echo',
-                'orientmat', 'AngRt',
+                'orientmat', 'angrt',
                 'percent_good',
                 'std_pitch', 'std_roll', 'std_heading', 'std_press'
         ]:

@@ -688,17 +688,17 @@ class NortekReader(object):
             (dat_o.orientmat[:, 0],
              dat_o.orientmat[:, 1]) = (dat_o.orientmat[:, 1],
                                        dat_o.orientmat[:, 0].copy())
-        if 'Accel' in dat_o:
+        if 'accel' in dat_o:
             # This value comes from the MS 3DM-GX3 MIP manual.
-            dat_o.Accel *= 9.80665
-            dat_o.Accel = ma.marray(dat_o.Accel, ma.varMeta(
+            dat_o.accel *= 9.80665
+            dat_o.accel = ma.marray(dat_o.accel, ma.varMeta(
                 'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
-            dat_o.AngRt = ma.marray(dat_o.AngRt, ma.varMeta(
+            dat_o.angrt = ma.marray(dat_o.angrt, ma.varMeta(
                 'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
         if self._ahrsid in [195, 211]:
-            # These are DAng and DVel, so we convert them to AngRt, Accel here
-            dat_o.AngRt *= self.config.fs
-            dat_o.Accel *= self.config.fs
+            # These are DAng and DVel, so we convert them to angrt, accel here
+            dat_o.angrt *= self.config.fs
+            dat_o.accel *= self.config.fs
 
     def read_microstrain(self,):
         """
@@ -726,63 +726,63 @@ class NortekReader(object):
         dat = self.data
         dat_o = dat['orient']
         dat.props['has imu'] = True
-        if not (hasattr(dat_o, 'Accel')):
+        if not (hasattr(dat_o, 'accel')):
             self._dtypes += ['microstrain']
             if ahrsid == 195:
-                self._orient_dnames = ['Accel', 'AngRt', 'orientmat']
-                dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
+                self._orient_dnames = ['accel', 'angrt', 'orientmat']
+                dat_o['accel'] = tbx.nans((3, self.n_samp_guess),
                                           dtype=np.float32)
-                dat_o['AngRt'] = tbx.nans((3, self.n_samp_guess),
+                dat_o['angrt'] = tbx.nans((3, self.n_samp_guess),
                                           dtype=np.float32)
                 dat_o['orientmat'] = tbx.nans((3, 3, self.n_samp_guess),
                                               dtype=np.float32)
-                dat.props['rotate_vars'].update({'orient.Accel',
-                                                 'orient.AngRt', })
+                dat.props['rotate_vars'].update({'orient.accel',
+                                                 'orient.angrt', })
             if ahrsid in [204, 210]:
-                self._orient_dnames = ['Accel', 'AngRt', 'Mag', 'orientmat']
-                dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
+                self._orient_dnames = ['accel', 'angrt', 'mag', 'orientmat']
+                dat_o['accel'] = tbx.nans((3, self.n_samp_guess),
                                           dtype=np.float32)
-                dat_o['AngRt'] = tbx.nans((3, self.n_samp_guess),
+                dat_o['angrt'] = tbx.nans((3, self.n_samp_guess),
                                           dtype=np.float32)
-                dat_o['Mag'] = tbx.nans((3, self.n_samp_guess),
+                dat_o['mag'] = tbx.nans((3, self.n_samp_guess),
                                         dtype=np.float32)
                 dat.props['rotate_vars'].update(
-                    {'orient.Accel', 'orient.AngRt', 'orient.Mag'})
+                    {'orient.accel', 'orient.angrt', 'orient.mag'})
                 if ahrsid == 204:
                     dat_o['orientmat'] = tbx.nans((3, 3, self.n_samp_guess),
                                                   dtype=np.float32)
             elif ahrsid == 211:
-                self._orient_dnames = ['AngRt', 'Accel', 'Mag']
-                dat_o['AngRt'] = tbx.nans((3, self.n_samp_guess),
+                self._orient_dnames = ['angrt', 'accel', 'mag']
+                dat_o['angrt'] = tbx.nans((3, self.n_samp_guess),
                                           dtype=np.float32)
-                dat_o['Accel'] = tbx.nans((3, self.n_samp_guess),
+                dat_o['accel'] = tbx.nans((3, self.n_samp_guess),
                                           dtype=np.float32)
-                dat_o['Mag'] = tbx.nans((3, self.n_samp_guess),
+                dat_o['mag'] = tbx.nans((3, self.n_samp_guess),
                                         dtype=np.float32)
                 dat.props['rotate_vars'].update(
-                    {'orient.AngRt', 'orient.Accel', 'orient.Mag'})
+                    {'orient.angrt', 'orient.accel', 'orient.mag'})
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)
             dt = unpack(self.endian + '6f9f4x', byts)
-            (dat_o.AngRt[:, c],
-             dat_o.Accel[:, c]) = (dt[0:3], dt[3:6],)
+            (dat_o.angrt[:, c],
+             dat_o.accel[:, c]) = (dt[0:3], dt[3:6],)
             dat_o.orientmat[:, :, c] = ((dt[6:9], dt[9:12], dt[12:15]))
         elif ahrsid == 204:  # 0xcc
             byts = self.read(78)
             # This skips the "DWORD" (4 bytes) and the AHRS checksum
             # (2 bytes)
             dt = unpack(self.endian + '18f6x', byts)
-            (dat_o.Accel[:, c],
-             dat_o.AngRt[:, c],
-             dat_o.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            (dat_o.accel[:, c],
+             dat_o.angrt[:, c],
+             dat_o.mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
             dat_o.orientmat[:, :, c] = ((dt[9:12], dt[12:15], dt[15:18]))
         elif ahrsid == 211:
             byts = self.read(42)
             dt = unpack(self.endian + '9f6x', byts)
-            (dat_o.AngRt[:, c],
-             dat_o.Accel[:, c],
-             dat_o.Mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
+            (dat_o.angrt[:, c],
+             dat_o.accel[:, c],
+             dat_o.mag[:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
         else:
             print('Unrecognized IMU identifier: ' + str(ahrsid))
             self.f.seek(-2, 1)

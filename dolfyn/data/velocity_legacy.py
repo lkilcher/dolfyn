@@ -60,7 +60,7 @@ class Velocity(TimeBased, Saveable):
         Test whether this data object contains Inertial Motion Unit
         (IMU) data.
         """
-        return hasattr(self, 'Accel') | hasattr(self, 'Veloc')
+        return hasattr(self, 'orient.accel') | hasattr(self, 'orient.angrt')
 
     @property
     def shape(self,):
