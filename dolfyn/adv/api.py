@@ -8,9 +8,6 @@ data. It contains:
 | :func:`~dolfyn.adv.base.load`     | A function for loading ADV data in      |
 |                                   | DOLfYN format.                          |
 +-----------------------------------+-----------------------------------------+
-| :func:`~dolfyn.adv.base.mmload`   | A function for loading ADV data in      |
-|                                   | DOLfYN format (as memory mapped arrays).|
-+-----------------------------------+-----------------------------------------+
 | :func:`~dolfyn.io.nortek.\        | A function for reading Nortek Vector    |
 | read_nortek`                      | files.                                  |
 +-----------------------------------+-----------------------------------------+
