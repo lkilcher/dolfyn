@@ -112,7 +112,8 @@ def inst2earth(adcpo, reverse=False,
     csin = adcpo.props['coord_sys'].lower()
     cs_allowed = ['inst', 'ship']
     if reverse:
-        cs_allowed = ['earth', 'enu']
+        #cs_allowed = ['earth', 'enu']
+        cs_allowed = ['earth']
     if not force and csin not in cs_allowed:
         raise ValueError("Invalid rotation for data in {}-frame "
                          "coordinate system.".format(csin))
