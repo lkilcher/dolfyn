@@ -33,12 +33,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # The transpose of the rotation matrix gives the inverse
         # rotation, so we simply reverse the order of the einsum:
         sumstr = 'jik,j...k->i...k'
-        cs_now = ['earth', 'enu']
-        cs_new = ['inst', 'xyz']
+        cs_now = 'earth'
+        cs_new = 'inst'
     else:
         sumstr = 'ijk,j...k->i...k'
-        cs_now = ['inst', 'xyz']
-        cs_new = ['earth', 'enu']
+        cs_now = 'inst'
+        cs_new = 'earth'
 
     if rotate_vars is None:
         if 'rotate_vars' in advo.props:
@@ -48,13 +48,13 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     cs = advo.props['coord_sys'].lower()
     if not force:
-        if cs in cs_new:
-            print("Data is already in the '%s' coordinate system" % cs_new[0])
+        if cs == cs_new:
+            print("Data is already in the '%s' coordinate system" % cs_new)
             return
-        elif cs not in cs_now:
+        elif cs != cs_now:
             raise ValueError(
                 "Data must be in the '%s' frame when using this function" %
-                cs_now[0])
+                cs_now)
 
     _check_declination(advo)
 
@@ -122,6 +122,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
 
-    advo.props['coord_sys'] = cs_new[0]
+    advo.props['coord_sys'] = cs_new
 
     return

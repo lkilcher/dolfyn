@@ -68,12 +68,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # The transpose of the rotation matrix gives the inverse
         # rotation, so we simply reverse the order of the einsum:
         sumstr = 'jik,j...k->i...k'
-        cs_now = ['earth', 'enu']
-        cs_new = ['inst', 'xyz']
+        cs_now = 'earth'
+        cs_new = 'inst'
     else:
         sumstr = 'ijk,j...k->i...k'
-        cs_now = ['inst', 'xyz']
-        cs_new = ['earth', 'enu']
+        cs_now = 'inst'
+        cs_new = 'earth'
 
     if rotate_vars is None:
         if 'rotate_vars' in advo.props:
@@ -83,13 +83,13 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     cs = advo.props['coord_sys'].lower()
     if not force:
-        if cs in cs_new:
-            print("Data is already in the '%s' coordinate system" % cs_new[0])
+        if cs == cs_new:
+            print("Data is already in the '%s' coordinate system" % cs_new)
             return
-        elif cs not in cs_now:
+        elif cs != cs_now:
             raise ValueError(
                 "Data must be in the '%s' frame when using this function" %
-                cs_now[0])
+                cs_now)
 
     _check_declination(advo)
 
@@ -139,7 +139,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # subsample the orientation matrix depending on the size of the object.
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
-    advo.props['coord_sys'] = cs_new[0]
+    advo.props['coord_sys'] = cs_new
 
     return
 
@@ -181,21 +181,25 @@ def earth2principal(advo, reverse=False):
 
     if reverse:
         ang = advo.principal_angle
-        cs_now = ['principal']
-        cs_new = ['earth', 'enu']
+        cs_now = 'principal'
+        cs_new = 'earth'
     else:
         ang = -advo.principal_angle
-        cs_now = ['earth', 'enu']
-        cs_new = ['principal']
+        cs_now = 'earth'
+        cs_new = 'principal'
 
     cs = advo.props['coord_sys'].lower()
-    if cs in cs_new:
-        print('Data is already in the %s coordinate system' % cs_new[0])
+    if cs == cs_new:
+        print('Data is already in the %s coordinate system' % cs_new)
         return
-    elif cs not in cs_now:
+    elif cs != cs_now:
         raise ValueError(
             'Data must be in the {} frame '
-            'to use this function'.format(cs_now[0]))
+            'to use this function'.format(cs_now))
+
+    if advo.props['coord_sys_principal_ref'] not in ['earth', 'enu']:
+        raise ValueError("The reference system in which the principal "
+                         "axes is calculated must be 'earth'.")
 
     # Calculate the rotation matrix:
     cp, sp = np.cos(ang), np.sin(ang)
@@ -219,4 +223,4 @@ def earth2principal(advo, reverse=False):
                                       rotmat, )
 
     # Finalize the output.
-    advo.props['coord_sys'] = cs_new[0]
+    advo.props['coord_sys'] = cs_new

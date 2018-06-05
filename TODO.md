@@ -32,16 +32,20 @@ Create a 'developing/contributing to DOLfYN' page.
 General Test Updates
 -------
 
-Add `earth2principal` rotation tests for ADVs?
+Tests should use API-level functions.
+- This means I need to better define the API.
 
-Add check for `coord_sys_principal_ref` in `earth2principal` fn's.
+Increase coverage
+- Look at coverage report.
+- Add `earth2principal` rotation tests for ADVs?
+- Add averaging tests for ADP.
 
-Add tests for ADP:
-
-- averaging!
 
 Data Processing
 ========
+
+Coordinate systems:
+- Support for rotating directly from 'inst' to 'principal'
 
 Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
 
@@ -55,7 +59,6 @@ What about dropping data from averaging? Is this something we should support? Vi
 
 ``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
 
-- Add tools for loading test data?
 
 Binary Reading
 ---------------
