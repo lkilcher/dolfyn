@@ -19,6 +19,10 @@ motion correction of ADV-IMU measurements. The accuracy and
 applicability of these measurements is beyond the scope of this
 documentation (journal articles are forthcoming).
 
+Nortek's Signature ADP's are now also available with an IMU, but
+|dlfn| does not yet support motion correction of ADP data. I hope to
+remedy this soon.
+
 Pre-Deployment Requirements
 ...........................
 
