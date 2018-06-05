@@ -1,45 +1,67 @@
+Finalize the API
+===================
+
+    import dolfyn as dlfn
+    dlfn.adv  # for adv-specific funcs
+    dlfn.adp  # for adp-specific funcs
+    dlfn.plot  # need to figure out what's in this module
+    dlfn.rotate2
+    dlfn.correct_motion  # only in dolfyn.adv for now?
+    dlfn.VelBinner  # class for doing averaging + turbulence analysis
+
+Otherwise, data objects have the following methods:
+
+    rotate2, save/to_hdf5, __repr__, subset, copy, __iter__, walk
+    __getitem__  # dat[<group>.<name>] indexing, etc.
+    show  # need to add this!
+    
+What else is there?! I think I need to forego 'autodoc', and select specific funcs/objects for the API page.
+
+
 Documentation
 ====
 
-Add some examples to the plotting tools page
+Document variables in data objects
+- document `props` attribute.
+- Add a units section.
+  - use radians everywhere?
 
-Add a units section.
-- use radians everywhere?
+Create a file I/O page
+- Document read function (io.api.read)
+  - What types of data files does this function read?
+  - Document the .userdata.json files
+    - declination, accel_filtfreq
+    - add 'timezone' handling
+- Document load/save functions briefly.
 
 Time format options:
-- mpltime
-- matlab datenum
 - datetime objects (date strings in hdf5 files?, with timezone from .userdata.json file?)
+- Does this move to 'TODO-later'?
+
+Add some examples to the plotting tools page
+- add a ``show`` method
 
 Add usage examples for the adp package.
 
-Document the .userdata.json files
-
-- declination handling
-
-Document variables in data objects
-
-- document `props` attribute.
-
-Document generic read function (io.api.read)
-- What types of data files does this function read?
-
-Create a 'developing/contributing to DOLfYN' page.
+Create a 'contributing to DOLfYN' page.
+- Email me!
+- Create tasks on github 'projects'? or something like [MPL enhacement proposals (MEPs)](https://matplotlib.org/devel/MEP/index.html)?
+  - I could create a few starter entries from `TODO-later`
 - Document need for git-lfs. (Are there other options? Maybe a `get_test_data.py`?)
 - Document how to run tests. (switch to `py.test`?)
 
 
-General Test Updates
--------
+Testing
+======
+
+Add tests to confirm that all *scripts* work.
 
 Tests should use API-level functions.
 - This means I need to better define the API.
 
-Increase coverage
-- Look at coverage report.
+Coverage
 - Add `earth2principal` rotation tests for ADVs?
 - Add averaging tests for ADP.
-
 
 Data Processing
 ========
@@ -47,50 +69,15 @@ Data Processing
 Coordinate systems:
 - Support for rotating directly from 'inst' to 'principal'
 
-Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
-
 ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts".
 
-What if I want 30-minute turbulence averages spaced 15-minutes apart?
-  - add `n_pad` option to `TurbBinner.__init__`, or
-  - Add capability for `n_fft` > `n_bin`?
+Add check for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
 
-What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
-
-``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
-
-
-Binary Reading
----------------
-
-- Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
-
-- Fix Signature rotations.
-
-Default to not including test folder (or just data?) in a release.
-
-Testing
-======
-
-Add tests to confirm that all scripts work.
-
-Add tests to confirm that matlab file I/O works.
-
-Low Priority
-======
-Add support for csv files? What do these look like?
-
-File format:
-- Or, switch to default to matlab files?
-- Best option: write matlab-compatible hdf5 files?!
+Packaging
+===========
 
 Build a conda install
 
-Handle units (use Pint?).
+New PyPi entry
 
-Add array-dim labels.
-
-Testing Framework
---------
-
-- More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
+Version++ (1.0?!)
