@@ -4,6 +4,12 @@ Documentation
 Add some examples to the plotting tools page
 
 Add a units section.
+- use radians everywhere?
+
+Time format options:
+- mpltime
+- matlab datenum
+- datetime objects (date strings in hdf5 files?, with timezone from .userdata.json file?)
 
 Add usage examples for the adp package.
 

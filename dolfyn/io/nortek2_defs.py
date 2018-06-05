@@ -172,8 +172,8 @@ _burst_hdr = DataDef([
     ('nom_corr', 'B', [], None),  # percent
     ('temp_press', 'B', [], LinFunc(0.2, -20, dtype=dt16)),  # Celsius
     ('batt_V', 'H', [], LinFunc(0.1, dtype=dt16)),  # Volts
-    ('Mag', 'h', [3], None),
-    ('Accel', 'h', [3], LinFunc(1. / 16384 * grav, dtype=dt32)),
+    ('mag', 'h', [3], None),
+    ('accel', 'h', [3], LinFunc(1. / 16384 * grav, dtype=dt32)),
     ('ambig_vel', 'h', [], None),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None),
@@ -197,7 +197,7 @@ _burst_group_org = {
     'echo': ['echo'],
     'orient': ['orientmat',
                'heading', 'pitch', 'roll',
-               'AngRt', 'Mag', 'Accel'],
+               'angrt', 'mag', 'accel'],
     'env': ['c_sound', 'temp', 'press'],
     'sys': ['temp_press', 'temp_mag', 'temp_clock',
             'batt_V', 'ambig_vel', 'xmit_energy',
@@ -254,7 +254,7 @@ def calc_burst_struct(config, nb, nc):
         dd += [('orientmat', 'f', [3, 3], None),
                # This use of 'x' here is a hack
                ('ahrs_spare', 'B15x', [], None),
-               ('AngRt', 'f', [3], LinFunc(np.pi / 180,
+               ('angrt', 'f', [3], LinFunc(np.pi / 180,
                                            dtype=dt32))]  # rad/sec
     if flags['p_gd']:
         dd += [('percent_good', 'B', [nc], None)]  # percent
