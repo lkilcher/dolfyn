@@ -78,24 +78,13 @@ class Velocity(TimeData):
     """
 
     @property
-    def make_model(self, ):
+    def _make_model(self, ):
         """
         The make and model of the instrument that collected the data
         in this data object.
         """
-        return '{} {}'.format(self.make, self.model)
-
-    @property
-    def make(self, ):
-        """The manufacturer of the instrument that collected the data
-        in this data object."""
-        return self.props['inst_make'].lower()
-
-    @property
-    def model(self, ):
-        """The model of the instrument that collected the data
-        in this data object."""
-        return self.props['inst_model'].lower()
+        return '{} {}'.format(self.props['inst_make'],
+                              self.props['inst_model']).lower()
 
     @property
     def n_time(self, ):

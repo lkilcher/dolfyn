@@ -194,7 +194,7 @@ class CalcMotion(object):
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - get_body2imu(self.advo.make_model)[:, None]
+        vec = vec - get_body2imu(self.advo._make_model)[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -444,7 +444,7 @@ def correct_motion(advo,
     if advo.props['inst_type'] == 'ADP':
         velmot = velmot[:, None]
     advo['vel'][:3] += velmot
-    if advo.make_model.startswith('nortek signature') and \
+    if advo._make_model.startswith('nortek signature') and \
        advo['vel'].shape[0] > 3:
         # This assumes these are w.
         advo['vel'][3:] += velmot[2:]
