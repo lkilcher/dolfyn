@@ -20,7 +20,7 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
 
 default:
-	make api
+	make autogen
 	make html
 
 help:
@@ -46,8 +46,11 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 
-api:
-	$(SPHINXBUILDAPI) -f -T -H 'DOLfYN API' -o source/api ../dolfyn/ ../dolfyn/meta ../dolfyn/plot ../dolfyn/test ../dolfyn/*_legacy.py ../dolfyn/*/*_legacy.py 
+autogen:
+	sphinx-autogen -o source/_as_gen/ source/*.rst
+
+# api:
+# 	$(SPHINXBUILDAPI) -f -T -H 'DOLfYN API' -o source/api ../dolfyn/ ../dolfyn/meta ../dolfyn/plot ../dolfyn/test ../dolfyn/*_legacy.py ../dolfyn/*/*_legacy.py 
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)
@@ -153,3 +156,4 @@ doctest:
 clean:
 	find ../doc-build -type f -not -path "*/.git*" -not -path "../doc-build/html/.nojekyll" -delete
 	find ../doc-build -type d -not -path "../doc-build/html*" -not -path "../doc-build" -delete
+	rm source/_as_gen/*.rst

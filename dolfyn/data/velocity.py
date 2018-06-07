@@ -7,30 +7,34 @@ from ..rotate import rotate2
 
 
 class Velocity(TimeData):
+    """This is the base class for DOLfYN velocity-data objects.
+
+    DOLfYN
+    """
 
     @property
     def make_model(self, ):
-        return '{} {}'.format(self.props['inst_make'].lower(),
-                              self.props['inst_model'].lower())
+        """
+        The make and model of the instrument that collected the data
+        in this data object.
+        """
+        return '{} {}'.format(self.make, self.model)
 
     @property
     def make(self, ):
+        """The manufacturer of the instrument that collected the data
+        in this data object."""
         return self.props['inst_make'].lower()
 
     @property
     def model(self, ):
+        """The model of the instrument that collected the data
+        in this data object."""
         return self.props['inst_model'].lower()
 
     @property
-    def has_imu(self,):
-        """
-        Test whether this data object contains Inertial Motion Unit
-        (IMU) data.
-        """
-        return self.props['has imu']
-
-    @property
     def n_time(self, ):
+        """The number of timesteps in the data object."""
         try:
             return self['mpltime'].shape[-1]
         except KeyError:
@@ -38,6 +42,7 @@ class Velocity(TimeData):
 
     @property
     def shape(self,):
+        """The shape of 'scalar' data in this data object."""
         return self.u.shape
 
     @property
@@ -54,7 +59,7 @@ class Velocity(TimeData):
         """
         return np.angle(self.U)
 
-    def rotate2(self, out_frame='earth', inplace=False):
+    def rotate2(self, out_frame, inplace=False):
         """Rotate the data object into a new coordinate system.
 
         Parameters
@@ -71,6 +76,10 @@ class Velocity(TimeData):
         -------
         objout : :class:`Velocity <data.velocity.Velocity>`
           The rotated data object. This is `self` if inplace is True.
+
+        See Also
+        --------
+        :func:`dolfyn.rotate2`
 
         """
         return rotate2(self, out_frame=out_frame, inplace=inplace)
@@ -94,7 +103,7 @@ class Velocity(TimeData):
         ``self.props['principal_angle']``, and
         ``self.props['coord_sys_principal_ref']``.
 
-        This function calculates the principal direction 
+        .. morehere: document how exactly the principal angle is calculated.
         """
         if self.props['coord_sys'].lower() not in ['earth', 'inst',
                                                    'enu', 'xyz']:
@@ -125,14 +134,38 @@ class Velocity(TimeData):
 
     @property
     def u(self,):
+        """
+        The first velocity component. Depending on the data's
+        coordinate system, this is:
+        - beam:      beam1
+        - inst:      x
+        - earth:     east
+        - principal: streamwise
+        """
         return self['vel'][0]
 
     @property
     def v(self,):
+        """
+        The second velocity component. Depending on the data's
+        coordinate system, this is:
+        - beam:      beam2
+        - inst:      y
+        - earth:     north
+        - principal: cross-stream
+        """
         return self['vel'][1]
 
     @property
     def w(self,):
+        """
+        The third velocity component. Depending on the data's
+        coordinate system, this is:
+        - beam:      beam3
+        - inst:      z
+        - earth:     up
+        - principal: up
+        """
         return self['vel'][2]
 
     @property

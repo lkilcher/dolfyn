@@ -39,7 +39,7 @@ Time format options:
 - Does this move to 'TODO-later'?
 
 Add some examples to the plotting tools page
-- add a ``show`` method
+- add a ``show`` method and document it.
 
 Add usage examples for the adp package.
 
@@ -76,8 +76,8 @@ Add check for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.c
 Packaging
 ===========
 
-Build a conda install
+Version++ (1.0?!)
 
 New PyPi entry
 
-Version++ (1.0?!)
+Build a conda install
