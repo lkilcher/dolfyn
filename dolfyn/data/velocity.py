@@ -11,80 +11,80 @@ class Velocity(TimeData):
 
     All ADV and ADP data objects inherit from this base class.
 
+    See Also
+    ========
+
+    :class:`dict`
+
     NOTES
-    -----
+    =====
 
     DOLfYN Velocity objects are based on Python dicts, but have fancy
     interactive printing properties and indexing properties.
 
-    Interactive printing
-    ....................
+    First, the interactive printing::
 
-    >>> import dolfyn as dlfn
-    >>> dat = dlfn.read_example('BenchFile01.ad2cp')
+        >>> import dolfyn as dlfn
+        >>> dat = dlfn.read_example('BenchFile01.ad2cp')
 
-    # In an interactive interpreter, we view the contents of the data
-    # object by:
-    >>> dat
-    <ADP data object>
-    . 9.11 minutes (started: Feb 24, 2017 10:01)
-    . BEAM-frame
-    . (38 bins, 1094 pings @ 2Hz)
-    *------------
-    | mpltime                  : <time_array; (1094,); float64>
-    | range                    : <array; (38,); float64>
-    | range_b5                 : <array; (38,); float64>
-    | vel                      : <array; (4, 38, 1094); float32>
-    | vel_b5                   : <array; (1, 38, 1094); float32>
-    + alt                      : + DATA GROUP
-    + altraw                   : + DATA GROUP
-    + config                   : + DATA GROUP
-    + env                      : + DATA GROUP
-    + orient                   : + DATA GROUP
-    + props                    : + DATA GROUP
-    + signal                   : + DATA GROUP
-    + sys                      : + DATA GROUP
+    In an interactive interpreter, we view the contents of the data
+    object by::
 
-    # You can view the contents of a 'DATA GROUP' by:
-    >>> dat['env']
-    <class 'dolfyn.data.base.TimeData'>: Data Object with Keys:
-    *------------
-    | c_sound                  : <array; (1094,); float32>
-    | press                    : <array; (1094,); float32>
-    | temp                     : <array; (1094,); float32>
+        >>> dat
+        <ADP data object>
+        . 9.11 minutes (started: Feb 24, 2017 10:01)
+        . BEAM-frame
+        . (38 bins, 1094 pings @ 2Hz)
+        *------------
+        | mpltime                  : <time_array; (1094,); float64>
+        | range                    : <array; (38,); float64>
+        | range_b5                 : <array; (38,); float64>
+        | vel                      : <array; (4, 38, 1094); float32>
+        | vel_b5                   : <array; (1, 38, 1094); float32>
+        + alt                      : + DATA GROUP
+        + altraw                   : + DATA GROUP
+        + config                   : + DATA GROUP
+        + env                      : + DATA GROUP
+        + orient                   : + DATA GROUP
+        + props                    : + DATA GROUP
+        + signal                   : + DATA GROUP
+        + sys                      : + DATA GROUP
 
-    # Or you can also use attribute-style syntax:
-    >>> dat.signal
-    <class 'dolfyn.data.base.TimeData'>: Data Object with Keys:
-    *------------
-    | amp                      : <array; (4, 38, 1094); float16>
-    | amp_b5                   : <array; (1, 38, 1094); float16>
-    | corr                     : <array; (4, 38, 1094); uint8>
-    | corr_b5                  : <array; (1, 38, 1094); uint8>
+    You can view the contents of a 'DATA GROUP' by::
+
+        >>> dat['env']
+        <class 'dolfyn.data.base.TimeData'>: Data Object with Keys:
+        *------------
+        | c_sound                  : <array; (1094,); float32>
+        | press                    : <array; (1094,); float32>
+        | temp                     : <array; (1094,); float32>
+
+    Or you can also use attribute-style syntax::
+
+        >>> dat.signal
+        <class 'dolfyn.data.base.TimeData'>: Data Object with Keys:
+        *------------
+        | amp                      : <array; (4, 38, 1094); float16>
+        | amp_b5                   : <array; (1, 38, 1094); float16>
+        | corr                     : <array; (4, 38, 1094); uint8>
+        | corr_b5                  : <array; (1, 38, 1094); uint8>
 
 
     Indexing
     ........
 
-    # You can directly access an item in a subgroup by:
-    >>> dat['env.c_sound']
-    array([1520.9   , 1520.8501, 1520.8501, ..., 1522.3   , 1522.3   ,
-           1522.3   ], dtype=float32)
+    You can directly access an item in a subgroup by::
 
-    # And you can test for the presence of a variable by:
-    >>> 'signal.amp' in dat
-    True
+        >>> dat['env.c_sound']
+        array([1520.9   , 1520.8501, 1520.8501, ..., 1522.3   , 1522.3   ,
+               1522.3   ], dtype=float32)
+
+    # And you can test for the presence of a variable by::
+
+        >>> 'signal.amp' in dat
+        True
 
     """
-
-    @property
-    def _make_model(self, ):
-        """
-        The make and model of the instrument that collected the data
-        in this data object.
-        """
-        return '{} {}'.format(self.props['inst_make'],
-                              self.props['inst_model']).lower()
 
     @property
     def n_time(self, ):
@@ -100,16 +100,59 @@ class Velocity(TimeData):
         return self.u.shape
 
     @property
+    def u(self,):
+        """
+        The first velocity component. Depending on the data's
+        coordinate system, this is:
+        - beam:      beam1
+        - inst:      x
+        - earth:     east
+        - principal: streamwise
+        """
+        return self['vel'][0]
+
+    @property
+    def v(self,):
+        """
+        The second velocity component. Depending on the data's
+        coordinate system, this is:
+        - beam:      beam2
+        - inst:      y
+        - earth:     north
+        - principal: cross-stream
+        """
+        return self['vel'][1]
+
+    @property
+    def w(self,):
+        """
+        The third velocity component. Depending on the data's
+        coordinate system, this is:
+        - beam:      beam3
+        - inst:      z
+        - earth:     up
+        - principal: up
+        """
+        return self['vel'][2]
+
+    @property
+    def U(self,):
+        "Horizontal velocity as a complex quantity."
+        return self.u[:] + self.v[:] * 1j
+
+
+    @property
     def U_mag(self,):
         """
-        Velocity magnitude
+        Horizontal velocity magnitude.
         """
         return np.abs(self.U)
 
     @property
     def U_angle(self,):
         """
-        Angle of velocity vector.
+        Angle of horizontal velocity vector (radians clockwise from
+        east/X/streamwise).
         """
         return np.angle(self.U)
 
@@ -187,42 +230,6 @@ class Velocity(TimeData):
             self.props['principal_angle'] += np.pi
 
     @property
-    def u(self,):
-        """
-        The first velocity component. Depending on the data's
-        coordinate system, this is:
-        - beam:      beam1
-        - inst:      x
-        - earth:     east
-        - principal: streamwise
-        """
-        return self['vel'][0]
-
-    @property
-    def v(self,):
-        """
-        The second velocity component. Depending on the data's
-        coordinate system, this is:
-        - beam:      beam2
-        - inst:      y
-        - earth:     north
-        - principal: cross-stream
-        """
-        return self['vel'][1]
-
-    @property
-    def w(self,):
-        """
-        The third velocity component. Depending on the data's
-        coordinate system, this is:
-        - beam:      beam3
-        - inst:      z
-        - earth:     up
-        - principal: up
-        """
-        return self['vel'][2]
-
-    @property
     def principal_angle(self,):
         """
         Return the principal angle of the data.
@@ -230,11 +237,6 @@ class Velocity(TimeData):
         if 'principal_angle' not in self.props:
             self.calc_principal_angle()
         return self.props['principal_angle']
-
-    @property
-    def U(self,):
-        "Horizontal velocity as a complex quantity."
-        return self.u[:] + self.v[:] * 1j
 
     @property
     def _repr_header(self, ):
@@ -273,6 +275,15 @@ class Velocity(TimeData):
                  time_string,
                  self.props['coord_sys'].upper(),
                  shape_string))
+
+    @property
+    def _make_model(self, ):
+        """
+        The make and model of the instrument that collected the data
+        in this data object.
+        """
+        return '{} {}'.format(self.props['inst_make'],
+                              self.props['inst_model']).lower()
 
 
 class VelTkeData(TimeData):

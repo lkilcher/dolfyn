@@ -8,6 +8,8 @@ Add tests to confirm that matlab file I/O works.
 
 Default to not including test folder (or just data?) in a release.
 
+Add test for 'subset' and 'append' (for both ADV, ADP).
+
 Data Processing
 =============
 
