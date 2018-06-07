@@ -106,12 +106,22 @@ class TimeData(data):
                                       raise_on_empty_array=raise_on_empty_array,
                                       copy=copy + self._subset_copy_vars)
 
-    def append(self, other, array_axis=-1):
+    def append(self, other):
+        """Join two data objects together.
+
+        For example, two data objects ``d1`` and ``d2`` (which must
+        contain the same variables, with the same array dimensions)
+        can be joined together by::
+
+            >>> dat = d1.append(d2)
+
+        """
+        join_ax = self._time_dim
         shapes = {}
         for ky in self._subset_copy_vars:
             if ky in self:
-                shapes[ky] = self[ky].shape[array_axis]
-        data.append(self, other, array_axis=array_axis)
+                shapes[ky] = self[ky].shape[join_ax]
+        data.append(self, other, array_axis=join_ax)
         for ky in self._subset_copy_vars:
             if ky in self:
                 self[ky] = self[ky][..., :shapes[ky]]
@@ -135,6 +145,15 @@ class MappedTime(TimeData):
         return out
 
     def append(self, other):
+        """Join two data objects together.
+
+        For example, two data objects ``d1`` and ``d2`` (which must
+        contain the same variables, with the same array dimensions)
+        can be joined together by::
+
+            >>> dat = d1.append(d2)
+
+        """
         Ns = self.pop('_map_N')
         No = other.pop('_map_N')
         self['_map'] = np.hstack((self['_map'], other['_map'] + Ns))
