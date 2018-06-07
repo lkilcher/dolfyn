@@ -41,12 +41,12 @@ def rotate2(obj, out_frame='earth', inplace=False):
     """
     rmod = None
     for ky in rot_module_dict:
-        if obj.make_model.startswith(ky):
+        if obj._make_model.startswith(ky):
             rmod = rot_module_dict[ky]
             break
     if rmod is None:
         raise ValueError("Rotations are not defined for "
-                         "instrument '{}'.".format(obj.make_model))
+                         "instrument '{}'.".format(obj._make_model))
     if not inplace:
         obj = obj.copy()
 

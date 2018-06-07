@@ -109,7 +109,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             rr[lastgd:] = rr[lastgd]
             pp[lastgd:] = pp[lastgd]
             hh[lastgd:] = hh[lastgd]
-        if advo.make_model.lower().startswith('nortek vector'):
+        if advo._make_model.startswith('nortek vector'):
             # NOTE: For Nortek Vector ADVs: 'down' configuration means the
             #       head was pointing UP!  Check the Nortek coordinate
             #       transform matlab script for more info.  The 'up'
