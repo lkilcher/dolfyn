@@ -3,22 +3,22 @@ The |dlfn| API
 
 |dlfn| data objects
 ----------------------
-This needs a discussion of indexing (``__getitem__``). Or, this could go in the Velocity docstring?
-
-.. currentmodule:: dolfyn.data.velocity
 
 .. autosummary::
   :toctree: _as_gen
   :nosignatures:
-
      
-  Velocity
-  Velocity.to_hdf5
-  Velocity.rotate2
-  Velocity.copy
-  Velocity.calc_principal_angle
-  Velocity.subset
-  Velocity.iter_data
+  dolfyn.data.velocity.Velocity
+  dolfyn.adp.base.adcp_raw
+  dolfyn.adv.base.ADVraw
+  dolfyn.
+  
+
+
+.. autoclass:: dolfyn.Velocity
+   :members:
+   :inherited-members:
+   :exclude-members: clear, fromkeys, items, popitem, update, values, setdefault
 
 |dlfn| functions
 -----------------------
