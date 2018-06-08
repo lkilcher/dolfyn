@@ -102,8 +102,12 @@ class Velocity(TimeData):
     @property
     def u(self,):
         """
-        The first velocity component. Depending on the data's
-        coordinate system, this is:
+        The first velocity component.
+
+        This is simply a shortcut to self['vel'][0]. Therefore,
+        depending on the coordinate system of the data object
+        (self.props['coord_sys']), it is:
+
         - beam:      beam1
         - inst:      x
         - earth:     east
@@ -114,8 +118,12 @@ class Velocity(TimeData):
     @property
     def v(self,):
         """
-        The second velocity component. Depending on the data's
-        coordinate system, this is:
+        The second velocity component.
+
+        This is simply a shortcut to self['vel'][1]. Therefore,
+        depending on the coordinate system of the data object
+        (self.props['coord_sys']), it is:
+
         - beam:      beam2
         - inst:      y
         - earth:     north
@@ -126,8 +134,12 @@ class Velocity(TimeData):
     @property
     def w(self,):
         """
-        The third velocity component. Depending on the data's
-        coordinate system, this is:
+        The third velocity component.
+
+        This is simply a shortcut to self['vel'][2]. Therefore,
+        depending on the coordinate system of the data object
+        (self.props['coord_sys']), it is:
+
         - beam:      beam3
         - inst:      z
         - earth:     up
@@ -138,8 +150,7 @@ class Velocity(TimeData):
     @property
     def U(self,):
         "Horizontal velocity as a complex quantity."
-        return self.u[:] + self.v[:] * 1j
-
+        return self.u + self.v * 1j
 
     @property
     def U_mag(self,):

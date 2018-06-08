@@ -32,7 +32,7 @@ else:  # Python 2
 
 def load(fname, data_groups=None,):
     """
-    Load data from `fname` into class `type_map`.
+    Load data from `fname`.
 
     Parameters
     ----------
