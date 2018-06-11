@@ -267,10 +267,10 @@ def read_dat(filename,
                       'pressure'],
              dlm=' ',
              skip_n_headlines=0,
-             cls=adv.ADVraw,
+             cls=adv.ADVdata,
              nlines=None):
     """
-    Read ADV ascii file *filename*, and return a ADVraw object
+    Read ADV ascii file *filename*, and return a ADVdata object
     containing the data.
 
     *dat_map* specifies the variable names of the columns of the file.

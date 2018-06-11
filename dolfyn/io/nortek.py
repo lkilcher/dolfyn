@@ -72,7 +72,7 @@ def read_nortek(filename,
 
     Returns
     -------
-    adv_data : :class:`ADVraw <dolfyn.adv.base.ADVraw>`
+    adv_data : :class:`ADVdata <dolfyn.adv.base.ADVdata>`
 
     """
     # Read the json file
@@ -895,7 +895,7 @@ class NortekReader(object):
         return (self.pos - p0) / (i + 1)
 
     def init_ADV(self,):
-        dat = self.data = adv_base.ADVraw()
+        dat = self.data = adv_base.ADVdata()
         dat['orient'] = TimeData()
         dat['signal'] = TimeData()
         dat['sys'] = TimeData()
@@ -915,7 +915,7 @@ class NortekReader(object):
         self.n_samp_guess *= self.config['fs']
 
     def init_AWAC(self,):
-        dat = self.data = adp_base.adcp_raw()
+        dat = self.data = adp_base.ADPdata()
         dat['orient'] = TimeData()
         dat['signal'] = TimeData()
         dat['sys'] = TimeData()

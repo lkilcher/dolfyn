@@ -5,7 +5,7 @@ import datetime
 from ..data.time import date2num
 from ..data.base import config, TimeData as data
 from os.path import getsize
-from ..adp.base import adcp_raw
+from ..adp.base import ADPdata
 from .base import WrongFileType
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
@@ -775,7 +775,7 @@ class adcp_loader(object):
         self.avg_func = getattr(self, avg_func)
 
     def init_data(self,):
-        outd = adcp_raw()
+        outd = ADPdata()
         outd.props = {}
         outd.props['inst_make'] = 'RDI'
         outd.props['inst_model'] = '<WORKHORSE?>'

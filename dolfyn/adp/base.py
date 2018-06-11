@@ -12,57 +12,94 @@ def diffz_first(dat, z, axis=0):
 #    return np.diff(dat,axis=0)/(np.diff(z)[:,None])
 
 
-class adcp_raw(dbvel.Velocity):
+class ADPdata(dbvel.Velocity):
+    """The acoustic Doppler profiler (ADP) data type.
 
-    """
-    The base 'adcp' class.
+    See Also
+    ========
+    :class:`dolfyn.Velocity`
 
     """
     diff_style = 'first'
 
     def _diff_func(self, nm):
         if self.diff_style == 'first':
-            return diffz_first(getattr(self, nm), self.z)
+            return diffz_first(getattr(self, nm), self['range'])
         # else:
         #     pass
         #     #!!!FIXTHIS. Need the diffz_centered operator.
         #     # return diffz_centered(getattr(self, nm), self.z)
 
     @property
-    def z(self, ):
-        return self['range']
-
-    @property
-    def zd(self,):
+    def range_diff(self,):
         if self.diff_style == 'first':
-            return self.z[0:-1] + np.diff(self.z) / 2
+            return self['range'][0:-1] + np.diff(self['range']) / 2
         else:
-            return self.z
+            return self['range']
 
     @property
     def dudz(self,):
+        """The shear in the first velocity component.
+
+        Notes
+        =====
+        The derivative direction is along the profiler's 'z'
+        coordinate ('dz' is actually diff(self['range'])), not necessarily the
+        'true vertical' direction.
+
+        """
         return self._diff_func('u')
 
     @property
     def dvdz(self,):
+        """The shear in the second velocity component.
+
+        Notes
+        =====
+        The derivative direction is along the profiler's 'z'
+        coordinate ('dz' is actually diff(self['range'])), not necessarily the
+        'true vertical' direction.
+
+        """
         return self._diff_func('v')
 
     @property
     def dwdz(self,):
+        """The shear in the third velocity component.
+
+        Notes
+        =====
+        The derivative direction is along the profiler's 'z'
+        coordinate ('dz' is actually diff(self['range'])), not necessarily the
+        'true vertical' direction.
+
+        """
         return self._diff_func('w')
 
     @property
     def S2(self,):
+        """The horizontal shear-squared.
+
+        Notes
+        =====
+        This is actually (dudz)^2 + (dvdz)^2. So, if those variables
+        are not actually vertical derivatives of the horizontal
+        velocity, then this is not the 'horizontal shear-squared'.
+
+        See Also
+        ========
+        :meth:`dvdz`, :meth:`dudz`
+
+        """
         return self.dudz ** 2 + self.dvdz ** 2
 
 
-class adcp_binned(dbvel.VelTkeData, adcp_raw):
-    inds = slice(None)
+class ADPbinner(dbvel.VelBinner):
+    """An ADP binning (averaging) tool.
 
+    """
 
-class binner(dbvel.VelBinner):
-
-    def __call__(self, indat, out_type=adcp_binned):
+    def __call__(self, indat, out_type=ADPdata):
         out = dbvel.VelBinnerTke.__call__(self, indat, out_type=out_type)
         self.do_avg(indat, out)
         out.add_data('tke_vec',
@@ -137,7 +174,7 @@ class binner(dbvel.VelBinner):
             H = self.depth_m[:][None, :]
         sgn = np.sign(self.upwp_[dinds].mean(0))
         self.ustar = (sgn * self.upwp_[dinds] / (
-            1 - self.z[dinds][:, None] / H)).mean(0) ** 0.5
+            1 - self['range'][dinds][:, None] / H)).mean(0) ** 0.5
         # p=polyfit(self.hab[dinds],sgn*self.upwp_[dinds],1)
         # self.ustar=p[1]**(0.5)
         # self.hbl_fit=p[0]/p[1]
@@ -180,3 +217,11 @@ class binner(dbvel.VelBinner):
         # self.add_data('vpwp_',stress.imag,'stress')
         # self.meta['upwp_']=db.varMeta("u'w'",{2:'m',-2:'s'})
         # self.meta['vpwp_']=db.varMeta("v'w'",{2:'m',-2:'s'})
+
+
+# !CLEANUP! below this line
+
+class adcp_raw(object):
+    # This is a relic maintained here for now for backward compatability.
+    def __new__(cls, *args, **kwargs):
+        return ADPdata(*args, **kwargs)

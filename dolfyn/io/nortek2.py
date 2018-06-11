@@ -71,7 +71,7 @@ def read_signature(filename, userdata=True, nens=None):
 
     Returns
     =======
-    dat : :class:`dolfyn.adp.base.adcp_raw` object
+    dat : :class:`dolfyn.ADPdata` object
         An ADCP data object containing the loaded data.
     """
     if nens is None:
@@ -339,9 +339,10 @@ class Ad2cpReader(object):
 
 def reorg(dat):
     """This function grabs the data from the dictionary of data types
-    (organized by ID), and combines them into the adcp_raw object.
+    (organized by ID), and combines them into the
+    :class:`dolfyn.ADPdata` object.
     """
-    outdat = apb.adcp_raw()
+    outdat = apb.ADPdata()
     cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
     cfh = cfg['filehead config'] = dat['filehead config']
     cfg['model'] = (cfh['ID'].split(',')[0][5:-1])
@@ -446,11 +447,11 @@ def reorg(dat):
 
 
 def reduce(data):
-    """This function takes the adcp_raw object output from `reorg`,
-    and further simplifies the data. Mostly this is combining system,
-    environmental, and orientation data --- from different data
-    structures within the same ensemble --- by averaging.
-    """
+    """This function takes the :class:``dolfyn.ADPdata`` object output
+    from `reorg`, and further simplifies the data. Mostly this is
+    combining system, environmental, and orientation data --- from
+    different data structures within the same ensemble --- by
+    averaging.  """
     # Average these fields
     for ky in ['mpltime',
                'c_sound', 'temp', 'press',

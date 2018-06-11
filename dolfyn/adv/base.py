@@ -5,19 +5,25 @@ The base module for the adv package.
 from ..data import velocity as dbvel
 
 
-class ADVraw(dbvel.Velocity):
+class ADVdata(dbvel.Velocity):
+    """The acoustic Doppler velocimeter (ADV) data type.
 
+    See Also
+    ========
+    :class:`dolfyn.Velocity`
     """
-    The base class for ADV data objects.
-    """
-    # Is this needed?
     pass
 
 
-class ADVbinned(dbvel.VelTkeData, ADVraw):
+# !CLEANUP! below this line
 
-    """
-    A base class for binned ADV objects.
-    """
-    # Is this needed?
-    pass
+class ADVbinned(object):
+    # This is a relic maintained here for now for backward compatability.
+    def __new__(cls, *args, **kwargs):
+        return ADVdata(*args, **kwargs)
+
+
+class ADVraw(object):
+    # This is a relic maintained here for now for backward compatability.
+    def __new__(cls, *args, **kwargs):
+        return ADVdata(*args, **kwargs)

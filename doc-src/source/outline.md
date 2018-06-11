@@ -40,6 +40,9 @@ Data Cleaning
 
 Averaging/Turbulence
 --------
+In DOLfYN 'averaged data objects' *include* turbulence data as well as
+mean-flow data.
+
 
 Motion Correction
 ----------

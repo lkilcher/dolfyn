@@ -1,7 +1,6 @@
 from __future__ import division
 import numpy as np
 from ..data.velocity import VelBinner
-from .base import ADVbinned
 from ..data import base as db
 from ..tools.misc import slice1d_along_axis, nans_like
 from scipy.special import cbrt
@@ -27,7 +26,7 @@ class TurbBinner(VelBinner):
 
     """
 
-    def __call__(self, advr, out_type=ADVbinned,
+    def __call__(self, advr, out_type=None,
                  omega_range_epsilon=[6.28, 12.57],
                  Itke_thresh=0, window='hann'):
         """
@@ -37,7 +36,7 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        advr : :class:`ADVraw <base.ADVraw>`
+        advr : :class:`ADVdata <base.ADVdata>`
           The raw adv data-object to `bin`, average and compute
           turbulence statistics of.
 
@@ -93,7 +92,8 @@ class TurbBinner(VelBinner):
         #               " is being deprecated. Use the functional form, e.g. '"
         #               "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
         #               .format(self.n_bin))
-        out = out_type()
+        if out_type is None:
+            out = type(advr)()
         self._check_indata(advr)
         self.do_avg(advr, out)
         noise = advr.get('doppler_noise', [0, 0, 0])
@@ -242,7 +242,7 @@ class TurbBinner(VelBinner):
           The binned adv object. The following spectra and basic
           turbulence statistics must already be computed.
 
-        advraw : :class:`ADVraw <base.ADVraw>`
+        advraw : :class:`ADVdata <base.ADVdata>`
           The raw adv object.
 
         Notes
@@ -347,7 +347,7 @@ class TurbBinner(VelBinner):
                           (1 / np.e), axis=-1))
 
 
-def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
+def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
                     omega_range_epsilon=[6.28, 12.57],
                     Itke_thresh=0, window='hann'):
     """
@@ -357,7 +357,7 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=ADVbinned,
     Parameters
     ----------
 
-    advr : :class:`ADVraw <base.ADVraw>`
+    advr : :class:`ADVdata <base.ADVdata>`
       The raw adv data-object to `bin`, average and compute
       turbulence statistics of.
 
