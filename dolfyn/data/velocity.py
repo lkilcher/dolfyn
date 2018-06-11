@@ -7,9 +7,9 @@ from ..rotate import rotate2
 
 
 class Velocity(TimeData):
-    """This is the base class for DOLfYN velocity-data objects.
+    """This is the base class for DOLfYN velocity data objects.
 
-    All ADV and ADP data objects inherit from this base class.
+    All ADP and ADV data objects inherit from this base class.
 
     See Also
     ========
@@ -182,7 +182,7 @@ class Velocity(TimeData):
 
         Returns
         -------
-        objout : :class:`Velocity <data.velocity.Velocity>`
+        objout : :class:`Velocity`
           The rotated data object. This is `self` if inplace is True.
 
         See Also
@@ -401,6 +401,26 @@ class VelTkeData(TimeData):
 
 
 class VelBinner(TimeBinner):
+    """This is the base binning (averaging) tool.
+
+    All DOLfYN binning tools derive from this base class.
+
+    Examples
+    ========
+    The VelBinner class is used to compute averages and turbulence
+    statistics from 'raw' (unaveraged) ADV or ADP measurements, for
+    example::
+
+        # First read or load some data.
+        rawdat = dlfn.read_example('BenchFile01.ad2cp')
+
+        # Now initialize the averaging tool:
+        binner = dlfn.VelBinner(n_bin=600, fs=rawdat.props['fs'])
+
+        # This computes the basic averages
+        avg = binner(rawdat)
+
+    """
 
     # This defines how cross-spectra and stresses are computed.
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
