@@ -1,3 +1,11 @@
+General
+=======
+
+Separate backwards-compatability release from a new/clean release:
+
+- Search the code for `# !CLEANUP!`
+- remove all `_legacy.py`
+
 Testing
 ======
 

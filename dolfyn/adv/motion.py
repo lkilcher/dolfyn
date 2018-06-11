@@ -611,7 +611,7 @@ class CorrectMotion(object):
 
         Parameters
         ----------
-        advo : :class:`ADVraw <base.ADVraw>`
+        advo : :class:`ADVdata <base.ADVdata>`
           The adv object on which to perform motion correction.
           It must contain the following data attributes:
 

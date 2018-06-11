@@ -52,7 +52,7 @@ def orient2euler(advo):
 
     Parameters
     ----------
-    advo : :class:`ADVraw <base.ADVraw>`
+    advo : :class:`ADVdata <base.ADVdata>`
       An adv object containing an `orientmat` attribute (array).
 
     Returns

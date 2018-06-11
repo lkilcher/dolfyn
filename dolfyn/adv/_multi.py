@@ -1,9 +1,9 @@
-from .base import ADVraw
+from .base import ADVdata
 import numpy as np
 from dolfyn.data.time import num2date
 
 
-class multi_sync(ADVraw):
+class multi_sync(ADVdata):
 
     """
     A base class for multiple, sync'd advs.
@@ -29,8 +29,8 @@ def merge_lag(adv_list, lag=[0]):
 
     Parameters
     ----------
-    adv_list : iterable(ADVraw)
-      An iterable of :class:`ADVraw <dolfyn.adv.base.ADVraw>`
+    adv_list : iterable(ADVdata)
+      An iterable of :class:`ADVdata <dolfyn.adv.base.ADVdata>`
       objects to be merged.
     lag : iterable(ints), len(adv_list)
       An iterable of the lag, in timesteps.
@@ -43,7 +43,7 @@ def merge_lag(adv_list, lag=[0]):
     Notes
     -----
 
-    Each :class:`ADVraw <dolfyn.adv.base.ADVraw>` in `adv_list` must
+    Each :class:`ADVdata <dolfyn.adv.base.ADVdata>` in `adv_list` must
     have the same timestep (sample rate), and have the same data
     attributes.
 
@@ -70,8 +70,8 @@ def merge_syncd(adv_list, sync_on='ensemble'):
 
     Parameters
     ----------
-    adv_list : iterable(ADVraw)
-      An iterable of :class:`ADVraw <dolfyn.adv.base.ADVraw>`
+    adv_list : iterable(ADVdata)
+      An iterable of :class:`ADVdata <dolfyn.adv.base.ADVdata>`
       objects to be merged.
 
     sync_on : string
@@ -85,7 +85,7 @@ def merge_syncd(adv_list, sync_on='ensemble'):
     Notes
     -----
 
-    Each :class:`ADVraw <dolfyn.adv.base.ADVraw>` in `adv_list` must
+    Each :class:`ADVdata <~dolfyn.adv.base.ADVdata>` in `adv_list` must
     have the same timestep (sample rate), and have the same data
     attributes.
 
