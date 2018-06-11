@@ -31,8 +31,7 @@ else:  # Python 2
 
 
 def load(fname, data_groups=None,):
-    """
-    Load data from `fname`.
+    """Load data from ``fname``.
 
     Parameters
     ----------

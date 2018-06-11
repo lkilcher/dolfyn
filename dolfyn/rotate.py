@@ -23,7 +23,7 @@ def rotate2(obj, out_frame='earth', inplace=False):
     Parameters
     ----------
 
-    obj : :class:`Velocity <data.velocity.Velocity>`
+    obj : :class:`~dolfyn.Velocity`
       The dolfyn velocity-data (ADV or ADP) object to rotate.
 
     out_frame : string {'beam', 'inst', 'earth', 'principal'}
@@ -35,8 +35,10 @@ def rotate2(obj, out_frame='earth', inplace=False):
 
     Returns
     -------
-    objout : :class:`Velocity <data.velocity.Velocity>`
-      The rotated data object. This is `obj` if inplace is True.
+    objout : :class:`~dolfyn.Velocity`
+      The rotated data object. Note that when ``inplace=True``, the
+      input object is modified in-place *and* returned (i.e.,
+      ``objout`` is ``obj``).
 
     """
     rmod = None
