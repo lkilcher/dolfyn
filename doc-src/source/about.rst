@@ -11,6 +11,7 @@ History
 License
 ^^^^^^^
 DOLfYN is released publically by Levi Kilcher
-under the FreeBSD license (see the COPYRIGHT file in the
+under the Creative Commons Attribution 4.0
+International License (see the LICENSE.txt file in the
 :repo:`repository <>`).
 
