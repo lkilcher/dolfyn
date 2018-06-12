@@ -180,11 +180,11 @@ def earth2principal(advo, reverse=False):
     """
 
     if reverse:
-        ang = advo.principal_angle
+        ang = advo['props']['principal_angle']
         cs_now = 'principal'
         cs_new = 'earth'
     else:
-        ang = -advo.principal_angle
+        ang = -advo['props']['principal_angle']
         cs_now = 'earth'
         cs_new = 'principal'
 
