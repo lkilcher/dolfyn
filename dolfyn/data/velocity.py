@@ -86,6 +86,14 @@ class Velocity(TimeData):
 
     """
 
+    def __init__(self, *args, **kwargs):
+        TimeData.__init__(self, *args, **kwargs)
+        self['props'] = {'coord_sys': '????',
+                         'fs': -1,
+                         'inst_type': '?',
+                         'inst_make': '?',
+                         'inst_model': '?'}
+
     @property
     def n_time(self, ):
         """The number of timesteps in the data object."""
@@ -106,7 +114,7 @@ class Velocity(TimeData):
 
         This is simply a shortcut to self['vel'][0]. Therefore,
         depending on the coordinate system of the data object
-        (self.props['coord_sys']), it is:
+        (self['props']['coord_sys']), it is:
 
         - beam:      beam1
         - inst:      x
@@ -122,7 +130,7 @@ class Velocity(TimeData):
 
         This is simply a shortcut to self['vel'][1]. Therefore,
         depending on the coordinate system of the data object
-        (self.props['coord_sys']), it is:
+        (self['props']['coord_sys']), it is:
 
         - beam:      beam2
         - inst:      y
@@ -138,7 +146,7 @@ class Velocity(TimeData):
 
         This is simply a shortcut to self['vel'][2]. Therefore,
         depending on the coordinate system of the data object
-        (self.props['coord_sys']), it is:
+        (self['props']['coord_sys']), it is:
 
         - beam:      beam3
         - inst:      z
@@ -208,17 +216,17 @@ class Velocity(TimeData):
         -----
 
         This function sets (overwrites) the values of
-        ``self.props['principal_angle']``, and
-        ``self.props['coord_sys_principal_ref']``.
+        ``self['props']['principal_angle']``, and
+        ``self['props']['coord_sys_principal_ref']``.
 
         .. morehere: document how exactly the principal angle is calculated.
         """
-        if self.props['coord_sys'].lower() not in ['earth', 'inst',
+        if self['props']['coord_sys'].lower() not in ['earth', 'inst',
                                                    'enu', 'xyz']:
             raise Exception("The principal angle should only be estimated "
                             "if the coordinate system is either 'earth' or "
                             "'inst'.")
-        self.props['coord_sys_principal_ref'] = self.props['coord_sys']
+        self['props']['coord_sys_principal_ref'] = self['props']['coord_sys']
         dt = self.U  # horizontal velocity as a complex number
         if bin is None:
             if dt.ndim > 1:
@@ -232,22 +240,13 @@ class Velocity(TimeData):
         dt = np.ma.masked_invalid(dt)
         # Divide the angle by 2 to remove the doubling done on the previous
         # line.
-        self.props['principal_angle'] = np.angle(
+        self['props']['principal_angle'] = np.angle(
             np.mean(dt, 0, dtype=np.complex128)) / 2
         # Angle returns values between -pi and pi.  I want the
         # principal angle always to be between 0 and pi.  Therefore,
         # add pi to the negative ones.
-        if self.props['principal_angle'] < 0:
-            self.props['principal_angle'] += np.pi
-
-    @property
-    def principal_angle(self,):
-        """
-        Return the principal angle of the data.
-        """
-        if 'principal_angle' not in self.props:
-            self.calc_principal_angle()
-        return self.props['principal_angle']
+        if self['props']['principal_angle'] < 0:
+            self['props']['principal_angle'] += np.pi
 
     @property
     def _repr_header(self, ):
@@ -271,20 +270,20 @@ class Velocity(TimeData):
                 units = 'seconds'
             time_string = time_string.format(delta, units,
                                              dt.strftime('%b %d, %Y %H:%M'))
-
+        p = self['props']
         if len(self.shape) > 1:
             shape_string = '({} bins, {} pings @ {}Hz)'.format(
-                self.shape[0], self.shape[1], self.props['fs'])
+                self.shape[0], self.shape[1], p.get('fs'))
         else:
             shape_string = '({} pings @ {}Hz)'.format(
-                self.shape[0], self.props['fs'])
+                self.shape[0], p.get('fs', '??'))
         return ("<%s data object>\n"
                 "  . %s\n"
                 "  . %s-frame\n"
                 "  . %s\n" %
-                (self.props['inst_type'],
+                (p.get('inst_type'),
                  time_string,
-                 self.props['coord_sys'].upper(),
+                 p.get('coord_sys'),
                  shape_string))
 
     @property
@@ -293,8 +292,8 @@ class Velocity(TimeData):
         The make and model of the instrument that collected the data
         in this data object.
         """
-        return '{} {}'.format(self.props['inst_make'],
-                              self.props['inst_model']).lower()
+        return '{} {}'.format(self['props']['inst_make'],
+                              self['props']['inst_model']).lower()
 
 
 class VelTkeData(TimeData):
@@ -415,7 +414,7 @@ class VelBinner(TimeBinner):
         rawdat = dlfn.read_example('BenchFile01.ad2cp')
 
         # Now initialize the averaging tool:
-        binner = dlfn.VelBinner(n_bin=600, fs=rawdat.props['fs'])
+        binner = dlfn.VelBinner(n_bin=600, fs=rawdat['props']['fs'])
 
         # This computes the basic averages
         avg = binner(rawdat)
