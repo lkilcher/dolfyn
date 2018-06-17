@@ -7,7 +7,7 @@ from ..rotate import rotate2
 
 
 class Velocity(TimeData):
-    """This is the base class for DOLfYN velocity data objects.
+    """This is the base class for velocity data objects.
 
     All ADP and ADV data objects inherit from this base class.
 
@@ -27,7 +27,7 @@ class Velocity(TimeData):
         >>> import dolfyn as dlfn
         >>> dat = dlfn.read_example('BenchFile01.ad2cp')
 
-    In an interactive interpreter, we view the contents of the data
+    In an interactive interpreter, view the contents of the data
     object by::
 
         >>> dat
@@ -222,7 +222,7 @@ class Velocity(TimeData):
         .. morehere: document how exactly the principal angle is calculated.
         """
         if self['props']['coord_sys'].lower() not in ['earth', 'inst',
-                                                   'enu', 'xyz']:
+                                                      'enu', 'xyz']:
             raise Exception("The principal angle should only be estimated "
                             "if the coordinate system is either 'earth' or "
                             "'inst'.")
@@ -296,8 +296,21 @@ class Velocity(TimeData):
                               self['props']['inst_model']).lower()
 
 
-class VelTkeData(TimeData):
+class TKEdata(Velocity):
+    """This is the Turbulence data-object class.
 
+    The attributes and methods defined for this class assume that the
+    ``'tke_vec'`` and ``'stress'`` data entries are included in the
+    data object. These are typically calculated using a
+    :class:`VelBinner` tool, but the method for calculating these
+    variables can depend on the details of the measurement
+    (instrument, it's configuration, orientation, etc.).
+
+    See Also
+    ========
+    :class:`VelBinner`
+
+    """
     @property
     def tauij(self, ):
         n = self.tke_vec
@@ -306,7 +319,7 @@ class VelTkeData(TimeData):
                          [s[0], n[1], s[2]],
                          [s[1], s[2], n[2]]])
 
-    def rotate(self, rmat):
+    def _rotate_tau(self, rmat, cs_from, cs_to):
         # Transpose second index of rmat for rotation
         t = np.einsum('ij...,jlm...,nl...->inm...', rmat, self.tauij, rmat)
         out = type(self)()
@@ -323,25 +336,29 @@ class VelTkeData(TimeData):
 
     @property
     def Ecoh(self,):
-        """
-        Niel Kelley's "coherent energy", i.e. the rms of the stresses.
+        """Coherent turbulent energy
+
+        Niel Kelley's 'coherent turbulence energy', which is the RMS
+        of the Reynold's stresses.
+
+        See: NREL Technical Report TP-500-52353
         """
         # Why did he do it this way, instead of the sum of the magnitude of the
         # stresses?
         return (self.upwp_ ** 2 + self.upvp_ ** 2 + self.vpwp_ ** 2) ** (0.5)
 
+    @property
     def Itke(self, thresh=0):
-        """
-        Turbulence kinetic energy intensity.
+        """Turbulence kinetic energy intensity.
 
         Ratio of sqrt(tke) to velocity magnitude.
         """
         return np.ma.masked_where(self.U_mag < thresh,
                                   np.sqrt(self.tke) / self.U_mag)
 
+    @property
     def I(self, thresh=0):
-        """
-        Turbulence intensity.
+        """Turbulence intensity.
 
         Ratio of standard deviation of horizontal velocity magnitude
         to horizontal velocity magnitude.
@@ -354,49 +371,49 @@ class VelTkeData(TimeData):
         """
         The turbulent kinetic energy (sum of the three components).
         """
-        return self.tke_vec.sum(0) / 2
+        return self['tke_vec'].sum(0) / 2
 
     @property
     def upvp_(self,):
         """
         u'v' Reynolds stress
         """
-        return self.stress[0]
+        return self['stress'][0]
 
     @property
     def upwp_(self,):
         """
         u'w' Reynolds stress
         """
-        return self.stress[1]
+        return self['stress'][1]
 
     @property
     def vpwp_(self,):
         """
         v'w' Reynolds stress
         """
-        return self.stress[2]
+        return self['stress'][2]
 
     @property
     def upup_(self,):
         """
         u'u' component of the tke.
         """
-        return self.tke_vec[0]
+        return self['tke_vec'][0]
 
     @property
     def vpvp_(self,):
         """
         v'v' component of the tke.
         """
-        return self.tke_vec[1]
+        return self['tke_vec'][1]
 
     @property
     def wpwp_(self,):
         """
         w'w' component of the tke.
         """
-        return self.tke_vec[2]
+        return self['tke_vec'][2]
 
 
 class VelBinner(TimeBinner):
@@ -426,7 +443,11 @@ class VelBinner(TimeBinner):
 
     def do_tke(self, indat, out=None):
         if out is None:
-            out = VelTkeData()
+            try:
+                outclass = indat._avg_class
+            except AttributeError:
+                outclass = TKEdata
+            out = outclass()
         out['tke_vec'] = self.calc_tke(indat['vel'])
         out['stress'] = self.calc_stress(indat['vel'])
         return out

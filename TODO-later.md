@@ -52,3 +52,15 @@ File format:
 
 Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
 
+Ideas
+=====
+
+Dynamic Types?
+-------------
+
+Make data objects that automatically change their methods based on the variables present. I'm not exactly sure how to do this, but it may involve metaclasses? One approach would be:
+- Add a hook in the `__setitem__` method that runs a function to check for new variables. Use a dict of var-name tuples that map to base-classes. Then compose the class from the ones that match.
+- If the right vars are present, use metaclass functionality to create a new class composed of the appropriate base-classes.
+- Perhaps the metaclass would be stored in the H5 file, and then this machinery would create the correct class on the fly?
+- However, I'm not sure this approach can modify an object in-place. ? ... OK, it looks like it is possible to change the `__class__` attribute of an object, but this apparently "generall isn't a good idea, since it can lead to some very strange behavior if it is handled incorrectly." Still, it may be worth looking into?
+- Once/if this is done, I can delete the `_avg_class` code.

@@ -93,7 +93,11 @@ class TurbBinner(VelBinner):
         #               "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
         #               .format(self.n_bin))
         if out_type is None:
-            out = type(advr)()
+            try:
+                out_type = advr._avg_class
+            except AttributeError:
+                out_type = type(advr)
+        out = out_type()
         self._check_indata(advr)
         self.do_avg(advr, out)
         noise = advr.get('doppler_noise', [0, 0, 0])
