@@ -40,6 +40,11 @@ def rotate2(obj, out_frame='earth', inplace=False):
       input object is modified in-place *and* returned (i.e.,
       ``objout`` is ``obj``).
 
+    Notes
+    -----
+
+    This function rotates all variables in ``obj.props['rotate_vars']``.
+
     """
     rmod = None
     for ky in rot_module_dict:

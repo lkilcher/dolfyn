@@ -31,7 +31,9 @@ See the `pyDictH5 README <https://github.com/lkilcher/pyDictH5/blob/master/READM
 Rotations and Coordinate Systems
 --------------------------------
 
-Coordinate systems (a.k.a. reference frames) specify the coordinate directions of vector data in the data object. The values in the list `dat.props['rotate_vars']` specifies the vectors that are rotated when changing between different coordinate systems. The first dimension of these vectors are the coordinate systems. DOLfYN supports four primary coordinate systems:
+Coordinate systems (a.k.a. reference frames) specify the coordinate directions of vector data in the data object. The values in the list `dat.props['rotate_vars']` specifies the vectors that are rotated when changing between different coordinate systems. **You can also create `dat._rotate_*` functions to perform additional rotation operations. I need to document these!**
+
+The first dimension of these vectors are the coordinate systems. DOLfYN supports four primary coordinate systems:
 
 - **BEAM**: this is the coordinate system of the 'along-beam' velocities. When a data object is in this coordinate system, only the velocity data (i.e., the variables in `dat.props['rotate_vars']` starting with '`vel'`) is in beam coordinates. Other vector variables listed in `'rotate_vars'` (e.g., `dat.orient.AngRt`, for instruments with IMUs) are in the INST frame. This coordinate system is *not* ortho-normal. When the data object is in BEAM coordinates, the first dimension of the velocity vectors are: [beam1, beam2, ... beamN].
 
