@@ -912,7 +912,7 @@ class NortekReader(object):
         dlta = self.code_spacing('0x11')
         self.config['fs'] = 512 / self.config.user.AvgInterval
         self.n_samp_guess = int(self.filesize / dlta + 1)
-        self.n_samp_guess *= self.config['fs']
+        self.n_samp_guess *= int(self.config['fs'])
 
     def init_AWAC(self,):
         dat = self.data = adp_base.ADPdata()

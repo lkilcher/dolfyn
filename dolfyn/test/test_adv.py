@@ -1,10 +1,7 @@
 import numpy as np
 import dolfyn.adv.api as avm
 from dolfyn.main import read_example as read
-try:
-    from . import base as tb
-except (ValueError, ImportError):
-    import base as tb
+import dolfyn.test.base as tb
 
 load = tb.load_tdata
 save = tb.save_tdata

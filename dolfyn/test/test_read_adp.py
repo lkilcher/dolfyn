@@ -1,8 +1,5 @@
 from dolfyn.main import read_example as read
-try:
-    from . import base as tb
-except (ValueError, ImportError):
-    import base as tb
+import dolfyn.test.base as tb
 
 load = tb.load_tdata
 save = tb.save_tdata
@@ -16,7 +13,7 @@ dat_wr1 = load('winriver01.h5')
 dat_wr2 = load('winriver02.h5')
 
 
-def read_test(make_data=False):
+def test_read(make_data=False):
 
     td_rdi = read('RDI_test01.000')
     td_sig = read('BenchFile01.ad2cp')
