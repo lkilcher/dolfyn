@@ -1,6 +1,7 @@
 from ..data import velocity as dbvel
 import numpy as np
-from dolfyn.rdi import rotate
+from dolfyn.rotate import rdi
+import warnings
 
 deg2rad = np.pi / 180
 
@@ -216,7 +217,14 @@ class ADPbinner(dbvel.VelBinner):
             # The uw (real) component has two minus signs, but the vw (imag)
             # component only has one, therefore:
             stress.imag *= -1
-        stress *= rotate.inst2earth_heading(self)
+
+        # !FIXTHIS!:
+        # - Stress rotations should be **tensor rotations**.
+        # - These should be handled by rotate2.
+        # - Delete the inst2earth_heading fn?
+        warnings.warn("The calc_stresses function does not yet "
+                      "properly handle the coordinate system.")
+        stress *= rdi.inst2earth_heading(self)
         if self.props['coord_sys'] == 'principal':
             stress *= np.exp(-1j * self.props['principal_angle'])
         return stress.real, stress.imag

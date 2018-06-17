@@ -1,5 +1,5 @@
 import numpy as np
-from ..nortek.rotate.vector import earth2principal, inst2earth as nortek_inst2earth
+from .vector import earth2principal, inst2earth as nortek_inst2earth
 
 deg2rad = np.pi / 180.
 

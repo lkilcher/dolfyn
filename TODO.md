@@ -50,6 +50,10 @@ Create a 'contributing to DOLfYN' page.
 - Document need for git-lfs. (Are there other options? Maybe a `get_test_data.py`?)
 - Document how to run tests. (switch to `py.test`?)
 
+FIXTHIS
+=======
+
+Find all instances of !FIXTHIS! and fix them!
 
 Testing
 ======

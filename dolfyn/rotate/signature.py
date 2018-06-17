@@ -1,6 +1,6 @@
 from .vector import earth2principal
-from dolfyn.rdi.rotate import beam2inst
-from .base import _check_declination, euler2orient, _check_rotmat_det, \
+from .rdi import beam2inst
+from .base_nortek import _check_declination, euler2orient, _check_rotmat_det, \
     BadDeterminantWarning
 import numpy as np
 import warnings
