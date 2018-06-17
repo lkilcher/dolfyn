@@ -2,8 +2,8 @@ from __future__ import division
 import numpy as np
 import warnings
 from numpy.linalg import inv
-from .base import _check_declination, euler2orient, _check_rotmat_det, \
-    BadDeterminantWarning, orient2euler
+from .base_nortek import _check_declination, euler2orient, \
+    _check_rotmat_det, BadDeterminantWarning, orient2euler
 
 
 def beam2inst(advo, reverse=False, force=False):

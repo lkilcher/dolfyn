@@ -1,7 +1,7 @@
-from .nortek.rotate import vector as r_vec
-from .nortek.rotate import awac as r_awac
-from .nortek.rotate import signature as r_sig
-from .rdi import rotate as r_rdi
+from . import vector as r_vec
+from . import awac as r_awac
+from . import signature as r_sig
+from . import rdi as r_rdi
 
 # The 'rotation chain'
 rc = ['beam', 'inst', 'earth', 'principal']

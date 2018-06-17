@@ -34,6 +34,6 @@ Examples
 
 from .turbulence import calc_turbulence, TurbBinner
 from . import clean
-from ..nortek.rotate import vector as rotate
+from ..rotate import vector as rotate
 from . import motion
 from ..io.api import read, load
