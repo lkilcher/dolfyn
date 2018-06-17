@@ -49,6 +49,12 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
 
 
 class BadDeterminantWarning(UserWarning):
-    """A warning for the determinant is not equal to 1.
+    """A warning for when the determinant is not equal to 1.
+    """
+    pass
+
+
+class BadDeterminant(Exception):
+    """An error for when the determinant is not equal to 1.
     """
     pass

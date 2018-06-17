@@ -109,6 +109,11 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     # matrix.
     rmat = np.rollaxis(omat, 1)
 
+    if reverse:
+        rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
+    else:
+        rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
+
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
         warnings.warn("Invalid orientation matrix"
@@ -124,11 +129,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                             "be rotated.".format(nm))
         # subsample the orientation matrix depending on the size of the object.
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
-
-    if reverse:
-        rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
-    else:
-        rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
 
     advo.props['coord_sys'] = cs_new
 
@@ -240,7 +240,7 @@ def earth2principal(advo, reverse=False):
                                       advo['orientmat'],
                                       rotmat, )
 
-    rotb.call_rotate_methods(advo, rotmat, 'earth', 'principal')
+    rotb.call_rotate_methods(advo, rotmat, cs_now, cs_new)
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new

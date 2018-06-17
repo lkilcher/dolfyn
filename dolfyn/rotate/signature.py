@@ -69,6 +69,11 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     # matrix.
     rmat = np.rollaxis(rmat, 1)
 
+    if reverse:
+        rotb.call_rotate_methods(advo, rmat, 'earth', 'inst')
+    else:
+        rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
+
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
         warnings.warn("Invalid orientation matrix"
@@ -122,11 +127,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         else:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
-
-    if reverse:
-        rotb.call_rotate_methods(advo, np.rollaxis(rmd[3], 1), 'earth', 'inst')
-    else:
-        rotb.call_rotate_methods(advo, rmd[3], 'inst', 'earth')
 
     advo.props['coord_sys'] = cs_new
 

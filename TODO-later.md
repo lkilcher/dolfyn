@@ -23,6 +23,12 @@ Data Processing
 
 Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
 
+Make `'vel'` a 3-element vector always, and do rotations that way. Have a separate n-element array for `'beamvel'`.
+
+I've implemented stress-rotations, but this needs more testing and checks. Also, need to create an example script. See the `doc-src/source/examples/Reynolds_Stresses.rst` file for more thoughts.
+
+Rotations: we get badly `orientmat` after averaging moving objects. Do quaternions average better? Obviously there are some issues with doing rotations of some data based on the average orientation, but it still seems like we ought to be able to do it, right? Or, do we simply enforce no reverse rotations on averaged objects (except principal->earth?)?
+
 What if I want 30-minute turbulence averages spaced 15-minutes apart?
   - add `n_pad` option to `TurbBinner.__init__`, or
   - Add capability for `n_fft` > `n_bin`?

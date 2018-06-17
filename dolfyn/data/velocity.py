@@ -322,6 +322,25 @@ class TKEdata(Velocity):
                          [s[1], s[2], n[2]]])
 
     def _rotate_tau(self, rmat, cs_from, cs_to):
+        # This function only gets called for inst <-> earth and earth
+        # <-> principal rotations.
+        if not ('stress' in self and 'tke_vec' in self):
+            return
+        _dcheck = rotb._check_rotmat_det(rmat)
+        if not _dcheck.all():
+            # This is an instance of TKEdata, so it has been averaged.
+            if self.props['inst_type'] == 'ADV':
+                raise rotb.BadDeterminant(
+                    "Are you rotating a moving ADV object after averaging? "
+                    "Consider motion correction and rotating to earth frame "
+                    "before calculating stresses and averaging. Then rotate "
+                    "between stationary reference frames.")
+            elif self.props['inst_type'] == 'ADP':
+                raise rotb.BadDeterminant(
+                    "Are you rotating a moving ADP object? "
+                    "Stresses can only be rotated for stationary ADP "
+                    "data.")
+
         # Transpose second index of rmat for rotation
         t = rotb.rotate_tensor(self.tauij, rmat)
         self['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
