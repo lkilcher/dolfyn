@@ -1,10 +1,11 @@
+from . import base as rotb
 from .vector import earth2principal
 from .rdi import beam2inst
-from .base_nortek import _check_declination, euler2orient, _check_rotmat_det, \
-    BadDeterminantWarning
+from .base_nortek import _check_declination, euler2orient
 import numpy as np
 import warnings
 from numpy.linalg import inv
+from . import base as rotb
 
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
@@ -68,13 +69,13 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     # matrix.
     rmat = np.rollaxis(rmat, 1)
 
-    _dcheck = _check_rotmat_det(rmat)
+    _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
         warnings.warn("Invalid orientation matrix"
                       " (determinant != 1) at"
                       " indices: {}."
                       .format(np.nonzero(~_dcheck)[0]),
-                      BadDeterminantWarning)
+                      rotb.BadDeterminantWarning)
 
     # The dictionary of rotation matrices for different sized arrays.
     rmd = {3: rmat, }
@@ -121,6 +122,11 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         else:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
+
+    if reverse:
+        rotb.call_rotate_methods(advo, np.rollaxis(rmd[3], 1), 'earth', 'inst')
+    else:
+        rotb.call_rotate_methods(advo, rmd[3], 'inst', 'earth')
 
     advo.props['coord_sys'] = cs_new
 

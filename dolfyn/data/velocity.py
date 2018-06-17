@@ -4,6 +4,7 @@ from .binned import TimeBinner
 import warnings
 from .time import num2date
 from ..rotate import rotate2
+from ..rotate import base as rotb
 
 
 class Velocity(TimeData):
@@ -321,18 +322,12 @@ class TKEdata(Velocity):
 
     def _rotate_tau(self, rmat, cs_from, cs_to):
         # Transpose second index of rmat for rotation
-        t = np.einsum('ij...,jlm...,nl...->inm...', rmat, self.tauij, rmat)
-        out = type(self)()
-        out['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
-        out['stress'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
-        return out
+        t = rotb.rotate_tensor(self.tauij, rmat)
+        self['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
+        self['stress'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
 
     def tau_is_pd(self, ):
-        t = np.moveaxis(self.tauij, [0, 1], [-2, -1])
-        val = t[..., 0, 0] > 0
-        for idx in [2, 3]:
-            val &= np.linalg.det(t[..., :idx, :idx]) > 0
-        return val
+        rotb.is_positive_definite(self.tauij)
 
     @property
     def Ecoh(self,):

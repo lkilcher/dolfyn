@@ -1,6 +1,4 @@
 import numpy as np
-from numpy.linalg import det
-from dolfyn.base import BadDeterminantWarning
 
 sin = np.sin
 cos = np.cos
@@ -128,15 +126,3 @@ def _check_declination(advo):
         odata['heading'][odata['heading'] < 0] += 360
         odata['heading'][odata['heading'] > 360] -= 360
         advo.props['declination_in_heading'] = True
-
-
-def _check_rotmat_det(rotmat, thresh=1e-3):
-    """Check that the absolute error of the determinant is small.
-
-          abs(det(rotmat) - 1) < thresh
-
-    Returns a boolean array.
-    """
-    if rotmat.ndim > 2:
-        rotmat = np.transpose(rotmat)
-    return np.abs(det(rotmat) - 1) < thresh

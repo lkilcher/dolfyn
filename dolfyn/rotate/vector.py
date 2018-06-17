@@ -2,8 +2,8 @@ from __future__ import division
 import numpy as np
 import warnings
 from numpy.linalg import inv
-from .base_nortek import _check_declination, euler2orient, \
-    _check_rotmat_det, BadDeterminantWarning, orient2euler
+from .base_nortek import _check_declination, euler2orient, orient2euler
+from . import base as rotb
 
 
 def beam2inst(advo, reverse=False, force=False):
@@ -95,53 +95,68 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     odata = advo['orient']
     if hasattr(odata, 'orientmat'):
-        # Take the transpose of the orientation to get the inst->earth rotation
-        # matrix.
-        rmat = np.rollaxis(odata['orientmat'], 1)
-
+        omat = odata['orientmat']
     else:
-        rr = odata['roll'].copy()
-        pp = odata['pitch'].copy()
-        hh = odata['heading'].copy()
-        if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
-            # The end of the data may not have valid orientations
-            lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
-            rr[lastgd:] = rr[lastgd]
-            pp[lastgd:] = pp[lastgd]
-            hh[lastgd:] = hh[lastgd]
+        print("HELLO!!!! WHY ARE WE HERE?")
         if advo._make_model.startswith('nortek vector'):
-            # NOTE: For Nortek Vector ADVs: 'down' configuration means the
-            #       head was pointing UP!  Check the Nortek coordinate
-            #       transform matlab script for more info.  The 'up'
-            #       orientation corresponds to the communication cable
-            #       being up.  This is ridiculous, but apparently a
-            #       reality.
-            rr[odata['orientation_down']] += 180
+            orientation_down = odata['orientation_down']
+        else:
+            orientation_down = None
+        omat = calc_omat(odata['roll'], odata['pitch'], odata['heading'],
+                         orientation_down)
 
-        # Take the transpose of the orientation to get the inst->earth rotation
-        # matrix.
-        rmat = np.rollaxis(euler2orient(pp, rr, hh), 1)
+    # Take the transpose of the orientation to get the inst->earth rotation
+    # matrix.
+    rmat = np.rollaxis(omat, 1)
 
-    _dcheck = _check_rotmat_det(rmat)
+    _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
         warnings.warn("Invalid orientation matrix"
                       " (determinant != 1) at"
                       " indices: {}."
                       .format(np.nonzero(~_dcheck)[0]),
-                      BadDeterminantWarning)
+                      rotb.BadDeterminantWarning)
 
     for nm in rotate_vars:
         n = advo[nm].shape[0]
         if n != 3:
-            # size 5 vectors are the Signature.
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
         # subsample the orientation matrix depending on the size of the object.
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
+    if reverse:
+        rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
+    else:
+        rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
+
     advo.props['coord_sys'] = cs_new
 
     return
+
+
+def calc_omat(rr, pp, hh, orientation_down=None):
+    rr = rr.copy()
+    pp = pp.copy()
+    hh = hh.copy()
+    if np.isnan(rr[-1]) and np.isnan(pp[-1]) and np.isnan(hh[-1]):
+        # The end of the data may not have valid orientations
+        lastgd = np.nonzero(~np.isnan(rr + pp + hh))[0][-1]
+        rr[lastgd:] = rr[lastgd]
+        pp[lastgd:] = pp[lastgd]
+        hh[lastgd:] = hh[lastgd]
+    if orientation_down is not None:
+        # NOTE: For Nortek Vector ADVs: 'down' configuration means the
+        #       head was pointing UP!  Check the Nortek coordinate
+        #       transform matlab script for more info.  The 'up'
+        #       orientation corresponds to the communication cable
+        #       being up.  This is ridiculous, but apparently a
+        #       reality.
+        rr[orientation_down] += 180
+
+    # Take the transpose of the orientation to get the inst->earth rotation
+    # matrix.
+    return euler2orient(pp, rr, hh)
 
 
 def _rotate_vel2body(advo):
@@ -151,7 +166,7 @@ def _rotate_vel2body(advo):
        advo.props['vel_rotated2body'] is True:
         # Don't re-rotate the data if its already been rotated.
         return
-    if not _check_rotmat_det(advo.props['body2head_rotmat']).all():
+    if not rotb._check_rotmat_det(advo.props['body2head_rotmat']).all():
         raise ValueError("Invalid body-to-head rotation matrix"
                          " (determinant != 1).")
     # The transpose should do head to body.
@@ -224,6 +239,8 @@ def earth2principal(advo, reverse=False):
         advo['orientmat'] = np.einsum('ijl,kj->ikl',
                                       advo['orientmat'],
                                       rotmat, )
+
+    rotb.call_rotate_methods(advo, rotmat, 'earth', 'principal')
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new
