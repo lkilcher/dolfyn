@@ -179,6 +179,9 @@ def earth2principal(advo, reverse=False):
 
     """
 
+    if 'principal_angle' not in advo['props']:
+        advo.calc_principal_angle()
+
     if reverse:
         ang = advo['props']['principal_angle']
         cs_now = 'principal'

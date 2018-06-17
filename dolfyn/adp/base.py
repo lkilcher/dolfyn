@@ -94,6 +94,13 @@ class ADPdata(dbvel.Velocity):
         return self.dudz ** 2 + self.dvdz ** 2
 
 
+class ADPavg(ADPdata, dbvel.TKEdata):
+    pass
+
+
+ADPdata._avg_class = ADPavg
+
+
 class ADPbinner(dbvel.VelBinner):
     """An ADP binning (averaging) tool.
 
