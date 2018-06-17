@@ -1,6 +1,6 @@
 from dolfyn.test import test_adv as tr
 from dolfyn.rotate import rotate2 as rotate
-from .base import load_tdata as load, save_tdata as save
+from dolfyn.test.base import load_tdata as load, save_tdata as save
 
 data_equiv = tr.data_equiv
 
@@ -12,8 +12,8 @@ def test_rotate_inst2earth(make_data=False):
     rotate(tdm, 'earth', inplace=True)
 
     if make_data:
-        td.to_hdf5('vector_data01_rotate_inst2earth.h5')
-        tdm.to_hdf5('vector_data_imu01_rotate_inst2earth.h5')
+        save(td, 'vector_data01_rotate_inst2earth.h5')
+        save(tdm, 'vector_data_imu01_rotate_inst2earth.h5')
         return
 
     cd = load('vector_data01_rotate_inst2earth.h5')

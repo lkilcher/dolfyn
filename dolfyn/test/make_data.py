@@ -12,18 +12,19 @@ import test_read_adp as adpr
 import test_rotate_adp as adpro
 from base import rungen
 
-# rungen(advt.read_test(make_data=True))
-# rungen(advt.motion_test(make_data=True))
-# advt.heading_test(make_data=True)
-# advt.turbulence_test(make_data=True)
-# advt.clean_test(make_data=True)
-# rungen(advt.subset_test(make_data=True))
+# rungen(advt.test_read(make_data=True))
+# rungen(advt.test_motion(make_data=True))
+# advt.test_heading(make_data=True)
+# advt.test_turbulence(make_data=True)
+# advt.test_clean(make_data=True)
+# rungen(advt.test_subset(make_data=True))
 # rungen(advro.test_rotate_inst2beam(make_data=True))
 # rungen(advro.test_rotate_inst2earth(make_data=True))
+# rungen(advro.test_rotate_earth2inst(make_data=True))
 # rungen(advro.test_rotate_earth2principal(make_data=True))
 
 
-# rungen(adpr.read_test(make_data=True))
+# rungen(adpr.test_read(make_data=True))
 # rungen(adpro.test_rotate_beam2inst(make_data=True))
 # rungen(adpro.test_rotate_inst2earth(make_data=True))
 # rungen(adpro.test_rotate_earth2inst(make_data=True))

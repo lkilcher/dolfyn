@@ -1,5 +1,5 @@
 from dolfyn.test import test_read_adp as tr
-from .base import load_tdata as load, save_tdata as save, data_equiv
+from dolfyn.test.base import load_tdata as load, save_tdata as save, data_equiv
 
 
 def test_rotate_beam2inst(make_data=False):

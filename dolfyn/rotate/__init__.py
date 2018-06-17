@@ -1,1 +1,1 @@
-from main import rotate2
+from .main import rotate2

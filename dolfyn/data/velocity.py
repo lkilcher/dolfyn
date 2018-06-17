@@ -93,7 +93,8 @@ class Velocity(TimeData):
                          'fs': -1,
                          'inst_type': '?',
                          'inst_make': '?',
-                         'inst_model': '?'}
+                         'inst_model': '?',
+                         'has imu': False}
 
     @property
     def n_time(self, ):
