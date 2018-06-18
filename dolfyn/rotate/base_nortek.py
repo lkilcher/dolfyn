@@ -86,9 +86,9 @@ def orient2euler(advo):
 def _check_declination(advo):
     odata = advo['orient']
     if 'declination' not in advo.props:
-        if 'orientmat' in odata and \
+        if advo.props['has imu'] and \
            advo._make_model.startswith('nortek vector'):
-            # Vector's don't have p,r,h when they have an orientmat.
+            # Vector's don't have p,r,h when they have an imu
             p, r, h = orient2euler(odata['orientmat'])
             odata['pitch'] = p
             odata['roll'] = r
@@ -96,9 +96,10 @@ def _check_declination(advo):
         # warnings.warn(
         #     'No declination in adv object.  Assuming a declination of 0.')
         return
+    # else:
 
-    if 'orientmat' in odata and \
-       not advo.props.get('declination_in_orientmat', False):
+    if advo.props['has imu'] and \
+            not advo.props.get('declination_in_orientmat', False):
         # Declination is defined as positive if MagN is east of
         # TrueN. Therefore we must rotate about the z-axis by minus
         # the declination angle to get from Mag to True.

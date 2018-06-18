@@ -97,7 +97,10 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     if hasattr(odata, 'orientmat'):
         omat = odata['orientmat']
     else:
-        print("HELLO!!!! WHY ARE WE HERE?")
+        # !CLEANUP! This block should be gone now that we're
+        # calculating orientmat in read_nortek
+        warnings.warn("Something is strange: perhaps you're using an "
+                      "old data file?")
         if advo._make_model.startswith('nortek vector'):
             orientation_down = odata['orientation_down']
         else:
@@ -153,9 +156,6 @@ def calc_omat(rr, pp, hh, orientation_down=None):
         #       being up.  This is ridiculous, but apparently a
         #       reality.
         rr[orientation_down] += 180
-
-    # Take the transpose of the orientation to get the inst->earth rotation
-    # matrix.
     return euler2orient(pp, rr, hh)
 
 

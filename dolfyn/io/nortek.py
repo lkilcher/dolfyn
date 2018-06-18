@@ -18,6 +18,7 @@ from .base import WrongFileType
 import warnings
 from ..data.base import TimeData
 from ..data.base import config
+from ..rotate.vector import calc_omat
 import io
 try:
     file_types = (file, io.IOBase)
@@ -90,6 +91,15 @@ def read_nortek(filename,
         rdr.readfile()
     rdr.dat2sci()
     dat = rdr.data
+
+    if 'orient.orientmat' not in dat:
+        od = dat['orient']
+        if 'orientation_down' in od:
+            o_down = od['orientation_down']
+        else:
+            o_down = None
+        od['orientmat'] = calc_omat(od['roll'], od['pitch'], od['heading'],
+                                    o_down)
 
     dat.props.update(json_props)
 
