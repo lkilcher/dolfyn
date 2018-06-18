@@ -24,7 +24,7 @@ Documentation
 Document variables in data objects
 - document `props` attribute.
 - Add a units section.
-  - use radians everywhere?
+  - use radians everywhere? (started this on branch: `reorg-radians`)
 
 Create a file I/O page
 - Document read function (io.api.read)
@@ -64,7 +64,7 @@ Tests should use API-level functions.
 - This means I need to better define the API.
 
 Coverage
-- Add `earth2principal` rotation tests for ADVs?
+- Add `earth2principal` rotation tests for ADPs?
 - Add averaging tests for ADP.
 
 Data Processing
