@@ -23,6 +23,11 @@ Data Processing
 
 Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
 
+I've done a first-ass at implementing stress-rotations, but isn't as straightforward as originally anticipated.  This is in the `reorg-add_omat` branch. The big issue is: `orientmat` is bad (`det != 1`) after averaging data from a moving instrument.
+    - Do quaternions average better?
+    - Obviously there are some issues with doing rotations of some data based on the average orientation, but it still seems like we ought to be able to do it if it's moving slowly, right?
+    - Should we enforce no reverse rotations on averaged objects (unless they are fixed, e.g. principal->earth?, or other check for no motion?)?
+
 What if I want 30-minute turbulence averages spaced 15-minutes apart?
   - add `n_pad` option to `TurbBinner.__init__`, or
   - Add capability for `n_fft` > `n_bin`?
