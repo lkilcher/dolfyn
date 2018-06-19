@@ -621,7 +621,7 @@ class Loader(DataFactory):
         """
 
         for grp in list(self.get_group(where).values()):
-            if grp.__class__ is h5.highlevel.Group:
+            if grp.__class__ is h5.Group:
                 gnm = self.get_name(grp)
 
                 if groups is None:
