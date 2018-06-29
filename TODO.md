@@ -3,11 +3,13 @@ Finalize the API
 
     import dolfyn as dlfn
     dlfn.adv  # for adv-specific funcs
+    dlfn.adv.correct_motion  # only in dolfyn.adv for now?
+    dlfn.adv.TurbBinner
     dlfn.adp  # for adp-specific funcs
     dlfn.plot  # need to figure out what's in this module
     dlfn.rotate2
-    dlfn.correct_motion  # only in dolfyn.adv for now?
     dlfn.VelBinner  # class for doing averaging + turbulence analysis
+    dlfn.clean
 
 Otherwise, data objects have the following methods:
 
@@ -23,6 +25,7 @@ Documentation
 
 Document variables in data objects
 - document `props` attribute.
+  - declination
 - Add a units section.
   - use radians everywhere? (started this on branch: `reorg-radians`)
 
@@ -35,7 +38,7 @@ Create a file I/O page
 - Document load/save functions briefly.
 
 Time format options:
-- datetime objects (date strings in hdf5 files?, with timezone from .userdata.json file?)
+- datetime objects (date strings in hdf5 files?, 8601 strings?, with timezone from .userdata.json file?)
 - Does this move to 'TODO-later'?
 
 Add some examples to the plotting tools page
