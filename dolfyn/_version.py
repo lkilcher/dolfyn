@@ -1,6 +1,6 @@
-__version__ = '0.9.0'
+__version__ = '0.9.0-pre1'
 __prog_name__ = 'DOLfYN'
-__version_date__ = 'April-3-2018'
+__version_date__ = 'August-13-2018'
 
 
 def ver2tuple(ver):
@@ -13,7 +13,7 @@ def ver2tuple(ver):
     # '##' and ending with '##' is for specially handled groups.
     # Version 1.2: now using time_array.
     #         '_' is for essential groups.
-    # Version 1.3: Now load/unload is fully symmetric (needed for __eq__ tests).
+    # Version 1.3: Now load/unload is fully symmetric (needed for __eq__ tests)
     #         Added _config_type to i/o.
     if isinstance(ver, (float, int)):
         return (0, int(ver), int(round(10 * (ver % 1))))
@@ -29,5 +29,6 @@ def ver2tuple(ver):
             pass
         out.append(val)
     return tuple(out)
+
 
 version_info = ver2tuple(__version__)
