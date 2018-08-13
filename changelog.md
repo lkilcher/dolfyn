@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add continuous integration on Appveyor, Travis-ci, codecov
 - Added a universal 'read' function.
 - Add capability to read AD2CP files.
+- Changed back to a Apache license (CC4.0 isn't quite right for software)
 
 ## Version 0.8.2 (January 1, 2018)
 
