@@ -314,6 +314,10 @@ class TKEdata(Velocity):
 
     """
     @property
+    def shape(self, ):
+        return self.tke_vec[0].shape
+
+    @property
     def tauij(self, ):
         n = self.tke_vec
         s = self.stress
