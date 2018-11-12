@@ -824,19 +824,22 @@ class adcp_loader(object):
                 self.finalize()
                 return dat
             self.ensemble.clean_data()
-            if self.ensemble.rtc[0, 0] < 100:
-                self.ensemble.rtc[0, :] += century
-            dats = date2num(datetime.datetime(self.ensemble.rtc[0, :],
-                                              self.ensemble.rtc[1, :],
-                                              self.ensemble.rtc[2, :],
-                                              self.ensemble.rtc[3, :],
-                                              self.ensemble.rtc[4, :],
-                                              self.ensemble.rtc[5, :],
-                                              1e4 * self.ensemble.rtc[6, :]))
-            #print( self.ensemble.bt_range )
+            # Fix the 'real-time-clock' century
+            clock = self.ensemble.rtc[:, :]
+            if clock[0, 0] < 100:
+                clock[0, :] += century
+            # Copy the ensemble to the dataset.
             for nm in self.vars_read:
                 get(dat, nm)[..., iens] = self.avg_func(self.ensemble[nm])
-            dat['mpltime'][iens] = np.median(dats)
+            try:
+                dats = date2num(datetime.datetime(*clock[:6],
+                                                  microsecond=clock[6] * 10000))
+            except ValueError:
+                warnings.warn("Invalid time stamp in ping {}.".format(
+                    int(self.ensemble.number[0])))
+                dat['mpltime'][iens] = np.NaN
+            else:
+                dat['mpltime'][iens] = np.median(dats)
         self.finalize()
         return dat
 

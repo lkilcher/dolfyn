@@ -54,5 +54,5 @@ def test_read(make_data=False):
 
 if __name__ == '__main__':
 
-    for func, dat1, dat2, msg in read_test():
+    for func, dat1, dat2, msg in test_read():
         func(dat1, dat2, msg)
