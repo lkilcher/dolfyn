@@ -17,6 +17,12 @@ import copy
 from six import string_types
 import sys
 from .. import _version as _ver
+try:
+    # There is an organizational inconsistenty in different versions of h5py.
+    # Some have the 'highlevel' module
+    h5_group = h5.highlevel.Group
+except AttributeError:
+    h5_group = h5.Group
 
 
 if sys.version_info >= (3, 0):
@@ -621,7 +627,7 @@ class Loader(DataFactory):
         """
 
         for grp in list(self.get_group(where).values()):
-            if grp.__class__ is h5.highlevel.Group:
+            if grp.__class__ is h5_group:
                 gnm = self.get_name(grp)
 
                 if groups is None:
