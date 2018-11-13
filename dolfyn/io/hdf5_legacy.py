@@ -18,6 +18,12 @@ from six import string_types
 import sys
 from .. import _version as _ver
 import warnings
+try:
+    # There is an organizational inconsistenty in different versions of h5py.
+    h5_group = h5.Group
+except AttributeError:
+    # This is going away, but just in case we're using a version that doesn't have the above, here is this
+    h5_group = h5.highlevel.Group
 
 
 if sys.version_info >= (3, 0):
@@ -30,8 +36,8 @@ if sys.version_info >= (3, 0):
             return pkl.loads(s, encoding='bytes')
 
 else:  # Python 2
-    input = raw_input
-    import cPickle as pkl
+    input = raw_input  # pylint: disable=undefined-variable
+    import cPickle as pkl # pylint: disable=undefined-variable
 
     def pkl_loads(s):
         return pkl.loads(s)
@@ -628,7 +634,7 @@ class Loader(base.DataFactory):
         """
 
         for grp in list(self.get_group(where).values()):
-            if grp.__class__ is h5.highlevel.Group:
+            if grp.__class__ is h5_group:
                 gnm = self.get_name(grp)
 
                 if groups is None:
