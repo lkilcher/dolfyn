@@ -21,8 +21,11 @@ debug/
 \.#*
 *flymake.py
 
-tmp/
-
 .DS_Store
 
+# These are folders from forward-versions of dolfyn that need to be ignored.
 tmp/
+.cache/
+.pytest_cache/
+dolfyn/example_data/
+doc-src/source/_as_gen/
