@@ -1,0 +1,13 @@
+channels:
+  - anaconda
+
+dependencies:
+  - python=2.7
+  - matplotlib
+  - numpy
+  - scipy=1.1
+  - h5py
+  - pip:
+     - "git+https://github.com/lkilcher/pyDictH5.git@v0.2.1#egg=pyDictH5"
+# Recommended:
+#  - ipython=4.2
