@@ -1,0 +1,23 @@
+package:
+  name: dolfyn
+  version: 0.8.3
+
+source:
+  git_rev: v0.8.3
+  git_url: https://github.com/lkilcher/dolfyn.git
+
+requirements:
+  host:
+    - python=2.7
+    - setuptools
+    - h5py
+    - matplotlib
+    - scipy
+
+  run:
+    - python
+
+about:
+  home: https://lkilcher.github.io/dolfyn/
+  license: Apache 2.0
+  license_file: License.txt
