@@ -3,8 +3,9 @@ package:
   version: 0.8.3
 
 source:
-  git_rev: v0.8.3
-  git_url: https://github.com/lkilcher/dolfyn.git
+  fn: dolfyn-0.8.3.tar.gz
+  sha256: 7e7bed9b843efbfc0611af888d070291898f21a956a2345e6a471a0dad37322e
+  url: https://files.pythonhosted.org/packages/4a/dc/1bff65455c39850c4d1a648250986a70ba50288489117c73fa7ee0bc28a8/dolfyn-0.8.3.tar.gz
 
 requirements:
   host:
