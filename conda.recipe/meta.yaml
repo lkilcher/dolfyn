@@ -1,0 +1,24 @@
+package:
+  name: dolfyn
+  version: "0.8.0"
+
+source:
+  path: ..
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - scipy
+    - h5py
+  run:
+    - python
+    - numpy
+    - scipy
+    - h5py
+
+about:
+  home: http://lkilcher.github.io/dolfyn/
+  license: Creative Commons Attribution 4.0
+  license_file: LICENSE.txt

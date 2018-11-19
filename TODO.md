@@ -70,3 +70,20 @@ Testing Framework
 --------
 
 - More tests for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
+
+Building
+=======
+
+Merge new/old build approaches.
+
+Build a conda-build script
+
+- build
+- convert
+- upload
+
+Test conda on win+linux
+
+Build py3 conda installs
+
+- Test
