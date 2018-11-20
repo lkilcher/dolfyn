@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 
 
-	
+
 ## Version 0.9.0
 
 - Changed the io layer to use pyDictH5 for hdf5 files. This is another
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add continuous integration on Appveyor, Travis-ci, codecov
 - Added a universal 'read' function.
 - Add capability to read AD2CP files.
+- Add conda build recipe.
 
 ## Version 0.8.2 (January 1, 2018)
 

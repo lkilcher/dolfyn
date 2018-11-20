@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 import argparse
 import dolfyn.adv.api as avm
 
