@@ -10,7 +10,7 @@ import numpy as np
 # import pylab as plb
 # from pylab import plot,show
 
-from . import rotate
+from ..rotate import rdi as rotate
 
 deg2rad = np.pi / 180
 
@@ -233,8 +233,8 @@ class binner(dbvel.VelBinnerTke):
         "Measurements of Reynolds stress profiles in unstratified
         tidal flow"
         """
-        fac = 4 * np.sin(self.config.beam_angle * deg2rad) * \
-            np.cos(self.config.beam_angle * deg2rad)
+        fac = 4 * np.sin(self['config']['beam_angle'] * deg2rad) * \
+            np.cos(self['config']['beam_angle'] * deg2rad)
         # Note: Stacey defines the beams incorrectly for Workhorse ADCPs.
         #       According to the workhorse coordinate transformation
         #       documentation, the instrument's:
