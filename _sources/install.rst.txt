@@ -8,11 +8,11 @@ Download and Install
     $ pip install dolfyn
 
 If you want to download the source code locally so that you can modify
-it, you can clone the repository:
+it, you can clone the repository::
     
    $ git clone https://github.com/lkilcher/dolfyn/ <download_location>
 
-And then use pip to install it as an 'editable' package:
+And then use pip to install it as an 'editable' package::
 
      $ cd <download_location>
      $ pip install -e ./
