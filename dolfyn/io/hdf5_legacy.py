@@ -6,7 +6,7 @@ See the h5py and HDF5 documentation for further info on the details of
 this approach.
 
 """
-
+# pylint: disable=no-member
 
 import h5py as h5
 import numpy as np
@@ -37,7 +37,7 @@ if sys.version_info >= (3, 0):
 
 else:  # Python 2
     input = raw_input  # pylint: disable=undefined-variable
-    import cPickle as pkl # pylint: disable=undefined-variable
+    import cPickle as pkl # pylint: disable=undefined-variable, import-error
 
     def pkl_loads(s):
         return pkl.loads(s)
@@ -521,7 +521,7 @@ class Loader(base.DataFactory):
                         except ImportError:
                             # This is to catch a redefinition of data objects.
                             u = pkl_loads(s.replace('cdata_base', 'cdata'))
-                        meta = db.ma.varMeta(pkl_loads(nd.attrs.get('_name')),
+                        meta = db.ma.varMeta(pkl_loads(nd.attrs.get('_name')),  # pylint: disable=assignment-from-none
                                              u,
                                              pkl_loads(nd.attrs.get('dim_names'))
                         )
@@ -612,7 +612,7 @@ class Loader(base.DataFactory):
         return out
 
     def iter_groups(self, groups=None, where='/', no_essential=False):
-        """
+        r"""
         Returns an iterator of the groups in `groups`.
         Here is how `groups` specification works:
 
@@ -624,7 +624,7 @@ class Loader(base.DataFactory):
         +-------------+-----------------------------------------------+
         | [<a list>]  |  Iterates over the groups in the list (plus   |
         |             |  the data in 'essential' groups, ie those     |
-        |             |  starting with '_'\*\*\*).                    |
+        |             |  starting with '_').                          |
         +-------------+-----------------------------------------------+
         | 'ALL'       |  Iterates over all the data in the file.      |
         +-------------+-----------------------------------------------+
@@ -679,7 +679,7 @@ def convert_from_legacy(dat):
     if '.adcp_raw' in typestr:
         from ..adp.base import adcp_raw as TypeNow
     elif '.adcp_binned' in typestr:
-        from ..adp.base import adcp_binned as TypeNow
+        from ..adp.base_legacy import adcp_binned as TypeNow
     elif '.ADVraw' in typestr:
         from ..adv.base import ADVraw as TypeNow
     elif '.ADVbinned' in typestr:
@@ -803,11 +803,3 @@ def convert_rdi(dat, out):
     odat = out['orient']
     for ky in ['roll', 'pitch', 'heading']:
         odat[ky] = odat.pop(ky + '_deg')
-
-
-if __name__ == '__main__':
-    # filename='/home/lkilcher/data/eastriver/advb_10m_6_09.h5'
-    filename = '/home/lkilcher/data/ttm_dem_june2012/TTM_Vectors/TTM_NRELvector_Jun2012_b5m.h5'
-    import adv
-    ldr = loader(filename, adv.type_map)
-    dat = ldr.load()

@@ -2,6 +2,7 @@
 Holds the primary high-level interfaces for the io (read/write)
 package.
 """
+# pylint: disable=no-member
 import sys
 import inspect
 from ..data import base_legacy as db
