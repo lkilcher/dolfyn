@@ -69,10 +69,9 @@ To rotate a data object into one of these coordinate systems, simply use the `ro
 Units
 -----
 
-|dlfn| generally uses the `*MKS* system <https://en.wikipedia.org/wiki/MKS_system_of_units>`_, with most angles in degrees. This table lists the units of all variables in |dlfn| data objects:
+|dlfn| generally uses the `*MKS* system <https://en.wikipedia.org/wiki/MKS_system_of_units>`_, with most angles in degrees.
 
-.. csv-table:: Units Table!
+.. csv-table:: Table 1: The units of common variables found in |dlfn| data objects.
                :header-rows: 1
                :widths: 15, 20, 15, 50
                :file: ./units.csv
-

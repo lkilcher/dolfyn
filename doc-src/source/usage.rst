@@ -35,7 +35,7 @@ In an interactive shell, typing the variable name followed by enter/return will 
     + signal                   : + DATA GROUP
     + sys                      : + DATA GROUP
 
-This view reveals a few detailed attributes of the data object (above line), and the underlying data structure (below). The attributes indicate that this ADV dataset is 3.02 seconds long, started at noon on June 12, 2012, is in the 'instrument' reference-frame, and contains 99 pings at a 32Hz sample-rate. The information below the line shows the variable names in the ADV dataset. ``mpltime`` is a `<~dolfyn.data.time.time_array>` that contains the time information in `MatPlotLib date <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_ format. ``vel`` is the velocity data. The other entries (with ``+`` next to them) are 'data groups', which contain additional data. These variables can be accessed using dict-style syntax, *or* attribute-style syntax. For example::
+This view reveals a few detailed attributes of the data object (above line), and the underlying data structure (below). The attributes indicate that this ADV dataset is 3.02 seconds long, started at noon on June 12, 2012, is in the 'instrument' reference-frame, and contains 99 pings at a 32Hz sample-rate. The information below the line shows the variable names in the ADV dataset. ``mpltime`` is a :class:`~dolfyn.data.time.time_array` that contains the time information in `MatPlotLib date <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_ format. ``vel`` is the velocity data. The other entries (with ``+`` next to them) are 'data groups', which contain additional data. These variables can be accessed using dict-style syntax, *or* attribute-style syntax. For example::
 
   >>> dat['mpltime']
   time_array([734666.50003436, 734666.50003472, 734666.50003509, ...,
@@ -69,6 +69,7 @@ The data in data objects is organized into data groups to facilitate easier view
 - ``config``: this data group contains instrument-configuration data that was loaded from the source file. This is a long list of information that (*mostly*) inherits attribute names from the manufacturers documentation (i.e., see that documentation for info on these variables).
 
 - ``env``: contains *environmental* data such as temperature, pressure, or the speed of sound::
+
      <class 'dolfyn.data.base.TimeData'>: Data Object with Keys:
       *------------
       | c_sound                  : <array; (120530,); float32>
@@ -105,7 +106,6 @@ Here we see that the ``props`` attribute contains the `'coord_sys'` entry, which
       | error                    : <array; (120530,); uint8>
       | status                   : <array; (120530,); uint8>
 
-  
 Saving and loading data
 ------------------------------
 
@@ -116,3 +116,36 @@ A data object can be saved for later use using the ``to_hdf5`` method::
 To load this data into memory (e.g., in a different script), use |dlfn|'s load function::
 
     >>> dat2 = dlfn.load('my_data_file.h5')
+
+Cleaning data
+----------------
+
+|dlfn| includes tools for cleaning ADV data in the `dlfn.adv.clean` module. Take a look at those functions for more details. Tools for cleaning ADP data have not yet been developed.
+  
+Averaging data
+------------------
+
+|dlfn| includes tools for averaging data and computing turbulence
+statistics from ADV and ADP data. These tools are Python classes
+('averaging objects') that are initialized with specific averaging
+window details, and then you call methods of the averaging object to
+compute averages or turbulence statistics. For example::
+
+  # First initalize the averaging tool
+  >>> avg_tool = dlfn.VelBinner(4800, fs=16)
+
+  # Then compute averages of all variables in dat
+  >>> avg_dat = avg_tool(dat)
+
+Here, we have initialized an averaging tool, `avg_tool`, to bin 16 Hz data into 4800-point segments (5 minutes). Then when we call the averaging tool on a data object, it returns an 'averaged' data object, where all the data field names are the same, but the fields contain averaged data. The averaging tool also includes many tools for computing statistics other than averages, for example::
+
+  # Compute the power-spectral-density of the velocity data, and store it in 
+  >>> avg_dat['Spec.vel'] = avg_tool.psd(dat['vel'])
+
+  # Compute the Reynold's stresses (cross-correlations) of the velocity data:
+  >>> avg_dat['stress'] = avg_tool.calc_stress(dat['vel'])
+
+There is also the :class:`~dlfn.adv.turbulence.TurbBinner`, which is based on
+:class:`~dolfyn.data.velocity.VelBinner`, and has several methods for computing additional
+statistics from ADV data. Take a look at the API documentation for both of
+those tools for more details.

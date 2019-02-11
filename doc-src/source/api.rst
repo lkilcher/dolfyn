@@ -31,8 +31,26 @@ processing and data analysis tasks.
 .. autoclass:: dolfyn.ADVdata
    :members:
 
+|dlfn| tools and functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-|dlfn| functions
-^^^^^^^^^^^^
-  
+.. autosummary::
+   :toctree: _as_gen
+   :nosignatures:
+
+   dolfyn.rotate2
+   dolfyn.adv.motion.CorrectMotion
+   dolfyn.VelBinner
+   dolfyn.adv.turbulence.TurbBinner
+   
 .. autofunction:: dolfyn.rotate2
+
+.. autoclass:: dolfyn.adv.motion.CorrectMotion
+   :members:
+
+.. autoclass:: dolfyn.VelBinner
+   :members:
+   :inherited-members:
+
+.. autoclass:: dolfyn.adv.turbulence.TurbBinner
+   :members:

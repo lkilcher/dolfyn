@@ -144,7 +144,6 @@ simple, you can either:
 
         adv.motion.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
 
-
 2. For users who want to perform motion correction with minimal Python
    scripting, the :repo:`motcorrect_vectory.py
    <tree/master/scripts/motcorrect_vector.py>` script can be used. So long as
