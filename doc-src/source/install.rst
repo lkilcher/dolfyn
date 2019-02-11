@@ -3,35 +3,20 @@
 Download and Install
 ====================
 
-On Windows I recommend getting PythonXY, because it comes with a
-functioning pip installation. On a Mac, you probably need to install
-the command line tools (xcode).
-
-|dlfn| can be installed in several different ways depending on your
-system.  If you are on a system with a working version of Python that includes
-pip, you can simply do::
+|dlfn| can be installed using pip::
 
     $ pip install dolfyn
 
-For systems that do not include pip you will need to install the
-:ref:`dependencies` manually. From that point onward you can download
-|dlfn| from :repo:`the repository <>`. For example, if git is
-installed, you can::
-
+If you want to download the source code locally so that you can modify
+it, you can clone the repository:
+    
    $ git clone https://github.com/lkilcher/dolfyn/ <download_location>
 
-If `<download_location>` is not specified, the repository will be
-created in the current directory in a new `dolfyn` folder. Once you
-have downloaded |dlfn|, you may either:
-
-a) install it into your Python packages repository by executing the setup.py script::
+And then use pip to install it as an 'editable' package:
 
      $ cd <download_location>
-     $ python setup.py install
+     $ pip install -e ./
 
-b) use it out of `<download_location>`.
-
-For information on how to use |dlfn| consult the :doc:`usage` page.
 
 .. _datafiles:
 
