@@ -4,6 +4,7 @@ import scipy.signal as sig
 from scipy.integrate import cumtrapz
 from ..rotate import vector as rot
 import warnings
+from ..rotate.base import deg2rad
 
 
 def get_body2imu(make_model):
@@ -234,9 +235,9 @@ def _calc_probe_pos(advo, separate_probes=False):
        p['inst_model'].lower == 'vector':
         r = 0.076
         # The angle between the x-y plane and the probes
-        phi = -30 * rot.deg2rad
+        phi = -30 * deg2rad
         # The angles of the probes from the x-axis:
-        theta = np.array([0., 120., 240.]) * rot.deg2rad
+        theta = np.array([0., 120., 240.]) * deg2rad
         return (np.dot(advo.props['body2head_rotmat'].T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
@@ -589,9 +590,9 @@ class CorrectMotion(object):
            p['inst_model'].lower == 'vector':
             r = 0.076
             # The angle between the x-y plane and the probes
-            phi = -30 * rot.deg2rad
+            phi = -30 * deg2rad
             # The angles of the probes from the x-axis:
-            theta = np.array([0., 120., 240.]) * rot.deg2rad
+            theta = np.array([0., 120., 240.]) * deg2rad
             return (np.dot(advo.props['body2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
@@ -647,6 +648,9 @@ class CorrectMotion(object):
             raise Exception('The data object appears to already have been '
                             'motion corrected.')
 
+        if not advo.props['inst_type'] == 'ADV':
+            raise Exception("This motion correction tool currently only works for ADV data objects.")
+
         calcobj = CalcMotion(advo,
                              accel_filtfreq=self.accel_filtfreq,
                              vel_filtfreq=self.accelvel_filtfreq,
@@ -658,9 +662,9 @@ class CorrectMotion(object):
                                          'orient.accel', 'orient.acclow',
                                          'orient.angrt', 'orient.mag'}
         else:
-            advo.props['rotate_vars'].update({'orient.velrot', 'orient.velacc',
-                                              'orient.acclow',
-                                              'orient.velraw'})
+            advo.props['rotate_vars'].update({'velraw',
+                                              'orient.velrot', 'orient.velacc',
+                                              'orient.acclow', })
 
         self._rotate_vel2body(advo)
         self._calc_rot_vel(calcobj)

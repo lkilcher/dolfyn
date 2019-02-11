@@ -68,18 +68,19 @@ def test_read(make_data=False):
 
 
 def test_motion(make_data=False):
+    mc = avm.motion.CorrectMotion()
     tdm = dat_imu.copy()
-    avm.motion.correct_motion(tdm)
+    mc(tdm)
     tdm10 = dat_imu.copy()
     # Include the declination.
     tdm10.props['declination'] = 10.0
-    avm.motion.correct_motion(tdm10)
+    mc(tdm10)
     tdm0 = dat_imu.copy()
     # Include the declination.
     tdm0.props['declination'] = 0.0
-    avm.motion.correct_motion(tdm0)
+    mc(tdm0)
     tdmj = dat_imu_json.copy()
-    avm.motion.correct_motion(tdmj)
+    mc(tdmj)
 
     if make_data:
         save(tdm, 'vector_data_imu01_mc.h5')

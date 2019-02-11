@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.linalg import det
 
+deg2rad = np.pi / 180
+
 
 def _find_method(obj, string):
     """Find methods in object that starts with `string`.

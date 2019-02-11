@@ -32,6 +32,7 @@ from .data.velocity import VelBinner, Velocity
 from .adp.base import ADPdata, ADPbinner
 from .adv.base import ADVdata
 from . import doctools as _dt
+from .adv import api as advtools
 
 
 __doc__ = __doc__.format(

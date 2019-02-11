@@ -1,3 +1,4 @@
+# pylint: disable=anomalous-backslash-in-string
 """
 This module contains routines for reading and working with adv
 data. It contains:
