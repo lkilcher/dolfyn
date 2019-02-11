@@ -6,10 +6,10 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adv.turbulence &#8212; DOLfYN 0.9.0 documentation</title>
+    <title>dolfyn.adv.turbulence &#8212; DOLfYN 0.9.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
@@ -35,7 +35,6 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">..data.velocity</span> <span class="k">import</span> <span class="n">VelBinner</span>
-<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">ADVbinned</span>
 <span class="kn">from</span> <span class="nn">..data</span> <span class="k">import</span> <span class="n">base</span> <span class="k">as</span> <span class="n">db</span>
 <span class="kn">from</span> <span class="nn">..tools.misc</span> <span class="k">import</span> <span class="n">slice1d_along_axis</span><span class="p">,</span> <span class="n">nans_like</span>
 <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">cbrt</span>
@@ -44,7 +43,7 @@
 <span class="n">kappa</span> <span class="o">=</span> <span class="mf">0.41</span>
 
 
-<div class="viewcode-block" id="TurbBinner"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner">[docs]</a><span class="k">class</span> <span class="nc">TurbBinner</span><span class="p">(</span><span class="n">VelBinner</span><span class="p">):</span>
+<div class="viewcode-block" id="TurbBinner"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner">[docs]</a><span class="k">class</span> <span class="nc">TurbBinner</span><span class="p">(</span><span class="n">VelBinner</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes various averages and turbulence statistics from cleaned</span>
@@ -61,7 +60,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="TurbBinner.__call__"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">advr</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="n">ADVbinned</span><span class="p">,</span>
+<div class="viewcode-block" id="TurbBinner.__call__"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">advr</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">omega_range_epsilon</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">],</span>
                  <span class="n">Itke_thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -71,7 +70,7 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 
-<span class="sd">        advr : :class:`ADVraw &lt;base.ADVraw&gt;`</span>
+<span class="sd">        advr : :class:`ADVdata &lt;base.ADVdata&gt;`</span>
 <span class="sd">          The raw adv data-object to `bin`, average and compute</span>
 <span class="sd">          turbulence statistics of.</span>
 
@@ -127,6 +126,11 @@
         <span class="c1">#               &quot; is being deprecated. Use the functional form, e.g. &#39;&quot;</span>
         <span class="c1">#               &quot;adv.turbulence.calc_turbulence(advr, n_bin={})&#39;, instead.&quot;</span>
         <span class="c1">#               .format(self.n_bin))</span>
+        <span class="k">if</span> <span class="n">out_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">out_type</span> <span class="o">=</span> <span class="n">advr</span><span class="o">.</span><span class="n">_avg_class</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">out_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">advr</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">out_type</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_indata</span><span class="p">(</span><span class="n">advr</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">do_avg</span><span class="p">(</span><span class="n">advr</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
@@ -153,7 +157,7 @@
         <span class="c1"># out.add_data(&#39;Lint&#39;,self.calc_Lint(out.Acov,out.U_mag),&#39;main&#39;)</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="TurbBinner.calc_epsilon_LT83"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83">[docs]</a>    <span class="k">def</span> <span class="nf">calc_epsilon_LT83</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">omega</span><span class="p">,</span> <span class="n">U_mag</span><span class="p">,</span> <span class="n">omega_range</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">]):</span>
+<div class="viewcode-block" id="TurbBinner.calc_epsilon_LT83"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83">[docs]</a>    <span class="k">def</span> <span class="nf">calc_epsilon_LT83</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">omega</span><span class="p">,</span> <span class="n">U_mag</span><span class="p">,</span> <span class="n">omega_range</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">]):</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the dissipation rate from the spectrum.</span>
 
@@ -204,7 +208,7 @@
                        <span class="p">(</span><span class="n">omega</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">f_shp</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="mi">5</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span><span class="p">,</span>
                        <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">U_mag</span></div>
 
-<div class="viewcode-block" id="TurbBinner.calc_epsilon_SF"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF">[docs]</a>    <span class="k">def</span> <span class="nf">calc_epsilon_SF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">veldat</span><span class="p">,</span> <span class="n">umag</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">freq_rng</span><span class="o">=</span><span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="mf">5.</span><span class="p">]):</span>
+<div class="viewcode-block" id="TurbBinner.calc_epsilon_SF"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF">[docs]</a>    <span class="k">def</span> <span class="nf">calc_epsilon_SF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">veldat</span><span class="p">,</span> <span class="n">umag</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">freq_rng</span><span class="o">=</span><span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="mf">5.</span><span class="p">]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate epsilon using the &quot;structure function&quot; (SF) method.</span>
 
@@ -245,7 +249,7 @@
             <span class="n">out</span><span class="p">[</span><span class="n">slc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cv2m</span> <span class="o">/</span> <span class="mf">2.1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="TurbBinner.up_angle"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner.up_angle">[docs]</a>    <span class="k">def</span> <span class="nf">up_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Uh_complex</span><span class="p">):</span>
+<div class="viewcode-block" id="TurbBinner.up_angle"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner.up_angle">[docs]</a>    <span class="k">def</span> <span class="nf">up_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Uh_complex</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the angle of the turbulence fluctuations.</span>
 
@@ -265,7 +269,7 @@
         <span class="n">dt</span><span class="p">[</span><span class="n">fx</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="n">fx</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="TurbBinner.calc_epsilon_TE01"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01">[docs]</a>    <span class="k">def</span> <span class="nf">calc_epsilon_TE01</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">advbin</span><span class="p">,</span> <span class="n">advraw</span><span class="p">,</span> <span class="n">omega_range</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">]):</span>
+<div class="viewcode-block" id="TurbBinner.calc_epsilon_TE01"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01">[docs]</a>    <span class="k">def</span> <span class="nf">calc_epsilon_TE01</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">advbin</span><span class="p">,</span> <span class="n">advraw</span><span class="p">,</span> <span class="n">omega_range</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the dissipation according to TE01.</span>
 
@@ -276,7 +280,7 @@
 <span class="sd">          The binned adv object. The following spectra and basic</span>
 <span class="sd">          turbulence statistics must already be computed.</span>
 
-<span class="sd">        advraw : :class:`ADVraw &lt;base.ADVraw&gt;`</span>
+<span class="sd">        advraw : :class:`ADVdata &lt;base.ADVdata&gt;`</span>
 <span class="sd">          The raw adv object.</span>
 
 <span class="sd">        Notes</span>
@@ -347,7 +351,7 @@
         <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">Itke</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> \
             <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">Itke</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TurbBinner.calc_Lint"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.TurbBinner.calc_Lint">[docs]</a>    <span class="k">def</span> <span class="nf">calc_Lint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corr_vel</span><span class="p">,</span> <span class="n">U_mag</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="TurbBinner.calc_Lint"><a class="viewcode-back" href="../../../api.html#dolfyn.adv.turbulence.TurbBinner.calc_Lint">[docs]</a>    <span class="k">def</span> <span class="nf">calc_Lint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corr_vel</span><span class="p">,</span> <span class="n">U_mag</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate integral length scales.</span>
 
@@ -381,7 +385,7 @@
                           <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span></div></div>
 
 
-<div class="viewcode-block" id="calc_turbulence"><a class="viewcode-back" href="../../../api/dolfyn.adv.html#dolfyn.adv.turbulence.calc_turbulence">[docs]</a><span class="k">def</span> <span class="nf">calc_turbulence</span><span class="p">(</span><span class="n">advr</span><span class="p">,</span> <span class="n">n_bin</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="n">ADVbinned</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">calc_turbulence</span><span class="p">(</span><span class="n">advr</span><span class="p">,</span> <span class="n">n_bin</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">omega_range_epsilon</span><span class="o">=</span><span class="p">[</span><span class="mf">6.28</span><span class="p">,</span> <span class="mf">12.57</span><span class="p">],</span>
                     <span class="n">Itke_thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;hann&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -391,7 +395,7 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 
-<span class="sd">    advr : :class:`ADVraw &lt;base.ADVraw&gt;`</span>
+<span class="sd">    advr : :class:`ADVdata &lt;base.ADVdata&gt;`</span>
 <span class="sd">      The raw adv data-object to `bin`, average and compute</span>
 <span class="sd">      turbulence statistics of.</span>
 
@@ -463,14 +467,36 @@
     <span class="c1"># out.U_mag,omega_range=omega_range_epsilon),&#39;main&#39;)</span>
     <span class="c1"># out.add_data(&#39;Acov&#39;,self.calc_acov(advr[&#39;vel&#39;]),&#39;corr&#39;)</span>
     <span class="c1"># out.add_data(&#39;Lint&#39;,self.calc_Lint(out.Acov,out.U_mag),&#39;main&#39;)</span>
-    <span class="k">return</span> <span class="n">out</span></div>
+    <span class="k">return</span> <span class="n">out</span>
 </pre></div>
 
           </div>
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The DOLfYN API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
@@ -499,7 +525,7 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>

@@ -1,0 +1,6 @@
+dolfyn.rotate2
+==============
+
+.. currentmodule:: dolfyn
+
+.. autofunction:: rotate2

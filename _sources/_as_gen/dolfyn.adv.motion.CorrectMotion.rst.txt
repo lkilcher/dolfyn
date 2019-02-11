@@ -1,0 +1,22 @@
+dolfyn.adv.motion.CorrectMotion
+===============================
+
+.. currentmodule:: dolfyn.adv.motion
+
+.. autoclass:: CorrectMotion
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CorrectMotion.__init__
+   
+   
+
+   
+   
+   

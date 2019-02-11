@@ -1,0 +1,465 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pyDictH5.base &#8212; DOLfYN 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyDictH5.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A base data module for compound data types that supports I/O</span>
+<span class="sd">to/from hdf5.</span>
+
+<span class="sd">This data type is based on dict. The keys of the data must be strings.</span>
+
+<span class="sd">The data type is smart, such that you can &#39;subset&#39; the data by</span>
+<span class="sd">indexing it with integers, slices, np.ndarrays, or lists. Or, you</span>
+<span class="sd">can get fields by indexing those.</span>
+
+<span class="sd">Objects that are added to the dictionary will automatically be</span>
+<span class="sd">stored when using one of the i/o routines, e.g.:</span>
+
+<span class="sd">    &gt;&gt;&gt; d = pydata.data()</span>
+<span class="sd">    &gt;&gt;&gt; d[&#39;time&#39;] = np.arange(10)</span>
+<span class="sd">    &gt;&gt;&gt; d.to_hdf5(&#39;test.h5&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; d_copy = load(&#39;test.h5&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; d_copy[&#39;time&#39;]</span>
+<span class="sd">    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])</span>
+
+<span class="sd">You can also access data as either attributes, or items:</span>
+
+<span class="sd">    &gt;&gt;&gt; d_copy[&#39;time&#39;] == d.time</span>
+<span class="sd">    True</span>
+
+<span class="sd">However, only dict entries are stored:</span>
+<span class="sd">    &gt;&gt;&gt; d.time2 = np.arange(1, 11)</span>
+<span class="sd">    &gt;&gt;&gt; d.to_hdf5(&#39;test2.h5&#39;)</span>
+
+<span class="sd">    &gt;&gt;&gt; d_copy = load(&#39;test2.h5&#39;)</span>
+<span class="sd">    KeyError: &#39;time2&#39;</span>
+
+<span class="sd">    &gt;&gt;&gt; d_copy.time2</span>
+<span class="sd">    &#39;&lt;data&gt;&#39; object has no attribute &#39;time2&#39;</span>
+
+<span class="sd">    &gt;&gt;&gt; d_copy[&#39;time2&#39;]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.testing</span> <span class="k">as</span> <span class="nn">nptest</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># PY 3</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">io</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># PY 2</span>
+    <span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+
+<span class="n">debug_level</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">arrayEQ_tols</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+
+
+<span class="n">_RaiseKeyError</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">indexer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_subset</span><span class="p">(</span><span class="n">indx</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_equiv_dict</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>  <span class="c1"># nopep8</span>
+                    <span class="k">assert</span> <span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inexact</span><span class="p">))</span> <span class="ow">or</span> \
+                       <span class="n">arrayEQ_tols</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">(</span><span class="n">rtol</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+                        <span class="n">nptest</span><span class="o">.</span><span class="n">assert_equal</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span>
+                                           <span class="n">equal_nan</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">arrayEQ_tols</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="k">assert</span> <span class="n">_equiv_dict</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span> <span class="o">==</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+                <span class="n">retval</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">debug_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The shapes of the arrays do not match. &#39;</span>
+                                  <span class="s1">&#39;(</span><span class="si">{}</span><span class="s1">, vs. </span><span class="si">{}</span><span class="s1">).&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                                         <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">frac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">((</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
+                                <span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">equal_nan</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">arrayEQ_tols</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{:0.2f}% o</span><span class="s1">f the values in </span><span class="si">{}</span><span class="s1"> do not match.&#39;</span>
+                                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">frac</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">ky</span><span class="p">))</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span>
+                                               <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">equal_nan</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; ... but they are close.&#39;</span><span class="p">)</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The values in </span><span class="si">{}</span><span class="s1"> do not match.&#39;</span>
+                              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ky</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">retval</span>
+    <span class="k">if</span> <span class="n">debug_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">dif1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">dif2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The list of items are not the same.</span><span class="se">\n</span><span class="s2">&quot;</span>
+              <span class="s2">&quot;Entries in 1 that are not in 2: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+              <span class="s2">&quot;Entries in 2 that are not in 1: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dif1</span><span class="p">),</span>
+                                                          <span class="nb">list</span><span class="p">(</span><span class="n">dif2</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">class</span> <span class="nc">data</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The base PyCoDa class.</span>
+
+<span class="sd">    This class supports temporary attribute variables with leading</span>
+<span class="sd">    underscores (e.g. &#39;_temp&#39;). However, if a dict-entry already</span>
+<span class="sd">    exists with that value, it *will* point to that entry.</span>
+
+<span class="sd">    This class is capable of storing object arrays. This is done by</span>
+<span class="sd">    pickling each item in the object array.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Subset is an `indexer` for creating subsets of the data</span>
+<span class="sd">        object using Python slice syntax.</span>
+
+<span class="sd">        For example, you can do::</span>
+
+<span class="sd">            dat2 = dat.subset[10:500]</span>
+
+<span class="sd">        Which returns a new data object that contains the 10th through</span>
+<span class="sd">        500th entry for each variable in the data object. This also</span>
+<span class="sd">        operates recursively through sub-objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">,</span> <span class="n">raise_on_empty_array</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">copy</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">],</span> <span class="n">data</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">_subset</span><span class="p">(</span>
+                    <span class="n">indx</span><span class="p">,</span>
+                    <span class="n">raise_on_empty_array</span><span class="o">=</span><span class="n">raise_on_empty_array</span><span class="p">,</span>
+                    <span class="n">copy</span><span class="o">=</span><span class="n">copy</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">][</span><span class="n">indx</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">raise_on_empty_array</span> <span class="ow">and</span> \
+                   <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s1">&#39;The indexing object yields &#39;</span>
+                                     <span class="s1">&#39;empty arrays.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indx</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;.&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indx</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">dict</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span>
+                <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="n">indx</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">ky</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">tmp</span>
+
+    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">array_axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Append another PyCoDa data object to this one.  This method</span>
+<span class="sd">        assumes all arrays should be appended (concatenated) along</span>
+<span class="sd">        axis 0.</span>
+
+<span class="sd">        The appended object must have matching keys and values with</span>
+<span class="sd">        the same data types.</span>
+
+<span class="sd">        Overload this method to implement alternate appending schemes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">dat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">],</span>
+                                           <span class="n">other</span><span class="p">[</span><span class="n">nm</span><span class="p">]),</span>
+                                          <span class="n">axis</span><span class="o">=</span><span class="n">array_axis</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="s1">&#39;append&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">PropData</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="k">assert</span> <span class="n">dat</span> <span class="o">==</span> <span class="n">other</span><span class="p">[</span><span class="n">nm</span><span class="p">],</span> <span class="p">(</span><span class="s2">&quot;Properties in </span><span class="si">{}</span><span class="s2"> do not match.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nm</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;array_axis&#39;</span> <span class="ow">in</span> <span class="n">dat</span><span class="o">.</span><span class="n">append</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">:</span>
+                    <span class="n">dat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">[</span><span class="n">nm</span><span class="p">],</span> <span class="n">array_axis</span><span class="o">=</span><span class="n">array_axis</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">dat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">[</span><span class="n">nm</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">_RaiseKeyError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indx</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;&lt;class &#39;PyCoDa.base.data&#39;&gt; objects&quot;</span>
+                <span class="s2">&quot; only support string indexing.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="n">_RaiseKeyError</span><span class="p">:</span>
+                <span class="nb">dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">d</span>
+        <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">indx</span><span class="p">:</span>
+            <span class="n">grp</span><span class="p">,</span> <span class="n">indx</span> <span class="o">=</span> <span class="n">indx</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">grp</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">indx</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indx</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;&lt;class &#39;PyCoDa.base.data&#39;&gt; objects&quot;</span>
+                <span class="s2">&quot; only support string indexing.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">indx</span><span class="p">:</span>
+            <span class="n">grp</span><span class="p">,</span> <span class="n">indx</span> <span class="o">=</span> <span class="n">indx</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">grp</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="n">indx</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">tmp</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;The attribute &#39;</span><span class="si">{}</span><span class="s2">&#39; exists: Creating a key that &quot;</span>
+                           <span class="s2">&quot;matches an attribute name is forbidden.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">indx</span><span class="p">))</span>
+        <span class="nb">dict</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">indx</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="n">outstr</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: Data Object with Keys:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">outstr</span> <span class="o">+=</span> <span class="s1">&#39;  </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outstr</span>
+
+    <span class="k">def</span> <span class="nf">iter_subgroups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_hidden</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the keys for all sub-groups in this data object,</span>
+<span class="sd">        including walking through sub-groups.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        include_hidden : bool (Default: False)</span>
+<span class="sd">              Whether entries starting with &#39;_&#39; should be included in</span>
+<span class="sd">              the iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include_hidden</span> <span class="ow">and</span> <span class="n">ky</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">data</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">ky</span>
+                <span class="k">for</span> <span class="n">ky2</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">iter_subgroups</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">include_hidden</span> <span class="ow">and</span> <span class="n">ky2</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">ky</span><span class="p">][</span><span class="n">ky2</span><span class="p">],</span> <span class="n">data</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">ky2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">iter_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_hidden</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the keys for all data items in this data object,</span>
+<span class="sd">        including walking through sub-data objects.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        include_hidden : bool (Default: False)</span>
+<span class="sd">              Whether entries starting with &#39;_&#39; should be included in</span>
+<span class="sd">              the iteration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ky</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include_hidden</span> <span class="ow">and</span> <span class="n">ky</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">ky</span><span class="p">],</span> <span class="n">data</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">ky2</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="n">ky</span><span class="p">]</span><span class="o">.</span><span class="n">iter_data</span><span class="p">(</span><span class="n">include_hidden</span><span class="o">=</span><span class="n">include_hidden</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">ky2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">ky</span>
+
+    <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a copy of the data object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="n">copy</span> <span class="o">=</span> <span class="n">__copy__</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test for equivalence between data objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">is</span> <span class="n">other</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">and</span> <span class="n">_equiv_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nm</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">nm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">):</span>
+            <span class="c1"># Support for &#39;temporary variables&#39; that are not added to</span>
+            <span class="c1"># the dictionary, and therefore not included in I/O</span>
+            <span class="c1"># operations.</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+    <span class="c1"># def __getstate__(self, ):</span>
+    <span class="c1">#     return self</span>
+
+    <span class="k">def</span> <span class="nf">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">nm</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; object has no attribute &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span>
+                                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">nm</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_hdf5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;gzip&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the data in this object to an hdf5 file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">hdf5_write</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PropData</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">array_axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;These data items cannot be joined because &quot;</span>
+                               <span class="s2">&quot;their properties do not match.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span> <span class="nc">geodat</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class for holding &#39;gis&#39; type data.</span>
+
+<span class="sd">    This data is assumed to have lat/lon attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">llrange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">lon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">lon</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;bool&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inds</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">lat</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">other_inds</span> <span class="o">=</span> <span class="p">{</span><span class="n">nm</span><span class="p">:</span> <span class="n">dat</span><span class="o">.</span><span class="n">llrange</span><span class="p">(</span><span class="n">lon</span><span class="o">=</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="n">lat</span><span class="p">)</span>
+                      <span class="k">for</span> <span class="n">nm</span><span class="p">,</span> <span class="n">dat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">geodat</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_inds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">inds</span><span class="p">,</span> <span class="n">other_inds</span>
+        <span class="k">return</span> <span class="n">inds</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">The DOLfYN API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

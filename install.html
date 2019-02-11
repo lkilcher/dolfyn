@@ -6,10 +6,10 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Download and Install &#8212; DOLfYN 0.9.0 documentation</title>
+    <title>Download and Install &#8212; DOLfYN 0.9.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -35,36 +35,18 @@
             
   <div class="section" id="download-and-install">
 <span id="install"></span><h1>Download and Install<a class="headerlink" href="#download-and-install" title="Permalink to this headline">¶</a></h1>
-<p>On Windows I recommend getting PythonXY, because it comes with a
-functioning pip installation. On a Mac, you probably need to install
-the command line tools (xcode).</p>
-<p>DOLfYN can be installed in several different ways depending on your
-system.  If you are on a system with a working version of Python that includes
-pip, you can simply do:</p>
+<p>DOLfYN can be installed using pip:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install dolfyn
 </pre></div>
 </div>
-<p>For systems that do not include pip you will need to install the
-<a class="reference internal" href="#dependencies"><span class="std std-ref">Dependencies</span></a> manually. From that point onward you can download
-DOLfYN from <a class="reference external" href="http://github.com/lkilcher/dolfyn/">the repository</a>. For example, if git is
-installed, you can:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/lkilcher/dolfyn/ &lt;download_location&gt;
-</pre></div>
-</div>
-<p>If <cite>&lt;download_location&gt;</cite> is not specified, the repository will be
-created in the current directory in a new <cite>dolfyn</cite> folder. Once you
-have downloaded DOLfYN, you may either:</p>
-<ol class="loweralpha">
-<li><p class="first">install it into your Python packages repository by executing the setup.py script:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd &lt;download_location&gt;
-$ python setup.py install
-</pre></div>
-</div>
-</li>
-<li><p class="first">use it out of <cite>&lt;download_location&gt;</cite>.</p>
-</li>
-</ol>
-<p>For information on how to use DOLfYN consult the <a class="reference internal" href="usage.html"><span class="doc">The Basics</span></a> page.</p>
+<p>If you want to download the source code locally so that you can modify
+it, you can clone the repository:</p>
+<blockquote>
+<div>$ git clone <a class="reference external" href="https://github.com/lkilcher/dolfyn/">https://github.com/lkilcher/dolfyn/</a> &lt;download_location&gt;</div></blockquote>
+<p>And then use pip to install it as an ‘editable’ package:</p>
+<blockquote>
+<div>$ cd &lt;download_location&gt;
+$ pip install -e ./</div></blockquote>
 <div class="section" id="data-files-and-test-files">
 <span id="datafiles"></span><h2>Data Files and Test Files<a class="headerlink" href="#data-files-and-test-files" title="Permalink to this headline">¶</a></h2>
 <p>DOLfYN has several moderately large (a few MB each) binary data files
@@ -115,15 +97,32 @@ sure to indicate that you are using Python 3).</li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Download and Install</a><ul>
-<li><a class="reference internal" href="#data-files-and-test-files">Data Files and Test Files</a></li>
-<li><a class="reference internal" href="#testing">Testing</a></li>
-<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<h1 class="logo"><a href="index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Download and Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-files-and-test-files">Data Files and Test Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">The DOLfYN API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -133,13 +132,6 @@ sure to indicate that you are using Python 3).</li>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/install.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -160,7 +152,7 @@ sure to indicate that you are using Python 3).</li>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |

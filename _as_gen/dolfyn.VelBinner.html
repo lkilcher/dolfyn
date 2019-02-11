@@ -1,0 +1,260 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dolfyn.VelBinner &#8212; DOLfYN 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dolfyn.adv.turbulence.TurbBinner" href="dolfyn.adv.turbulence.TurbBinner.html" />
+    <link rel="prev" title="dolfyn.adv.motion.CorrectMotion" href="dolfyn.adv.motion.CorrectMotion.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dolfyn-velbinner">
+<h1>dolfyn.VelBinner<a class="headerlink" href="#dolfyn-velbinner" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="dolfyn.VelBinner">
+<em class="property">class </em><code class="descclassname">dolfyn.</code><code class="descname">VelBinner</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/data/velocity.html#VelBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the base binning (averaging) tool.</p>
+<p>All DOLfYN binning tools derive from this base class.</p>
+<p class="rubric">Examples</p>
+<p>The VelBinner class is used to compute averages and turbulence
+statistics from ‘raw’ (unaveraged) ADV or ADP measurements, for
+example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># First read or load some data.</span>
+<span class="n">rawdat</span> <span class="o">=</span> <span class="n">dlfn</span><span class="o">.</span><span class="n">read_example</span><span class="p">(</span><span class="s1">&#39;BenchFile01.ad2cp&#39;</span><span class="p">)</span>
+
+<span class="c1"># Now initialize the averaging tool:</span>
+<span class="n">binner</span> <span class="o">=</span> <span class="n">dlfn</span><span class="o">.</span><span class="n">VelBinner</span><span class="p">(</span><span class="n">n_bin</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">rawdat</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;fs&#39;</span><span class="p">])</span>
+
+<span class="c1"># This computes the basic averages</span>
+<span class="n">avg</span> <span class="o">=</span> <span class="n">binner</span><span class="p">(</span><span class="n">rawdat</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="dolfyn.VelBinner.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an averaging object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the number of data points to include in a ‘bin’ (average).</p>
+</dd>
+<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the number of data points to use for fft (<cite>n_fft`&lt;=`n_bin</cite>).
+Default: <cite>n_fft`=`n_bin</cite></p>
+</dd>
+<dt><strong>n_fft_coh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">the number of data points to use for coherence and cross-spectra ffts
+(<cite>n_fft_coh`&lt;=`n_bin</cite>). Default: <cite>n_fft_coh`=`n_bin</cite>/6</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.VelBinner.__init__" title="dolfyn.VelBinner.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(n_bin,&nbsp;fs[,&nbsp;n_fft,&nbsp;n_fft_coh])</td>
+<td>Initialize an averaging object.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_acov" title="dolfyn.VelBinner.calc_acov"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_acov</span></code></a>(indat[,&nbsp;n_bin])</td>
+<td>Calculate the auto-covariance of the raw-signal <cite>indat</cite>.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_lag</span></code>([npt,&nbsp;one_sided])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_omega" title="dolfyn.VelBinner.calc_omega"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_omega</span></code></a>([fs,&nbsp;coh])</td>
+<td>Calculate the radial-frequency vector for the psd’s.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_stress" title="dolfyn.VelBinner.calc_stress"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_stress</span></code></a>(veldat)</td>
+<td>Calculate the stresses (cross-covariances of u,v,w).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_tke" title="dolfyn.VelBinner.calc_tke"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_tke</span></code></a>(veldat[,&nbsp;noise])</td>
+<td>Calculate the tke (variances of u,v,w).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_vel_cpsd" title="dolfyn.VelBinner.calc_vel_cpsd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_vel_cpsd</span></code></a>(veldat[,&nbsp;rotate_u,&nbsp;fs,&nbsp;…])</td>
+<td>Calculate the cross-spectra of velocity components.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_vel_psd" title="dolfyn.VelBinner.calc_vel_psd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_vel_psd</span></code></a>(veldat[,&nbsp;rotate_u,&nbsp;fs,&nbsp;window,&nbsp;…])</td>
+<td>Calculate the psd of velocity.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.calc_xcov" title="dolfyn.VelBinner.calc_xcov"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_xcov</span></code></a>(indt1,&nbsp;indt2[,&nbsp;npt,&nbsp;n_bin1,&nbsp;…])</td>
+<td>Calculate the cross-covariance between arrays indt1 and indt2 for each bin.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.cohere" title="dolfyn.VelBinner.cohere"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cohere</span></code></a>(dat1,&nbsp;dat2[,&nbsp;window,&nbsp;debias,&nbsp;noise,&nbsp;…])</td>
+<td>Calculate coherence between <cite>dat1</cite> and <cite>dat2</cite>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.cpsd" title="dolfyn.VelBinner.cpsd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpsd</span></code></a>(dat1,&nbsp;dat2[,&nbsp;fs,&nbsp;window,&nbsp;n_fft,&nbsp;…])</td>
+<td>Calculate the ‘cross power spectral density’ of <cite>dat</cite>.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.demean" title="dolfyn.VelBinner.demean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demean</span></code></a>(dat[,&nbsp;n_pad,&nbsp;n_bin])</td>
+<td>Reshape the array <cite>dat</cite> and remove the mean from each ensemble.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.detrend" title="dolfyn.VelBinner.detrend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrend</span></code></a>(dat[,&nbsp;n_pad,&nbsp;n_bin])</td>
+<td>Reshape the array <cite>dat</cite> and remove the best-fit trend line.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.do_avg" title="dolfyn.VelBinner.do_avg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_avg</span></code></a>(rawdat[,&nbsp;outdat,&nbsp;names,&nbsp;n_time])</td>
+<td><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_cross_spec</span></code>(indat[,&nbsp;out,&nbsp;names])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_spec</span></code>(indat[,&nbsp;out,&nbsp;names])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_tke</span></code>(indat[,&nbsp;out])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.do_var" title="dolfyn.VelBinner.do_var"><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_var</span></code></a>(rawdat[,&nbsp;outdat,&nbsp;names,&nbsp;suffix])</td>
+<td>Calculate the variance of data attributes.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.mean" title="dolfyn.VelBinner.mean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean</span></code></a>(dat[,&nbsp;axis,&nbsp;n_bin,&nbsp;mask_thresh])</td>
+<td>Average an array object.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.mean_angle" title="dolfyn.VelBinner.mean_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean_angle</span></code></a>(dat[,&nbsp;axis,&nbsp;units,&nbsp;n_bin,&nbsp;…])</td>
+<td>Average an angle array.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.phase_angle" title="dolfyn.VelBinner.phase_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phase_angle</span></code></a>(dat1,&nbsp;dat2[,&nbsp;window,&nbsp;n_fft,&nbsp;…])</td>
+<td>Calculate the phase difference between two signals as a function of frequency (complimentary to coherence).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.psd" title="dolfyn.VelBinner.psd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">psd</span></code></a>(dat[,&nbsp;fs,&nbsp;window,&nbsp;noise,&nbsp;n_bin,&nbsp;n_fft,&nbsp;…])</td>
+<td>Calculate ‘power spectral density’ of <cite>dat</cite>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.VelBinner.reshape" title="dolfyn.VelBinner.reshape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reshape</span></code></a>(arr[,&nbsp;n_pad,&nbsp;n_bin])</td>
+<td>Reshape the array <cite>arr</cite> to shape (…,n,n_bin+n_pad).</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">std</span></code>(dat[,&nbsp;n_bin])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">var</span></code>(dat[,&nbsp;n_bin])</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">The DOLfYN API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#dlfn-data-objects">DOLfYN data objects</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#dlfn-tools-and-functions">DOLfYN tools and functions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.rotate2.html">dolfyn.rotate2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.adv.motion.CorrectMotion.html">dolfyn.adv.motion.CorrectMotion</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">dolfyn.VelBinner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.adv.turbulence.TurbBinner.html">dolfyn.adv.turbulence.TurbBinner</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api.html">The DOLfYN API</a><ul>
+      <li>Previous: <a href="dolfyn.adv.motion.CorrectMotion.html" title="previous chapter">dolfyn.adv.motion.CorrectMotion</a></li>
+      <li>Next: <a href="dolfyn.adv.turbulence.TurbBinner.html" title="next chapter">dolfyn.adv.turbulence.TurbBinner</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Levi Kilcher.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/_as_gen/dolfyn.VelBinner.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

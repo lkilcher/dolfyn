@@ -1,0 +1,51 @@
+dolfyn.adv.turbulence.TurbBinner
+================================
+
+.. currentmodule:: dolfyn.adv.turbulence
+
+.. autoclass:: TurbBinner
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TurbBinner.__init__
+      ~TurbBinner.calc_Lint
+      ~TurbBinner.calc_acov
+      ~TurbBinner.calc_epsilon_LT83
+      ~TurbBinner.calc_epsilon_SF
+      ~TurbBinner.calc_epsilon_TE01
+      ~TurbBinner.calc_lag
+      ~TurbBinner.calc_omega
+      ~TurbBinner.calc_stress
+      ~TurbBinner.calc_tke
+      ~TurbBinner.calc_vel_cpsd
+      ~TurbBinner.calc_vel_psd
+      ~TurbBinner.calc_xcov
+      ~TurbBinner.cohere
+      ~TurbBinner.cpsd
+      ~TurbBinner.demean
+      ~TurbBinner.detrend
+      ~TurbBinner.do_avg
+      ~TurbBinner.do_cross_spec
+      ~TurbBinner.do_spec
+      ~TurbBinner.do_tke
+      ~TurbBinner.do_var
+      ~TurbBinner.mean
+      ~TurbBinner.mean_angle
+      ~TurbBinner.phase_angle
+      ~TurbBinner.psd
+      ~TurbBinner.reshape
+      ~TurbBinner.std
+      ~TurbBinner.up_angle
+      ~TurbBinner.var
+   
+   
+
+   
+   
+   

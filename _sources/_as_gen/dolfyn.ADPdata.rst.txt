@@ -1,0 +1,59 @@
+dolfyn.ADPdata
+==============
+
+.. currentmodule:: dolfyn
+
+.. autoclass:: ADPdata
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ADPdata.__init__
+      ~ADPdata.append
+      ~ADPdata.calc_principal_angle
+      ~ADPdata.clear
+      ~ADPdata.copy
+      ~ADPdata.fromkeys
+      ~ADPdata.get
+      ~ADPdata.items
+      ~ADPdata.iter_data
+      ~ADPdata.iter_subgroups
+      ~ADPdata.keys
+      ~ADPdata.pop
+      ~ADPdata.popitem
+      ~ADPdata.rotate2
+      ~ADPdata.setdefault
+      ~ADPdata.to_hdf5
+      ~ADPdata.update
+      ~ADPdata.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ADPdata.S2
+      ~ADPdata.U
+      ~ADPdata.U_angle
+      ~ADPdata.U_mag
+      ~ADPdata.diff_style
+      ~ADPdata.dudz
+      ~ADPdata.dvdz
+      ~ADPdata.dwdz
+      ~ADPdata.n_time
+      ~ADPdata.range_diff
+      ~ADPdata.shape
+      ~ADPdata.subset
+      ~ADPdata.u
+      ~ADPdata.v
+      ~ADPdata.w
+   
+   

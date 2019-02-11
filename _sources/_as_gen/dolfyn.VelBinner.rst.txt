@@ -1,0 +1,46 @@
+dolfyn.VelBinner
+================
+
+.. currentmodule:: dolfyn
+
+.. autoclass:: VelBinner
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~VelBinner.__init__
+      ~VelBinner.calc_acov
+      ~VelBinner.calc_lag
+      ~VelBinner.calc_omega
+      ~VelBinner.calc_stress
+      ~VelBinner.calc_tke
+      ~VelBinner.calc_vel_cpsd
+      ~VelBinner.calc_vel_psd
+      ~VelBinner.calc_xcov
+      ~VelBinner.cohere
+      ~VelBinner.cpsd
+      ~VelBinner.demean
+      ~VelBinner.detrend
+      ~VelBinner.do_avg
+      ~VelBinner.do_cross_spec
+      ~VelBinner.do_spec
+      ~VelBinner.do_tke
+      ~VelBinner.do_var
+      ~VelBinner.mean
+      ~VelBinner.mean_angle
+      ~VelBinner.phase_angle
+      ~VelBinner.psd
+      ~VelBinner.reshape
+      ~VelBinner.std
+      ~VelBinner.var
+   
+   
+
+   
+   
+   

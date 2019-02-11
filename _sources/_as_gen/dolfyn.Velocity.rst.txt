@@ -1,0 +1,53 @@
+dolfyn.Velocity
+===============
+
+.. currentmodule:: dolfyn
+
+.. autoclass:: Velocity
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Velocity.__init__
+      ~Velocity.append
+      ~Velocity.calc_principal_angle
+      ~Velocity.clear
+      ~Velocity.copy
+      ~Velocity.fromkeys
+      ~Velocity.get
+      ~Velocity.items
+      ~Velocity.iter_data
+      ~Velocity.iter_subgroups
+      ~Velocity.keys
+      ~Velocity.pop
+      ~Velocity.popitem
+      ~Velocity.rotate2
+      ~Velocity.setdefault
+      ~Velocity.to_hdf5
+      ~Velocity.update
+      ~Velocity.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Velocity.U
+      ~Velocity.U_angle
+      ~Velocity.U_mag
+      ~Velocity.n_time
+      ~Velocity.shape
+      ~Velocity.subset
+      ~Velocity.u
+      ~Velocity.v
+      ~Velocity.w
+   
+   

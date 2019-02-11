@@ -6,10 +6,10 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adp.base &#8212; DOLfYN 0.9.0 documentation</title>
+    <title>dolfyn.adp.base &#8212; DOLfYN 0.9.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
@@ -34,69 +34,114 @@
   <h1>Source code for dolfyn.adp.base</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">..data</span> <span class="k">import</span> <span class="n">velocity</span> <span class="k">as</span> <span class="n">dbvel</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">dolfyn.rdi</span> <span class="k">import</span> <span class="n">rotate</span>
+<span class="kn">from</span> <span class="nn">dolfyn.rotate</span> <span class="k">import</span> <span class="n">rdi</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="n">deg2rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
 
 
-<div class="viewcode-block" id="diffz_first"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.diffz_first">[docs]</a><span class="k">def</span> <span class="nf">diffz_first</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">z</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span></div>
+<span class="k">def</span> <span class="nf">diffz_first</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">z</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
 
 <span class="c1"># def diffz_centered(dat,z,axis=0):</span>
 <span class="c1">#    return np.diff(dat,axis=0)/(np.diff(z)[:,None])</span>
 
 
-<div class="viewcode-block" id="adcp_raw"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.adcp_raw">[docs]</a><span class="k">class</span> <span class="nc">adcp_raw</span><span class="p">(</span><span class="n">dbvel</span><span class="o">.</span><span class="n">Velocity</span><span class="p">):</span>
+<div class="viewcode-block" id="ADPdata"><a class="viewcode-back" href="../../../api.html#dolfyn.ADPdata">[docs]</a><span class="k">class</span> <span class="nc">ADPdata</span><span class="p">(</span><span class="n">dbvel</span><span class="o">.</span><span class="n">Velocity</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The acoustic Doppler profiler (ADP) data type.</span>
 
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The base &#39;adcp&#39; class.</span>
+<span class="sd">    See Also</span>
+<span class="sd">    ========</span>
+<span class="sd">    :class:`dolfyn.Velocity`</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diff_style</span> <span class="o">=</span> <span class="s1">&#39;first&#39;</span>
 
     <span class="k">def</span> <span class="nf">_diff_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diff_style</span> <span class="o">==</span> <span class="s1">&#39;first&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">diffz_first</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">diffz_first</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">])</span>
         <span class="c1"># else:</span>
         <span class="c1">#     pass</span>
         <span class="c1">#     #!!!FIXTHIS. Need the diffz_centered operator.</span>
         <span class="c1">#     # return diffz_centered(getattr(self, nm), self.z)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">z</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">zd</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+    <span class="k">def</span> <span class="nf">range_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diff_style</span> <span class="o">==</span> <span class="s1">&#39;first&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dudz</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;The shear in the first velocity component.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        =====</span>
+<span class="sd">        The derivative direction is along the profiler&#39;s &#39;z&#39;</span>
+<span class="sd">        coordinate (&#39;dz&#39; is actually diff(self[&#39;range&#39;])), not necessarily the</span>
+<span class="sd">        &#39;true vertical&#39; direction.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diff_func</span><span class="p">(</span><span class="s1">&#39;u&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dvdz</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;The shear in the second velocity component.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        =====</span>
+<span class="sd">        The derivative direction is along the profiler&#39;s &#39;z&#39;</span>
+<span class="sd">        coordinate (&#39;dz&#39; is actually diff(self[&#39;range&#39;])), not necessarily the</span>
+<span class="sd">        &#39;true vertical&#39; direction.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diff_func</span><span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dwdz</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;The shear in the third velocity component.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        =====</span>
+<span class="sd">        The derivative direction is along the profiler&#39;s &#39;z&#39;</span>
+<span class="sd">        coordinate (&#39;dz&#39; is actually diff(self[&#39;range&#39;])), not necessarily the</span>
+<span class="sd">        &#39;true vertical&#39; direction.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diff_func</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">S2</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
+        <span class="sd">&quot;&quot;&quot;The horizontal shear-squared.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        =====</span>
+<span class="sd">        This is actually (dudz)^2 + (dvdz)^2. So, if those variables</span>
+<span class="sd">        are not actually vertical derivatives of the horizontal</span>
+<span class="sd">        velocity, then this is not the &#39;horizontal shear-squared&#39;.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ========</span>
+<span class="sd">        :meth:`dvdz`, :meth:`dudz`</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dudz</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dvdz</span> <span class="o">**</span> <span class="mi">2</span></div>
 
 
-<div class="viewcode-block" id="adcp_binned"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.adcp_binned">[docs]</a><span class="k">class</span> <span class="nc">adcp_binned</span><span class="p">(</span><span class="n">dbvel</span><span class="o">.</span><span class="n">VelTkeData</span><span class="p">,</span> <span class="n">adcp_raw</span><span class="p">):</span>
-    <span class="n">inds</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
+<span class="k">class</span> <span class="nc">ADPavg</span><span class="p">(</span><span class="n">ADPdata</span><span class="p">,</span> <span class="n">dbvel</span><span class="o">.</span><span class="n">TKEdata</span><span class="p">):</span>
+    <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="binner"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.binner">[docs]</a><span class="k">class</span> <span class="nc">binner</span><span class="p">(</span><span class="n">dbvel</span><span class="o">.</span><span class="n">VelBinner</span><span class="p">):</span>
+<span class="n">ADPdata</span><span class="o">.</span><span class="n">_avg_class</span> <span class="o">=</span> <span class="n">ADPavg</span>
 
-<div class="viewcode-block" id="binner.__call__"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.binner.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="n">adcp_binned</span><span class="p">):</span>
+
+<span class="k">class</span> <span class="nc">ADPbinner</span><span class="p">(</span><span class="n">dbvel</span><span class="o">.</span><span class="n">VelBinner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An ADP binning (averaging) tool.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="n">ADPdata</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">dbvel</span><span class="o">.</span><span class="n">VelBinnerTke</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indat</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="n">out_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">do_avg</span><span class="p">(</span><span class="n">indat</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;tke_vec&#39;</span><span class="p">,</span>
@@ -114,7 +159,7 @@
         <span class="c1">#if hasattr(indat.config, &#39;beam_angle&#39;) and hasattr(indat, &#39;beam1vel&#39;):</span>
         <span class="k">if</span> <span class="kc">False</span><span class="p">:</span>
             <span class="n">out</span><span class="o">.</span><span class="n">calc_stresses</span><span class="p">(</span><span class="n">indat</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">out</span></div>
+        <span class="k">return</span> <span class="n">out</span>
 
     <span class="c1"># def calc_tke(self, advr):</span>
     <span class="c1">#     &quot;&quot;&quot;</span>
@@ -166,17 +211,17 @@
     <span class="c1">#             if ind == 10:</span>
     <span class="c1">#                 raise Exception(&#39;Too many loops&#39;)</span>
 
-<div class="viewcode-block" id="binner.calc_ustar_fitstress"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.binner.calc_ustar_fitstress">[docs]</a>    <span class="k">def</span> <span class="nf">calc_ustar_fitstress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dinds</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="n">H</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">calc_ustar_fitstress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dinds</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="n">H</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">H</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_m</span><span class="p">[:][</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
         <span class="n">sgn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upwp_</span><span class="p">[</span><span class="n">dinds</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ustar</span> <span class="o">=</span> <span class="p">(</span><span class="n">sgn</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">upwp_</span><span class="p">[</span><span class="n">dinds</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span>
-            <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">[</span><span class="n">dinds</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">H</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span></div>
+            <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">][</span><span class="n">dinds</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">H</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
         <span class="c1"># p=polyfit(self.hab[dinds],sgn*self.upwp_[dinds],1)</span>
         <span class="c1"># self.ustar=p[1]**(0.5)</span>
         <span class="c1"># self.hbl_fit=p[0]/p[1]</span>
 
-<div class="viewcode-block" id="binner.calc_stresses"><a class="viewcode-back" href="../../../api/dolfyn.adp.html#dolfyn.adp.base.binner.calc_stresses">[docs]</a>    <span class="k">def</span> <span class="nf">calc_stresses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beamvel</span><span class="p">,</span> <span class="n">beamAng</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">calc_stresses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beamvel</span><span class="p">,</span> <span class="n">beamAng</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the stresses from the difference in the beam variances.</span>
 
@@ -206,21 +251,58 @@
             <span class="c1"># The uw (real) component has two minus signs, but the vw (imag)</span>
             <span class="c1"># component only has one, therefore:</span>
             <span class="n">stress</span><span class="o">.</span><span class="n">imag</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="n">stress</span> <span class="o">*=</span> <span class="n">rotate</span><span class="o">.</span><span class="n">inst2earth_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># !FIXTHIS!:</span>
+        <span class="c1"># - Stress rotations should be **tensor rotations**.</span>
+        <span class="c1"># - These should be handled by rotate2.</span>
+        <span class="c1"># - Delete the inst2earth_heading fn?</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The calc_stresses function does not yet &quot;</span>
+                      <span class="s2">&quot;properly handle the coordinate system.&quot;</span><span class="p">)</span>
+        <span class="n">stress</span> <span class="o">*=</span> <span class="n">rdi</span><span class="o">.</span><span class="n">inst2earth_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;principal&#39;</span><span class="p">:</span>
             <span class="n">stress</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">stress</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">stress</span><span class="o">.</span><span class="n">imag</span></div></div>
+        <span class="k">return</span> <span class="n">stress</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">stress</span><span class="o">.</span><span class="n">imag</span>
         <span class="c1"># self.add_data(&#39;upwp_&#39;,stress.real,&#39;stress&#39;)</span>
         <span class="c1"># self.add_data(&#39;vpwp_&#39;,stress.imag,&#39;stress&#39;)</span>
         <span class="c1"># self.meta[&#39;upwp_&#39;]=db.varMeta(&quot;u&#39;w&#39;&quot;,{2:&#39;m&#39;,-2:&#39;s&#39;})</span>
         <span class="c1"># self.meta[&#39;vpwp_&#39;]=db.varMeta(&quot;v&#39;w&#39;&quot;,{2:&#39;m&#39;,-2:&#39;s&#39;})</span>
+
+
+<span class="c1"># !CLEANUP! below this line</span>
+
+<span class="k">class</span> <span class="nc">adcp_raw</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="c1"># This is a relic maintained here for now for backward compatability.</span>
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ADPdata</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </pre></div>
 
           </div>
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The DOLfYN API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
@@ -249,7 +331,7 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
