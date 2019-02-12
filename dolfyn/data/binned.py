@@ -39,7 +39,7 @@ class TimeBinner(object):
         Returns `outshape` (the 'reshape'd shape) for an `inshape` array.
         """
         n_bin = int(self._parse_nbin(n_bin))
-        return list(inshape[:-1]) + [inshape[-1] // n_bin, n_bin + n_pad]
+        return list(inshape[:-1]) + [int(inshape[-1] // n_bin), int(n_bin + n_pad)]
 
     def _outshape_fft(self, inshape, n_fft=None, n_bin=None):
         """
@@ -47,7 +47,7 @@ class TimeBinner(object):
         """
         n_fft = self._parse_nfft(n_fft)
         n_bin = self._parse_nbin(n_bin)
-        return list(inshape[:-1]) + [inshape[-1] // n_bin, n_fft // 2]
+        return list(inshape[:-1]) + [int(inshape[-1] // n_bin), int(n_fft // 2)]
 
     def _parse_fs(self, fs=None):
         if fs is not None:
@@ -93,22 +93,24 @@ class TimeBinner(object):
 
         """
         n_bin = self._parse_nbin(n_bin)
-        npd0 = n_pad // 2
-        npd1 = (n_pad + 1) // 2
+        npd0 = int(n_pad // 2)
+        npd1 = int((n_pad + 1) // 2)
         shp = self._outshape(arr.shape, n_pad=0, n_bin=n_bin)
         out = np.zeros(
             self._outshape(arr.shape, n_pad=n_pad, n_bin=n_bin),
             dtype=arr.dtype)
         if np.mod(n_bin, 1) == 0:
+            # n_bin needs to be int
+            n_bin = int(n_bin)
             # If n_bin is an integer, we can do this simply.
             out[..., npd0: n_bin + npd0] = (
                 arr[..., :(shp[-2] * shp[-1])]).reshape(shp, order='C')
         else:
             inds = (np.arange(np.prod(shp[-2:])) * n_bin // int(n_bin)
                     ).astype(int)
-            out[..., npd0:int(n_bin) + npd0] = (arr[..., inds]
+            n_bin = int(n_bin)
+            out[..., npd0:n_bin + npd0] = (arr[..., inds]
                                                 ).reshape(shp, order='C')
-            # n_bin needs to be int for the n_pad operation.
             n_bin = int(n_bin)
         if n_pad != 0:
             out[..., 1:, :npd0] = out[..., :-1, n_bin:n_bin + npd0]
@@ -207,10 +209,10 @@ class TimeBinner(object):
         """
         n_bin = self._parse_nbin(n_bin)
         out = np.empty(self._outshape(indat.shape, n_bin=n_bin)[:-1] +
-                       [n_bin // 4], dtype=indat.dtype)
+                       [int(n_bin // 4)], dtype=indat.dtype)
         dt1 = self.reshape(indat, n_pad=n_bin / 2 - 2)
         # Here we de-mean only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, (n_bin // 4):(-n_bin // 4)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(n_bin // 4):int(-n_bin // 4)].mean(-1)[..., None]
         dt2 = self.demean(indat)  # Don't pad the second variable.
         dt2 = dt2 - dt2.mean(-1)[..., None]
         se = slice(int(n_bin // 4) - 1, None, 1)
@@ -232,9 +234,9 @@ class TimeBinner(object):
         if npt is None:
             npt = self.n_bin
         if one_sided:
-            return np.arange(npt // 2, dtype=np.float32)
+            return np.arange(int(npt // 2), dtype=np.float32)
         else:
-            return np.arange(npt, dtype=np.float32) - npt // 2
+            return np.arange(npt, dtype=np.float32) - int(npt // 2)
 
     def calc_xcov(self, indt1, indt2, npt=None,
                   n_bin1=None, n_bin2=None, normed=False):
@@ -250,7 +252,7 @@ class TimeBinner(object):
         tmp = int(n_bin2) - int(n_bin1) + npt
         dt1 = self.reshape(indt1, n_pad=tmp - 1, n_bin=n_bin1)
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, (tmp // 2):(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(indt2, n_bin=n_bin2)
         dt2 = dt2 - dt2.mean(-1)[..., None]
@@ -360,9 +362,9 @@ class TimeBinner(object):
             print("n_fft larger than n_bin \
             doesn't make sense, setting n_fft=n_bin")
         if n_fft_coh is None:
-            self.n_fft_coh = self.n_bin // 6
+            self.n_fft_coh = int(self.n_bin // 6)
         elif n_fft_coh >= n_bin:
-            self.n_fft_coh = n_bin // 6
+            self.n_fft_coh = int(n_bin // 6)
             print("n_fft_coh must be smaller than n_bin, "
                   "setting n_fft_coh=n_bin / 6")
 
@@ -392,7 +394,7 @@ class TimeBinner(object):
         n_bin1 = self._parse_nbin(n_bin1)
         n_bin2 = self._parse_nbin(n_bin2)
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
-        oshp[-2] = np.min([oshp[-2], dat2.shape[-1] // n_bin2])
+        oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         out = np.empty(oshp, dtype=dat1.dtype)
         # The data is detrended in psd, so we don't need to do it here.
         dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
@@ -428,7 +430,7 @@ class TimeBinner(object):
         n_bin1 = self._parse_nbin(n_bin1)
         n_bin2 = self._parse_nbin(n_bin2)
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
-        oshp[-2] = np.min([oshp[-2], dat2.shape[-1] // n_bin2])
+        oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         # The data is detrended in psd, so we don't need to do it here:
         dat1 = self.reshape(dat1, n_pad=n_fft)
         dat2 = self.reshape(dat2, n_pad=n_fft)
@@ -468,7 +470,7 @@ class TimeBinner(object):
         n_bin1 = self._parse_nbin(n_bin1)
         n_bin2 = self._parse_nbin(n_bin2)
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
-        oshp[-2] = np.min([oshp[-2], dat2.shape[-1] // n_bin2])
+        oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         # The data is detrended in psd, so we don't need to do it here:
         dat1 = self.reshape(dat1, n_pad=n_fft)
         dat2 = self.reshape(dat2, n_pad=n_fft)

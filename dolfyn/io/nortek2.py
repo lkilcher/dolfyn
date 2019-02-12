@@ -257,7 +257,7 @@ class Ad2cpReader(object):
                     rdr._N[tmp_idx] = sz
                     rdr._struct = defs.Struct('<' + rdr.format)
                     rdr.nbyte = defs.calcsize(rdr.format)
-                    rdr._cs_struct = defs.Struct('<' + '{}H'.format(rdr.nbyte // 2))
+                    rdr._cs_struct = defs.Struct('<' + '{}H'.format(int(rdr.nbyte // 2)))
                     # Initialize the array
                     outdat[26]['altraw_samp'] = defs.nans(
                         [rdr._N[tmp_idx],

@@ -597,7 +597,7 @@ class NortekReader(object):
             num_bursts = 1
             nburst = len(dat.mpltime)
         else:
-            num_bursts = len(dat.mpltime) // nburst + 1
+            num_bursts = int(len(dat.mpltime) // nburst + 1)
         for nb in range(num_bursts):
             iburst = slice(nb * nburst, (nb + 1) * nburst)
             sysi = dat._sysi[iburst]

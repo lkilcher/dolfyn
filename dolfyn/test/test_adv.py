@@ -133,7 +133,7 @@ def test_heading(make_data=False):
 
 def test_turbulence(make_data=False):
     tmp = dat.copy()
-    bnr = avm.TurbBinner(20, tmp['props']['fs'])
+    bnr = avm.TurbBinner(20.0, float(tmp['props']['fs']))
     td = bnr(tmp)
 
     if make_data:

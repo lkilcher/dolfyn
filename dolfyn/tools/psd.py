@@ -42,7 +42,7 @@ def psd_freq(nfft, fs, full=False):
 
     """
     fs = np.float64(fs)
-    f = np.fft.fftfreq(nfft, 1 / fs)
+    f = np.fft.fftfreq(int(nfft), 1 / fs)
     if full:
         return f
     else:
@@ -82,15 +82,15 @@ def _stepsize(l, nfft, nens=None, step=None):
         nfft = l
     if nens is None and step is None:
         if l == nfft:
-            return 0, 1, nfft
+            return 0, 1, int(nfft)
         nens = int(2. * l / nfft)
-        return int((l - nfft) / (nens - 1)), nens, nfft
+        return int((l - nfft) / (nens - 1)), nens, int(nfft)
     elif nens is None:
-        return int(step), int((l - nfft) / step + 1), nfft
+        return int(step), int((l - nfft) / step + 1), int(nfft)
     else:
         if nens == 1:
-            return 0, 1, nfft
-        return int((l - nfft) / (nens - 1)), nens, nfft
+            return 0, 1, int(nfft)
+        return int((l - nfft) / (nens - 1)), int(nens), int(nfft)
 
 
 def cohere(a, b, nfft, window='hann', debias=True, noise=(0, 0)):

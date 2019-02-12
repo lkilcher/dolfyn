@@ -52,7 +52,7 @@ class DataDef(object):
                 self._N.append(int(np.prod(itm[2])))
         self._struct = Struct('<' + self.format)
         self.nbyte = calcsize(self.format)
-        self._cs_struct = Struct('<' + '{}H'.format(self.nbyte // 2))
+        self._cs_struct = Struct('<' + '{}H'.format(int(self.nbyte // 2)))
 
     def init_data(self, npings):
         out = {}
