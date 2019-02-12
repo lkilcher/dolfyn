@@ -1,6 +1,6 @@
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 __prog_name__ = 'DOLfYN'
-__version_date__ = 'April-3-2018'
+__version_date__ = 'November-13-2018'
 
 
 def ver2tuple(ver):
