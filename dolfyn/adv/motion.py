@@ -148,13 +148,18 @@ class CalcMotion(object):
         """
         samp_freq = self.advo['props']['fs']
 
+        # Get high-pass accelerations
         hp = self.accel - self.acclow
 
+        # Integrate in time to get velocities
         dat = np.concatenate((np.zeros(list(hp.shape[:-1]) + [1]),
                               cumtrapz(hp, dx=1 / samp_freq)), axis=-1)
+
+        # Filter again?
         if self.accelvel_filtfreq > 0:
             filt_freq = self.accelvel_filtfreq
-            # 8th order butterworth filter.
+            # 2nd order Butterworth filter
+            # Applied twice by 'filtfilt' = 4th order butterworth
             filt = sig.butter(2, float(filt_freq) / (samp_freq / 2))
             for idx in range(hp.shape[0]):
                 dat[idx] = dat[idx] - sig.filtfilt(filt[0], filt[1], dat[idx])
