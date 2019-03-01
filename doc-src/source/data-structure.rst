@@ -66,8 +66,8 @@ To rotate a data object into one of these coordinate systems, simply use the `ro
 
 .. _units:
 
-Units
------
+Data Description and Units
+--------------------------
 
 |dlfn| generally uses the `*MKS* system <https://en.wikipedia.org/wiki/MKS_system_of_units>`_, with most angles in degrees.
 
@@ -75,3 +75,21 @@ Units
                :header-rows: 1
                :widths: 15, 20, 15, 50
                :file: ./units.csv
+
+                      
+Data Shortcuts (properties)
+---------------------------
+In addition to the data items listed above, |dlfn| data objects also
+contain shortcuts to tools and other variables that can be obtained
+from simple operations of its data items. These attributes aren't
+listed in the view of the data shown above. Instead, to see the
+variables that are available as shortcuts for a particular data
+object, take a look at the ``dat.shortcuts`` property.
+
+.. csv-table:: Table 2: Notes on common shorcuts found in |dlfn| data objects.
+               :header-rows: 1
+               :widths: 15, 20, 85
+               :file: ./shortcuts.csv
+
+**Important Note:** The items listed in Table 2 are not stored in the data
+object but are provided as attributes (shortcuts) to |dlfn| data objects.

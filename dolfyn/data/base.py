@@ -80,6 +80,11 @@ class data(SourceDataType):
     """
 
     @property
+    def shortcuts(self, ):
+        return [p for p in dir(type(self)) if isinstance(getattr(type(self), p), property)
+                and not p.startswith('_') and not p == 'shortcuts']
+
+    @property
     def _repr_header(self, ):
         return (
             '{}: Data Object with Keys:\n'
