@@ -26,7 +26,6 @@ Documentation
 Document variables in data objects
 - document `props` attribute.
   - declination
-- Add a units section.
   - use radians everywhere? (started this on branch: `reorg-radians`)
 
 Create a file I/O page
@@ -35,11 +34,11 @@ Create a file I/O page
   - Document the .userdata.json files
     - declination, accel_filtfreq
     - add 'timezone' handling
-- Document load/save functions briefly.
 
 Time format options:
 - datetime objects (date strings in hdf5 files?, 8601 strings?, with timezone from .userdata.json file?)
 - Does this move to 'TODO-later'?
+- Or do we document the ``time_array`` class?
 
 Add some examples to the plotting tools page
 - add a ``show`` method and document it.
