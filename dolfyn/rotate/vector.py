@@ -97,7 +97,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     if hasattr(odata, 'orientmat'):
         omat = odata['orientmat']
     else:
-        print("HELLO!!!! WHY ARE WE HERE?")
         if advo._make_model.startswith('nortek vector'):
             orientation_down = odata['orientation_down']
         else:
