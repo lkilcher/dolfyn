@@ -1,6 +1,6 @@
 import numpy as np
 import dolfyn.adv.api as avm
-from dolfyn.main import read_example as read
+from dolfyn import read_example as read
 import dolfyn.test.base as tb
 
 load = tb.load_tdata
