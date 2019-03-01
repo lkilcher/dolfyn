@@ -32,3 +32,5 @@ tmp/
 tmp*.py
 
 .DS_Store
+
+.vscode/

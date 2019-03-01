@@ -27,7 +27,7 @@ def test_rotate_inst2earth(make_data=False):
         yield data_equiv, t, c, msg
 
 
-def test_rotate_earth2inst(make_data=False):
+def test_rotate_earth2inst():
     td = load('vector_data01_rotate_inst2earth.h5')
     rotate(td, 'inst', inplace=True)
     tdm = load('vector_data_imu01_rotate_inst2earth.h5')
@@ -70,7 +70,7 @@ def test_rotate_inst2beam(make_data=False):
         yield data_equiv, t, c, msg
 
 
-def test_rotate_beam2inst(make_data=False):
+def test_rotate_beam2inst():
     td = load('vector_data01_rotate_inst2beam.h5')
     rotate(td, 'inst', inplace=True)
     tdm = load('vector_data_imu01_rotate_inst2beam.h5')
