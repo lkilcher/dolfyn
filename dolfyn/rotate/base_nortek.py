@@ -112,6 +112,11 @@ def _check_declination(advo):
         odata['orientmat'] = np.einsum('ij,kjl->kil',
                                        Rdec,
                                        odata['orientmat'])
+        # NOTE: for a moment I thought I needed to a tensor rotation
+        # on orientmat, but that's not the case. It seems like the
+        # rotation matrix isn't actually a "tensor".
+        # I checked this by showing that the above actually gives the
+        # desired result of rotating vectors by the declination.
 
         advo.props['declination_in_orientmat'] = True
         p, r, h = orient2euler(odata['orientmat'])
