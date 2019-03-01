@@ -1,7 +1,7 @@
 import pkg_resources
 import atexit
 import pyDictH5.base as pb
-from dolfyn.io.main import load as _load
+from dolfyn import load as _load
 import numpy as np
 
 pb.debug_level = 10
