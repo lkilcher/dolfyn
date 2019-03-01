@@ -75,18 +75,11 @@ class TurbBinner(VelBinner):
           - sigma_Uh : The standard deviation of the horizontal
             velocity.
 
-          - Spec : The spectra of the velocity in radial frequency
-            units (each component is available as:
-            :attr:`Suu <dolfyn.data.velocity.VelBindatSpec.Suu>`,
-            :attr:`Svv <dolfyn.data.velocity.VelBindatSpec.Svv>`,
-            :attr:`Sww <dolfyn.data.velocity.VelBindatSpec.Sww>`,
-            or in Hz units as:
-            :attr:`Suu_hz <dolfyn.data.velocity.VelBindatSpec.Suu_hz>`,
-            :attr:`Svv_hz <dolfyn.data.velocity.VelBindatSpec.Svv_hz>`,
-            :attr:`Sww_hz <dolfyn.data.velocity.VelBindatSpec.Sww_hz>`)
+          - Spec : A data group containing the spectra of the velocity
+            in radial frequency units. The data group contains:
+             - vel : the velocity spectra array (m^2/s/radian))
+             - omega : the radial frequncy (radian / s)
 
-          - omega : The radial frequency [rad/s] (also see the :attr:`freq
-            <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
         """
         # warnings.warn("The instance.__call__ syntax of turbulence averaging"
         #               " is being deprecated. Use the functional form, e.g. '"
@@ -385,14 +378,14 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
       chunks. This object also computes the following items over
       those chunks:
 
-      - tke\_vec : The energy in each component (components are also
-        accessible as
+      - tke\_vec : The energy in each component, each components is
+        alternatively accessible as:
         :attr:`upup_ <dolfyn.data.velocity.VelBindatTke.upup_>`,
         :attr:`vpvp_ <dolfyn.data.velocity.VelBindatTke.vpvp_>`,
         :attr:`wpwp_ <dolfyn.data.velocity.VelBindatTke.wpwp_>`)
 
-      - stress : The Reynolds stresses (each component is
-        accessible as
+      - stress : The Reynolds stresses, each component is
+        alternatively accessible as:
         :attr:`upwp_ <dolfyn.data.velocity.VelBindatTke.upwp_>`,
         :attr:`vpwp_ <dolfyn.data.velocity.VelBindatTke.vpwp_>`,
         :attr:`upvp_ <dolfyn.data.velocity.VelBindatTke.upvp_>`)
@@ -400,37 +393,14 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
       - sigma_Uh : The standard deviation of the horizontal
         velocity.
 
-      - Spec : The spectra of the velocity in radial frequency
-        units (each component is available as:
-        :attr:`Suu <dolfyn.data.velocity.VelBindatSpec.Suu>`,
-        :attr:`Svv <dolfyn.data.velocity.VelBindatSpec.Svv>`,
-        :attr:`Sww <dolfyn.data.velocity.VelBindatSpec.Sww>`,
-        or in Hz units as:
-        :attr:`Suu_hz <dolfyn.data.velocity.VelBindatSpec.Suu_hz>`,
-        :attr:`Svv_hz <dolfyn.data.velocity.VelBindatSpec.Svv_hz>`,
-        :attr:`Sww_hz <dolfyn.data.velocity.VelBindatSpec.Sww_hz>`)
+      - Spec : A data group containing the spectra of the velocity
+        in radial frequency units. The data group contains:
+         - vel : the velocity spectra array (m^2/s/radian))
+         - omega : the radial frequncy (radian / s)
 
-      - omega : The radial frequency [rad/s] (also see the :attr:`freq
-        <dolfyn.data.velocity.VelBindatSpec.freq>` attribute).
     """
-    calculator = TurbBinner(n_bin, advr.fs, n_fft=n_fft)
-    out = VelBinnerSpec.__call__(calculator, advr, out_type=out_type)
-    calculator.do_avg(advr, out)
-    out.add_data('tke_vec', calculator.calc_tke(advr['vel'], noise=advr.noise), 'main')
-    out.add_data('stress', calculator.calc_stress(advr['vel']), 'main')
-    out.add_data('sigma_Uh',
-                 np.std(calculator.reshape(advr.U_mag), -1, dtype=np.float64) -
-                 (advr.noise[0] + advr.noise[1]) / 2, 'main')
-    out.props['Itke_thresh'] = Itke_thresh
-    out.add_data('Spec',
-                 calculator.calc_vel_psd(advr['vel'],
-                                         noise=advr.noise,
-                                         window=window),
-                 'spec')
-    out.add_data('omega', calculator.calc_omega(), '_essential')
-
-    # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,
-    # out.U_mag,omega_range=omega_range_epsilon),'main')
-    # out.add_data('Acov',self.calc_acov(advr['vel']),'corr')
-    # out.add_data('Lint',self.calc_Lint(out.Acov,out.U_mag),'main')
-    return out
+    calculator = TurbBinner(n_bin, advr.props['fs'], n_fft=n_fft,
+                            out_type=out_type,
+                            omega_range_epsilon=omega_range_epsilon,
+                            Itke_thresh=Itke_thresh, window=window)
+    return calculator(advr)
