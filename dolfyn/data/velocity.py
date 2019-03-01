@@ -354,7 +354,7 @@ class TKEdata(Velocity):
         Ratio of sqrt(tke) to velocity magnitude.
         """
         return np.ma.masked_where(self.U_mag < thresh,
-                                  np.sqrt(self.tke) / self.U_mag)
+                                  np.sqrt(2 * self.tke) / self.U_mag)
 
     @property
     def I(self, thresh=0):

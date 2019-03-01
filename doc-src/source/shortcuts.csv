@@ -1,0 +1,21 @@
+﻿Name,units,Description/Notes
+shape, ---, the shape of ``dat.u`` (see below)
+n_time, ---, the length of ``dat['mpltime']``
+u, m/s, ``dat['vel'][0]``
+v, m/s, ``dat['vel'][1]``
+w, m/s, ``dat['vel'][2]``
+U, m/s,  the horizontal velocity as a complex quantity (dat.u + 1j * dat.v)
+U_mag, m/s,  the magnitude of the horizontal velocity
+U_angle, radians, the direction of the horizontal velocity (counter-clockwise from East; X; or streamwise direction; depending on coordinate system)
+subset, ---, a tool for indexing a subset of the data object
+tauij, m\ :sup:`2`/s\ :sup:`2`, the Reynold's stress tensor
+tke, m\ :sup:`2`/s\ :sup:`2`,  the turbulent kinetic energy (half the sum of the data in `'tke_vec'`)
+upup\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][0]``
+vpvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][1]``
+wpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][2]``
+upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][0]``
+upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][1]``
+vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][2]``
+Ecoh, m\ :sup:`2`/s\ :sup:`2`, Coherent turbulent kinetic energy (root-sum-square of Reynold's stresses)
+I, ---, Ratio of sigma_Uh to horizontal velocity magnitude
+Itke, ---, Ratio of sqrt(2*tke) to horizontal velocity magnitude

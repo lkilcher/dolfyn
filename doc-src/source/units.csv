@@ -3,11 +3,15 @@ mpltime,`matplotlib date format <https://matplotlib.org/api/dates_api.html#matpl
 vel,m/s,---,The velocity vector data
 range,m,---,The distance from the ADP head
 c_sound,m/s,env,The speed of sound used in velocity calculations.
-press,dbar?,env,pressure measured by the instrument
+press / pressure,dbar?,env,pressure measured by the instrument
 temp,degrees Celsius,env,The temperature measured by the instrument.
-Accel,m/s^2,orient,The vector acceleraton of the instrument
-AngRt,rad/s,orient,The angular rotation rate of the instrument
-Mag,???,orient,The magnetometer data.
+accel,m/s\ :sup:`2`,orient,The vector acceleraton of the instrument
+angrt,rad/s,orient,The angular rotation rate of the instrument
+mag,???,orient,The magnetometer data.
+velraw,m/s,---,The velocity without motion-correction.
+velrot,m/s,orient,The rotational motion velocity (computed from angrt).
+velacc,m/s,orient,The translational motion velocity (computed from accel).
+acclow,m/s\ :sup:`2`,orient,The low-pass filtered acceleration signal.
 heading,degrees,orient,The instrument heading* (clockwise from North)
 pitch,degrees,orient,The instrument pitch*
 roll,degrees,orient,The instrument roll*
@@ -15,10 +19,16 @@ orientmat,---,orient,The instrument's orientation matrix in the earth reference 
 amp,???,signal,The acoustic signal return amplitude
 corr,percent,signal,correlation between the send and receive pings.
 ambig_vel,m/s,sys,The ambiguity velocity*
-batt_V,voltage,sys,The battery voltage
+batt_V / batt,voltage,sys,The battery voltage
 ensemble,---,sys,The ensemble counter
 error,---,sys,The instrument error code*
 status,---,sys,The instrument status code*
 temp_clock,degrees C?,sys,The instruments clock temperature
 temp_mag,degrees C?,sys,The instruments magnetometer temperature
 temp_press,degrees C?,sys,The instruments pressure sensor temperature
+tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,Variance of velocity components (0: uu; 1: vv; 2: ww)
+stress,m\ :sup:`2`/s\ :sup:`2`,---,"The Reynolds stress array (0: uv, 1: uw, 2: vw)"
+sigma_Uh,m/s,---,Standard deviation of horizontal velocity magnitude 
+epsilon,m\ :sup:`2`/s\ :sup:`3`,---,Turbulence dissipation rate
+Spec,<variables units>\ :sup:`2`/(rad/s),---,A data group containing spectra of variables above.
+omega,rad/s,Spec,Radial frequency.
