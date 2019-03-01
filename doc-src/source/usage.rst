@@ -106,6 +106,24 @@ Here we see that the ``props`` attribute contains the `'coord_sys'` entry, which
       | error                    : <array; (120530,); uint8>
       | status                   : <array; (120530,); uint8>
 
+Subsetting data
+---------------
+
+A segment of the time-record of a data object can be extracted to a new data object using the ``subset`` property, for example::
+
+  >>> datsub = dat.subset[:1000]
+
+Returns a new data object with a copy of the first one-thousand time-steps from the original data object.
+
+The subset property is actually an indexing-object that takes a *one-dimensional* `numpy-compatible indexing object <https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html>`_ such as slices and boolean arrays. For example, we can also do::
+
+  >>> from datetime import datetime
+  >>> datsub = dat.subset[
+                    (datetime(2012,6,12,0,1) < dat.mpltime.datetime) &
+                    (dat.mpltime.datetime < datetime(2012,6,12,12,0,3))]
+
+This gives a data with data from the original for the two seconds between 12:00:01 and 12:00:03 on June 12, 2012. This also reveals the ``.datetime`` property of the ``time_array`` class, but this functionality may change.
+
 Saving and loading data
 ------------------------------
 
