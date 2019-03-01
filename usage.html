@@ -6,14 +6,15 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>The Basics &#8212; DOLfYN 0.9.1 documentation</title>
+    <title>The Basics &#8212; DOLfYN 0.10.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -31,6 +32,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="the-basics">
@@ -87,7 +90,7 @@ acoustic Doppler velocimeters (ADVs) and acoustic Doppler profilers
 <span class="go">  | roll                     : &lt;array; (120530,); float32&gt;</span>
 </pre></div>
 </div>
-<p>Note here that the display information includes the size of each array, and its data-type. The units of most variables are in the <em>MKS</em> system (e.g., velocity is in meters-per-second), and angles are in degrees. See the <a class="reference internal" href="data-structure.html#units"><span class="std std-ref">Units</span></a> section for a complete list of the units of DOLfYN variables.</p>
+<p>Note here that the display information includes the size of each array, and its data-type. The units of most variables are in the <em>MKS</em> system (e.g., velocity is in meters-per-second), and angles are in degrees. See the <a class="reference internal" href="data-structure.html#units"><span class="std std-ref">Data Description and Units</span></a> section for a complete list of the units of DOLfYN variables.</p>
 </div>
 <div class="section" id="data-groups">
 <h2>Data Groups<a class="headerlink" href="#data-groups" title="Permalink to this headline">¶</a></h2>
@@ -140,6 +143,22 @@ acoustic Doppler velocimeters (ADVs) and acoustic Doppler profilers
 </li>
 </ul>
 </div>
+<div class="section" id="subsetting-data">
+<h2>Subsetting data<a class="headerlink" href="#subsetting-data" title="Permalink to this headline">¶</a></h2>
+<p>A segment of the time-record of a data object can be extracted to a new data object using the <code class="docutils literal notranslate"><span class="pre">subset</span></code> property, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">datsub</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">subset</span><span class="p">[:</span><span class="mi">1000</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Returns a new data object with a copy of the first one-thousand time-steps from the original data object.</p>
+<p>The subset property is actually an indexing-object that takes a <em>one-dimensional</em> <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html">numpy-compatible indexing object</a> such as slices and boolean arrays. For example, we can also do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">datsub</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span>
+<span class="go">                  (datetime(2012,6,12,0,1) &lt; dat.mpltime.datetime) &amp;</span>
+<span class="go">                  (dat.mpltime.datetime &lt; datetime(2012,6,12,12,0,3))]</span>
+</pre></div>
+</div>
+<p>This gives a data with data from the original for the two seconds between 12:00:01 and 12:00:03 on June 12, 2012. This also reveals the <code class="docutils literal notranslate"><span class="pre">.datetime</span></code> property of the <code class="docutils literal notranslate"><span class="pre">time_array</span></code> class, but this functionality may change.</p>
+</div>
 <div class="section" id="saving-and-loading-data">
 <h2>Saving and loading data<a class="headerlink" href="#saving-and-loading-data" title="Permalink to this headline">¶</a></h2>
 <p>A data object can be saved for later use using the <code class="docutils literal notranslate"><span class="pre">to_hdf5</span></code> method:</p>
@@ -186,6 +205,7 @@ those tools for more details.</p>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -206,6 +226,7 @@ those tools for more details.</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Basics</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#reading-source-data-files">Reading source data files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-groups">Data Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subsetting-data">Subsetting data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#saving-and-loading-data">Saving and loading data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cleaning-data">Cleaning data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#averaging-data">Averaging data</a></li>
@@ -239,6 +260,14 @@ those tools for more details.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -247,8 +276,8 @@ those tools for more details.</p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/usage.rst.txt"

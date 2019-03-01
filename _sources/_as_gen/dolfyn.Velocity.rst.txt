@@ -45,6 +45,7 @@ dolfyn.Velocity
       ~Velocity.U_mag
       ~Velocity.n_time
       ~Velocity.shape
+      ~Velocity.shortcuts
       ~Velocity.subset
       ~Velocity.u
       ~Velocity.v

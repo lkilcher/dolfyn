@@ -6,14 +6,15 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Data Structure &#8212; DOLfYN 0.9.1 documentation</title>
+    <title>Data Structure &#8212; DOLfYN 0.10.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -31,6 +32,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="data-structure">
@@ -95,11 +98,11 @@
 </pre></div>
 </div>
 </div>
-<div class="section" id="units">
-<span id="id1"></span><h2>Units<a class="headerlink" href="#units" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="data-description-and-units">
+<span id="units"></span><h2>Data Description and Units<a class="headerlink" href="#data-description-and-units" title="Permalink to this headline">¶</a></h2>
 <p>DOLfYN generally uses the <a class="reference external" href="https://en.wikipedia.org/wiki/MKS_system_of_units">*MKS* system</a>, with most angles in degrees.</p>
-<table border="1" class="colwidths-given docutils" id="id2">
-<caption><span class="caption-text">Table 1: The units of common variables found in DOLfYN data objects.</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<table border="1" class="colwidths-given docutils" id="id1">
+<caption><span class="caption-text">Table 1: The units of common variables found in DOLfYN data objects.</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col width="15%" />
 <col width="20%" />
@@ -134,7 +137,7 @@
 <td>env</td>
 <td>The speed of sound used in velocity calculations.</td>
 </tr>
-<tr class="row-even"><td>press</td>
+<tr class="row-even"><td>press / pressure</td>
 <td>dbar?</td>
 <td>env</td>
 <td>pressure measured by the instrument</td>
@@ -144,20 +147,40 @@
 <td>env</td>
 <td>The temperature measured by the instrument.</td>
 </tr>
-<tr class="row-even"><td>Accel</td>
-<td>m/s^2</td>
+<tr class="row-even"><td>accel</td>
+<td>m/s<sup>2</sup></td>
 <td>orient</td>
 <td>The vector acceleraton of the instrument</td>
 </tr>
-<tr class="row-odd"><td>AngRt</td>
+<tr class="row-odd"><td>angrt</td>
 <td>rad/s</td>
 <td>orient</td>
 <td>The angular rotation rate of the instrument</td>
 </tr>
-<tr class="row-even"><td>Mag</td>
+<tr class="row-even"><td>mag</td>
 <td>???</td>
 <td>orient</td>
 <td>The magnetometer data.</td>
+</tr>
+<tr class="row-odd"><td>velraw</td>
+<td>m/s</td>
+<td>—</td>
+<td>The velocity without motion-correction.</td>
+</tr>
+<tr class="row-even"><td>velrot</td>
+<td>m/s</td>
+<td>orient</td>
+<td>The rotational motion velocity (computed from angrt).</td>
+</tr>
+<tr class="row-odd"><td>velacc</td>
+<td>m/s</td>
+<td>orient</td>
+<td>The translational motion velocity (computed from accel).</td>
+</tr>
+<tr class="row-even"><td>acclow</td>
+<td>m/s<sup>2</sup></td>
+<td>orient</td>
+<td>The low-pass filtered acceleration signal.</td>
 </tr>
 <tr class="row-odd"><td>heading</td>
 <td>degrees</td>
@@ -194,7 +217,7 @@
 <td>sys</td>
 <td>The ambiguity velocity*</td>
 </tr>
-<tr class="row-even"><td>batt_V</td>
+<tr class="row-even"><td>batt_V / batt</td>
 <td>voltage</td>
 <td>sys</td>
 <td>The battery voltage</td>
@@ -229,13 +252,151 @@
 <td>sys</td>
 <td>The instruments pressure sensor temperature</td>
 </tr>
+<tr class="row-odd"><td>tke_vec</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td>—</td>
+<td>Variance of velocity components (0: uu; 1: vv; 2: ww)</td>
+</tr>
+<tr class="row-even"><td>stress</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td>—</td>
+<td>The Reynolds stress array (0: uv, 1: uw, 2: vw)</td>
+</tr>
+<tr class="row-odd"><td>sigma_Uh</td>
+<td>m/s</td>
+<td>—</td>
+<td>Standard deviation of horizontal velocity magnitude</td>
+</tr>
+<tr class="row-even"><td>epsilon</td>
+<td>m<sup>2</sup>/s<sup>3</sup></td>
+<td>—</td>
+<td>Turbulence dissipation rate</td>
+</tr>
+<tr class="row-odd"><td>Spec</td>
+<td>&lt;variables units&gt;<sup>2</sup>/(rad/s)</td>
+<td>—</td>
+<td>A data group containing spectra of variables above.</td>
+</tr>
+<tr class="row-even"><td>omega</td>
+<td>rad/s</td>
+<td>Spec</td>
+<td>Radial frequency.</td>
+</tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="data-shortcuts-properties">
+<h2>Data Shortcuts (properties)<a class="headerlink" href="#data-shortcuts-properties" title="Permalink to this headline">¶</a></h2>
+<p>In addition to the data items listed above, DOLfYN data objects also
+contain shortcuts to tools and other variables that can be obtained
+from simple operations of its data items. These attributes aren’t
+listed in the view of the data shown above. Instead, to see the
+variables that are available as shortcuts for a particular data
+object, take a look at the <code class="docutils literal notranslate"><span class="pre">dat.shortcuts</span></code> property.</p>
+<table border="1" class="colwidths-given docutils" id="id2">
+<caption><span class="caption-text">Table 2: Notes on common shorcuts found in DOLfYN data objects.</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="13%" />
+<col width="17%" />
+<col width="71%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">units</th>
+<th class="head">Description/Notes</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>shape</td>
+<td>—</td>
+<td>the shape of <code class="docutils literal notranslate"><span class="pre">dat.u</span></code> (see below)</td>
+</tr>
+<tr class="row-odd"><td>n_time</td>
+<td>—</td>
+<td>the length of <code class="docutils literal notranslate"><span class="pre">dat['mpltime']</span></code></td>
+</tr>
+<tr class="row-even"><td>u</td>
+<td>m/s</td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['vel'][0]</span></code></td>
+</tr>
+<tr class="row-odd"><td>v</td>
+<td>m/s</td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['vel'][1]</span></code></td>
+</tr>
+<tr class="row-even"><td>w</td>
+<td>m/s</td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['vel'][2]</span></code></td>
+</tr>
+<tr class="row-odd"><td>U</td>
+<td>m/s</td>
+<td>the horizontal velocity as a complex quantity (dat.u + 1j * dat.v)</td>
+</tr>
+<tr class="row-even"><td>U_mag</td>
+<td>m/s</td>
+<td>the magnitude of the horizontal velocity</td>
+</tr>
+<tr class="row-odd"><td>U_angle</td>
+<td>radians</td>
+<td>the direction of the horizontal velocity (counter-clockwise from East; X; or streamwise direction; depending on coordinate system)</td>
+</tr>
+<tr class="row-even"><td>subset</td>
+<td>—</td>
+<td>a tool for indexing a subset of the data object</td>
+</tr>
+<tr class="row-odd"><td>tauij</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td>the Reynold’s stress tensor</td>
+</tr>
+<tr class="row-even"><td>tke</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td>the turbulent kinetic energy (half the sum of the data in <cite>‘tke_vec’</cite>)</td>
+</tr>
+<tr class="row-odd"><td>upup_</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['tke_vec'][0]</span></code></td>
+</tr>
+<tr class="row-even"><td>vpvp_</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['tke_vec'][1]</span></code></td>
+</tr>
+<tr class="row-odd"><td>wpwp_</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['tke_vec'][2]</span></code></td>
+</tr>
+<tr class="row-even"><td>upvp_</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['stress'][0]</span></code></td>
+</tr>
+<tr class="row-odd"><td>upwp_</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['stress'][1]</span></code></td>
+</tr>
+<tr class="row-even"><td>vpwp_</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td><code class="docutils literal notranslate"><span class="pre">dat['stress'][2]</span></code></td>
+</tr>
+<tr class="row-odd"><td>Ecoh</td>
+<td>m<sup>2</sup>/s<sup>2</sup></td>
+<td>Coherent turbulent kinetic energy (root-sum-square of Reynold’s stresses)</td>
+</tr>
+<tr class="row-even"><td>I</td>
+<td>—</td>
+<td>Ratio of sigma_Uh to horizontal velocity magnitude</td>
+</tr>
+<tr class="row-odd"><td>Itke</td>
+<td>—</td>
+<td>Ratio of sqrt(2*tke) to horizontal velocity magnitude</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important Note:</strong> The items listed in Table 2 are not stored in the data
+object but are provided as attributes (shortcuts) to DOLfYN data objects.</p>
 </div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -256,7 +417,8 @@
 <li class="toctree-l1"><a class="reference internal" href="usage.html">The Basics</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Data Structure</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#rotations-and-coordinate-systems">Rotations and Coordinate Systems</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-description-and-units">Data Description and Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-shortcuts-properties">Data Shortcuts (properties)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="motion-correction.html">Motion Correction</a></li>
@@ -286,6 +448,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -294,8 +464,8 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/data-structure.rst.txt"

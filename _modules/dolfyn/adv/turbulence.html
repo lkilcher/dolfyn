@@ -6,14 +6,15 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adv.turbulence &#8212; DOLfYN 0.9.1 documentation</title>
+    <title>dolfyn.adv.turbulence &#8212; DOLfYN 0.10.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../../about.html" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -29,6 +30,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <h1>Source code for dolfyn.adv.turbulence</h1><div class="highlight"><pre>
@@ -109,18 +112,11 @@
 <span class="sd">          - sigma_Uh : The standard deviation of the horizontal</span>
 <span class="sd">            velocity.</span>
 
-<span class="sd">          - Spec : The spectra of the velocity in radial frequency</span>
-<span class="sd">            units (each component is available as:</span>
-<span class="sd">            :attr:`Suu &lt;dolfyn.data.velocity.VelBindatSpec.Suu&gt;`,</span>
-<span class="sd">            :attr:`Svv &lt;dolfyn.data.velocity.VelBindatSpec.Svv&gt;`,</span>
-<span class="sd">            :attr:`Sww &lt;dolfyn.data.velocity.VelBindatSpec.Sww&gt;`,</span>
-<span class="sd">            or in Hz units as:</span>
-<span class="sd">            :attr:`Suu_hz &lt;dolfyn.data.velocity.VelBindatSpec.Suu_hz&gt;`,</span>
-<span class="sd">            :attr:`Svv_hz &lt;dolfyn.data.velocity.VelBindatSpec.Svv_hz&gt;`,</span>
-<span class="sd">            :attr:`Sww_hz &lt;dolfyn.data.velocity.VelBindatSpec.Sww_hz&gt;`)</span>
+<span class="sd">          - Spec : A data group containing the spectra of the velocity</span>
+<span class="sd">            in radial frequency units. The data group contains:</span>
+<span class="sd">             - vel : the velocity spectra array (m^2/s/radian))</span>
+<span class="sd">             - omega : the radial frequncy (radian / s)</span>
 
-<span class="sd">          - omega : The radial frequency [rad/s] (also see the :attr:`freq</span>
-<span class="sd">            &lt;dolfyn.data.velocity.VelBindatSpec.freq&gt;` attribute).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># warnings.warn(&quot;The instance.__call__ syntax of turbulence averaging&quot;</span>
         <span class="c1">#               &quot; is being deprecated. Use the functional form, e.g. &#39;&quot;</span>
@@ -419,14 +415,14 @@
 <span class="sd">      chunks. This object also computes the following items over</span>
 <span class="sd">      those chunks:</span>
 
-<span class="sd">      - tke\_vec : The energy in each component (components are also</span>
-<span class="sd">        accessible as</span>
+<span class="sd">      - tke\_vec : The energy in each component, each components is</span>
+<span class="sd">        alternatively accessible as:</span>
 <span class="sd">        :attr:`upup_ &lt;dolfyn.data.velocity.VelBindatTke.upup_&gt;`,</span>
 <span class="sd">        :attr:`vpvp_ &lt;dolfyn.data.velocity.VelBindatTke.vpvp_&gt;`,</span>
 <span class="sd">        :attr:`wpwp_ &lt;dolfyn.data.velocity.VelBindatTke.wpwp_&gt;`)</span>
 
-<span class="sd">      - stress : The Reynolds stresses (each component is</span>
-<span class="sd">        accessible as</span>
+<span class="sd">      - stress : The Reynolds stresses, each component is</span>
+<span class="sd">        alternatively accessible as:</span>
 <span class="sd">        :attr:`upwp_ &lt;dolfyn.data.velocity.VelBindatTke.upwp_&gt;`,</span>
 <span class="sd">        :attr:`vpwp_ &lt;dolfyn.data.velocity.VelBindatTke.vpwp_&gt;`,</span>
 <span class="sd">        :attr:`upvp_ &lt;dolfyn.data.velocity.VelBindatTke.upvp_&gt;`)</span>
@@ -434,43 +430,21 @@
 <span class="sd">      - sigma_Uh : The standard deviation of the horizontal</span>
 <span class="sd">        velocity.</span>
 
-<span class="sd">      - Spec : The spectra of the velocity in radial frequency</span>
-<span class="sd">        units (each component is available as:</span>
-<span class="sd">        :attr:`Suu &lt;dolfyn.data.velocity.VelBindatSpec.Suu&gt;`,</span>
-<span class="sd">        :attr:`Svv &lt;dolfyn.data.velocity.VelBindatSpec.Svv&gt;`,</span>
-<span class="sd">        :attr:`Sww &lt;dolfyn.data.velocity.VelBindatSpec.Sww&gt;`,</span>
-<span class="sd">        or in Hz units as:</span>
-<span class="sd">        :attr:`Suu_hz &lt;dolfyn.data.velocity.VelBindatSpec.Suu_hz&gt;`,</span>
-<span class="sd">        :attr:`Svv_hz &lt;dolfyn.data.velocity.VelBindatSpec.Svv_hz&gt;`,</span>
-<span class="sd">        :attr:`Sww_hz &lt;dolfyn.data.velocity.VelBindatSpec.Sww_hz&gt;`)</span>
+<span class="sd">      - Spec : A data group containing the spectra of the velocity</span>
+<span class="sd">        in radial frequency units. The data group contains:</span>
+<span class="sd">         - vel : the velocity spectra array (m^2/s/radian))</span>
+<span class="sd">         - omega : the radial frequncy (radian / s)</span>
 
-<span class="sd">      - omega : The radial frequency [rad/s] (also see the :attr:`freq</span>
-<span class="sd">        &lt;dolfyn.data.velocity.VelBindatSpec.freq&gt;` attribute).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">calculator</span> <span class="o">=</span> <span class="n">TurbBinner</span><span class="p">(</span><span class="n">n_bin</span><span class="p">,</span> <span class="n">advr</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">)</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">VelBinnerSpec</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">calculator</span><span class="p">,</span> <span class="n">advr</span><span class="p">,</span> <span class="n">out_type</span><span class="o">=</span><span class="n">out_type</span><span class="p">)</span>
-    <span class="n">calculator</span><span class="o">.</span><span class="n">do_avg</span><span class="p">(</span><span class="n">advr</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;tke_vec&#39;</span><span class="p">,</span> <span class="n">calculator</span><span class="o">.</span><span class="n">calc_tke</span><span class="p">(</span><span class="n">advr</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">],</span> <span class="n">noise</span><span class="o">=</span><span class="n">advr</span><span class="o">.</span><span class="n">noise</span><span class="p">),</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;stress&#39;</span><span class="p">,</span> <span class="n">calculator</span><span class="o">.</span><span class="n">calc_stress</span><span class="p">(</span><span class="n">advr</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">]),</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;sigma_Uh&#39;</span><span class="p">,</span>
-                 <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">calculator</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">advr</span><span class="o">.</span><span class="n">U_mag</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">-</span>
-                 <span class="p">(</span><span class="n">advr</span><span class="o">.</span><span class="n">noise</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">advr</span><span class="o">.</span><span class="n">noise</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;Itke_thresh&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Itke_thresh</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;Spec&#39;</span><span class="p">,</span>
-                 <span class="n">calculator</span><span class="o">.</span><span class="n">calc_vel_psd</span><span class="p">(</span><span class="n">advr</span><span class="p">[</span><span class="s1">&#39;vel&#39;</span><span class="p">],</span>
-                                         <span class="n">noise</span><span class="o">=</span><span class="n">advr</span><span class="o">.</span><span class="n">noise</span><span class="p">,</span>
-                                         <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">),</span>
-                 <span class="s1">&#39;spec&#39;</span><span class="p">)</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="s1">&#39;omega&#39;</span><span class="p">,</span> <span class="n">calculator</span><span class="o">.</span><span class="n">calc_omega</span><span class="p">(),</span> <span class="s1">&#39;_essential&#39;</span><span class="p">)</span>
-
-    <span class="c1"># out.add_data(&#39;epsilon&#39;,self.calc_epsilon_LT83(out.Spec,out.omega,</span>
-    <span class="c1"># out.U_mag,omega_range=omega_range_epsilon),&#39;main&#39;)</span>
-    <span class="c1"># out.add_data(&#39;Acov&#39;,self.calc_acov(advr[&#39;vel&#39;]),&#39;corr&#39;)</span>
-    <span class="c1"># out.add_data(&#39;Lint&#39;,self.calc_Lint(out.Acov,out.U_mag),&#39;main&#39;)</span>
-    <span class="k">return</span> <span class="n">out</span>
+    <span class="n">calculator</span> <span class="o">=</span> <span class="n">TurbBinner</span><span class="p">(</span><span class="n">n_bin</span><span class="p">,</span> <span class="n">advr</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">],</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">n_fft</span><span class="p">,</span>
+                            <span class="n">out_type</span><span class="o">=</span><span class="n">out_type</span><span class="p">,</span>
+                            <span class="n">omega_range_epsilon</span><span class="o">=</span><span class="n">omega_range_epsilon</span><span class="p">,</span>
+                            <span class="n">Itke_thresh</span><span class="o">=</span><span class="n">Itke_thresh</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">calculator</span><span class="p">(</span><span class="n">advr</span><span class="p">)</span>
 </pre></div>
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -517,6 +491,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -525,8 +507,8 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

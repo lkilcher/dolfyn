@@ -51,6 +51,7 @@ dolfyn.ADPdata
       ~ADPdata.n_time
       ~ADPdata.range_diff
       ~ADPdata.shape
+      ~ADPdata.shortcuts
       ~ADPdata.subset
       ~ADPdata.u
       ~ADPdata.v

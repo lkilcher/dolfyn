@@ -45,6 +45,7 @@ dolfyn.ADVdata
       ~ADVdata.U_mag
       ~ADVdata.n_time
       ~ADVdata.shape
+      ~ADVdata.shortcuts
       ~ADVdata.subset
       ~ADVdata.u
       ~ADVdata.v

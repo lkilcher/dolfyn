@@ -6,14 +6,15 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.Velocity &#8212; DOLfYN 0.9.1 documentation</title>
+    <title>dolfyn.Velocity &#8212; DOLfYN 0.10.0 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -31,6 +32,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="dolfyn-velocity">
@@ -80,7 +83,7 @@ object by:</p>
 <span class="go">&lt;class &#39;dolfyn.data.base.TimeData&#39;&gt;: Data Object with Keys:</span>
 <span class="go">*------------</span>
 <span class="go">| c_sound                  : &lt;array; (1094,); float32&gt;</span>
-<span class="go">| press                    : &lt;array; (1094,); float32&gt;</span>
+<span class="go">| pressure                 : &lt;array; (1094,); float32&gt;</span>
 <span class="go">| temp                     : &lt;array; (1094,); float32&gt;</span>
 </pre></div>
 </div>
@@ -134,10 +137,10 @@ object by:</p>
 <td>Create a copy of the data object.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">fromkeys</span></code>($type,&nbsp;iterable[,&nbsp;value])</td>
-<td>Returns a new dict with keys from iterable and values equal to value.</td>
+<td>Create a new dictionary with keys from iterable and values set to value.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.get" title="dolfyn.Velocity.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>(k[,d])</td>
-<td></td>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.get" title="dolfyn.Velocity.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>($self,&nbsp;key[,&nbsp;default])</td>
+<td>Return the value for key if key is in the dictionary, else default.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">items</span></code>()</td>
 <td></td>
@@ -160,8 +163,8 @@ object by:</p>
 <tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.rotate2" title="dolfyn.Velocity.rotate2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotate2</span></code></a>(out_frame[,&nbsp;inplace])</td>
 <td>Rotate the data object into a new coordinate system.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setdefault</span></code>(k[,d])</td>
-<td></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setdefault</span></code>($self,&nbsp;key[,&nbsp;default])</td>
+<td>Insert key with a value of default if key is not in the dictionary.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.to_hdf5" title="dolfyn.Velocity.to_hdf5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_hdf5</span></code></a>(buf[,&nbsp;chunks,&nbsp;compression])</td>
 <td>Write the data in this object to an hdf5 file.</td>
@@ -196,16 +199,19 @@ object by:</p>
 <tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.shape" title="dolfyn.Velocity.shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code></a></td>
 <td>The shape of ‘scalar’ data in this data object.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.subset" title="dolfyn.Velocity.subset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset</span></code></a></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">shortcuts</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.subset" title="dolfyn.Velocity.subset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset</span></code></a></td>
 <td>Subset is an <cite>indexer</cite> for creating subsets of the data object using Python slice syntax.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.u" title="dolfyn.Velocity.u"><code class="xref py py-obj docutils literal notranslate"><span class="pre">u</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.u" title="dolfyn.Velocity.u"><code class="xref py py-obj docutils literal notranslate"><span class="pre">u</span></code></a></td>
 <td>The first velocity component.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.v" title="dolfyn.Velocity.v"><code class="xref py py-obj docutils literal notranslate"><span class="pre">v</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.v" title="dolfyn.Velocity.v"><code class="xref py py-obj docutils literal notranslate"><span class="pre">v</span></code></a></td>
 <td>The second velocity component.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.w" title="dolfyn.Velocity.w"><code class="xref py py-obj docutils literal notranslate"><span class="pre">w</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.Velocity.w" title="dolfyn.Velocity.w"><code class="xref py py-obj docutils literal notranslate"><span class="pre">w</span></code></a></td>
 <td>The third velocity component.</td>
 </tr>
 </tbody>
@@ -216,6 +222,7 @@ object by:</p>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -273,6 +280,14 @@ object by:</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -281,8 +296,8 @@ object by:</p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/_as_gen/dolfyn.Velocity.rst.txt"
