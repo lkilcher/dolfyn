@@ -3,4 +3,4 @@ h5py
 matplotlib
 scipy
 six
--e git://github.com/lkilcher/pyDictH5.git@v0.2.1#egg=pyDictH5
+-e git://github.com/lkilcher/pyDictH5.git@v0.2.2#egg=pyDictH5
