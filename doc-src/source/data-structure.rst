@@ -84,7 +84,8 @@ contain shortcuts to tools and other variables that can be obtained
 from simple operations of its data items. These attributes aren't
 listed in the view of the data shown above. Instead, to see the
 variables that are available as shortcuts for a particular data
-object, take a look at the ``dat.shortcuts`` property.
+object, take a look at the ``dat.shortcuts`` property (new in |dlfn|
+0.10.1).
 
 .. csv-table:: Table 2: Notes on common shorcuts found in |dlfn| data objects.
                :header-rows: 1
