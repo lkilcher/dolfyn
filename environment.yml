@@ -7,4 +7,4 @@ dependencies:
   - scipy
   - six
   - pip:
-     - "--editable=git+https://github.com/lkilcher/pyDictH5.git@v0.2.1#egg=pyDictH5"
+     - "--editable=git+https://github.com/lkilcher/pyDictH5.git@v0.2.2#egg=pyDictH5"
