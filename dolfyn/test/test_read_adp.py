@@ -10,6 +10,7 @@ dat_rdi_i = load('RDI_test01_rotate_beam2inst.h5')
 dat_awac = load('AWAC_test01.h5')
 dat_sig = load('BenchFile01.h5')
 dat_sigi = load('Sig1000_IMU.h5')
+dat_sigi_ud = load('Sig1000_IMU_ud.h5')
 dat_wr1 = load('winriver01.h5')
 dat_wr2 = load('winriver02.h5')
 
@@ -18,10 +19,21 @@ def test_read(make_data=False):
 
     td_rdi = read('RDI_test01.000')
     td_sig = read('BenchFile01.ad2cp')
-    td_sigi = read('Sig1000_IMU.ad2cp')
+    td_sigi = read('Sig1000_IMU.ad2cp', userdata=False)
+    td_sigi_ud = read('Sig1000_IMU.ad2cp')
     td_awac = read('AWAC_test01.wpr')
     td_wr1 = read('winriver01.PD0')
     td_wr2 = read('winriver02.PD0')
+
+    if make_data:
+        save(td_rdi, 'RDI_test01.h5')
+        save(td_sig, 'BenchFile01.h5')
+        save(td_sigi, 'Sig1000_IMU.h5')
+        save(td_sigi_ud, 'Sig1000_IMU_ud.h5')
+        save(td_awac, 'AWAC_test01.h5')
+        save(td_wr1, 'winriver01.h5')
+        save(td_wr2, 'winriver02.h5')
+        return
 
     if sys.version_info.major == 2:
         # This is a HACK for Py2
@@ -30,19 +42,15 @@ def test_read(make_data=False):
         # !CLEANUP!
         # BUG that's loading different data??!
         td_sigi.pop('sys.temp_mag')
-        dat_sigi_tmp = dat_sigi.copy()  # local fn only
+        dat_sigi_tmp = dat_sigi.copy()
         dat_sigi_tmp.pop('sys.temp_mag')
+
+        td_sigi_ud.pop('sys.temp_mag')
+        dat_sigi_ud_tmp = dat_sigi_ud.copy()
+        dat_sigi_ud_tmp.pop('sys.temp_mag')
     else:
         dat_sigi_tmp = dat_sigi
-
-    if make_data:
-        save(td_rdi, 'RDI_test01.h5')
-        save(td_sig, 'BenchFile01.h5')
-        save(td_sigi, 'Sig1000_IMU.h5')
-        save(td_awac, 'AWAC_test01.h5')
-        save(td_wr1, 'winriver01.h5')
-        save(td_wr2, 'winriver02.h5')
-        return
+        dat_sigi_ud_tmp = dat_sigi_ud
 
     def msg(infile):
         testfile = infile.split('.')[0] + '.h5'
@@ -55,6 +63,8 @@ def test_read(make_data=False):
              msg('BenchFile01.ad2cp')),
             (td_sigi, dat_sigi_tmp,
              msg('Sig1000_IMU.ad2cp')),
+            (td_sigi_ud, dat_sigi_ud_tmp,
+             msg('Sig1000_IMU_ud.ad2cp')),
             (td_awac, dat_awac,
              msg('AWAC_test01.wpr')),
             (td_wr1, dat_wr1,

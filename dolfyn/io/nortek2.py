@@ -7,7 +7,7 @@ from . import nortek2_defs as defs
 from . import nortek2lib as lib
 from ..adp import base as apb
 import numpy as np
-from .base import WrongFileType
+from .base import WrongFileType, read_userdata
 from ..data import base as db
 import warnings
 
@@ -85,11 +85,15 @@ def read_signature(filename, userdata=True, nens=None):
             # passes: it's a list/tuple/array
             if n != 2:
                 raise TypeError('nens must be: None (), int, or len 2')
+
+    userdata = read_userdata(filename, userdata)
+
     rdr = Ad2cpReader(filename)
     d = rdr.readfile(nens[0], nens[1])
     rdr.sci_data(d)
     out = reorg(d)
     reduce(out)
+    out['props'].update(userdata)
     return out
 
 
