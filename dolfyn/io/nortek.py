@@ -11,8 +11,6 @@ from struct import unpack
 from ..data.base import ma
 from . import nortek_defs
 from ..data import time
-import os.path
-import six
 from .base import WrongFileType, read_userdata
 import warnings
 from ..data.base import TimeData
@@ -42,7 +40,6 @@ def int2binarray(val, n):
 
 def read_nortek(filename,
                 userdata=True,
-                cropdata=False,
                 do_checksum=False,
                 nens=None):
     """
@@ -52,13 +49,14 @@ def read_nortek(filename,
     ----------
     filename : string
                Filename of Nortek file to read.
-    userdata : True or False (default ``True``)
-                Whether to read the '<base-filename>.userdata.json' file.
-    cropdata : bool or string (default ``False``)
-                Use the 'inds_range', or 'time_range' field in the
-                'userdata.json' file to crop the data. This can also
-                be ``'inds_range'``, or ``'time_range'``, to specify
-                which property to use.
+
+    userdata : True, False, or string of userdata.json filename
+               (default ``True``) Whether to read the
+               '<base-filename>.userdata.json' file.
+
+    do_checksum : bool (default False)
+        Whether to perform the checksum of each data block.
+
     nens : None (default: read entire file), int, or
            2-element tuple (start, stop)
               Number of pings to read from the file
@@ -68,48 +66,15 @@ def read_nortek(filename,
     adv_data : :class:`ADVdata <dolfyn.adv.base.ADVdata>`
 
     """
-    # Read the json file
-    json_props = {}
-    for basefile in [filename.rsplit('.', 1)[0],
-                     filename]:
-        jsonfile = basefile + '.userdata.json'
-        if os.path.isfile(jsonfile) and userdata is True:
-            json_props = read_userdata(jsonfile)
-            break
-    if isinstance(userdata, (six.string_types)) or hasattr(userdata, 'read'):
-        json_props = read_userdata(userdata)
+    user_data = read_userdata(filename, userdata)
 
     with NortekReader(filename, do_checksum=do_checksum, nens=nens) as rdr:
         rdr.readfile()
     rdr.dat2sci()
     dat = rdr.data
 
-    dat.props.update(json_props)
+    dat.props.update(user_data)
 
-    # Crop the data?
-    if cropdata:
-        if cropdata is True:
-            if 'inds_range' in dat.props:
-                inds = slice(*dat.props['inds_range'])
-            elif 'time_range' in dat.props:
-                tr = dat.props['time_range']
-                inds = ((tr[0] < dat.mpltime) & (dat.mpltime < tr[1]))
-            else:
-                raise Exception("The data does not contain a 'inds_range', "
-                                "or 'time_range' property. Unable to crop the "
-                                "data. Either specify one of these properties "
-                                "in the `.userdata.json` file, or specify "
-                                "``cropdata=False`` in the call to "
-                                "read_nortek.")
-        if isinstance(cropdata, six.string_types):
-            if cropdata == 'inds_range':
-                inds = slice(*dat.props['inds_range'])
-            elif cropdata == 'time_range':
-                tr = dat.props['time_range']
-                inds = ((tr[0] < dat.mpltime) & (dat.mpltime < tr[1]))
-            else:
-                raise KeyError(cropdata)
-        dat = dat.subset(inds)
     return dat
 
 
