@@ -6,7 +6,7 @@ from ..data.time import date2num
 from ..data.base import config, TimeData as data
 from os.path import getsize
 from ..adp.base import ADPdata
-from .base import WrongFileType
+from .base import WrongFileType, read_userdata
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
 import warnings
@@ -14,8 +14,10 @@ import warnings
 
 def read_rdi(fname, userdata=None, nens=None):
     # userdata is not used here.
+    userdata = read_userdata(fname, userdata)
     with adcp_loader(fname) as ldr:
         dat = ldr.load_data(nens=nens)
+    dat['props'].update(userdata)
     return dat
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
