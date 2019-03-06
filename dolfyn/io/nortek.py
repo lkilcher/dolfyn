@@ -12,18 +12,11 @@ from ..data.base import ma
 from . import nortek_defs
 from ..data import time
 import os.path
-import json
 import six
-from .base import WrongFileType
+from .base import WrongFileType, read_userdata
 import warnings
 from ..data.base import TimeData
 from ..data.base import config
-import io
-try:
-    file_types = (file, io.IOBase)
-
-except NameError:
-    file_types = io.IOBase
 
 
 def recatenate(obj):
@@ -81,10 +74,10 @@ def read_nortek(filename,
                      filename]:
         jsonfile = basefile + '.userdata.json'
         if os.path.isfile(jsonfile) and userdata is True:
-            json_props = _read_vecjson(jsonfile)
+            json_props = read_userdata(jsonfile)
             break
     if isinstance(userdata, (six.string_types)) or hasattr(userdata, 'read'):
-        json_props = _read_vecjson(userdata)
+        json_props = read_userdata(userdata)
 
     with NortekReader(filename, do_checksum=do_checksum, nens=nens) as rdr:
         rdr.readfile()
@@ -118,26 +111,6 @@ def read_nortek(filename,
                 raise KeyError(cropdata)
         dat = dat.subset(inds)
     return dat
-
-
-def _read_vecjson(jsonfile):
-    """Reads a json file containing the rotation matrix, the vector and the t_range
-       and return the items as a dictionary"""
-    if isinstance(jsonfile, file_types):
-        data = json.load(jsonfile)
-    else:
-        with open(jsonfile) as data_file:
-            data = json.load(data_file)
-    if 'body2head_rotmat' in data and \
-       data['body2head_rotmat'] in ['identity', 'eye', 1, 1.]:
-        data['body2head_rotmat'] = np.eye(3)
-    for nm in ['body2head_rotmat', 'body2head_vec']:
-        if nm in data:
-            data[nm] = np.array(data[nm])
-    if 'time_range' in data:
-        if isinstance(data['time_range'][0], six.string_types):
-            data['time_range'] = time.isotime2mpltime(data['time_range'])
-    return data
 
 
 def _bcd2char(cBCD):
