@@ -2,6 +2,7 @@
 mpltime,`matplotlib date format <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_,---,The time data
 vel,m/s,---,The velocity vector data
 range,m,---,The distance from the ADP head
+depth_m,m,---,The depth of the ADP
 c_sound,m/s,env,The speed of sound used in velocity calculations.
 press / pressure,dbar?,env,pressure measured by the instrument
 temp,degrees Celsius,env,The temperature measured by the instrument.
