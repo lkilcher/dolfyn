@@ -9,6 +9,7 @@ from ..data import time
 import six
 import json
 import io
+import os
 try:
     file_types = (file, io.IOBase)
 except NameError:
@@ -51,11 +52,26 @@ class DataFactory(object):
         self._filename = expanduser(filename)
 
 
-def read_userdata(fname):
+def read_userdata(filename, userdata=True):
     """
     Reads a userdata.json file and returns the data it contains as a
     dictionary.
     """
+    # This function finds the file to read
+    if userdata is True:
+        for basefile in [filename.rsplit('.', 1)[0],
+                         filename]:
+            jsonfile = basefile + '.userdata.json'
+            if os.path.isfile(jsonfile):
+                return _read_userdata(jsonfile)
+
+    elif isinstance(userdata, (six.string_types)) or hasattr(userdata, 'read'):
+        return _read_userdata(userdata)
+    return {}
+
+
+def _read_userdata(fname):
+    # This one actually does the read
     if isinstance(fname, file_types):
         data = json.load(fname)
     else:
