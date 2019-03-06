@@ -5,6 +5,14 @@ The base module for the io package.
 from os.path import expanduser
 import numpy as np
 from ..data import base as db
+from ..data import time
+import six
+import json
+import io
+try:
+    file_types = (file, io.IOBase)
+except NameError:
+    file_types = io.IOBase
 
 
 class WrongFileType(Exception):
@@ -41,6 +49,28 @@ class DataFactory(object):
     @filename.setter
     def filename(self, filename):
         self._filename = expanduser(filename)
+
+
+def read_userdata(fname):
+    """
+    Reads a userdata.json file and returns the data it contains as a
+    dictionary.
+    """
+    if isinstance(fname, file_types):
+        data = json.load(fname)
+    else:
+        with open(fname) as data_file:
+            data = json.load(data_file)
+    if 'body2head_rotmat' in data and \
+       data['body2head_rotmat'] in ['identity', 'eye', 1, 1.]:
+        data['body2head_rotmat'] = np.eye(3)
+    for nm in ['body2head_rotmat', 'body2head_vec']:
+        if nm in data:
+            data[nm] = np.array(data[nm])
+    if 'time_range' in data:
+        if isinstance(data['time_range'][0], six.string_types):
+            data['time_range'] = time.isotime2mpltime(data['time_range'])
+    return data
 
 
 class VarAtts(object):
