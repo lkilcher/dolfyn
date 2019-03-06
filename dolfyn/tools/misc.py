@@ -46,7 +46,8 @@ def detrend(arr, axis=-1, in_place=False):
     x = np.arange(sz[axis], dtype=np.float_).reshape(sz)
     x -= x.mean(axis=axis, keepdims=True)
     arr -= arr.mean(axis=axis, keepdims=True)
-    b = (x * arr).mean(axis=axis, keepdims=True) / (x ** 2).mean(axis=axis, keepdims=True)
+    b = (x * arr).mean(axis=axis, keepdims=True) / (x ** 2).mean(axis=axis,
+                                                                 keepdims=True)
     arr -= b * x
     return arr
 
@@ -222,7 +223,19 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
       Whether to extrapolate if NaNs are found at the ends of the
       array.
 
-      """
+    See Also
+    =====
+
+    interpgaps : Linearly interpolates in time.
+
+    Notes
+    =====
+
+    This function interpolates assuming spacing/timestep between
+    successive points is constant. If the spacing is not constant, use
+    interpgaps.
+
+    """
 
     # If this is a multi-dimensional array, operate along axis dim.
     if a.ndim > 1:
@@ -268,13 +281,33 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
 
 def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
     """
-    out=interpgaps(A,T,MAXGAP,DIM) Fills gaps in A by linear
-    interpolation along dimension DIM.  The maximum gap width
-    to be filled is specified by MAXGAP.
+    Fill gaps (NaN values) in ``a`` by linear interpolation along
+    dimension DIM with the point spacing specified in ``t``.
 
-    MAXGAP defualts to fill gaps of any width.
+    Parameters
+    ==========
+    a : |np.ndarray|
+      The array containing NaN values to be filled.
 
-    DIM defaults to 0."""
+    t : |np.ndarray| (len(t) == a.shape[dim])
+      The grid of the points in ``a``.
+
+    maxgap : |np.ndarray| (optional: inf)
+      The maximum gap to fill.
+
+    dim : int (optional: 0)
+      The dimension to operate along.
+
+    extrapFlg : bool (optional: False)
+      Whether to extrapolate if NaNs are found at the ends of the
+      array.
+
+    See Also
+    =====
+
+    fillgaps : Linearly interpolates in array-index space.
+
+    """
 
     # If this is a multi-dimensional array, operate along dim dim.
     if a.ndim > 1:
@@ -297,7 +330,8 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
                     (np.diff(gd) <= maxgap + 1))
         for i2 in range(0, inds.__len__()):
             ii = np.arange(gd[inds[i2]] + 1, gd[inds[i2] + 1])
-            ti = (t[ii] - t[gd[inds[i2]]]) / np.diff(t[[gd[inds[i2]], gd[inds[i2] + 1]]])
+            ti = (t[ii] - t[gd[inds[i2]]]) / np.diff(t[[gd[inds[i2]],
+                                                        gd[inds[i2] + 1]]])
             a[ii] = (np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) * ti +
                      a[gd[inds[i2]]]).astype(a.dtype)
 

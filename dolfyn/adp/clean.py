@@ -100,8 +100,6 @@ def vel_exceeds_thresh(adcpo, thresh=10, source=None):
         if hasattr(adcpo, dt):
             getattr(adcpo, dt)[bd] = np.NaN
 
-# def find_surface(adcpo,bin_min,):
-
 
 def medfilt_orientation(adcpo, kernel_size=7):
     """
