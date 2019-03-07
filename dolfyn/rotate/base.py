@@ -127,8 +127,7 @@ def _check_declination(advo):
             advo.rotate2('inst', inplace=True)
 
         odata['heading'] += advo.props['declination']
-        odata['heading'][odata['heading'] < 0] += 360
-        odata['heading'][odata['heading'] > 360] -= 360
+        odata['heading'] %= 360
         advo.props['declination_in_heading'] = True
 
         if cs == 'earth' and not rotation_done_flag:
