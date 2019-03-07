@@ -38,6 +38,12 @@ What about dropping data from averaging? Is this something we should support? Vi
 
 Support for motion-correcting ADP data.
 
+use radians everywhere? (started this on branch: `reorg-radians`)
+
+Time format options:
+- datetime objects (date strings in hdf5 files?, 8601 strings?, with timezone from .userdata.json file?)
+- Does this move to 'TODO-later'?
+- Or do we document the ``time_array`` class?
 
 File I/O
 ======

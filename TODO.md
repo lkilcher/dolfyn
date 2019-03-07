@@ -23,22 +23,11 @@ What else is there?! I think I need to forego 'autodoc', and select specific fun
 Documentation
 ====
 
-Document variables in data objects
-- document `props` attribute.
-  - declination
-  - use radians everywhere? (started this on branch: `reorg-radians`)
 
 Create a file I/O page
 - Document read function (io.api.read)
   - What types of data files does this function read?
-  - Document the .userdata.json files
-    - declination, accel_filtfreq
-    - add 'timezone' handling
-
-Time format options:
-- datetime objects (date strings in hdf5 files?, 8601 strings?, with timezone from .userdata.json file?)
-- Does this move to 'TODO-later'?
-- Or do we document the ``time_array`` class?
+    - add 'timezone' handling to `dat.props`?
 
 Add some examples to the plotting tools page
 - add a ``show`` method and document it.
