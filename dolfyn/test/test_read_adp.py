@@ -18,7 +18,7 @@ dat_wr2 = load('winriver02.h5')
 
 def test_read(make_data=False):
 
-    td_rdi = read('RDI_test01.000')
+    td_rdi = read('RDI_test01.000')  # This uses the built-in declination!
     td_sig = read('BenchFile01.ad2cp')
     td_sigi = read('Sig1000_IMU.ad2cp', userdata=False)
     td_sigi_ud = read('Sig1000_IMU.ad2cp')

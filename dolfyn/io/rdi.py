@@ -19,6 +19,21 @@ def read_rdi(fname, userdata=None, nens=None):
     with adcp_loader(fname) as ldr:
         dat = ldr.load_data(nens=nens)
     dat['props'].update(userdata)
+
+    if dat.config['magnetic_var_deg'] != 0:
+        if 'declination' in dat['props']:
+            warnings.warn(
+                "'magnetic_var_deg' is set to {:.2f} degrees in the binary "
+                "file '{}', AND 'declination' is set in the 'userdata.json' "
+                "file. DOLfYN WILL USE THE VALUE of {:.2f} degrees in "
+                "userdata.json. If you want to use the value in "
+                "'magnetic_var_deg', delete the value from userdata.json and "
+                "re-read the file."
+                .format(dat['config']['magnetic_var_deg'], fname,
+                        dat.props['declination']))
+        else:
+            dat.props['declination'] = dat.config['magnetic_var_deg']
+
     _check_declination(dat)
     return dat
 
