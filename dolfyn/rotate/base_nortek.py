@@ -1,8 +1,5 @@
 import numpy as np
 
-sin = np.sin
-cos = np.cos
-
 
 def euler2orient(pitch, roll, heading, units='degrees'):
     # Heading input is clockwise from North
@@ -19,12 +16,12 @@ def euler2orient(pitch, roll, heading, units='degrees'):
     # below from the values provided in the Nortek Matlab script
     heading = (np.pi / 2 - heading)
 
-    ch = cos(heading)
-    sh = sin(heading)
-    cp = cos(pitch)
-    sp = sin(pitch)
-    cr = cos(roll)
-    sr = sin(roll)
+    ch = np.cos(heading)
+    sh = np.sin(heading)
+    cp = np.cos(pitch)
+    sp = np.sin(pitch)
+    cr = np.cos(roll)
+    sr = np.sin(roll)
 
     # Note that I've transposed these values (from what is defined in
     # Nortek matlab script), so that this is earth->inst (as
@@ -81,53 +78,3 @@ def orient2euler(advo):
             np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
             np.rad2deg(np.arctan2(omat[0, 1], omat[0, 0]))
             )
-
-
-def _check_declination(advo):
-    odata = advo['orient']
-    if 'declination' not in advo.props:
-        if 'orientmat' in odata and \
-           advo._make_model.startswith('nortek vector'):
-            # Vector's don't have p,r,h when they have an orientmat.
-            p, r, h = orient2euler(odata['orientmat'])
-            odata['pitch'] = p
-            odata['roll'] = r
-            odata['heading'] = h
-        # warnings.warn(
-        #     'No declination in adv object.  Assuming a declination of 0.')
-        return
-
-    if 'orientmat' in odata and \
-       not advo.props.get('declination_in_orientmat', False):
-        # Declination is defined as positive if MagN is east of
-        # TrueN. Therefore we must rotate about the z-axis by minus
-        # the declination angle to get from Mag to True.
-        cd = cos(-np.deg2rad(advo.props['declination']))
-        sd = sin(-np.deg2rad(advo.props['declination']))
-        # The ordering is funny here because orientmat is the
-        # transpose of the inst->earth rotation matrix:
-        Rdec = np.array([[cd, -sd, 0],
-                         [sd, cd, 0],
-                         [0, 0, 1]])
-        odata['orientmat'] = np.einsum('ij,kjl->kil',
-                                       Rdec,
-                                       odata['orientmat'])
-        # NOTE: for a moment I thought I needed to a tensor rotation
-        # on orientmat, but that's not the case. It seems like the
-        # rotation matrix isn't actually a "tensor".
-        # I checked this by showing that the above actually gives the
-        # desired result of rotating vectors by the declination.
-
-        advo.props['declination_in_orientmat'] = True
-        p, r, h = orient2euler(odata['orientmat'])
-        odata['pitch'] = p
-        odata['roll'] = r
-        odata['heading'] = h
-        advo.props['declination_in_heading'] = True
-
-    if 'heading' in odata and \
-       not advo.props.get('declination_in_heading', False):
-        odata['heading'] += advo.props['declination']
-        odata['heading'][odata['heading'] < 0] += 360
-        odata['heading'][odata['heading'] > 360] -= 360
-        advo.props['declination_in_heading'] = True

@@ -86,6 +86,11 @@ def _read_userdata(fname):
     if 'time_range' in data:
         if isinstance(data['time_range'][0], six.string_types):
             data['time_range'] = time.isotime2mpltime(data['time_range'])
+    if 'coord_sys' in data:
+        raise Exception("The instrument coordinate system "
+                        "('coord_sys') should not be specified in "
+                        "the .userdata.json file, remove this and "
+                        "read the file again.")
     return data
 
 
