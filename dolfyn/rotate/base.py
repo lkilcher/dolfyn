@@ -1,7 +1,11 @@
 import numpy as np
 from numpy.linalg import det
 
-deg2rad = np.pi / 180
+
+class BadDeterminantWarning(UserWarning):
+    """A warning for the determinant is not equal to 1.
+    """
+    pass
 
 
 def _find_method(obj, string):
@@ -50,7 +54,3 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
     return np.abs(det(rotmat) - 1) < thresh
 
 
-class BadDeterminantWarning(UserWarning):
-    """A warning for the determinant is not equal to 1.
-    """
-    pass

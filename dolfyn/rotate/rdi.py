@@ -1,8 +1,6 @@
 import numpy as np
 from .vector import earth2principal, inst2earth as nortek_inst2earth
 
-deg2rad = np.pi / 180.
-
 
 def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
     """Calculate the rotation matrix from beam coordinates to
@@ -18,7 +16,7 @@ def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
         or radians (default: degrees=True)
     """
     if degrees:
-        theta = theta * deg2rad
+        theta = np.deg2rad(theta)
     if convex == 0 or convex == -1:
         c = -1
     else:
@@ -138,9 +136,9 @@ def inst2earth(adcpo, reverse=False,
     (Tilt 1) is recorded in the variable leader. P is set to 0 if the
     "use tilt" bit of the EX command is not set."""
     odat = adcpo.orient
-    r = odat.roll * deg2rad
-    p = np.arctan(np.tan(odat.pitch * deg2rad) * np.cos(r))
-    h = odat.heading * deg2rad
+    r = np.deg2rad(odat.roll)
+    p = np.arctan(np.tan(np.deg2rad(odat.pitch)) * np.cos(r))
+    h = np.deg2rad(odat.heading)
     if adcpo.props['inst_make'].lower() == 'rdi':
         if adcpo.config.orientation == 'up':
             """
@@ -208,9 +206,9 @@ def inst2earth(adcpo, reverse=False,
 
 
 def inst2earth_heading(adpo):
-    h = adpo.orient.heading[:] * deg2rad
+    h = np.deg2rad(adpo.orient.heading[:])
     if 'heading_offset' in adpo.props.keys():
-        h += adpo.props['heading_offset'] * deg2rad
+        h += np.deg2rad(adpo.props['heading_offset'])
     if 'declination' in adpo.props.keys():
-        h += adpo.props['declination'] * deg2rad
+        h += np.deg2rad(adpo.props['declination'])
     return np.exp(-1j * h)
