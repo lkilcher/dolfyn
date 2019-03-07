@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.linalg import det
-from .base_nortek import orient2euler, euler2orient
+from . import base_nortek
 
 
 class BadDeterminantWarning(UserWarning):
@@ -56,13 +56,16 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
 
 
 def _check_declination(advo):
+    if advo.props.get('__checking_declination__', False):
+        # Don't go into an infinite loop.
+        return
     odata = advo['orient']
     cs = advo.props['coord_sys']
     if 'declination' not in advo.props:
         if 'orientmat' in odata and \
            advo._make_model.startswith('nortek vector'):
             # Vector's don't have p,r,h when they have an orientmat.
-            p, r, h = orient2euler(odata['orientmat'])
+            p, r, h = base_nortek.orient2euler(odata['orientmat'])
             odata['pitch'] = p
             odata['roll'] = r
             odata['heading'] = h
@@ -70,8 +73,18 @@ def _check_declination(advo):
         #     'No declination in adv object.  Assuming a declination of 0.')
         return
 
+    rotation_done_flag = False
+
+    # This flag avoids an infinitie recursion loop
+    advo.props['__checking_declination__'] = True
+
     if 'orientmat' in odata and \
        not advo.props.get('declination_in_orientmat', False):
+        if cs == 'earth':
+            # Rotate to instrument coordinate-system before adjusting
+            # for declination.
+            advo.rotate2('inst', inplace=True)
+
         # Declination is defined as positive if MagN is east of
         # TrueN. Therefore we must rotate about the z-axis by minus
         # the declination angle to get from Mag to True.
@@ -93,16 +106,33 @@ def _check_declination(advo):
 
         advo.props['declination_in_orientmat'] = True
         if advo._make_model.startswith('nortek vector'):
-            p, r, h = orient2euler(odata['orientmat'])
+            p, r, h = base_nortek.orient2euler(odata['orientmat'])
             odata['pitch'] = p
             odata['roll'] = r
             odata['heading'] = h
             advo.props['declination_in_heading'] = True
 
+        if cs == 'earth':
+            # Now rotate back to the earth coordinate-system with the
+            # declination included in the data
+            advo.rotate2('earth', inplace=True)
+            rotation_done_flag = True
+
     if 'heading' in odata and \
        not advo.props.get('declination_in_heading', False):
+
+        if cs == 'earth' and not rotation_done_flag:
+            # Rotate to instrument coordinate-system before adjusting
+            # for declination.
+            advo.rotate2('inst', inplace=True)
 
         odata['heading'] += advo.props['declination']
         odata['heading'][odata['heading'] < 0] += 360
         odata['heading'][odata['heading'] > 360] -= 360
         advo.props['declination_in_heading'] = True
+
+        if cs == 'earth' and not rotation_done_flag:
+            # Now rotate back to the earth coordinate-system with the
+            # declination included.
+            advo.rotate2('earth', inplace=True)
+    advo.props.pop('__checking_declination__')
