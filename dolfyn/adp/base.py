@@ -3,8 +3,6 @@ import numpy as np
 from dolfyn.rotate import rdi
 import warnings
 
-deg2rad = np.pi / 180
-
 
 def diffz_first(dat, z, axis=0):
     return np.diff(dat, axis=0) / (np.diff(z)[:, None])
@@ -195,8 +193,8 @@ class ADPbinner(dbvel.VelBinner):
         "Measurements of Reynolds stress profiles in unstratified
         tidal flow"
         """
-        fac = 4 * np.sin(self.config.beam_angle * deg2rad) * \
-            np.cos(self.config.beam_angle * deg2rad)
+        fac = 4 * np.sin(np.deg2rad(self.config.beam_angle)) * \
+            np.cos(np.deg2rad(self.config.beam_angle))
         # Note: Stacey defines the beams incorrectly for Workhorse ADCPs.
         #       According to the workhorse coordinate transformation
         #       documentation, the instrument's:

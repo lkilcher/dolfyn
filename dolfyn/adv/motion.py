@@ -4,7 +4,6 @@ import scipy.signal as sig
 from scipy.integrate import cumtrapz
 from ..rotate import vector as rot
 import warnings
-from ..rotate.base import deg2rad
 
 
 def get_body2imu(make_model):
@@ -240,9 +239,9 @@ def _calc_probe_pos(advo, separate_probes=False):
        p['inst_model'].lower == 'vector':
         r = 0.076
         # The angle between the x-y plane and the probes
-        phi = -30 * deg2rad
+        phi = np.deg2rad(-30)
         # The angles of the probes from the x-axis:
-        theta = np.array([0., 120., 240.]) * deg2rad
+        theta = np.deg2rad(np.array([0., 120., 240.]))
         return (np.dot(advo.props['body2head_rotmat'].T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
@@ -595,9 +594,9 @@ class CorrectMotion(object):
            p['inst_model'].lower == 'vector':
             r = 0.076
             # The angle between the x-y plane and the probes
-            phi = -30 * deg2rad
+            phi = np.deg2rad(-30)
             # The angles of the probes from the x-axis:
-            theta = np.array([0., 120., 240.]) * deg2rad
+            theta = np.deg2rad(np.array([0., 120., 240.]))
             return (np.dot(advo.props['body2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
