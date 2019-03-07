@@ -8,6 +8,7 @@ save = tb.save_tdata
 dat_rdi = load('RDI_test01.h5')
 dat_rdi_i = load('RDI_test01_rotate_beam2inst.h5')
 dat_awac = load('AWAC_test01.h5')
+dat_awac_ud = load('AWAC_test01_ud.h5')
 dat_sig = load('BenchFile01.h5')
 dat_sigi = load('Sig1000_IMU.h5')
 dat_sigi_ud = load('Sig1000_IMU_ud.h5')
@@ -21,7 +22,8 @@ def test_read(make_data=False):
     td_sig = read('BenchFile01.ad2cp')
     td_sigi = read('Sig1000_IMU.ad2cp', userdata=False)
     td_sigi_ud = read('Sig1000_IMU.ad2cp')
-    td_awac = read('AWAC_test01.wpr')
+    td_awac = read('AWAC_test01.wpr', userdata=False)
+    td_awac_ud = read('AWAC_test01.wpr')
     td_wr1 = read('winriver01.PD0')
     td_wr2 = read('winriver02.PD0')
 
@@ -31,6 +33,7 @@ def test_read(make_data=False):
         save(td_sigi, 'Sig1000_IMU.h5')
         save(td_sigi_ud, 'Sig1000_IMU_ud.h5')
         save(td_awac, 'AWAC_test01.h5')
+        save(td_awac_ud, 'AWAC_test01_ud.h5')
         save(td_wr1, 'winriver01.h5')
         save(td_wr2, 'winriver02.h5')
         return
@@ -67,6 +70,8 @@ def test_read(make_data=False):
              msg('Sig1000_IMU_ud.ad2cp')),
             (td_awac, dat_awac,
              msg('AWAC_test01.wpr')),
+            (td_awac_ud, dat_awac_ud,
+             msg('AWAC_test01.wpr+userdata')),
             (td_wr1, dat_wr1,
              msg('winriver01.PD0')),
             (td_wr2, dat_wr2,
