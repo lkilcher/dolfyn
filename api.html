@@ -6,15 +6,14 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>The DOLfYN API &#8212; DOLfYN 0.10.0 documentation</title>
+    <title>The DOLfYN API &#8212; DOLfYN 0.10.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,8 +31,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <div class="section" id="the-dlfn-api">
@@ -117,7 +114,7 @@ object by:</p>
 <span class="go">&lt;class &#39;dolfyn.data.base.TimeData&#39;&gt;: Data Object with Keys:</span>
 <span class="go">*------------</span>
 <span class="go">| c_sound                  : &lt;array; (1094,); float32&gt;</span>
-<span class="go">| pressure                 : &lt;array; (1094,); float32&gt;</span>
+<span class="go">| press                    : &lt;array; (1094,); float32&gt;</span>
 <span class="go">| temp                     : &lt;array; (1094,); float32&gt;</span>
 </pre></div>
 </div>
@@ -181,13 +178,12 @@ can be joined together by:</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{int or None}</span></dt>
-<dd><p class="first last">For ADP objects, this is the depth bin where the principal
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>bin</strong> : {int or None}</p>
+<blockquote class="last">
+<div><p>For ADP objects, this is the depth bin where the principal
 angle is calculated. If it is None (default), the
 depth-averaged velocity is used.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -206,9 +202,8 @@ depth-averaged velocity is used.</p>
 
 <dl class="method">
 <dt id="dolfyn.Velocity.get">
-<code class="descname">get</code><span class="sig-paren">(</span><em>$self</em>, <em>key</em>, <em>default=None</em>, <em>/</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the value for key if key is in the dictionary, else default.</p>
-</dd></dl>
+<code class="descname">get</code><span class="sig-paren">(</span><em>k</em><span class="optional">[</span>, <em>d</em><span class="optional">]</span><span class="sig-paren">)</span> &#x2192; D[k] if k in D, else d.  d defaults to None.<a class="headerlink" href="#dolfyn.Velocity.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="dolfyn.Velocity.iter_data">
@@ -219,12 +214,11 @@ including walking through sub-data objects.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>include_hidden</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (Default: False)</span></dt>
-<dd><p class="first last">Whether entries starting with ‘_’ should be included in
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>include_hidden</strong> : bool (Default: False)</p>
+<blockquote class="last">
+<div><p>Whether entries starting with ‘_’ should be included in
 the iteration.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -240,12 +234,11 @@ including walking through sub-groups.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>include_hidden</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (Default: False)</span></dt>
-<dd><p class="first last">Whether entries starting with ‘_’ should be included in
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>include_hidden</strong> : bool (Default: False)</p>
+<blockquote class="last">
+<div><p>Whether entries starting with ‘_’ should be included in
 the iteration.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -277,22 +270,21 @@ the iteration.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>out_frame</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt>
-<dd><p class="first last">The coordinate system to rotate the data into.</p>
-</dd>
-<dt><strong>inplace</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Operate on self (True), or return a copy that
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>out_frame</strong> : string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</p>
+<blockquote>
+<div><p>The coordinate system to rotate the data into.</p>
+</div></blockquote>
+<p><strong>inplace</strong> : bool</p>
+<blockquote>
+<div><p>Operate on self (True), or return a copy that
 has been rotated (False, default).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>objout</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
-<dd><p class="first last">The rotated data object. This is <cite>self</cite> if inplace is True.</p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>objout</strong> : <a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
+<blockquote class="last">
+<div><p>The rotated data object. This is <cite>self</cite> if inplace is True.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -471,27 +463,27 @@ coordinate (‘dz’ is actually diff(self[‘range’])), not necessarily the
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>obj</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
-<dd><p class="first last">The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
-</dd>
-<dt><strong>out_frame</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt>
-<dd><p class="first last">The coordinate system to rotate the data into.</p>
-</dd>
-<dt><strong>inplace</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Operate on the input data object (True), or return a copy that
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>obj</strong> : <a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
+<blockquote>
+<div><p>The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
+</div></blockquote>
+<p><strong>out_frame</strong> : string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</p>
+<blockquote>
+<div><p>The coordinate system to rotate the data into.</p>
+</div></blockquote>
+<p><strong>inplace</strong> : bool</p>
+<blockquote>
+<div><p>Operate on the input data object (True), or return a copy that
 has been rotated (False, default).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>objout</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
-<dd><p class="first last">The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>objout</strong> : <a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
+<blockquote class="last">
+<div><p>The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
 input object is modified in-place <em>and</em> returned (i.e.,
 <code class="docutils literal notranslate"><span class="pre">objout</span></code> is <code class="docutils literal notranslate"><span class="pre">obj</span></code>).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -510,23 +502,24 @@ contained in a single data object.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>accel_filtfreq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">the frequency at which to high-pass filter the acceleration
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>accel_filtfreq</strong> : float</p>
+<blockquote>
+<div><p>the frequency at which to high-pass filter the acceleration
 signal to remove low-frequency drift.</p>
-</dd>
-<dt><strong>vel_filtfreq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">a second frequency to high-pass filter the integrated
+</div></blockquote>
+<p><strong>vel_filtfreq</strong> : float (optional)</p>
+<blockquote>
+<div><p>a second frequency to high-pass filter the integrated
 acceleration.  (default: 1/3 of accel_filtfreq)</p>
-</dd>
-<dt><strong>separate_probes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional: False)</span></dt>
-<dd><p class="first last">a flag to perform motion-correction at the probe tips, and
+</div></blockquote>
+<p><strong>separate_probes</strong> : bool (optional: False)</p>
+<blockquote class="last">
+<div><p>a flag to perform motion-correction at the probe tips, and
 perform motion correction in beam-coordinates, then transform
 back into XYZ/earth coordinates. This correction seems to be
 lower than the noise levels of the ADV, so the defualt is to not
 use it (False).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -577,11 +570,11 @@ yet.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>advo</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt>
-<dd><p class="first">The adv object on which to perform motion correction.
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>advo</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></p>
+<blockquote>
+<div><p>The adv object on which to perform motion correction.
 It must contain the following data attributes:</p>
-<ul class="last simple">
+<ul class="simple">
 <li>vel : The velocity array.</li>
 <li>accel : The translational acceleration array.</li>
 <li>angrt : The rotation-rate array.</li>
@@ -589,12 +582,12 @@ It must contain the following data attributes:</p>
 <li>props : a dictionary that has ‘body2head_vec’,
 ‘body2head_rotmat’ and ‘coord_sys’.</li>
 </ul>
-</dd>
-<dt><strong>to_earth</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional, default: True)</span></dt>
-<dd><p class="first last">A boolean that specifies whether the data should be
+</div></blockquote>
+<p><strong>to_earth</strong> : bool (optional, default: True)</p>
+<blockquote class="last">
+<div><p>A boolean that specifies whether the data should be
 rotated into the earth frame.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -652,16 +645,16 @@ sides (to return a ‘quartered’ covariance).</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">The sample rate (Hz).</p>
-</dd>
-<dt><strong>coh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Calculate the frequency vector for coherence/cross-spectra
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>fs</strong> : float (optional)</p>
+<blockquote>
+<div><p>The sample rate (Hz).</p>
+</div></blockquote>
+<p><strong>coh</strong> : bool</p>
+<blockquote class="last">
+<div><p>Calculate the frequency vector for coherence/cross-spectra
 (default: False) i.e. use self.n_fft_coh instead of
 self.n_fft.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -676,17 +669,13 @@ self.n_fft.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a velocity data array. The last dimension is assumed</span></dt>
-<dd><p class="first last">to be time.</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : a velocity data array. The last dimension is assumed</p>
+<blockquote>
+<div><p>to be time.</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">An array of stress values.</span></dt>
-<dd></dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>out</strong> : An array of stress values.</p>
 </td>
 </tr>
 </tbody>
@@ -701,20 +690,17 @@ self.n_fft.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a velocity data array. The last dimension is assumed</span></dt>
-<dd><p class="first last">to be time.</p>
-</dd>
-<dt><strong>noise</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a three-element vector of the noise levels of the</span></dt>
-<dd><p class="first last">velocity data for ach component of velocity.</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : a velocity data array. The last dimension is assumed</p>
+<blockquote>
+<div><p>to be time.</p>
+</div></blockquote>
+<p><strong>noise</strong> : a three-element vector of the noise levels of the</p>
+<blockquote>
+<div><p>velocity data for ach component of velocity.</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">An array of tke values.</span></dt>
-<dd></dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>out</strong> : An array of tke values.</p>
 </td>
 </tr>
 </tbody>
@@ -729,44 +715,49 @@ self.n_fft.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The raw velocity data.</p>
-</dd>
-<dt><strong>rotate_u</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional)</span></dt>
-<dd><p class="first last">If True, each ‘bin’ of horizontal velocity is rotated into
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The raw velocity data.</p>
+</div></blockquote>
+<p><strong>rotate_u</strong> : bool (optional)</p>
+<blockquote>
+<div><p>If True, each ‘bin’ of horizontal velocity is rotated into
 its principal axis prior to calculating the psd.  (default:
 False).</p>
-</dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">The sample rate (default: from the binner).</p>
-</dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or array</span></dt>
-<dd><p class="first last">Specify the window function.</p>
-</dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The bin-size (default: from the binner).</p>
-</dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The fft size (default: from the binner).</p>
-</dd>
-<dt><strong>n_pad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The number of values to pad with zero (default: 0)</p>
-</dd>
-<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">Controls amount of overlap in fft (default: the step size is
+</div></blockquote>
+<p><strong>fs</strong> : float (optional)</p>
+<blockquote>
+<div><p>The sample rate (default: from the binner).</p>
+</div></blockquote>
+<p><strong>window</strong> : string or array</p>
+<blockquote>
+<div><p>Specify the window function.</p>
+</div></blockquote>
+<p><strong>n_bin</strong> : int (optional)</p>
+<blockquote>
+<div><p>The bin-size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_fft</strong> : int (optional)</p>
+<blockquote>
+<div><p>The fft size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_pad</strong> : int (optional)</p>
+<blockquote>
+<div><p>The number of values to pad with zero (default: 0)</p>
+</div></blockquote>
+<p><strong>step</strong> : int (optional)</p>
+<blockquote>
+<div><p>Controls amount of overlap in fft (default: the step size is
 chosen to maximize data use, minimize nens, and have a
 minimum of 50% overlap.).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>CSpec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (3, M, N_FFT)</span></dt>
-<dd><p class="first last">The first-dimension of the cross-spectrum is the three
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>CSpec</strong> : np.ndarray (3, M, N_FFT)</p>
+<blockquote class="last">
+<div><p>The first-dimension of the cross-spectrum is the three
 different cross-spectra: ‘uv’, ‘uw’, ‘vw’ (in that order).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -781,48 +772,54 @@ different cross-spectra: ‘uv’, ‘uw’, ‘vw’ (in that order).</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The raw velocity data.</p>
-</dd>
-<dt><strong>rotate_u</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional)</span></dt>
-<dd><p class="first last">If True, each ‘bin’ of horizontal velocity is rotated into
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The raw velocity data.</p>
+</div></blockquote>
+<p><strong>rotate_u</strong> : bool (optional)</p>
+<blockquote>
+<div><p>If True, each ‘bin’ of horizontal velocity is rotated into
 its principal axis prior to calculating the psd.  (default:
 False).</p>
-</dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">The sample rate (default: from the binner).</p>
-</dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or array</span></dt>
-<dd><p class="first last">Specify the window function.</p>
-</dd>
-<dt><strong>noise</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(3 floats) (optional)</span></dt>
-<dd><p class="first last">Noise level of each component’s velocity measurement
+</div></blockquote>
+<p><strong>fs</strong> : float (optional)</p>
+<blockquote>
+<div><p>The sample rate (default: from the binner).</p>
+</div></blockquote>
+<p><strong>window</strong> : string or array</p>
+<blockquote>
+<div><p>Specify the window function.</p>
+</div></blockquote>
+<p><strong>noise</strong> : list(3 floats) (optional)</p>
+<blockquote>
+<div><p>Noise level of each component’s velocity measurement
 (default 0).</p>
-</dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The bin-size (default: from the binner).</p>
-</dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The fft size (default: from the binner).</p>
-</dd>
-<dt><strong>n_pad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The number of values to pad with zero (default: 0)</p>
-</dd>
-<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">Controls amount of overlap in fft (default: the step size is
+</div></blockquote>
+<p><strong>n_bin</strong> : int (optional)</p>
+<blockquote>
+<div><p>The bin-size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_fft</strong> : int (optional)</p>
+<blockquote>
+<div><p>The fft size (default: from the binner).</p>
+</div></blockquote>
+<p><strong>n_pad</strong> : int (optional)</p>
+<blockquote>
+<div><p>The number of values to pad with zero (default: 0)</p>
+</div></blockquote>
+<p><strong>step</strong> : int (optional)</p>
+<blockquote>
+<div><p>Controls amount of overlap in fft (default: the step size is
 chosen to maximize data use, minimize nens, and have a
 minimum of 50% overlap.).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Spec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (3, M, N_FFT)</span></dt>
-<dd><p class="first last">The first-dimension of the spectrum is the three
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Spec</strong> : np.ndarray (3, M, N_FFT)</p>
+<blockquote class="last">
+<div><p>The first-dimension of the spectrum is the three
 different spectra: ‘uu’, ‘vv’, ‘ww’.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -850,24 +847,24 @@ for each bin.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>dat1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The first raw-data array of which to calculate the cpsd.</p>
-</dd>
-<dt><strong>dat2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The second raw-data array of which to calculate the cpsd.</p>
-</dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">String indicating the window function to use (default: ‘hanning’).</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dat1</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The first raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>dat2</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The second raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>window</strong> : string</p>
+<blockquote>
+<div><p>String indicating the window function to use (default: ‘hanning’).</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The cross-spectral density of <cite>dat1</cite> and <cite>dat2</cite></p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : np.ndarray</p>
+<blockquote class="last">
+<div><p>The cross-spectral density of <cite>dat1</cite> and <cite>dat2</cite></p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -894,18 +891,19 @@ for each bin.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>rawdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">raw_data_object</span></dt>
-<dd><p class="first last">The raw data structure to be binned</p>
-</dd>
-<dt><strong>outdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">avg_data_object</span></dt>
-<dd><p class="first last">The bin’d (output) data object to which averaged data is added.</p>
-</dd>
-<dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of strings</span></dt>
-<dd><p class="first last">The names of variables to be averaged.  If <cite>names</cite> is None,
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>rawdat</strong> : raw_data_object</p>
+<blockquote>
+<div><p>The raw data structure to be binned</p>
+</div></blockquote>
+<p><strong>outdat</strong> : avg_data_object</p>
+<blockquote>
+<div><p>The bin’d (output) data object to which averaged data is added.</p>
+</div></blockquote>
+<p><strong>names</strong> : list of strings</p>
+<blockquote class="last">
+<div><p>The names of variables to be averaged.  If <cite>names</cite> is None,
 all data in <cite>rawdat</cite> will be binned.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -920,18 +918,19 @@ all data in <cite>rawdat</cite> will be binned.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>rawdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">raw_data_object</span></dt>
-<dd><p class="first last">The raw data structure to be binned.</p>
-</dd>
-<dt><strong>outdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">avg_data_object</span></dt>
-<dd><p class="first last">The bin’d (output) data object to which variance data is added.</p>
-</dd>
-<dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of strings</span></dt>
-<dd><p class="first last">The names of variables of which to calculate variance.  If
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>rawdat</strong> : raw_data_object</p>
+<blockquote>
+<div><p>The raw data structure to be binned.</p>
+</div></blockquote>
+<p><strong>outdat</strong> : avg_data_object</p>
+<blockquote>
+<div><p>The bin’d (output) data object to which variance data is added.</p>
+</div></blockquote>
+<p><strong>names</strong> : list of strings</p>
+<blockquote class="last">
+<div><p>The names of variables of which to calculate variance.  If
 <cite>names</cite> is None, all data in <cite>rawdat</cite> will be binned.</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -946,15 +945,13 @@ all data in <cite>rawdat</cite> will be binned.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (default is self.n_bin)</span></dt>
-<dd></dd>
-<dt><strong>mask_thresh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (between 0 and 1)</span></dt>
-<dd><p class="first last">if the input data is a masked array, and mask_thresh is
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>n_bin</strong> : int (default is self.n_bin)</p>
+<p><strong>mask_thresh</strong> : float (between 0 and 1)</p>
+<blockquote class="last">
+<div><p>if the input data is a masked array, and mask_thresh is
 not None mask the averaged values where the fraction of
 bad points is greater than mask_thresh</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -969,17 +966,14 @@ bad points is greater than mask_thresh</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘radians’ | ‘degrees’}</span></dt>
-<dd></dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (default is self.n_bin)</span></dt>
-<dd></dd>
-<dt><strong>mask_thresh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (between 0 and 1)</span></dt>
-<dd><p class="first last">if the input data is a masked array, and mask_thresh is
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>units</strong> : {‘radians’ | ‘degrees’}</p>
+<p><strong>n_bin</strong> : int (default is self.n_bin)</p>
+<p><strong>mask_thresh</strong> : float (between 0 and 1)</p>
+<blockquote class="last">
+<div><p>if the input data is a masked array, and mask_thresh is
 not None mask the averaged values where the fraction of
 bad points is greater than mask_thresh</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -995,24 +989,24 @@ function of frequency (complimentary to coherence).</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>dat1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The first raw-data array of which to calculate the cpsd.</p>
-</dd>
-<dt><strong>dat2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The second raw-data array of which to calculate the cpsd.</p>
-</dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">String indicating the window function to use (default: ‘hanning’).</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dat1</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The first raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>dat2</strong> : np.ndarray</p>
+<blockquote>
+<div><p>The second raw-data array of which to calculate the cpsd.</p>
+</div></blockquote>
+<p><strong>window</strong> : string</p>
+<blockquote>
+<div><p>String indicating the window function to use (default: ‘hanning’).</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The phase difference between signal dat1 and dat2.</p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> : np.ndarray</p>
+<blockquote class="last">
+<div><p>The phase difference between signal dat1 and dat2.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1027,18 +1021,19 @@ function of frequency (complimentary to coherence).</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>dat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">data_object</span></dt>
-<dd><p class="first last">The raw-data array of which to calculate the psd.</p>
-</dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">String indicating the window function to use (default: ‘hanning’).</p>
-</dd>
-<dt><strong>noise</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The white-noise level of the measurement (in the same units
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>dat</strong> : data_object</p>
+<blockquote>
+<div><p>The raw-data array of which to calculate the psd.</p>
+</div></blockquote>
+<p><strong>window</strong> : string</p>
+<blockquote>
+<div><p>String indicating the window function to use (default: ‘hanning’).</p>
+</div></blockquote>
+<p><strong>noise</strong> : float</p>
+<blockquote class="last">
+<div><p>The white-noise level of the measurement (in the same units
 as <cite>dat</cite>).</p>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1053,21 +1048,20 @@ as <cite>dat</cite>).</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>arr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd></dd>
-<dt><strong>n_pad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Is used to add <cite>n_pad</cite>/2 points from the end of the previous
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>arr</strong> : np.ndarray</p>
+<p><strong>n_pad</strong> : int</p>
+<blockquote>
+<div><p>Is used to add <cite>n_pad</cite>/2 points from the end of the previous
 ensemble to the top of the current, and <cite>n_pad</cite>/2 points
 from the top of the next ensemble to the bottom of the
 current.  Zeros are padded in the upper-left and lower-right
 corners of the matrix (beginning/end of timeseries).  In
 this case, the array shape will be (…,`n`,`n_pad`+`n_bin`)</p>
-</dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, int (optional)</span></dt>
-<dd><p class="first last">Override this binner’s n_bin.</p>
-</dd>
-</dl>
+</div></blockquote>
+<p><strong>n_bin</strong> : float, int (optional)</p>
+<blockquote class="last">
+<div><p>Override this binner’s n_bin.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1093,15 +1087,15 @@ ADV data.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">The length of <cite>bin</cite> s, in number of points, for this averaging
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>n_bin</strong> : int</p>
+<blockquote>
+<div><p>The length of <cite>bin</cite> s, in number of points, for this averaging
 operator.</p>
-</dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional, default: n_fft = n_bin)</span></dt>
-<dd><p class="first last">The length of the FFT for computing spectra (must be &lt; n_bin)</p>
-</dd>
-</dl>
+</div></blockquote>
+<p><strong>n_fft</strong> : int (optional, default: n_fft = n_bin)</p>
+<blockquote class="last">
+<div><p>The length of the FFT for computing spectra (must be &lt; n_bin)</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1115,32 +1109,34 @@ advr, and return a <cite>binned</cite> data object.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>advr</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt>
-<dd><p class="first last">The raw adv data-object to <cite>bin</cite>, average and compute
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>advr</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></p>
+<blockquote>
+<div><p>The raw adv data-object to <cite>bin</cite>, average and compute
 turbulence statistics of.</p>
-</dd>
-<dt><strong>omega_range_epsilon</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable(2)</span></dt>
-<dd><p class="first last">The frequency range (low, high) over which to estimate the
+</div></blockquote>
+<p><strong>omega_range_epsilon</strong> : iterable(2)</p>
+<blockquote>
+<div><p>The frequency range (low, high) over which to estimate the
 dissipation rate <cite>epsilon</cite> [rad/s].</p>
-</dd>
-<dt><strong>Itke_thresh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">The threshold for velocity magnitude for</span></dt>
-<dd><p class="first last">computing the turbulence intensity. Values of Itke where
+</div></blockquote>
+<p><strong>Itke_thresh</strong> : The threshold for velocity magnitude for</p>
+<blockquote>
+<div><p>computing the turbulence intensity. Values of Itke where
 U_mag &lt; Itke_thresh are set to NaN.  (default: 0).</p>
-</dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">1, None, ‘hann’</span></dt>
-<dd><p class="first last">The window to use for psds.</p>
-</dd>
-</dl>
+</div></blockquote>
+<p><strong>window</strong> : 1, None, ‘hann’</p>
+<blockquote>
+<div><p>The window to use for psds.</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>advb</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.ADVbinned</span></code></span></dt>
-<dd><p class="first">Returns an ‘binned’ (i.e. ‘averaged’) data object. All
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>advb</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">base.ADVbinned</span></code></p>
+<blockquote class="last">
+<div><p>Returns an ‘binned’ (i.e. ‘averaged’) data object. All
 fields of the input data object are averaged in n_bin
 chunks. This object also computes the following items over
 those chunks:</p>
-<ul class="last">
+<ul>
 <li><p class="first">tke_vec : The energy in each component (components are also
 accessible as
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">upup_</span></code>,
@@ -1166,8 +1162,7 @@ in radial frequency units. The data group contains:</p>
 </div></blockquote>
 </li>
 </ul>
-</dd>
-</dl>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1182,24 +1177,24 @@ in radial frequency units. The data group contains:</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>corr_vel</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></span></dt>
-<dd><p class="first last">The auto-covariance array (i.e. computed using calc_acov).</p>
-</dd>
-<dt><strong>U_mag</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The velocity magnitude for this bin.</p>
-</dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The raw sample rate.</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>corr_vel</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></p>
+<blockquote>
+<div><p>The auto-covariance array (i.e. computed using calc_acov).</p>
+</div></blockquote>
+<p><strong>U_mag</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</p>
+<blockquote>
+<div><p>The velocity magnitude for this bin.</p>
+</div></blockquote>
+<p><strong>fs</strong> : float</p>
+<blockquote>
+<div><p>The raw sample rate.</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Lint</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The integral length scale (Tint*U_mag).</p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Lint</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</p>
+<blockquote class="last">
+<div><p>The integral length scale (Tint*U_mag).</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1217,41 +1212,42 @@ auto-covariance falls to 1/e.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>spec</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time,n_f)</span></dt>
-<dd><p class="first last">The spectrum array [m^2/s]</p>
-</dd>
-<dt><strong>omega</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (n_f)</span></dt>
-<dd><p class="first last">The frequency array [rad/s]</p>
-</dd>
-<dt><strong>U_mag</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time)</span></dt>
-<dd><p class="first last">The velocity magnitude [m/s]</p>
-</dd>
-<dt><strong>omega_range</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable(2)</span></dt>
-<dd><p class="first last">The range over which to integrate/average the spectrum.</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>spec</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time,n_f)</p>
+<blockquote>
+<div><p>The spectrum array [m^2/s]</p>
+</div></blockquote>
+<p><strong>omega</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (n_f)</p>
+<blockquote>
+<div><p>The frequency array [rad/s]</p>
+</div></blockquote>
+<p><strong>U_mag</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time)</p>
+<blockquote>
+<div><p>The velocity magnitude [m/s]</p>
+</div></blockquote>
+<p><strong>omega_range</strong> : iterable(2)</p>
+<blockquote>
+<div><p>The range over which to integrate/average the spectrum.</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>epsilon</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (…,n_time)</span></dt>
-<dd><p class="first last">The dissipation rate.</p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>epsilon</strong> : np.ndarray (…,n_time)</p>
+<blockquote class="last">
+<div><p>The dissipation rate.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
 <p>This uses the <cite>standard</cite> formula for dissipation:</p>
-<div class="math notranslate nohighlight">
+<div class="math notranslate">
 \[S(k) = \alpha \epsilon^{2/3} k^{-5/3}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\alpha = 0.5\)</span> (1.5 for all three velocity
+<p>where <span class="math notranslate">\(\alpha = 0.5\)</span> (1.5 for all three velocity
 components), <cite>k</cite> is wavenumber and <cite>S(k)</cite> is the turbulent
 kinetic energy spectrum.</p>
-<p>With <span class="math notranslate nohighlight">\(k \rightarrow \omega / U\)</span> then–to preserve variance–
-<span class="math notranslate nohighlight">\(S(k) = U S(\omega)\)</span> and so this becomes:</p>
-<div class="math notranslate nohighlight">
+<p>With <span class="math notranslate">\(k \rightarrow \omega / U\)</span> then–to preserve variance–
+<span class="math notranslate">\(S(k) = U S(\omega)\)</span> and so this becomes:</p>
+<div class="math notranslate">
 \[S(\omega) = \alpha \epsilon^{2/3} \omega^{-5/3} U^{2/3}\]</div>
 <p>LT83 : Lumley and Terray “Kinematics of turbulence convected
 by a random wave field” JPO, 1983, 13, 2000-2007.</p>
@@ -1265,28 +1261,29 @@ by a random wave field” JPO, 1983, 13, 2000-2007.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time, n_bin)</span></dt>
-<dd><p class="first last">The raw velocity signal (last dimension time) upon which to
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>veldat</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time, n_bin)</p>
+<blockquote>
+<div><p>The raw velocity signal (last dimension time) upon which to
 perform the SF technique.</p>
-</dd>
-<dt><strong>umag</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The bin-averaged horizontal velocity magnitude.</p>
-</dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The sample rate of <cite>veldat</cite> [hz].</p>
-</dd>
-<dt><strong>freq_rng</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable(2)</span></dt>
-<dd><p class="first last">The frequency range over which to compute the SF [hz].</p>
-</dd>
-</dl>
+</div></blockquote>
+<p><strong>umag</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</p>
+<blockquote>
+<div><p>The bin-averaged horizontal velocity magnitude.</p>
+</div></blockquote>
+<p><strong>fs</strong> : float</p>
+<blockquote>
+<div><p>The sample rate of <cite>veldat</cite> [hz].</p>
+</div></blockquote>
+<p><strong>freq_rng</strong> : iterable(2)</p>
+<blockquote>
+<div><p>The frequency range over which to compute the SF [hz].</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>epsilon</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The dissipation rate.</p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>epsilon</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</p>
+<blockquote class="last">
+<div><p>The dissipation rate.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1301,15 +1298,15 @@ perform the SF technique.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>advbin</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVbinned</span></code></span></dt>
-<dd><p class="first last">The binned adv object. The following spectra and basic
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>advbin</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">ADVbinned</span></code></p>
+<blockquote>
+<div><p>The binned adv object. The following spectra and basic
 turbulence statistics must already be computed.</p>
-</dd>
-<dt><strong>advraw</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt>
-<dd><p class="first last">The raw adv object.</p>
-</dd>
-</dl>
+</div></blockquote>
+<p><strong>advraw</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></p>
+<blockquote class="last">
+<div><p>The raw adv object.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1329,18 +1326,16 @@ turbulence statistics must already be computed.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>Uh_complex</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time * n_bin)</span></dt>
-<dd><p class="first last">The complex, raw horizontal velocity (non-binned).</p>
-</dd>
-</dl>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>Uh_complex</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time * n_bin)</p>
+<blockquote>
+<div><p>The complex, raw horizontal velocity (non-binned).</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>theta</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The angle of the turbulence [rad]</p>
-</dd>
-</dl>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>theta</strong> : <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</p>
+<blockquote class="last">
+<div><p>The angle of the turbulence [rad]</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1354,47 +1349,18 @@ turbulence statistics must already be computed.</p>
 
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">The Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data-structure.html">Data Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="motion-correction.html">Motion Correction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">The DOLfYN API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dlfn-data-objects">DOLfYN data objects</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.Velocity.html">dolfyn.Velocity</a></li>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.ADPdata.html">dolfyn.ADPdata</a></li>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.ADVdata.html">dolfyn.ADVdata</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#dlfn-tools-and-functions">DOLfYN tools and functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.rotate2.html">dolfyn.rotate2</a></li>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.adv.motion.CorrectMotion.html">dolfyn.adv.motion.CorrectMotion</a></li>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.VelBinner.html">dolfyn.VelBinner</a></li>
-<li class="toctree-l3"><a class="reference internal" href="_as_gen/dolfyn.adv.turbulence.TurbBinner.html">dolfyn.adv.turbulence.TurbBinner</a></li>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The DOLfYN API</a><ul>
+<li><a class="reference internal" href="#dlfn-data-objects">DOLfYN data objects</a></li>
+<li><a class="reference internal" href="#dlfn-tools-and-functions">DOLfYN tools and functions</a></li>
 </ul>
 </li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
-</ul>
-
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -1404,6 +1370,13 @@ turbulence statistics must already be computed.</p>
   </ul></li>
 </ul>
 </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -1416,14 +1389,6 @@ turbulence statistics must already be computed.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -1432,8 +1397,8 @@ turbulence statistics must already be computed.</p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/api.rst.txt"

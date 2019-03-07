@@ -76,6 +76,24 @@ Data Description and Units
                :widths: 15, 20, 15, 50
                :file: ./units.csv
 
+User MetaData (``dat.props``)
+-----------------------------
+
+The ``props`` data-group of |dlfn| data objects is a place for
+user-specified metadata and |dlfn|-specific implementation data. The
+entries that are used by |dlfn| are described in Table 2. But, you can
+store any relavent metadata here (provided that you don't overwrite
+the key-names below because that could cause errors); for example, it
+may be convenient to store the position of the instrument in
+``dat.props['lonlat']``. These values can also be specified in a
+```<mydata_file_name>.userdata.json`` file.
+
+.. csv-table:: Table 2: The entries in ``dat.props`` that are used in |dlfn|.
+               :header-rows: 1
+               :widths: 15, 105
+               :file: ./props_info.csv
+
+\*: These entries are set by DOLfYN, and should *not* - in general - be set or changed by the user.
                       
 Data Shortcuts (properties)
 ---------------------------
@@ -84,12 +102,13 @@ contain shortcuts to tools and other variables that can be obtained
 from simple operations of its data items. These attributes aren't
 listed in the view of the data shown above. Instead, to see the
 variables that are available as shortcuts for a particular data
-object, take a look at the ``dat.shortcuts`` property.
+object, take a look at the ``dat.shortcuts`` property (new in |dlfn|
+0.10.1).
 
-.. csv-table:: Table 2: Notes on common shorcuts found in |dlfn| data objects.
+.. csv-table:: Table 3: Notes on common shorcuts found in |dlfn| data objects.
                :header-rows: 1
                :widths: 15, 20, 85
                :file: ./shortcuts.csv
 
-**Important Note:** The items listed in Table 2 are not stored in the data
+**Important Note:** The items listed in Table 3 are not stored in the data
 object but are provided as attributes (shortcuts) to |dlfn| data objects.

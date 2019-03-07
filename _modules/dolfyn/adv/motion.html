@@ -6,15 +6,14 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adv.motion &#8212; DOLfYN 0.10.0 documentation</title>
+    <title>dolfyn.adv.motion &#8212; DOLfYN 0.10.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../../about.html" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -30,8 +29,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <h1>Source code for dolfyn.adv.motion</h1><div class="highlight"><pre>
@@ -41,7 +38,6 @@
 <span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="k">import</span> <span class="n">cumtrapz</span>
 <span class="kn">from</span> <span class="nn">..rotate</span> <span class="k">import</span> <span class="n">vector</span> <span class="k">as</span> <span class="n">rot</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">..rotate.base</span> <span class="k">import</span> <span class="n">deg2rad</span>
 
 
 <span class="k">def</span> <span class="nf">get_body2imu</span><span class="p">(</span><span class="n">make_model</span><span class="p">):</span>
@@ -122,6 +118,8 @@
                         <span class="s2">&quot;The data object specifies a value for accel_filtfreq &quot;</span>
                         <span class="s2">&quot;of </span><span class="si">{}</span><span class="s2"> Hz. Overriding this with the user-specified &quot;</span>
                         <span class="s2">&quot;value: </span><span class="si">{}</span><span class="s2"> Hz.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">datval</span><span class="p">,</span> <span class="n">accel_filtfreq</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">vel_filtfreq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vel_filtfreq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;motion vel_filtfreq Hz&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">vel_filtfreq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">vel_filtfreq</span> <span class="o">=</span> <span class="n">accel_filtfreq</span> <span class="o">/</span> <span class="mf">3.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">accel_filtfreq</span> <span class="o">=</span> <span class="n">accel_filtfreq</span>
@@ -277,9 +275,9 @@
        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;inst_model&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span> <span class="o">==</span> <span class="s1">&#39;vector&#39;</span><span class="p">:</span>
         <span class="n">r</span> <span class="o">=</span> <span class="mf">0.076</span>
         <span class="c1"># The angle between the x-y plane and the probes</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="o">-</span><span class="mi">30</span> <span class="o">*</span> <span class="n">deg2rad</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">)</span>
         <span class="c1"># The angles of the probes from the x-axis:</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">120.</span><span class="p">,</span> <span class="mf">240.</span><span class="p">])</span> <span class="o">*</span> <span class="n">deg2rad</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">120.</span><span class="p">,</span> <span class="mf">240.</span><span class="p">]))</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;body2head_rotmat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span>
                                  <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span>
@@ -632,9 +630,9 @@
            <span class="n">p</span><span class="p">[</span><span class="s1">&#39;inst_model&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span> <span class="o">==</span> <span class="s1">&#39;vector&#39;</span><span class="p">:</span>
             <span class="n">r</span> <span class="o">=</span> <span class="mf">0.076</span>
             <span class="c1"># The angle between the x-y plane and the probes</span>
-            <span class="n">phi</span> <span class="o">=</span> <span class="o">-</span><span class="mi">30</span> <span class="o">*</span> <span class="n">deg2rad</span>
+            <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">)</span>
             <span class="c1"># The angles of the probes from the x-axis:</span>
-            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">120.</span><span class="p">,</span> <span class="mf">240.</span><span class="p">])</span> <span class="o">*</span> <span class="n">deg2rad</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">120.</span><span class="p">,</span> <span class="mf">240.</span><span class="p">]))</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;body2head_rotmat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
                            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span>
                                      <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span>
@@ -737,33 +735,10 @@
 </pre></div>
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">The Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../data-structure.html">Data Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../motion-correction.html">Motion Correction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The DOLfYN API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
-</ul>
-
-<div class="relations">
+        <div class="sphinxsidebarwrapper"><div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
@@ -784,14 +759,6 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -800,8 +767,8 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
 

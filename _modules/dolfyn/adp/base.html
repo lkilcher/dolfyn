@@ -6,15 +6,14 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adp.base &#8212; DOLfYN 0.10.0 documentation</title>
+    <title>dolfyn.adp.base &#8212; DOLfYN 0.10.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../../about.html" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -30,8 +29,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <h1>Source code for dolfyn.adp.base</h1><div class="highlight"><pre>
@@ -39,8 +36,6 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">dolfyn.rotate</span> <span class="k">import</span> <span class="n">rdi</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-
-<span class="n">deg2rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
 
 
 <span class="k">def</span> <span class="nf">diffz_first</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -232,8 +227,8 @@
 <span class="sd">        &quot;Measurements of Reynolds stress profiles in unstratified</span>
 <span class="sd">        tidal flow&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">fac</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_angle</span> <span class="o">*</span> <span class="n">deg2rad</span><span class="p">)</span> <span class="o">*</span> \
-            <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_angle</span> <span class="o">*</span> <span class="n">deg2rad</span><span class="p">)</span>
+        <span class="n">fac</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_angle</span><span class="p">))</span> <span class="o">*</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">beam_angle</span><span class="p">))</span>
         <span class="c1"># Note: Stacey defines the beams incorrectly for Workhorse ADCPs.</span>
         <span class="c1">#       According to the workhorse coordinate transformation</span>
         <span class="c1">#       documentation, the instrument&#39;s:</span>
@@ -258,17 +253,9 @@
         <span class="c1"># !FIXTHIS!:</span>
         <span class="c1"># - Stress rotations should be **tensor rotations**.</span>
         <span class="c1"># - These should be handled by rotate2.</span>
-        <span class="c1"># - Delete the inst2earth_heading fn?</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The calc_stresses function does not yet &quot;</span>
                       <span class="s2">&quot;properly handle the coordinate system.&quot;</span><span class="p">)</span>
-        <span class="n">stress</span> <span class="o">*=</span> <span class="n">rdi</span><span class="o">.</span><span class="n">inst2earth_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;principal&#39;</span><span class="p">:</span>
-            <span class="n">stress</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">stress</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">stress</span><span class="o">.</span><span class="n">imag</span>
-        <span class="c1"># self.add_data(&#39;upwp_&#39;,stress.real,&#39;stress&#39;)</span>
-        <span class="c1"># self.add_data(&#39;vpwp_&#39;,stress.imag,&#39;stress&#39;)</span>
-        <span class="c1"># self.meta[&#39;upwp_&#39;]=db.varMeta(&quot;u&#39;w&#39;&quot;,{2:&#39;m&#39;,-2:&#39;s&#39;})</span>
-        <span class="c1"># self.meta[&#39;vpwp_&#39;]=db.varMeta(&quot;v&#39;w&#39;&quot;,{2:&#39;m&#39;,-2:&#39;s&#39;})</span>
 
 
 <span class="c1"># !CLEANUP! below this line</span>
@@ -280,33 +267,10 @@
 </pre></div>
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">The Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../data-structure.html">Data Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../motion-correction.html">Motion Correction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The DOLfYN API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
-</ul>
-
-<div class="relations">
+        <div class="sphinxsidebarwrapper"><div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
@@ -327,14 +291,6 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -343,8 +299,8 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
 
