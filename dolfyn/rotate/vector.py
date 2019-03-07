@@ -2,8 +2,7 @@ from __future__ import division
 import numpy as np
 import warnings
 from numpy.linalg import inv
-from .base import _check_declination
-from .base_nortek import euler2orient, orient2euler
+from .base import _check_declination, nortek_euler2orient as euler2orient, nortek_orient2euler as orient2euler
 from . import base as rotb
 
 
