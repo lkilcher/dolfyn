@@ -85,6 +85,8 @@ class CalcMotion(object):
                         "of {} Hz. Overriding this with the user-specified "
                         "value: {} Hz.".format(datval, accel_filtfreq))
         if vel_filtfreq is None:
+            vel_filtfreq = self.advo.props.get('motion vel_filtfreq Hz', None)
+        if vel_filtfreq is None:
             vel_filtfreq = accel_filtfreq / 3.0
         self.accel_filtfreq = accel_filtfreq
         self.accelvel_filtfreq = vel_filtfreq

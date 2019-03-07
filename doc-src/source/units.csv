@@ -27,7 +27,7 @@ status,---,sys,The instrument status code*
 temp_clock,degrees C?,sys,The instruments clock temperature
 temp_mag,degrees C?,sys,The instruments magnetometer temperature
 temp_press,degrees C?,sys,The instruments pressure sensor temperature
-tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,Variance of velocity components (0: uu; 1: vv; 2: ww)
+tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,"Variance of velocity components (0: uu, 1: vv, 2: ww)"
 stress,m\ :sup:`2`/s\ :sup:`2`,---,"The Reynolds stress array (0: uv, 1: uw, 2: vw)"
 sigma_Uh,m/s,---,Standard deviation of horizontal velocity magnitude 
 epsilon,m\ :sup:`2`/s\ :sup:`3`,---,Turbulence dissipation rate

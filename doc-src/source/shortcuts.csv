@@ -6,7 +6,7 @@ v, m/s, ``dat['vel'][1]``
 w, m/s, ``dat['vel'][2]``
 U, m/s,  the horizontal velocity as a complex quantity (dat.u + 1j * dat.v)
 U_mag, m/s,  the magnitude of the horizontal velocity
-U_angle, radians, the direction of the horizontal velocity (counter-clockwise from East; X; or streamwise direction; depending on coordinate system)
+U_angle, radians, "the direction of the horizontal velocity (counter-clockwise from East, X, or streamwise direction, depending on coordinate system)"
 subset, ---, a tool for indexing a subset of the data object
 tauij, m\ :sup:`2`/s\ :sup:`2`, the Reynold's stress tensor
 tke, m\ :sup:`2`/s\ :sup:`2`,  the turbulent kinetic energy (half the sum of the data in `'tke_vec'`)
