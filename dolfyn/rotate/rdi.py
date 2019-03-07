@@ -202,12 +202,3 @@ def inst2earth(adcpo, reverse=False,
         adcpo['bt_vel'][:3] = np.einsum(ess.replace('d', ''),
                                         rotmat, adcpo['bt_vel'][:3])
     adcpo.props['coord_sys'] = cs
-
-
-def inst2earth_heading(adpo):
-    h = np.deg2rad(adpo.orient.heading[:])
-    if 'heading_offset' in adpo.props.keys():
-        h += np.deg2rad(adpo.props['heading_offset'])
-    if 'declination' in adpo.props.keys():
-        h += np.deg2rad(adpo.props['declination'])
-    return np.exp(-1j * h)

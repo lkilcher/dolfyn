@@ -219,17 +219,9 @@ class ADPbinner(dbvel.VelBinner):
         # !FIXTHIS!:
         # - Stress rotations should be **tensor rotations**.
         # - These should be handled by rotate2.
-        # - Delete the inst2earth_heading fn?
         warnings.warn("The calc_stresses function does not yet "
                       "properly handle the coordinate system.")
-        stress *= rdi.inst2earth_heading(self)
-        if self.props['coord_sys'] == 'principal':
-            stress *= np.exp(-1j * self.props['principal_angle'])
         return stress.real, stress.imag
-        # self.add_data('upwp_',stress.real,'stress')
-        # self.add_data('vpwp_',stress.imag,'stress')
-        # self.meta['upwp_']=db.varMeta("u'w'",{2:'m',-2:'s'})
-        # self.meta['vpwp_']=db.varMeta("v'w'",{2:'m',-2:'s'})
 
 
 # !CLEANUP! below this line
