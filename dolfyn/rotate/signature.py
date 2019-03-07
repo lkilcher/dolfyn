@@ -1,8 +1,7 @@
 from . import base as rotb
 from .vector import earth2principal
 from .rdi import beam2inst
-from .base import _check_declination
-from .base_nortek import euler2orient
+from .base import _check_declination, nortek_euler2orient as euler2orient
 import numpy as np
 import warnings
 from numpy.linalg import inv
