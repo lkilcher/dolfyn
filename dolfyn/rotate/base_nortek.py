@@ -1,4 +1,5 @@
 import numpy as np
+from . import base
 
 
 def euler2orient(pitch, roll, heading, units='degrees'):
@@ -70,7 +71,7 @@ def orient2euler(advo):
             advo.shape[:2] == (3, 3):
         omat = advo
     elif hasattr(advo['orient'], 'orientmat'):
-        _check_declination(advo)
+        base._check_declination(advo)
         omat = advo['orient'].orientmat
     # I'm pretty sure the 'yaw' is the angle from the east axis, so we
     # correct this for 'deg_true':
