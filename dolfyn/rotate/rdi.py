@@ -1,5 +1,6 @@
 import numpy as np
 from .vector import earth2principal, inst2earth as nortek_inst2earth
+from .base import _check_declination
 
 
 def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
@@ -107,6 +108,7 @@ def inst2earth(adcpo, reverse=False,
     if adcpo.props['inst_make'].lower() == 'nortek':
         # Handle nortek rotations with the nortek (adv) rotate fn.
         return nortek_inst2earth(adcpo, reverse=reverse, force=force)
+
     csin = adcpo.props['coord_sys'].lower()
     cs_allowed = ['inst', 'ship']
     if reverse:
@@ -115,11 +117,8 @@ def inst2earth(adcpo, reverse=False,
     if not force and csin not in cs_allowed:
         raise ValueError("Invalid rotation for data in {}-frame "
                          "coordinate system.".format(csin))
-    if (not reverse and 'declination' in adcpo.props.keys() and not
-            adcpo.props.get('declination_in_heading', False)):
-        # Only do this if making the forward rotation.
-        adcpo.heading += adcpo.props['declination']
-        adcpo.props['declination_in_heading'] = True
+
+    _check_declination(adcpo)
 
     # Now calculate the rotation matrix.
     """
