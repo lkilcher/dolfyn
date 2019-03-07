@@ -13,6 +13,7 @@ from . import nortek_defs
 from ..data import time
 from .base import WrongFileType, read_userdata
 import warnings
+from ..rotate.base import _check_declination
 from ..data.base import TimeData
 from ..data.base import config
 
@@ -74,6 +75,8 @@ def read_nortek(filename,
     dat = rdr.data
 
     dat.props.update(user_data)
+
+    _check_declination(dat)
 
     return dat
 

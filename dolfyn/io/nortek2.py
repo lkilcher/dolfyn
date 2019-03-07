@@ -10,6 +10,7 @@ import numpy as np
 from .base import WrongFileType, read_userdata
 from ..data import base as db
 import warnings
+from ..rotate.base import _check_declination
 
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -94,6 +95,7 @@ def read_signature(filename, userdata=True, nens=None):
     out = reorg(d)
     reduce(out)
     out['props'].update(userdata)
+    _check_declination(out)
     return out
 
 
