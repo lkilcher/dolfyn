@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Version 0.10.1
 	- Add the `.shortcuts` property
 	- Read userdata.json files for ADPs
+	- Account for declination in ADP data processing
 
 ## Version 0.10.0
 	- Major reorg
