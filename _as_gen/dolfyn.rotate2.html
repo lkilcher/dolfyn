@@ -9,11 +9,12 @@
     <title>dolfyn.rotate2 &#8212; DOLfYN 0.10.1 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -31,6 +32,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="dolfyn-rotate2">
@@ -43,27 +46,27 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>obj</strong> : <a class="reference internal" href="../api.html#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
-<blockquote>
-<div><p>The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
-</div></blockquote>
-<p><strong>out_frame</strong> : string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</p>
-<blockquote>
-<div><p>The coordinate system to rotate the data into.</p>
-</div></blockquote>
-<p><strong>inplace</strong> : bool</p>
-<blockquote>
-<div><p>Operate on the input data object (True), or return a copy that
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>obj</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="../api.html#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
+<dd><p class="first last">The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
+</dd>
+<dt><strong>out_frame</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt>
+<dd><p class="first last">The coordinate system to rotate the data into.</p>
+</dd>
+<dt><strong>inplace</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Operate on the input data object (True), or return a copy that
 has been rotated (False, default).</p>
-</div></blockquote>
+</dd>
+</dl>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>objout</strong> : <a class="reference internal" href="../api.html#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
-<blockquote class="last">
-<div><p>The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>objout</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="../api.html#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
+<dd><p class="first last">The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
 input object is modified in-place <em>and</em> returned (i.e.,
 <code class="docutils literal notranslate"><span class="pre">objout</span></code> is <code class="docutils literal notranslate"><span class="pre">obj</span></code>).</p>
-</div></blockquote>
+</dd>
+</dl>
 </td>
 </tr>
 </tbody>
@@ -76,10 +79,43 @@ input object is modified in-place <em>and</em> returned (i.e.,
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">The DOLfYN API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#dlfn-data-objects">DOLfYN data objects</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#dlfn-tools-and-functions">DOLfYN tools and functions</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">dolfyn.rotate2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.adv.motion.CorrectMotion.html">dolfyn.adv.motion.CorrectMotion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.VelBinner.html">dolfyn.VelBinner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.adv.turbulence.TurbBinner.html">dolfyn.adv.turbulence.TurbBinner</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
@@ -90,13 +126,6 @@ input object is modified in-place <em>and</em> returned (i.e.,
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="../_sources/_as_gen/dolfyn.rotate2.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -109,6 +138,14 @@ input object is modified in-place <em>and</em> returned (i.e.,
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -117,8 +154,8 @@ input object is modified in-place <em>and</em> returned (i.e.,
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/_as_gen/dolfyn.rotate2.rst.txt"

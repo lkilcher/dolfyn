@@ -9,11 +9,12 @@
     <title>dolfyn.adv.motion.CorrectMotion &#8212; DOLfYN 0.10.1 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -31,6 +32,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="dolfyn-adv-motion-correctmotion">
@@ -45,24 +48,23 @@ contained in a single data object.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>accel_filtfreq</strong> : float</p>
-<blockquote>
-<div><p>the frequency at which to high-pass filter the acceleration
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>accel_filtfreq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">the frequency at which to high-pass filter the acceleration
 signal to remove low-frequency drift.</p>
-</div></blockquote>
-<p><strong>vel_filtfreq</strong> : float (optional)</p>
-<blockquote>
-<div><p>a second frequency to high-pass filter the integrated
+</dd>
+<dt><strong>vel_filtfreq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
+<dd><p class="first last">a second frequency to high-pass filter the integrated
 acceleration.  (default: 1/3 of accel_filtfreq)</p>
-</div></blockquote>
-<p><strong>separate_probes</strong> : bool (optional: False)</p>
-<blockquote class="last">
-<div><p>a flag to perform motion-correction at the probe tips, and
+</dd>
+<dt><strong>separate_probes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional: False)</span></dt>
+<dd><p class="first last">a flag to perform motion-correction at the probe tips, and
 perform motion correction in beam-coordinates, then transform
 back into XYZ/earth coordinates. This correction seems to be
 lower than the noise levels of the ADV, so the defualt is to not
 use it (False).</p>
-</div></blockquote>
+</dd>
+</dl>
 </td>
 </tr>
 </tbody>
@@ -129,10 +131,43 @@ yet.</p>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-structure.html">Data Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">The DOLfYN API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#dlfn-data-objects">DOLfYN data objects</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#dlfn-tools-and-functions">DOLfYN tools and functions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.rotate2.html">dolfyn.rotate2</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">dolfyn.adv.motion.CorrectMotion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.VelBinner.html">dolfyn.VelBinner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dolfyn.adv.turbulence.TurbBinner.html">dolfyn.adv.turbulence.TurbBinner</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
@@ -143,13 +178,6 @@ yet.</p>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="../_sources/_as_gen/dolfyn.adv.motion.CorrectMotion.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -162,6 +190,14 @@ yet.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -170,8 +206,8 @@ yet.</p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/_as_gen/dolfyn.adv.motion.CorrectMotion.rst.txt"
