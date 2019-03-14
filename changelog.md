@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- Read userdata.json files for ADPs
 	- Account for declination in ADP data processing
 	- Add function for calculating orientation matrix of RDI ADPs
+	- Support motion-correction of ADV data in non-inst frames
 
 ## Version 0.10.0
 	- Major reorg

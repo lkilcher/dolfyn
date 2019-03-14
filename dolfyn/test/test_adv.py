@@ -82,24 +82,35 @@ def test_motion(make_data=False):
     tdmj = dat_imu_json.copy()
     mc(tdmj)
 
+    tdmE = dat_imu.copy()
+    # Include declination
+    tdmE.props['declination'] = 10.0
+    tdmE.rotate2('earth', inplace=True)
+    mc(tdmE)
+
     if make_data:
         save(tdm, 'vector_data_imu01_mc.h5')
         save(tdm10, 'vector_data_imu01_mcDeclin10.h5')
         save(tdmj, 'vector_data_imu01-json_mc.h5')
         return
 
-    msg_form = "Motion correction {}does not match expectations."
+    msg_form = "Motion correction '{}' does not match expectations."
+
+    cdm10 = load('vector_data_imu01_mcDeclin10.h5')
 
     for dat1, dat2, msg in [
             (tdm,
              load('vector_data_imu01_mc.h5'),
-             ''),
+             'basic motion correction'),
             (tdm10,
-             load('vector_data_imu01_mcDeclin10.h5'),
-             'with declination=10 '),
+             cdm10,
+             'with declination=10'),
+            (tdmE,
+             cdm10,
+             'earth-rotation first, with declination=10'),
             (tdmj,
              load('vector_data_imu01-json_mc.h5'),
-             'with reading userdata.json '),
+             'with reading userdata.json'),
     ]:
         yield data_equiv, dat1, dat2, msg_form.format(msg)
 

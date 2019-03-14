@@ -94,7 +94,7 @@ class CalcMotion(object):
     def _set_Accel(self, ):
         advo = self.advo
         if advo.props['coord_sys'] == 'inst':
-            self.accel = np.einsum('ijk,ik->jk',
+            self.accel = np.einsum('ij...,i...->j...',
                                    advo['orient']['orientmat'],
                                    advo['orient']['accel'])
         elif self.advo.props['coord_sys'] == 'earth':
@@ -216,7 +216,7 @@ class CalcMotion(object):
                            ])
 
         if to_earth:
-            velrot = np.einsum('jik,jlk->ilk', self.advo['orientmat'], velrot)
+            velrot = np.einsum('ji...,j...->i...', self.advo['orientmat'], velrot)
 
         if dimflag:
             return velrot[:, 0, :]
@@ -366,8 +366,7 @@ def correct_motion(advo,
                         'motion corrected.')
 
     if advo.props['coord_sys'] != 'inst':
-        raise Exception('The data object must be in the '
-                        'instrument frame to be motion corrected.')
+        advo.rotate2('inst', inplace=True)
 
     # Be sure the velocity data has been rotated to the body frame.
     rot._rotate_vel2body(advo)
@@ -402,7 +401,7 @@ def correct_motion(advo,
         # 4) Rotate back to head-coord (einsum),
         velrot = np.einsum('ij,kj->ik',
                            transMat,
-                           np.diagonal(np.einsum('ij,jkl->ikl',
+                           np.diagonal(np.einsum('ij,j...->i...',
                                                  np.linalg.inv(transMat),
                                                  velrot)))
         # 5) Rotate back to body-coord.
@@ -571,7 +570,7 @@ class CorrectMotion(object):
             # 4) Rotate back to head-coord (einsum),
             velrot = np.einsum('ij,kj->ik',
                                transMat,
-                               np.diagonal(np.einsum('ij,jkl->ikl',
+                               np.diagonal(np.einsum('ij,j...->i...',
                                                      np.linalg.inv(transMat),
                                                      velrot)))
             # 5) Rotate back to body-coord.
@@ -655,7 +654,11 @@ class CorrectMotion(object):
                             'motion corrected.')
 
         if not advo.props['inst_type'] == 'ADV':
-            raise Exception("This motion correction tool currently only works for ADV data objects.")
+            raise Exception("This motion correction tool currently only works "
+                            "for ADV data objects.")
+
+        if advo.props['coord_sys'] != 'inst':
+            advo.rotate2('inst', inplace=True)
 
         calcobj = CalcMotion(advo,
                              accel_filtfreq=self.accel_filtfreq,
