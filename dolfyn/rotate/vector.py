@@ -121,7 +121,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         if n != 3:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
-        # subsample the orientation matrix depending on the size of the object.
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
     if reverse:

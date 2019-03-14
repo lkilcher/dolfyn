@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- Add the `.shortcuts` property
 	- Read userdata.json files for ADPs
 	- Account for declination in ADP data processing
+	- Add function for calculating orientation matrix of RDI ADPs
 
 ## Version 0.10.0
 	- Major reorg

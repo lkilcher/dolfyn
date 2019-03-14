@@ -118,6 +118,37 @@ def inst2earth(adcpo, reverse=False,
         raise ValueError("Invalid rotation for data in {}-frame "
                          "coordinate system.".format(csin))
 
+    # rollaxis gives transpose of orientation matrix.
+    # The 'rotation matrix' is the transpose of the 'orientation matrix'
+    # NOTE the double 'rollaxis' within this function, and here, has
+    # minimal computational impact because np.rollaxis returns a
+    # view (not a new array)
+    rotmat = np.rollaxis(calc_orientmat(adcpo), 1)
+
+    sumstr = 'ijt,j...t->i...t'
+    cs = 'earth'
+    if reverse:
+        cs = 'inst'
+        fixed_orientation = adcpo.props.pop('inst2earth:fixed',
+                                            fixed_orientation)
+        sumstr = sumstr.replace('ij', 'ji')  # Transpose for reverse rotation
+    else:
+        adcpo.props['inst2earth:fixed'] = fixed_orientation
+    if fixed_orientation:
+        sumstr = sumstr.replace('t,', ',')
+        rotmat = rotmat.mean(-1)
+
+    # Only operate on the first 3-components, b/c the 4th is err_vel
+    adcpo['vel'][:3] = np.einsum(sumstr, rotmat, adcpo['vel'][:3])
+
+    if 'bt_vel' in adcpo:
+        adcpo['bt_vel'][:3] = np.einsum(sumstr,
+                                        rotmat, adcpo['bt_vel'][:3])
+    adcpo.props['coord_sys'] = cs
+
+
+def calc_orientmat(adcpo):
+
     _check_declination(adcpo)
 
     # Now calculate the rotation matrix.
@@ -170,35 +201,6 @@ def inst2earth(adcpo, reverse=False,
     rotmat[2, 0, :] = -cp * sr
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
-
-    # Nortek 'signature' instruments have a couple defs
-    # of the coordinate system.
-    if adcpo.props['inst_model'].lower() == 'signature':
-        if np.any(odat['orient_up'] != 4):
-            raise Exception("Orientations other than 'ZUP' are "
-                            "not yet supported.")
-        # # 0: 'XUP', heading: Z
-        # inds = odat['orient_up'] == 0
-        # # 1: 'XDOWN', heading: Z
-        # inds = odat['orient_up'] == 1
-        # # 4: 'ZUP', heading: X
-        # # This is the ENU case, I think.
-
-    # Only operate on the first 3-components, b/c the 4th is err_vel
-    ess = 'ijt,jdt->idt'
-    cs = 'earth'
-    if reverse:
-        cs = 'inst'
-        fixed_orientation = adcpo.props.pop('inst2earth:fixed',
-                                            fixed_orientation)
-        ess = ess.replace('ij', 'ji')
-    else:
-        adcpo.props['inst2earth:fixed'] = fixed_orientation
-    if fixed_orientation:
-        ess = ess.replace('t,', ',')
-        rotmat = rotmat.mean(-1)
-    adcpo['vel'][:3] = np.einsum(ess, rotmat, adcpo['vel'][:3])
-    if 'bt_vel' in adcpo:
-        adcpo['bt_vel'][:3] = np.einsum(ess.replace('d', ''),
-                                        rotmat, adcpo['bt_vel'][:3])
-    adcpo.props['coord_sys'] = cs
+    # The 'orientation matrix' is the transpose of the 'rotation matrix'
+    omat = np.rollaxis(rotmat, 1)
+    return omat
