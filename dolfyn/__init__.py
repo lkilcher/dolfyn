@@ -29,6 +29,7 @@ from ._version import __version__
 from .main import read, load, read_example
 from .rotate import rotate2
 from .data.velocity import VelBinner, Velocity
+from .data.base import TimeData
 from .adp.base import ADPdata, ADPbinner
 from .adv.base import ADVdata
 from . import doctools as _dt
