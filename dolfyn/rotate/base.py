@@ -217,11 +217,13 @@ def nortek_orient2euler(advo):
     
     # Some conventions use rotation matrices as inst->earth, but this omat is 
     # earth->inst, so the order of indices may be reversed from some conventions.
+    hh = np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
+    hh %= 360
     return (
         # pitch (positive up)
         np.rad2deg(np.arcsin(omat[0, 2])),
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
-        # heading (+x axis clockwise from north)
-        np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
+        # heading (+x axis clockwise from north, range 0-360 rather than -180 to +180)
+         hh
         )
