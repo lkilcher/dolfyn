@@ -2,7 +2,7 @@
 fs*, This is the sample rate of the instrument [Hz]
 coord_sys*, "The coordinate system of the data object. When a data object is rotated to a new coordinate system using the ``dat.rotate2()`` method, the value of ``dat.props['coord_sys']`` is updated to reflect the final coordinate system. Valid values are: **beam**, **inst**, **earth**, and **principal**. For further details on these coordinate systems see the :ref:`rotations` section."
 rotate_vars*,The variables in the data object that should be rotated when rotating the data object.
-declination,"The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North)."
+declination*,"The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North). Set this value using ``dat.set_declination(<value>)``."
 declination_in_heading*,"A boolean specifying whether the heading includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
 declination_in_orientmat*,"A boolean specifying whether the ``orient.orientmat`` includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
 principal_angle,"The horizontal angle between the earth coordinate system (or whatever `coord_sys_principal_ref` is) and the *principal axes* of the flow (u: streamwise, v: cross-stream, w: up). [radians, positive means principal axis is clockwise from earth]."
