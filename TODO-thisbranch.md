@@ -1,0 +1,15 @@
+
+- Create orientmat for all instruments (in/after read functions)
+- Implement ``dat.set_declination`` as described in docs
+- Remove ``declination_in_orientmat`` and similar variables
+- Remove ``_check_declination`` function?
+- enforce no setting of dat.props['declination']?
+- Drop ``nortek_`` from ``nortek_orient2euler`` func names
+- make a ``nortek_euler2orient`` function for reading data and generating ``orientmat``
+- Handle userdata.json declination specification (``declin = info.pop('declination')``, then do ``set_declination(declin)``)
+- Tests:
+  - test for consistency of ``orient2euler`` and ``euler2orient``
+  - update data files to match new API rules (e..g, heading, pitch, roll defs)
+- Give users the option (in ``dolfyn.read``) to keep the raw instrument orientation data in ``orient.raw`` +doc this
+- Move `Velocity.calc_principle_angle` to a function in the API (`dolfyn.calc_principal_angle`)
+- Use degrees, instead of radians, for principal angle?
