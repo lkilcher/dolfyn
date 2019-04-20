@@ -87,6 +87,33 @@ class Velocity(TimeData):
 
     """
 
+    def set_declination(self, declin):
+        if 'declination' in self['props']:
+            angle = declin - self.props.pop('declination')
+        else:
+            angle = declin
+        cd = np.cos(-np.deg2rad(angle))
+        sd = np.sin(-np.deg2rad(angle))
+        # The ordering is funny here because orientmat is the
+        # transpose of the inst->earth rotation matrix:
+        Rdec = np.array([[cd, -sd, 0],
+                         [sd, cd, 0],
+                         [0, 0, 1]])
+        odata = self['orient']
+
+        if self.props['coord_sys'] == 'earth':
+            rotate2earth = True
+            self.rotate2('inst', inplace=True)
+        else:
+            rotate2earth = False
+
+        odata['orientmat'] = np.einsum('kj,ij...->ki...',
+                                       odata['orientmat'],
+                                       Rdec, )
+        odata['heading'] += angle
+        if rotate2earth:
+            self.rotate2('earth')
+
     def __init__(self, *args, **kwargs):
         TimeData.__init__(self, *args, **kwargs)
         self['props'] = {'coord_sys': '????',
