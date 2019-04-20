@@ -1,0 +1,78 @@
+from dolfyn.rotate.base import euler2orient, orient2euler
+import numpy as np
+
+
+def check_hpr(h, p, r, omatin):
+    omat = euler2orient(h, p, r)
+    assert np.allclose(omat, omatin), (
+        'Orientation matrix different than expected!\nExpected:\n{}\nGot:\n{}'
+        .format(np.array(omatin), omat))
+    hpr = orient2euler(omat)
+    assert np.allclose(hpr, [h, p, r]), (
+        "Angles different than specified, orient2euler and euler2orient are "
+        "antisymmetric!\nExpected:\n{}\nGot:\n{}"
+        .format(hpr, np.array([h, p, r]), ))
+
+
+def test_hpr_defs():
+    """
+    These tests confirm that the euler2orient and orient2euler functions
+    are consistent, and that they follow the conventions defined in the
+    DOLfYN documentation (data-structure.html#heading-pitch-roll), namely:
+
+      - a "ZYX" rotation order. That is, these variables are computed
+        assuming that rotation from the earth -> instrument frame happens
+        by rotating around the z-axis first (heading), then rotating
+        around the y-axis (pitch), then rotating around the x-axis (roll).
+
+      - heading is defined as the direction the x-axis points, positive
+        clockwise from North (this is the opposite direction from the
+        right-hand-rule around the Z-axis)
+
+      - pitch is positive when the x-axis pitches up (this is opposite the
+        right-hand-rule around the Y-axis)
+
+      - roll is positive according to the right-hand-rule around the
+        instument's x-axis
+
+    IF YOU MAKE CHANGES TO THESE CONVENTIONS, BE SURE TO UPDATE THE
+    DOCUMENTATION.
+
+    """
+    check_hpr(0, 0, 0, [[0, 1, 0],
+                        [-1, 0, 0],
+                        [0, 0, 1], ])
+
+    check_hpr(90, 0, 0, [[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, 1], ])
+
+    check_hpr(90, 0, 90, [[1, 0, 0],
+                          [0, 0, 1],
+                          [0, -1, 0], ])
+
+    sq2 = 1. / np.sqrt(2)
+    check_hpr(45, 0, 0, [[sq2, sq2, 0],
+                         [-sq2, sq2, 0],
+                         [0, 0, 1], ])
+
+    check_hpr(0, 45, 0, [[0, sq2, sq2],
+                         [-1, 0, 0],
+                         [0, -sq2, sq2], ])
+
+    check_hpr(0, 0, 45, [[0, 1, 0],
+                         [-sq2, 0, sq2],
+                         [sq2, 0, sq2], ])
+
+    check_hpr(90, 45, 90, [[sq2, 0, sq2],
+                           [-sq2, 0, sq2],
+                           [0, -1, 0], ])
+
+    c30 = np.cos(np.deg2rad(30))
+    s30 = np.sin(np.deg2rad(30))
+    check_hpr(30, 0, 0, [[s30, c30, 0],
+                         [-c30, s30, 0],
+                         [0, 0, 1], ])
+
+if __name__ == '__main__':
+    test_hpr_defs()
