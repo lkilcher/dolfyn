@@ -1,11 +1,9 @@
 
 - Create orientmat for all instruments (in/after read functions)
-- Implement ``dat.set_declination`` as described in docs
+- Document ``dat.set_declination``
 - Remove ``declination_in_orientmat`` and similar variables
 - Remove ``_check_declination`` function?
 - enforce no setting of dat.props['declination']?
-- Drop ``nortek_`` from ``nortek_orient2euler`` func names
-- make a ``nortek_euler2orient`` function for reading data and generating ``orientmat``
 - Handle userdata.json declination specification (``declin = info.pop('declination')``, then do ``set_declination(declin)``)
 - Tests:
   - test for consistency of ``orient2euler`` and ``euler2orient``

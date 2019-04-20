@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import warnings
 from numpy.linalg import inv
-from .base import _check_declination, nortek_euler2orient as euler2orient, nortek_orient2euler as orient2euler
+from .base import _check_declination, euler2orient, orient2euler
 from . import base as rotb
 
 
@@ -154,7 +154,7 @@ def calc_omat(rr, pp, hh, orientation_down=None):
 
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
-    return euler2orient(pp, rr, hh)
+    return _euler2orient(hh, pp, rr)
 
 
 def _rotate_vel2body(advo):
@@ -242,3 +242,44 @@ def earth2principal(advo, reverse=False):
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new
+
+
+def _euler2orient(heading, pitch, roll, units='degrees'):
+    # THIS IS FOR NORTEK data ONLY!
+
+    # Heading input is clockwise from North
+    # Returns a rotation matrix that rotates earth (ENU) -> inst.
+    # This is based on the Nortek `Transforms.m` file, available in
+    # the refs folder.
+    if units.lower() == 'degrees':
+        pitch = np.deg2rad(pitch)
+        roll = np.deg2rad(roll)
+        heading = np.deg2rad(heading)
+    # I've fixed the definition of heading to be consistent with
+    # typical definitions.
+    # This also involved swapping the sign on sh in the def of omat
+    # below from the values provided in the Nortek Matlab script
+    heading = (np.pi / 2 - heading)
+
+    ch = np.cos(heading)
+    sh = np.sin(heading)
+    cp = np.cos(pitch)
+    sp = np.sin(pitch)
+    cr = np.cos(roll)
+    sr = np.sin(roll)
+
+    # Note that I've transposed these values (from what is defined in
+    # Nortek matlab script), so that this is earth->inst (as
+    # orientation matrices are typically defined)
+    omat = np.empty((3, 3, len(sh)), dtype=np.float32)
+    omat[0, 0, :] = ch * cp
+    omat[1, 0, :] = -ch * sp * sr - sh * cr
+    omat[2, 0, :] = -ch * cr * sp + sh * sr
+    omat[0, 1, :] = sh * cp
+    omat[1, 1, :] = -sh * sp * sr + ch * cr
+    omat[2, 1, :] = -sh * cr * sp - ch * sr
+    omat[0, 2, :] = sp
+    omat[1, 2, :] = sr * cp
+    omat[2, 2, :] = cp * cr
+
+    return omat

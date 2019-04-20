@@ -1,7 +1,7 @@
 from . import base as rotb
 from .vector import earth2principal
 from .rdi import beam2inst
-from .base import _check_declination, nortek_euler2orient as euler2orient
+from .base import _check_declination, euler2orient
 import numpy as np
 import warnings
 from numpy.linalg import inv
@@ -64,7 +64,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rmat = od['orientmat'].copy()
 
     else:
-        rmat = euler2orient(od['pitch'], od['roll'], od['heading'])
+        rmat = euler2orient(od['heading'], od['pitch'], od['roll'])
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
     rmat = np.rollaxis(rmat, 1)

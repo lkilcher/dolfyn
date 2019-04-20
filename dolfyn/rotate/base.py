@@ -64,7 +64,7 @@ def _check_declination(advo):
         if 'orientmat' in odata and \
            advo._make_model.startswith('nortek vector'):
             # Vector's don't have p,r,h when they have an orientmat.
-            p, r, h = nortek_orient2euler(odata['orientmat'])
+            h, p, r = orient2euler(odata['orientmat'])
             odata['pitch'] = p
             odata['roll'] = r
             odata['heading'] = h
@@ -105,7 +105,7 @@ def _check_declination(advo):
 
         advo.props['declination_in_orientmat'] = True
         if advo._make_model.startswith('nortek vector'):
-            p, r, h = nortek_orient2euler(odata['orientmat'])
+            h, p, r = orient2euler(odata['orientmat'])
             odata['pitch'] = p
             odata['roll'] = r
             odata['heading'] = h
@@ -136,22 +136,52 @@ def _check_declination(advo):
     advo.props.pop('__checking_declination__')
 
 
-def nortek_euler2orient(pitch, roll, heading, units='degrees'):
-    # THIS IS FOR NORTEK data ONLY!
+def euler2orient(heading, pitch, roll, units='degrees'):
+    """
+    Calculate the orientation matrix from euler angles.
 
-    # Heading input is clockwise from North
-    # Returns a rotation matrix that rotates earth (ENU) -> inst.
-    # This is based on the Nortek `Transforms.m` file, available in
-    # the refs folder.
+    Parameters
+    ----------
+    heading : np.ndarray (Nt)
+      The heading angle of the ADV (clockwise from North).
+    pitch : np.ndarray (Nt)
+      The pitch angle of the ADV.
+    roll : np.ndarray (Nt)
+      The pitch angle of the ADV.
+    units : string {'degrees' (default), 'radians'}
+
+    Returns
+    =======
+    omat : np.ndarray (3x3xNt)
+      The orientation matrix of the data. The returned orientation
+      matrix obeys the following conventions:
+
+       - a "ZYX" rotation order. That is, these variables are computed
+         assuming that rotation from the earth -> instrument frame happens
+         by rotating around the z-axis first (heading), then rotating
+         around the y-axis (pitch), then rotating around the x-axis (roll).
+
+       - heading is defined as the direction the x-axis points, positive
+         clockwise from North (this is *opposite* the right-hand-rule
+         around the Z-axis)
+
+       - pitch is positive when the x-axis pitches up (this is *opposite* the
+         right-hand-rule around the Y-axis)
+
+       - roll is positive according to the right-hand-rule around the
+         instument's x-axis
+
+    """
     if units.lower() == 'degrees':
         pitch = np.deg2rad(pitch)
         roll = np.deg2rad(roll)
         heading = np.deg2rad(heading)
-    # I've fixed the definition of heading to be consistent with
-    # typical definitions.
-    # This also involved swapping the sign on sh in the def of omat
-    # below from the values provided in the Nortek Matlab script
-    heading = (np.pi / 2 - heading)
+    elif units.lower() == 'radians':
+        pass
+    else:
+        raise Exception("Invalid units")
+
+    heading = np.pi / 2 - heading
 
     ch = np.cos(heading)
     sh = np.sin(heading)
@@ -159,71 +189,65 @@ def nortek_euler2orient(pitch, roll, heading, units='degrees'):
     sp = np.sin(pitch)
     cr = np.cos(roll)
     sr = np.sin(roll)
+    zero = np.zeros_like(sr)
+    one = np.ones_like(sr)
 
-    # Note that I've transposed these values (from what is defined in
-    # Nortek matlab script), so that this is earth->inst (as
-    # orientation matrices are typically defined)
-    omat = np.empty((3, 3, len(sh)), dtype=np.float32)
-    omat[0, 0, :] = ch * cp
-    omat[1, 0, :] = -ch * sp * sr - sh * cr
-    omat[2, 0, :] = -ch * cr * sp + sh * sr
-    omat[0, 1, :] = sh * cp
-    omat[1, 1, :] = -sh * sp * sr + ch * cr
-    omat[2, 1, :] = -sh * cr * sp - ch * sr
-    omat[0, 2, :] = sp
-    omat[1, 2, :] = sr * cp
-    omat[2, 2, :] = cp * cr
+    H = np.array(
+        [[ch, sh, zero],
+         [-sh, ch, zero],
+         [zero, zero, one], ])
+    P = np.array(
+        [[cp, zero, sp],
+         [zero, one, zero],
+         [-sp, zero, cp], ])
+    R = np.array(
+        [[one, zero, zero],
+         [zero, cr, sr],
+         [zero, -sr, cr], ])
 
-    return omat
+    return np.einsum('ij...,jk...,kl...->il...', R, P, H)
 
 
-def nortek_orient2euler(advo):
+def orient2euler(omat):
     """
-    Calculate the euler angle orientations of Nortek data from the
-    orientation matrix.
+    Calculate the euler angles from the orientation matrix.
 
     Parameters
     ----------
-    advo : :class:`ADVdata <base.ADVdata>`
-      An adv object containing an `orientmat` attribute (array).
+    advo : np.ndarray (or :class:`<~dolfyn.data.velocity.Velocity>`)
+      The orientation matrix (or a data object containing one).
 
     Returns
     -------
+    heading : np.ndarray
+      The heading angle of the ADV (degrees clockwise from North).
     pitch : np.ndarray
       The pitch angle of the ADV (degrees).
     roll : np.ndarray
       The pitch angle of the ADV (degrees).
-    heading : np.ndarray
-      The heading angle of the ADV (degrees true).
-
-    Notes
-    -----
-
-    Citation: Microstrain (April, 2012) "3DM-GX3-25 Single Byte Data
-    Communications Protocol", (Rev 15).
 
     """
-    if isinstance(advo, np.ndarray) and \
-            advo.shape[:2] == (3, 3):
-        omat = advo
-    elif hasattr(advo['orient'], 'orientmat'):
-        _check_declination(advo)
-        omat = advo['orient'].orientmat
+    if isinstance(omat, np.ndarray) and \
+            omat.shape[:2] == (3, 3):
+        pass
+    elif hasattr(omat['orient'], 'orientmat'):
+        _check_declination(omat)
+        omat = omat['orient'].orientmat
     # #####
-    # Heading is direction of +x axis clockwise from north. 
+    # Heading is direction of +x axis clockwise from north.
     # So, for arctan (opposite/adjacent) we want arctan(east/north)
     # omat columns have been reorganized in io.nortek.NortekReader.sci_microstrain to ENU
     # (not the original NED from the Microstrain)
-    
+
     # Some conventions use rotation matrices as inst->earth, but this omat is 
     # earth->inst, so the order of indices may be reversed from some conventions.
     hh = np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
     hh %= 360
     return (
+        # heading (+x axis clockwise from north, range 0-360 rather than -180 to +180)
+        hh,
         # pitch (positive up)
         np.rad2deg(np.arcsin(omat[0, 2])),
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
-        # heading (+x axis clockwise from north, range 0-360 rather than -180 to +180)
-         hh
-        )
+    )
