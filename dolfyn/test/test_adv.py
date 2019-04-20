@@ -127,7 +127,7 @@ def test_motion(make_data=False):
 def test_heading(make_data=False):
     td = dat_imu.copy()
 
-    pitch, roll, head = avm.rotate.orient2euler(td)
+    head, pitch, roll = avm.rotate.orient2euler(td)
     od = td['orient']
     od['pitch'] = pitch
     od['roll'] = roll

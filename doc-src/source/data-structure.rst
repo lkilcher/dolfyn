@@ -153,11 +153,11 @@ variables according to the following conventions:
     around the y-axis (pitch), then rotating around the x-axis (roll).
 
   - heading is defined as the direction the x-axis points, positive
-    clockwise from North (this is the opposite direction from the
-    right-hand-rule around the Up-axis)
+    clockwise from North (this is *opposite* the right-hand-rule
+    around the Z-axis)
 
-  - pitch is positive when the x-axis pitches up (this agrees with the
-    right-hand-rule)
+  - pitch is positive when the x-axis pitches up (this is *opposite* the
+    right-hand-rule around the Y-axis)
 
   - roll is positive according to the right-hand-rule around the
     instument's x-axis
