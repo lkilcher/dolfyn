@@ -10,10 +10,8 @@ def read(fname, userdata=True, nens=None):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, etc.) data file.
 
-    Notes
-    =====
-    This function will loop over binary readers until it finds one that works.
     """
+    # Loop over binary readers until we find one that works.
     for func in [read_nortek, read_signature, read_rdi]:
         try:
             dat = func(fname, userdata=userdata, nens=nens)

@@ -11,6 +11,7 @@ from .base import WrongFileType, read_userdata
 from ..data import base as db
 import warnings
 from ..rotate.base import _check_declination
+from ..rotate.vector import _euler2orient as euler2orient
 
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -94,6 +95,11 @@ def read_signature(filename, userdata=True, nens=None):
     rdr.sci_data(d)
     out = reorg(d)
     reduce(out)
+
+    if 'orient.orientmat' not in out:
+        od = out['orient']
+        od['orientmat'] = euler2orient(od['heading'], od['pitch'], od['roll'])
+
     out['props'].update(userdata)
     _check_declination(out)
     return out

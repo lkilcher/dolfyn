@@ -14,6 +14,7 @@ from ..data import time
 from .base import WrongFileType, read_userdata
 import warnings
 from ..rotate.base import _check_declination
+from ..rotate.vector import calc_omat as _calc_omat
 from ..data.base import TimeData
 from ..data.base import config
 
@@ -73,6 +74,12 @@ def read_nortek(filename,
         rdr.readfile()
     rdr.dat2sci()
     dat = rdr.data
+
+    if 'orient.orientmat' not in dat:
+        od = dat['orient']
+        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
+        od['orientmat'] = _calc_omat(h, p, r,
+                                     od.get('orientation_down', None))
 
     dat.props.update(user_data)
 
