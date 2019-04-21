@@ -10,6 +10,7 @@ from ._read_bin import eofException, bin_reader
 from scipy import nanmean
 from ..rotate.base import _check_declination
 import warnings
+from ..rotate.rdi import calc_orientmat as _calc_omat
 
 
 def read_rdi(fname, userdata=None, nens=None):
@@ -21,7 +22,7 @@ def read_rdi(fname, userdata=None, nens=None):
 
     _check_rdi_declination(dat)
 
-    _check_declination(dat)
+    dat['orient']['orientmat'] = _calc_omat(dat)
 
     return dat
 
