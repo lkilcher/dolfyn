@@ -123,7 +123,7 @@ def inst2earth(adcpo, reverse=False,
     # NOTE the double 'rollaxis' within this function, and here, has
     # minimal computational impact because np.rollaxis returns a
     # view (not a new array)
-    rotmat = np.rollaxis(calc_orientmat(adcpo), 1)
+    rotmat = np.rollaxis(adcpo['orient']['orientmat'], 1)
 
     sumstr = 'ijt,j...t->i...t'
     cs = 'earth'
