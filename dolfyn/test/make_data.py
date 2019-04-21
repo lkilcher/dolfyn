@@ -20,7 +20,6 @@ from base import rungen
 # rungen(advt.test_subset(make_data=True))
 # rungen(advro.test_rotate_inst2beam(make_data=True))
 # rungen(advro.test_rotate_inst2earth(make_data=True))
-# rungen(advro.test_rotate_earth2inst(make_data=True))
 # rungen(advro.test_rotate_earth2principal(make_data=True))
 
 
