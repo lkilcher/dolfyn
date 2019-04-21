@@ -101,7 +101,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             orientation_down = odata['orientation_down']
         else:
             orientation_down = None
-        omat = calc_omat(odata['roll'], odata['pitch'], odata['heading'],
+        omat = calc_omat(odata['heading'], odata['pitch'], odata['roll'],
                          orientation_down)
 
     # Take the transpose of the orientation to get the inst->earth rotation
@@ -133,7 +133,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     return
 
 
-def calc_omat(rr, pp, hh, orientation_down=None):
+def calc_omat(hh, pp, rr, orientation_down=None):
     rr = rr.copy()
     pp = pp.copy()
     hh = hh.copy()

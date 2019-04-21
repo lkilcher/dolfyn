@@ -1,5 +1,9 @@
 
 - Create orientmat for all instruments (in/after read functions)
+  - Should we drop heading/pitch/roll, and let user calculate these if
+    needed?
+  - Do we give the user the choice to keep raw (instrument
+    manufacturer defined) heading/pitch/roll?
 - Document ``dat.set_declination``
 - Remove ``declination_in_orientmat`` and similar variables
 - Remove ``_check_declination`` function?
