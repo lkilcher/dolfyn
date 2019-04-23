@@ -10,7 +10,6 @@ import numpy as np
 from .base import WrongFileType, read_userdata
 from ..data import base as db
 import warnings
-from ..rotate.base import _check_declination
 from ..rotate.vector import _euler2orient
 
 

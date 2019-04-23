@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import warnings
 from numpy.linalg import inv
-from .base import _check_declination, euler2orient, orient2euler
+from .base import euler2orient, orient2euler
 from . import base as rotb
 
 
@@ -90,8 +90,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             raise ValueError(
                 "Data must be in the '%s' frame when using this function" %
                 cs_now)
-
-    _check_declination(advo)
 
     odata = advo['orient']
     if hasattr(odata, 'orientmat'):

@@ -13,7 +13,6 @@ from . import nortek_defs
 from ..data import time
 from .base import WrongFileType, read_userdata
 import warnings
-from ..rotate.base import _check_declination
 from ..rotate.vector import calc_omat as _calc_omat
 from ..data.base import TimeData
 from ..data.base import config
