@@ -1,6 +1,5 @@
 import numpy as np
 from .vector import earth2principal, inst2earth as nortek_inst2earth
-from .base import _check_declination
 
 
 def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
@@ -148,8 +147,6 @@ def inst2earth(adcpo, reverse=False,
 
 
 def calc_orientmat(adcpo):
-
-    _check_declination(adcpo)
 
     # Now calculate the rotation matrix.
     """

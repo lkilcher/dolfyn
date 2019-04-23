@@ -1,7 +1,6 @@
 from . import base as rotb
 from .vector import earth2principal
 from .rdi import beam2inst
-from .base import _check_declination
 from .vector import _euler2orient as euler2orient
 import numpy as np
 import warnings
@@ -57,8 +56,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             raise ValueError(
                 "Data must be in the '%s' frame when using this function" %
                 cs_now)
-
-    _check_declination(advo)
 
     od = advo['orient']
     if hasattr(od, 'orientmat'):

@@ -63,7 +63,6 @@ class CalcMotion(object):
                               vel_filtfreq)
         self.to_earth = to_earth
 
-        rot._check_declination(advo)
         self._set_Accel()
         self._set_acclow()
         self.angrt = advo['orient']['angrt']  # No copy because not modified.

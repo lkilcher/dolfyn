@@ -8,7 +8,6 @@ from ..adp.base import ADPdata
 from .base import WrongFileType, read_userdata
 from ._read_bin import eofException, bin_reader
 from scipy import nanmean
-from ..rotate.base import _check_declination
 import warnings
 from ..rotate.rdi import calc_orientmat as _calc_omat
 
