@@ -58,6 +58,10 @@ def _set_rdi_declination(fname, dat):
         if declin is not None:
             dat.set_declination(declin)
 
+    if 'heading' in od:
+        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
+
+
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
 # Rich Pawlawicz' rdadcp routines.

@@ -75,11 +75,13 @@ def read_nortek(filename,
     rdr.dat2sci()
     dat = rdr.data
 
+    od = dat['orient']
     if 'orient.orientmat' not in dat:
-        od = dat['orient']
-        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
-        od['orientmat'] = _calc_omat(h, p, r,
+        od['orientmat'] = _calc_omat(od['heading'], od['pitch'], od['roll'],
                                      od.get('orientation_down', None))
+
+    if 'heading' in od:
+        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
 
     dat.props.update(user_data)
 
