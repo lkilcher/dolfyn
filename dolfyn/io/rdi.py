@@ -19,47 +19,46 @@ def read_rdi(fname, userdata=None, nens=None):
         dat = ldr.load_data(nens=nens)
     dat['props'].update(userdata)
 
-    _set_rdi_declination(fname, dat)
-
-    return dat
-
-
-def _set_rdi_declination(fname, dat):
     od = dat['orient']
-    if dat.config['magnetic_var_deg'] != 0:
-        # NEED TO CONFIRM: If magnetic_var_deg is set, this means
-        # that the declination is already included in the heading,
-        # and in the velocity data.
-        # I'm assuming this is the case for now...
-        if 'declination' in dat['props']:
-            warnings.warn(
-                "'magnetic_var_deg' is set to {:.2f} degrees in the binary "
-                "file '{}', AND 'declination' is set in the 'userdata.json' "
-                "file. DOLfYN WILL USE THE VALUE of {:.2f} degrees in "
-                "userdata.json. If you want to use the value in "
-                "'magnetic_var_deg', delete the value from userdata.json and "
-                "re-read the file."
-                .format(dat['config']['magnetic_var_deg'], fname,
-                        dat.props['declination']))
-            # This implements what is spelled out above.
-            declin = dat.props.pop('declination')
-            dat.props['declination'] = dat.config['magnetic_var_deg']
-            dat.set_declination(declin)
-        else:
-            # I believe declination is already included in the data
-            # (by RDI internal processing), so we set the value here
-            # in order to clarify that.
-            dat.props['declination'] = dat.config['magnetic_var_deg']
-        od['orientmat'] = _calc_omat(dat)
-    else:
-        declin = dat['props'].pop('declination', None)
-        od['orientmat'] = _calc_omat(dat)
-        if declin is not None:
-            dat.set_declination(declin)
+
+    # value in userdata, otherwise None
+    od['orientmat'] = _calc_omat(dat)
+
+    _set_rdi_declination(dat, fname)
 
     if 'heading' in od:
         h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
 
+    return dat
+
+
+def _set_rdi_declination(dat, fname):
+    # NEED TO CONFIRM: If magnetic_var_deg is set, this means
+    # that the declination is already included in the heading,
+    # and in the velocity data.
+    # I'm assuming this is the case for now...
+
+    declin = dat['props'].pop('declination', None)
+
+    if dat.config['magnetic_var_deg'] != 0:
+        dat.props['declination'] = dat.config['magnetic_var_deg']
+
+    if dat.config['magnetic_var_deg'] != 0 and declin is not None:
+        warnings.warn(
+            "'magnetic_var_deg' is set to {:.2f} degrees in the binary "
+            "file '{}', AND 'declination' is set in the 'userdata.json' "
+            "file. DOLfYN WILL USE THE VALUE of {:.2f} degrees in "
+            "userdata.json. If you want to use the value in "
+            "'magnetic_var_deg', delete the value from userdata.json and "
+            "re-read the file."
+            .format(dat['config']['magnetic_var_deg'], fname,
+                    dat.props['declination']))
+
+    if declin is not None:
+        # set_declination rotates by the difference between what is
+        # already set in props['declination'] (i.e., above), and the
+        # input value
+        dat.set_declination(declin)
 
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
