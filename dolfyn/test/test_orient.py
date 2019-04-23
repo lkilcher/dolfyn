@@ -1,4 +1,4 @@
-from dolfyn.rotate.base import euler2orient, orient2euler
+from dolfyn import euler2orient, orient2euler
 import numpy as np
 from dolfyn.test.base import load_tdata as load
 

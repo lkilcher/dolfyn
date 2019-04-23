@@ -27,7 +27,7 @@ The functions for working with and operating on these data types are:
 
 from ._version import __version__
 from .main import read, load, read_example
-from .rotate import rotate2
+from .rotate import rotate2, orient2euler, euler2orient
 from .data.velocity import VelBinner, Velocity
 from .data.base import TimeData
 from .adp.base import ADPdata, ADPbinner
