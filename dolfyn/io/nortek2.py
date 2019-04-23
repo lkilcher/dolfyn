@@ -101,7 +101,11 @@ def read_signature(filename, userdata=True, nens=None):
         od['orientmat'] = euler2orient(od['heading'], od['pitch'], od['roll'])
 
     out['props'].update(userdata)
-    _check_declination(out)
+
+    declin = out['props'].pop('declination', None)
+    if declin is not None:
+        out.set_declination(declin)
+
     return out
 
 
