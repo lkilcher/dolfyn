@@ -107,12 +107,15 @@ class Velocity(TimeData):
         else:
             rotate2earth = False
 
-        odata['orientmat'] = np.einsum('kj,ij...->ki...',
+        odata['orientmat'] = np.einsum('kj...,ij->ki...',
                                        odata['orientmat'],
                                        Rdec, )
-        odata['heading'] += angle
+        if 'heading' in odata:
+            odata['heading'] += angle
         if rotate2earth:
-            self.rotate2('earth')
+            self.rotate2('earth', inplace=True)
+        self.props['declination'] = declin
+        self.props['declination_in_orientmat'] = True
 
     def __init__(self, *args, **kwargs):
         TimeData.__init__(self, *args, **kwargs)

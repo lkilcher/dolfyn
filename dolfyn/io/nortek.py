@@ -83,7 +83,9 @@ def read_nortek(filename,
 
     dat.props.update(user_data)
 
-    _check_declination(dat)
+    declin = dat['props'].pop('declination', None)
+    if declin is not None:
+        dat.set_declination(declin)
 
     return dat
 

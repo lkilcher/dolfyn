@@ -20,20 +20,18 @@ def read_rdi(fname, userdata=None, nens=None):
         dat = ldr.load_data(nens=nens)
     dat['props'].update(userdata)
 
-    _check_rdi_declination(dat)
-
-    dat['orient']['orientmat'] = _calc_omat(dat)
+    _set_rdi_declination(fname, dat)
 
     return dat
 
 
-def _check_rdi_declination(dat):
+def _set_rdi_declination(fname, dat):
+    od = dat['orient']
     if dat.config['magnetic_var_deg'] != 0:
         # NEED TO CONFIRM: If magnetic_var_deg is set, this means
         # that the declination is already included in the heading,
         # and in the velocity data.
         # I'm assuming this is the case for now...
-        # If this is not the case then this entire commit is unnecessary.
         if 'declination' in dat['props']:
             warnings.warn(
                 "'magnetic_var_deg' is set to {:.2f} degrees in the binary "
@@ -44,21 +42,21 @@ def _check_rdi_declination(dat):
                 "re-read the file."
                 .format(dat['config']['magnetic_var_deg'], fname,
                         dat.props['declination']))
+            # This implements what is spelled out above.
             declin = dat.props.pop('declination')
-            cs = dat.props['coord_sys']
-            if cs == 'earth':
-                dat.props['__checking_declination__'] = True  # Don't do _check_declination
-                dat.rotate2('inst')  # Rotate to earth using existing heading
-                dat.props.pop('__checking_declination__')
-            # Now correct the heading to use the one specified in userdata.json
-            dat['orient']['heading'] += declin - dat.config['magnetic_var_deg']
-            dat['orient']['heading'] %= 360
-            dat.props['declination_in_heading'] = True
-            if cs == 'earth':
-                dat.rotate2('earth')
-        else:
             dat.props['declination'] = dat.config['magnetic_var_deg']
-            dat.props['declination_in_heading'] = True
+            dat.set_declination(declin)
+        else:
+            # I believe declination is already included in the data
+            # (by RDI internal processing), so we set the value here
+            # in order to clarify that.
+            dat.props['declination'] = dat.config['magnetic_var_deg']
+        od['orientmat'] = _calc_omat(dat)
+    else:
+        declin = dat['props'].pop('declination', None)
+        od['orientmat'] = _calc_omat(dat)
+        if declin is not None:
+            dat.set_declination(declin)
 
 
 # Four pound symbols ("####"), indicate a duplication of a comment from

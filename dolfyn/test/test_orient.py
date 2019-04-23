@@ -1,5 +1,7 @@
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
+from dolfyn.test.base import load_tdata as load
+from dolfyn.rotate.base import _check_declination
 
 
 def check_hpr(h, p, r, omatin):
@@ -74,5 +76,32 @@ def test_hpr_defs():
                          [-c30, s30, 0],
                          [0, 0, 1], ])
 
+
+def test_pr_declination():
+    # Test to confirm that pitch and roll don't change when you set
+    # declination
+    declin = 15.37
+
+    dat = load('vector_data_imu01.h5')
+    h0, p0, r0 = orient2euler(dat['orient']['orientmat'])
+
+    dat.set_declination(declin)
+    h1, p1, r1 = orient2euler(dat['orient']['orientmat'])
+
+    assert np.allclose(p0, p1), "Pitch changes when setting declination"
+    assert np.allclose(r0, r1), "Roll changes when setting declination"
+    assert np.allclose(h0 + declin, h1), "incorrect heading change when setting declination"
+
+    dat = load('vector_data_imu01.h5')
+    dat.props['declination'] = declin
+    _check_declination(dat)
+    h2, p2, r2 = orient2euler(dat['orient']['orientmat'])
+    assert np.allclose(p0, p2), "Pitch changes when setting declination"
+    assert np.allclose(r0, r2), "Roll changes when setting declination"
+    assert np.allclose(h0, h2 - declin), "heading doesn't change as expected when setting Declination"
+    
+
+    
 if __name__ == '__main__':
     test_hpr_defs()
+    test_pr_declination()
