@@ -73,18 +73,18 @@ def test_motion(make_data=False):
     mc(tdm)
     tdm10 = dat_imu.copy()
     # Include the declination.
-    tdm10.props['declination'] = 10.0
+    tdm10.set_declination(10.0)
     mc(tdm10)
     tdm0 = dat_imu.copy()
     # Include the declination.
-    tdm0.props['declination'] = 0.0
+    tdm0.set_declination(0.0)
     mc(tdm0)
     tdmj = dat_imu_json.copy()
     mc(tdmj)
 
     tdmE = dat_imu.copy()
     # Include declination
-    tdmE.props['declination'] = 10.0
+    tdmE.set_declination(10.0)
     tdmE.rotate2('earth', inplace=True)
     mc(tdmE)
 
@@ -119,7 +119,6 @@ def test_motion(make_data=False):
 
     tdm0.props.pop('declination')
     tdm0.props.pop('declination_in_orientmat')
-    tdm0.props.pop('declination_in_heading')
     yield data_equiv, tdm0, tdm, \
         "The data changes when declination is specified as 0!"
 
