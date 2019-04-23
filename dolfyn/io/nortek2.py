@@ -11,6 +11,7 @@ from .base import WrongFileType, read_userdata
 from ..data import base as db
 import warnings
 from ..rotate.vector import _euler2orient
+from ..data.base import TimeData
 
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -57,18 +58,27 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
         ens_now += nens_per_file
 
 
-def read_signature(filename, userdata=True, nens=None):
+def read_signature(filename, userdata=True, nens=None, keep_orient_raw=False):
     """Read a Nortek Signature (.ad2cp) file.
 
     Parameters
     ==========
     filename : string
         The filename of the file to load.
+
     userdata : filename
         <<currently unused, just a placeholder.>>
+
     nens : int, or tuple of 2 ints
         The number of ensembles to read, if int (starting at the
         beginning); or the range of ensembles to read, if tuple.
+
+    keep_orient_raw : bool (default: False)
+        If this is set to True, the raw orientation heading/pitch/roll
+        data is retained in the returned data structure in the
+        ``dat['orient']['raw']`` data group. This data is exactly as
+        it was found in the binary data file, and obeys the instrument
+        manufacturers definitions not DOLfYN's.
 
     Returns
     =======
@@ -101,6 +111,9 @@ def read_signature(filename, userdata=True, nens=None):
 
     if 'heading' in od:
         h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
+        if keep_orient_raw:
+            odr = od['raw'] = TimeData()
+            odr['heading'], odr['pitch'], odr['roll'] = h, p, r        
 
     out['props'].update(userdata)
 
