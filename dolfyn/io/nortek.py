@@ -42,7 +42,8 @@ def int2binarray(val, n):
 def read_nortek(filename,
                 userdata=True,
                 do_checksum=False,
-                nens=None):
+                nens=None,
+                keep_orient_raw=False):
     """
     Read a nortek file.
 
@@ -62,9 +63,17 @@ def read_nortek(filename,
            2-element tuple (start, stop)
               Number of pings to read from the file
 
+    keep_orient_raw : bool (default: False)
+        If this is set to True, the raw orientation heading/pitch/roll
+        data is retained in the returned data structure in the
+        ``dat['orient']['raw']`` data group. This data is exactly as
+        it was found in the binary data file, and obeys the instrument
+        manufacturers definitions not DOLfYN's.
+
     Returns
     -------
-    adv_data : :class:`ADVdata <dolfyn.adv.base.ADVdata>`
+    dat : :class:`<~dolfyn.data.velocity.Velocity>`
+      A DOLfYN Velocity data object.
 
     """
     user_data = read_userdata(filename, userdata)
@@ -81,6 +90,9 @@ def read_nortek(filename,
 
     if 'heading' in od:
         h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
+        if keep_orient_raw:
+            odr = od['raw'] = TimeData()
+            odr['heading'], odr['pitch'], odr['roll'] = h, p, r
 
     dat.props.update(user_data)
 

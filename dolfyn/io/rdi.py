@@ -12,7 +12,35 @@ import warnings
 from ..rotate.rdi import calc_orientmat as _calc_omat
 
 
-def read_rdi(fname, userdata=None, nens=None):
+def read_rdi(fname, userdata=None, nens=None, keep_orient_raw=False):
+    """
+    Read an RDI binary data file.
+
+    Parameters
+    ----------
+    filename : string
+               Filename of Nortek file to read.
+
+    userdata : True, False, or string of userdata.json filename
+               (default ``True``) Whether to read the
+               '<base-filename>.userdata.json' file.
+
+    nens : None (default: read entire file), int, or
+           2-element tuple (start, stop)
+              Number of pings to read from the file
+
+    keep_orient_raw : bool (default: False)
+        If this is set to True, the raw orientation heading/pitch/roll
+        data is retained in the returned data structure in the
+        ``dat['orient']['raw']`` data group. This data is exactly as
+        it was found in the binary data file, and obeys the instrument
+        manufacturers definitions not DOLfYN's.
+
+    Returns
+    -------
+    adp_data : :class:`ADPdata <dolfyn.adp.base.ADPdata>`
+
+    """
     # userdata is not used here.
     userdata = read_userdata(fname, userdata)
     with adcp_loader(fname) as ldr:
@@ -24,10 +52,14 @@ def read_rdi(fname, userdata=None, nens=None):
     # value in userdata, otherwise None
     od['orientmat'] = _calc_omat(dat)
 
-    _set_rdi_declination(dat, fname)
-
     if 'heading' in od:
         h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
+
+    _set_rdi_declination(dat, fname)
+
+    if keep_orient_raw:
+        odr = od['raw'] = data()
+        odr['heading'], odr['pitch'], odr['roll'] = h, p, r
 
     return dat
 

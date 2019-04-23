@@ -142,10 +142,12 @@ the inverse rotation matrix is simply the transpose:
 Heading, Pitch, Roll
 ....................
 
-The instrument's *heading*, *pitch*, and *roll* information can be
-computed from the orientation matrix using the
-``dolfyn.rotate.orient2euler`` function. This function computes these
-variables according to the following conventions:
+The instrument's *heading*, *pitch*, and *roll* information is not
+included in the data-structure by default. Instead, these variables
+can be computed from the orientation matrix using the
+``dolfyn.orient2euler`` function (``dolfyn.euler2orient`` provides the
+reverse functionality). This function computes these variables
+according to the following conventions:
 
   - a "ZYX" rotation order. That is, these variables are computed
     assuming that rotation from the earth -> instrument frame happens
@@ -190,6 +192,16 @@ that the user should:
   - All rotations into the earth frame will yield vectors that are in
     a ENU coordinate system
 
+It is also possible to obtain the raw *heading*, *pitch*, *roll* data
+as defined by the instrument manufacturer using the
+``keep_orient_raw`` argument in the :func:`dolfyn.read` function. That
+data is contained in ``dat['orient']['raw']``. Note that this data
+does not obey the above definitions, and instead obeys the instrument
+manufacturer's definitions of these variables (i.e., it is exactly the
+data contained in the binary file). Also note that
+``dat['orient']['raw']['heading']`` is unaffected by setting declination
+as described in the next section.
+    
 Declination Handling
 ....................
 
@@ -221,7 +233,7 @@ characteristics:
 
 - The value of the declination will be stored in ``dat.props['declination']``
 
-- ``dat['orient']['heading']`` is adjusted for declination (i.e., it is relative to True North)
+- ``dat['orient']['heading']`` is adjusted for declination (i.e., it is relative to True North).
 
 Principal Angles
 ................

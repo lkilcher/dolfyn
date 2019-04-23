@@ -6,7 +6,9 @@ import dolfyn.test.base as tb
 load = tb.load_tdata
 save = tb.save_tdata
 
-dat = load('vector_data01.h5')
+dat_orientraw = load('vector_data01.h5')
+dat = dat_orientraw.copy()
+dat['orient'].pop('raw')
 dat_imu = load('vector_data_imu01.h5')
 dat_imu_json = load('vector_data_imu01-json.h5')
 dat_burst = load('burst_mode01.h5')
@@ -31,7 +33,10 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def test_read(make_data=False):
 
-    td = read('vector_data01.VEC', nens=100)
+    td_orientraw = read('vector_data01.VEC', nens=100,
+                        keep_orient_raw=True)
+    td = td_orientraw.copy()
+    td['orient'].pop('raw')
     tdm = read('vector_data_imu01.VEC',
                userdata=False,
                nens=100)
@@ -46,7 +51,7 @@ def test_read(make_data=False):
     tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
-        save(td, 'vector_data01.h5')
+        save(td_orientraw, 'vector_data01.h5')
         save(tdm, 'vector_data_imu01.h5')
         save(tdb, 'burst_mode01.h5')
         save(tdm2, 'vector_data_imu01-json.h5')
@@ -56,6 +61,8 @@ def test_read(make_data=False):
     for dat1, dat2, msg in [
             (td, dat,
              msg_form.format('vector_data01', 'vector_data01')),
+            (td_orientraw, dat_orientraw,
+             msg_form.format('vector_data01+orientraw', 'vector_data01+orientraw')),
             (tdm, dat_imu,
              msg_form.format('vector_data_imu01', 'vector_data_imu01')),
             (tdb, dat_burst,

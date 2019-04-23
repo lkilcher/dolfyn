@@ -5,7 +5,9 @@ import sys
 load = tb.load_tdata
 save = tb.save_tdata
 
-dat_rdi = load('RDI_test01.h5')
+dat_rdi_orientraw = load('RDI_test01.h5')
+dat_rdi = dat_rdi_orientraw.copy()
+dat_rdi['orient'].pop('raw')
 dat_rdi_i = load('RDI_test01_rotate_beam2inst.h5')
 dat_awac = load('AWAC_test01.h5')
 dat_awac_ud = load('AWAC_test01_ud.h5')
@@ -18,7 +20,12 @@ dat_wr2 = load('winriver02.h5')
 
 def test_read(make_data=False):
 
-    td_rdi = read('RDI_test01.000')  # This uses the built-in declination!
+    # This uses the built-in declination!
+    td_rdi_orientraw = read('RDI_test01.000', keep_orient_raw=True)
+    td_rdi = td_rdi_orientraw.copy()
+    # Remove 'raw' from orient
+    td_rdi['orient'].pop('raw')
+
     td_sig = read('BenchFile01.ad2cp')
     td_sigi = read('Sig1000_IMU.ad2cp', userdata=False)
     td_sigi_ud = read('Sig1000_IMU.ad2cp')
@@ -28,7 +35,7 @@ def test_read(make_data=False):
     td_wr2 = read('winriver02.PD0')
 
     if make_data:
-        save(td_rdi, 'RDI_test01.h5')
+        save(td_rdi_orientraw, 'RDI_test01.h5')
         save(td_sig, 'BenchFile01.h5')
         save(td_sigi, 'Sig1000_IMU.h5')
         save(td_sigi_ud, 'Sig1000_IMU_ud.h5')
@@ -62,6 +69,8 @@ def test_read(make_data=False):
     for dat1, dat2, msg in [
             (td_rdi, dat_rdi,
              msg('RDI_test01.000')),
+            (td_rdi_orientraw, dat_rdi_orientraw,
+             msg('RDI_test01.000+orientraw')),
             (td_sig, dat_sig,
              msg('BenchFile01.ad2cp')),
             (td_sigi, dat_sigi_tmp,
