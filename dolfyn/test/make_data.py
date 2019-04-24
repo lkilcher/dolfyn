@@ -28,3 +28,4 @@ from base import rungen
 # rungen(adpro.test_rotate_inst2earth(make_data=True))
 # rungen(adpro.test_rotate_earth2inst(make_data=True))
 # rungen(adpro.test_rotate_inst2beam(make_data=True))
+# rungen(adpro.test_rotate_earth2principal(make_data=True))
