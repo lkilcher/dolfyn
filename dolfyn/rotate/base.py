@@ -168,3 +168,54 @@ def orient2euler(omat):
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
     )
+
+
+def calc_principal_angle(vel, tidal_mode=True):
+    """
+    Compute the principal angle of the horizontal velocity.
+
+    Parameters
+    ----------
+    vel : np.ndarray (2,...,Nt), or (3,...,Nt)
+      The 2D or 3D velocity array (3rd-dim is ignored in this calculation)
+
+    tidal_mode : bool (default: True)
+
+    Returns
+    -------
+    p_ang : float or ndarray
+      The principal angle(s) in radians.
+
+    Notes
+    -----
+
+    The tidal mode rotates half of the vectors (negative v) by 180
+    degreees, then doubles those angles (to make a complete circle
+    again), and computes a mean direction from this. It then halves
+    the angle again. The returned angle will always be between 0 and
+    :math:`pi` for this mode. So, you may need to add :math:`pi` to
+    this if you want your positive direction to be in the
+    southern-half of the plane.
+
+    Otherwise, this function simply compute the average direction
+    using a vector method.
+
+    """
+    dt = vel[0] + vel[1] * 1j
+    if tidal_mode:
+        # Flip all vectors that are below the x-axis
+        dt[dt.imag <= 0] *= -1
+        # Now double the angle, so that angles near pi and 0 get averaged
+        # together correctly:
+        dt *= np.exp(1j * np.angle(dt))
+        dt = np.ma.masked_invalid(dt)
+        # Divide the angle by 2 to remove the doubling done on the previous
+        # line.
+        pang = np.angle(
+            np.mean(dt, -1, dtype=np.complex128, keepdims=True)) / 2
+        pang[pang < 0] += np.pi
+    else:
+        pang = np.angle(np.mean(dt, -1, keepdims=True))
+    if len(pang) == 1:
+        pang = pang[0]
+    return pang

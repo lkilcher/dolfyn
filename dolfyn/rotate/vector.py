@@ -191,7 +191,10 @@ def earth2principal(advo, reverse=False):
     """
 
     if 'principal_angle' not in advo['props']:
-        advo.calc_principal_angle()
+        raise Exception(
+            "You must set 'principal_angle' in dat.props prior to "
+            "rotating to the principal axes. Note that the principal "
+            "angle must be calculated in the earth reference frame.")
 
     if reverse:
         ang = advo['props']['principal_angle']
@@ -211,10 +214,6 @@ def earth2principal(advo, reverse=False):
             'Data must be in the {} frame '
             'to use this function'.format(cs_now))
 
-    if advo.props['coord_sys_principal_ref'] not in ['earth', 'enu']:
-        raise ValueError("The reference system in which the principal "
-                         "axes is calculated must be 'earth'.")
-
     # Calculate the rotation matrix:
     cp, sp = np.cos(ang), np.sin(ang)
     rotmat = np.array([[cp, -sp, 0],
@@ -225,18 +224,6 @@ def earth2principal(advo, reverse=False):
     for nm in advo.props['rotate_vars']:
         dat = advo[nm]
         dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
-
-    if hasattr(advo, 'orientmat'):
-        # The orientmat does earth->inst, so the orientmat needs to
-        # rotate from principal to earth first. rotmat does
-        # earth->principal, so we use the inverse (via index ordering)
-        # This should handle the 'reverse' case also, because the
-        # inverse rotmat gets applied first.
-        advo['orientmat'] = np.einsum('ijl,kj->ikl',
-                                      advo['orientmat'],
-                                      rotmat, )
-
-    rotb.call_rotate_methods(advo, rotmat, 'earth', 'principal')
 
     # Finalize the output.
     advo.props['coord_sys'] = cs_new

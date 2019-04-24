@@ -232,54 +232,6 @@ class Velocity(TimeData):
         """
         return rotate2(self, out_frame=out_frame, inplace=inplace)
 
-    def calc_principal_angle(self, bin=None):
-        """
-        Compute the principal angle of the horizontal velocity.
-
-        Parameters
-        ----------
-
-        bin : {int or None}
-          For ADP objects, this is the depth bin where the principal
-          angle is calculated. If it is None (default), the
-          depth-averaged velocity is used.
-
-        Notes
-        -----
-
-        This function sets (overwrites) the values of
-        ``self['props']['principal_angle']``, and
-        ``self['props']['coord_sys_principal_ref']``.
-
-        .. morehere: document how exactly the principal angle is calculated.
-        """
-        if self['props']['coord_sys'].lower() not in ['earth', 'inst',
-                                                      'enu', 'xyz']:
-            raise Exception("The principal angle should only be estimated "
-                            "if the coordinate system is either 'earth' or "
-                            "'inst'.")
-        self['props']['coord_sys_principal_ref'] = self['props']['coord_sys']
-        dt = self.U  # horizontal velocity as a complex number
-        if bin is None:
-            if dt.ndim > 1:
-                dt = dt.mean(0)
-        else:
-            dt = dt[bin]
-        dt[dt.imag <= 0] *= -1
-        # Now double the angle, so that angles near pi and 0 get averaged
-        # together correctly:
-        dt *= np.exp(1j * np.angle(dt))
-        dt = np.ma.masked_invalid(dt)
-        # Divide the angle by 2 to remove the doubling done on the previous
-        # line.
-        self['props']['principal_angle'] = np.angle(
-            np.mean(dt, 0, dtype=np.complex128)) / 2
-        # Angle returns values between -pi and pi.  I want the
-        # principal angle always to be between 0 and pi.  Therefore,
-        # add pi to the negative ones.
-        if self['props']['principal_angle'] < 0:
-            self['props']['principal_angle'] += np.pi
-
     @property
     def _repr_header(self, ):
         time_string = '{:.2f} {} (started: {})'
