@@ -88,11 +88,12 @@ def read_nortek(filename,
         od['orientmat'] = _calc_omat(od['heading'], od['pitch'], od['roll'],
                                      od.get('orientation_down', None))
 
-    if 'heading' in od:
-        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
-        if keep_orient_raw:
-            odr = od['raw'] = TimeData()
-            odr['heading'], odr['pitch'], odr['roll'] = h, p, r
+    if keep_orient_raw:
+        odr = od['raw'] = TimeData()
+    for ky in ['heading', 'pitch', 'roll', 'orientation_down']:
+        val = od.pop(ky, None)
+        if keep_orient_raw and val is not None:
+            odr[ky] = val
 
     dat.props.update(user_data)
 

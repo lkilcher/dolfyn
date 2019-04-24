@@ -170,7 +170,7 @@ def orient2euler(omat):
     )
 
 
-def calc_principal_angle(vel, tidal_mode=True):
+def calc_principal_heading(vel, tidal_mode=True):
     """
     Compute the principal angle of the horizontal velocity.
 
@@ -183,19 +183,19 @@ def calc_principal_angle(vel, tidal_mode=True):
 
     Returns
     -------
-    p_ang : float or ndarray
-      The principal angle(s) in radians.
+    p_heading : float or ndarray
+      The principal heading(s) in degrees clockwise from North.
 
     Notes
     -----
 
-    The tidal mode rotates half of the vectors (negative v) by 180
-    degreees, then doubles those angles (to make a complete circle
-    again), and computes a mean direction from this. It then halves
-    the angle again. The returned angle will always be between 0 and
-    :math:`pi` for this mode. So, you may need to add :math:`pi` to
-    this if you want your positive direction to be in the
-    southern-half of the plane.
+    The tidal mode follows these steps:
+      1. rotates vectors with negative v by 180 degrees
+      2. then doubles those angles to make a complete circle again
+      3. computes a mean direction from this, and halves that angle again.
+      4. The returned angle is forced to be between 0 and 180. So, you
+         may need to add 180 to this if you want your positive
+         direction to be in the western-half of the plane.
 
     Otherwise, this function simply compute the average direction
     using a vector method.
@@ -212,10 +212,7 @@ def calc_principal_angle(vel, tidal_mode=True):
         # Divide the angle by 2 to remove the doubling done on the previous
         # line.
         pang = np.angle(
-            np.mean(dt, -1, dtype=np.complex128, keepdims=True)) / 2
-        pang[pang < 0] += np.pi
+            np.mean(dt, -1, dtype=np.complex128)) / 2
     else:
-        pang = np.angle(np.mean(dt, -1, keepdims=True))
-    if len(pang) == 1:
-        pang = pang[0]
-    return pang
+        pang = np.angle(np.mean(dt, -1))
+    return (90 - np.rad2deg(pang))

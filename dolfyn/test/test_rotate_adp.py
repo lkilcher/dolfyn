@@ -1,6 +1,6 @@
 from dolfyn.test import test_read_adp as tr
 from dolfyn.test.base import load_tdata as load, save_tdata as save, data_equiv
-from dolfyn import calc_principal_angle
+from dolfyn import calc_principal_heading
 import numpy as np
 
 
@@ -128,10 +128,13 @@ def test_rotate_earth2principal(make_data=False):
     td_sig = load('BenchFile01_rotate_inst2earth.h5')
     td_awac = tr.dat_awac.copy()
 
-    td_rdi.props['principal_angle'] = calc_principal_angle(td_rdi.vel.mean(1))
-    td_sig.props['principal_angle'] = calc_principal_angle(td_sig.vel.mean(1))
-    td_awac.props['principal_angle'] = calc_principal_angle(td_sig.vel.mean(1),
-                                                            tidal_mode=False)
+    td_rdi.props['principal_heading'] = calc_principal_heading(
+        td_rdi.vel.mean(1))
+    td_sig.props['principal_heading'] = calc_principal_heading(
+        td_sig.vel.mean(1))
+    td_awac.props['principal_heading'] = calc_principal_heading(
+        td_sig.vel.mean(1),
+        tidal_mode=False)
 
     td_rdi.rotate2('principal')
     td_sig.rotate2('principal')
