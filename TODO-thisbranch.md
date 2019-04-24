@@ -4,5 +4,4 @@
 - enforce no setting of dat.props['declination']?
 - Remove orientation_down from vectors?
 
-- Move `Velocity.calc_principle_angle` to a function in the API (`dolfyn.calc_principal_angle`)
 - Use degrees, instead of radians, for principal angle?
