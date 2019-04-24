@@ -87,11 +87,39 @@ class Velocity(TimeData):
 
     """
 
-    def set_declination(self, declin):
+    def set_declination(self, declination):
+        """Set the declination of the data object.
+
+        Parameters
+        ----------
+        declination : float
+           The value of the magnetic declination in degrees (positive
+           values specity that Magnetic North is clockwise from true North)
+
+        Notes
+        -----
+        This method modifies the data object in the following ways:
+
+        - If the data-object is in the *earth* reference frame at the time of
+          setting declination, it will be rotated into the "*True-East*,
+          *True-North*, Up" (hereafter, ETU) coordinate system
+
+        - ``dat['orient']['orientmat']`` is modified to be an ETU to
+          instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
+          XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
+          frame will now be to/from this ETU coordinate system.
+
+        - The value of the specified declination will be stored in
+          ``dat.props['declination']``
+
+        - ``dat['orient']['heading']`` is adjusted for declination
+          (i.e., it is relative to True North).
+
+        """
         if 'declination' in self['props']:
-            angle = declin - self.props.pop('declination')
+            angle = declination - self.props.pop('declination')
         else:
-            angle = declin
+            angle = declination
         cd = np.cos(-np.deg2rad(angle))
         sd = np.sin(-np.deg2rad(angle))
         # The ordering is funny here because orientmat is the
@@ -114,7 +142,7 @@ class Velocity(TimeData):
             odata['heading'] += angle
         if rotate2earth:
             self.rotate2('earth', inplace=True)
-        self.props['declination'] = declin
+        self.props['declination'] = declination
         self.props['declination_in_orientmat'] = True
 
     def __init__(self, *args, **kwargs):
