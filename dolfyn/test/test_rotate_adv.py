@@ -109,3 +109,22 @@ def test_rotate_earth2principal(make_data=False):
             (tdm, cdm, msg.format('vector_data_imu01')),
     ):
         yield data_equiv, t, c, msg
+
+
+def test_rotate_earth2principal_set_declination():
+
+    declin = 3.875
+    td = load('vector_data01_rotate_inst2earth.h5')
+    td0 = td.copy()
+    td['props']['principal_heading'] = calc_principal_heading(td['vel'])
+
+    td.rotate2('principal', inplace=True)
+    td.set_declination(declin)
+    td.rotate2('earth', inplace=True)
+
+    td0.set_declination(declin)
+    td0['props']['principal_heading'] = calc_principal_heading(td0['vel'])
+
+    data_equiv(td0, td,
+               "Something is wrong with declination "
+               "handling w/r/t principal_heading.")
