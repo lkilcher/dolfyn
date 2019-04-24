@@ -215,22 +215,9 @@ to set a data-object's declination:
    (`more details <json-userdata>`_ ), then read the binary data
    file (i.e., using ``dat = dolfyn.read(<data_filename>)``).
 
-Both of these approaches will yield data objects with the following
-characteristics:
-
-- If the data-object is in the *earth* reference frame at the time of
-  setting declination, it will be rotated into the "*True-East*,
-  *True-North*, Up" (hereafter, ETU) coordinate system
-
-- ``dat['orient']['orientmat']`` is modified to be an ETU to
-  instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
-  XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
-  frame will now be to/from this ETU coordinate system.
-
-- The value of the declination will be stored in ``dat.props['declination']``
-
-- ``dat['orient']['heading']`` is adjusted for declination (i.e., it is relative to True North).
-
+Both of these approaches produce modify the ``dat`` as described in
+the documentation for :meth:`~dolfyn.Velocity.set_declination` .
+   
 Principal Angles
 ................
 
