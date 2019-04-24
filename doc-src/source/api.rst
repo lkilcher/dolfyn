@@ -43,7 +43,7 @@ processing and data analysis tasks.
    dolfyn.adv.motion.CorrectMotion
    dolfyn.VelBinner
    dolfyn.adv.turbulence.TurbBinner
-   dolfyn.calc_principal_angle
+   dolfyn.calc_principal_heading
 
 .. autofunction:: dolfyn.read
    
@@ -59,4 +59,4 @@ processing and data analysis tasks.
 .. autoclass:: dolfyn.adv.turbulence.TurbBinner
    :members:
 
-.. autofunction:: dolfyn.calc_principal_angle
+.. autofunction:: dolfyn.calc_principal_heading

@@ -5,8 +5,7 @@ rotate_vars*,The variables in the data object that should be rotated when rotati
 declination*,"The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North). Set this value using ``dat.set_declination(<value>)``."
 declination_in_heading*,"A boolean specifying whether the heading includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
 declination_in_orientmat*,"A boolean specifying whether the ``orient.orientmat`` includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
-principal_angle,"The horizontal angle between the earth coordinate system (or whatever `coord_sys_principal_ref` is) and the *principal axes* of the flow (u: streamwise, v: cross-stream, w: up). [radians, positive means principal axis is clockwise from earth]."
-coord_sys_principal_ref*, "The reference frame in which principal_angle was calculated."
+principal_heading,"The heading of the +u direction for the 'principal' coordinate system [degrees clockwise from north]."
 has imu*, A boolean indicating whether the instrument has an inertial motion sensor/unit.
 inst_make*, The manufacturer name.
 inst_model*, The instrument model.
