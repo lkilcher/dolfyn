@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Version 0.11.0
+	- Use dat.set_declination() to set the declination
+	- new defs for heading, pitch, roll (+docs)
+		- new order of euler2orient inputs (h,p,r)
+		- dropped heading, pitch, roll from data; unless user specifies
+		keep_orient_raw=True in `dolfyn.read`, in which case the data is
+		stored in orient.raw
+	- New definitions/tools for 'principal coordinate system'
+		- switched from using principal_angle to principal_heading
+		- removed `calc_principal_angle` method
+		- added `calc_principal_heading` function
+		- principal rotations only from earth
+	- ad2cp earth2principal rotations now supported
+
 ## Version 0.10.1
 	- Add the `.shortcuts` property
 	- Read userdata.json files for ADPs
