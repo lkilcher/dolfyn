@@ -87,16 +87,12 @@ defined by the following coordinate systems:
   system that has been rotated in the horizontal plane (around the Up
   axis) to align with the flow. In this coordinate system the first
   dimension of a vector is meant to be: [Stream-wise, Cross-stream,
-  Up]. This coordinate system is defined by the variables
-  ``dat.props['coord_sys_principal_ref']``, and
-  ``dat.props['principal_angle']``. These variables define the
-  *reference* coordinate system that the data was rotated from and the
-  rotation angle, respectively. The rotation angle is the angle that
-  the principal coordinate system is rotated relative to the reference
-  coordinate system around the Up (or Z axis when the reference
-  coordinate system is *inst*), positive according to the
-  right-hand-rule (i.e., counter-clockwise). See the `Principal
-  Angles`_ section for further details.
+  Up]. This coordinate system is defined by the variable
+  ``dat.props['principal_angle']``. This variable defines the
+  rotation angle that the principal coordinate system is rotated
+  relative to the earth coordinate system around the Up axis, positive
+  according to the right-hand-rule (i.e., counter-clockwise). See the
+  `Principal Angles`_ section for further details.
 
 To rotate a data object into one of these coordinate systems, simply
 use the ``rotate2`` method::
@@ -242,25 +238,22 @@ As described above, the principal coordinate system is meant to be the
 flow-aligned coordinate system (Streamwise, Cross-stream, Up). |dlfn|
 includes the `:func:<dolfyn.calc_principal_angle>` function to aide in
 identifying/calculating the principal angle. Using this function to
-identify the principal angle, an ADV data object can be rotated into
-the principal coordinate system like this::
+identify the principal angle, an ADV data object that is in the
+earth-frame can be rotated into the principal coordinate system like
+this::
 
   dat.props['principal_angle'] = dolfyn.calc_principal_angle(dat.vel)
   dat.rotate2('principal')
 
-Note here that when you are rotating to the principal coordinate
-system, and ``dat.props['coord_sys_principal_ref']`` is not defined
-(but ``principal_angle`` is), ``rotate2`` assumes that the data
-object's existing coordinate system is the reference coordinate
-system, and it sets it (i.e., prior to rotating to principal,
-``rotate2`` does ``dat.props['coord_sys_principal_ref'] =
-dat.props['coord_sys']``).
+Note here that if ``dat`` is in a coordinate system other than EARTH,
+you will get unexpected results, because you will calculate a
+principal_angle in the coordinate system that the data is in.
 
-It should also be noted that by defining
-``dat.props['principal_angle']``, the user can choose any horizontal
-coordinate system that they like, and this might not be consistent
-with the *streamwise, cross-stream, up* definition described here. In
-those cases, the user should take care to clarify this point with
+It should also be noted that by setting
+``dat.props['principal_angle']`` the user can choose any horizontal
+coordinate system, and this might not be consistent with the
+*streamwise, cross-stream, up* definition described here. In those
+cases, the user should take care to clarify this point with
 collaborators to avoid confusion.
 
 .. _units:

@@ -2,6 +2,7 @@ from . import vector as r_vec
 from . import awac as r_awac
 from . import signature as r_sig
 from . import rdi as r_rdi
+import warnings
 
 # The 'rotation chain'
 rc = ['beam', 'inst', 'earth', 'principal']
@@ -46,6 +47,17 @@ def rotate2(obj, out_frame='earth', inplace=False):
     This function rotates all variables in ``obj.props['rotate_vars']``.
 
     """
+    csin = obj.props['coord_sys'].lower()
+    if csin == 'ship':
+        csin = 'inst'
+
+    if out_frame == 'principal' and csin != 'earth':
+        warnings.warn(
+            "You are attempting to rotate into the 'principal' "
+            "coordinate system, but the data object is in the {} "
+            "coordinate system. Be sure that 'principal_angle' is "
+            "defined based on the earth coordinate system.")
+
     rmod = None
     for ky in rot_module_dict:
         if obj._make_model.startswith(ky):
@@ -58,9 +70,6 @@ def rotate2(obj, out_frame='earth', inplace=False):
         obj = obj.copy()
 
     # Get the 'indices' of the rotation chain
-    csin = obj.props['coord_sys'].lower()
-    if csin == 'ship':
-        csin = 'inst'
     try:
         iframe_in = rc.index(csin)
     except ValueError:
