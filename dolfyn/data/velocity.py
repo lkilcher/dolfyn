@@ -115,6 +115,13 @@ class Velocity(TimeData):
         - ``dat['orient']['heading']`` is adjusted for declination
           (i.e., it is relative to True North).
 
+        - If ``dat['props']['principal_heading']`` is set, it is
+          adjusted to account for the orientation of the new 'True'
+          earth coordinate system (i.e., calling set_declination on a
+          data object in the principal coordinate system, then calling
+          dat.rotate2('earth') will yield a data object in the new
+          'True' earth coordinate system)
+
         """
         if 'declination' in self['props']:
             angle = declination - self.props.pop('declination')
@@ -142,6 +149,8 @@ class Velocity(TimeData):
             odata['heading'] += angle
         if rotate2earth:
             self.rotate2('earth', inplace=True)
+        if 'principal_heading' in self.props:
+            self.props['principal_heading'] += angle
         self.props['declination'] = declination
         self.props['declination_in_orientmat'] = True
 
