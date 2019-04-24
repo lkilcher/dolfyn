@@ -381,6 +381,7 @@ def reorg(dat):
     outdat['props']['inst_make'] = 'Nortek'
     outdat['props']['inst_model'] = cfg['model']
     outdat['props']['inst_type'] = 'ADP'
+    outdat['props']['rotate_vars'] = {'vel', }
 
     for id, tag in [(21, ''), (24, '_b5'), (26, '_ar')]:
         if id == 26:
@@ -474,6 +475,9 @@ def reorg(dat):
     outdat.orient['orient_up'] = tmp['orient_up']
     # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
     # Heding is: 0,1: Z; 4,5: X
+    for ky in ['accel', 'angrt']:
+        if ky in outdat['orient']:
+            outdat.props['rotate_vars'].update({'orient.' + ky})
     return outdat
 
 
