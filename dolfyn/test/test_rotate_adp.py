@@ -1,5 +1,6 @@
 from dolfyn.test import test_read_adp as tr
 from dolfyn.test.base import load_tdata as load, save_tdata as save, data_equiv
+import numpy as np
 
 
 def test_rotate_beam2inst(make_data=False):
@@ -68,6 +69,11 @@ def test_rotate_earth2inst(make_data=False):
     cd_awac = load('AWAC_test01_earth2inst.h5')
     cd_sig = load('BenchFile01_rotate_beam2inst.h5')
     cd_sigi = load('Sig1000_IMU_rotate_beam2inst.h5')
+
+    assert (np.abs(cd_sigi['orient'].pop('accel') - \
+                   td_sigi['orient'].pop('accel')) < 1e-3).all(), \
+                  "adp.rotate.inst2earth gives unexpected ACCEL results for 'Sig1000_IMU_rotate_beam2inst.h5'"
+    
 
     msg = "adp.rotate.inst2earth gives unexpected REVERSE results for {}"
     for t, c, msg in (
