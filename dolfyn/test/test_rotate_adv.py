@@ -1,5 +1,5 @@
 from dolfyn.test import test_adv as tr
-from dolfyn import rotate2 as rotate, calc_principal_angle
+from dolfyn import rotate2 as rotate, calc_principal_heading
 from dolfyn.test.base import load_tdata as load, save_tdata as save
 
 data_equiv = tr.data_equiv
@@ -89,10 +89,10 @@ def test_rotate_beam2inst():
 
 def test_rotate_earth2principal(make_data=False):
     td = load('vector_data01_rotate_inst2earth.h5')
-    td['props']['principal_angle'] = calc_principal_angle(td['vel'])
+    td['props']['principal_heading'] = calc_principal_heading(td['vel'])
     rotate(td, 'principal', inplace=True)
     tdm = load('vector_data_imu01_rotate_inst2earth.h5')
-    tdm['props']['principal_angle'] = calc_principal_angle(tdm['vel'])
+    tdm['props']['principal_heading'] = calc_principal_heading(tdm['vel'])
     rotate(tdm, 'principal', inplace=True)
 
     if make_data:

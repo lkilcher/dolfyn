@@ -88,11 +88,11 @@ defined by the following coordinate systems:
   axis) to align with the flow. In this coordinate system the first
   dimension of a vector is meant to be: [Stream-wise, Cross-stream,
   Up]. This coordinate system is defined by the variable
-  ``dat.props['principal_angle']``. This variable defines the
+  ``dat.props['principal_heading']``. This variable defines the
   rotation angle that the principal coordinate system is rotated
   relative to the earth coordinate system around the Up axis, positive
   according to the right-hand-rule (i.e., counter-clockwise). See the
-  `Principal Angles`_ section for further details.
+  `Principal Heading`_ section for further details.
 
 To rotate a data object into one of these coordinate systems, simply
 use the ``rotate2`` method::
@@ -218,26 +218,26 @@ to set a data-object's declination:
 Both of these approaches produce modify the ``dat`` as described in
 the documentation for :meth:`~dolfyn.Velocity.set_declination` .
    
-Principal Angles
-................
+Principal Heading
+.................
 
 As described above, the principal coordinate system is meant to be the
 flow-aligned coordinate system (Streamwise, Cross-stream, Up). |dlfn|
-includes the `:func:<dolfyn.calc_principal_angle>` function to aide in
-identifying/calculating the principal angle. Using this function to
-identify the principal angle, an ADV data object that is in the
+includes the `:func:<dolfyn.calc_principal_heading>` function to aide in
+identifying/calculating the principal heading. Using this function to
+identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
 this::
 
-  dat.props['principal_angle'] = dolfyn.calc_principal_angle(dat.vel)
+  dat.props['principal_heading'] = dolfyn.calc_principal_heading(dat.vel)
   dat.rotate2('principal')
 
 Note here that if ``dat`` is in a coordinate system other than EARTH,
 you will get unexpected results, because you will calculate a
-principal_angle in the coordinate system that the data is in.
+*principal_heading* in the coordinate system that the data is in.
 
 It should also be noted that by setting
-``dat.props['principal_angle']`` the user can choose any horizontal
+``dat.props['principal_heading']`` the user can choose any horizontal
 coordinate system, and this might not be consistent with the
 *streamwise, cross-stream, up* definition described here. In those
 cases, the user should take care to clarify this point with

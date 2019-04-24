@@ -190,18 +190,26 @@ def earth2principal(advo, reverse=False):
 
     """
 
-    if 'principal_angle' not in advo['props']:
-        raise Exception(
-            "You must set 'principal_angle' in dat.props prior to "
-            "rotating to the principal axes. Note that the principal "
-            "angle must be calculated in the earth reference frame.")
+    try:
+        # this is in degrees CW from North
+        ang = np.deg2rad(90 - advo.props['principal_heading'])
+        # convert this to radians CCW from east (which is expected by
+        # the rest of the function)
+    except KeyError:
+        if 'principal_angle' in advo['props']:
+            warnings.warn(
+                "'principal_angle' will be deprecated in a future release of "
+                "DOLfYN. Please update your file to use ``principal_heading = "
+                "(90 - np.rad2deg(principal_angle))``."
+            )
+            # This is in radians CCW from east
+            ang = advo.props['principal_angle']
 
     if reverse:
-        ang = advo['props']['principal_angle']
         cs_now = 'principal'
         cs_new = 'earth'
     else:
-        ang = -advo['props']['principal_angle']
+        ang *= -1
         cs_now = 'earth'
         cs_new = 'principal'
 

@@ -15,10 +15,10 @@ dat_burst = load('burst_mode01.h5')
 
 
 def data_equiv(dat1, dat2, message=''):
-    if 'props' in dat1 and 'principal_angle' in dat1['props']:
-        pa1 = dat1['props'].pop('principal_angle')
-        pa2 = dat2['props'].pop('principal_angle')
-        assert np.abs(pa1 - pa2) < 1e-4
+    if 'props' in dat1 and 'principal_heading' in dat1['props']:
+        pa1 = dat1['props'].pop('principal_heading')
+        pa2 = dat2['props'].pop('principal_heading')
+        assert np.abs(pa1 - pa2) < 1e-4, "The principal headings do not agree."
     assert dat1 == dat2, message
 
 
