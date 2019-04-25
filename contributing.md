@@ -1,7 +1,32 @@
-1) Open an issue
-2) Branch off of master
-3) Make changes
-4) Test that changes don't break/fail tests (or that failures are consistent with change)
-5) Create a test that verifies the change (this should be included in your changes)
-6) Make entry for change in `changelog.md`
-7) Once finished create a PR (mention issue) and wait for TravisCI + AppVeyor to do checks
+0) Build a dolfyn development environment.
+
+   - In anaconda ou can install dependencies using the `environment-dev.yml` file:
+
+        conda env create -n dolfyn-dev -f environment-dev.yml
+      
+   - Also be sure to install the repo to this environment in *editable* mode:
+     
+        source activate dolfyn-dev  # activate the env
+        pip install -e ./  # install dolfyn in editable mode
+
+1) Get set up
+    - Open an issue (optional)
+    - Create a branch
+
+3) Make changes to documentation first!
+    - The documentation source lives in `doc-src/`
+    - Build the documentation by running `make` in the `doc-src/` folder.
+    - You can preview the built documentation by directing your browser to `file:///<dolfyn-repo-path>/doc-build/html/index.html`
+    - Documenting your plans before making changes to the code accomplishes two things:
+      i. It makes you think about what you're going to do, and how it will affect the API, before you put time into doing it
+      ii. It gives you a big head-start on actually writing the documentation (which, if you're like me, is so easy to overlook/forget)
+
+4) Make changes to the code
+
+5) Test that changes don't break/fail tests (or that failures are consistent with change)
+
+6) Create a test that verifies the change (this should be included in your changes)
+
+7) Make entry for change in `changelog.md`
+
+8) Once finished create a PR (mention issue) and wait for TravisCI + AppVeyor to do checks

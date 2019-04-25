@@ -7,3 +7,11 @@ dependencies:
   - pip
   - pip:
      - "--editable=git+https://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5"
+
+  # For building docs
+  - sphinx
+  - numpydoc
+
+  # For running tests
+  # yes I know nose is old, I'm working on moving to pytest, but I'm not there yet
+  - nose
