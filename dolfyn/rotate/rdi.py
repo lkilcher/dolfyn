@@ -2,6 +2,7 @@ import numpy as np
 from .vector import earth2principal, inst2earth as nortek_inst2earth
 
 
+
 def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
     """Calculate the rotation matrix from beam coordinates to
     instrument head coordinates.
@@ -148,8 +149,14 @@ def inst2earth(adcpo, reverse=False,
 
 def calc_orientmat(adcpo):
 
-    # Now calculate the rotation matrix.
+    # Calculate the orientation matrix using the raw 
+    # heading, pitch, roll values from the RDI binary file.
+
     """
+     Parameters
+    ----------
+    -adcpo : The ADP object containing the data.
+    
     ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
     The internal tilt sensors do not measure exactly the same
     pitch as a set of gimbals would (the roll is the same). Only in
@@ -198,6 +205,8 @@ def calc_orientmat(adcpo):
     rotmat[2, 0, :] = -cp * sr
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
-    # The 'orientation matrix' is the transpose of the 'rotation matrix'
-    omat = np.rollaxis(rotmat, 1)
+
+    # The 'orientation matrix' is the transpose of the 'rotation matrix' and will organized the matrix for INST --> EARTH.
+    omat = np.rollaxis(rotmat, 1) 
+
     return omat
