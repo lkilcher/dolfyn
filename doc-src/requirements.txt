@@ -6,3 +6,4 @@ six
 pip
 -e git://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5
 numpydoc
+sphinx-version-warning

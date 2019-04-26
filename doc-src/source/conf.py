@@ -42,7 +42,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.extlinks',
               'numpydoc',
               'matplotlib.sphinxext.plot_directive',
-              #'numfig',
+              'versionwarning.extension',
               ]
 # extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
 # 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
@@ -74,6 +74,9 @@ copyright = u'2014, Levi Kilcher'
 version = ver.__version__
 # The full version, including alpha/beta/rc tags.
 release = ver.__version__
+
+versionwarning_project_version = '0.10.1'
+versionwarning_project_slug = 'DOLfYN'
 
 rst_prolog = """
 .. |dlfn| replace:: DOLfYN
