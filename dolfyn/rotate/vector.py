@@ -148,6 +148,8 @@ def calc_omat(hh, pp, rr, orientation_down=None):
         #       orientation corresponds to the communication cable
         #       being up.  This is ridiculous, but apparently a
         #       reality.
+        #       In DOLfYN 'orientation_down' = True indicates the ADV probe head
+        #       is pointing UP.
         rr[orientation_down] += 180
 
     # Take the transpose of the orientation to get the inst->earth rotation
@@ -239,6 +241,7 @@ def earth2principal(advo, reverse=False):
 
 def _euler2orient(heading, pitch, roll, units='degrees'):
     # THIS IS FOR NORTEK data ONLY!
+    # The heading, pitch, roll used here are from the Nortek binary files.
 
     # Heading input is clockwise from North
     # Returns a rotation matrix that rotates earth (ENU) -> inst.
@@ -248,10 +251,11 @@ def _euler2orient(heading, pitch, roll, units='degrees'):
         pitch = np.deg2rad(pitch)
         roll = np.deg2rad(roll)
         heading = np.deg2rad(heading)
-    # I've fixed the definition of heading to be consistent with
-    # typical definitions.
+    # I've fixed the definition of heading below to be consistent with the
+    # right-hand-rule; heading is the angle positive counterclockwise from North
+    # of the y-axis.
     # This also involved swapping the sign on sh in the def of omat
-    # below from the values provided in the Nortek Matlab script
+    # below from the values provided in the Nortek Matlab script.
     heading = (np.pi / 2 - heading)
 
     ch = np.cos(heading)
