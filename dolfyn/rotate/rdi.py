@@ -146,10 +146,21 @@ def inst2earth(adcpo, reverse=False,
     adcpo.props['coord_sys'] = cs
 
 
-def calc_orientmat(adcpo):
+def calc_orientmat(adcpo, xducer_misalign = False):
 
-    # Now calculate the rotation matrix.
+    # Calculate the orientation matrix using the raw 
+    # heading, pitch, roll values from the RDI binary file.
+
     """
+     Parameters
+    ----------
+    -adcpo : The ADP object containing the data.
+
+    -xducer_misalign : The rotation of the positive y-axis (beam 3 transducer)
+                       from the foward keel of the boat/buoy. Include it
+                       here if dat.config['xducer_misalign'] = 0 but 
+                       an adjustment is necessary.
+    
     ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
     The internal tilt sensors do not measure exactly the same
     pitch as a set of gimbals would (the roll is the same). Only in
@@ -198,6 +209,37 @@ def calc_orientmat(adcpo):
     rotmat[2, 0, :] = -cp * sr
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
-    # The 'orientation matrix' is the transpose of the 'rotation matrix'
-    omat = np.rollaxis(rotmat, 1)
+
+    # The organization of rotmat is the result H <dot> P <dot> R where
+        # H  = ([ch sh 0], [-sh ch 0], [0 0 1])
+        # P = ([1 0 0], [0 cp -sp], [0 sp cp])
+        # R = ([cr 0 sr],  [0 1 0], [-sr 0 cr])
+    # The H is like the wiki Rotation Matrix (and DOLfYN) rotation about z, the same as in rotate/base euler2orient.
+    # The P is like the wiki Rotation Matrix (and DOLfYN) rotation about x, but DOLfYN calls that R in rotate/base euler2orient.
+    # The R is like the wiki Rotation Maxtrix (and DOLfYN) rotation about y, but DOLfYN calls that P in rotate/base euler2orient.
+    # Therefore, rotmat is already organized for EARTH --> INST.
+    # The order of rotations that made rotmat is YXZ, where DOLfYN uses a rotation order of ZYX in rotate/base euler2orient.
+    # RDI defines pitch and roll differently than DOLfYN.   
+    # The 'orientation matrix' is the transpose of the 'rotation matrix' and will organized the matrix for INST --> EARTH.
+    # omat = np.rollaxis(rotmat, 1) 
+
+    # In order to produce an omat that would match if it were made in rotate/base euler2orient. rotmat will not agree 
+    # because it was created with YXZ rotations, not ZYX rotations, and the pitch and roll matrices are assigned opposite 
+    # of how they are in rotate/base euler2orient. Instead of using rotmat, adjust the RDI heading, pitch, roll so they 
+    # can be used as inputs to rotate/base euler2orient and then execute rotate/base euler2orient to get omat.
+
+    # When it is important to align the RDI heading with the StableMoor Buoy (e.g), adjust the heading for
+    # the misalignment between the nose end of the keel of the buoy and the +y axis of the RDI (beam 3). 
+    # If the dat.config['xducer_misalign'] != 0, then this was accounted for during instrument configuration and is built into
+    # the raw heading.
+
+    heading = heading + xducer_misalign 
+    heading = (np.pi / 2 - heading) # Defines heading as +CCW rotation of y-axis from North, following right-hand-rule.
+    roll_rdi = roll.copy()
+    pitch_rdi = pitch.copy()
+    pitch = roll_rdi
+    roll = pitch_rdi
+
+    omat = euler2orient(heading, pitch, roll, units='degrees')
+
     return omat
