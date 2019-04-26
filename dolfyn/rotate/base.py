@@ -56,16 +56,25 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
 
 def euler2orient(heading, pitch, roll, units='degrees'):
     """
-    Calculate the orientation matrix from euler angles.
+    Calculate the orientation matrix from DOLfYN-defined euler angles.
+
+    This function is not likely to be called during data processing since it requires
+    DOLfYN-defined euler angles. It is intended for testing DOLfYN.
+
+    The matrices H, P, R are the transpose of the matrices for rotation about z, y, x
+    as shown here https://en.wikipedia.org/wiki/Rotation_matrix. The transpose is used
+    because in DOLfYN the orientation matrix is organized for 
+    rotation from EARTH --> INST, while the wiki's matrices are organized for 
+    rotation from INST --> EARTH.
 
     Parameters
     ----------
     heading : np.ndarray (Nt)
-      The heading angle of the ADV (clockwise from North).
+      The heading angle.
     pitch : np.ndarray (Nt)
-      The pitch angle of the ADV.
+      The pitch angle.
     roll : np.ndarray (Nt)
-      The pitch angle of the ADV.
+      The roll angle.
     units : string {'degrees' (default), 'radians'}
 
     Returns
@@ -77,11 +86,12 @@ def euler2orient(heading, pitch, roll, units='degrees'):
        - a "ZYX" rotation order. That is, these variables are computed
          assuming that rotation from the earth -> instrument frame happens
          by rotating around the z-axis first (heading), then rotating
-         around the y-axis (pitch), then rotating around the x-axis (roll).
+         around the y-axis (pitch), then rotating around the x-axis (roll). 
+         Note this requires matrix multiplication in the reverse order.
 
        - heading is defined as the direction the x-axis points, positive
          clockwise from North (this is *opposite* the right-hand-rule
-         around the Z-axis)
+         around the Z-axis), range 0-360 degrees.
 
        - pitch is positive when the x-axis pitches up (this is *opposite* the
          right-hand-rule around the Y-axis)
@@ -99,7 +109,10 @@ def euler2orient(heading, pitch, roll, units='degrees'):
     else:
         raise Exception("Invalid units")
 
-    heading = np.pi / 2 - heading
+    heading = np.pi / 2 - heading # Converts the DOLfYN-defined heading to one that follows the right-hand-rule; 
+                                  # reports heading as rotation of the y-axis positive counterclockwise from North.
+
+    pitch = -pitch # Converts the DOLfYN-defined pitch to one that follows the right-hand-rule.
 
     ch = np.cos(heading)
     sh = np.sin(heading)
@@ -115,9 +128,9 @@ def euler2orient(heading, pitch, roll, units='degrees'):
          [-sh, ch, zero],
          [zero, zero, one], ])
     P = np.array(
-        [[cp, zero, sp],
+        [[cp, zero, -sp],
          [zero, one, zero],
-         [-sp, zero, cp], ])
+         [sp, zero, cp], ])
     R = np.array(
         [[one, zero, zero],
          [zero, cr, sr],
@@ -128,7 +141,7 @@ def euler2orient(heading, pitch, roll, units='degrees'):
 
 def orient2euler(omat):
     """
-    Calculate the euler angles from the orientation matrix.
+    Calculate DOLfYN-defined euler angles from the orientation matrix.
 
     Parameters
     ----------
@@ -138,11 +151,15 @@ def orient2euler(omat):
     Returns
     -------
     heading : np.ndarray
-      The heading angle of the ADV (degrees clockwise from North).
+      The heading angle. Heading is defined as the direction the x-axis points,
+      positive clockwise from North (this is *opposite* the right-hand-rule
+      around the Z-axis), range 0-360 degrees.
     pitch : np.ndarray
-      The pitch angle of the ADV (degrees).
+      The pitch angle (degrees). Pitch is positive when the x-axis 
+      pitches up (this is *opposite* the right-hand-rule around the Y-axis).
     roll : np.ndarray
-      The pitch angle of the ADV (degrees).
+      The roll angle (degrees). Roll is positive according to the 
+      right-hand-rule around the instument's x-axis.
 
     """
     if isinstance(omat, np.ndarray) and \
@@ -161,9 +178,9 @@ def orient2euler(omat):
     hh = np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
     hh %= 360
     return (
-        # heading (+x axis clockwise from north, range 0-360 rather than -180 to +180)
+        # heading 
         hh,
-        # pitch (positive up)
+        # pitch 
         np.rad2deg(np.arcsin(omat[0, 2])),
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
