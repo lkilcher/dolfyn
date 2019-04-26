@@ -9,6 +9,8 @@ indexing, iterating, etc.), with additional functionality that is
 designed to streamline the process of analyzing and working with
 data. Most notably, these data objects provide:
 
+I'm making some changes to the documentation!!!
+
 - a summarized view of the data structure when in interactive mode::
 
     >>> dat
@@ -121,8 +123,8 @@ the ``orient`` data group. The ``orientmat`` data item in this group
 is the orientation matrix, :math:`R`, of the instrument in the earth
 reference frame. It is a 3x3xNt array, where each 3x3 array is the `rotation matrix
 <http://en.wikipedia.org/wiki/Rotation_matrix>`_ that rotates vectors
-in the earth frame, $v_e$, into the instrument coordinate system,
-$v_i$, at each timestep:
+in the earth frame, :math:`v_e`, into the instrument coordinate system,
+:math:`v_i`, at each timestep:
 
 .. math:: v_i = R \cdot v_e
 
