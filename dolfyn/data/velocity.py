@@ -94,7 +94,7 @@ class Velocity(TimeData):
         ----------
         declination : float
            The value of the magnetic declination in degrees (positive
-           values specity that Magnetic North is clockwise from true North)
+           values specify that Magnetic North is clockwise from True North)
 
         Notes
         -----
@@ -129,11 +129,13 @@ class Velocity(TimeData):
             angle = declination
         cd = np.cos(-np.deg2rad(angle))
         sd = np.sin(-np.deg2rad(angle))
-        # The ordering is funny here because orientmat is the
-        # transpose of the inst->earth rotation matrix:
+
+        #The ordering is funny here because orientmat is the
+        #transpose of the inst->earth rotation matrix:
         Rdec = np.array([[cd, -sd, 0],
                          [sd, cd, 0],
                          [0, 0, 1]])
+
         odata = self['orient']
 
         if self.props['coord_sys'] == 'earth':

@@ -162,6 +162,7 @@ def orient2euler(omat):
       right-hand-rule around the instument's x-axis.
 
     """
+
     if isinstance(omat, np.ndarray) and \
             omat.shape[:2] == (3, 3):
         pass
@@ -185,7 +186,6 @@ def orient2euler(omat):
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
     )
-
 
 def calc_principal_heading(vel, tidal_mode=True):
     """
