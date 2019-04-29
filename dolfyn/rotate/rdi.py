@@ -233,7 +233,7 @@ def calc_orientmat(adcpo, xducer_misalign = False):
     # If the dat.config['xducer_misalign'] != 0, then this was accounted for during instrument configuration and is built into
     # the raw heading.
 
-    heading = heading + xducer_misalign 
+    heading = h + xducer_misalign 
     heading = (np.pi / 2 - heading) # Defines heading as +CCW rotation of y-axis from North, following right-hand-rule.
     roll_rdi = roll.copy()
     pitch_rdi = pitch.copy()
