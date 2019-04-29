@@ -94,7 +94,7 @@ class Velocity(TimeData):
         ----------
         declination : float
            The value of the magnetic declination in degrees (positive
-           values specity that Magnetic North is clockwise from true North)
+           values specify that Magnetic North is clockwise from True North)
 
         Notes
         -----
