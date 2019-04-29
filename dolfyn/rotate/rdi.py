@@ -235,8 +235,8 @@ def calc_orientmat(adcpo, xducer_misalign = False):
 
     heading = h + xducer_misalign 
     heading = (np.pi / 2 - heading) # Defines heading as +CCW rotation of y-axis from North, following right-hand-rule.
-    roll_rdi = roll.copy()
-    pitch_rdi = pitch.copy()
+    roll_rdi = r.copy()
+    pitch_rdi = p.copy()
     pitch = roll_rdi
     roll = pitch_rdi
 
