@@ -130,16 +130,11 @@ class Velocity(TimeData):
         cd = np.cos(-np.deg2rad(angle))
         sd = np.sin(-np.deg2rad(angle))
 
-        # The ordering is funny here because orientmat is the
-        # transpose of the inst->earth rotation matrix:
-        # Rdec = np.array([[cd, -sd, 0],
-        #                  [sd, cd, 0],
-        #                  [0, 0, 1]])
-        # NEW. Use transpose of the origianl Rdec here. The original Rdec matches the wiki for rotation
-        # about z. That's set up for inst --> ENU. We want ENU --> inst.
-        Rdec = np.array([[cd, sd, 0],
-             [-sd, cd, 0],
-            [0, 0, 1]])
+        #The ordering is funny here because orientmat is the
+        #transpose of the inst->earth rotation matrix:
+        Rdec = np.array([[cd, -sd, 0],
+                         [sd, cd, 0],
+                         [0, 0, 1]])
 
         odata = self['orient']
 
