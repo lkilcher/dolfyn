@@ -127,8 +127,12 @@ class Velocity(TimeData):
             angle = declination - self.props.pop('declination')
         else:
             angle = declination
-        cd = np.cos(-np.deg2rad(angle))
-        sd = np.sin(-np.deg2rad(angle))
+        # Original. Results in a True heading larger than magnetic heading.
+        # cd = np.cos(-np.deg2rad(angle))
+        # sd = np.sin(-np.deg2rad(angle))
+        # New. Remove the negative signs to get a CCW rotation about +z.
+        cd = np.cos(np.deg2rad(angle))
+        sd = np.sin(np.deg2rad(angle))
         # The ordering is funny here because orientmat is the
         # transpose of the inst->earth rotation matrix:
         Rdec = np.array([[cd, -sd, 0],
