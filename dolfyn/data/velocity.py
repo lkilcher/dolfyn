@@ -128,17 +128,25 @@ class Velocity(TimeData):
         else:
             angle = declination
         # Original. 
-        # cd = np.cos(-np.deg2rad(angle))
-        # sd = np.sin(-np.deg2rad(angle))
+        cd = np.cos(-np.deg2rad(angle))
+        sd = np.sin(-np.deg2rad(angle))
         # New. Remove negative sign. Will result in CCW rotation.
-        cd = np.cos(np.deg2rad(angle))
-        sd = np.sin(np.deg2rad(angle))
+        # cd = np.cos(np.deg2rad(angle))
+        # sd = np.sin(np.deg2rad(angle))
 
         # The ordering is funny here because orientmat is the
         # transpose of the inst->earth rotation matrix:
-        Rdec = np.array([[cd, -sd, 0],
-                         [sd, cd, 0],
-                         [0, 0, 1]])
+        # Rdec = np.array([[cd, -sd, 0],
+        #                  [sd, cd, 0],
+        #                  [0, 0, 1]])
+        # NEW. Instead of removing the minus signs from cd and sd above, what if we use the 
+        # transpose of the origianl Rdec here? The original Rdec matches the wiki for rotation
+        # about z. That's set up for inst --> ENU. We want ENU --> inst, so this edit makes
+        # more sense.
+        Rdec = np.array([[cd, sd, 0],
+             [-sd, cd, 0],
+            [0, 0, 1]])
+
         odata = self['orient']
 
         if self.props['coord_sys'] == 'earth':
