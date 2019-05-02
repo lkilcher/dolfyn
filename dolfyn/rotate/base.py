@@ -162,42 +162,20 @@ def orient2euler(omat):
       right-hand-rule around the instument's x-axis.
 
     """
-    # ORIGINAL. Works for ADV with head down. Comment out for now to test edits on ADV with head up.
-    # if isinstance(omat, np.ndarray) and \
-    #         omat.shape[:2] == (3, 3):
-    #     pass
-    # elif hasattr(omat['orient'], 'orientmat'):
-    #     omat = omat['orient'].orientmat
-    # # #####
-    # # Heading is direction of +x axis clockwise from north.
-    # # So, for arctan (opposite/adjacent) we want arctan(east/north)
-    # # omat columns have been reorganized in io.nortek.NortekReader.sci_microstrain to ENU
-    # # (not the original NED from the Microstrain)
 
-    # # Some conventions use rotation matrices as inst->earth, but this omat is 
-    # # earth->inst, so the order of indices may be reversed from some conventions.
-    # hh = np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
-    # hh %= 360
-    # return (
-    #     # heading 
-    #     hh,
-    #     # pitch 
-    #     np.rad2deg(np.arcsin(omat[0, 2])),
-    #     # roll
-    #     np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
-    # )
-
-    # Test for ADV with head up. If this works, will need to incorporate a conditional
-    # statement to function above to execute this part if the ADV head is up. May need to add another
-    # field to dat.props to make that happen. 
     if isinstance(omat, np.ndarray) and \
             omat.shape[:2] == (3, 3):
         pass
     elif hasattr(omat['orient'], 'orientmat'):
         omat = omat['orient'].orientmat
+    # #####
+    # Heading is direction of +x axis clockwise from north.
+    # So, for arctan (opposite/adjacent) we want arctan(east/north)
+    # omat columns have been reorganized in io.nortek.NortekReader.sci_microstrain to ENU
+    # (not the original NED from the Microstrain)
 
-    # When ADV head is up, and the above is used, roll is wrong sign and magntitude.
-    # Change how roll is created; add negative signs to both components.
+    # Some conventions use rotation matrices as inst->earth, but this omat is 
+    # earth->inst, so the order of indices may be reversed from some conventions.
     hh = np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
     hh %= 360
     return (
@@ -206,7 +184,7 @@ def orient2euler(omat):
         # pitch 
         np.rad2deg(np.arcsin(omat[0, 2])),
         # roll
-        np.rad2deg(np.arctan2(-omat[1, 2], -omat[2, 2])),
+        np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
     )
 
 def calc_principal_heading(vel, tidal_mode=True):
