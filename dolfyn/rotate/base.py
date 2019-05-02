@@ -196,12 +196,8 @@ def orient2euler(omat):
     elif hasattr(omat['orient'], 'orientmat'):
         omat = omat['orient'].orientmat
 
-    # When ADV head is up, an the above is used, heading gets east/west backward and
-    # roll If we switch the sign on the E and U columns of
-    # the ENU omat, will the heading and roll values be correct?
-    omat[:, 0] *= -1
-    omat[:, 2] *= -1
-
+    # When ADV head is up, and the above is used, roll is wrong sign and magntitude.
+    # Change how roll is created; add negative signs to both components.
     hh = np.rad2deg(np.arctan2(omat[0, 0], omat[0, 1]))
     hh %= 360
     return (
@@ -210,7 +206,7 @@ def orient2euler(omat):
         # pitch 
         np.rad2deg(np.arcsin(omat[0, 2])),
         # roll
-        np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
+        np.rad2deg(np.arctan2(-omat[1, 2], -omat[2, 2])),
     )
 
 def calc_principal_heading(vel, tidal_mode=True):
