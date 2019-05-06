@@ -206,7 +206,7 @@ def calc_orientmat(adcpo):
     rotmat[2, 1, :] = sp
     rotmat[2, 2, :] = cp * cr
 
-    # The 'orientation matrix' is the transpose of the 'rotation matrix' and will organized the matrix for INST --> EARTH.
+    # The 'orientation matrix' is the transpose of the 'rotation matrix'.
     omat = np.rollaxis(rotmat, 1) 
 
     return omat
