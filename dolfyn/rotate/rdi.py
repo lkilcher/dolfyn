@@ -1,6 +1,6 @@
 import numpy as np
 from .vector import earth2principal, inst2earth as nortek_inst2earth
-from .base import euler2orient
+
 
 
 def calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
