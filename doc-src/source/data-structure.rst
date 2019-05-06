@@ -9,8 +9,6 @@ indexing, iterating, etc.), with additional functionality that is
 designed to streamline the process of analyzing and working with
 data. Most notably, these data objects provide:
 
-I'm making some changes to the documentation!!!
-
 - a summarized view of the data structure when in interactive mode::
 
     >>> dat
@@ -160,7 +158,7 @@ according to the following conventions:
     right-hand-rule around the Y-axis)
 
   - roll is positive according to the right-hand-rule around the
-    instument's x-axis
+    instrument's x-axis
 
 Considerable care has been taken to make sure
 that these definitions of *heading*, *pitch*, *roll* and *orientmat*
