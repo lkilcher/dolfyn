@@ -147,7 +147,7 @@ def inst2earth(adcpo, reverse=False,
     adcpo.props['coord_sys'] = cs
 
 
-def calc_orientmat(adcpo:
+def calc_orientmat(adcpo):
 
     # Calculate the orientation matrix using the raw 
     # heading, pitch, roll values from the RDI binary file.
@@ -208,7 +208,5 @@ def calc_orientmat(adcpo:
 
     # The 'orientation matrix' is the transpose of the 'rotation matrix' and will organized the matrix for INST --> EARTH.
     omat = np.rollaxis(rotmat, 1) 
-
-
 
     return omat
