@@ -883,6 +883,8 @@ class adcp_loader(object):
             else:
                 dat['mpltime'][iens] = np.median(dats)
         self.finalize()
+        if 'bt_vel' in dat:
+            dat['props']['rotate_vars'].update({'bt_vel', })
         return dat
 
     def finalize(self, ):
