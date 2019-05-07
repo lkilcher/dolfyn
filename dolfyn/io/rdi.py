@@ -41,7 +41,6 @@ def read_rdi(fname, userdata=None, nens=None, keep_orient_raw=False):
     adp_data : :class:`ADPdata <dolfyn.adp.base.ADPdata>`
 
     """
-    # userdata is not used here. CLARIFY COMMENT..
     userdata = read_userdata(fname, userdata)
     with adcp_loader(fname) as ldr:
         dat = ldr.load_data(nens=nens)
@@ -49,7 +48,6 @@ def read_rdi(fname, userdata=None, nens=None, keep_orient_raw=False):
 
     od = dat['orient']
 
-    # value in userdata, otherwise None. CLARIFY COMMENT..
     od['orientmat'] = _calc_omat(dat)
 
     if 'heading' in od:
