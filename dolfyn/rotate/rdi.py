@@ -155,7 +155,7 @@ def calc_orientmat(adcpo):
     """
      Parameters
     ----------
-    -adcpo : The ADP object containing the data.
+    adcpo : The ADP object containing the data.
     
     ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
     The internal tilt sensors do not measure exactly the same
