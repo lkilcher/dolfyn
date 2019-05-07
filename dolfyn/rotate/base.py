@@ -163,7 +163,7 @@ def orient2euler(omat):
       pitches up (this is *opposite* the right-hand-rule around the Y-axis).
     roll : np.ndarray
       The roll angle (degrees). Roll is positive according to the 
-      right-hand-rule around the instument's x-axis.
+      right-hand-rule around the instrument's x-axis.
 
     """
 
