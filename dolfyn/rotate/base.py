@@ -97,7 +97,7 @@ def euler2orient(heading, pitch, roll, units='degrees'):
          right-hand-rule around the Y-axis)
 
        - roll is positive according to the right-hand-rule around the
-         instument's x-axis
+         instrument's x-axis
 
     """
     if units.lower() == 'degrees':
@@ -136,6 +136,10 @@ def euler2orient(heading, pitch, roll, units='degrees'):
          [zero, cr, sr],
          [zero, -sr, cr], ])
 
+    # As mentioned in the docs, the matrix-multiplication order is "reversed" (i.e., ZYX
+    # order of rotations happens by multiplying R*P*H).
+    # It helps to think of this as left-multiplying omat onto a vector. In which case,
+    # H gets multiplied first, then P, then R (i.e., the ZYX rotation order).
     return np.einsum('ij...,jk...,kl...->il...', R, P, H)
 
 
