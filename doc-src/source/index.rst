@@ -21,6 +21,7 @@ Table of Contents
    install
    usage
    data-structure
+   rotations
    motion-correction
    plotting-tools
    api
