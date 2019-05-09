@@ -15,7 +15,6 @@ dolfyn.ADPdata
    
       ~ADPdata.__init__
       ~ADPdata.append
-      ~ADPdata.calc_principal_angle
       ~ADPdata.clear
       ~ADPdata.copy
       ~ADPdata.fromkeys
@@ -27,6 +26,7 @@ dolfyn.ADPdata
       ~ADPdata.pop
       ~ADPdata.popitem
       ~ADPdata.rotate2
+      ~ADPdata.set_declination
       ~ADPdata.setdefault
       ~ADPdata.to_hdf5
       ~ADPdata.update

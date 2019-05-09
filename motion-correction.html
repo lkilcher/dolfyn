@@ -6,20 +6,20 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Motion Correction &#8212; DOLfYN 0.10.1 documentation</title>
+    <title>Motion Correction &#8212; DOLfYN 0.11.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/js/versionwarning.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Plotting Tools" href="plotting-tools.html" />
-    <link rel="prev" title="Data Structure" href="data-structure.html" />
+    <link rel="prev" title="Rotations and Coordinate Systems" href="rotations.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -32,8 +32,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <div class="section" id="motion-correction">
@@ -43,7 +41,7 @@
 remove motion from ADV velocity measurements when the ADV is mounted
 on a moving platform (e.g. a mooring). This approach has been found to
 be effective for removing high-frequency motion from ADV measurements,
-but cannot remove low-frequency (<span class="math notranslate nohighlight">\(\lesssim\)</span> 0.03Hz) motion
+but cannot remove low-frequency (<span class="math notranslate">\(\lesssim\)</span> 0.03Hz) motion
 because of bias-drift inherent in IMU accelerometer sensors that
 contaminates motion estimates at those frequencies.</p>
 <p>This documentation is designed to document the methods for performing
@@ -111,14 +109,14 @@ attribute (a dictionary) of the returned
 <div class="figure align-center" id="id3" style="width: 560px">
 <a class="reference internal image-reference" href="_images/adv_coord_sys3_warr.png"><img alt="ADV head and body coordinate systems." src="_images/adv_coord_sys3_warr.png" style="width: 531.0px; height: 466.79999999999995px;" /></a>
 <p class="caption"><span class="caption-text">Figure 1) Coordinate systems of the ADV body (magenta) and head
-(yellow). The <span class="math notranslate nohighlight">\(\hat{x}^\mathrm{head}\)</span> -direction is known by
+(yellow). The <span class="math notranslate">\(\hat{x}^\mathrm{head}\)</span> -direction is known by
 the black-band around the transducer arm, and the
-<span class="math notranslate nohighlight">\(\hat{x}^*\)</span> -direction is marked by a notch on the end-cap
+<span class="math notranslate">\(\hat{x}^*\)</span> -direction is marked by a notch on the end-cap
 (indiscernible in the image). The cyan arrow indicates the
-body-to-head vector, <span class="math notranslate nohighlight">\(\vec{\ell}_{head}^*\)</span> .  The perspective
-slightly distorts the fact that <span class="math notranslate nohighlight">\(\hat{x}^\mathrm{head}
-\parallel - \hat{z}^*\)</span> , <span class="math notranslate nohighlight">\(\hat{y}^\mathrm{head} \parallel
--\hat{y}^*\)</span> , and <span class="math notranslate nohighlight">\(\hat{z}^\mathrm{head} \parallel
+body-to-head vector, <span class="math notranslate">\(\vec{\ell}_{head}^*\)</span> .  The perspective
+slightly distorts the fact that <span class="math notranslate">\(\hat{x}^\mathrm{head}
+\parallel - \hat{z}^*\)</span> , <span class="math notranslate">\(\hat{y}^\mathrm{head} \parallel
+-\hat{y}^*\)</span> , and <span class="math notranslate">\(\hat{z}^\mathrm{head} \parallel
 -\hat{x}^*\)</span> .</span></p>
 </div>
 <p>The other major advantage of using these <code class="docutils literal notranslate"><span class="pre">userdata.json</span></code> files, is
@@ -233,45 +231,34 @@ Lab, <a class="reference external" href="http://www.nrel.gov/docs/fy16osti/62979
 
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">The Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data-structure.html">Data Structure</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Motion Correction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pre-deployment-requirements">Pre-Deployment Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#data-processing">Data processing</a></li>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Motion Correction</a><ul>
+<li><a class="reference internal" href="#pre-deployment-requirements">Pre-Deployment Requirements</a></li>
+<li><a class="reference internal" href="#data-processing">Data processing</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">The DOLfYN API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
-
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="data-structure.html" title="previous chapter">Data Structure</a></li>
+      <li>Previous: <a href="rotations.html" title="previous chapter">Rotations and Coordinate Systems</a></li>
       <li>Next: <a href="plotting-tools.html" title="next chapter">Plotting Tools</a></li>
   </ul></li>
 </ul>
 </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/motion-correction.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -284,14 +271,6 @@ Lab, <a class="reference external" href="http://www.nrel.gov/docs/fy16osti/62979
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -300,8 +279,8 @@ Lab, <a class="reference external" href="http://www.nrel.gov/docs/fy16osti/62979
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/motion-correction.rst.txt"

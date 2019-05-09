@@ -15,7 +15,6 @@ dolfyn.ADVdata
    
       ~ADVdata.__init__
       ~ADVdata.append
-      ~ADVdata.calc_principal_angle
       ~ADVdata.clear
       ~ADVdata.copy
       ~ADVdata.fromkeys
@@ -27,6 +26,7 @@ dolfyn.ADVdata
       ~ADVdata.pop
       ~ADVdata.popitem
       ~ADVdata.rotate2
+      ~ADVdata.set_declination
       ~ADVdata.setdefault
       ~ADVdata.to_hdf5
       ~ADVdata.update

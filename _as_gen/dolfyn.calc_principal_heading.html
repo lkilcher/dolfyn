@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.rotate2 &#8212; DOLfYN 0.11.0 documentation</title>
+    <title>dolfyn.calc_principal_heading &#8212; DOLfYN 0.11.0 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../_static/documentation_options.js"></script>
@@ -18,8 +18,8 @@
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="dolfyn.adv.motion.CorrectMotion" href="dolfyn.adv.motion.CorrectMotion.html" />
-    <link rel="prev" title="dolfyn.read" href="dolfyn.read.html" />
+    <link rel="next" title="Glossary" href="../glossary.html" />
+    <link rel="prev" title="dolfyn.adv.turbulence.TurbBinner" href="dolfyn.adv.turbulence.TurbBinner.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -34,43 +34,46 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="dolfyn-rotate2">
-<h1>dolfyn.rotate2<a class="headerlink" href="#dolfyn-rotate2" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="dolfyn-calc-principal-heading">
+<h1>dolfyn.calc_principal_heading<a class="headerlink" href="#dolfyn-calc-principal-heading" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="dolfyn.rotate2">
-<code class="descclassname">dolfyn.</code><code class="descname">rotate2</code><span class="sig-paren">(</span><em>obj</em>, <em>out_frame='earth'</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/rotate/main.html#rotate2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rotate2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate a data object to a new coordinate system.</p>
+<dt id="dolfyn.calc_principal_heading">
+<code class="descclassname">dolfyn.</code><code class="descname">calc_principal_heading</code><span class="sig-paren">(</span><em>vel</em>, <em>tidal_mode=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/rotate/base.html#calc_principal_heading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.calc_principal_heading" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the principal angle of the horizontal velocity.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>obj</strong> : <a class="reference internal" href="../api.html#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>vel</strong> : np.ndarray (2,…,Nt), or (3,…,Nt)</p>
 <blockquote>
-<div><p>The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
+<div><p>The 2D or 3D velocity array (3rd-dim is ignored in this calculation)</p>
 </div></blockquote>
-<p><strong>out_frame</strong> : string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</p>
-<blockquote>
-<div><p>The coordinate system to rotate the data into.</p>
-</div></blockquote>
-<p><strong>inplace</strong> : bool</p>
-<blockquote>
-<div><p>Operate on the input data object (True), or return a copy that
-has been rotated (False, default).</p>
-</div></blockquote>
+<p><strong>tidal_mode</strong> : bool (default: True)</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>objout</strong> : <a class="reference internal" href="../api.html#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>p_heading</strong> : float or ndarray</p>
 <blockquote class="last">
-<div><p>The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
-input object is modified in-place <em>and</em> returned (i.e.,
-<code class="docutils literal notranslate"><span class="pre">objout</span></code> is <code class="docutils literal notranslate"><span class="pre">obj</span></code>).</p>
+<div><p>The principal heading(s) in degrees clockwise from North.</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>This function rotates all variables in <code class="docutils literal notranslate"><span class="pre">obj.props['rotate_vars']</span></code>.</p>
+<dl class="docutils">
+<dt>The tidal mode follows these steps:</dt>
+<dd><ol class="first last arabic simple">
+<li>rotates vectors with negative v by 180 degrees</li>
+<li>then doubles those angles to make a complete circle again</li>
+<li>computes a mean direction from this, and halves that angle again.</li>
+<li>The returned angle is forced to be between 0 and 180. So, you
+may need to add 180 to this if you want your positive
+direction to be in the western-half of the plane.</li>
+</ol>
+</dd>
+</dl>
+<p>Otherwise, this function simply compute the average direction
+using a vector method.</p>
 </dd></dl>
 
 </div>
@@ -85,8 +88,8 @@ input object is modified in-place <em>and</em> returned (i.e.,
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="../api.html">The DOLfYN API</a><ul>
-      <li>Previous: <a href="dolfyn.read.html" title="previous chapter">dolfyn.read</a></li>
-      <li>Next: <a href="dolfyn.adv.motion.CorrectMotion.html" title="next chapter">dolfyn.adv.motion.CorrectMotion</a></li>
+      <li>Previous: <a href="dolfyn.adv.turbulence.TurbBinner.html" title="previous chapter">dolfyn.adv.turbulence.TurbBinner</a></li>
+      <li>Next: <a href="../glossary.html" title="next chapter">Glossary</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -94,7 +97,7 @@ input object is modified in-place <em>and</em> returned (i.e.,
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/_as_gen/dolfyn.rotate2.rst.txt"
+      <li><a href="../_sources/_as_gen/dolfyn.calc_principal_heading.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -122,7 +125,7 @@ input object is modified in-place <em>and</em> returned (i.e.,
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
-      <a href="../_sources/_as_gen/dolfyn.rotate2.rst.txt"
+      <a href="../_sources/_as_gen/dolfyn.calc_principal_heading.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

@@ -1,0 +1,6 @@
+dolfyn.calc\_principal\_heading
+===============================
+
+.. currentmodule:: dolfyn
+
+.. autofunction:: calc_principal_heading

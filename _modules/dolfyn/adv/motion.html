@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adv.motion &#8212; DOLfYN 0.10.1 documentation</title>
+    <title>dolfyn.adv.motion &#8212; DOLfYN 0.11.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/versionwarning.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../../about.html" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -30,8 +30,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <h1>Source code for dolfyn.adv.motion</h1><div class="highlight"><pre>
@@ -100,7 +98,6 @@
                               <span class="n">vel_filtfreq</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to_earth</span> <span class="o">=</span> <span class="n">to_earth</span>
 
-        <span class="n">rot</span><span class="o">.</span><span class="n">_check_declination</span><span class="p">(</span><span class="n">advo</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_Accel</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_acclow</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">angrt</span> <span class="o">=</span> <span class="n">advo</span><span class="p">[</span><span class="s1">&#39;orient&#39;</span><span class="p">][</span><span class="s1">&#39;angrt&#39;</span><span class="p">]</span>  <span class="c1"># No copy because not modified.</span>
@@ -131,7 +128,7 @@
     <span class="k">def</span> <span class="nf">_set_Accel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
         <span class="n">advo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">advo</span>
         <span class="k">if</span> <span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;inst&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">accel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijk,ik-&gt;jk&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">accel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij...,i...-&gt;j...&#39;</span><span class="p">,</span>
                                    <span class="n">advo</span><span class="p">[</span><span class="s1">&#39;orient&#39;</span><span class="p">][</span><span class="s1">&#39;orientmat&#39;</span><span class="p">],</span>
                                    <span class="n">advo</span><span class="p">[</span><span class="s1">&#39;orient&#39;</span><span class="p">][</span><span class="s1">&#39;accel&#39;</span><span class="p">])</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;earth&#39;</span><span class="p">:</span>
@@ -253,7 +250,7 @@
                            <span class="p">])</span>
 
         <span class="k">if</span> <span class="n">to_earth</span><span class="p">:</span>
-            <span class="n">velrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;jik,jlk-&gt;ilk&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">advo</span><span class="p">[</span><span class="s1">&#39;orientmat&#39;</span><span class="p">],</span> <span class="n">velrot</span><span class="p">)</span>
+            <span class="n">velrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ji...,j...-&gt;i...&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">advo</span><span class="p">[</span><span class="s1">&#39;orientmat&#39;</span><span class="p">],</span> <span class="n">velrot</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">dimflag</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">velrot</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
@@ -403,8 +400,7 @@
                         <span class="s1">&#39;motion corrected.&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;inst&#39;</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;The data object must be in the &#39;</span>
-                        <span class="s1">&#39;instrument frame to be motion corrected.&#39;</span><span class="p">)</span>
+        <span class="n">advo</span><span class="o">.</span><span class="n">rotate2</span><span class="p">(</span><span class="s1">&#39;inst&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Be sure the velocity data has been rotated to the body frame.</span>
     <span class="n">rot</span><span class="o">.</span><span class="n">_rotate_vel2body</span><span class="p">(</span><span class="n">advo</span><span class="p">)</span>
@@ -439,7 +435,7 @@
         <span class="c1"># 4) Rotate back to head-coord (einsum),</span>
         <span class="n">velrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,kj-&gt;ik&#39;</span><span class="p">,</span>
                            <span class="n">transMat</span><span class="p">,</span>
-                           <span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,jkl-&gt;ikl&#39;</span><span class="p">,</span>
+                           <span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,j...-&gt;i...&#39;</span><span class="p">,</span>
                                                  <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">transMat</span><span class="p">),</span>
                                                  <span class="n">velrot</span><span class="p">)))</span>
         <span class="c1"># 5) Rotate back to body-coord.</span>
@@ -608,7 +604,7 @@
             <span class="c1"># 4) Rotate back to head-coord (einsum),</span>
             <span class="n">velrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,kj-&gt;ik&#39;</span><span class="p">,</span>
                                <span class="n">transMat</span><span class="p">,</span>
-                               <span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,jkl-&gt;ikl&#39;</span><span class="p">,</span>
+                               <span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,j...-&gt;i...&#39;</span><span class="p">,</span>
                                                      <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">transMat</span><span class="p">),</span>
                                                      <span class="n">velrot</span><span class="p">)))</span>
             <span class="c1"># 5) Rotate back to body-coord.</span>
@@ -692,7 +688,11 @@
                             <span class="s1">&#39;motion corrected.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;inst_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ADV&#39;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;This motion correction tool currently only works for ADV data objects.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;This motion correction tool currently only works &quot;</span>
+                            <span class="s2">&quot;for ADV data objects.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">advo</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;inst&#39;</span><span class="p">:</span>
+            <span class="n">advo</span><span class="o">.</span><span class="n">rotate2</span><span class="p">(</span><span class="s1">&#39;inst&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">calcobj</span> <span class="o">=</span> <span class="n">CalcMotion</span><span class="p">(</span><span class="n">advo</span><span class="p">,</span>
                              <span class="n">accel_filtfreq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">accel_filtfreq</span><span class="p">,</span>
@@ -738,33 +738,10 @@
 </pre></div>
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">The Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../data-structure.html">Data Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../motion-correction.html">Motion Correction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The DOLfYN API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
-</ul>
-
-<div class="relations">
+        <div class="sphinxsidebarwrapper"><div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
@@ -785,14 +762,6 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -801,8 +770,8 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
 

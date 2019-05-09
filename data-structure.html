@@ -6,19 +6,19 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Data Structure &#8212; DOLfYN 0.10.1 documentation</title>
+    <title>Data Structure &#8212; DOLfYN 0.11.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/js/versionwarning.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Motion Correction" href="motion-correction.html" />
+    <link rel="next" title="Rotations and Coordinate Systems" href="rotations.html" />
     <link rel="prev" title="The Basics" href="usage.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -32,8 +32,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <div class="section" id="data-structure">
@@ -49,7 +47,7 @@ data. Most notably, these data objects provide:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span>
 <span class="go">&lt;ADV data object&gt;</span>
 <span class="go">  . 1.05 hours (started: Jun 12, 2012 12:00)</span>
-<span class="go">  . EARTH-frame</span>
+<span class="go">  . INST-frame</span>
 <span class="go">  . (120530 pings @ 32Hz)</span>
 <span class="go">  *------------</span>
 <span class="go">  | mpltime                  : &lt;time_array; (120530,); float64&gt;</span>
@@ -71,80 +69,6 @@ and <code class="docutils literal notranslate"><span class="pre">'env.temp'</spa
 </ul>
 <p>See the <a class="reference external" href="https://github.com/lkilcher/pyDictH5/blob/master/README.rst">pyDictH5 README</a> for
 additional details.</p>
-<div class="section" id="rotations-and-coordinate-systems">
-<span id="rotations"></span><h2>Rotations and Coordinate Systems<a class="headerlink" href="#rotations-and-coordinate-systems" title="Permalink to this headline">¶</a></h2>
-<p>Coordinate systems (a.k.a. reference frames) specify the coordinate
-directions of vector data in the data object. The values in the list
-<cite>dat.props[‘rotate_vars’]</cite> specifies the vectors that are rotated when
-changing between different coordinate systems. <strong>You can also create
-`dat._rotate_*` functions to perform additional rotation operations. I
-need to document these!</strong></p>
-<p>The first dimension of these vectors are the coordinate
-systems. DOLfYN supports four primary coordinate systems:</p>
-<ul>
-<li><p class="first"><strong>BEAM</strong>: this is the coordinate system of the ‘along-beam’
-velocities. When a data object is in this coordinate system, only
-the velocity data (i.e., the variables in <cite>dat.props[‘rotate_vars’]</cite>
-starting with ‘<cite>vel’</cite>) is in beam coordinates. Other vector
-variables listed in <cite>‘rotate_vars’</cite> (e.g., <cite>dat.orient.AngRt</cite>, for
-instruments with IMUs) are in the INST frame. This coordinate system
-is <em>not</em> ortho-normal. When the data object is in BEAM coordinates,
-the first dimension of the velocity vectors are: [beam1, beam2,
-… beamN].</p>
-</li>
-<li><p class="first"><strong>INST</strong>: this is the ‘instrument’ coordinate system defined by the
-manufacturer. This coordinate system is orth-normal, but is not
-necessarily fixed. That is, if the instrument is rotating, then this
-coordinate system changes relative to the earth. When the data
-object is in INST coordinates, the first dimension of the vectors
-are: [X, Y, Z, …].</p>
-<p>Note: instruments with more than three beams will have more than
-three coordinate directions. See the documentation for your specific
-instrument to see how ‘extra’ dimensions are handled by DOLfYN. <strong>I
-need to update this more</strong>.</p>
-</li>
-<li><p class="first"><strong>EARTH</strong>: the earth coordinate system is the ‘rotationally-fixed’
-coordinate system. This coordinate system is ‘fixed’ in the sense
-that it does not rotate, but it may not be ‘stationary’ if the
-instrument slides around translationally (see the
-<a class="reference internal" href="motion-correction.html#motion-correction"><span class="std std-ref">Motion Correction</span></a> section for details on how to correct for
-translational motion). When the data object is in EARTH coordinates,
-the first dimension of the vectors are: [East, North, Up, …].</p>
-</li>
-<li><p class="first"><strong>PRINCIPAL</strong>: the principal coordinate system is similar to the
-earth coordinate system (it is fixed), but it has been rotated in
-the horizontal plane to align with the flow in one way or
-another. In this coordinate system the first dimension of the
-vectors are: [Stream-wise, Cross-stream, Up]. By default, the
-stream-wise direction is determined using the
-<cite>:func:&lt;data.velocity.calc_principal_angle&gt;</cite> function. Or, you can
-specify the rotation direction directly by setting
-<cite>dat.props[‘principal_angle’]</cite> to the rotation angle by which you
-want to rotate the horizontal velocity, in units of radians. This
-direction (positive counter-clockwise from east) will be the first
-row of vectors (i.e., the <em>Streamwise</em> direction).</p>
-</li>
-</ul>
-<p>To rotate a data object into one of these coordinate systems, simply
-use the <cite>rotate2</cite> method:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dat_earth</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">rotate2</span><span class="p">(</span><span class="s1">&#39;earth&#39;</span><span class="p">)</span>  <span class="c1"># (&quot;rotate to earth&quot;)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dat_earth</span>
-<span class="go">&lt;ADV data object&gt;</span>
-<span class="go">  . 1.05 hours (started: Jun 12, 2012 12:00)</span>
-<span class="go">  . EARTH-frame</span>
-<span class="go">  . (120530 pings @ 32Hz)</span>
-<span class="go">  *------------</span>
-<span class="go">  | mpltime                  : &lt;time_array; (120530,); float64&gt;</span>
-<span class="go">  | vel                      : &lt;array; (3, 120530); float32&gt;</span>
-<span class="go">  + config                   : + DATA GROUP</span>
-<span class="go">  + env                      : + DATA GROUP</span>
-<span class="go">  + orient                   : + DATA GROUP</span>
-<span class="go">  + props                    : + DATA GROUP</span>
-<span class="go">  + signal                   : + DATA GROUP</span>
-<span class="go">  + sys                      : + DATA GROUP</span>
-</pre></div>
-</div>
-</div>
 <div class="section" id="data-description-and-units">
 <span id="units"></span><h2>Data Description and Units<a class="headerlink" href="#data-description-and-units" title="Permalink to this headline">¶</a></h2>
 <p>DOLfYN generally uses the <a class="reference external" href="https://en.wikipedia.org/wiki/MKS_system_of_units">*MKS* system</a>, with most
@@ -359,13 +283,13 @@ most common variables found here are described in Table 2.</p>
 <td>This is the sample rate of the instrument [Hz]</td>
 </tr>
 <tr class="row-odd"><td>coord_sys*</td>
-<td>The coordinate system of the data object. When a data object is rotated to a new coordinate system using the <code class="docutils literal notranslate"><span class="pre">dat.rotate2()</span></code> method, the value of <code class="docutils literal notranslate"><span class="pre">dat.props['coord_sys']</span></code> is updated to reflect the final coordinate system. Valid values are: <strong>beam</strong>, <strong>inst</strong>, <strong>earth</strong>, and <strong>principal</strong>. For further details on these coordinate systems see the <a class="reference internal" href="#rotations"><span class="std std-ref">Rotations and Coordinate Systems</span></a> section.</td>
+<td>The coordinate system of the data object. When a data object is rotated to a new coordinate system using the <code class="docutils literal notranslate"><span class="pre">dat.rotate2()</span></code> method, the value of <code class="docutils literal notranslate"><span class="pre">dat.props['coord_sys']</span></code> is updated to reflect the final coordinate system. Valid values are: <strong>beam</strong>, <strong>inst</strong>, <strong>earth</strong>, and <strong>principal</strong>. For further details on these coordinate systems see the <a class="reference internal" href="rotations.html#rotations"><span class="std std-ref">Rotations and Coordinate Systems</span></a> section.</td>
 </tr>
 <tr class="row-even"><td>rotate_vars*</td>
 <td>The variables in the data object that should be rotated when rotating the data object.</td>
 </tr>
-<tr class="row-odd"><td>declination</td>
-<td>The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North).</td>
+<tr class="row-odd"><td>declination*</td>
+<td>The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North). Set this value using <code class="docutils literal notranslate"><span class="pre">dat.set_declination(&lt;value&gt;)</span></code>.</td>
 </tr>
 <tr class="row-even"><td>declination_in_heading*</td>
 <td>A boolean specifying whether the heading includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North).</td>
@@ -373,40 +297,37 @@ most common variables found here are described in Table 2.</p>
 <tr class="row-odd"><td>declination_in_orientmat*</td>
 <td>A boolean specifying whether the <code class="docutils literal notranslate"><span class="pre">orient.orientmat</span></code> includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North).</td>
 </tr>
-<tr class="row-even"><td>principal_angle</td>
-<td>The horizontal angle between the earth coordinate system (or whatever <cite>coord_sys_principal_ref</cite> is) and the <em>principal axes</em> of the flow (u: streamwise, v: cross-stream, w: up). [radians, positive means principal axis is clockwise from earth].</td>
+<tr class="row-even"><td>principal_heading</td>
+<td>The heading of the +u direction for the ‘principal’ coordinate system [degrees clockwise from north].</td>
 </tr>
-<tr class="row-odd"><td>coord_sys_principal_ref*</td>
-<td>The reference frame in which principal_angle was calculated.</td>
-</tr>
-<tr class="row-even"><td>has imu*</td>
+<tr class="row-odd"><td>has imu*</td>
 <td>A boolean indicating whether the instrument has an inertial motion sensor/unit.</td>
 </tr>
-<tr class="row-odd"><td>inst_make*</td>
+<tr class="row-even"><td>inst_make*</td>
 <td>The manufacturer name.</td>
 </tr>
-<tr class="row-even"><td>inst_model*</td>
+<tr class="row-odd"><td>inst_model*</td>
 <td>The instrument model.</td>
 </tr>
-<tr class="row-odd"><td>DutyCycle_NBurst*</td>
+<tr class="row-even"><td>DutyCycle_NBurst*</td>
 <td>The number of pings in a burst.</td>
 </tr>
-<tr class="row-even"><td>DutyCycle_NCycle*</td>
+<tr class="row-odd"><td>DutyCycle_NCycle*</td>
 <td>The time – in number of pings – before the next burst starts. (this may be incorrect for some instrument types, please <a class="reference external" href="http://github.com/lkilcher/dolfyn/issues/">report issues</a>)</td>
 </tr>
-<tr class="row-odd"><td>body2head_vec</td>
+<tr class="row-even"><td>body2head_vec</td>
 <td>The vector from the center of the ADV body reference frame to the center of the head’s reference frame, <em>in coordinates of the body reference frame</em>. For ADPs this is always zero because the two coordinate systems are centered at the same place.</td>
 </tr>
-<tr class="row-even"><td>body2head_rotmat</td>
+<tr class="row-odd"><td>body2head_rotmat</td>
 <td>The rotation matrix that rotates vectors from the instrument body reference-frame to the head reference-frame. For ADPs this is always the identity matrix. Valid values are: 3-by-3 valid rotation matrices, or: <code class="docutils literal notranslate"><span class="pre">'eye'</span></code>, <code class="docutils literal notranslate"><span class="pre">'identity'</span></code>, or <code class="docutils literal notranslate"><span class="pre">1</span></code> all of which specify that it is the identity matrix. This is typically used for cable-head ADVs where the ADV head is not oriented the same as the ADV body.</td>
 </tr>
-<tr class="row-odd"><td>motion accel_filtfreq Hz</td>
+<tr class="row-even"><td>motion accel_filtfreq Hz</td>
 <td>The filter-frequency for the computing translational motion from the acceleration signal of an IMU. This is only used for motion correction. This high-pass filter is applied prior to integrating acceleration. This value is only used if when <code class="docutils literal notranslate"><span class="pre">accel_filtfreq</span></code> is not explicitly specified when motion-correcting</td>
 </tr>
-<tr class="row-even"><td>motion vel_filtfreq Hz</td>
+<tr class="row-odd"><td>motion vel_filtfreq Hz</td>
 <td>The filter-frequency for the computing translational motion from the acceleration signal of an IMU. This is only used for motion correction. This high-pass filter is applied after integrating acceleration. This value is only used if when <code class="docutils literal notranslate"><span class="pre">vel_filtfreq</span></code> is not explicitly specified when motion-correcting.</td>
 </tr>
-<tr class="row-odd"><td>lonlat†</td>
+<tr class="row-even"><td>lonlat†</td>
 <td>The location of the measurements in decimal degrees. Longitude is positive west of the prime-meridian, and latitude is positive North of the equator.</td>
 </tr>
 </tbody>
@@ -550,50 +471,38 @@ object but are provided as attributes (shortcuts) to DOLfYN data objects.</p>
 
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">The Basics</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Data Structure</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#rotations-and-coordinate-systems">Rotations and Coordinate Systems</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#data-description-and-units">Data Description and Units</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#user-meta-data-dat-props">User Meta-Data (<code class="docutils literal notranslate"><span class="pre">dat.props</span></code>)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#specify-meta-data-in-a-json-file">Specify meta-data in a JSON file</a></li>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Data Structure</a><ul>
+<li><a class="reference internal" href="#data-description-and-units">Data Description and Units</a></li>
+<li><a class="reference internal" href="#user-meta-data-dat-props">User Meta-Data (<code class="docutils literal notranslate"><span class="pre">dat.props</span></code>)</a><ul>
+<li><a class="reference internal" href="#specify-meta-data-in-a-json-file">Specify meta-data in a JSON file</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#data-shortcuts-properties">Data Shortcuts (properties)</a></li>
+<li><a class="reference internal" href="#data-shortcuts-properties">Data Shortcuts (properties)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="motion-correction.html">Motion Correction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">The DOLfYN API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
-
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="usage.html" title="previous chapter">The Basics</a></li>
-      <li>Next: <a href="motion-correction.html" title="next chapter">Motion Correction</a></li>
+      <li>Next: <a href="rotations.html" title="next chapter">Rotations and Coordinate Systems</a></li>
   </ul></li>
 </ul>
 </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/data-structure.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -606,14 +515,6 @@ object but are provided as attributes (shortcuts) to DOLfYN data objects.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -622,8 +523,8 @@ object but are provided as attributes (shortcuts) to DOLfYN data objects.</p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/data-structure.rst.txt"

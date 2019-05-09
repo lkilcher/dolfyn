@@ -1,0 +1,6 @@
+dolfyn.read
+===========
+
+.. currentmodule:: dolfyn
+
+.. autofunction:: read

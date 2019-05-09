@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.data.velocity &#8212; DOLfYN 0.10.1 documentation</title>
+    <title>dolfyn.data.velocity &#8212; DOLfYN 0.11.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/versionwarning.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../../about.html" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -30,8 +30,6 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <h1>Source code for dolfyn.data.velocity</h1><div class="highlight"><pre>
@@ -123,6 +121,75 @@
 <span class="sd">        True</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Velocity.set_declination"><a class="viewcode-back" href="../../../api.html#dolfyn.Velocity.set_declination">[docs]</a>    <span class="k">def</span> <span class="nf">set_declination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declination</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the declination of the data object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        declination : float</span>
+<span class="sd">           The value of the magnetic declination in degrees (positive</span>
+<span class="sd">           values specify that Magnetic North is clockwise from True North)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method modifies the data object in the following ways:</span>
+
+<span class="sd">        - If the data-object is in the *earth* reference frame at the time of</span>
+<span class="sd">          setting declination, it will be rotated into the &quot;*True-East*,</span>
+<span class="sd">          *True-North*, Up&quot; (hereafter, ETU) coordinate system</span>
+
+<span class="sd">        - ``dat[&#39;orient&#39;][&#39;orientmat&#39;]`` is modified to be an ETU to</span>
+<span class="sd">          instrument (XYZ) rotation matrix (rather than the magnetic-ENU to</span>
+<span class="sd">          XYZ rotation matrix). Therefore, all rotations to/from the &#39;earth&#39;</span>
+<span class="sd">          frame will now be to/from this ETU coordinate system.</span>
+
+<span class="sd">        - The value of the specified declination will be stored in</span>
+<span class="sd">          ``dat.props[&#39;declination&#39;]``</span>
+
+<span class="sd">        - ``dat[&#39;orient&#39;][&#39;heading&#39;]`` is adjusted for declination</span>
+<span class="sd">          (i.e., it is relative to True North).</span>
+
+<span class="sd">        - If ``dat[&#39;props&#39;][&#39;principal_heading&#39;]`` is set, it is</span>
+<span class="sd">          adjusted to account for the orientation of the new &#39;True&#39;</span>
+<span class="sd">          earth coordinate system (i.e., calling set_declination on a</span>
+<span class="sd">          data object in the principal coordinate system, then calling</span>
+<span class="sd">          dat.rotate2(&#39;earth&#39;) will yield a data object in the new</span>
+<span class="sd">          &#39;True&#39; earth coordinate system)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;declination&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">]:</span>
+            <span class="n">angle</span> <span class="o">=</span> <span class="n">declination</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;declination&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">=</span> <span class="n">declination</span>
+        <span class="n">cd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span>
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span>
+
+        <span class="c1">#The ordering is funny here because orientmat is the</span>
+        <span class="c1">#transpose of the inst-&gt;earth rotation matrix:</span>
+        <span class="n">Rdec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cd</span><span class="p">,</span> <span class="o">-</span><span class="n">sd</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                         <span class="p">[</span><span class="n">sd</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                         <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+
+        <span class="n">odata</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;orient&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;earth&#39;</span><span class="p">:</span>
+            <span class="n">rotate2earth</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rotate2</span><span class="p">(</span><span class="s1">&#39;inst&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rotate2earth</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">odata</span><span class="p">[</span><span class="s1">&#39;orientmat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;kj...,ij-&gt;ki...&#39;</span><span class="p">,</span>
+                                       <span class="n">odata</span><span class="p">[</span><span class="s1">&#39;orientmat&#39;</span><span class="p">],</span>
+                                       <span class="n">Rdec</span><span class="p">,</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;heading&#39;</span> <span class="ow">in</span> <span class="n">odata</span><span class="p">:</span>
+            <span class="n">odata</span><span class="p">[</span><span class="s1">&#39;heading&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">angle</span>
+        <span class="k">if</span> <span class="n">rotate2earth</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rotate2</span><span class="p">(</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;principal_heading&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;principal_heading&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">angle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;declination&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">declination</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;declination_in_orientmat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="Velocity.__init__"><a class="viewcode-back" href="../../../_as_gen/dolfyn.Velocity.html#dolfyn.Velocity.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">TimeData</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -238,54 +305,6 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">rotate2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_frame</span><span class="o">=</span><span class="n">out_frame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Velocity.calc_principal_angle"><a class="viewcode-back" href="../../../api.html#dolfyn.Velocity.calc_principal_angle">[docs]</a>    <span class="k">def</span> <span class="nf">calc_principal_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">bin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the principal angle of the horizontal velocity.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-
-<span class="sd">        bin : {int or None}</span>
-<span class="sd">          For ADP objects, this is the depth bin where the principal</span>
-<span class="sd">          angle is calculated. If it is None (default), the</span>
-<span class="sd">          depth-averaged velocity is used.</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-
-<span class="sd">        This function sets (overwrites) the values of</span>
-<span class="sd">        ``self[&#39;props&#39;][&#39;principal_angle&#39;]``, and</span>
-<span class="sd">        ``self[&#39;props&#39;][&#39;coord_sys_principal_ref&#39;]``.</span>
-
-<span class="sd">        .. morehere: document how exactly the principal angle is calculated.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="s1">&#39;inst&#39;</span><span class="p">,</span>
-                                                      <span class="s1">&#39;enu&#39;</span><span class="p">,</span> <span class="s1">&#39;xyz&#39;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The principal angle should only be estimated &quot;</span>
-                            <span class="s2">&quot;if the coordinate system is either &#39;earth&#39; or &quot;</span>
-                            <span class="s2">&quot;&#39;inst&#39;.&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;coord_sys_principal_ref&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;coord_sys&#39;</span><span class="p">]</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">U</span>  <span class="c1"># horizontal velocity as a complex number</span>
-        <span class="k">if</span> <span class="nb">bin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="nb">bin</span><span class="p">]</span>
-        <span class="n">dt</span><span class="p">[</span><span class="n">dt</span><span class="o">.</span><span class="n">imag</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="c1"># Now double the angle, so that angles near pi and 0 get averaged</span>
-        <span class="c1"># together correctly:</span>
-        <span class="n">dt</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">dt</span><span class="p">))</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
-        <span class="c1"># Divide the angle by 2 to remove the doubling done on the previous</span>
-        <span class="c1"># line.</span>
-        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="c1"># Angle returns values between -pi and pi.  I want the</span>
-        <span class="c1"># principal angle always to be between 0 and pi.  Therefore,</span>
-        <span class="c1"># add pi to the negative ones.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;props&#39;</span><span class="p">][</span><span class="s1">&#39;principal_angle&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_repr_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">):</span>
@@ -684,33 +703,10 @@
 </pre></div>
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">DOLfYN</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Download and Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">The Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../data-structure.html">Data Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../motion-correction.html">Motion Correction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../plotting-tools.html">Plotting Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The DOLfYN API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
-</ul>
-
-<div class="relations">
+        <div class="sphinxsidebarwrapper"><div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
@@ -731,14 +727,6 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
@@ -747,8 +735,8 @@
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
 

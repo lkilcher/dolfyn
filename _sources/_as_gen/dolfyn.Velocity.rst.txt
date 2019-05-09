@@ -15,7 +15,6 @@ dolfyn.Velocity
    
       ~Velocity.__init__
       ~Velocity.append
-      ~Velocity.calc_principal_angle
       ~Velocity.clear
       ~Velocity.copy
       ~Velocity.fromkeys
@@ -27,6 +26,7 @@ dolfyn.Velocity
       ~Velocity.pop
       ~Velocity.popitem
       ~Velocity.rotate2
+      ~Velocity.set_declination
       ~Velocity.setdefault
       ~Velocity.to_hdf5
       ~Velocity.update
