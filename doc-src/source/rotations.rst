@@ -73,11 +73,11 @@ directions, which are defined by the following coordinate systems:
   axis) to align with the flow. In this coordinate system the first
   dimension of a vector is meant to be: [Stream-wise, Cross-stream,
   Up]. This coordinate system is defined by the variable
-  ``dat.props['principal_heading']``. This variable defines the
-  rotation angle that the principal coordinate system is rotated
-  relative to the earth coordinate system around the Up axis, positive
-  according to the right-hand-rule (i.e., counter-clockwise). See the
-  `Principal Heading`_ section for further details.
+  ``dat.props['principal_heading']``, which specifies the
+  principal coordinate system's :math:`+u` direction. The
+  :math:`v` direction is then defined by the right-hand-rule (with
+  :math:`w` up). See the `Principal Heading`_ section for further
+  details.
 
 To rotate a data object into one of these coordinate systems, simply
 use the ``rotate2`` method::
