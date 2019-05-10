@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- added `calc_principal_heading` function
 		- principal rotations only from earth
 	- ad2cp earth2principal rotations now supported
+	- Major improvements to documentation of rotations (Thanks Michelle Fogarty!)
 
 ## Version 0.10.1
 	- Add the `.shortcuts` property
