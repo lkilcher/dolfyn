@@ -30,23 +30,34 @@ def test_rotate_beam2inst(make_data=False):
 
 def test_rotate_inst2beam(make_data=False):
 
-    # # The reverse RDI rotation doesn't work b/c of NaN's in one beam
-    # # that propagate to others.
-    # td = load('RDI_test01_rotate_beam2inst.h5')
-    # td.rotate('beam', inplace=True)
+    td = load('RDI_test01_rotate_beam2inst.h5')
+    td.rotate2('beam', inplace=True)
     td_awac = load('AWAC_test01_earth2inst.h5')
     td_awac.rotate2('beam', inplace=True)
+    td_sig = load('BenchFile01_rotate_beam2inst.h5')
+    td_sig.rotate2('beam', inplace=True)
+    td_sigi = load('Sig1000_IMU_rotate_beam2inst.h5')
+    td_sigi.rotate2('beam', inplace=True)
 
     if make_data:
         save(td_awac, 'AWAC_test01_inst2beam.h5')
         return
 
+    cd_td = tr.dat_rdi.copy()
     cd_awac = load('AWAC_test01_inst2beam.h5')
+    cd_sig = tr.dat_sig.copy()
+    cd_sigi = tr.dat_sigi.copy()
+
+    # # The reverse RDI rotation doesn't work b/c of NaN's in one beam
+    # # that propagate to others, so we impose that here.
+    cd_td['vel'][:, np.isnan(cd_td['vel']).any(0)] = np.NaN
 
     msg = "adp.rotate.beam2inst gives unexpected REVERSE results for {}"
     for t, c, msg in (
-            # (td, dat_rdi, msg.format('RDI_test01')),
+            (td, cd_td, msg.format('RDI_test01')),
             (td_awac, cd_awac, msg.format('AWAC_test01')),
+            (td_sig, cd_sig, msg.format('BenchFile01')),
+            (td_sigi, cd_sigi, msg.format('Sig1000_IMU')),
     ):
         yield data_equiv, t, c, msg
 
