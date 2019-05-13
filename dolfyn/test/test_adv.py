@@ -1,5 +1,6 @@
 import numpy as np
 import dolfyn.adv.api as avm
+import dolfyn
 from dolfyn import read_example as read
 import dolfyn.test.base as tb
 
@@ -133,7 +134,7 @@ def test_motion(make_data=False):
 def test_heading(make_data=False):
     td = dat_imu.copy()
 
-    head, pitch, roll = avm.rotate.orient2euler(td)
+    head, pitch, roll = dolfyn.orient2euler(td)
     od = td['orient']
     od['pitch'] = pitch
     od['roll'] = roll
