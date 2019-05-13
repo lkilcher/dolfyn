@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.linalg import det
+from numpy.linalg import det, inv
 
 
 class BadDeterminantWarning(UserWarning):
@@ -38,7 +38,7 @@ def is_positive_definite(tensor):
     t = np.moveaxis(tensor, [0, 1], [-2, -1])
     val = t[..., 0, 0] > 0
     for idx in [2, 3]:
-        val &= np.linalg.det(t[..., :idx, :idx]) > 0
+        val &= det(t[..., :idx, :idx]) > 0
     return val
 
 
@@ -237,3 +237,94 @@ def calc_principal_heading(vel, tidal_mode=True):
     else:
         pang = np.angle(np.mean(dt, -1))
     return (90 - np.rad2deg(pang))
+
+
+def _calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
+    """Calculate the rotation matrix from beam coordinates to
+    instrument head coordinates for an RDI ADCP.
+
+    Parameters
+    ----------
+    theta : is the angle of the heads (usually 20 or 30 degrees)
+
+    convex : is a flag for convex or concave head configuration.
+
+    degrees : is a flag which specifies whether theta is in degrees
+        or radians (default: degrees=True)
+    """
+    if degrees:
+        theta = np.deg2rad(theta)
+    if convex == 0 or convex == -1:
+        c = -1
+    else:
+        c = 1
+    a = 1 / (2. * np.sin(theta))
+    b = 1 / (4. * np.cos(theta))
+    d = a / (2. ** 0.5)
+    return np.array([[c * a, -c * a, 0, 0],
+                     [0, 0, -c * a, c * a],
+                     [b, b, b, b],
+                     [d, d, -d, -d]])
+
+
+def beam2inst(dat, reverse=False, force=False):
+    """Rotate velocities from beam to instrument coordinates.
+
+    Parameters
+    ----------
+    dat : The ADP object containing the data.
+
+    reverse : bool (default: False)
+           If True, this function performs the inverse rotation
+           (inst->beam).
+    force : bool (default: False), or list
+        When true do not check which coordinate system the data is in
+        prior to performing this rotation. When forced-rotations are
+        applied, the string '-forced!' is appended to the
+        dat.props['coord_sys'] string. If force is a list, it contains
+        a list of variables that should be rotated (rather than the
+        default values in adpo.props['rotate_vars']).
+
+    """
+    if not force:
+        if not reverse and dat.props['coord_sys'].lower() != 'beam':
+            raise ValueError('The input must be in beam coordinates.')
+        if reverse and dat.props['coord_sys'] != 'inst':
+            raise ValueError('The input must be in inst coordinates.')
+
+    if dat.props['inst_make'].lower() == 'rdi':
+        try:
+            rotmat = dat.config.rotmat
+        except AttributeError:
+            rotmat = _calc_beam_rotmatrix(
+                dat.config.beam_angle,
+                dat.config.beam_pattern == 'convex')
+    elif dat.props['inst_make'].lower() == 'nortek' and \
+         dat.props['inst_model'].lower().startswith('signature'):
+        rotmat = dat.config['TransMatrix']
+    elif dat.props['inst_make'].lower() == 'nortek':
+        # Nortek Vector and AWAC
+        rotmat = dat.config['head']['TransMatrix']
+    else:
+        raise Exception("Unrecognized device type.")
+
+    if isinstance(force, (list, set, tuple)):
+        # You can force a distinct set of variables to be rotated by
+        # specifying it here.
+        rotate_vars = force
+    else:
+        rotate_vars = {ky for ky in dat.props['rotate_vars']
+                       if ky.startswith('vel')}
+
+    cs = 'inst'
+    if reverse:
+        # Can't use transpose because rotation is not between
+        # orthogonal coordinate systems
+        rotmat = inv(rotmat)
+        cs = 'beam'
+    for ky in rotate_vars:
+        dat[ky] = np.einsum('ij,j...->i...', rotmat, dat[ky])
+    if force:
+        dat.props['coord_sys'] += '-forced'
+    else:
+        dat.props['coord_sys'] = cs
