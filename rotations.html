@@ -64,14 +64,20 @@ systems.  The first dimension of these vectors are their coordinate
 directions, which are defined by the following coordinate systems:</p>
 <ul>
 <li><p class="first"><strong>BEAM</strong>: this is the coordinate system of the ‘along-beam’
-velocities. When a data object is in this coordinate system, only
-the velocity data (i.e., the variables in
-<code class="docutils literal notranslate"><span class="pre">dat.props['rotate_vars']</span></code> starting with <code class="docutils literal notranslate"><span class="pre">'vel'</span></code>) is in beam
-coordinates. Other vector variables listed in <cite>‘rotate_vars’</cite> (e.g.,
-<cite>dat.orient.AngRt</cite>) are in the INST frame. This coordinate system is
-<em>not</em> ortho-normal. When the data object is in BEAM coordinates, the
-first dimension of the velocity vectors are: [beam1, beam2,
-… beamN].</p>
+velocities.  When the data object is in BEAM coordinates, the first
+dimension of the velocity vectors are: [beam1, beam2,
+… beamN]. This coordinate system is <em>not</em> ortho-normal, which
+means that the inverse rotation (inst to beam) cannot be computed
+using the transpose of the beam-to-inst rotation matrix. Instead,
+the inverse of the matrix must be computed explicitly, which is done
+internally in DOLfYN (in <code class="xref py py-func docutils literal notranslate"><span class="pre">beam2inst()</span></code>).</p>
+<p>When a data object is in this coordinate system, only the velocity
+data (i.e., the variables in <code class="docutils literal notranslate"><span class="pre">dat.props['rotate_vars']</span></code> starting
+with <code class="docutils literal notranslate"><span class="pre">'vel'</span></code>) is in beam coordinates. Other vector variables
+listed in <code class="docutils literal notranslate"><span class="pre">'rotate_vars'</span></code> are in the INST frame (e.g.,
+<cite>dat.orient.AngRt</cite>). This is true for data read from binary files
+that is in beam coordinates, and also when rotating from other
+coordinate systems to beam coordinates.</p>
 </li>
 <li><p class="first"><strong>INST</strong>: this is the ‘instrument’ coordinate system defined by the
 manufacturer. This coordinate system is orth-normal, but is not
@@ -102,11 +108,11 @@ system that has been rotated in the horizontal plane (around the Up
 axis) to align with the flow. In this coordinate system the first
 dimension of a vector is meant to be: [Stream-wise, Cross-stream,
 Up]. This coordinate system is defined by the variable
-<code class="docutils literal notranslate"><span class="pre">dat.props['principal_heading']</span></code>. This variable defines the
-rotation angle that the principal coordinate system is rotated
-relative to the earth coordinate system around the Up axis, positive
-according to the right-hand-rule (i.e., counter-clockwise). See the
-<a class="reference internal" href="#principal-heading">Principal Heading</a> section for further details.</p>
+<code class="docutils literal notranslate"><span class="pre">dat.props['principal_heading']</span></code>, which specifies the
+principal coordinate system’s <span class="math notranslate">\(+u\)</span> direction. The
+<span class="math notranslate">\(v\)</span> direction is then defined by the right-hand-rule (with
+<span class="math notranslate">\(w\)</span> up). See the <a class="reference internal" href="#principal-heading">Principal Heading</a> section for further
+details.</p>
 </li>
 </ul>
 <p>To rotate a data object into one of these coordinate systems, simply
