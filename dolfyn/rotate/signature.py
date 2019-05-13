@@ -1,6 +1,6 @@
 from . import base as rotb
 from .vector import earth2principal
-from .rdi import beam2inst
+from .base import beam2inst
 from .vector import _euler2orient as euler2orient
 import numpy as np
 import warnings
