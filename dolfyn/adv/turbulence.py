@@ -124,7 +124,7 @@ class TurbBinner(VelBinner):
         ----------
 
         spec : |np.ndarray| (...,n_time,n_f)
-          The spectrum array [m^2/s]
+          The spectrum array [m^2/s/radian]
 
         omega : |np.ndarray| (n_f)
           The frequency array [rad/s]
