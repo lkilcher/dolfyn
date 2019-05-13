@@ -33,14 +33,21 @@ systems.  The first dimension of these vectors are their coordinate
 directions, which are defined by the following coordinate systems:
 
 - **BEAM**: this is the coordinate system of the 'along-beam'
-  velocities. When a data object is in this coordinate system, only
-  the velocity data (i.e., the variables in
-  ``dat.props['rotate_vars']`` starting with ``'vel'``) is in beam
-  coordinates. Other vector variables listed in `'rotate_vars'` (e.g.,
-  `dat.orient.AngRt`) are in the INST frame. This coordinate system is
-  *not* ortho-normal. When the data object is in BEAM coordinates, the
-  first dimension of the velocity vectors are: [beam1, beam2,
-  ... beamN].
+  velocities.  When the data object is in BEAM coordinates, the first
+  dimension of the velocity vectors are: [beam1, beam2,
+  ... beamN]. This coordinate system is *not* ortho-normal, which
+  means that the inverse rotation (inst to beam) cannot be computed
+  using the transpose of the beam-to-inst rotation matrix. Instead,
+  the inverse of the matrix must be computed explicitly, which is done
+  internally in |dlfn| (in :func:`~dolfyn.rotate.base.beam2inst`).
+
+  When a data object is in this coordinate system, only the velocity
+  data (i.e., the variables in ``dat.props['rotate_vars']`` starting
+  with ``'vel'``) is in beam coordinates. Other vector variables
+  listed in ``'rotate_vars'`` are in the INST frame (e.g.,
+  `dat.orient.AngRt`). This is true for data read from binary files
+  that is in beam coordinates, and also when rotating from other
+  coordinate systems to beam coordinates.
 
 - **INST**: this is the 'instrument' coordinate system defined by the
   manufacturer. This coordinate system is orth-normal, but is not
