@@ -20,7 +20,7 @@ instruments and configurations. Instrument manufacturers use different
 conventions, and can change conventions with firmware
 updates. Therefore, we make no promises that these tools will work for
 any instrument type, but we do have higher confidence in some
-instruments and configurations than others. See `the table
+instruments and configurations than others. See :ref:`the table
 <rotate-testing-table>` at the bottom of this page for details on the
 degree of testing of |dlfn|\ 's rotations and coordinate-system tools
 that has occurred for several instrument types. With your help, we
