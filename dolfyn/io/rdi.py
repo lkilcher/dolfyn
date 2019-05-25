@@ -12,7 +12,7 @@ import warnings
 from ..rotate.rdi import calc_orientmat as _calc_omat
 
 
-def read_rdi(fname, userdata=None, nens=None, keep_orient_raw=False):
+def read_rdi(fname, userdata=None, nens=None):
     """
     Read an RDI binary data file.
 
@@ -29,13 +29,6 @@ def read_rdi(fname, userdata=None, nens=None, keep_orient_raw=False):
            2-element tuple (start, stop)
               Number of pings to read from the file
 
-    keep_orient_raw : bool (default: False)
-        If this is set to True, the raw orientation heading/pitch/roll
-        data is retained in the returned data structure in the
-        ``dat['orient']['raw']`` data group. This data is exactly as
-        it was found in the binary data file, and obeys the instrument
-        manufacturers definitions not DOLfYN's.
-
     Returns
     -------
     adp_data : :class:`ADPdata <dolfyn.adp.base.ADPdata>`
@@ -50,14 +43,15 @@ def read_rdi(fname, userdata=None, nens=None, keep_orient_raw=False):
 
     od['orientmat'] = _calc_omat(dat)
 
-    if 'heading' in od:
-        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
+    # Move raw heading data into orient.raw
+    odr = od['raw'] = data()
+    for ky in ['heading', 'pitch', 'roll',
+               'heading_std', 'pitch_std', 'roll_std']:
+        val = od.pop(ky, None)
+        if val is not None:
+            odr[ky] = val
 
     _set_rdi_declination(dat, fname)
-
-    if keep_orient_raw:
-        odr = od['raw'] = data()
-        odr['heading'], odr['pitch'], odr['roll'] = h, p, r
 
     return dat
 
