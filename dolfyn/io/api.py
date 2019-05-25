@@ -6,7 +6,7 @@ from .base import WrongFileType as _WTF
 from .hdf5 import load
 
 
-def read(fname, userdata=True, nens=None, keep_orient_raw=False):
+def read(fname, userdata=True, nens=None):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, etc.) data file.
 
@@ -23,13 +23,6 @@ def read(fname, userdata=True, nens=None, keep_orient_raw=False):
            2-element tuple (start, stop)
               Number of pings to read from the file
 
-    keep_orient_raw : bool (default: False)
-        If this is set to True, the raw orientation heading/pitch/roll
-        data is retained in the returned data structure in the
-        ``dat['orient']['raw']`` data group. This data is exactly as
-        it was found in the binary data file, and obeys the instrument
-        manufacturers definitions not DOLfYN's.
-
     Returns
     -------
     dat : :class:`<~dolfyn.data.velocity.Velocity>`
@@ -39,8 +32,7 @@ def read(fname, userdata=True, nens=None, keep_orient_raw=False):
     # Loop over binary readers until we find one that works.
     for func in [read_nortek, read_signature, read_rdi]:
         try:
-            dat = func(fname, userdata=userdata, nens=nens,
-                       keep_orient_raw=keep_orient_raw)
+            dat = func(fname, userdata=userdata, nens=nens)
         except _WTF:
             continue
         else:

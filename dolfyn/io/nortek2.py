@@ -58,7 +58,7 @@ def split_to_hdf(infile, nens_per_file, outfile=None,
         ens_now += nens_per_file
 
 
-def read_signature(filename, userdata=True, nens=None, keep_orient_raw=False):
+def read_signature(filename, userdata=True, nens=None):
     """Read a Nortek Signature (.ad2cp) file.
 
     Parameters
@@ -72,13 +72,6 @@ def read_signature(filename, userdata=True, nens=None, keep_orient_raw=False):
     nens : int, or tuple of 2 ints
         The number of ensembles to read, if int (starting at the
         beginning); or the range of ensembles to read, if tuple.
-
-    keep_orient_raw : bool (default: False)
-        If this is set to True, the raw orientation heading/pitch/roll
-        data is retained in the returned data structure in the
-        ``dat['orient']['raw']`` data group. This data is exactly as
-        it was found in the binary data file, and obeys the instrument
-        manufacturers definitions not DOLfYN's.
 
     Returns
     =======
@@ -109,11 +102,12 @@ def read_signature(filename, userdata=True, nens=None, keep_orient_raw=False):
     if 'orient.orientmat' not in out:
         od['orientmat'] = _euler2orient(od['heading'], od['pitch'], od['roll'])
 
-    if 'heading' in od:
-        h, p, r = od.pop('heading'), od.pop('pitch'), od.pop('roll')
-        if keep_orient_raw:
-            odr = od['raw'] = TimeData()
-            odr['heading'], odr['pitch'], odr['roll'] = h, p, r        
+    # Move raw heading data into orient.raw
+    odr = od['raw'] = TimeData()
+    for ky in ['heading', 'pitch', 'roll']:
+        val = od.pop(ky, None)
+        if val is not None:
+            odr[ky] = val
 
     out['props'].update(userdata)
 

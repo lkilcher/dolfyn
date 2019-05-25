@@ -8,14 +8,12 @@ from ..adv import base as adv_base
 from ..adp import base as adp_base
 from ..tools import misc as tbx
 from struct import unpack
-from ..data.base import ma
+from ..data.base import ma, TimeData, config
 from . import nortek_defs
 from ..data import time
 from .base import WrongFileType, read_userdata
 import warnings
 from ..rotate.vector import calc_omat as _calc_omat
-from ..data.base import TimeData
-from ..data.base import config
 
 
 def recatenate(obj):
@@ -42,8 +40,7 @@ def int2binarray(val, n):
 def read_nortek(filename,
                 userdata=True,
                 do_checksum=False,
-                nens=None,
-                keep_orient_raw=False):
+                nens=None):
     """
     Read a nortek file.
 
@@ -63,13 +60,6 @@ def read_nortek(filename,
            2-element tuple (start, stop)
               Number of pings to read from the file
 
-    keep_orient_raw : bool (default: False)
-        If this is set to True, the raw orientation heading/pitch/roll
-        data is retained in the returned data structure in the
-        ``dat['orient']['raw']`` data group. This data is exactly as
-        it was found in the binary data file, and obeys the instrument
-        manufacturers definitions not DOLfYN's.
-
     Returns
     -------
     dat : :class:`<~dolfyn.data.velocity.Velocity>`
@@ -88,11 +78,11 @@ def read_nortek(filename,
         od['orientmat'] = _calc_omat(od['heading'], od['pitch'], od['roll'],
                                      od.get('orientation_down', None))
 
-    if keep_orient_raw:
-        odr = od['raw'] = TimeData()
+    # Move raw heading data into orient.raw
+    odr = od['raw'] = TimeData()
     for ky in ['heading', 'pitch', 'roll', 'orientation_down']:
         val = od.pop(ky, None)
-        if keep_orient_raw and val is not None:
+        if val is not None:
             odr[ky] = val
 
     dat.props.update(user_data)
