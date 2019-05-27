@@ -22,10 +22,8 @@ dat_wr2 = load('winriver02.h5')
 def test_read(make_data=False):
 
     # This uses the built-in declination!
-    td_rdi_orientraw = read('RDI_test01.000', keep_orient_raw=True)
+    td_rdi_orientraw = read('RDI_test01.000')
     td_rdi = td_rdi_orientraw.copy()
-    # Remove 'raw' from orient
-    td_rdi['orient'].pop('raw')
     td_rdi_bt = read('RDI_withBT.000')
 
     td_sig = read('BenchFile01.ad2cp')
@@ -35,6 +33,17 @@ def test_read(make_data=False):
     td_awac_ud = read('AWAC_test01.wpr')
     td_wr1 = read('winriver01.PD0')
     td_wr2 = read('winriver02.PD0')
+
+    # We don't need the raw orientation data for most tests.
+    td_rdi['orient'].pop('raw')
+    td_rdi_bt['orient'].pop('raw')
+    td_sig['orient'].pop('raw')
+    td_sigi['orient'].pop('raw')
+    td_sigi_ud['orient'].pop('raw')
+    td_awac['orient'].pop('raw')
+    td_awac_ud['orient'].pop('raw')
+    td_wr1['orient'].pop('raw')
+    td_wr2['orient'].pop('raw')
 
     if make_data:
         save(td_rdi_orientraw, 'RDI_test01.h5')

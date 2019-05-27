@@ -34,10 +34,8 @@ def check_except(fn, args, errors=Exception, message=''):
 
 def test_read(make_data=False):
 
-    td_orientraw = read('vector_data01.VEC', nens=100,
-                        keep_orient_raw=True)
+    td_orientraw = read('vector_data01.VEC', nens=100)
     td = td_orientraw.copy()
-    td['orient'].pop('raw')
     tdm = read('vector_data_imu01.VEC',
                userdata=False,
                nens=100)
@@ -46,6 +44,13 @@ def test_read(make_data=False):
     tdm2 = read('vector_data_imu01.VEC',
                 userdata=tb.exdt('vector_data_imu01.userdata.json'),
                 nens=100)
+
+    # We don't need the raw orientation data for most tests.
+    td['orient'].pop('raw')
+    tdm['orient'].pop('raw')
+    tdb['orient'].pop('raw')
+    tdm2['orient'].pop('raw')
+
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     tdm.props['body2head_rotmat'] = np.eye(3)
