@@ -1,7 +1,7 @@
 .. _rotations:
 
 Rotations and Coordinate Systems
---------------------------------
+================================
 
 One of |dlfn|\ 's primary advantages is that it contains simple tools
 for managing the coordinate system (a.k.a. the reference frame) of the
@@ -20,7 +20,7 @@ instruments and configurations. Instrument manufacturers use different
 conventions, and can change conventions with firmware
 updates. Therefore, we make no promises that these tools will work for
 any instrument type, but we do have higher confidence in some
-instruments and configurations than others. See `the table
+instruments and configurations than others. See :ref:`the table
 <rotate-testing-table>` at the bottom of this page for details on the
 degree of testing of |dlfn|\ 's rotations and coordinate-system tools
 that has occurred for several instrument types. With your help, we
@@ -106,7 +106,7 @@ use the ``rotate2`` method::
     + sys                      : + DATA GROUP
 
 Orientation Data
-................
+----------------
   
 The instrument orientation data in |dlfn| data objects is contained in
 the ``orient`` data group. The ``orientmat`` data item in this group
@@ -128,17 +128,50 @@ the inverse rotation matrix is simply the transpose:
 .. math:: v_e = R^T \cdot v_i
 
 Heading, Pitch, Roll
-....................
+--------------------
 
 Some (most?) instruments do not calculate or output the orientation
 matrix by default. Instead, these instruments typically provide
-*heading*, *pitch*, and *roll* data (hereafter, *h,p,r*).  For these
-instruments these variables are used to calculate an orientation
-matrix, :math:`R`, and the values of *h,p,r* are removed from the data
-object. These can be obtained from the orientation matrix using the
-``dolfyn.orient2euler`` function (``dolfyn.euler2orient`` provides the
-reverse functionality). This function computes these variables
-according to the following conventions:
+*heading*, *pitch*, and *roll* data (hereafter, *h,p,r*).  Instruments that provide an ``orientmat`` directly will have
+``dat.props['has_imu'] = True``. Otherwise, the ``orientmat`` was
+calculated from *h,p,r*.
+
+Note that an orientation matrix calculated
+from *h,p,r* can have larger error associated with it, partly because
+of the `gimbal lock <https://en.wikipedia.org/wiki/Gimbal_lock>`_
+problem, and also because the accuracy of some *h,p,r* sensors
+decreases for large pitch or roll angles (e.g., >40 degrees).
+
+Because the definitions of *h,p,r* are not consistent between
+instrument makes/models, and because |dlfn|\ -developers have chosen
+to utilize consistent definitions of orientation data (``orientmat``,
+and *h,p,r*), the following things are true:
+
+  - |dlfn| uses instrument-specific functions to calculate a
+    consistent ``dat['orient']['orientmat']`` from the inconsistent
+    definitions of *h,p,r*
+
+  - |dlfn|\ 's consistent definitions *h,p,r* are generally different
+    from the definitions provided by an instrument manufacturer (i.e.,
+    there is no consensus on these definitions, so |dlfn| developers
+    have chosen one)
+
+Varying degrees of validation have been performed to confirm that the
+``orientmat`` is being calculated correctly for each instrument's
+definitions of *h,p,r*. See the :ref:`the table
+<rotate-testing-table>` at the bottom of this page for details on
+this. If your instrument has low confidence, or you suspect an error
+in rotating data into the earth coordinate system, and you have
+interest in doing the work to fix this, please reach out to us
+by filing an issue.
+
+|dlfn|-Defined Heading, Pitch, Roll
+...................................
+
+The |dlfn|-defined *h,p,r* variables can be calculated using the
+:func:`dolfyn.orient2euler` function (:func:`dolfyn.euler2orient`
+provides the reverse functionality). This function computes these
+variables according to the following conventions:
 
   - a "ZYX" rotation order. That is, these variables are computed
     assuming that rotation from the earth -> instrument frame happens
@@ -155,61 +188,19 @@ according to the following conventions:
   - roll is positive according to the right-hand-rule around the
     instrument's x-axis
 
-Considerable care has been taken to make sure
-that these definitions of *h,p,r* and *orientmat*
-are consistent within |dlfn| between instrument models.
-However, because the instrument manufacturer's definitions of these
-variables are not consistent between instrument makes/models, this
-means that:
-
-  - |dlfn| uses instrument-specific functions to calculate a
-    consistent ``dat['orient']['orientmat']`` from the inconsistent
-    definitions of *h,p,r*
-
-  - |dlfn|\ 's consistent definitions are different from the
-    definitions provided by an instrument manufacturer (i.e., there is
-    no consensus on these definitions, so |dlfn| uses the above
-    definitions)
-
-Instruments that provide an ``orientmat`` directly will have
-``dat.props['has_imu'] = True``. Otherwise, the ``orientmat`` was
-calculated from *h,p,r*. Note that an orientation matrix calculated
-from *h,p,r* can have larger error associated with it, partly because
-of the `gimbal lock <https://en.wikipedia.org/wiki/Gimbal_lock>`_
-problem, and also because the accuracy of some *h,p,r* sensors
-decreases for large pitch or roll angles (e.g., >40 degrees).
-
-So, while |dlfn| uses the instrument manufacturer's definition of the
-instrument coordinate system ("XYZ"), the details of how this relates
-to the 'earth' coordinate system, and how *h,p,r*
-are computed are often distinct from the definitions specified by
-the instrument manufacturer (e.g., some manufacturers reference
-heading off of the y-axis rather than x, some use a 'north-east-down'
-earth reference frame, etc.). For practical purposes, when utilizing
-|dlfn| orientation data (for all instrument types), this all means
-that the user should:
-
-  - Use the instrument manufacturers definitions of XYZ
-
-  - Interpret *h,p,r* data according to the above
-    definitions (ignore manufacturer definitions of these variables)
-
-  - All rotations into the earth frame will yield vectors that are in
-    a ENU coordinate system
-
-It is also possible to obtain the raw *h,p,r* data
-as defined by the instrument manufacturer using the
-``keep_orient_raw`` argument in the :func:`dolfyn.read` function. That
-data is contained in ``dat['orient']['raw']``. Note that this data
-does not obey the above definitions, and instead obeys the instrument
+Instrument heading, pitch, roll
+...............................
+    
+The raw *h,p,r* data as defined by the instrument manufacturer is
+available in ``dat['orient']['raw']``. Note that this data does not
+obey the above definitions, and instead obeys the instrument
 manufacturer's definitions of these variables (i.e., it is exactly the
 data contained in the binary file). Also note that
-``dat['orient']['raw']['heading']`` is unaffected by setting declination
-as described in the next section.
-
+``dat['orient']['raw']['heading']`` is unaffected by setting
+declination as described in the next section.
     
 Declination Handling
-....................
+--------------------
 
 |dlfn| includes functionality for handling `declination
 <https://www.ngdc.noaa.gov/geomag/declination.shtml>`_, but the value
@@ -229,11 +220,11 @@ Both of these approaches produce modify the ``dat`` as described in
 the documentation for :meth:`~dolfyn.Velocity.set_declination` .
    
 Principal Heading
-.................
+-----------------
 
 As described above, the principal coordinate system is meant to be the
 flow-aligned coordinate system (Streamwise, Cross-stream, Up). |dlfn|
-includes the `:func:<dolfyn.calc_principal_heading>` function to aide in
+includes the :func:`<dolfyn.calc_principal_heading>` function to aide in
 identifying/calculating the principal heading. Using this function to
 identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
@@ -254,7 +245,7 @@ cases, the user should take care to clarify this point with
 collaborators to avoid confusion.
 
 Degree of testing by instrument type
-....................................
+------------------------------------
 
 The table below details the degree of testing of the rotation,
 *p,r,h*, and coordinate-system tools contained in |dlfn|. The

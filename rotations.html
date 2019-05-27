@@ -6,15 +6,16 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Rotations and Coordinate Systems &#8212; DOLfYN 0.11.0 documentation</title>
+    <title>Rotations and Coordinate Systems &#8212; DOLfYN 0.11.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <script type="text/javascript" src="_static/js/versionwarning.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,6 +33,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="rotations-and-coordinate-systems">
@@ -52,8 +55,7 @@ instruments and configurations. Instrument manufacturers use different
 conventions, and can change conventions with firmware
 updates. Therefore, we make no promises that these tools will work for
 any instrument type, but we do have higher confidence in some
-instruments and configurations than others. See <cite>the table
-&lt;rotate-testing-table&gt;</cite> at the bottom of this page for details on the
+instruments and configurations than others. See <a class="reference internal" href="#rotate-testing-table"><span class="std std-ref">the table</span></a> at the bottom of this page for details on the
 degree of testing of DOLfYN’s rotations and coordinate-system tools
 that has occurred for several instrument types. With your help, we
 hope to improve our confidence in these tools for the wide-array of
@@ -109,9 +111,9 @@ axis) to align with the flow. In this coordinate system the first
 dimension of a vector is meant to be: [Stream-wise, Cross-stream,
 Up]. This coordinate system is defined by the variable
 <code class="docutils literal notranslate"><span class="pre">dat.props['principal_heading']</span></code>, which specifies the
-principal coordinate system’s <span class="math notranslate">\(+u\)</span> direction. The
-<span class="math notranslate">\(v\)</span> direction is then defined by the right-hand-rule (with
-<span class="math notranslate">\(w\)</span> up). See the <a class="reference internal" href="#principal-heading">Principal Heading</a> section for further
+principal coordinate system’s <span class="math notranslate nohighlight">\(+u\)</span> direction. The
+<span class="math notranslate nohighlight">\(v\)</span> direction is then defined by the right-hand-rule (with
+<span class="math notranslate nohighlight">\(w\)</span> up). See the <a class="reference internal" href="#principal-heading">Principal Heading</a> section for further
 details.</p>
 </li>
 </ul>
@@ -138,32 +140,61 @@ use the <code class="docutils literal notranslate"><span class="pre">rotate2</sp
 <h2>Orientation Data<a class="headerlink" href="#orientation-data" title="Permalink to this headline">¶</a></h2>
 <p>The instrument orientation data in DOLfYN data objects is contained in
 the <code class="docutils literal notranslate"><span class="pre">orient</span></code> data group. The <code class="docutils literal notranslate"><span class="pre">orientmat</span></code> data item in this group
-is the orientation matrix, <span class="math notranslate">\(R\)</span>, of the instrument in the earth
+is the orientation matrix, <span class="math notranslate nohighlight">\(R\)</span>, of the instrument in the earth
 reference frame. It is a 3x3xNt array, where each 3x3 array is the <a class="reference external" href="http://en.wikipedia.org/wiki/Rotation_matrix">rotation matrix</a> that rotates vectors
-in the earth frame, <span class="math notranslate">\(v_e\)</span>, into the instrument coordinate system,
-<span class="math notranslate">\(v_i\)</span>, at each timestep:</p>
-<div class="math notranslate">
+in the earth frame, <span class="math notranslate nohighlight">\(v_e\)</span>, into the instrument coordinate system,
+<span class="math notranslate nohighlight">\(v_i\)</span>, at each timestep:</p>
+<div class="math notranslate nohighlight">
 \[v_i = R \cdot v_e\]</div>
 <p>The ENU definitions of coordinate systems means that the rows of
-<span class="math notranslate">\(R\)</span> are the unit-vectors of the XYZ coordinate system in the ENU
+<span class="math notranslate nohighlight">\(R\)</span> are the unit-vectors of the XYZ coordinate system in the ENU
 reference frame, and the columns are the unit vectors of the ENU
 coordinate system in the XYZ reference frame. That is, for this kind
 of simple rotation matrix between two orthogonal coordinate systems,
 the inverse rotation matrix is simply the transpose:</p>
-<div class="math notranslate">
+<div class="math notranslate nohighlight">
 \[v_e = R^T \cdot v_i\]</div>
 </div>
 <div class="section" id="heading-pitch-roll">
 <h2>Heading, Pitch, Roll<a class="headerlink" href="#heading-pitch-roll" title="Permalink to this headline">¶</a></h2>
 <p>Some (most?) instruments do not calculate or output the orientation
 matrix by default. Instead, these instruments typically provide
-<em>heading</em>, <em>pitch</em>, and <em>roll</em> data (hereafter, <em>h,p,r</em>).  For these
-instruments these variables are used to calculate an orientation
-matrix, <span class="math notranslate">\(R\)</span>, and the values of <em>h,p,r</em> are removed from the data
-object. These can be obtained from the orientation matrix using the
-<code class="docutils literal notranslate"><span class="pre">dolfyn.orient2euler</span></code> function (<code class="docutils literal notranslate"><span class="pre">dolfyn.euler2orient</span></code> provides the
-reverse functionality). This function computes these variables
-according to the following conventions:</p>
+<em>heading</em>, <em>pitch</em>, and <em>roll</em> data (hereafter, <em>h,p,r</em>).  Instruments that provide an <code class="docutils literal notranslate"><span class="pre">orientmat</span></code> directly will have
+<code class="docutils literal notranslate"><span class="pre">dat.props['has_imu']</span> <span class="pre">=</span> <span class="pre">True</span></code>. Otherwise, the <code class="docutils literal notranslate"><span class="pre">orientmat</span></code> was
+calculated from <em>h,p,r</em>.</p>
+<p>Note that an orientation matrix calculated
+from <em>h,p,r</em> can have larger error associated with it, partly because
+of the <a class="reference external" href="https://en.wikipedia.org/wiki/Gimbal_lock">gimbal lock</a>
+problem, and also because the accuracy of some <em>h,p,r</em> sensors
+decreases for large pitch or roll angles (e.g., &gt;40 degrees).</p>
+<p>Because the definitions of <em>h,p,r</em> are not consistent between
+instrument makes/models, and because DOLfYN-developers have chosen
+to utilize consistent definitions of orientation data (<code class="docutils literal notranslate"><span class="pre">orientmat</span></code>,
+and <em>h,p,r</em>), the following things are true:</p>
+<blockquote>
+<div><ul class="simple">
+<li>DOLfYN uses instrument-specific functions to calculate a
+consistent <code class="docutils literal notranslate"><span class="pre">dat['orient']['orientmat']</span></code> from the inconsistent
+definitions of <em>h,p,r</em></li>
+<li>DOLfYN’s consistent definitions <em>h,p,r</em> are generally different
+from the definitions provided by an instrument manufacturer (i.e.,
+there is no consensus on these definitions, so DOLfYN developers
+have chosen one)</li>
+</ul>
+</div></blockquote>
+<p>Varying degrees of validation have been performed to confirm that the
+<code class="docutils literal notranslate"><span class="pre">orientmat</span></code> is being calculated correctly for each instrument’s
+definitions of <em>h,p,r</em>. See the <a class="reference internal" href="#rotate-testing-table"><span class="std std-ref">the table</span></a> at the bottom of this page for details on
+this. If your instrument has low confidence, or you suspect an error
+in rotating data into the earth coordinate system, and you have
+interest in doing the work to fix this, please reach out to us
+by filing an issue.</p>
+<div class="section" id="dlfn-defined-heading-pitch-roll">
+<h3>DOLfYN-Defined Heading, Pitch, Roll<a class="headerlink" href="#dlfn-defined-heading-pitch-roll" title="Permalink to this headline">¶</a></h3>
+<p>The DOLfYN-defined <em>h,p,r</em> variables can be calculated using the
+<code class="xref py py-func docutils literal notranslate"><span class="pre">dolfyn.orient2euler()</span></code> function (<code class="xref py py-func docutils literal notranslate"><span class="pre">dolfyn.euler2orient()</span></code>
+provides the reverse functionality). This function computes these
+variables according to the following conventions:</p>
 <blockquote>
 <div><ul class="simple">
 <li>a “ZYX” rotation order. That is, these variables are computed
@@ -179,57 +210,17 @@ right-hand-rule around the Y-axis)</li>
 instrument’s x-axis</li>
 </ul>
 </div></blockquote>
-<p>Considerable care has been taken to make sure
-that these definitions of <em>h,p,r</em> and <em>orientmat</em>
-are consistent within DOLfYN between instrument models.
-However, because the instrument manufacturer’s definitions of these
-variables are not consistent between instrument makes/models, this
-means that:</p>
-<blockquote>
-<div><ul class="simple">
-<li>DOLfYN uses instrument-specific functions to calculate a
-consistent <code class="docutils literal notranslate"><span class="pre">dat['orient']['orientmat']</span></code> from the inconsistent
-definitions of <em>h,p,r</em></li>
-<li>DOLfYN’s consistent definitions are different from the
-definitions provided by an instrument manufacturer (i.e., there is
-no consensus on these definitions, so DOLfYN uses the above
-definitions)</li>
-</ul>
-</div></blockquote>
-<p>Instruments that provide an <code class="docutils literal notranslate"><span class="pre">orientmat</span></code> directly will have
-<code class="docutils literal notranslate"><span class="pre">dat.props['has_imu']</span> <span class="pre">=</span> <span class="pre">True</span></code>. Otherwise, the <code class="docutils literal notranslate"><span class="pre">orientmat</span></code> was
-calculated from <em>h,p,r</em>. Note that an orientation matrix calculated
-from <em>h,p,r</em> can have larger error associated with it, partly because
-of the <a class="reference external" href="https://en.wikipedia.org/wiki/Gimbal_lock">gimbal lock</a>
-problem, and also because the accuracy of some <em>h,p,r</em> sensors
-decreases for large pitch or roll angles (e.g., &gt;40 degrees).</p>
-<p>So, while DOLfYN uses the instrument manufacturer’s definition of the
-instrument coordinate system (“XYZ”), the details of how this relates
-to the ‘earth’ coordinate system, and how <em>h,p,r</em>
-are computed are often distinct from the definitions specified by
-the instrument manufacturer (e.g., some manufacturers reference
-heading off of the y-axis rather than x, some use a ‘north-east-down’
-earth reference frame, etc.). For practical purposes, when utilizing
-DOLfYN orientation data (for all instrument types), this all means
-that the user should:</p>
-<blockquote>
-<div><ul class="simple">
-<li>Use the instrument manufacturers definitions of XYZ</li>
-<li>Interpret <em>h,p,r</em> data according to the above
-definitions (ignore manufacturer definitions of these variables)</li>
-<li>All rotations into the earth frame will yield vectors that are in
-a ENU coordinate system</li>
-</ul>
-</div></blockquote>
-<p>It is also possible to obtain the raw <em>h,p,r</em> data
-as defined by the instrument manufacturer using the
-<code class="docutils literal notranslate"><span class="pre">keep_orient_raw</span></code> argument in the <a class="reference internal" href="api.html#dolfyn.read" title="dolfyn.read"><code class="xref py py-func docutils literal notranslate"><span class="pre">dolfyn.read()</span></code></a> function. That
-data is contained in <code class="docutils literal notranslate"><span class="pre">dat['orient']['raw']</span></code>. Note that this data
-does not obey the above definitions, and instead obeys the instrument
+</div>
+<div class="section" id="instrument-heading-pitch-roll">
+<h3>Instrument heading, pitch, roll<a class="headerlink" href="#instrument-heading-pitch-roll" title="Permalink to this headline">¶</a></h3>
+<p>The raw <em>h,p,r</em> data as defined by the instrument manufacturer is
+available in <code class="docutils literal notranslate"><span class="pre">dat['orient']['raw']</span></code>. Note that this data does not
+obey the above definitions, and instead obeys the instrument
 manufacturer’s definitions of these variables (i.e., it is exactly the
 data contained in the binary file). Also note that
-<code class="docutils literal notranslate"><span class="pre">dat['orient']['raw']['heading']</span></code> is unaffected by setting declination
-as described in the next section.</p>
+<code class="docutils literal notranslate"><span class="pre">dat['orient']['raw']['heading']</span></code> is unaffected by setting
+declination as described in the next section.</p>
+</div>
 </div>
 <div class="section" id="declination-handling">
 <h2>Declination Handling<a class="headerlink" href="#declination-handling" title="Permalink to this headline">¶</a></h2>
@@ -255,7 +246,7 @@ the documentation for <a class="reference internal" href="api.html#dolfyn.Veloci
 <h2>Principal Heading<a class="headerlink" href="#principal-heading" title="Permalink to this headline">¶</a></h2>
 <p>As described above, the principal coordinate system is meant to be the
 flow-aligned coordinate system (Streamwise, Cross-stream, Up). DOLfYN
-includes the <cite>:func:&lt;dolfyn.calc_principal_heading&gt;</cite> function to aide in
+includes the <code class="xref py py-func docutils literal notranslate"><span class="pre">&lt;dolfyn.calc_principal_heading&gt;()</span></code> function to aide in
 identifying/calculating the principal heading. Using this function to
 identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
@@ -352,21 +343,44 @@ DOLfYN’s coordinate systems and rotation tools.</span><a class="headerlink" hr
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Rotations and Coordinate Systems</a><ul>
-<li><a class="reference internal" href="#orientation-data">Orientation Data</a></li>
-<li><a class="reference internal" href="#heading-pitch-roll">Heading, Pitch, Roll</a></li>
-<li><a class="reference internal" href="#declination-handling">Declination Handling</a></li>
-<li><a class="reference internal" href="#principal-heading">Principal Heading</a></li>
-<li><a class="reference internal" href="#degree-of-testing-by-instrument-type">Degree of testing by instrument type</a></li>
+<h1 class="logo"><a href="index.html">DOLfYN</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Download and Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">The Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-structure.html">Data Structure</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Rotations and Coordinate Systems</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#orientation-data">Orientation Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#heading-pitch-roll">Heading, Pitch, Roll</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dlfn-defined-heading-pitch-roll">DOLfYN-Defined Heading, Pitch, Roll</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#instrument-heading-pitch-roll">Instrument heading, pitch, roll</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#declination-handling">Declination Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#principal-heading">Principal Heading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#degree-of-testing-by-instrument-type">Degree of testing by instrument type</a></li>
 </ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="motion-correction.html">Motion Correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting-tools.html">Plotting Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">The DOLfYN API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -376,13 +390,6 @@ DOLfYN’s coordinate systems and rotation tools.</span><a class="headerlink" hr
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/rotations.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -395,6 +402,14 @@ DOLfYN’s coordinate systems and rotation tools.</span><a class="headerlink" hr
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -403,8 +418,8 @@ DOLfYN’s coordinate systems and rotation tools.</span><a class="headerlink" hr
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/rotations.rst.txt"

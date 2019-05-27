@@ -50,6 +50,25 @@ angles in degrees.
                :widths: 15, 20, 15, 50
                :file: ./units.csv
 
+Data Shortcuts (properties)
+...........................
+
+In addition to the data items listed above, |dlfn| data objects also
+contain shortcuts to tools and other variables that can be obtained
+from simple operations of its data items. These attributes aren't
+listed in the view of the data shown above. Instead, to see the
+variables that are available as shortcuts for a particular data
+object, take a look at the ``dat.shortcuts`` property (new in |dlfn|
+0.10.1).
+
+.. csv-table:: Table 3: Notes on common shorcuts found in |dlfn| data objects.
+               :header-rows: 1
+               :widths: 15, 20, 85
+               :file: ./shortcuts.csv
+
+**Important Note:** The items listed in Table 3 are not stored in the data
+object but are provided as attributes (shortcuts) to |dlfn| data objects.
+
 User Meta-Data (``dat.props``)
 ------------------------------
 
@@ -95,22 +114,3 @@ create a ``my_data.userdata.json`` file. Then when you do
 ``dat.props`` attribute of the returned data object. This
 feature is provided so that meta-data can live alongside your
 binary data files.
-
-
-Data Shortcuts (properties)
----------------------------
-In addition to the data items listed above, |dlfn| data objects also
-contain shortcuts to tools and other variables that can be obtained
-from simple operations of its data items. These attributes aren't
-listed in the view of the data shown above. Instead, to see the
-variables that are available as shortcuts for a particular data
-object, take a look at the ``dat.shortcuts`` property (new in |dlfn|
-0.10.1).
-
-.. csv-table:: Table 3: Notes on common shorcuts found in |dlfn| data objects.
-               :header-rows: 1
-               :widths: 15, 20, 85
-               :file: ./shortcuts.csv
-
-**Important Note:** The items listed in Table 3 are not stored in the data
-object but are provided as attributes (shortcuts) to |dlfn| data objects.
