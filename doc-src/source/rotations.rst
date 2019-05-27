@@ -169,7 +169,7 @@ by filing an issue.
 ...................................
 
 The |dlfn|-defined *h,p,r* variables can be calculated using the
-:func:`dolfyn.orient2euler`_ function (:func:`dolfyn.euler2orient`_
+:func:`dolfyn.orient2euler` function (:func:`dolfyn.euler2orient`
 provides the reverse functionality). This function computes these
 variables according to the following conventions:
 
@@ -224,7 +224,7 @@ Principal Heading
 
 As described above, the principal coordinate system is meant to be the
 flow-aligned coordinate system (Streamwise, Cross-stream, Up). |dlfn|
-includes the `:func:<dolfyn.calc_principal_heading>` function to aide in
+includes the :func:`<dolfyn.calc_principal_heading>` function to aide in
 identifying/calculating the principal heading. Using this function to
 identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
