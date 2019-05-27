@@ -888,8 +888,7 @@ class adcp_loader(object):
                 self.read_buffer()
             except eofException:
                 self.remove_end(iens)
-                self.finalize()
-                return dat
+                break
             self.ensemble.clean_data()
             # Fix the 'real-time-clock' century
             clock = self.ensemble.rtc[:, :]
