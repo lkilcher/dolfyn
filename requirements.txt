@@ -4,4 +4,6 @@ matplotlib
 scipy
 six
 pip
+xarray
+netcdf4
 -e git://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5
