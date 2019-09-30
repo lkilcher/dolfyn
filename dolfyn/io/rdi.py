@@ -56,7 +56,7 @@ def read_rdi(fname, userdata=None, nens=None):
     return dat
 
 
-def _set_rdi_declination(dat, fname):
+def _set_rdi_declination(dat, fname='????'):
     # NEED TO CONFIRM: If magnetic_var_deg is set, this means
     # that the declination is already included in the heading,
     # and in the velocity data.
