@@ -12,6 +12,7 @@ rot_module_dict = {
     'nortek vector': r_vec,
     'nortek awac': r_awac,
     'nortek signature': r_sig,
+    'nortek ad2cp': r_sig,
 
     # RDI instruments
     'rdi': r_rdi,
