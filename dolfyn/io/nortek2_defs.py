@@ -197,7 +197,7 @@ _burst_group_org = {
     'echo': ['echo'],
     'orient': ['orientmat',
                'heading', 'pitch', 'roll',
-               'angrt', 'mag', 'accel'],
+               'angrt', 'mag', 'accel', 'quaternion'],
     'env': ['c_sound', 'temp', 'press'],
     'sys': ['temp_press', 'temp_mag', 'temp_clock',
             'batt_V', 'ambig_vel', 'xmit_energy',
@@ -252,8 +252,7 @@ def calc_burst_struct(config, nb, nc):
         dd += [('echo', 'H', [nc], None)]
     if flags['ahrs']:
         dd += [('orientmat', 'f', [3, 3], None),
-               # This use of 'x' here is a hack
-               ('ahrs_spare', 'B15x', [], None),
+               ('quaternion', 'f', [4], None),
                ('angrt', 'f', [3], LinFunc(np.pi / 180,
                                            dtype=dt32))]  # rad/sec
     if flags['p_gd']:
