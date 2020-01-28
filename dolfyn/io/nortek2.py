@@ -144,7 +144,9 @@ class Ad2cpReader(object):
         self._burst_readers = {}
         for rdr_id, cfg in self._config.items():
             if rdr_id == 28:
-                self._burst_readers[rdr_id] = defs.calc_echo_struct(cfg['_config'], cfg['ncells'])
+                self._burst_readers[rdr_id] = defs.calc_echo_struct(cfg['_config'], cfg['ncells'])  # noqa
+            elif rdr_id == 23:
+                self._burst_readers[rdr_id] = defs.calc_bt_struct(cfg['_config'], cfg['nbeams'])  # noqa
             else:
                 self._burst_readers[rdr_id] = defs.calc_burst_struct(
                     cfg['_config'], cfg['nbeams'], cfg['ncells'])
@@ -168,7 +170,7 @@ class Ad2cpReader(object):
         return outdat
 
     def read_hdr(self, do_cs=False):
-        res = defs._header.read2dict(self.f, cs=do_cs)
+        res = defs.header.read2dict(self.f, cs=do_cs)
         if res['sync'] != 165:
             raise Exception("Out of sync!")
         return res
@@ -253,9 +255,9 @@ class Ad2cpReader(object):
             except IOError:
                 return outdat
             id = hdr['id']
-            if id in [21, 24, 28]: # vel, vel_b5, echo
+            if id in [21, 23, 24, 28]: # vel, vel_b5, echo
                 self.read_burst(id, outdat[id], c)
-            elif id in [26]:
+            elif id in [26]:  # alt_raw
                 # warnings.warn(
                 #     "Unhandled ID: 0x1A (26)\n"
                 #     "    There still seems to be a discrepancy between\n"
@@ -299,8 +301,8 @@ class Ad2cpReader(object):
                 self.read_burst(id, outdat[id], c26)
                 outdat[id]['ensemble'][c26] = c
                 c26 += 1
-                
-            elif id in [22, 27, 28, 29, 30, 31]:
+
+            elif id in [22, 23, 27, 29, 30, 31]:
                 warnings.warn(
                     "Unhandled ID: 0x{:02X} ({:02d})\n"
                     "    This ID is not yet handled by DOLfYN.\n"
@@ -380,7 +382,7 @@ def reorg(dat):
     outdat['props']['inst_type'] = 'ADP'
     outdat['props']['rotate_vars'] = {'vel', }
 
-    for id, tag in [(21, ''), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
+    for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
         if id == 26:
             collapse_exclude = [0]
         else:
@@ -415,11 +417,11 @@ def reorg(dat):
                                          name=ky)
         for ky in ['c_sound', 'temp', 'press',
                    'heading', 'pitch', 'roll',
-                   'temp_press', 'batt_V',
+                   'batt_V',
                    'temp_mag', 'temp_clock',
                    'mag', 'accel',
                    'ambig_vel', 'xmit_energy',
-                   'error', 'status0', 'status',
+                   'error', 'status',
                    '_ensemble', 'ensemble']:
             # No if statement here
             outdat[ky + tag] = dnow[ky]
@@ -427,11 +429,11 @@ def reorg(dat):
                 'vel', 'amp', 'corr',
                 'alt_dist', 'alt_quality', 'alt_status',
                 'ast_dist', 'ast_quality', 'ast_offset_time',
-                'ast_pressure',
+                'ast_pressure', 'temp_press',
                 'altraw_nsamp', 'altraw_dist', 'altraw_samp',
-                'echo',
+                'echo', 'dist', 'fom',
                 'orientmat', 'angrt', 'quaternion',
-                'percent_good',
+                'percent_good', 'status0',
                 'std_pitch', 'std_roll', 'std_heading', 'std_press'
         ]:
             if ky in dnow:

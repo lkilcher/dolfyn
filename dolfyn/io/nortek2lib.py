@@ -97,26 +97,31 @@ def create_index_slow(infile, outfile, N_ens):
     N = 0
     config = 0
     last_ens = -1
+    seek_2ens = {21: 40, 24: 40, 26: 40,
+                 23: 42, 28: 40}
     while N < N_ens:
         pos = fin.tell()
         try:
             dat = hdr.unpack(fin.read(hdr.size))
         except:
             break
-        if dat[2] in [21, 24, 26]:
+        if dat[2] in [21, 23, 24, 26, 28]:
             d_ver, d_off, config = struct.unpack('<BBH', fin.read(4))
             fin.seek(4, 1)
             yr, mo, dy, h, m, s, u = struct.unpack('6BH', fin.read(8))
             fin.seek(14, 1)
             beams_cy = struct.unpack('<H', fin.read(2))[0]
-            fin.seek(40, 1)
+            fin.seek(seek_2ens[dat[2]], 1)
             ens = struct.unpack('<I', fin.read(4))[0]
+            if dat[2] in [23, 28]:
+                # ensemble counter is garbage(=1 ?!) for these ids
+                ens = last_ens
             if last_ens > 0 and last_ens != ens:
                 N += 1
             fout.write(struct.pack('<QQ4H6BHB', N, pos, dat[2],
                                    config, beams_cy, 0,
                                    yr, mo, dy, h, m, s, u, d_ver))
-            fin.seek(dat[4] - 76, 1)
+            fin.seek(dat[4] - (36 + seek_2ens[dat[2]]), 1)
             last_ens = ens
         else:
             fin.seek(dat[4], 1)
@@ -217,28 +222,45 @@ class BitIndexer(object):
         return out
 
 
-def headconfig_int2dict(val):
+def headconfig_int2dict(val, mode='burst'):
     """Convert the burst Configuration bit-mask to a dict of bools.
-    """
-    return dict(
-        press_valid=getbit(val, 0),
-        temp_valid=getbit(val, 1),
-        compass_valid=getbit(val, 2),
-        tilt_valid=getbit(val, 3),
-        # bit 4 is unused
-        vel=getbit(val, 5),
-        amp=getbit(val, 6),
-        corr=getbit(val, 7),
-        alt=getbit(val, 8),
-        alt_raw=getbit(val, 9),
-        ast=getbit(val, 10),
-        echo=getbit(val, 11),
-        ahrs=getbit(val, 12),
-        p_gd=getbit(val, 13),
-        std=getbit(val, 14),
-        # bit 15 is unused
-    )
 
+    mode: {'burst', 'bt'}
+       For 'burst' configs, or 'bottom-track' configs.
+    """
+    if mode == 'burst':
+        return dict(
+            press_valid=getbit(val, 0),
+            temp_valid=getbit(val, 1),
+            compass_valid=getbit(val, 2),
+            tilt_valid=getbit(val, 3),
+            # bit 4 is unused
+            vel=getbit(val, 5),
+            amp=getbit(val, 6),
+            corr=getbit(val, 7),
+            alt=getbit(val, 8),
+            alt_raw=getbit(val, 9),
+            ast=getbit(val, 10),
+            echo=getbit(val, 11),
+            ahrs=getbit(val, 12),
+            p_gd=getbit(val, 13),
+            std=getbit(val, 14),
+            # bit 15 is unused
+        )
+    elif mode == 'bt':
+        return dict(
+            press_valid=getbit(val, 0),
+            temp_valid=getbit(val, 1),
+            compass_valid=getbit(val, 2),
+            tilt_valid=getbit(val, 3),
+            # bit 4 is unused
+            vel=getbit(val, 5),
+            # bits 6-7 unused
+            dist=getbit(val, 8),
+            fom=getbit(val, 9),
+            ahrs=getbit(val, 10),
+            # bits 10-15 unused
+        )
 
 def status2data(val):
     # This is detailed in the 6.1.2 of the Nortek Signature
@@ -307,8 +329,12 @@ def calc_config(index):
     ids = np.unique(index['ID'])
     config = {}
     for id in ids:
-        if id not in [21, 24, 26, 28]:
+        if id not in [21, 23, 24, 26, 28]:
             continue
+        if id == 23:
+            type = 'bt'
+        else:
+            type = 'burst'
         inds = index['ID'] == id
         _config = index['config'][inds]
         _beams_cy = index['beams_cy'][inds]
@@ -320,9 +346,10 @@ def calc_config(index):
             raise Exception("beams_cy are not identical for id: 0x{:X}."
                             .format(id))
         # Now that we've confirmed they are the same:
-        config[id] = headconfig_int2dict(_config[0])
+        config[id] = headconfig_int2dict(_config[0], mode=type)
         config[id].update(beams_cy_int2dict(_beams_cy[0], id))
         config[id]['_config'] = _config[0]
         config[id]['_beams_cy'] = _beams_cy[0]
+        config[id]['type'] = type
         config[id].pop('cy', None)
     return config
