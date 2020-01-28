@@ -115,8 +115,8 @@ def create_index_slow(infile, outfile, N_ens):
                 N += 1
             fout.write(struct.pack('<QQ4H6BHB', N, pos, dat[2],
                                    config, beams_cy, 0,
-            fin.seek(dat[4] - 76, 1)
                                    yr, mo, dy, h, m, s, u, d_ver))
+            fin.seek(dat[4] - 76, 1)
             last_ens = ens
         else:
             fin.seek(dat[4], 1)
@@ -307,7 +307,7 @@ def calc_config(index):
     ids = np.unique(index['ID'])
     config = {}
     for id in ids:
-        if id not in [21, 24, 26]:
+        if id not in [21, 24, 26, 28]:
             continue
         inds = index['ID'] == id
         _config = index['config'][inds]
@@ -324,5 +324,5 @@ def calc_config(index):
         config[id].update(beams_cy_int2dict(_beams_cy[0], id))
         config[id]['_config'] = _config[0]
         config[id]['_beams_cy'] = _beams_cy[0]
-        config[id].pop('cy')
+        config[id].pop('cy', None)
     return config
