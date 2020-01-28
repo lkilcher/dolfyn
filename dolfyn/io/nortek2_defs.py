@@ -139,7 +139,7 @@ class LinFunc(object):
         return array
 
 
-_header = DataDef([
+header = DataDef([
     ('sync', 'B', [], None),
     ('hsz', 'B', [], None),
     ('id', 'B', [], None),
@@ -149,7 +149,7 @@ _header = DataDef([
     ('hcs', 'H', [], None),
 ])
 
-_burst_hdr = DataDef([
+_burst_hdr = [
     ('ver', 'B', [], None),
     ('DatOffset', 'B', [], None),
     ('config', 'H', [], None),
@@ -186,7 +186,52 @@ _burst_hdr = DataDef([
     ('status0', 'H', [], None),
     ('status', 'I', [], None),
     ('_ensemble', 'I', [], None)
-])
+]
+
+_bt_hdr = [
+    ('ver', 'B', [], None),
+    ('DatOffset', 'B', [], None),
+    ('config', 'H', [], None),
+    ('SerialNum', 'I', [], None),
+    ('year', 'B', [], None),
+    ('month', 'B', [], None),
+    ('day', 'B', [], None),
+    ('hour', 'B', [], None),
+    ('minute', 'B', [], None),
+    ('second', 'B', [], None),
+    ('usec100', 'H', [], None),
+    ('c_sound', 'H', [], LinFunc(0.1, dtype=dt32)),  # m/s
+    ('temp', 'H', [], LinFunc(0.01, dtype=dt32)),  # Celsius
+    ('press', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
+    ('heading', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('pitch', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('roll', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
+    ('beam_config', 'H', [], None),
+    ('cell_size', 'H', [], LinFunc(0.001)),  # m
+    ('blanking', 'H', [], LinFunc(0.01)),  # m
+    ('nom_corr', 'B', [], None),  # percent
+    ('unused', 'B', [], None),  # Celsius
+    ('batt_V', 'H', [], LinFunc(0.1, dtype=dt16)),  # Volts
+    ('mag', 'h', [3], None),
+    ('accel', 'h', [3], LinFunc(1. / 16384 * grav, dtype=dt32)),
+    ('ambig_vel', 'I', [], None),
+    ('data_desc', 'H', [], None),
+    ('xmit_energy', 'H', [], None),
+    ('vel_scale', 'b', [], None),
+    ('power_level', 'b', [], None),
+    ('temp_mag', 'h', [], None),
+    ('temp_clock', 'h', [], LinFunc(0.01, dtype=dt16)),
+    ('error', 'I', [], None),
+    ('status', 'I', [], None),
+    ('_ensemble', 'I', [], None)
+]
+
+_ahrs_def = [
+    ('orientmat', 'f', [3, 3], None),
+    ('quaternion', 'f', [4], None),
+    ('angrt', 'f', [3], LinFunc(np.pi / 180,
+                                dtype=dt32)),  # rad/sec
+]
 
 _burst_group_org = {
     # Anything not specified here will be in the root group
@@ -195,7 +240,6 @@ _burst_group_org = {
             'ast_dist', 'ast_quality',
             'ast_offset_time', 'ast_pressure',
             'altraw_nsamp', 'altraw_dist', 'altraw_samp'],
-    #'echo': ['echo'],
     'orient': ['orientmat',
                'heading', 'pitch', 'roll',
                'angrt', 'mag', 'accel', 'quaternion'],
@@ -217,32 +261,36 @@ def get_group(ky, ):
     return None
 
 
+def calc_bt_struct(config, nb):
+    flags = lib.headconfig_int2dict(config, mode='bt')
+    dd = _bt_hdr.copy()
+    if flags['vel']:
+        dd.append(('vel', 'i', [nb], None))  # units handled in Ad2cpReader.sci_data
+    if flags['dist']:
+        dd.append(('dist', 'i', [nb], LinFunc(0.001, dtype=dt32)))
+    if flags['fom']:
+        dd.append(('fom', 'H', [nb], None))
+    if flags['ahrs']:
+        dd += _ahrs_def
+    return DataDef(dd)
+
+
 def calc_echo_struct(config, nc):
     flags = lib.headconfig_int2dict(config)
-    dd = []
+    dd = _burst_hdr.copy()
     if any([flags[nm] for nm in ['vel', 'amp', 'corr', 'alt', 'ast',
                                  'alt_raw', 'p_gd', 'std']]):
         raise Exception("Echosounder ping contains invalid data?")
     if flags['echo']:
         dd += [('echo', 'H', [nc], None)]
     if flags['ahrs']:
-        dd += [('orientmat', 'f', [3, 3], None),
-               ('quaternion', 'f', [4], None),
-               ('angrt', 'f', [3], LinFunc(np.pi / 180,
-                                           dtype=dt32))]  # rad/sec
-    # Now join this with the _burst_hdr
-    out = DataDef(
-        list(zip(_burst_hdr._names,
-                 _burst_hdr._format,
-                 _burst_hdr._shape,
-                 _burst_hdr._sci_func)) +
-        dd)
-    return out
-        
-        
+        dd += _ahrs_def
+    return DataDef(dd)
+
+
 def calc_burst_struct(config, nb, nc):
     flags = lib.headconfig_int2dict(config)
-    dd = []
+    dd = _burst_hdr.copy()
     if flags['echo']:
         raise Exception("Echousounder data found in velocity ping?")
     if flags['vel']:
@@ -275,10 +323,7 @@ def calc_burst_struct(config, nb, nc):
             ('altraw_samp', 'h', [], None),
         ]
     if flags['ahrs']:
-        dd += [('orientmat', 'f', [3, 3], None),
-               ('quaternion', 'f', [4], None),
-               ('angrt', 'f', [3], LinFunc(np.pi / 180,
-                                           dtype=dt32))]  # rad/sec
+        dd += _ahrs_def
     if flags['p_gd']:
         dd += [('percent_good', 'B', [nc], None)]  # percent
     if flags['std']:
@@ -292,14 +337,7 @@ def calc_burst_struct(config, nb, nc):
                 LinFunc(0.1, dtype=dt32)),  # dbar
                # This use of 'x' here is a hack
                ('std_spare', 'H22x', [], None)]
-    # Now join this with the _burst_hdr
-    out = DataDef(
-        list(zip(_burst_hdr._names,
-                 _burst_hdr._format,
-                 _burst_hdr._shape,
-                 _burst_hdr._sci_func)) +
-        dd)
-    return out
+    return DataDef(dd)
 
 
 """
