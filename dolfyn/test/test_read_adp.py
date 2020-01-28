@@ -1,6 +1,8 @@
 from dolfyn.main import read_example as read
 import dolfyn.test.base as tb
 import sys
+import warnings
+warnings.simplefilter('ignore', UserWarning)
 
 load = tb.load_tdata
 save = tb.save_tdata
@@ -15,6 +17,7 @@ dat_awac_ud = load('AWAC_test01_ud.h5')
 dat_sig = load('BenchFile01.h5')
 dat_sigi = load('Sig1000_IMU.h5')
 dat_sigi_ud = load('Sig1000_IMU_ud.h5')
+dat_sigi_echo_bt = load('VelEchoBT01.h5')
 dat_wr1 = load('winriver01.h5')
 dat_wr2 = load('winriver02.h5')
 
@@ -29,6 +32,7 @@ def test_read(make_data=False):
     td_sig = read('BenchFile01.ad2cp')
     td_sigi = read('Sig1000_IMU.ad2cp', userdata=False)
     td_sigi_ud = read('Sig1000_IMU.ad2cp')
+    td_sigi_echo_bt = read('VelEchoBT01.ad2cp')
     td_awac = read('AWAC_test01.wpr', userdata=False)
     td_awac_ud = read('AWAC_test01.wpr')
     td_wr1 = read('winriver01.PD0')
@@ -38,8 +42,6 @@ def test_read(make_data=False):
     td_rdi['orient'].pop('raw')
     td_rdi_bt['orient'].pop('raw')
     td_sig['orient'].pop('raw')
-    td_sigi['orient'].pop('raw')
-    td_sigi_ud['orient'].pop('raw')
     td_awac['orient'].pop('raw')
     td_awac_ud['orient'].pop('raw')
     td_wr1['orient'].pop('raw')
@@ -51,6 +53,7 @@ def test_read(make_data=False):
         save(td_sig, 'BenchFile01.h5')
         save(td_sigi, 'Sig1000_IMU.h5')
         save(td_sigi_ud, 'Sig1000_IMU_ud.h5')
+        save(td_sigi_echo_bt, 'VelEchoBT01.h5')
         save(td_awac, 'AWAC_test01.h5')
         save(td_awac_ud, 'AWAC_test01_ud.h5')
         save(td_wr1, 'winriver01.h5')
@@ -90,6 +93,8 @@ def test_read(make_data=False):
             (td_sigi, dat_sigi_tmp,
              msg('Sig1000_IMU.ad2cp')),
             (td_sigi_ud, dat_sigi_ud_tmp,
+             msg('Sig1000_IMU_ud.ad2cp')),
+            (td_sigi_echo_bt, dat_sigi_echo_bt,
              msg('Sig1000_IMU_ud.ad2cp')),
             (td_awac, dat_awac,
              msg('AWAC_test01.wpr')),
