@@ -36,20 +36,40 @@ def reduce_by_average_angle(data, ky0, ky1, degrees=True):
 
 # This is the data-type of the index file.
 # This must match what is written-out by the create_index function.
-index_dtype = np.dtype([('ens', np.uint64),
-                        ('pos', np.uint64),
-                        ('ID', np.uint16),
-                        ('config', np.uint16),
-                        ('beams_cy', np.uint16),
-                        ('_blank', np.uint16),
-                        ('year', np.uint8),
-                        ('month', np.uint8),
-                        ('day', np.uint8),
-                        ('hour', np.uint8),
-                        ('minute', np.uint8),
-                        ('second', np.uint8),
-                        ('usec100', np.uint16),
-                        ])
+index_dtype = {
+    None:
+    np.dtype([('ens', np.uint64),
+              ('pos', np.uint64),
+              ('ID', np.uint16),
+              ('config', np.uint16),
+              ('beams_cy', np.uint16),
+              ('_blank', np.uint16),
+              ('year', np.uint8),
+              ('month', np.uint8),
+              ('day', np.uint8),
+              ('hour', np.uint8),
+              ('minute', np.uint8),
+              ('second', np.uint8),
+              ('usec100', np.uint16),
+    ]),
+    1:
+    np.dtype([('ens', np.uint64),
+              ('pos', np.uint64),
+              ('ID', np.uint16),
+              ('config', np.uint16),
+              ('beams_cy', np.uint16),
+              ('_blank', np.uint16),
+              ('year', np.uint8),
+              ('month', np.uint8),
+              ('day', np.uint8),
+              ('hour', np.uint8),
+              ('minute', np.uint8),
+              ('second', np.uint8),
+              ('usec100', np.uint16),
+              ('d_ver', np.uint8),
+    ])
+}
+index_version = 1
 
 hdr = struct.Struct('<BBBBhhh')
 
@@ -71,6 +91,8 @@ def calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
 def create_index_slow(infile, outfile, N_ens):
     fin = open(infile, 'rb')
     fout = open(outfile, 'wb')
+    fout.write(b'Index Ver:')
+    fout.write(struct.pack('<H', index_version))
     ens = 0
     N = 0
     config = 0
@@ -82,8 +104,7 @@ def create_index_slow(infile, outfile, N_ens):
         except:
             break
         if dat[2] in [21, 24, 26]:
-            fin.seek(2, 1)
-            config = struct.unpack('<H', fin.read(2))[0]
+            d_ver, d_off, config = struct.unpack('<BBH', fin.read(4))
             fin.seek(4, 1)
             yr, mo, dy, h, m, s, u = struct.unpack('6BH', fin.read(8))
             fin.seek(14, 1)
@@ -92,10 +113,10 @@ def create_index_slow(infile, outfile, N_ens):
             ens = struct.unpack('<I', fin.read(4))[0]
             if last_ens > 0 and last_ens != ens:
                 N += 1
-            fout.write(struct.pack('<QQ4H6BH', N, pos, dat[2],
+            fout.write(struct.pack('<QQ4H6BHB', N, pos, dat[2],
                                    config, beams_cy, 0,
-                                   yr, mo, dy, h, m, s, u))
             fin.seek(dat[4] - 76, 1)
+                                   yr, mo, dy, h, m, s, u, d_ver))
             last_ens = ens
         else:
             fin.seek(dat[4], 1)
@@ -117,7 +138,17 @@ def get_index(infile, reload=False):
         print(" Done.")
     # else:
     #     print("Using saved index file.")
-    return np.fromfile(index_file, dtype=index_dtype)
+    f = open(index_file, 'rb')
+    file_head = f.read(12)
+    if file_head[:10] == b'Index Ver:':
+        index_ver = struct.unpack('<H', file_head[10:])[0]
+    else:
+        # This is pre-versioning the index files
+        index_ver = None
+        f.seek(0, 0)
+    out = np.fromfile(f, dtype=index_dtype[index_ver])
+    f.close()
+    return out
 
 
 def index2ens_pos(index):
