@@ -299,12 +299,13 @@ def beam2inst(dat, reverse=False, force=False):
             rotmat = _calc_beam_rotmatrix(
                 dat.config.beam_angle,
                 dat.config.beam_pattern == 'convex')
-    elif dat.props['inst_make'].lower() == 'nortek' and \
-         dat.props['inst_model'].lower().startswith('signature'):
-        rotmat = dat.config['TransMatrix']
     elif dat.props['inst_make'].lower() == 'nortek':
-        # Nortek Vector and AWAC
-        rotmat = dat.config['head']['TransMatrix']
+        try:
+            # Signature and "AD2CP"
+            rotmat = dat.config['TransMatrix']
+        except KeyError:
+            # Nortek Vector and AWAC
+            rotmat = dat.config['head']['TransMatrix']
     else:
         raise Exception("Unrecognized device type.")
 

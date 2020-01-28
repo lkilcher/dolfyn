@@ -475,8 +475,11 @@ def reorg(dat):
     # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
     # Heding is: 0,1: Z; 4,5: X
     for ky in ['accel', 'angrt']:
-        if ky in outdat['orient']:
-            outdat.props['rotate_vars'].update({'orient.' + ky})
+        for dky in outdat['orient'].keys():
+            if dky == ky or dky.startswith(ky + '_'):
+                outdat.props['rotate_vars'].update({'orient.' + dky})
+    if 'vel_bt' in outdat:
+        outdat.props['rotate_vars'].update({'vel_bt', })
     return outdat
 
 
