@@ -452,9 +452,6 @@ def reorg(dat):
                    isinstance(outdat[ky + tag], db.TimeData):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
 
-    if 'echo_echo' in outdat:
-        outdat['echo'] = outdat.pop('echo_echo')
-
     # Move 'altimeter raw' data to it's own down-sampled structure
     if 26 in dat:
         ard = outdat['altraw'] = db.MappedTime()
@@ -515,6 +512,11 @@ def reduce(data):
         data['range_b5'] = (np.arange(data['vel_b5'].shape[1]) *
                             data['config']['cell_size_b5'] +
                             data['config']['blanking_b5'])
+    if 'echo_echo' in data:
+        data['echo'] = data.pop('echo_echo')
+        data['range_echo'] = (np.arange(data['echo'].shape[0]) *
+                              data['config']['cell_size_echo'] +
+                              data['config']['blanking_echo'])
 
     if 'orientmat' in data['orient']:
         data['props']['has imu'] = True
