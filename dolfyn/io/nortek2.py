@@ -143,8 +143,11 @@ class Ad2cpReader(object):
     def _init_burst_readers(self, ):
         self._burst_readers = {}
         for rdr_id, cfg in self._config.items():
-            self._burst_readers[rdr_id] = defs.calc_burst_struct(
-                cfg['_config'], cfg['nbeams'], cfg['ncells'])
+            if rdr_id == 28:
+                self._burst_readers[rdr_id] = defs.calc_echo_struct(cfg['_config'], cfg['ncells'])
+            else:
+                self._burst_readers[rdr_id] = defs.calc_burst_struct(
+                    cfg['_config'], cfg['nbeams'], cfg['ncells'])
 
     def init_data(self, ens_start, ens_stop):
         outdat = {}
@@ -250,7 +253,7 @@ class Ad2cpReader(object):
             except IOError:
                 return outdat
             id = hdr['id']
-            if id in [21, 24]:
+            if id in [21, 24, 28]: # vel, vel_b5, echo
                 self.read_burst(id, outdat[id], c)
             elif id in [26]:
                 # warnings.warn(
@@ -296,8 +299,8 @@ class Ad2cpReader(object):
                 self.read_burst(id, outdat[id], c26)
                 outdat[id]['ensemble'][c26] = c
                 c26 += 1
-
-            elif id in [22, 23, 27, 28, 29, 30, 31]:
+                
+            elif id in [22, 27, 28, 29, 30, 31]:
                 warnings.warn(
                     "Unhandled ID: 0x{:02X} ({:02d})\n"
                     "    This ID is not yet handled by DOLfYN.\n"
@@ -377,7 +380,7 @@ def reorg(dat):
     outdat['props']['inst_type'] = 'ADP'
     outdat['props']['rotate_vars'] = {'vel', }
 
-    for id, tag in [(21, ''), (24, '_b5'), (26, '_ar')]:
+    for id, tag in [(21, ''), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
         if id == 26:
             collapse_exclude = [0]
         else:
@@ -448,6 +451,9 @@ def reorg(dat):
                 if ky + tag in outdat and not \
                    isinstance(outdat[ky + tag], db.TimeData):
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
+
+    if 'echo_echo' in outdat:
+        outdat['echo'] = outdat.pop('echo_echo')
 
     # Move 'altimeter raw' data to it's own down-sampled structure
     if 26 in dat:

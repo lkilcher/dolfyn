@@ -52,6 +52,7 @@ class DataDef(object):
                 self._N.append(int(np.prod(itm[2])))
         self._struct = Struct('<' + self.format)
         self.nbyte = self._struct.size
+        #self.nbyte = calcsize(self.format)
         self._cs_struct = Struct('<' + '{}H'.format(int(self.nbyte // 2)))
 
     def init_data(self, npings):
@@ -194,7 +195,7 @@ _burst_group_org = {
             'ast_dist', 'ast_quality',
             'ast_offset_time', 'ast_pressure',
             'altraw_nsamp', 'altraw_dist', 'altraw_samp'],
-    'echo': ['echo'],
+    #'echo': ['echo'],
     'orient': ['orientmat',
                'heading', 'pitch', 'roll',
                'angrt', 'mag', 'accel', 'quaternion'],
@@ -216,9 +217,34 @@ def get_group(ky, ):
     return None
 
 
+def calc_echo_struct(config, nc):
+    flags = lib.headconfig_int2dict(config)
+    dd = []
+    if any([flags[nm] for nm in ['vel', 'amp', 'corr', 'alt', 'ast',
+                                 'alt_raw', 'p_gd', 'std']]):
+        raise Exception("Echosounder ping contains invalid data?")
+    if flags['echo']:
+        dd += [('echo', 'H', [nc], None)]
+    if flags['ahrs']:
+        dd += [('orientmat', 'f', [3, 3], None),
+               ('quaternion', 'f', [4], None),
+               ('angrt', 'f', [3], LinFunc(np.pi / 180,
+                                           dtype=dt32))]  # rad/sec
+    # Now join this with the _burst_hdr
+    out = DataDef(
+        list(zip(_burst_hdr._names,
+                 _burst_hdr._format,
+                 _burst_hdr._shape,
+                 _burst_hdr._sci_func)) +
+        dd)
+    return out
+        
+        
 def calc_burst_struct(config, nb, nc):
     flags = lib.headconfig_int2dict(config)
     dd = []
+    if flags['echo']:
+        raise Exception("Echousounder data found in velocity ping?")
     if flags['vel']:
         dd.append(('vel', 'h', [nb, nc], None))
     if flags['amp']:
@@ -248,8 +274,6 @@ def calc_burst_struct(config, nb, nc):
             ('altraw_dist', 'H', [], LinFunc(0.0001, dtype=dt32)),  # m
             ('altraw_samp', 'h', [], None),
         ]
-    if flags['echo']:
-        dd += [('echo', 'H', [nc], None)]
     if flags['ahrs']:
         dd += [('orientmat', 'f', [3, 3], None),
                ('quaternion', 'f', [4], None),
