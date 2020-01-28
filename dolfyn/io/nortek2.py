@@ -427,7 +427,7 @@ def reorg(dat):
                 'ast_pressure',
                 'altraw_nsamp', 'altraw_dist', 'altraw_samp',
                 'echo',
-                'orientmat', 'angrt',
+                'orientmat', 'angrt', 'quaternion',
                 'percent_good',
                 'std_pitch', 'std_roll', 'std_heading', 'std_press'
         ]:
