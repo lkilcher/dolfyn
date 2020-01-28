@@ -9,21 +9,25 @@ def test_rotate_beam2inst(make_data=False):
     td = tr.dat_rdi.rotate2('inst')
     td_sig = tr.dat_sig.rotate2('inst')
     td_sigi = tr.dat_sigi.rotate2('inst')
+    td_sigi_echo_bt = tr.dat_sigi_echo_bt.rotate2('inst')
 
     if make_data:
         save(td, 'RDI_test01_rotate_beam2inst.h5')
         save(td_sig, 'BenchFile01_rotate_beam2inst.h5')
         save(td_sigi, 'Sig1000_IMU_rotate_beam2inst.h5')
+        save(td_sigi_echo_bt, 'VelEchoBT01_rotate_beam2inst.h5')
         return
 
     cd_sig = load('BenchFile01_rotate_beam2inst.h5')
     cd_sigi = load('Sig1000_IMU_rotate_beam2inst.h5')
+    cd_sigi_echo_bt = load('VelEchoBT01_rotate_beam2inst.h5')
 
     msg = "adp.rotate.beam2inst gives unexpected results for {}"
     for t, c, msg in (
             (td, tr.dat_rdi_i, msg.format('RDI_test01')),
             (td_sig, cd_sig, msg.format('BenchFile01')),
             (td_sigi, cd_sigi, msg.format('Sig1000_IMU')),
+            (td_sigi_echo_bt, cd_sigi_echo_bt, msg.format('VelEchoBT01')),
     ):
         yield data_equiv, t, c, msg
 
@@ -85,7 +89,11 @@ def test_rotate_earth2inst(make_data=False):
     assert (np.abs(cd_sigi['orient'].pop('accel') - \
                    td_sigi['orient'].pop('accel')) < 1e-3).all(), \
                   "adp.rotate.inst2earth gives unexpected ACCEL results for 'Sig1000_IMU_rotate_beam2inst.h5'"
-    
+
+    assert (np.abs(cd_sigi['orient'].pop('accel_b5') - \
+                   td_sigi['orient'].pop('accel_b5')) < 1e-3).all(), \
+                   "adp.rotate.inst2earth gives unexpected ACCEL results for 'Sig1000_IMU_rotate_beam2inst.h5'"
+
 
     msg = "adp.rotate.inst2earth gives unexpected REVERSE results for {}"
     for t, c, msg in (
