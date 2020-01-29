@@ -54,6 +54,7 @@ index_dtype = {
     ]),
     1:
     np.dtype([('ens', np.uint64),
+              ('hw_ens', np.uint32),
               ('pos', np.uint64),
               ('ID', np.uint16),
               ('config', np.uint16),
@@ -124,7 +125,7 @@ def create_index_slow(infile, outfile, N_ens):
                 ens = last_ens
             if last_ens > 0 and last_ens != ens:
                 N += 1
-            fout.write(struct.pack('<QQ4H6BHB', N, pos, dat[2],
+            fout.write(struct.pack('<QIQ4H6BHB', N, ens, pos, dat[2],
                                    config, beams_cy, 0,
                                    yr, mo, dy, h, m, s, u, d_ver))
             fin.seek(dat[4] - (36 + seek_2ens[dat[2]]), 1)
