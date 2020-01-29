@@ -2,6 +2,7 @@ from dolfyn.main import read_example as read
 import dolfyn.test.base as tb
 import sys
 import warnings
+import numpy as np
 warnings.simplefilter('ignore', UserWarning)
 
 load = tb.load_tdata
@@ -20,6 +21,13 @@ dat_sigi_ud = load('Sig1000_IMU_ud.h5')
 dat_sigi_echo_bt = load('VelEchoBT01.h5')
 dat_wr1 = load('winriver01.h5')
 dat_wr2 = load('winriver02.h5')
+
+
+def test_badtime():
+
+    dat = read('Sig1000_BadTime01.ad2cp')
+
+    assert np.isnan(dat.mpltime[199]), "A good timestamp was found where a bad value is expected."
 
 
 def test_read(make_data=False):
