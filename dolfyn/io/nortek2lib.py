@@ -83,8 +83,14 @@ def calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
                 h == 0 and mi == 0 and
                 s == 0 and u == 0):
             continue
-        # Note that month is zero-based
-        dt[idx] = time.datetime(y, mo + 1, d, h, mi, s, u)
+        try:
+            # Note that month is zero-based
+            dt[idx] = time.datetime(y, mo + 1, d, h, mi, s, u)
+        except ValueError:
+            # One of the time values is out-of-range (e.g., mi > 60)
+            # This probably indicates a corrupted byte, so we just insert None.
+            dt[idx] = None
+    # None -> NaN in this step
     return time.time_array(time.date2num(dt))
 
 
