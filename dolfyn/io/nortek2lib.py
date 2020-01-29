@@ -176,6 +176,27 @@ def getbit(val, n):
     return bool((val >> n) & 1)
 
 
+def crop_ensembles(infile, outfile, range):
+    """This function is for cropping certain pings out of an AD2CP
+    file to create a new AD2CP file. It properly grabs the header from
+    infile.
+
+    The range is the `ensemble/ping` counter as defined in the first column
+    of the INDEX.
+
+    """
+    idx = get_index(infile)
+    with open(infile, 'rb') as fin:
+        with open(outfile, 'wb') as fout:
+            fout.write(fin.read(idx['pos'][0]))
+            i0 = np.nonzero(idx['ens'] == range[0])[0][0]
+            ie = np.nonzero(idx['ens'] == range[1])[0][0]
+            pos = idx['pos'][i0]
+            nbyte = idx['pos'][ie] - pos
+            fin.seek(pos, 0)
+            fout.write(fin.read(nbyte))
+
+
 class BitIndexer(object):
 
     def __init__(self, data):
