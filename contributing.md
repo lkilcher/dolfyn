@@ -12,6 +12,8 @@
 1) Get set up
     - Open an issue (optional)
     - Create a branch
+    
+2) Create a plan in `todo-branch.md`
 
 3) Make changes to documentation first!
     - The documentation source lives in `doc-src/`
