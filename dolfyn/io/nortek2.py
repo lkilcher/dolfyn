@@ -490,8 +490,7 @@ def reduce(data):
     different data structures within the same ensemble --- by
     averaging.  """
     # Average these fields
-    for ky in ['mpltime',
-               'c_sound', 'temp', 'press',
+    for ky in ['c_sound', 'temp', 'press',
                'temp_press', 'temp_clock', 'temp_mag',
                'batt_V']:
         grp = defs.get_group(ky)
@@ -504,11 +503,6 @@ def reduce(data):
     # Angle-averaging is treated separately
     for ky in ['heading', 'pitch', 'roll']:
         lib.reduce_by_average_angle(data['orient'], ky, ky + '_b5')
-
-    # Drop the ensemble count from other data structures
-    for ky in ['_ensemble', 'ensemble']:
-        if ky + '_b5' in data['sys']:
-            data['sys'].pop(ky + '_b5')
 
     data['range'] = (np.arange(data['vel'].shape[1]) *
                      data['config']['cell_size'] +
