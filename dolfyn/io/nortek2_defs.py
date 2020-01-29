@@ -1,6 +1,7 @@
 from struct import calcsize, Struct
 from . import nortek2lib as lib
 import numpy as np
+from copy import copy
 
 dt16 = 'float16'
 dt32 = 'float32'
@@ -263,7 +264,7 @@ def get_group(ky, ):
 
 def calc_bt_struct(config, nb):
     flags = lib.headconfig_int2dict(config, mode='bt')
-    dd = _bt_hdr.copy()
+    dd = copy(_bt_hdr)
     if flags['vel']:
         dd.append(('vel', 'i', [nb], None))  # units handled in Ad2cpReader.sci_data
     if flags['dist']:
@@ -277,7 +278,7 @@ def calc_bt_struct(config, nb):
 
 def calc_echo_struct(config, nc):
     flags = lib.headconfig_int2dict(config)
-    dd = _burst_hdr.copy()
+    dd = copy(_burst_hdr)
     if any([flags[nm] for nm in ['vel', 'amp', 'corr', 'alt', 'ast',
                                  'alt_raw', 'p_gd', 'std']]):
         raise Exception("Echosounder ping contains invalid data?")
@@ -290,7 +291,7 @@ def calc_echo_struct(config, nc):
 
 def calc_burst_struct(config, nb, nc):
     flags = lib.headconfig_int2dict(config)
-    dd = _burst_hdr.copy()
+    dd = copy(_burst_hdr)
     if flags['echo']:
         raise Exception("Echousounder data found in velocity ping?")
     if flags['vel']:

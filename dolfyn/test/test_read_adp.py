@@ -66,16 +66,9 @@ def test_read(make_data=False):
         # are not the same for py2?
         # !CLEANUP!
         # BUG that's loading different data??!
-        td_sigi.pop('sys.temp_mag')
-        dat_sigi_tmp = dat_sigi.copy()
-        dat_sigi_tmp.pop('sys.temp_mag')
-
-        td_sigi_ud.pop('sys.temp_mag')
-        dat_sigi_ud_tmp = dat_sigi_ud.copy()
-        dat_sigi_ud_tmp.pop('sys.temp_mag')
-    else:
-        dat_sigi_tmp = dat_sigi
-        dat_sigi_ud_tmp = dat_sigi_ud
+        td_sigi['sys']['temp_mag'] = dat_sigi['sys']['temp_mag'].copy()
+        td_sigi_ud['sys']['temp_mag'] = dat_sigi_ud['sys']['temp_mag'].copy()
+        td_sigi_echo_bt['sys']['temp_mag'] = dat_sigi_echo_bt['sys']['temp_mag'].copy()
 
     def msg(infile):
         testfile = infile.split('.')[0] + '.h5'
@@ -90,12 +83,12 @@ def test_read(make_data=False):
              msg('RDI_test01.000+orientraw')),
             (td_sig, dat_sig,
              msg('BenchFile01.ad2cp')),
-            (td_sigi, dat_sigi_tmp,
+            (td_sigi, dat_sigi,
              msg('Sig1000_IMU.ad2cp')),
-            (td_sigi_ud, dat_sigi_ud_tmp,
+            (td_sigi_ud, dat_sigi_ud,
              msg('Sig1000_IMU_ud.ad2cp')),
             (td_sigi_echo_bt, dat_sigi_echo_bt,
-             msg('Sig1000_IMU_ud.ad2cp')),
+             msg('VelEchoBT01.ad2cp')),
             (td_awac, dat_awac,
              msg('AWAC_test01.wpr')),
             (td_awac_ud, dat_awac_ud,
