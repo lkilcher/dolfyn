@@ -383,7 +383,7 @@ def reorg(dat):
     outdat['props']['rotate_vars'] = {'vel', }
 
     for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
-        if id == 26:
+        if id in [24, 26]:
             collapse_exclude = [0]
         else:
             collapse_exclude = []
