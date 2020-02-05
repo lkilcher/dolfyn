@@ -4,6 +4,7 @@ from .rdi import read_rdi
 from .base import WrongFileType as _WTF
 # These are included here for use in the API
 from .hdf5 import load
+from ..base import Path
 
 
 def read(fname, userdata=True, nens=None):
@@ -12,10 +13,10 @@ def read(fname, userdata=True, nens=None):
 
     Parameters
     ----------
-    filename : string
-               Filename of Nortek file to read.
+    filename : string or pathlib.Path
+               Filename of the file to read.
 
-    userdata : True, False, or string of userdata.json filename
+    userdata : True, False, or string or Path of userdata.json filename
                (default ``True``) Whether to read the
                '<base-filename>.userdata.json' file.
 
@@ -29,6 +30,16 @@ def read(fname, userdata=True, nens=None):
       A DOLfYN velocity data object.
 
     """
+    if not isinstance(fname, Path):
+        fname = Path(fname)
+    # Now resolve it.
+    fname = str(fname.resolve())
+    if not isinstance(userdata, bool):
+        if not isinstance(fname, Path):
+            # It should be a string.
+            userdata = Path(userdata)
+        # Now resolve it.
+        userdata = str(userdata.resolve())
     # Loop over binary readers until we find one that works.
     for func in [read_nortek, read_signature, read_rdi]:
         try:

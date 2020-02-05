@@ -12,6 +12,7 @@ import h5py as h5
 import sys
 from . import hdf5_legacy as legacy
 from pyDictH5.io import load_hdf5
+from ..base import Path
 
 if sys.version_info >= (3, 0):
     import pickle as pkl
@@ -45,6 +46,9 @@ def load(fname, data_groups=None,):
 
 
     """
+    if not isinstance(fname, Path):
+        fname = Path(fname)
+    fname = str(fname.resolve())
     if is_pydicth5(fname):
         return load_hdf5(fname, group=data_groups)
     else:
