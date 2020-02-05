@@ -8,12 +8,8 @@ from ..data import base as db
 from ..data import time
 import six
 import json
-import io
 import os
-try:
-    file_types = (file, io.IOBase)
-except NameError:
-    file_types = io.IOBase
+from ..base import file_types
 
 
 class WrongFileType(Exception):
