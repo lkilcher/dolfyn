@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Version 0.12
+	- Handle echo (0x1c) and bottom-track (0x17) Nortek Signature pings
+	- Handle corrupted timestamps in Nortek Signature pings (assign NaN)
+	- Bugfix for files that have missing pings at the start of the file
+	- Handle rotations of angrt and accel for `_bt` and `_b5` pings
+	- Add quaternion data from Nortek Signatures with AHRS
+	- AD2CP index files include burst version and hw_ensemble counter, include versioning
+
 ## Version 0.11.1
 	- Remove the keep_orient_raw option, and just put instrument h,p,r into `dat['orient']['raw']`
 
