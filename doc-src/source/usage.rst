@@ -138,7 +138,7 @@ To load this data into memory (e.g., in a different script), use |dlfn|'s load f
 Cleaning data
 ----------------
 
-|dlfn| includes tools for cleaning ADV data in the `dlfn.adv.clean` module. Take a look at those functions for more details. Tools for cleaning ADP data have not yet been developed.
+|dlfn| includes tools for cleaning ADV data in the ``dlfn.adv.clean`` module. Take a look at those functions for more details. Tools for cleaning ADP data have not yet been developed.
   
 Averaging data
 ------------------
@@ -153,9 +153,9 @@ compute averages or turbulence statistics. For example::
   >>> avg_tool = dlfn.VelBinner(4800, fs=16)
 
   # Then compute averages of all variables in dat
-  >>> avg_dat = avg_tool(dat)
+  >>> avg_dat = avg_tool.do_avg(dat)
 
-Here, we have initialized an averaging tool, `avg_tool`, to bin 16 Hz data into 4800-point segments (5 minutes). Then when we call the averaging tool on a data object, it returns an 'averaged' data object, where all the data field names are the same, but the fields contain averaged data. The averaging tool also includes many tools for computing statistics other than averages, for example::
+Here, we have initialized an averaging tool, ``avg_tool``, to bin 16 Hz data into 4800-point segments (5 minutes). Then when we call the ``do_avg`` method in the averaging tool on a data object, it returns an 'averaged' data object, where all the data field names are the same, but the fields contain averaged data. The averaging tool also includes many other tools (methods) for computing statistics other than averages, for example::
 
   # Compute the power-spectral-density of the velocity data, and store it in 
   >>> avg_dat['Spec.vel'] = avg_tool.psd(dat['vel'])
