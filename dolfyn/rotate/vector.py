@@ -122,7 +122,7 @@ def calc_omat(hh, pp, rr, orientation_down=None):
 
 
 def _rotate_vel2body(advo):
-    if (np.diag(np.eye(3)) == 1).all():
+    if (np.diag(advo.props['body2head_rotmat']) == 1).all():
         advo.props['vel_rotated2body'] = True
     if 'vel_rotated2body' in advo.props and \
        advo.props['vel_rotated2body'] is True:
