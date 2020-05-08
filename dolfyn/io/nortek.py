@@ -13,7 +13,7 @@ from . import nortek_defs
 from ..data import time
 from .base import WrongFileType, read_userdata
 import warnings
-from ..rotate.vector import calc_omat as _calc_omat
+from ..rotate.vector import _rotate_vel2body, calc_omat as _calc_omat
 
 
 def recatenate(obj):
@@ -87,6 +87,16 @@ def read_nortek(filename,
 
     dat.props.update(user_data)
 
+    if dat.props['coord_sys'] == 'earth' and \
+      'body2head_rotmat' in dat.props and \
+       (dat.props['body2head_rotmat'] != np.eye(3)).all():
+        # This rotation should enforce the body->head rotation correctly
+        # including setting `dat.props['vel_rotated2body'] = True`
+        dat.rotate2('inst', inplace=True)
+
+        # This just brings us back to the 'correct' earth frame
+        dat.rotate2('earth', inplace=True)
+    
     declin = dat['props'].pop('declination', None)
     if declin is not None:
         dat.set_declination(declin)
