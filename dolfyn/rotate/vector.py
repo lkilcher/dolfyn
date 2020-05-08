@@ -121,19 +121,38 @@ def calc_omat(hh, pp, rr, orientation_down=None):
     return _euler2orient(hh, pp, rr)
 
 
-def _rotate_vel2body(advo):
-    if (np.diag(advo.props['body2head_rotmat']) == 1).all():
-        advo.props['vel_rotated2body'] = True
-    if 'vel_rotated2body' in advo.props and \
-       advo.props['vel_rotated2body'] is True:
-        # Don't re-rotate the data if its already been rotated.
+def _rotate_vel2body(advo, reverse=False):
+    if 'body2head_rotmat' not in advo.props:
+        warnings.warn(
+            'A body2head_rotmat was not specified in advo.props. DOLfYN '
+            'is assuming that the ADV head is aligned with the ADV body. '
+            'This is generally true for fixed-head ADVs, but not necessarily '
+            'for cable-head ADVs.')
+        advo.props['body2head_rotmat'] = np.eye(3)
+    if (advo.props['body2head_rotmat'] == np.eye(3)).all():
+        # We don't do anything. Don't even set vel_rotated2body.
         return
     if not rotb._check_rotmat_det(advo.props['body2head_rotmat']).all():
         raise ValueError("Invalid body-to-head rotation matrix"
                          " (determinant != 1).")
-    # The transpose should do head to body.
-    advo['vel'] = np.dot(advo.props['body2head_rotmat'].T, advo['vel'])
-    advo.props['vel_rotated2body'] = True
+    if not reverse:
+        # This is what we usually want.
+        if 'vel_rotated2body' in advo.props and \
+           advo.props['vel_rotated2body'] is True:
+            # Don't re-rotate the data if its already been rotated.
+            return
+        # The transpose should do head->body.
+        advo['vel'] = np.dot(advo.props['body2head_rotmat'].T, advo['vel'])
+        advo.props['vel_rotated2body'] = True
+    else:
+        # This is here for rotating back to beam coordinates.
+        if 'vel_rotated2body' in advo.props and \
+           advo.props['vel_rotated2body'] is False:
+            # Don't re-rotate
+            return
+        # Rotate body->head
+        advo['vel'] = np.dot(advo.props['body2head_rotmat'], advo['vel'])
+        advo.props['vel_rotated2body'] = False
 
 
 def earth2principal(advo, reverse=False):
