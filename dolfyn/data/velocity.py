@@ -5,6 +5,7 @@ import warnings
 from .time import num2date
 from ..rotate import rotate2
 from ..rotate import base as rotb
+from ..rotate.vector import _rotate_body2head
 
 
 class Velocity(TimeData):
@@ -87,6 +88,24 @@ class Velocity(TimeData):
 
     """
 
+    def set_inst2head_rotmat(self, rotmat):
+        if not self._make_model.startswith('nortek vector'):
+            raise Exception("Setting 'inst2head_rotmat' is only supported "
+                            "for Nortek Vector ADVs.")
+        if self.props.get('inst2head_rotmat', None) is not None:
+            # Technically we could support changing this (unrotate with the
+            # original, then rotate with the new one), but WHY?!
+            raise Exception(
+                "You are setting 'inst2head_rotmat' after it has already "
+                "been set. You can only set it once.")
+        csin = self.props['coord_sys']
+        if csin is not 'inst':
+            self.rotate2('inst', inplace=True)
+        self.props['inst2head_rotmat'] = rotmat
+        _rotate_body2head(self)
+        self.props['inst2head_rotmat_was_set'] = True
+        
+    
     def set_declination(self, declination):
         """Set the declination of the data object.
 
