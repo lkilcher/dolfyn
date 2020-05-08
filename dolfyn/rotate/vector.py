@@ -3,8 +3,20 @@ import numpy as np
 import warnings
 from . import base as rotb
 
-beam2inst = rotb.beam2inst
 
+def beam2inst(dat, reverse=False, force=False):
+    # Remember: order of rotations matters!
+    if not reverse: # beam->inst
+        rotb.beam2inst(dat, reverse=reverse, force=force)
+        _rotate_vel2body(dat)
+    else: # inst->beam
+        # First rotate velocities back to head frame
+        _rotate_vel2body(dat, reverse)
+        # Now rotate to beam
+        rotb.beam2inst(dat, reverse=reverse, force=force)
+
+# Set the docstring to match the default rotation func
+beam2inst.__doc_ = rotb.beam2inst.__doc__
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
@@ -27,14 +39,14 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
       performing this rotation.
 
     """
-
-    if reverse:
+    if reverse: # earth->inst
         # The transpose of the rotation matrix gives the inverse
         # rotation, so we simply reverse the order of the einsum:
         sumstr = 'jik,j...k->i...k'
         cs_now = 'earth'
         cs_new = 'inst'
-    else:
+    else: # inst->earth
+        _rotate_vel2body(advo) # make sure vel is in body frame
         sumstr = 'ijk,j...k->i...k'
         cs_now = 'inst'
         cs_new = 'earth'
@@ -90,6 +102,14 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     else:
         rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
 
+    if reverse:
+        # make sure vel is in body/inst frame (after rot from earth->inst)
+        # This should only be an issue when the data is recorded (on
+        # the instrument in the field) in earth frame but
+        # body2head_rotmat is not the identity.
+        _rotate_vel2body(advo)
+
+        
     advo.props['coord_sys'] = cs_new
 
     return
