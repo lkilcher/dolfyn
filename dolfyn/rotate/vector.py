@@ -107,7 +107,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         # This should only be an issue when the data is recorded (on
         # the instrument in the field) in earth frame but
         # body2head_rotmat is not the identity.
-        _rotate_vel2body(advo)
+        _rotate_vel2body(advo) # don't reverse b/c that does inst->head
 
         
     advo.props['coord_sys'] = cs_new
@@ -141,23 +141,16 @@ def calc_omat(hh, pp, rr, orientation_down=None):
     return _euler2orient(hh, pp, rr)
 
 
-def _rotate_vel2body(advo, reverse=False):
-    if 'body2head_rotmat' not in advo.props:
-        warnings.warn(
-            'A body2head_rotmat was not specified in advo.props. DOLfYN '
-            'is assuming that the ADV head is aligned with the ADV body. '
-            'This is generally true for fixed-head ADVs, but not necessarily '
-            'for cable-head ADVs.')
-        advo.props['body2head_rotmat'] = np.eye(3)
-    if (advo.props['body2head_rotmat'] == np.eye(3)).all():
-        # We don't do anything. Don't even set vel_rotated2body.
-        return
-    if not rotb._check_rotmat_det(advo.props['body2head_rotmat']).all():
+def _rotate_head2inst(advo, reverse=False):
+    if not advo.props.get('inst2head_rotmat', None)
+    if not advo.props.get('inst2head_rotmat_was_set', None):
+        raise Exception("The inst->head")
+    if not rotb._check_rotmat_det(advo.props['inst2head_rotmat']).all():
         raise ValueError("Invalid body-to-head rotation matrix"
                          " (determinant != 1).")
     if not reverse:
         # This is what we usually want.
-        if 'vel_rotated2body' in advo.props and \
+        if 'head2inst_rotmat_was_set' in advo.props and \
            advo.props['vel_rotated2body'] is True:
             # Don't re-rotate the data if its already been rotated.
             return

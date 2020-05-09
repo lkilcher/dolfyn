@@ -5,7 +5,7 @@ import warnings
 from .time import num2date
 from ..rotate import rotate2
 from ..rotate import base as rotb
-from ..rotate.vector import _rotate_body2head
+from ..rotate.vector import _rotate_head2inst
 
 
 class Velocity(TimeData):
@@ -88,7 +88,7 @@ class Velocity(TimeData):
 
     """
 
-    def set_inst2head_rotmat(self, rotmat):
+    def set_head2inst_rotmat(self, rotmat):
         if not self._make_model.startswith('nortek vector'):
             raise Exception("Setting 'inst2head_rotmat' is only supported "
                             "for Nortek Vector ADVs.")
@@ -102,7 +102,7 @@ class Velocity(TimeData):
         if csin is not 'inst':
             self.rotate2('inst', inplace=True)
         self.props['inst2head_rotmat'] = rotmat
-        _rotate_body2head(self)
+        _rotate_inst2head(self)
         self.props['inst2head_rotmat_was_set'] = True
         
     
