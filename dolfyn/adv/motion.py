@@ -243,14 +243,14 @@ def _calc_probe_pos(advo, separate_probes=False):
         phi = np.deg2rad(-30)
         # The angles of the probes from the x-axis:
         theta = np.deg2rad(np.array([0., 120., 240.]))
-        return (np.dot(advo.props['body2head_rotmat'].T,
+        return (np.dot(advo.props['inst2head_rotmat'].T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
                                  r * np.tan(phi) * np.ones(3)])) +
-                advo.props['body2head_vec'][:, None]
+                advo.props['inst2head_vec'][:, None]
                 )
     else:
-        return advo.props['body2head_vec']
+        return advo.props['inst2head_vec']
 
 
 def correct_motion(advo,
@@ -392,7 +392,7 @@ def correct_motion(advo,
         # The head->beam transformation matrix
         transMat = advo.config.head.get('TransMatrix', None)
         # The body->head transformation matrix
-        rmat = advo.props['body2head_rotmat']
+        rmat = advo.props['inst2head_rotmat']
 
         # 1) Rotate body-coordinate velocities to head-coord.
         velrot = np.dot(rmat, velrot)
@@ -558,7 +558,7 @@ class CorrectMotion(object):
             # The head->beam transformation matrix
             transMat = advo.config.head.get('TransMatrix', None)
             # The body->head transformation matrix
-            rmat = advo.props['body2head_rotmat']
+            rmat = advo.props['inst2head_rotmat']
 
             # 1) Rotate body-coordinate velocities to head-coord.
             velrot = np.dot(rmat, velrot)
@@ -595,14 +595,14 @@ class CorrectMotion(object):
             phi = np.deg2rad(-30)
             # The angles of the probes from the x-axis:
             theta = np.deg2rad(np.array([0., 120., 240.]))
-            return (np.dot(advo.props['body2head_rotmat'].T,
+            return (np.dot(advo.props['inst2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
                                      r * np.tan(phi) * np.ones(3)])) +
-                    advo.props['body2head_vec'][:, None]
+                    advo.props['inst2head_vec'][:, None]
                     )
         else:
-            return advo.props['body2head_vec']
+            return advo.props['inst2head_vec']
 
     def _calc_accel_vel(self, calcobj):
         advo = calcobj.advo
@@ -622,8 +622,8 @@ class CorrectMotion(object):
           - accel : The translational acceleration array.
           - angrt : The rotation-rate array.
           - orientmat : The orientation matrix.
-          - props : a dictionary that has 'body2head_vec',
-            'body2head_rotmat' and 'coord_sys'.
+          - props : a dictionary that has 'inst2head_vec' and
+            'coord_sys'.
 
         to_earth : bool (optional, default: True)
           A boolean that specifies whether the data should be

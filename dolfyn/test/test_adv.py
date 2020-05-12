@@ -53,8 +53,8 @@ def test_read(make_data=False):
 
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
-    tdm.props['body2head_rotmat'] = np.eye(3)
-    tdm.props['body2head_vec'] = np.array([-1.0, 0.5, 0.2])
+    tdm.set_inst2head_rotmat(np.eye(3))
+    tdm.props['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
         save(td_orientraw, 'vector_data01.h5')
