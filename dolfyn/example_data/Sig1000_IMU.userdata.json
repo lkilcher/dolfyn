@@ -1,5 +1,3 @@
-{"body2head_rotmat": "identity",
- "motion accel_filtfreq Hz": 0.03,
- "declination": 8.28,
+{"declination": 8.28,
  "lonlat": [-105.2283, 39.9402]
 }

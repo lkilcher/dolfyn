@@ -70,7 +70,7 @@ def test_read(make_data=False):
 
     # Drop these variables until we update data files again...
     for nm in ['mpltime_b5', 'sys.ensemble_b5', 'sys._ensemble_b5']:
-        for d in [td_sig, td_sigi, td_sigi_ud, td_sigi_echo_bt]:
+        for d in [td_sig, td_sigi, td_sigi_echo_bt]:
             d.pop(nm)
 
     if sys.version_info.major == 2:
