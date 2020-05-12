@@ -367,9 +367,10 @@ def correct_motion(advo,
     if advo.props['coord_sys'] != 'inst':
         advo.rotate2('inst', inplace=True)
 
-    # Be sure the velocity data has been rotated to the body frame.
-    rot._rotate_vel2body(advo)
-
+    # Returns True/False if head2inst_rotmat has been set/not-set.
+    # Bad configs raises errors (this is to check for those)
+    rot._check_inst2head_rotmat(advo)
+        
     # Create the motion 'calculator':
     calcobj = CalcMotion(advo,
                          accel_filtfreq=accel_filtfreq,
@@ -539,9 +540,6 @@ class CorrectMotion(object):
                       "Use the 'correct_motion' function instead.",
                       DeprecationWarning)
 
-    def _rotate_vel2body(self, advo):
-        rot._rotate_vel2body(advo)
-
     def _calc_rot_vel(self, calcobj):
         """
         Calculate the 'rotational' velocity as measured by the IMU
@@ -659,6 +657,10 @@ class CorrectMotion(object):
         if advo.props['coord_sys'] != 'inst':
             advo.rotate2('inst', inplace=True)
 
+        # Returns True/False if head2inst_rotmat has been set/not-set.
+        # Bad configs raises errors (this is to check for those)
+        rot._check_inst2head_rotmat(advo)
+
         calcobj = CalcMotion(advo,
                              accel_filtfreq=self.accel_filtfreq,
                              vel_filtfreq=self.accelvel_filtfreq,
@@ -674,7 +676,6 @@ class CorrectMotion(object):
                                               'orient.velrot', 'orient.velacc',
                                               'orient.acclow', })
 
-        self._rotate_vel2body(advo)
         self._calc_rot_vel(calcobj)
         self._calc_accel_vel(calcobj)
 

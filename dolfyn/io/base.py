@@ -10,11 +10,11 @@ import six
 import json
 import io
 import os
+import warnings
 try:
     file_types = (file, io.IOBase)
 except NameError:
     file_types = io.IOBase
-
 
 class WrongFileType(Exception):
     pass
@@ -77,10 +77,17 @@ def _read_userdata(fname):
     else:
         with open(fname) as data_file:
             data = json.load(data_file)
-    if 'body2head_rotmat' in data and \
-       data['body2head_rotmat'] in ['identity', 'eye', 1, 1.]:
-        data['body2head_rotmat'] = np.eye(3)
     for nm in ['body2head_rotmat', 'body2head_vec']:
+        if nm in data:
+            new_name = 'inst' + nm[4:]
+            warnings.warn(
+                '{} has been deprecated, please change this to {} in {}.'
+                .format(nm, new_name, fname))
+            data[new_name] = data.pop(nm)
+    if 'inst2head_rotmat' in data and \
+       data['inst2head_rotmat'] in ['identity', 'eye', 1, 1.]:
+        data['inst2head_rotmat'] = np.eye(3)
+    for nm in ['inst2head_rotmat', 'inst2head_vec']:
         if nm in data:
             data[nm] = np.array(data[nm])
     if 'time_range' in data:

@@ -52,6 +52,10 @@ def rotate2(obj, out_frame='earth', inplace=False):
     if csin == 'ship':
         csin = 'inst'
 
+    # Returns True/False if head2inst_rotmat has been set/not-set.
+    # Bad configs raises errors (this is to check for those)
+    r_vec._check_inst2head_rotmat(obj)
+
     if out_frame == 'principal' and csin != 'earth':
         warnings.warn(
             "You are attempting to rotate into the 'principal' "

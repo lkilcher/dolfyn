@@ -8,10 +8,10 @@ def beam2inst(dat, reverse=False, force=False):
     # Remember: order of rotations matters!
     if not reverse: # beam->inst
         rotb.beam2inst(dat, reverse=reverse, force=force)
-        _rotate_vel2body(dat)
+        _rotate_head2inst(dat)
     else: # inst->beam
         # First rotate velocities back to head frame
-        _rotate_vel2body(dat, reverse)
+        _rotate_head2inst(dat, reverse)
         # Now rotate to beam
         rotb.beam2inst(dat, reverse=reverse, force=force)
 
@@ -46,7 +46,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         cs_now = 'earth'
         cs_new = 'inst'
     else: # inst->earth
-        _rotate_vel2body(advo) # make sure vel is in body frame
         sumstr = 'ijk,j...k->i...k'
         cs_now = 'inst'
         cs_new = 'earth'
@@ -102,14 +101,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     else:
         rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
 
-    if reverse:
-        # make sure vel is in body/inst frame (after rot from earth->inst)
-        # This should only be an issue when the data is recorded (on
-        # the instrument in the field) in earth frame but
-        # body2head_rotmat is not the identity.
-        _rotate_vel2body(advo) # don't reverse b/c that does inst->head
-
-        
     advo.props['coord_sys'] = cs_new
 
     return
@@ -142,30 +133,36 @@ def calc_omat(hh, pp, rr, orientation_down=None):
 
 
 def _rotate_head2inst(advo, reverse=False):
-    if not advo.props.get('inst2head_rotmat', None)
-    if not advo.props.get('inst2head_rotmat_was_set', None):
-        raise Exception("The inst->head")
-    if not rotb._check_rotmat_det(advo.props['inst2head_rotmat']).all():
-        raise ValueError("Invalid body-to-head rotation matrix"
-                         " (determinant != 1).")
-    if not reverse:
-        # This is what we usually want.
-        if 'head2inst_rotmat_was_set' in advo.props and \
-           advo.props['vel_rotated2body'] is True:
-            # Don't re-rotate the data if its already been rotated.
-            return
-        # The transpose should do head->body.
-        advo['vel'] = np.dot(advo.props['body2head_rotmat'].T, advo['vel'])
-        advo.props['vel_rotated2body'] = True
+    if not _check_inst2head_rotmat(advo): # RAISE on bad values.
+        # This object doesn't have a head2inst_rotmat, so we do nothing.
+        return
+    if not reverse: # head->inst
+        # This is usually what we want.
+        # transpose of inst2head gives head->inst
+        advo['vel'] = np.dot(advo.props['inst2head_rotmat'].T, advo['vel'])
     else:
-        # This is here for rotating back to beam coordinates.
-        if 'vel_rotated2body' in advo.props and \
-           advo.props['vel_rotated2body'] is False:
-            # Don't re-rotate
-            return
-        # Rotate body->head
-        advo['vel'] = np.dot(advo.props['body2head_rotmat'], advo['vel'])
-        advo.props['vel_rotated2body'] = False
+        advo['vel'] = np.dot(advo.props['inst2head_rotmat'], advo['vel'])
+
+
+def _check_inst2head_rotmat(advo):
+    if advo.props.get('body2head_rotmat', None) is not None:
+        warnings.warn(
+            "body2head_rotmat will be deprecated in future versions of DOLfYN."
+            "Use the `set_head2inst_rotmat` method instead.",
+            DeprecationWarning)
+        # head2inst is transpose of body2head
+        advo.set_inst2head_rotmat(advo.props.pop('body2head_rotmat'))
+    if advo.props.get('inst2head_rotmat', None) is None:
+        # This is the default value, and we do nothing.
+        return False
+    if not advo.props.get('inst2head_rotmat_was_set', None):
+        raise Exception(
+            "The inst2head rotation matrix exists in props, "
+            "but it was not set using `set_inst2head_rotmat.")
+    if not rotb._check_rotmat_det(advo.props['inst2head_rotmat']).all():
+        raise ValueError("Invalid inst2head_rotmat"
+                         " (determinant != 1).")
+    return True
 
 
 def earth2principal(advo, reverse=False):

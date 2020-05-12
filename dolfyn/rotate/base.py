@@ -54,10 +54,6 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
     return np.abs(det(rotmat) - 1) < thresh
 
 
-def _is_identity(dat):
-    return (dat == np.eye(dat.shape[0])).all()
-
-
 def euler2orient(heading, pitch, roll, units='degrees'):
     """
     Calculate the orientation matrix from DOLfYN-defined euler angles.
