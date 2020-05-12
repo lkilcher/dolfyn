@@ -105,7 +105,7 @@ class Velocity(TimeData):
         csin = self.props['coord_sys']
         if csin not in ['inst', 'beam']:
             self.rotate2('inst', inplace=True)
-        self.props['inst2head_rotmat'] = rotmat
+        self.props['inst2head_rotmat'] = np.array(rotmat)
 
         self.props['inst2head_rotmat_was_set'] = True
         # Note that there is no validation that the user doesn't
@@ -114,7 +114,7 @@ class Velocity(TimeData):
         #     self.props['inst2head_rotmat_was_set'] = hash(rotmat)
         # But then I'd also have to check for that!? Is it worth it?
 
-        if csin == 'inst': # not 'beam', based on above
+        if not csin == 'beam': # csin not 'beam', then we're in inst
             _rotate_head2inst(self)
         if csin not in ['inst', 'beam']:
             self.rotate2(csin, inplace=True)

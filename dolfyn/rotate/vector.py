@@ -148,7 +148,7 @@ def _check_inst2head_rotmat(advo):
     if advo.props.get('body2head_rotmat', None) is not None:
         warnings.warn(
             "body2head_rotmat will be deprecated in future versions of DOLfYN."
-            "Use the `set_head2inst_rotmat` method instead.",
+            "Use the `set_inst2head_rotmat` method instead.",
             DeprecationWarning)
         # head2inst is transpose of body2head
         advo.set_inst2head_rotmat(advo.props.pop('body2head_rotmat'))

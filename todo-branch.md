@@ -5,6 +5,3 @@ Finalizing Branch
 - Update docs
 - Update changelog
 - Clear everything below this line.
-
-- Fix tests
-- Create test for non-identity `inst2head_rotmat`
