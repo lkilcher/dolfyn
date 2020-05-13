@@ -3,12 +3,24 @@ from dolfyn import rotate2 as rotate, calc_principal_heading
 from dolfyn.test.base import load_tdata as load, save_tdata as save
 from dolfyn.rotate.base import euler2orient
 import numpy as np    
+from nose.tools import raises
 
 data_equiv = tr.data_equiv
 
 
+@raises(KeyError)
 def test_props_enforcement():
     td = tr.dat.copy()
+    td.props['fs'] = 16
+    # I'm not checking every value that should be enforced, just
+    # making sure it's happening.
+
+@raises(KeyError)
+def test_props_enforcement2():
+    td = tr.dat.copy()
+    td.props['declination'] = 10
+    # I'm not checking every value that should be enforced, just
+    # making sure it's happening.
 
 def test_inst2head_rotmat():
     # Validated test
