@@ -77,7 +77,7 @@ def inst2earth(adcpo, reverse=False,
     if 'bt_vel' in adcpo:
         adcpo['bt_vel'][:3] = np.einsum(sumstr,
                                         rotmat, adcpo['bt_vel'][:3])
-    adcpo.props['coord_sys'] = cs
+    adcpo.props._set('coord_sys', cs)
 
 
 def calc_orientmat(adcpo):

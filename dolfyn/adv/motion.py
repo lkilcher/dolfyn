@@ -243,14 +243,14 @@ def _calc_probe_pos(advo, separate_probes=False):
         phi = np.deg2rad(-30)
         # The angles of the probes from the x-axis:
         theta = np.deg2rad(np.array([0., 120., 240.]))
-        return (np.dot(advo.props['body2head_rotmat'].T,
+        return (np.dot(advo.props['inst2head_rotmat'].T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
                                  r * np.tan(phi) * np.ones(3)])) +
-                advo.props['body2head_vec'][:, None]
+                advo.props['inst2head_vec'][:, None]
                 )
     else:
-        return advo.props['body2head_vec']
+        return advo.props['inst2head_vec']
 
 
 def correct_motion(advo,
@@ -367,9 +367,10 @@ def correct_motion(advo,
     if advo.props['coord_sys'] != 'inst':
         advo.rotate2('inst', inplace=True)
 
-    # Be sure the velocity data has been rotated to the body frame.
-    rot._rotate_vel2body(advo)
-
+    # Returns True/False if head2inst_rotmat has been set/not-set.
+    # Bad configs raises errors (this is to check for those)
+    rot._check_inst2head_rotmat(advo)
+        
     # Create the motion 'calculator':
     calcobj = CalcMotion(advo,
                          accel_filtfreq=accel_filtfreq,
@@ -391,7 +392,7 @@ def correct_motion(advo,
         # The head->beam transformation matrix
         transMat = advo.config.head.get('TransMatrix', None)
         # The body->head transformation matrix
-        rmat = advo.props['body2head_rotmat']
+        rmat = advo.props['inst2head_rotmat']
 
         # 1) Rotate body-coordinate velocities to head-coord.
         velrot = np.dot(rmat, velrot)
@@ -539,9 +540,6 @@ class CorrectMotion(object):
                       "Use the 'correct_motion' function instead.",
                       DeprecationWarning)
 
-    def _rotate_vel2body(self, advo):
-        rot._rotate_vel2body(advo)
-
     def _calc_rot_vel(self, calcobj):
         """
         Calculate the 'rotational' velocity as measured by the IMU
@@ -560,7 +558,7 @@ class CorrectMotion(object):
             # The head->beam transformation matrix
             transMat = advo.config.head.get('TransMatrix', None)
             # The body->head transformation matrix
-            rmat = advo.props['body2head_rotmat']
+            rmat = advo.props['inst2head_rotmat']
 
             # 1) Rotate body-coordinate velocities to head-coord.
             velrot = np.dot(rmat, velrot)
@@ -597,14 +595,14 @@ class CorrectMotion(object):
             phi = np.deg2rad(-30)
             # The angles of the probes from the x-axis:
             theta = np.deg2rad(np.array([0., 120., 240.]))
-            return (np.dot(advo.props['body2head_rotmat'].T,
+            return (np.dot(advo.props['inst2head_rotmat'].T,
                            np.array([r * np.cos(theta),
                                      r * np.sin(theta),
                                      r * np.tan(phi) * np.ones(3)])) +
-                    advo.props['body2head_vec'][:, None]
+                    advo.props['inst2head_vec'][:, None]
                     )
         else:
-            return advo.props['body2head_vec']
+            return advo.props['inst2head_vec']
 
     def _calc_accel_vel(self, calcobj):
         advo = calcobj.advo
@@ -624,8 +622,8 @@ class CorrectMotion(object):
           - accel : The translational acceleration array.
           - angrt : The rotation-rate array.
           - orientmat : The orientation matrix.
-          - props : a dictionary that has 'body2head_vec',
-            'body2head_rotmat' and 'coord_sys'.
+          - props : a dictionary that has 'inst2head_vec' and
+            'coord_sys'.
 
         to_earth : bool (optional, default: True)
           A boolean that specifies whether the data should be
@@ -659,6 +657,10 @@ class CorrectMotion(object):
         if advo.props['coord_sys'] != 'inst':
             advo.rotate2('inst', inplace=True)
 
+        # Returns True/False if head2inst_rotmat has been set/not-set.
+        # Bad configs raises errors (this is to check for those)
+        rot._check_inst2head_rotmat(advo)
+
         calcobj = CalcMotion(advo,
                              accel_filtfreq=self.accel_filtfreq,
                              vel_filtfreq=self.accelvel_filtfreq,
@@ -674,7 +676,6 @@ class CorrectMotion(object):
                                               'orient.velrot', 'orient.velacc',
                                               'orient.acclow', })
 
-        self._rotate_vel2body(advo)
         self._calc_rot_vel(calcobj)
         self._calc_accel_vel(calcobj)
 

@@ -3,8 +3,20 @@ import numpy as np
 import warnings
 from . import base as rotb
 
-beam2inst = rotb.beam2inst
 
+def beam2inst(dat, reverse=False, force=False):
+    # Remember: order of rotations matters!
+    if not reverse: # beam->inst
+        rotb.beam2inst(dat, reverse=reverse, force=force)
+        _rotate_head2inst(dat)
+    else: # inst->beam
+        # First rotate velocities back to head frame
+        _rotate_head2inst(dat, reverse)
+        # Now rotate to beam
+        rotb.beam2inst(dat, reverse=reverse, force=force)
+
+# Set the docstring to match the default rotation func
+beam2inst.__doc_ = rotb.beam2inst.__doc__
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
@@ -27,14 +39,13 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
       performing this rotation.
 
     """
-
-    if reverse:
+    if reverse: # earth->inst
         # The transpose of the rotation matrix gives the inverse
         # rotation, so we simply reverse the order of the einsum:
         sumstr = 'jik,j...k->i...k'
         cs_now = 'earth'
         cs_new = 'inst'
-    else:
+    else: # inst->earth
         sumstr = 'ijk,j...k->i...k'
         cs_now = 'inst'
         cs_new = 'earth'
@@ -90,7 +101,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     else:
         rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
 
-    advo.props['coord_sys'] = cs_new
+    advo.props._set('coord_sys', cs_new)
 
     return
 
@@ -121,19 +132,37 @@ def calc_omat(hh, pp, rr, orientation_down=None):
     return _euler2orient(hh, pp, rr)
 
 
-def _rotate_vel2body(advo):
-    if (np.diag(np.eye(3)) == 1).all():
-        advo.props['vel_rotated2body'] = True
-    if 'vel_rotated2body' in advo.props and \
-       advo.props['vel_rotated2body'] is True:
-        # Don't re-rotate the data if its already been rotated.
+def _rotate_head2inst(advo, reverse=False):
+    if not _check_inst2head_rotmat(advo): # RAISE on bad values.
+        # This object doesn't have a head2inst_rotmat, so we do nothing.
         return
-    if not rotb._check_rotmat_det(advo.props['body2head_rotmat']).all():
-        raise ValueError("Invalid body-to-head rotation matrix"
+    if not reverse: # head->inst
+        # This is usually what we want.
+        # transpose of inst2head gives head->inst
+        advo['vel'] = np.dot(advo.props['inst2head_rotmat'].T, advo['vel'])
+    else:
+        advo['vel'] = np.dot(advo.props['inst2head_rotmat'], advo['vel'])
+
+
+def _check_inst2head_rotmat(advo):
+    if advo.props.get('body2head_rotmat', None) is not None:
+        warnings.warn(
+            "body2head_rotmat will be deprecated in future versions of DOLfYN."
+            "Use the `set_inst2head_rotmat` method instead.",
+            DeprecationWarning)
+        # head2inst is transpose of body2head
+        advo.set_inst2head_rotmat(advo.props.pop('body2head_rotmat'))
+    if advo.props.get('inst2head_rotmat', None) is None:
+        # This is the default value, and we do nothing.
+        return False
+    if not advo.props.get('inst2head_rotmat_was_set', None):
+        raise Exception(
+            "The inst2head rotation matrix exists in props, "
+            "but it was not set using `set_inst2head_rotmat.")
+    if not rotb._check_rotmat_det(advo.props['inst2head_rotmat']).all():
+        raise ValueError("Invalid inst2head_rotmat"
                          " (determinant != 1).")
-    # The transpose should do head to body.
-    advo['vel'] = np.dot(advo.props['body2head_rotmat'].T, advo['vel'])
-    advo.props['vel_rotated2body'] = True
+    return True
 
 
 def earth2principal(advo, reverse=False):
@@ -200,7 +229,7 @@ def earth2principal(advo, reverse=False):
         dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
 
     # Finalize the output.
-    advo.props['coord_sys'] = cs_new
+    advo.props._set('coord_sys', cs_new)
 
 
 def _euler2orient(heading, pitch, roll, units='degrees'):

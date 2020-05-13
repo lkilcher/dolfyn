@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import datetime
 from ..data.time import date2num
-from ..data.base import config, TimeData as data
+from ..data.base import config, TimeData as data, PropsDict
 from os.path import getsize
 from ..adp.base import ADPdata
 from .base import WrongFileType, read_userdata
@@ -51,8 +51,11 @@ def read_rdi(fname, userdata=None, nens=None):
         if val is not None:
             odr[ky] = val
 
-    _set_rdi_declination(dat, fname)
+    # Handle properties with the PropsDict class.
+    dat['props'] = PropsDict(dat['props'])
 
+    _set_rdi_declination(dat, fname)
+    
     return dat
 
 
@@ -65,7 +68,7 @@ def _set_rdi_declination(dat, fname='????'):
     declin = dat['props'].pop('declination', None)
 
     if dat.config['magnetic_var_deg'] != 0:
-        dat.props['declination'] = dat.config['magnetic_var_deg']
+        dat.props._set('declination', dat.config['magnetic_var_deg'])
 
     if dat.config['magnetic_var_deg'] != 0 and declin is not None:
         warnings.warn(

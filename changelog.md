@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Version 0.12.1
+    - Handle `inst2head_rotmat`, this includes an API change:
+      - `body2head_vec` and `body2head_rotmat` have been replaced by
+        `inst2head_vec` and `inst2head_rotmat`, respectively.
+      - Also you must use `dat.set_inst2head_rotmat` now (don't set it directly as `dat.props['inst2head_rotmat'] = ...`)
+      - Stricter handling of `dat.props` (e.g., don't allow `dat.props['coord_sys'] = 'inst'`)
+
 ## Version 0.12
 	- Handle echo (0x1c) and bottom-track (0x17) Nortek Signature pings
 	- Handle corrupted timestamps in Nortek Signature pings (assign NaN)

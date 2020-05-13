@@ -326,6 +326,6 @@ def beam2inst(dat, reverse=False, force=False):
     for ky in rotate_vars:
         dat[ky] = np.einsum('ij,j...->i...', rotmat, dat[ky])
     if force:
-        dat.props['coord_sys'] += '-forced'
+        dat.props._set('coord_sys', dat.props['coord_sys'] + '-forced')
     else:
-        dat.props['coord_sys'] = cs
+        dat.props._set('coord_sys', cs)

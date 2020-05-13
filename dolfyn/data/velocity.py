@@ -5,6 +5,7 @@ import warnings
 from .time import num2date
 from ..rotate import rotate2
 from ..rotate import base as rotb
+from ..rotate.vector import _rotate_head2inst
 
 
 class Velocity(TimeData):
@@ -87,6 +88,38 @@ class Velocity(TimeData):
 
     """
 
+    def set_inst2head_rotmat(self, rotmat):
+        if not self._make_model.startswith('nortek vector'):
+            raise Exception("Setting 'inst2head_rotmat' is only supported "
+                            "for Nortek Vector ADVs.")
+        if self.props.get('inst2head_rotmat', None) is not None:
+            # Technically we could support changing this (unrotate with the
+            # original, then rotate with the new one), but WHY?!
+            # If you REALLY need to change this, simply rotate to
+            # beam-coords, change this by
+            # `obj.props['inst2head_rotmat'] = rotmat`, then rotate
+            # to the coords of your choice.
+            raise Exception(
+                "You are setting 'inst2head_rotmat' after it has already "
+                "been set. You can only set it once.")
+        csin = self.props['coord_sys']
+        if csin not in ['inst', 'beam']:
+            self.rotate2('inst', inplace=True)
+        dict.__setitem__(self.props, 'inst2head_rotmat', np.array(rotmat))
+
+        self.props['inst2head_rotmat_was_set'] = True
+        # Note that there is no validation that the user doesn't
+        # change `obj.props['inst2head_rotmat']` after calling this
+        # function. I suppose I could do:
+        #     self.props['inst2head_rotmat_was_set'] = hash(rotmat)
+        # But then I'd also have to check for that!? Is it worth it?
+
+        if not csin == 'beam': # csin not 'beam', then we're in inst
+            _rotate_head2inst(self)
+        if csin not in ['inst', 'beam']:
+            self.rotate2(csin, inplace=True)
+
+    
     def set_declination(self, declination):
         """Set the declination of the data object.
 
@@ -153,8 +186,8 @@ class Velocity(TimeData):
             self.rotate2('earth', inplace=True)
         if 'principal_heading' in self.props:
             self.props['principal_heading'] += angle
-        self.props['declination'] = declination
-        self.props['declination_in_orientmat'] = True
+        self.props._set('declination', declination)
+        self.props._set('declination_in_orientmat', True)
 
     def __init__(self, *args, **kwargs):
         TimeData.__init__(self, *args, **kwargs)
