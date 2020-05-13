@@ -126,6 +126,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     else:
         rotb.call_rotate_methods(advo, rmd[3], 'inst', 'earth')
 
-    advo.props['coord_sys'] = cs_new
+    advo.props._set('coord_sys', cs_new)
 
     return

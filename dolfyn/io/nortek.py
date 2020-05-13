@@ -8,7 +8,7 @@ from ..adv import base as adv_base
 from ..adp import base as adp_base
 from ..tools import misc as tbx
 from struct import unpack
-from ..data.base import ma, TimeData, config
+from ..data.base import ma, TimeData, config, PropsDict
 from . import nortek_defs
 from ..data import time
 from .base import WrongFileType, read_userdata
@@ -86,6 +86,9 @@ def read_nortek(filename,
             odr[ky] = val
 
     dat.props.update(user_data)
+
+    # Handle properties with the PropsDict class.
+    dat['props'] = PropsDict(dat['props'])
 
     if 'inst2head_rotmat' in dat.props:
         dat.set_inst2head_rotmat(dat.props.pop('inst2head_rotmat'))

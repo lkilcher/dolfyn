@@ -11,7 +11,6 @@ from .base import WrongFileType, read_userdata
 from ..data import base as db
 import warnings
 from ..rotate.vector import _euler2orient
-from ..data.base import TimeData
 
 
 def split_to_hdf(infile, nens_per_file, outfile=None,
@@ -103,13 +102,16 @@ def read_signature(filename, userdata=True, nens=None):
         od['orientmat'] = _euler2orient(od['heading'], od['pitch'], od['roll'])
 
     # Move raw heading data into orient.raw
-    odr = od['raw'] = TimeData()
+    odr = od['raw'] = db.TimeData()
     for ky in ['heading', 'pitch', 'roll']:
         val = od.pop(ky, None)
         if val is not None:
             odr[ky] = val
 
     out['props'].update(userdata)
+
+    # Handle properties with the PropsDict class.
+    out['props'] = db.PropsDict(out['props'])
 
     declin = out['props'].pop('declination', None)
     if declin is not None:

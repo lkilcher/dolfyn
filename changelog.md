@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
       - `body2head_vec` and `body2head_rotmat` have been replaced by
         `inst2head_vec` and `inst2head_rotmat`, respectively.
       - Also you must use `dat.set_inst2head_rotmat` now (don't set it directly as `dat.props['inst2head_rotmat'] = ...`)
+      - Stricter handling of `dat.props` (e.g., don't allow `dat.props['coord_sys'] = 'inst'`)
 
 ## Version 0.12
 	- Handle echo (0x1c) and bottom-track (0x17) Nortek Signature pings

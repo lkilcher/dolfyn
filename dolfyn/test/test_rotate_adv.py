@@ -7,6 +7,9 @@ import numpy as np
 data_equiv = tr.data_equiv
 
 
+def test_props_enforcement():
+    td = tr.dat.copy()
+
 def test_inst2head_rotmat():
     # Validated test
     td = tr.dat.copy()

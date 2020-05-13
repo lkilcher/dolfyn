@@ -182,6 +182,45 @@ class FreqData(TimeData):
                                       copy=copy + self._subset_copy_vars)
 
 
+class PropsDict(dict):
+
+    def __setitem__(self, ky, val):
+        if ky in ['fs', 'coord_sys',
+                  'declination_in_heading',
+                  'declination_in_orientmat',
+                  'has imu',
+                  'inst_make',
+                  'inst_model',
+                  'DutyCycle_NBurst',
+                  'DutyCycle_NCycle',
+                  ]:
+            # The entries in this list should have a "*" by them in
+            # the data-structure.html doc page (i.e., the
+            # props_info.csv file)
+            raise KeyError(
+                "The props entry '{}' shouldn't be modified by "
+                "the user. This is a dolfyn-managed variable."
+                .format(ky))
+            
+        if ky in ['inst2head_rotmat', 'declination']:
+            # The entries in this list should have a "**" by them in
+            # the data-structure.html doc page (i.e., the
+            # props_info.csv file)
+            raise KeyError(
+                "The props entry '{}' shouldn't be set directly by "
+                "the user. Use `dat.set_{}` instead."
+                .format(ky, ky))
+        dict.__setitem__(self, ky, val)
+        
+    def __deepcopy__(self, memo):
+        return PropsDict(copy.deepcopy(dict(self)))
+
+    def _set(self, ky, val):
+        """This is the 'internal' setting function (not a part of
+        the API)."""
+        dict.__setitem__(self, ky, val)
+
+
 class config(data):
 
     @property

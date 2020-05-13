@@ -105,7 +105,7 @@ class Velocity(TimeData):
         csin = self.props['coord_sys']
         if csin not in ['inst', 'beam']:
             self.rotate2('inst', inplace=True)
-        self.props['inst2head_rotmat'] = np.array(rotmat)
+        dict.__setitem__(self.props, 'inst2head_rotmat', np.array(rotmat))
 
         self.props['inst2head_rotmat_was_set'] = True
         # Note that there is no validation that the user doesn't
@@ -186,8 +186,8 @@ class Velocity(TimeData):
             self.rotate2('earth', inplace=True)
         if 'principal_heading' in self.props:
             self.props['principal_heading'] += angle
-        self.props['declination'] = declination
-        self.props['declination_in_orientmat'] = True
+        self.props._set('declination', declination)
+        self.props._set('declination_in_orientmat', True)
 
     def __init__(self, *args, **kwargs):
         TimeData.__init__(self, *args, **kwargs)

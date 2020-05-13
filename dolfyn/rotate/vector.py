@@ -101,7 +101,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     else:
         rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
 
-    advo.props['coord_sys'] = cs_new
+    advo.props._set('coord_sys', cs_new)
 
     return
 
@@ -229,7 +229,7 @@ def earth2principal(advo, reverse=False):
         dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
 
     # Finalize the output.
-    advo.props['coord_sys'] = cs_new
+    advo.props._set('coord_sys', cs_new)
 
 
 def _euler2orient(heading, pitch, roll, units='degrees'):
