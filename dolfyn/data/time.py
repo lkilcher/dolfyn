@@ -73,6 +73,20 @@ def date2num(dt):
              dt.hour) / 24)
 
 
+def date2str(dt, format='ISO'):
+    """Convert a datetime object, or array of them, to an array of strings.
+    format can be 'ISO' (default, e.g.: 2020-03-20T14:28:23.382748),
+    or a strftime format string.
+    """
+    if isinstance(dt, datetime):
+        if format == 'ISO':
+            return dt.isoformat()
+        else:
+            return dt.strftime(format)
+    return np.array([date2str(d) for d in dt])
+    
+
+
 def mpltime2matlab_datenum(time):
     return time.view(np.ndarray) + 366
 
@@ -146,6 +160,20 @@ class time_array(np.ndarray):
     def matlab_datenum(self,):
         return mpltime2matlab_datenum(self)
 
+    def to_str(self, format='ISO'):
+        """Convert the timestamps to an array of strings.
+        
+        Parameters
+        ----------
+        format : str {'ISO' (default), or a strftime format string}
+
+        Notes
+        -----
+            An example of 'ISO' format is:
+              2020-03-20T14:28:23.382748
+        """
+        return date2str(self.datetime, format)
+    
     def minmax(self, round_to=None):
         """
         Find the minimum and maximum values in the time object.
