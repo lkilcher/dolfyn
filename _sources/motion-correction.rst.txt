@@ -29,14 +29,7 @@ Pre-Deployment Requirements
 In order to perform motion correction the ADV-IMU must be assembled
 and configured correctly:
 
-1. The ADV *head* must be rigidly connected to the ADV *body*
-   (pressure case, which contains the IMU sensor).
-
-   a. For fixed-head (fixed-stem) ADVs the body is rigidly connected
-      to the body.
-
-   b. For cable-head (cabled-probe) ADVs, a support structure must be
-      constructed that rigidly connects the ADV body to the head.
+1. The ADV *head* must be rigidly connected to the ADV *pressure case*.
 
 2. The ADV software must be configured properly.  In the 'Deployment
    Planning' frame of the Vector Nortek Software, be sure that:
@@ -49,87 +42,56 @@ and configured correctly:
       or larger.
 
 3. For cable-head ADVs be sure to record the position and orientation
-   of the ADV head relative to the ADV body (Figure 1). It is
-   recommended that this information be stored in a
-   ``<vec_filename>.userdata.json`` file (e.g., for a data file
-   ``vector_data_imu01.VEC``, the userdata file should have the name
-   ``vector_data_imu01.userdata.json``). `json is a simple
-   text-based data format <http://www.json.org/>`_. |dlfn| expects the
-   format of this file to be a single dict-like container (i.e., the
-   file should start with ``{`` and end with ``}``, that contains
-   ``'name': value`` pairs, for example::
+   of the ADV head relative to the ADV pressure case 'inst' coordinate
+   system (Figure 1). This information is specified in terms of the
+   following variables:
 
-    {"body2head_rotmat": [[ 0, 0, 1],
-                          [ 0,-1, 0],
-                          [ 1, 0, 0]],
-     "body2head_vec": [0.13, 0.04, 1.3],
-     "declination": 14.3,
-     "lat": 43.2,
-     "lon": -123,
-     "depth": 90,
-     "inds_range": [1000, 5000]
-    }
+   inst2head_rotmat
+     The rotation matrix (a 3-by-3 array) that rotates vectors in the
+     'inst' coordinate system, to the ADV
+     'head' coordinate system. For fixed-head ADVs this is the identify
+     matrix, but for cable-head ADVs it is an arbitrary unimodular
+     (determinant of 1) matrix. This property must be in the
+     ``dat.props`` in order to do motion correction.
 
-  You can store any information you want to attribute with the binary
-  `.VEC` file in this file. One advantage of creating the
-  `.userdata.json` file is that this file is read when you read the
-  `.VEC` file using the :func:`~dolfyn.io.nortek.read_nortek`
-  function, and the name-value pairs are added to the ``props``
-  attribute (a dictionary) of the returned
-  :class:`~dolfyn.adv.base.ADVraw` data object.
-  
+   inst2head_vec
+     The 3-element vector that specifies the position of the ADV head in
+     the inst coordinate system (Figure 1). This property must be in
+     ``dat.props`` in order to do motion correction.
+
+   These variables are set in either the `userdata.json file
+   <json-userdata>`_ (prior to calling ``dolfyn.read``), or by setting
+   them explicitly after the data file has been read::
+
+     dat.set_inst2head_rotmat(<3x3 rotation matrix>)
+     dat.props['inst2head_vec'] = [3-element vector]
+     
 .. figure:: pic/adv_coord_sys3_warr.png
    :align: center
    :scale: 60%
-   :alt: ADV head and body coordinate systems.
+   :alt: ADV head and inst coordinate systems.
    :figwidth: 560px
 
-   Figure 1) Coordinate systems of the ADV body (magenta) and head
-   (yellow). The :math:`\hat{x}^\mathrm{head}` -direction is known by
+   Figure 1) The ADV 'inst' (magenta) and head (yellow) coordinate
+   systems. The :math:`\hat{x}^\mathrm{head}` -direction is known by
    the black-band around the transducer arm, and the
    :math:`\hat{x}^*` -direction is marked by a notch on the end-cap
    (indiscernible in the image). The cyan arrow indicates the
-   body-to-head vector, :math:`\vec{\ell}_{head}^*` .  The perspective
+   ``inst2head_vec`` vector :math:`\vec{\ell}_{head}^*` .  The perspective
    slightly distorts the fact that :math:`\hat{x}^\mathrm{head}
    \parallel - \hat{z}^*` , :math:`\hat{y}^\mathrm{head} \parallel
    -\hat{y}^*` , and :math:`\hat{z}^\mathrm{head} \parallel
    -\hat{x}^*` .
-
-
-The other major advantage of using these ``userdata.json`` files, is
-that many property names are special in that they are used by
-|dlfn| in later processing steps. The property names that are
-recognized and used by |dlfn| to provide specific information are:
-
-body2head_rotmat
-  The rotation matrix (a 3-by-3 array) that rotates vectors in the
-  ADV's pressure case coordinate system (i.e., the 'body'), to the ADV
-  head coordinate system. For fixed-head ADVs this is the identify
-  matrix, but for cable-head ADVs it is an arbitrary unimodular
-  (determinant of 1) matrix.
-
-body2head_vec
-  The 3-element vector that specifies the position of the ADV head in
-  the ADV pressure case's coordinate system (Figure 1). This property
-  must be in the ``props`` attribute of the data object in order to do
-  motion correction, so you might as well store it in the
-  ``userdata.json`` file.
-
-declination
-  This is the magnetic declination at the measurement site. If it is
-  in the ``props`` attribute, it will be incorporated into the
-  orientation matrix when :func:`~dolfyn.adv.rotate.inst2earth` is
-  called so that all rotations are to/from a 'True' north coordinate
-  system, rather than a 'magnetic' north coordinate system.
 
 Data processing
 ...............
 
 After making ADV-IMU measurements, the |dlfn| package can perform
 motion correction processing steps on the ADV data. Assuming you have
-created the ``.userdata.json`` file and added the ``body2head_rotmat``
-and ``body2head_vec`` attributes to it, motion correction is fairly
-simple, you can either:
+created a ``vector_data_imu01.userdata.json`` file (to go with your
+``vector_data_imu01.vec`` data file) and it contains entries for
+``inst2head_rotmat`` and ``inst2head_vec`` attributes to it, motion
+correction is fairly simple, you can either:
 
 1. Utilize the |dlfn| api perform motion-correction processing
    explicitly in Python::
@@ -156,7 +118,7 @@ simple, you can either:
    By default this will write a Matlab file containing your
    motion-corrected ADV data in ENU coordinates. Note that for
    fixed-stem ADVs (no cable-head), the standard values for
-   ``body2head_rotmat`` and ``body2head_vec`` can be specified by
+   ``inst2head_rotmat`` and ``inst2head_vec`` can be specified by
    using the ``--fixed-head`` command-line parameter::
      
         $ python motcorrect_vector.py --fixed-head vector_data_imu01.vec

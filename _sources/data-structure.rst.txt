@@ -69,6 +69,8 @@ object, take a look at the ``dat.shortcuts`` property (new in |dlfn|
 **Important Note:** The items listed in Table 3 are not stored in the data
 object but are provided as attributes (shortcuts) to |dlfn| data objects.
 
+.. _data-props
+
 User Meta-Data (``dat.props``)
 ------------------------------
 
@@ -83,8 +85,14 @@ most common variables found here are described in Table 2.
                :widths: 15, 105
                :file: ./props_info.csv
 
-\*: These entries are set by |dlfn|, and should *not* - in general -
-be set or changed by the user.
+\*: These entries are set and controlled by |dlfn|, and are not meant
+to be modified directly by the user. Attempts to set or change them
+directly (e.g., ``dat.props['fs'] = 10``) will raise an error.
+
+\*\*: These entries are set and controlled via
+``dat.set_<property name>`` methods. Attempts to set or change
+them directly (e.g., ``dat.props['declination'] = 20``) will be
+deprecated in future versions of |dlfn|.
 
 |dagger|: These entries are not used or set by |dlfn|, but they are
 useful measurement meta-data and are listed here to assist in
@@ -100,8 +108,8 @@ The values in ``dat.props`` can also be set in a json file,
 <https://json.org/>`_. For example, the contents of these files should
 look something like::
 
-    {"body2head_rotmat": "identity",
-     "body2head_vec": [-1.0, 0.5, 0.2],
+    {"inst2head_rotmat": "identity",
+     "inst2head_vec": [-1.0, 0.5, 0.2],
      "motion accel_filtfreq Hz": 0.03,
      "declination": 8.28,
      "lonlat": [-105.2283, 39.9402]

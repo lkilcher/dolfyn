@@ -1,21 +1,19 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>The DOLfYN API &#8212; DOLfYN 0.12 documentation</title>
+    <meta charset="utf-8" />
+    <title>The DOLfYN API &#8212; DOLfYN 0.12.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/js/versionwarning.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/versionwarning.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -47,40 +45,43 @@ processing and data analysis tasks.</p>
 <div class="contents topic" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#the-dlfn-api" id="id1">The DOLfYN API</a><ul>
-<li><a class="reference internal" href="#dlfn-data-objects" id="id2">DOLfYN data objects</a></li>
-<li><a class="reference internal" href="#dlfn-tools-and-functions" id="id3">DOLfYN tools and functions</a></li>
+<li><p><a class="reference internal" href="#the-dlfn-api" id="id1">The DOLfYN API</a></p>
+<ul>
+<li><p><a class="reference internal" href="#dlfn-data-objects" id="id2">DOLfYN data objects</a></p></li>
+<li><p><a class="reference internal" href="#dlfn-tools-and-functions" id="id3">DOLfYN tools and functions</a></p></li>
 </ul>
 </li>
 </ul>
 </div>
 <div class="section" id="dlfn-data-objects">
 <h2><a class="toc-backref" href="#id2">DOLfYN data objects</a><a class="headerlink" href="#dlfn-data-objects" title="Permalink to this headline">¶</a></h2>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-default">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.Velocity</span></code></a></td>
-<td>This is the base class for velocity data objects.</td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.Velocity</span></code></a></p></td>
+<td><p>This is the base class for velocity data objects.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#dolfyn.ADPdata" title="dolfyn.ADPdata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.ADPdata</span></code></a></td>
-<td>The acoustic Doppler profiler (ADP) data type.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="#dolfyn.ADPdata" title="dolfyn.ADPdata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.ADPdata</span></code></a></p></td>
+<td><p>The acoustic Doppler profiler (ADP) data type.</p></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.ADVdata" title="dolfyn.ADVdata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.ADVdata</span></code></a></td>
-<td>The acoustic Doppler velocimeter (ADV) data type.</td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dolfyn.ADVdata" title="dolfyn.ADVdata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.ADVdata</span></code></a></p></td>
+<td><p>The acoustic Doppler velocimeter (ADV) data type.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.Velocity">
-<em class="property">class </em><code class="descclassname">dolfyn.</code><code class="descname">Velocity</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#Velocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.Velocity" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">Velocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#Velocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.Velocity" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the base class for velocity data objects.</p>
 <p>All ADP and ADV data objects inherit from this base class.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></dt><dd></dd>
+</dl>
 </div>
 <p class="rubric">Notes</p>
 <p>DOLfYN Velocity objects are based on Python dicts, but have fancy
@@ -143,28 +144,28 @@ object by:</p>
 <span class="go">True</span>
 </pre></div>
 </div>
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.U">
-<code class="descname">U</code><a class="headerlink" href="#dolfyn.Velocity.U" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">U</code><a class="headerlink" href="#dolfyn.Velocity.U" title="Permalink to this definition">¶</a></dt>
 <dd><p>Horizontal velocity as a complex quantity.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.U_angle">
-<code class="descname">U_angle</code><a class="headerlink" href="#dolfyn.Velocity.U_angle" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">U_angle</code><a class="headerlink" href="#dolfyn.Velocity.U_angle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Angle of horizontal velocity vector (radians clockwise from
 east/X/streamwise).</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.U_mag">
-<code class="descname">U_mag</code><a class="headerlink" href="#dolfyn.Velocity.U_mag" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">U_mag</code><a class="headerlink" href="#dolfyn.Velocity.U_mag" title="Permalink to this definition">¶</a></dt>
 <dd><p>Horizontal velocity magnitude.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.append">
-<code class="descname">append</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.append" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Join two data objects together.</p>
 <p>For example, two data objects <code class="docutils literal notranslate"><span class="pre">d1</span></code> and <code class="docutils literal notranslate"><span class="pre">d2</span></code> (which must
 contain the same variables, with the same array dimensions)
@@ -174,161 +175,141 @@ can be joined together by:</p>
 </div>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.copy">
-<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.copy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a copy of the data object.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.get">
-<code class="descname">get</code><span class="sig-paren">(</span><em>$self</em>, <em>key</em>, <em>default=None</em>, <em>/</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.get" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">key</em>, <em class="sig-param">default=None</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the value for key if key is in the dictionary, else default.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.iter_data">
-<code class="descname">iter_data</code><span class="sig-paren">(</span><em>include_hidden=False</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.iter_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">iter_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">include_hidden</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.iter_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the keys for all data items in this data object,
 including walking through sub-data objects.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>include_hidden</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (Default: False)</span></dt>
-<dd><p class="first last">Whether entries starting with ‘_’ should be included in
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>include_hidden</strong><span class="classifier">bool (Default: False)</span></dt><dd><p>Whether entries starting with ‘_’ should be included in
 the iteration.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.iter_subgroups">
-<code class="descname">iter_subgroups</code><span class="sig-paren">(</span><em>include_hidden=False</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.iter_subgroups" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">iter_subgroups</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">include_hidden</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.iter_subgroups" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the keys for all sub-groups in this data object,
 including walking through sub-groups.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>include_hidden</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (Default: False)</span></dt>
-<dd><p class="first last">Whether entries starting with ‘_’ should be included in
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>include_hidden</strong><span class="classifier">bool (Default: False)</span></dt><dd><p>Whether entries starting with ‘_’ should be included in
 the iteration.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.keys">
-<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a set-like object providing a view on D's keys<a class="headerlink" href="#dolfyn.Velocity.keys" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.keys" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.n_time">
-<code class="descname">n_time</code><a class="headerlink" href="#dolfyn.Velocity.n_time" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">n_time</code><a class="headerlink" href="#dolfyn.Velocity.n_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of timesteps in the data object.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.pop">
-<code class="descname">pop</code><span class="sig-paren">(</span><em>k</em><span class="optional">[</span>, <em>d</em><span class="optional">]</span><span class="sig-paren">)</span> &#x2192; v, remove specified key and return the corresponding value.<a class="headerlink" href="#dolfyn.Velocity.pop" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pop</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">indx</em>, <em class="sig-param">d=&lt;object object at 0x11261f060&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.pop" title="Permalink to this definition">¶</a></dt>
 <dd><p>If key is not found, d is returned if given, otherwise KeyError is raised</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.rotate2">
-<code class="descname">rotate2</code><span class="sig-paren">(</span><em>out_frame</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#Velocity.rotate2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.Velocity.rotate2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">rotate2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">out_frame</span></em>, <em class="sig-param"><span class="n">inplace</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#Velocity.rotate2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.Velocity.rotate2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rotate the data object into a new coordinate system.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>out_frame</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt>
-<dd><p class="first last">The coordinate system to rotate the data into.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>out_frame</strong><span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt><dd><p>The coordinate system to rotate the data into.</p>
 </dd>
-<dt><strong>inplace</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Operate on self (True), or return a copy that
+<dt><strong>inplace</strong><span class="classifier">bool</span></dt><dd><p>Operate on self (True), or return a copy that
 has been rotated (False, default).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>objout</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
-<dd><p class="first last">The rotated data object. This is <cite>self</cite> if inplace is True.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>objout</strong><span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt><dd><p>The rotated data object. This is <cite>self</cite> if inplace is True.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#dolfyn.rotate2" title="dolfyn.rotate2"><code class="xref py py-func docutils literal notranslate"><span class="pre">dolfyn.rotate2()</span></code></a></p>
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#dolfyn.rotate2" title="dolfyn.rotate2"><code class="xref py py-func docutils literal notranslate"><span class="pre">dolfyn.rotate2()</span></code></a></dt><dd></dd>
+</dl>
 </div>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.set_declination">
-<code class="descname">set_declination</code><span class="sig-paren">(</span><em>declination</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#Velocity.set_declination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.Velocity.set_declination" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">set_declination</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">declination</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#Velocity.set_declination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.Velocity.set_declination" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the declination of the data object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>declination</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The value of the magnetic declination in degrees (positive
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>declination</strong><span class="classifier">float</span></dt><dd><p>The value of the magnetic declination in degrees (positive
 values specify that Magnetic North is clockwise from True North)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>This method modifies the data object in the following ways:</p>
 <ul class="simple">
-<li>If the data-object is in the <em>earth</em> reference frame at the time of
+<li><p>If the data-object is in the <em>earth</em> reference frame at the time of
 setting declination, it will be rotated into the “<em>True-East</em>,
-<em>True-North</em>, Up” (hereafter, ETU) coordinate system</li>
-<li><code class="docutils literal notranslate"><span class="pre">dat['orient']['orientmat']</span></code> is modified to be an ETU to
+<em>True-North</em>, Up” (hereafter, ETU) coordinate system</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dat['orient']['orientmat']</span></code> is modified to be an ETU to
 instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
 XYZ rotation matrix). Therefore, all rotations to/from the ‘earth’
-frame will now be to/from this ETU coordinate system.</li>
-<li>The value of the specified declination will be stored in
-<code class="docutils literal notranslate"><span class="pre">dat.props['declination']</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">dat['orient']['heading']</span></code> is adjusted for declination
-(i.e., it is relative to True North).</li>
-<li>If <code class="docutils literal notranslate"><span class="pre">dat['props']['principal_heading']</span></code> is set, it is
+frame will now be to/from this ETU coordinate system.</p></li>
+<li><p>The value of the specified declination will be stored in
+<code class="docutils literal notranslate"><span class="pre">dat.props['declination']</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dat['orient']['heading']</span></code> is adjusted for declination
+(i.e., it is relative to True North).</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">dat['props']['principal_heading']</span></code> is set, it is
 adjusted to account for the orientation of the new ‘True’
 earth coordinate system (i.e., calling set_declination on a
 data object in the principal coordinate system, then calling
 dat.rotate2(‘earth’) will yield a data object in the new
-‘True’ earth coordinate system)</li>
+‘True’ earth coordinate system)</p></li>
 </ul>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.shape">
-<code class="descname">shape</code><a class="headerlink" href="#dolfyn.Velocity.shape" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">shape</code><a class="headerlink" href="#dolfyn.Velocity.shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of ‘scalar’ data in this data object.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.subset">
-<code class="descname">subset</code><a class="headerlink" href="#dolfyn.Velocity.subset" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">subset</code><a class="headerlink" href="#dolfyn.Velocity.subset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Subset is an <cite>indexer</cite> for creating subsets of the data
 object using Python slice syntax.</p>
 <p>For example, you can do:</p>
@@ -340,74 +321,78 @@ object using Python slice syntax.</p>
 operates recursively through sub-objects.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.Velocity.to_hdf5">
-<code class="descname">to_hdf5</code><span class="sig-paren">(</span><em>buf</em>, <em>chunks=True</em>, <em>compression='gzip'</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.to_hdf5" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">to_hdf5</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">buf</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">compression</span><span class="o">=</span><span class="default_value">'gzip'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.Velocity.to_hdf5" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write the data in this object to an hdf5 file.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.u">
-<code class="descname">u</code><a class="headerlink" href="#dolfyn.Velocity.u" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">u</code><a class="headerlink" href="#dolfyn.Velocity.u" title="Permalink to this definition">¶</a></dt>
 <dd><p>The first velocity component.</p>
 <p>This is simply a shortcut to self[‘vel’][0]. Therefore,
 depending on the coordinate system of the data object
 (self[‘props’][‘coord_sys’]), it is:</p>
 <ul class="simple">
-<li>beam:      beam1</li>
-<li>inst:      x</li>
-<li>earth:     east</li>
-<li>principal: streamwise</li>
+<li><p>beam:      beam1</p></li>
+<li><p>inst:      x</p></li>
+<li><p>earth:     east</p></li>
+<li><p>principal: streamwise</p></li>
 </ul>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.v">
-<code class="descname">v</code><a class="headerlink" href="#dolfyn.Velocity.v" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">v</code><a class="headerlink" href="#dolfyn.Velocity.v" title="Permalink to this definition">¶</a></dt>
 <dd><p>The second velocity component.</p>
 <p>This is simply a shortcut to self[‘vel’][1]. Therefore,
 depending on the coordinate system of the data object
 (self[‘props’][‘coord_sys’]), it is:</p>
 <ul class="simple">
-<li>beam:      beam2</li>
-<li>inst:      y</li>
-<li>earth:     north</li>
-<li>principal: cross-stream</li>
+<li><p>beam:      beam2</p></li>
+<li><p>inst:      y</p></li>
+<li><p>earth:     north</p></li>
+<li><p>principal: cross-stream</p></li>
 </ul>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.Velocity.w">
-<code class="descname">w</code><a class="headerlink" href="#dolfyn.Velocity.w" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">w</code><a class="headerlink" href="#dolfyn.Velocity.w" title="Permalink to this definition">¶</a></dt>
 <dd><p>The third velocity component.</p>
 <p>This is simply a shortcut to self[‘vel’][2]. Therefore,
 depending on the coordinate system of the data object
 (self[‘props’][‘coord_sys’]), it is:</p>
 <ul class="simple">
-<li>beam:      beam3</li>
-<li>inst:      z</li>
-<li>earth:     up</li>
-<li>principal: up</li>
+<li><p>beam:      beam3</p></li>
+<li><p>inst:      z</p></li>
+<li><p>earth:     up</p></li>
+<li><p>principal: up</p></li>
 </ul>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.ADPdata">
-<em class="property">class </em><code class="descclassname">dolfyn.</code><code class="descname">ADPdata</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adp/base.html#ADPdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.ADPdata" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">ADPdata</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adp/base.html#ADPdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.ADPdata" title="Permalink to this definition">¶</a></dt>
 <dd><p>The acoustic Doppler profiler (ADP) data type.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.Velocity</span></code></a></p>
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.Velocity</span></code></a></dt><dd></dd>
+</dl>
 </div>
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.ADPdata.S2">
-<code class="descname">S2</code><a class="headerlink" href="#dolfyn.ADPdata.S2" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">S2</code><a class="headerlink" href="#dolfyn.ADPdata.S2" title="Permalink to this definition">¶</a></dt>
 <dd><p>The horizontal shear-squared.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#dolfyn.ADPdata.dvdz" title="dolfyn.ADPdata.dvdz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dvdz()</span></code></a>, <a class="reference internal" href="#dolfyn.ADPdata.dudz" title="dolfyn.ADPdata.dudz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dudz()</span></code></a></p>
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#dolfyn.ADPdata.dvdz" title="dolfyn.ADPdata.dvdz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dvdz()</span></code></a>, <a class="reference internal" href="#dolfyn.ADPdata.dudz" title="dolfyn.ADPdata.dudz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dudz()</span></code></a></dt><dd></dd>
+</dl>
 </div>
 <p class="rubric">Notes</p>
 <p>This is actually (dudz)^2 + (dvdz)^2. So, if those variables
@@ -415,9 +400,9 @@ are not actually vertical derivatives of the horizontal
 velocity, then this is not the ‘horizontal shear-squared’.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.ADPdata.dudz">
-<code class="descname">dudz</code><a class="headerlink" href="#dolfyn.ADPdata.dudz" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">dudz</code><a class="headerlink" href="#dolfyn.ADPdata.dudz" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shear in the first velocity component.</p>
 <p class="rubric">Notes</p>
 <p>The derivative direction is along the profiler’s ‘z’
@@ -425,9 +410,9 @@ coordinate (‘dz’ is actually diff(self[‘range’])), not necessarily the
 ‘true vertical’ direction.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.ADPdata.dvdz">
-<code class="descname">dvdz</code><a class="headerlink" href="#dolfyn.ADPdata.dvdz" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">dvdz</code><a class="headerlink" href="#dolfyn.ADPdata.dvdz" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shear in the second velocity component.</p>
 <p class="rubric">Notes</p>
 <p>The derivative direction is along the profiler’s ‘z’
@@ -435,9 +420,9 @@ coordinate (‘dz’ is actually diff(self[‘range’])), not necessarily the
 ‘true vertical’ direction.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="dolfyn.ADPdata.dwdz">
-<code class="descname">dwdz</code><a class="headerlink" href="#dolfyn.ADPdata.dwdz" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">dwdz</code><a class="headerlink" href="#dolfyn.ADPdata.dwdz" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shear in the third velocity component.</p>
 <p class="rubric">Notes</p>
 <p>The derivative direction is along the profiler’s ‘z’
@@ -447,151 +432,129 @@ coordinate (‘dz’ is actually diff(self[‘range’])), not necessarily the
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.ADVdata">
-<em class="property">class </em><code class="descclassname">dolfyn.</code><code class="descname">ADVdata</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/base.html#ADVdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.ADVdata" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">ADVdata</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/base.html#ADVdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.ADVdata" title="Permalink to this definition">¶</a></dt>
 <dd><p>The acoustic Doppler velocimeter (ADV) data type.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.Velocity</span></code></a></p>
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">dolfyn.Velocity</span></code></a></dt><dd></dd>
+</dl>
 </div>
 </dd></dl>
 
 </div>
 <div class="section" id="dlfn-tools-and-functions">
 <h2><a class="toc-backref" href="#id3">DOLfYN tools and functions</a><a class="headerlink" href="#dlfn-tools-and-functions" title="Permalink to this headline">¶</a></h2>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-default">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.read" title="dolfyn.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.read</span></code></a></td>
-<td>Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI (.000, .PD0, etc.) data file.</td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dolfyn.read" title="dolfyn.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.read</span></code></a></p></td>
+<td><p>Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI (.000, .PD0, etc.) data file.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#dolfyn.rotate2" title="dolfyn.rotate2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.rotate2</span></code></a></td>
-<td>Rotate a data object to a new coordinate system.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="#dolfyn.rotate2" title="dolfyn.rotate2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.rotate2</span></code></a></p></td>
+<td><p>Rotate a data object to a new coordinate system.</p></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.adv.motion.CorrectMotion" title="dolfyn.adv.motion.CorrectMotion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.adv.motion.CorrectMotion</span></code></a></td>
-<td>This object performs motion correction on an IMU-ADV data object.</td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dolfyn.adv.motion.CorrectMotion" title="dolfyn.adv.motion.CorrectMotion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.adv.motion.CorrectMotion</span></code></a></p></td>
+<td><p>This object performs motion correction on an IMU-ADV data object.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#dolfyn.VelBinner" title="dolfyn.VelBinner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.VelBinner</span></code></a></td>
-<td>This is the base binning (averaging) tool.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="#dolfyn.VelBinner" title="dolfyn.VelBinner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.VelBinner</span></code></a></p></td>
+<td><p>This is the base binning (averaging) tool.</p></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.adv.turbulence.TurbBinner" title="dolfyn.adv.turbulence.TurbBinner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.adv.turbulence.TurbBinner</span></code></a></td>
-<td>Computes various averages and turbulence statistics from cleaned ADV data.</td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dolfyn.adv.turbulence.TurbBinner" title="dolfyn.adv.turbulence.TurbBinner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.adv.turbulence.TurbBinner</span></code></a></p></td>
+<td><p>Computes various averages and turbulence statistics from cleaned ADV data.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#dolfyn.calc_principal_heading" title="dolfyn.calc_principal_heading"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.calc_principal_heading</span></code></a></td>
-<td>Compute the principal angle of the horizontal velocity.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="#dolfyn.calc_principal_heading" title="dolfyn.calc_principal_heading"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dolfyn.calc_principal_heading</span></code></a></p></td>
+<td><p>Compute the principal angle of the horizontal velocity.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="function">
+<dl class="py function">
 <dt id="dolfyn.read">
-<code class="descclassname">dolfyn.</code><code class="descname">read</code><span class="sig-paren">(</span><em>fname</em>, <em>userdata=True</em>, <em>nens=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/io/api.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fname</span></em>, <em class="sig-param"><span class="n">userdata</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">nens</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/io/api.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
 (.000, .PD0, etc.) data file.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">Filename of Nortek file to read.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>filename</strong><span class="classifier">string</span></dt><dd><p>Filename of Nortek file to read.</p>
 </dd>
-<dt><strong>userdata</strong> <span class="classifier-delimiter">:</span> <span class="classifier">True, False, or string of userdata.json filename</span></dt>
-<dd><p class="first last">(default <code class="docutils literal notranslate"><span class="pre">True</span></code>) Whether to read the
+<dt><strong>userdata</strong><span class="classifier">True, False, or string of userdata.json filename</span></dt><dd><p>(default <code class="docutils literal notranslate"><span class="pre">True</span></code>) Whether to read the
 ‘&lt;base-filename&gt;.userdata.json’ file.</p>
 </dd>
-<dt><strong>nens</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None (default: read entire file), int, or</span></dt>
-<dd><dl class="first last docutils">
-<dt>2-element tuple (start, stop)</dt>
-<dd><p class="first last">Number of pings to read from the file</p>
+<dt><strong>nens</strong><span class="classifier">None (default: read entire file), int, or</span></dt><dd><dl class="simple">
+<dt>2-element tuple (start, stop)</dt><dd><p>Number of pings to read from the file</p>
 </dd>
 </dl>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>dat</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">&lt;~dolfyn.data.velocity.Velocity&gt;</span></code></span></dt>
-<dd><p class="first last">A DOLfYN velocity data object.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>dat</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">&lt;~dolfyn.data.velocity.Velocity&gt;</span></code></span></dt><dd><p>A DOLfYN velocity data object.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="dolfyn.rotate2">
-<code class="descclassname">dolfyn.</code><code class="descname">rotate2</code><span class="sig-paren">(</span><em>obj</em>, <em>out_frame='earth'</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/rotate/main.html#rotate2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rotate2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">rotate2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">out_frame</span><span class="o">=</span><span class="default_value">'earth'</span></em>, <em class="sig-param"><span class="n">inplace</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/rotate/main.html#rotate2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.rotate2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rotate a data object to a new coordinate system.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>obj</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
-<dd><p class="first last">The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>obj</strong><span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt><dd><p>The dolfyn velocity-data (ADV or ADP) object to rotate.</p>
 </dd>
-<dt><strong>out_frame</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt>
-<dd><p class="first last">The coordinate system to rotate the data into.</p>
+<dt><strong>out_frame</strong><span class="classifier">string {‘beam’, ‘inst’, ‘earth’, ‘principal’}</span></dt><dd><p>The coordinate system to rotate the data into.</p>
 </dd>
-<dt><strong>inplace</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Operate on the input data object (True), or return a copy that
+<dt><strong>inplace</strong><span class="classifier">bool</span></dt><dd><p>Operate on the input data object (True), or return a copy that
 has been rotated (False, default).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>objout</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt>
-<dd><p class="first last">The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>objout</strong><span class="classifier"><a class="reference internal" href="#dolfyn.Velocity" title="dolfyn.Velocity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Velocity</span></code></a></span></dt><dd><p>The rotated data object. Note that when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>, the
 input object is modified in-place <em>and</em> returned (i.e.,
 <code class="docutils literal notranslate"><span class="pre">objout</span></code> is <code class="docutils literal notranslate"><span class="pre">obj</span></code>).</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>This function rotates all variables in <code class="docutils literal notranslate"><span class="pre">obj.props['rotate_vars']</span></code>.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.adv.motion.CorrectMotion">
-<em class="property">class </em><code class="descclassname">dolfyn.adv.motion.</code><code class="descname">CorrectMotion</code><span class="sig-paren">(</span><em>accel_filtfreq=None</em>, <em>vel_filtfreq=None</em>, <em>separate_probes=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/motion.html#CorrectMotion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.motion.CorrectMotion" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.adv.motion.</code><code class="sig-name descname">CorrectMotion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">accel_filtfreq</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">vel_filtfreq</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">separate_probes</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/motion.html#CorrectMotion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.motion.CorrectMotion" title="Permalink to this definition">¶</a></dt>
 <dd><p>This object performs motion correction on an IMU-ADV data
 object. The IMU and ADV data should be tightly synchronized and
 contained in a single data object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>accel_filtfreq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">the frequency at which to high-pass filter the acceleration
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>accel_filtfreq</strong><span class="classifier">float</span></dt><dd><p>the frequency at which to high-pass filter the acceleration
 signal to remove low-frequency drift.</p>
 </dd>
-<dt><strong>vel_filtfreq</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">a second frequency to high-pass filter the integrated
+<dt><strong>vel_filtfreq</strong><span class="classifier">float (optional)</span></dt><dd><p>a second frequency to high-pass filter the integrated
 acceleration.  (default: 1/3 of accel_filtfreq)</p>
 </dd>
-<dt><strong>separate_probes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional: False)</span></dt>
-<dd><p class="first last">a flag to perform motion-correction at the probe tips, and
+<dt><strong>separate_probes</strong><span class="classifier">bool (optional: False)</span></dt><dd><p>a flag to perform motion-correction at the probe tips, and
 perform motion correction in beam-coordinates, then transform
 back into XYZ/earth coordinates. This correction seems to be
 lower than the noise levels of the ADV, so the defualt is to not
 use it (False).</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>Acceleration signals from inertial sensors are notorious for
 having a small bias that can drift slowly in time. When
@@ -599,12 +562,12 @@ integrating these signals to estimate velocity the bias is
 amplified and leads to large errors in the estimated
 velocity. There are two methods for removing these errors,</p>
 <ol class="arabic simple">
-<li>high-pass filter the acceleration signal prior and/or after
+<li><p>high-pass filter the acceleration signal prior and/or after
 integrating. This implicitly assumes that the low-frequency
-translational velocity is zero.</li>
-<li>provide a slowly-varying reference position (often from a GPS)
+translational velocity is zero.</p></li>
+<li><p>provide a slowly-varying reference position (often from a GPS)
 to an IMU that can use the signal (usually using Kalman
-filters) to debias the acceleration signal.</li>
+filters) to debias the acceleration signal.</p></li>
 </ol>
 <p>Because method (1) removes <cite>real</cite> low-frequency acceleration,
 method (2) is more accurate. However, providing reference position
@@ -624,48 +587,43 @@ remove that signal from the ADV signal in post-processing. The
 accuracy of this approach has not, to my knowledge, been tested
 yet.</p>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">dolfyn.adv</span> <span class="kn">import</span> <span class="n">api</span> <span class="k">as</span> <span class="n">avm</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">dolfyn.adv</span> <span class="kn">import</span> <span class="n">api</span> <span class="k">as</span> <span class="n">avm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dat</span> <span class="o">=</span> <span class="n">avm</span><span class="o">.</span><span class="n">read_nortek</span><span class="p">(</span><span class="s1">&#39;my_data_file.vec&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mc</span> <span class="o">=</span> <span class="n">avm</span><span class="o">.</span><span class="n">CorrectMotion</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">corrected_data</span> <span class="o">=</span> <span class="n">mc</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.adv.motion.CorrectMotion.__call__">
-<code class="descname">__call__</code><span class="sig-paren">(</span><em>advo</em>, <em>to_earth=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/motion.html#CorrectMotion.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.motion.CorrectMotion.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">advo</span></em>, <em class="sig-param"><span class="n">to_earth</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/motion.html#CorrectMotion.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.motion.CorrectMotion.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform motion correction on an IMU-equipped ADV object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>advo</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt>
-<dd><p class="first">The adv object on which to perform motion correction.
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>advo</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt><dd><p>The adv object on which to perform motion correction.
 It must contain the following data attributes:</p>
-<ul class="last simple">
-<li>vel : The velocity array.</li>
-<li>accel : The translational acceleration array.</li>
-<li>angrt : The rotation-rate array.</li>
-<li>orientmat : The orientation matrix.</li>
-<li>props : a dictionary that has ‘body2head_vec’,
-‘body2head_rotmat’ and ‘coord_sys’.</li>
+<ul class="simple">
+<li><p>vel : The velocity array.</p></li>
+<li><p>accel : The translational acceleration array.</p></li>
+<li><p>angrt : The rotation-rate array.</p></li>
+<li><p>orientmat : The orientation matrix.</p></li>
+<li><p>props : a dictionary that has ‘inst2head_vec’ and
+‘coord_sys’.</p></li>
 </ul>
 </dd>
-<dt><strong>to_earth</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional, default: True)</span></dt>
-<dd><p class="first last">A boolean that specifies whether the data should be
+<dt><strong>to_earth</strong><span class="classifier">bool (optional, default: True)</span></dt><dd><p>A boolean that specifies whether the data should be
 rotated into the earth frame.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>After calling this function, <cite>advo</cite> will have <em>velrot</em> and
 <em>velacc</em> data attributes. The velocity vector attribute <code class="docutils literal notranslate"><span class="pre">vel</span></code>
 will be motion corrected according to:</p>
 <blockquote>
-<div>u_corr = u_raw + velacc + velrot</div></blockquote>
+<div><p>u_corr = u_raw + velacc + velrot</p>
+</div></blockquote>
 <p>Therefore, to recover the ‘raw’ velocity, subtract velacc and
 velrot from <code class="docutils literal notranslate"><span class="pre">vel</span></code>.</p>
 <p>This method does not return a data object, it operates on
@@ -674,9 +632,9 @@ velrot from <code class="docutils literal notranslate"><span class="pre">vel</sp
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.VelBinner">
-<em class="property">class </em><code class="descclassname">dolfyn.</code><code class="descname">VelBinner</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">VelBinner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_bin</span></em>, <em class="sig-param"><span class="n">fs</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft_coh</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the base binning (averaging) tool.</p>
 <p>All DOLfYN binning tools derive from this base class.</p>
 <p class="rubric">Examples</p>
@@ -693,9 +651,9 @@ example:</p>
 <span class="n">avg</span> <span class="o">=</span> <span class="n">binner</span><span class="p">(</span><span class="n">rawdat</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_acov">
-<code class="descname">calc_acov</code><span class="sig-paren">(</span><em>indat</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.calc_acov" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_acov</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">indat</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.calc_acov" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the auto-covariance of the raw-signal <cite>indat</cite>.</p>
 <p>As opposed to calc_xcov, which returns the full
 cross-covariance between two arrays, this function only
@@ -705,434 +663,331 @@ sides (to return a ‘quartered’ covariance).</p>
 <p>This has the advantage that the 0 index is actually zero-lag.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_omega">
-<code class="descname">calc_omega</code><span class="sig-paren">(</span><em>fs=None</em>, <em>coh=False</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.calc_omega" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_omega</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">coh</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.calc_omega" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the radial-frequency vector for the psd’s.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">The sample rate (Hz).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fs</strong><span class="classifier">float (optional)</span></dt><dd><p>The sample rate (Hz).</p>
 </dd>
-<dt><strong>coh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Calculate the frequency vector for coherence/cross-spectra
+<dt><strong>coh</strong><span class="classifier">bool</span></dt><dd><p>Calculate the frequency vector for coherence/cross-spectra
 (default: False) i.e. use self.n_fft_coh instead of
 self.n_fft.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_stress">
-<code class="descname">calc_stress</code><span class="sig-paren">(</span><em>veldat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_stress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_stress" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_stress</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">veldat</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_stress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_stress" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the stresses (cross-covariances of u,v,w).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a velocity data array. The last dimension is assumed</span></dt>
-<dd><p class="first last">to be time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>veldat</strong><span class="classifier">a velocity data array. The last dimension is assumed</span></dt><dd><p>to be time.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">An array of stress values.</span></dt>
-<dd></dd>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>out</strong><span class="classifier">An array of stress values.</span></dt><dd></dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_tke">
-<code class="descname">calc_tke</code><span class="sig-paren">(</span><em>veldat, noise=[0, 0, 0]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_tke"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_tke" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_tke</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">veldat</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">[0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_tke"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_tke" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the tke (variances of u,v,w).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a velocity data array. The last dimension is assumed</span></dt>
-<dd><p class="first last">to be time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>veldat</strong><span class="classifier">a velocity data array. The last dimension is assumed</span></dt><dd><p>to be time.</p>
 </dd>
-<dt><strong>noise</strong> <span class="classifier-delimiter">:</span> <span class="classifier">a three-element vector of the noise levels of the</span></dt>
-<dd><p class="first last">velocity data for ach component of velocity.</p>
+<dt><strong>noise</strong><span class="classifier">a three-element vector of the noise levels of the</span></dt><dd><p>velocity data for ach component of velocity.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">An array of tke values.</span></dt>
-<dd></dd>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>out</strong><span class="classifier">An array of tke values.</span></dt><dd></dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_vel_cpsd">
-<code class="descname">calc_vel_cpsd</code><span class="sig-paren">(</span><em>veldat</em>, <em>rotate_u=False</em>, <em>fs=None</em>, <em>window='hann'</em>, <em>n_bin=None</em>, <em>n_fft=None</em>, <em>n_pad=None</em>, <em>step=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_vel_cpsd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_vel_cpsd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_vel_cpsd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">veldat</span></em>, <em class="sig-param"><span class="n">rotate_u</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_pad</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_vel_cpsd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_vel_cpsd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the cross-spectra of velocity components.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The raw velocity data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>veldat</strong><span class="classifier">np.ndarray</span></dt><dd><p>The raw velocity data.</p>
 </dd>
-<dt><strong>rotate_u</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional)</span></dt>
-<dd><p class="first last">If True, each ‘bin’ of horizontal velocity is rotated into
+<dt><strong>rotate_u</strong><span class="classifier">bool (optional)</span></dt><dd><p>If True, each ‘bin’ of horizontal velocity is rotated into
 its principal axis prior to calculating the psd.  (default:
 False).</p>
 </dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">The sample rate (default: from the binner).</p>
+<dt><strong>fs</strong><span class="classifier">float (optional)</span></dt><dd><p>The sample rate (default: from the binner).</p>
 </dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or array</span></dt>
-<dd><p class="first last">Specify the window function.</p>
+<dt><strong>window</strong><span class="classifier">string or array</span></dt><dd><p>Specify the window function.</p>
 </dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The bin-size (default: from the binner).</p>
+<dt><strong>n_bin</strong><span class="classifier">int (optional)</span></dt><dd><p>The bin-size (default: from the binner).</p>
 </dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The fft size (default: from the binner).</p>
+<dt><strong>n_fft</strong><span class="classifier">int (optional)</span></dt><dd><p>The fft size (default: from the binner).</p>
 </dd>
-<dt><strong>n_pad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The number of values to pad with zero (default: 0)</p>
+<dt><strong>n_pad</strong><span class="classifier">int (optional)</span></dt><dd><p>The number of values to pad with zero (default: 0)</p>
 </dd>
-<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">Controls amount of overlap in fft (default: the step size is
+<dt><strong>step</strong><span class="classifier">int (optional)</span></dt><dd><p>Controls amount of overlap in fft (default: the step size is
 chosen to maximize data use, minimize nens, and have a
 minimum of 50% overlap.).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>CSpec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (3, M, N_FFT)</span></dt>
-<dd><p class="first last">The first-dimension of the cross-spectrum is the three
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>CSpec</strong><span class="classifier">np.ndarray (3, M, N_FFT)</span></dt><dd><p>The first-dimension of the cross-spectrum is the three
 different cross-spectra: ‘uv’, ‘uw’, ‘vw’ (in that order).</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_vel_psd">
-<code class="descname">calc_vel_psd</code><span class="sig-paren">(</span><em>veldat, rotate_u=False, fs=None, window='hann', noise=[0, 0, 0], n_bin=None, n_fft=None, n_pad=None, step=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_vel_psd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_vel_psd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_vel_psd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">veldat</span></em>, <em class="sig-param"><span class="n">rotate_u</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">[0, 0, 0]</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_pad</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/data/velocity.html#VelBinner.calc_vel_psd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.VelBinner.calc_vel_psd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the psd of velocity.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The raw velocity data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>veldat</strong><span class="classifier">np.ndarray</span></dt><dd><p>The raw velocity data.</p>
 </dd>
-<dt><strong>rotate_u</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional)</span></dt>
-<dd><p class="first last">If True, each ‘bin’ of horizontal velocity is rotated into
+<dt><strong>rotate_u</strong><span class="classifier">bool (optional)</span></dt><dd><p>If True, each ‘bin’ of horizontal velocity is rotated into
 its principal axis prior to calculating the psd.  (default:
 False).</p>
 </dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (optional)</span></dt>
-<dd><p class="first last">The sample rate (default: from the binner).</p>
+<dt><strong>fs</strong><span class="classifier">float (optional)</span></dt><dd><p>The sample rate (default: from the binner).</p>
 </dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string or array</span></dt>
-<dd><p class="first last">Specify the window function.</p>
+<dt><strong>window</strong><span class="classifier">string or array</span></dt><dd><p>Specify the window function.</p>
 </dd>
-<dt><strong>noise</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list(3 floats) (optional)</span></dt>
-<dd><p class="first last">Noise level of each component’s velocity measurement
+<dt><strong>noise</strong><span class="classifier">list(3 floats) (optional)</span></dt><dd><p>Noise level of each component’s velocity measurement
 (default 0).</p>
 </dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The bin-size (default: from the binner).</p>
+<dt><strong>n_bin</strong><span class="classifier">int (optional)</span></dt><dd><p>The bin-size (default: from the binner).</p>
 </dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The fft size (default: from the binner).</p>
+<dt><strong>n_fft</strong><span class="classifier">int (optional)</span></dt><dd><p>The fft size (default: from the binner).</p>
 </dd>
-<dt><strong>n_pad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">The number of values to pad with zero (default: 0)</p>
+<dt><strong>n_pad</strong><span class="classifier">int (optional)</span></dt><dd><p>The number of values to pad with zero (default: 0)</p>
 </dd>
-<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional)</span></dt>
-<dd><p class="first last">Controls amount of overlap in fft (default: the step size is
+<dt><strong>step</strong><span class="classifier">int (optional)</span></dt><dd><p>Controls amount of overlap in fft (default: the step size is
 chosen to maximize data use, minimize nens, and have a
 minimum of 50% overlap.).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Spec</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (3, M, N_FFT)</span></dt>
-<dd><p class="first last">The first-dimension of the spectrum is the three
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Spec</strong><span class="classifier">np.ndarray (3, M, N_FFT)</span></dt><dd><p>The first-dimension of the spectrum is the three
 different spectra: ‘uu’, ‘vv’, ‘ww’.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.calc_xcov">
-<code class="descname">calc_xcov</code><span class="sig-paren">(</span><em>indt1</em>, <em>indt2</em>, <em>npt=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em>, <em>normed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.calc_xcov" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_xcov</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">indt1</span></em>, <em class="sig-param"><span class="n">indt2</span></em>, <em class="sig-param"><span class="n">npt</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">normed</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.calc_xcov" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the cross-covariance between arrays indt1 and indt2
 for each bin.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.cohere">
-<code class="descname">cohere</code><span class="sig-paren">(</span><em>dat1</em>, <em>dat2</em>, <em>window='hann'</em>, <em>debias=True</em>, <em>noise=(0</em>, <em>0)</em>, <em>n_fft=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.cohere" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">cohere</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat1</span></em>, <em class="sig-param"><span class="n">dat2</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em>, <em class="sig-param"><span class="n">debias</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">0, 0</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin2</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.cohere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate coherence between <cite>dat1</cite> and <cite>dat2</cite>.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.cpsd">
-<code class="descname">cpsd</code><span class="sig-paren">(</span><em>dat1</em>, <em>dat2</em>, <em>fs=None</em>, <em>window='hann'</em>, <em>n_fft=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.cpsd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">cpsd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat1</span></em>, <em class="sig-param"><span class="n">dat2</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin2</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.cpsd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the ‘cross power spectral density’ of <cite>dat</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>dat1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The first raw-data array of which to calculate the cpsd.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dat1</strong><span class="classifier">np.ndarray</span></dt><dd><p>The first raw-data array of which to calculate the cpsd.</p>
 </dd>
-<dt><strong>dat2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The second raw-data array of which to calculate the cpsd.</p>
+<dt><strong>dat2</strong><span class="classifier">np.ndarray</span></dt><dd><p>The second raw-data array of which to calculate the cpsd.</p>
 </dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">String indicating the window function to use (default: ‘hanning’).</p>
+<dt><strong>window</strong><span class="classifier">string</span></dt><dd><p>String indicating the window function to use (default: ‘hanning’).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The cross-spectral density of <cite>dat1</cite> and <cite>dat2</cite></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>out</strong><span class="classifier">np.ndarray</span></dt><dd><p>The cross-spectral density of <cite>dat1</cite> and <cite>dat2</cite></p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.demean">
-<code class="descname">demean</code><span class="sig-paren">(</span><em>dat</em>, <em>n_pad=0</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.demean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">demean</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat</span></em>, <em class="sig-param"><span class="n">n_pad</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.demean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reshape the array <cite>dat</cite> and remove the mean from each ensemble.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.detrend">
-<code class="descname">detrend</code><span class="sig-paren">(</span><em>dat</em>, <em>n_pad=0</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.detrend" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">detrend</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat</span></em>, <em class="sig-param"><span class="n">n_pad</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.detrend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reshape the array <cite>dat</cite> and remove the best-fit trend line.</p>
 <p>… Need to fix this to deal with NaNs…</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.do_avg">
-<code class="descname">do_avg</code><span class="sig-paren">(</span><em>rawdat</em>, <em>outdat=None</em>, <em>names=None</em>, <em>n_time=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.do_avg" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>rawdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">raw_data_object</span></dt>
-<dd><p class="first last">The raw data structure to be binned</p>
+<code class="sig-name descname">do_avg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">rawdat</span></em>, <em class="sig-param"><span class="n">outdat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_time</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.do_avg" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>rawdat</strong><span class="classifier">raw_data_object</span></dt><dd><p>The raw data structure to be binned</p>
 </dd>
-<dt><strong>outdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">avg_data_object</span></dt>
-<dd><p class="first last">The bin’d (output) data object to which averaged data is added.</p>
+<dt><strong>outdat</strong><span class="classifier">avg_data_object</span></dt><dd><p>The bin’d (output) data object to which averaged data is added.</p>
 </dd>
-<dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of strings</span></dt>
-<dd><p class="first last">The names of variables to be averaged.  If <cite>names</cite> is None,
+<dt><strong>names</strong><span class="classifier">list of strings</span></dt><dd><p>The names of variables to be averaged.  If <cite>names</cite> is None,
 all data in <cite>rawdat</cite> will be binned.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.do_var">
-<code class="descname">do_var</code><span class="sig-paren">(</span><em>rawdat</em>, <em>outdat=None</em>, <em>names=None</em>, <em>suffix='_var'</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.do_var" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">do_var</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">rawdat</span></em>, <em class="sig-param"><span class="n">outdat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">suffix</span><span class="o">=</span><span class="default_value">'_var'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.do_var" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the variance of data attributes.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>rawdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">raw_data_object</span></dt>
-<dd><p class="first last">The raw data structure to be binned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>rawdat</strong><span class="classifier">raw_data_object</span></dt><dd><p>The raw data structure to be binned.</p>
 </dd>
-<dt><strong>outdat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">avg_data_object</span></dt>
-<dd><p class="first last">The bin’d (output) data object to which variance data is added.</p>
+<dt><strong>outdat</strong><span class="classifier">avg_data_object</span></dt><dd><p>The bin’d (output) data object to which variance data is added.</p>
 </dd>
-<dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of strings</span></dt>
-<dd><p class="first last">The names of variables of which to calculate variance.  If
+<dt><strong>names</strong><span class="classifier">list of strings</span></dt><dd><p>The names of variables of which to calculate variance.  If
 <cite>names</cite> is None, all data in <cite>rawdat</cite> will be binned.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.mean">
-<code class="descname">mean</code><span class="sig-paren">(</span><em>dat</em>, <em>axis=-1</em>, <em>n_bin=None</em>, <em>mask_thresh=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.mean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">mean</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat</span></em>, <em class="sig-param"><span class="n">axis</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask_thresh</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Average an array object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (default is self.n_bin)</span></dt>
-<dd></dd>
-<dt><strong>mask_thresh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (between 0 and 1)</span></dt>
-<dd><p class="first last">if the input data is a masked array, and mask_thresh is
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_bin</strong><span class="classifier">int (default is self.n_bin)</span></dt><dd></dd>
+<dt><strong>mask_thresh</strong><span class="classifier">float (between 0 and 1)</span></dt><dd><p>if the input data is a masked array, and mask_thresh is
 not None mask the averaged values where the fraction of
 bad points is greater than mask_thresh</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.mean_angle">
-<code class="descname">mean_angle</code><span class="sig-paren">(</span><em>dat</em>, <em>axis=-1</em>, <em>units='radians'</em>, <em>n_bin=None</em>, <em>mask_thresh=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.mean_angle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">mean_angle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat</span></em>, <em class="sig-param"><span class="n">axis</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">units</span><span class="o">=</span><span class="default_value">'radians'</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask_thresh</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.mean_angle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Average an angle array.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>units</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘radians’ | ‘degrees’}</span></dt>
-<dd></dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (default is self.n_bin)</span></dt>
-<dd></dd>
-<dt><strong>mask_thresh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (between 0 and 1)</span></dt>
-<dd><p class="first last">if the input data is a masked array, and mask_thresh is
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>units</strong><span class="classifier">{‘radians’ | ‘degrees’}</span></dt><dd></dd>
+<dt><strong>n_bin</strong><span class="classifier">int (default is self.n_bin)</span></dt><dd></dd>
+<dt><strong>mask_thresh</strong><span class="classifier">float (between 0 and 1)</span></dt><dd><p>if the input data is a masked array, and mask_thresh is
 not None mask the averaged values where the fraction of
 bad points is greater than mask_thresh</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.phase_angle">
-<code class="descname">phase_angle</code><span class="sig-paren">(</span><em>dat1</em>, <em>dat2</em>, <em>window='hann'</em>, <em>n_fft=None</em>, <em>n_bin1=None</em>, <em>n_bin2=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.phase_angle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">phase_angle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat1</span></em>, <em class="sig-param"><span class="n">dat2</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_bin2</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.phase_angle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the phase difference between two signals as a
 function of frequency (complimentary to coherence).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>dat1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The first raw-data array of which to calculate the cpsd.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dat1</strong><span class="classifier">np.ndarray</span></dt><dd><p>The first raw-data array of which to calculate the cpsd.</p>
 </dd>
-<dt><strong>dat2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The second raw-data array of which to calculate the cpsd.</p>
+<dt><strong>dat2</strong><span class="classifier">np.ndarray</span></dt><dd><p>The second raw-data array of which to calculate the cpsd.</p>
 </dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">String indicating the window function to use (default: ‘hanning’).</p>
+<dt><strong>window</strong><span class="classifier">string</span></dt><dd><p>String indicating the window function to use (default: ‘hanning’).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd><p class="first last">The phase difference between signal dat1 and dat2.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>out</strong><span class="classifier">np.ndarray</span></dt><dd><p>The phase difference between signal dat1 and dat2.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.psd">
-<code class="descname">psd</code><span class="sig-paren">(</span><em>dat</em>, <em>fs=None</em>, <em>window='hann'</em>, <em>noise=0</em>, <em>n_bin=None</em>, <em>n_fft=None</em>, <em>step=None</em>, <em>n_pad=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.psd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">psd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">dat</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">step</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_pad</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.psd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate ‘power spectral density’ of <cite>dat</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>dat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">data_object</span></dt>
-<dd><p class="first last">The raw-data array of which to calculate the psd.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dat</strong><span class="classifier">data_object</span></dt><dd><p>The raw-data array of which to calculate the psd.</p>
 </dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">String indicating the window function to use (default: ‘hanning’).</p>
+<dt><strong>window</strong><span class="classifier">string</span></dt><dd><p>String indicating the window function to use (default: ‘hanning’).</p>
 </dd>
-<dt><strong>noise</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The white-noise level of the measurement (in the same units
+<dt><strong>noise</strong><span class="classifier">float</span></dt><dd><p>The white-noise level of the measurement (in the same units
 as <cite>dat</cite>).</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.VelBinner.reshape">
-<code class="descname">reshape</code><span class="sig-paren">(</span><em>arr</em>, <em>n_pad=0</em>, <em>n_bin=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.reshape" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">reshape</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">arr</span></em>, <em class="sig-param"><span class="n">n_pad</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">n_bin</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.VelBinner.reshape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reshape the array <cite>arr</cite> to shape (…,n,n_bin+n_pad).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>arr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd></dd>
-<dt><strong>n_pad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Is used to add <cite>n_pad</cite>/2 points from the end of the previous
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>arr</strong><span class="classifier">np.ndarray</span></dt><dd></dd>
+<dt><strong>n_pad</strong><span class="classifier">int</span></dt><dd><p>Is used to add <cite>n_pad</cite>/2 points from the end of the previous
 ensemble to the top of the current, and <cite>n_pad</cite>/2 points
 from the top of the next ensemble to the bottom of the
 current.  Zeros are padded in the upper-left and lower-right
 corners of the matrix (beginning/end of timeseries).  In
 this case, the array shape will be (…,`n`,`n_pad`+`n_bin`)</p>
 </dd>
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, int (optional)</span></dt>
-<dd><p class="first last">Override this binner’s n_bin.</p>
+<dt><strong>n_bin</strong><span class="classifier">float, int (optional)</span></dt><dd><p>Override this binner’s n_bin.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p><cite>n_bin</cite> can be non-integer, in which case the output array
 size will be <cite>n_pad`+`n_bin</cite>, and the decimal will
@@ -1145,164 +1000,129 @@ example:
 
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.adv.turbulence.TurbBinner">
-<em class="property">class </em><code class="descclassname">dolfyn.adv.turbulence.</code><code class="descname">TurbBinner</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.adv.turbulence.</code><code class="sig-name descname">TurbBinner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_bin</span></em>, <em class="sig-param"><span class="n">fs</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft_coh</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes various averages and turbulence statistics from cleaned
 ADV data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">The length of <cite>bin</cite> s, in number of points, for this averaging
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_bin</strong><span class="classifier">int</span></dt><dd><p>The length of <cite>bin</cite> s, in number of points, for this averaging
 operator.</p>
 </dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional, default: n_fft = n_bin)</span></dt>
-<dd><p class="first last">The length of the FFT for computing spectra (must be &lt; n_bin)</p>
+<dt><strong>n_fft</strong><span class="classifier">int (optional, default: n_fft = n_bin)</span></dt><dd><p>The length of the FFT for computing spectra (must be &lt; n_bin)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
+</dd>
+</dl>
+<dl class="py method">
 <dt id="dolfyn.adv.turbulence.TurbBinner.__call__">
-<code class="descname">__call__</code><span class="sig-paren">(</span><em>advr, out_type=None, omega_range_epsilon=[6.28, 12.57], Itke_thresh=0, window='hann'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">advr</span></em>, <em class="sig-param"><span class="n">out_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">omega_range_epsilon</span><span class="o">=</span><span class="default_value">[6.28, 12.57]</span></em>, <em class="sig-param"><span class="n">Itke_thresh</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">window</span><span class="o">=</span><span class="default_value">'hann'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute a suite of turbulence statistics for the input data
 advr, and return a <cite>binned</cite> data object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>advr</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt>
-<dd><p class="first last">The raw adv data-object to <cite>bin</cite>, average and compute
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>advr</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt><dd><p>The raw adv data-object to <cite>bin</cite>, average and compute
 turbulence statistics of.</p>
 </dd>
-<dt><strong>omega_range_epsilon</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable(2)</span></dt>
-<dd><p class="first last">The frequency range (low, high) over which to estimate the
+<dt><strong>omega_range_epsilon</strong><span class="classifier">iterable(2)</span></dt><dd><p>The frequency range (low, high) over which to estimate the
 dissipation rate <cite>epsilon</cite> [rad/s].</p>
 </dd>
-<dt><strong>Itke_thresh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">The threshold for velocity magnitude for</span></dt>
-<dd><p class="first last">computing the turbulence intensity. Values of Itke where
+<dt><strong>Itke_thresh</strong><span class="classifier">The threshold for velocity magnitude for</span></dt><dd><p>computing the turbulence intensity. Values of Itke where
 U_mag &lt; Itke_thresh are set to NaN.  (default: 0).</p>
 </dd>
-<dt><strong>window</strong> <span class="classifier-delimiter">:</span> <span class="classifier">1, None, ‘hann’</span></dt>
-<dd><p class="first last">The window to use for psds.</p>
+<dt><strong>window</strong><span class="classifier">1, None, ‘hann’</span></dt><dd><p>The window to use for psds.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>advb</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.ADVbinned</span></code></span></dt>
-<dd><p class="first">Returns an ‘binned’ (i.e. ‘averaged’) data object. All
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>advb</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">base.ADVbinned</span></code></span></dt><dd><p>Returns an ‘binned’ (i.e. ‘averaged’) data object. All
 fields of the input data object are averaged in n_bin
 chunks. This object also computes the following items over
 those chunks:</p>
-<ul class="last">
-<li><p class="first">tke_vec : The energy in each component (components are also
+<ul>
+<li><p>tke_vec : The energy in each component (components are also
 accessible as
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">upup_</span></code>,
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">vpvp_</span></code>,
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">wpwp_</span></code>)</p>
-</li>
-<li><p class="first">stress : The Reynolds stresses (each component is
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">wpwp_</span></code>)</p></li>
+<li><p>stress : The Reynolds stresses (each component is
 accessible as
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">upwp_</span></code>,
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">vpwp_</span></code>,
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">upvp_</span></code>)</p>
-</li>
-<li><p class="first">sigma_Uh : The standard deviation of the horizontal
-velocity.</p>
-</li>
-<li><p class="first">Spec : A data group containing the spectra of the velocity
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">upvp_</span></code>)</p></li>
+<li><p>sigma_Uh : The standard deviation of the horizontal
+velocity.</p></li>
+<li><p>Spec : A data group containing the spectra of the velocity
 in radial frequency units. The data group contains:</p>
 <blockquote>
 <div><ul class="simple">
-<li>vel : the velocity spectra array (m^2/s/radian))</li>
-<li>omega : the radial frequncy (radian / s)</li>
+<li><p>vel : the velocity spectra array (m^2/s/radian))</p></li>
+<li><p>omega : the radial frequncy (radian / s)</p></li>
 </ul>
 </div></blockquote>
 </li>
 </ul>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.adv.turbulence.TurbBinner.calc_Lint">
-<code class="descname">calc_Lint</code><span class="sig-paren">(</span><em>corr_vel</em>, <em>U_mag</em>, <em>fs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_Lint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_Lint" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_Lint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">corr_vel</span></em>, <em class="sig-param"><span class="n">U_mag</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_Lint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_Lint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate integral length scales.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>corr_vel</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></span></dt>
-<dd><p class="first last">The auto-covariance array (i.e. computed using calc_acov).</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>corr_vel</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></span></dt><dd><p>The auto-covariance array (i.e. computed using calc_acov).</p>
 </dd>
-<dt><strong>U_mag</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The velocity magnitude for this bin.</p>
+<dt><strong>U_mag</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt><dd><p>The velocity magnitude for this bin.</p>
 </dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The raw sample rate.</p>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>The raw sample rate.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Lint</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The integral length scale (Tint*U_mag).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>Lint</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt><dd><p>The integral length scale (Tint*U_mag).</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>The integral time scale (Tint) is the lag-time at which the
 auto-covariance falls to 1/e.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83">
-<code class="descname">calc_epsilon_LT83</code><span class="sig-paren">(</span><em>spec, omega, U_mag, omega_range=[6.28, 12.57]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_epsilon_LT83"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_epsilon_LT83</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">spec</span></em>, <em class="sig-param"><span class="n">omega</span></em>, <em class="sig-param"><span class="n">U_mag</span></em>, <em class="sig-param"><span class="n">omega_range</span><span class="o">=</span><span class="default_value">[6.28, 12.57]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_epsilon_LT83"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the dissipation rate from the spectrum.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>spec</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time,n_f)</span></dt>
-<dd><p class="first last">The spectrum array [m^2/s/radian]</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>spec</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time,n_f)</span></dt><dd><p>The spectrum array [m^2/s/radian]</p>
 </dd>
-<dt><strong>omega</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (n_f)</span></dt>
-<dd><p class="first last">The frequency array [rad/s]</p>
+<dt><strong>omega</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (n_f)</span></dt><dd><p>The frequency array [rad/s]</p>
 </dd>
-<dt><strong>U_mag</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time)</span></dt>
-<dd><p class="first last">The velocity magnitude [m/s]</p>
+<dt><strong>U_mag</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…,n_time)</span></dt><dd><p>The velocity magnitude [m/s]</p>
 </dd>
-<dt><strong>omega_range</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable(2)</span></dt>
-<dd><p class="first last">The range over which to integrate/average the spectrum.</p>
+<dt><strong>omega_range</strong><span class="classifier">iterable(2)</span></dt><dd><p>The range over which to integrate/average the spectrum.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>epsilon</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (…,n_time)</span></dt>
-<dd><p class="first last">The dissipation rate.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>epsilon</strong><span class="classifier">np.ndarray (…,n_time)</span></dt><dd><p>The dissipation rate.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>This uses the <cite>standard</cite> formula for dissipation:</p>
 <div class="math notranslate nohighlight">
@@ -1318,134 +1138,105 @@ kinetic energy spectrum.</p>
 by a random wave field” JPO, 1983, 13, 2000-2007.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF">
-<code class="descname">calc_epsilon_SF</code><span class="sig-paren">(</span><em>veldat, umag, fs=None, freq_rng=[0.5, 5.0]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_epsilon_SF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_epsilon_SF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">veldat</span></em>, <em class="sig-param"><span class="n">umag</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">freq_rng</span><span class="o">=</span><span class="default_value">[0.5, 5.0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_epsilon_SF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate epsilon using the “structure function” (SF) method.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>veldat</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time, n_bin)</span></dt>
-<dd><p class="first last">The raw velocity signal (last dimension time) upon which to
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>veldat</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time, n_bin)</span></dt><dd><p>The raw velocity signal (last dimension time) upon which to
 perform the SF technique.</p>
 </dd>
-<dt><strong>umag</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The bin-averaged horizontal velocity magnitude.</p>
+<dt><strong>umag</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt><dd><p>The bin-averaged horizontal velocity magnitude.</p>
 </dd>
-<dt><strong>fs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The sample rate of <cite>veldat</cite> [hz].</p>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>The sample rate of <cite>veldat</cite> [hz].</p>
 </dd>
-<dt><strong>freq_rng</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable(2)</span></dt>
-<dd><p class="first last">The frequency range over which to compute the SF [hz].</p>
+<dt><strong>freq_rng</strong><span class="classifier">iterable(2)</span></dt><dd><p>The frequency range over which to compute the SF [hz].</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>epsilon</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The dissipation rate.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>epsilon</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt><dd><p>The dissipation rate.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01">
-<code class="descname">calc_epsilon_TE01</code><span class="sig-paren">(</span><em>advbin, advraw, omega_range=[6.28, 12.57]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_epsilon_TE01"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_epsilon_TE01</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">advbin</span></em>, <em class="sig-param"><span class="n">advraw</span></em>, <em class="sig-param"><span class="n">omega_range</span><span class="o">=</span><span class="default_value">[6.28, 12.57]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.calc_epsilon_TE01"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the dissipation according to TE01.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>advbin</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVbinned</span></code></span></dt>
-<dd><p class="first last">The binned adv object. The following spectra and basic
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>advbin</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVbinned</span></code></span></dt><dd><p>The binned adv object. The following spectra and basic
 turbulence statistics must already be computed.</p>
 </dd>
-<dt><strong>advraw</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt>
-<dd><p class="first last">The raw adv object.</p>
+<dt><strong>advraw</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADVdata</span></code></span></dt><dd><p>The raw adv object.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
-<dl class="docutils">
-<dt>TE01 <span class="classifier-delimiter">:</span> <span class="classifier">Trowbridge, J and Elgar, S, “Turbulence measurements in</span></dt>
-<dd>the Surf Zone” JPO, 2001, 31, 2403-2417.</dd>
+<dl class="simple">
+<dt>TE01<span class="classifier">Trowbridge, J and Elgar, S, “Turbulence measurements in</span></dt><dd><p>the Surf Zone” JPO, 2001, 31, 2403-2417.</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="dolfyn.adv.turbulence.TurbBinner.up_angle">
-<code class="descname">up_angle</code><span class="sig-paren">(</span><em>Uh_complex</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.up_angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.up_angle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">up_angle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">Uh_complex</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/adv/turbulence.html#TurbBinner.up_angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.up_angle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the angle of the turbulence fluctuations.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>Uh_complex</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time * n_bin)</span></dt>
-<dd><p class="first last">The complex, raw horizontal velocity (non-binned).</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>Uh_complex</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time * n_bin)</span></dt><dd><p>The complex, raw horizontal velocity (non-binned).</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>theta</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt>
-<dd><p class="first last">The angle of the turbulence [rad]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>theta</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> (…, n_time)</span></dt><dd><p>The angle of the turbulence [rad]</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="dolfyn.calc_principal_heading">
-<code class="descclassname">dolfyn.</code><code class="descname">calc_principal_heading</code><span class="sig-paren">(</span><em>vel</em>, <em>tidal_mode=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/rotate/base.html#calc_principal_heading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.calc_principal_heading" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">dolfyn.</code><code class="sig-name descname">calc_principal_heading</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vel</span></em>, <em class="sig-param"><span class="n">tidal_mode</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dolfyn/rotate/base.html#calc_principal_heading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.calc_principal_heading" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the principal angle of the horizontal velocity.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>vel</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray (2,…,Nt), or (3,…,Nt)</span></dt>
-<dd><p class="first last">The 2D or 3D velocity array (3rd-dim is ignored in this calculation)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>vel</strong><span class="classifier">np.ndarray (2,…,Nt), or (3,…,Nt)</span></dt><dd><p>The 2D or 3D velocity array (3rd-dim is ignored in this calculation)</p>
 </dd>
-<dt><strong>tidal_mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (default: True)</span></dt>
-<dd></dd>
+<dt><strong>tidal_mode</strong><span class="classifier">bool (default: True)</span></dt><dd></dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>p_heading</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or ndarray</span></dt>
-<dd><p class="first last">The principal heading(s) in degrees clockwise from North.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>p_heading</strong><span class="classifier">float or ndarray</span></dt><dd><p>The principal heading(s) in degrees clockwise from North.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
-<dl class="docutils">
-<dt>The tidal mode follows these steps:</dt>
-<dd><ol class="first last arabic simple">
-<li>rotates vectors with negative v by 180 degrees</li>
-<li>then doubles those angles to make a complete circle again</li>
-<li>computes a mean direction from this, and halves that angle again.</li>
-<li>The returned angle is forced to be between 0 and 180. So, you
+<dl class="simple">
+<dt>The tidal mode follows these steps:</dt><dd><ol class="arabic simple">
+<li><p>rotates vectors with negative v by 180 degrees</p></li>
+<li><p>then doubles those angles to make a complete circle again</p></li>
+<li><p>computes a mean direction from this, and halves that angle again.</p></li>
+<li><p>The returned angle is forced to be between 0 and 180. So, you
 may need to add 180 to this if you want your positive
-direction to be in the western-half of the plane.</li>
+direction to be in the western-half of the plane.</p></li>
 </ol>
 </dd>
 </dl>
@@ -1512,17 +1303,15 @@ using a vector method.</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -1539,7 +1328,7 @@ using a vector method.</p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -27,6 +27,7 @@ dolfyn.Velocity
       ~Velocity.popitem
       ~Velocity.rotate2
       ~Velocity.set_declination
+      ~Velocity.set_inst2head_rotmat
       ~Velocity.setdefault
       ~Velocity.to_hdf5
       ~Velocity.update

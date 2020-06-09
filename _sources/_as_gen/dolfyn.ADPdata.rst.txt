@@ -27,6 +27,7 @@ dolfyn.ADPdata
       ~ADPdata.popitem
       ~ADPdata.rotate2
       ~ADPdata.set_declination
+      ~ADPdata.set_inst2head_rotmat
       ~ADPdata.setdefault
       ~ADPdata.to_hdf5
       ~ADPdata.update

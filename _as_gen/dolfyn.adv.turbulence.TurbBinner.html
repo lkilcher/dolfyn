@@ -1,21 +1,19 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>dolfyn.adv.turbulence.TurbBinner &#8212; DOLfYN 0.12 documentation</title>
+    <meta charset="utf-8" />
+    <title>dolfyn.adv.turbulence.TurbBinner &#8212; DOLfYN 0.12.1 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script type="text/javascript" src="../_static/js/versionwarning.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/js/versionwarning.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -39,159 +37,142 @@
             
   <div class="section" id="dolfyn-adv-turbulence-turbbinner">
 <h1>dolfyn.adv.turbulence.TurbBinner<a class="headerlink" href="#dolfyn-adv-turbulence-turbbinner" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="dolfyn.adv.turbulence.TurbBinner">
-<em class="property">class </em><code class="descclassname">dolfyn.adv.turbulence.</code><code class="descname">TurbBinner</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/adv/turbulence.html#TurbBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">dolfyn.adv.turbulence.</code><code class="sig-name descname">TurbBinner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_bin</span></em>, <em class="sig-param"><span class="n">fs</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft_coh</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dolfyn/adv/turbulence.html#TurbBinner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes various averages and turbulence statistics from cleaned
 ADV data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">The length of <cite>bin</cite> s, in number of points, for this averaging
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_bin</strong><span class="classifier">int</span></dt><dd><p>The length of <cite>bin</cite> s, in number of points, for this averaging
 operator.</p>
 </dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int (optional, default: n_fft = n_bin)</span></dt>
-<dd><p class="first last">The length of the FFT for computing spectra (must be &lt; n_bin)</p>
+<dt><strong>n_fft</strong><span class="classifier">int (optional, default: n_fft = n_bin)</span></dt><dd><p>The length of the FFT for computing spectra (must be &lt; n_bin)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="dolfyn.adv.turbulence.TurbBinner.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>n_bin</em>, <em>fs</em>, <em>n_fft=None</em>, <em>n_fft_coh=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize an averaging object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>n_bin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">the number of data points to include in a ‘bin’ (average).</p>
 </dd>
-<dt><strong>n_fft</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">the number of data points to use for fft (<cite>n_fft`&lt;=`n_bin</cite>).
+</dl>
+<dl class="py method">
+<dt id="dolfyn.adv.turbulence.TurbBinner.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">n_bin</span></em>, <em class="sig-param"><span class="n">fs</span></em>, <em class="sig-param"><span class="n">n_fft</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">n_fft_coh</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dolfyn.adv.turbulence.TurbBinner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an averaging object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_bin</strong><span class="classifier">int</span></dt><dd><p>the number of data points to include in a ‘bin’ (average).</p>
+</dd>
+<dt><strong>n_fft</strong><span class="classifier">int</span></dt><dd><p>the number of data points to use for fft (<cite>n_fft`&lt;=`n_bin</cite>).
 Default: <cite>n_fft`=`n_bin</cite></p>
 </dd>
-<dt><strong>n_fft_coh</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">the number of data points to use for coherence and cross-spectra ffts
+<dt><strong>n_fft_coh</strong><span class="classifier">int</span></dt><dd><p>the number of data points to use for coherence and cross-spectra ffts
 (<cite>n_fft_coh`&lt;=`n_bin</cite>). Default: <cite>n_fft_coh`=`n_bin</cite>/6</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-default">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#dolfyn.adv.turbulence.TurbBinner.__init__" title="dolfyn.adv.turbulence.TurbBinner.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(n_bin,&nbsp;fs[,&nbsp;n_fft,&nbsp;n_fft_coh])</td>
-<td>Initialize an averaging object.</td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dolfyn.adv.turbulence.TurbBinner.__init__" title="dolfyn.adv.turbulence.TurbBinner.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(self, n_bin, fs[, n_fft, n_fft_coh])</p></td>
+<td><p>Initialize an averaging object.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_Lint" title="dolfyn.adv.turbulence.TurbBinner.calc_Lint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_Lint</span></code></a>(corr_vel,&nbsp;U_mag[,&nbsp;fs])</td>
-<td>Calculate integral length scales.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_Lint" title="dolfyn.adv.turbulence.TurbBinner.calc_Lint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_Lint</span></code></a>(self, corr_vel, U_mag[, fs])</p></td>
+<td><p>Calculate integral length scales.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_acov</span></code>(indat[,&nbsp;n_bin])</td>
-<td>Calculate the auto-covariance of the raw-signal <cite>indat</cite>.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_acov</span></code>(self, indat[, n_bin])</p></td>
+<td><p>Calculate the auto-covariance of the raw-signal <cite>indat</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83" title="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_epsilon_LT83</span></code></a>(spec,&nbsp;omega,&nbsp;U_mag[,&nbsp;…])</td>
-<td>Calculate the dissipation rate from the spectrum.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83" title="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_epsilon_LT83</span></code></a>(self, spec, omega, U_mag)</p></td>
+<td><p>Calculate the dissipation rate from the spectrum.</p></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF" title="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_epsilon_SF</span></code></a>(veldat,&nbsp;umag[,&nbsp;fs,&nbsp;freq_rng])</td>
-<td>Calculate epsilon using the “structure function” (SF) method.</td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF" title="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_epsilon_SF</span></code></a>(self, veldat, umag[, fs, …])</p></td>
+<td><p>Calculate epsilon using the “structure function” (SF) method.</p></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01" title="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_epsilon_TE01</span></code></a>(advbin,&nbsp;advraw[,&nbsp;omega_range])</td>
-<td>Calculate the dissipation according to TE01.</td>
+<tr class="row-even"><td><p><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01" title="dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_epsilon_TE01</span></code></a>(self, advbin, advraw[, …])</p></td>
+<td><p>Calculate the dissipation according to TE01.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_lag</span></code>([npt,&nbsp;one_sided])</td>
-<td></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_lag</span></code>(self[, npt, one_sided])</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_omega</span></code>([fs,&nbsp;coh])</td>
-<td>Calculate the radial-frequency vector for the psd’s.</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_omega</span></code>(self[, fs, coh])</p></td>
+<td><p>Calculate the radial-frequency vector for the psd’s.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_stress</span></code>(veldat)</td>
-<td>Calculate the stresses (cross-covariances of u,v,w).</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_stress</span></code>(self, veldat)</p></td>
+<td><p>Calculate the stresses (cross-covariances of u,v,w).</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_tke</span></code>(veldat[,&nbsp;noise])</td>
-<td>Calculate the tke (variances of u,v,w).</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_tke</span></code>(self, veldat[, noise])</p></td>
+<td><p>Calculate the tke (variances of u,v,w).</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_vel_cpsd</span></code>(veldat[,&nbsp;rotate_u,&nbsp;fs,&nbsp;…])</td>
-<td>Calculate the cross-spectra of velocity components.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_vel_cpsd</span></code>(self, veldat[, rotate_u, fs, …])</p></td>
+<td><p>Calculate the cross-spectra of velocity components.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_vel_psd</span></code>(veldat[,&nbsp;rotate_u,&nbsp;fs,&nbsp;window,&nbsp;…])</td>
-<td>Calculate the psd of velocity.</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_vel_psd</span></code>(self, veldat[, rotate_u, fs, …])</p></td>
+<td><p>Calculate the psd of velocity.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_xcov</span></code>(indt1,&nbsp;indt2[,&nbsp;npt,&nbsp;n_bin1,&nbsp;…])</td>
-<td>Calculate the cross-covariance between arrays indt1 and indt2 for each bin.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_xcov</span></code>(self, indt1, indt2[, npt, n_bin1, …])</p></td>
+<td><p>Calculate the cross-covariance between arrays indt1 and indt2 for each bin.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">cohere</span></code>(dat1,&nbsp;dat2[,&nbsp;window,&nbsp;debias,&nbsp;noise,&nbsp;…])</td>
-<td>Calculate coherence between <cite>dat1</cite> and <cite>dat2</cite>.</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cohere</span></code>(self, dat1, dat2[, window, debias, …])</p></td>
+<td><p>Calculate coherence between <cite>dat1</cite> and <cite>dat2</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpsd</span></code>(dat1,&nbsp;dat2[,&nbsp;fs,&nbsp;window,&nbsp;n_fft,&nbsp;…])</td>
-<td>Calculate the ‘cross power spectral density’ of <cite>dat</cite>.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpsd</span></code>(self, dat1, dat2[, fs, window, n_fft, …])</p></td>
+<td><p>Calculate the ‘cross power spectral density’ of <cite>dat</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">demean</span></code>(dat[,&nbsp;n_pad,&nbsp;n_bin])</td>
-<td>Reshape the array <cite>dat</cite> and remove the mean from each ensemble.</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">demean</span></code>(self, dat[, n_pad, n_bin])</p></td>
+<td><p>Reshape the array <cite>dat</cite> and remove the mean from each ensemble.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrend</span></code>(dat[,&nbsp;n_pad,&nbsp;n_bin])</td>
-<td>Reshape the array <cite>dat</cite> and remove the best-fit trend line.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrend</span></code>(self, dat[, n_pad, n_bin])</p></td>
+<td><p>Reshape the array <cite>dat</cite> and remove the best-fit trend line.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_avg</span></code>(rawdat[,&nbsp;outdat,&nbsp;names,&nbsp;n_time])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_avg</span></code>(self, rawdat[, outdat, names, n_time])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_cross_spec</span></code>(self, indat[, out, names])</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_cross_spec</span></code>(indat[,&nbsp;out,&nbsp;names])</td>
-<td></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_spec</span></code>(self, indat[, out, names])</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_spec</span></code>(indat[,&nbsp;out,&nbsp;names])</td>
-<td></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_tke</span></code>(self, indat[, out])</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_tke</span></code>(indat[,&nbsp;out])</td>
-<td></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_var</span></code>(self, rawdat[, outdat, names, suffix])</p></td>
+<td><p>Calculate the variance of data attributes.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_var</span></code>(rawdat[,&nbsp;outdat,&nbsp;names,&nbsp;suffix])</td>
-<td>Calculate the variance of data attributes.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean</span></code>(self, dat[, axis, n_bin, mask_thresh])</p></td>
+<td><p>Average an array object.</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean</span></code>(dat[,&nbsp;axis,&nbsp;n_bin,&nbsp;mask_thresh])</td>
-<td>Average an array object.</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean_angle</span></code>(self, dat[, axis, units, n_bin, …])</p></td>
+<td><p>Average an angle array.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean_angle</span></code>(dat[,&nbsp;axis,&nbsp;units,&nbsp;n_bin,&nbsp;…])</td>
-<td>Average an angle array.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">phase_angle</span></code>(self, dat1, dat2[, window, …])</p></td>
+<td><p>Calculate the phase difference between two signals as a function of frequency (complimentary to coherence).</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">phase_angle</span></code>(dat1,&nbsp;dat2[,&nbsp;window,&nbsp;n_fft,&nbsp;…])</td>
-<td>Calculate the phase difference between two signals as a function of frequency (complimentary to coherence).</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">psd</span></code>(self, dat[, fs, window, noise, n_bin, …])</p></td>
+<td><p>Calculate ‘power spectral density’ of <cite>dat</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">psd</span></code>(dat[,&nbsp;fs,&nbsp;window,&nbsp;noise,&nbsp;n_bin,&nbsp;n_fft,&nbsp;…])</td>
-<td>Calculate ‘power spectral density’ of <cite>dat</cite>.</td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reshape</span></code>(self, arr[, n_pad, n_bin])</p></td>
+<td><p>Reshape the array <cite>arr</cite> to shape (…,n,n_bin+n_pad).</p></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reshape</span></code>(arr[,&nbsp;n_pad,&nbsp;n_bin])</td>
-<td>Reshape the array <cite>arr</cite> to shape (…,n,n_bin+n_pad).</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">std</span></code>(self, dat[, n_bin])</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">std</span></code>(dat[,&nbsp;n_bin])</td>
-<td></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.up_angle" title="dolfyn.adv.turbulence.TurbBinner.up_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">up_angle</span></code></a>(self, Uh_complex)</p></td>
+<td><p>Calculate the angle of the turbulence fluctuations.</p></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../api.html#dolfyn.adv.turbulence.TurbBinner.up_angle" title="dolfyn.adv.turbulence.TurbBinner.up_angle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">up_angle</span></code></a>(Uh_complex)</td>
-<td>Calculate the angle of the turbulence fluctuations.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">var</span></code>(dat[,&nbsp;n_bin])</td>
-<td></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">var</span></code>(self, dat[, n_bin])</p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
@@ -252,17 +233,15 @@ Default: <cite>n_fft`=`n_bin</cite></p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 
 
 
@@ -279,7 +258,7 @@ Default: <cite>n_fft`=`n_bin</cite></p>
       &copy;2014, Levi Kilcher.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
