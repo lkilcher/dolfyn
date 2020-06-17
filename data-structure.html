@@ -440,8 +440,8 @@ most common variables found here are described in Table 2.</p>
 <tr class="row-odd"><td><p>motion vel_filtfreq Hz</p></td>
 <td><p>The filter-frequency for the computing translational motion from the acceleration signal of an IMU. This is only used for motion correction. This high-pass filter is applied after integrating acceleration. This value is only used if when <code class="docutils literal notranslate"><span class="pre">vel_filtfreq</span></code> is not explicitly specified when motion-correcting.</p></td>
 </tr>
-<tr class="row-even"><td><p>lonlat†</p></td>
-<td><p>The location of the measurements in decimal degrees. Longitude is positive west of the prime-meridian, and latitude is positive North of the equator.</p></td>
+<tr class="row-even"><td><p>latlon†</p></td>
+<td><p>The location of the measurements in decimal degrees. Latitude is positive North of the equator, longitude is positive west of the prime-meridian.</p></td>
 </tr>
 </tbody>
 </table>
@@ -464,7 +464,7 @@ look something like:</p>
  <span class="s2">&quot;inst2head_vec&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span>
  <span class="s2">&quot;motion accel_filtfreq Hz&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">,</span>
  <span class="s2">&quot;declination&quot;</span><span class="p">:</span> <span class="mf">8.28</span><span class="p">,</span>
- <span class="s2">&quot;lonlat&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">105.2283</span><span class="p">,</span> <span class="mf">39.9402</span><span class="p">]</span>
+ <span class="s2">&quot;latlon&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">39.9402</span><span class="p">,</span> <span class="o">-</span><span class="mf">105.2283</span><span class="p">]</span>
 <span class="p">}</span>
 </pre></div>
 </div>

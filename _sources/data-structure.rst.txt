@@ -112,7 +112,7 @@ look something like::
      "inst2head_vec": [-1.0, 0.5, 0.2],
      "motion accel_filtfreq Hz": 0.03,
      "declination": 8.28,
-     "lonlat": [-105.2283, 39.9402]
+     "latlon": [39.9402, -105.2283]
     }
 
 Prior to reading a binary data file ``my_data.VEC``, you can
