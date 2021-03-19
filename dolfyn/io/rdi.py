@@ -574,13 +574,13 @@ class adcp_loader(object):
         utim = fd.read_ui8(4)
         date = datetime.datetime(utim[2] + utim[3] * 256, utim[1], utim[0])
         # This byte is in hundredths of seconds (10s of milliseconds):
-        time = datetime.timedelta(milliseconds=(int(fd.read_ui32(1)[0] * 10)))
+        time = datetime.timedelta(milliseconds=(int(fd.read_ui32(1) * 10)))
         ens.stime[k] = date2num(date + time) + time_offset
         fd.seek(4, 1)  # "PC clock offset from UTC"
         ens.slatitude[k] = fd.read_i32(1) * self._cfac
         ens.slatitude[k] = fd.read_ui32(1) * self._cfac
         ens.etime[k] = date2num(date + datetime.timedelta(
-            milliseconds=int(fd.read_ui32(1)[0] * 10))) + time_offset
+            milliseconds=int(fd.read_ui32(1) * 10))) + time_offset
         ens.elatitude[k] = fd.read_i32(1) * self._cfac
         ens.elongitude[k] = fd.read_i32(1) * self._cfac
         fd.seek(12, 1)
@@ -589,7 +589,7 @@ class adcp_loader(object):
         utim = fd.read_ui8(4)
         date = datetime.datetime(utim[0] + utim[1] * 256, utim[3], utim[2])
         ens.ntime[k] = date2num(date + datetime.timedelta(
-            milliseconds=int(fd.read_ui32(1)[0] * 10))) + time_offset
+            milliseconds=int(fd.read_ui32(1) * 10))) + time_offset
         fd.seek(16, 1)
         self._nbyte = 2 + 76
 
@@ -901,8 +901,8 @@ class adcp_loader(object):
             for nm in self.vars_read:
                 get(dat, nm)[..., iens] = self.avg_func(self.ensemble[nm])
             try:
-                dats = date2num(datetime.datetime(*clock[:6],
-                                                  microsecond=clock[6] * 10000))
+                dats = date2num(datetime.datetime(*clock.T[0][:6],
+                                                  microsecond=clock.T[0][6] * 10000))
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
