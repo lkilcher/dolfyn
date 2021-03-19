@@ -116,9 +116,9 @@ class TimeData(data):
 
         For example, two data objects ``d1`` and ``d2`` (which must
         contain the same variables, with the same array dimensions)
-        can be joined together by::
+        can be joined together by:
 
-            >>> dat = d1.append(d2)
+            >> dat = d1.append(d2)
 
         """
         join_ax = self._time_dim
@@ -156,7 +156,7 @@ class MappedTime(TimeData):
         contain the same variables, with the same array dimensions)
         can be joined together by::
 
-            >>> dat = d1.append(d2)
+            >> dat = d1.append(d2)
 
         """
         Ns = self.pop('_map_N')
@@ -183,35 +183,35 @@ class FreqData(TimeData):
 
 
 class PropsDict(dict):
-
-    def __setitem__(self, ky, val):
-        if ky in ['fs', 'coord_sys',
-                  'declination_in_heading',
-                  'declination_in_orientmat',
-                  'has imu',
-                  'inst_make',
-                  'inst_model',
-                  'DutyCycle_NBurst',
-                  'DutyCycle_NCycle',
-                  ]:
-            # The entries in this list should have a "*" by them in
-            # the data-structure.html doc page (i.e., the
-            # props_info.csv file)
-            raise KeyError(
-                "The props entry '{}' shouldn't be modified by "
-                "the user. This is a dolfyn-managed variable."
-                .format(ky))
-            
-        if ky in ['inst2head_rotmat', 'declination']:
-            # The entries in this list should have a "**" by them in
-            # the data-structure.html doc page (i.e., the
-            # props_info.csv file)
-            raise KeyError(
-                "The props entry '{}' shouldn't be set directly by "
-                "the user. Use `dat.set_{}` instead."
-                .format(ky, ky))
-        dict.__setitem__(self, ky, val)
-        
+#
+#    def __setitem__(self, ky, val):
+#        if ky in ['fs', 'coord_sys',
+#                  'declination_in_heading',
+#                  'declination_in_orientmat',
+#                  'has imu',
+#                  'inst_make',
+#                  'inst_model',
+#                  'DutyCycle_NBurst',
+#                  'DutyCycle_NCycle',
+#                  ]:
+#            # The entries in this list should have a "*" by them in
+#            # the data-structure.html doc page (i.e., the
+#            # props_info.csv file)
+#            raise KeyError(
+#                "The props entry '{}' shouldn't be modified by "
+#                "the user. This is a dolfyn-managed variable."
+#                .format(ky))
+#            
+#        if ky in ['inst2head_rotmat', 'declination']:
+#            # The entries in this list should have a "**" by them in
+#            # the data-structure.html doc page (i.e., the
+#            # props_info.csv file)
+#            raise KeyError(
+#                "The props entry '{}' shouldn't be set directly by "
+#                "the user. Use `dat.set_{}` instead."
+#                .format(ky, ky))
+#        dict.__setitem__(self, ky, val)
+#        
     def __deepcopy__(self, memo):
         return PropsDict(copy.deepcopy(dict(self)))
 

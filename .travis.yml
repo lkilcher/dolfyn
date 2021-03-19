@@ -1,19 +1,87 @@
-language: python
-python:
- - "2.7"
- - "3.5"
- - "3.6"
+# Based on
+# http://conda.pydata.org/docs/travis.html
+# https://github.com/xray/xray/blob/master/.travis.yml
+# https://github.com/scipy/scipy/blob/master/.travis.yml
 
+language: python
+sudo: false # if false, use TravisCI's container based build
+
+matrix:
+    include:
+    - python: 2.7
+      dist: xenial
+      env: CONDA_ENV=py27
+      services:
+      - xvfb
+      sudo: true
+    - python: 3.6
+      dist: xenial
+      env: CONDA_ENV=py36
+      services:
+      - xvfb
+      sudo: true
+    - python: 3.7
+      dist: xenial
+      env: CONDA_ENV=py37
+      services:
+      - xvfb
+      sudo: true
+    - python: 3.8
+      dist: xenial
+      env: CONDA_ENV=py38
+      services:
+      - xvfb
+      sudo: true
+
+addons:
+    apt:
+        packages:
+            - ccache
+
+cache:
+    directories:
+        - $HOME/.ccache
+
+before_script: 
+    - "export DISPLAY=:99.0"
+    - if [[ "$CONDA_ENV" != "py37" ]]; then 
+        source /etc/init.d/xvfb start; 
+        sleep 3;
+      fi
+
+# setup miniconda for numpy, scipy, pandas
+before_install:
+    - echo "before install"
+    - export PATH=/usr/lib/ccache:$PATH
+    - wget http://repo.continuum.io/miniconda/Miniconda3-3.16.0-Linux-x86_64.sh -O miniconda.sh
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
+    
 install:
- - pip install -r requirements.txt
- - pip install nose codecov
+    - echo "install"
+    - conda env create --file ci/requirements-$CONDA_ENV.yml
+    - source activate test_env # all envs are named test_env in the yml files
+    - conda list
+    - echo $PATH
+    - ls -l /home/travis/miniconda/envs/test_env/lib
+    #- pip install . # use pip to automatically install anything not in the yml files (i.e. numpy/scipy/pandas for py3*)
+    #- pip install scipy # won't do anything if already installed
+    - pip install -e git://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5
+    - pip install nose
+    - python setup.py install
 
 script:
- - nosetests --with-coverage --cover-package=dolfyn
+    - nosetests --with-coverage --cover-package=dolfyn
+    - nosetests -v --nologcapture --with-coverage --with-doctest --doctest-extension=.rst --cover-package=dolfyn doc-src/*.rst dolfyn
 
 after_success:
- - codecov
+    coveralls
 
 branches:
   only:
     - master
+    - xarray-dev

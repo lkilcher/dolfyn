@@ -1,13 +1,10 @@
 # .readthedocs.yml
-
-version: 2
-
 sphinx:
-    configuration: doc-src/source/conf.py
+    configuration: doc-src/conf.py
 
-formats: []
+conda:
+    file: doc-src/environment.yml
 
 python:
-    version: 3.7
-    install:
-    - requirements: doc-src/requirements.txt
+    version: 3
+    setup_py_install: true

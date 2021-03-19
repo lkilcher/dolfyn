@@ -1,5 +1,5 @@
 from ..io.main_legacy import Saveable, get_typemap, loader
-from .base import Dprops
+from .base_legacy import Dprops
 # from binned import bindat
 
 

@@ -104,7 +104,7 @@ class varMeta(object):
         out._units = self._units / other._units
         return out
 
-    def __init__(self, name, units=None, dim_names=[],
+    def __init__(self, name, units=[], dim_names=[],
                  units_style=None, scale=0, vecnames={}):
         self.vecnames = vecnames
         self.dim_names = dim_names

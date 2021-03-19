@@ -174,9 +174,9 @@ def slice1d_along_axis(arr_shape, axis=0):
     Examples
     --------
 
-    >>> out=np.empty(replace(arr.shape,0,1))
-    >>> for slc in slice1d_along_axis(arr.shape,axis=0):
-            out[slc]=my_1d_function(arr[slc])
+    >> out=np.empty(replace(arr.shape,0,1))
+    >> for slc in slice1d_along_axis(arr.shape,axis=0):
+        out[slc]=my_1d_function(arr[slc])
 
     """
     nd = len(arr_shape)

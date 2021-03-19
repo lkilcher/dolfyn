@@ -1,9 +1,0 @@
-dependencies:
-  - numpy
-  - h5py
-  - matplotlib
-  - scipy
-  - six
-  - pip
-  - pip:
-     - "--editable=git+https://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5"

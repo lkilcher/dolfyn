@@ -39,16 +39,16 @@ class CalcMotion(object):
     Examples
     --------
 
-    >>> from dolfyn.adv import api as avm
-    >>> from dolfyn.adv import motion as avmot
+    >> from dolfyn.adv import api as avm
+    >> from dolfyn.adv import motion as avmot
 
-    >>> dat = avm.read_nortek('my_data_file.vec')
+    >> dat = avm.read_nortek('my_data_file.vec')
 
-    >>> mcalc = avmot.CalcMotion(dat)
+    >> mcalc = avmot.CalcMotion(dat)
 
     # Calculate the motion of a point that is (.3, .1, .06) meters
     # from the adv-body origin:
-    >>> mot = mcalc([.3, .1, .06])
+    >> mot = mcalc([.3, .1, .06])
 
     """
     _default_accel_filtfreq = 0.03
@@ -352,9 +352,9 @@ def correct_motion(advo,
     Examples
     --------
 
-    >>> from dolfyn.adv import api as avm
-    >>> dat = avm.read_nortek('my_data_file.vec')
-    >>> avm.motion.correct_motion(dat)
+    >> from dolfyn.adv import api as avm
+    >> dat = avm.read_nortek('my_data_file.vec')
+    >> avm.motion.correct_motion(dat)
 
     ``dat`` will now have motion-corrected.
 
@@ -521,10 +521,10 @@ class CorrectMotion(object):
     Examples
     --------
 
-    >>> from dolfyn.adv import api as avm
-    >>> dat = avm.read_nortek('my_data_file.vec')
-    >>> mc = avm.CorrectMotion(0.1)
-    >>> corrected_data = mc(dat)
+    >> from dolfyn.adv import api as avm
+    >> dat = avm.read_nortek('my_data_file.vec')
+    >> mc = avm.CorrectMotion(0.1)
+    >> corrected_data = mc(dat)
 
     """
 
