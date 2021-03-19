@@ -168,9 +168,17 @@ def index2ens_pos(index):
     ensemble. Returns only the position (the ens number is the array
     index).
     """
-    dens = np.ones(index['ens'].shape, dtype='bool')
-    dens[1:] = np.diff(index['ens']) != 0
-    return index['pos'][dens]
+    if (index['ens'] == 0).all() and (index['hw_ens'] == 1).all():
+        # This is an ugly hack.
+        # This is for when the system runs in 'raw/continuous mode' or something?
+        # Is there a better way to detect this mode?
+        n_IDs = {id:(index['ID'] == id).sum() for id in np.unique(index['ID'])}
+        assert all(np.abs(np.diff(list(n_IDs.values())))) <= 1, "Unable to read this file"
+        return index['pos'][index['ID']==index['ID'][0]]
+    else:
+        dens = np.ones(index['ens'].shape, dtype='bool')
+        dens[1:] = np.diff(index['ens']) != 0
+        return index['pos'][dens]
 
 
 def getbit(val, n):

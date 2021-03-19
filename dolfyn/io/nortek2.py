@@ -257,7 +257,7 @@ class Ad2cpReader(object):
             except IOError:
                 return outdat
             id = hdr['id']
-            if id in [21, 23, 24, 28]: # vel, vel_b5, echo
+            if id in [21, 23, 24, 28]: # vel, bt, vel_b5, echo
                 self.read_burst(id, outdat[id], c)
             elif id in [26]:  # alt_raw
                 # warnings.warn(
