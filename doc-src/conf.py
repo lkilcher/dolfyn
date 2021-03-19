@@ -33,6 +33,8 @@ import dolfyn._version as ver
 # 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
 # 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',]
 extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.coverage',
+              'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
               'sphinx.ext.doctest',
               'sphinx.ext.todo',
@@ -40,9 +42,9 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.viewcode',
               'sphinx.ext.extlinks',
+              'sphinx.ext.intersphinx',
               'numpydoc',
               'matplotlib.sphinxext.plot_directive',
-              'versionwarning.extension',
               ]
 # extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
 # 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
@@ -123,7 +125,7 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'alabaster'
-
+  
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.

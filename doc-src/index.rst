@@ -23,8 +23,8 @@ Table of Contents
    data-structure
    rotations
    motion-correction
-   plotting-tools
-   api
+   examples
+   API documentation <apidoc/dolfyn>
    glossary
    
 
@@ -32,5 +32,6 @@ Indices, tables and notes
 =========================
 
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`
 * :doc:`glossary`

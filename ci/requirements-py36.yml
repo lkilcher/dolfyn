@@ -1,0 +1,13 @@
+name: test_env
+channels:
+    - defaults
+dependencies:
+    - python=3.6
+    - numpy
+    - h5py
+    - matplotlib
+    - scipy
+    - six
+    - xarray
+    - pip:
+        - coveralls
