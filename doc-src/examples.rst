@@ -2,16 +2,12 @@ Basic Example Scripts
 .....................
 
 |dlfn| has several tools for performing useful and common operations
-on ADV data. Most of these are available via the ADV
-:mod:`~dolfyn.adv.api`. For example:
+on ADV data. For example:
 
 .. literalinclude:: examples/adv_example01.py
 
+An example of processing ADCP data:
 
-
-
-
-.. Plotting ADV data
-   .................
+.. literalinclude:: examples/adcp_example01.py
 
 

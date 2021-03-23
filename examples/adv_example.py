@@ -1,6 +1,5 @@
-# To get started first import the DOLfYN ADV advanced programming
-# interface (API):
-import dolfyn.adv.api as avm
+# To get started first import DOLfYN
+import dolfyn as dlfn
 
 # Import matplotlib tools for plotting the data:
 from matplotlib import pyplot as plt
@@ -11,18 +10,21 @@ import numpy as np
 # User input and customization
 
 # The file to load:
-fname = './example_data/vector_data_imu01.vec'
+fname = '../dolfyn/example_data/vector_data_imu01.VEC'
 # This file is available at:
 # http://goo.gl/yckXtG
 
 # This is the vector from the ADV head to the body frame, in meters,
 # in the ADV coordinate system.
-body2head_vec = np.array([0.48, -0.07, -0.27])
+# body2head_vec = np.array([0.48, -0.07, -0.27])
+# dat.props['body2head_vec'] = body2head_vec
+
 
 # This is the orientation matrix of the ADV head relative to the body.
 # In this case the head was aligned with the body, so it is the
 # identity matrix:
-body2head_rotmat = np.eye(3)
+# body2head_rotmat = np.eye(3)
+# dat.props['body2head_rotmat'] = body2head_rotmat
 
 # The time range of interest.
 t_range = [
@@ -40,17 +42,15 @@ accel_filter = 0.1
 ###############################
 
 # Read a file containing adv data:
-dat_raw = avm.read_nortek(fname)
+dat_raw = dlfn.read(fname)
 
 # Crop the data for t_range using DOLfYN's 'subset' method (creates a
 # copy):
 t_range_inds = (t_range[0] < dat_raw.mpltime) & (dat_raw.mpltime < t_range[1])
-dat = dat_raw.subset(t_range_inds)
-dat.props['body2head_vec'] = body2head_vec
-dat.props['body2head_rotmat'] = body2head_rotmat
+dat = dat_raw.subset[t_range_inds]
 
 # Then clean the file using the Goring+Nikora method:
-avm.clean.GN2002(dat)
+dlfn.adv.clean.GN2002(dat)
 
 ####
 # Create a figure for comparing screened data to the original.
@@ -59,11 +59,12 @@ fig.clf()
 ax = fig.add_axes([.14, .14, .8, .74])
 
 # Plot the raw (unscreened) data:
-ax.plot(dat_raw.mpltime, dat_raw.u, 'r-', rasterized=True)
+ax.plot(dat_raw.mpltime, dat_raw.u, 'r-', rasterized=True, label='Raw')
 
-# Plot the screened data:
-ax.plot(dat.mpltime, dat.u, 'g-', rasterized=True)
+# Plot the screened (despiked) data:
+ax.plot(dat.mpltime, dat.u, 'g-', rasterized=True, label='Despiked')
 bads = np.abs(dat.u - dat_raw.u[t_range_inds])
+ax.legend(loc='lower right')
 ax.text(0.55, 0.95,
         "%0.2f%% of the data were 'cleaned'\nby the Goring and Nikora method."
         % (np.float(sum(bads > 0)) / len(bads) * 100),
@@ -74,7 +75,7 @@ ax.text(0.55, 0.95,
 
 # Add some annotations:
 ax.axvspan(dt.date2num(dt.datetime.datetime(2012, 6, 12, 12)),
-           t_range[0], zorder=-10, facecolor='0.9',
+           t_range[0], zorder=-1, facecolor='0.9',
            edgecolor='none')
 ax.text(0.13, 0.9, 'Mooring falling\ntoward seafloor',
         ha='center', va='top', transform=ax.transAxes,
@@ -104,36 +105,37 @@ ax.set_xlim([dt.date2num(dt.datetime.datetime(2012, 6, 12, 12)),
              dt.date2num(dt.datetime.datetime(2012, 6, 12, 12, 30))])
 
 # Save the figure:
-fig.savefig('./fig/crop_data.pdf')
+fig.savefig('crop_data.png')
 # end cropping figure
 ####
 
 dat_cln = dat.copy()
 
 # Perform motion correction (including rotation into earth frame):
-avm.motion.correct_motion(dat, accel_filter)
+dlfn.adv.motion.correct_motion(dat, accel_filter, to_earth=True)
 
 # Rotate the uncorrected data into the earth frame,
 # for comparison to motion correction:
-avm.rotate.inst2earth(dat_cln)
+dat_cln = dlfn.rotate2(dat_cln, 'earth')
 
 #ax.plot(dat.mpltime, dat.u, 'b-')
 
 # Then rotate it into a 'principal axes frame':
-avm.rotate.earth2principal(dat)
-avm.rotate.earth2principal(dat_cln)
+dat.props['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
+dat = dlfn.rotate2(dat, 'principal')
+
+dat_cln.props['principal_heading'] = dlfn.calc_principal_heading(dat_cln.vel)
+dat_cln = dlfn.rotate2(dat_cln, 'principal')
 
 # Average the data and compute turbulence statistics
-dat_bin = avm.calc_turbulence(dat, n_bin=19200,
-                              n_fft=4096)
-dat_cln_bin = avm.calc_turbulence(dat_cln, n_bin=19200,
-                                  n_fft=4096)
+dat_bin = dlfn.adv.calc_turbulence(dat, n_bin=dat.props['fs']*180)
+dat_cln_bin = dlfn.adv.calc_turbulence(dat_cln, n_bin=dat_cln.props['fs']*180)
 
 # At any point you can save the data:
-dat_bin.save('adv_data_rotated2principal.h5')
+dat_bin.to_hdf5('adv_data_rotated2principal.h5')
 
 # And reload the data:
-dat_bin_copy = avm.load('adv_data_rotated2principal.h5')
+dat_bin_copy = dlfn.load('adv_data_rotated2principal.h5')
 
 ####
 # Figure to look at spectra
@@ -141,14 +143,18 @@ fig2 = plt.figure(2, figsize=[6, 6])
 fig2.clf()
 ax = fig2.add_axes([.14, .14, .8, .74])
 
-ax.loglog(dat_bin.freq, dat_bin.Suu_hz.mean(0),
+# Convert spectra frequencies to Hz
+dat_bin.freq = dat_bin.Spec['omega']/(2*np.pi)
+dat_cln_bin.freq = dat_bin.Spec['omega']/(2*np.pi)
+
+ax.loglog(dat_bin.freq, np.mean(dat_bin.Spec.vel[0],0),
           'b-', label='motion corrected')
-ax.loglog(dat_cln_bin.freq, dat_cln_bin.Suu_hz.mean(0),
+ax.loglog(dat_cln_bin.freq, np.mean(dat_cln_bin.Spec.vel[0],0),
           'r-', label='no motion correction')
 
 # Add some annotations
-ax.axhline(1.7e-4, color='k', zorder=21)
-ax.text(2e-3, 1.7e-4, 'Doppler noise level', va='bottom', ha='left',)
+ax.axhline(1e-5, color='k', zorder=1)
+ax.text(2e-3, 1e-5, 'Doppler noise level', va='bottom', ha='left',)
 
 ax.text(1, 2e-2, 'Motion\nCorrection')
 ax.annotate('', (3.6e-1, 3e-3), (1, 2e-2),
@@ -157,8 +163,7 @@ ax.annotate('', (3.6e-1, 3e-3), (1, 2e-2),
                         'facecolor': '0.8',
                         'edgecolor': '0.6',
                         },
-            ha='center',
-            )
+            ha='center')
 
 ax.annotate('', (1.6e-1, 7e-3), (1, 2e-2),
             arrowprops={'arrowstyle': 'fancy',
@@ -166,23 +171,22 @@ ax.annotate('', (1.6e-1, 7e-3), (1, 2e-2),
                         'facecolor': '0.8',
                         'edgecolor': '0.6',
                         },
-            ha='center',
-            )
+            ha='center')
 
 # Finalize the figure
 ax.set_xlim([1e-3, 20])
-ax.set_ylim([1e-4, 1])
+ax.set_ylim([1e-6, 1])
 ax.set_xlabel('frequency [hz]')
 ax.set_ylabel('$\mathrm{[m^2s^{-2}/hz]}$', size='large')
 
 f_tmp = np.logspace(-3, 1)
-ax.plot(f_tmp, 4e-5 * f_tmp ** (-5. / 3), 'k--')
+ax.plot(f_tmp, 4e-5*f_tmp**(-5/3), 'k--', label='f^-5/3 slope')
 
 ax.set_title('Velocity Spectra')
 ax.legend()
-ax.axvspan(1, 16, 0, .2, facecolor='0.8', zorder=-10, edgecolor='none')
-ax.text(4, 4e-4, 'Doppler noise', va='bottom', ha='center',
+ax.axvspan(1, 16, 0, .35, facecolor='0.8', zorder=-1, edgecolor='none')
+ax.text(4, 2e-4, 'Doppler noise', va='bottom', ha='center',
         #bbox=dict(facecolor='w', alpha=0.9, edgecolor='none'),
-        zorder=20)
+        zorder=1)
 
-fig2.savefig('./fig/motion_vel_spec.pdf')
+fig2.savefig('motion_vel_spec.png')
