@@ -1,29 +1,36 @@
 # pylint: disable=anomalous-backslash-in-string
 """
-This module contains routines for reading and working with adv
+This module contains routines for reading and working with ADV
 data. It contains:
 
 +-----------------------------------+-----------------------------------------+
 | Name                              | Description                             |
 +===================================+=========================================+
-| :func:`~dolfyn.adv.base.load`     | A function for loading ADV data in      |
-|                                   | DOLfYN format.                          |
+| :func:`load <dolfyn.io.api.load>` | A function for loading DOLfYN's h5 data |
+|                                   | files.                                  |
 +-----------------------------------+-----------------------------------------+
-| :func:`~dolfyn.io.nortek.\        | A function for reading Nortek Vector    |
-| read_nortek`                      | files.                                  |
+| :func:`read <dolfyn.io.api.read>` | A function for reading Nortek Vector    |
+|                                   | files.                                  |
 +-----------------------------------+-----------------------------------------+
-| :mod:`rotate <dolfyn.adv.rotate>` | A module containing classes and         |
-|                                   | functions for rotating adv data between |
+| :func:`rotate2 <dolfyn.rotate.\   | A function for rotating data            |
+| .rotate2>`                        | between different coordinate systems    |
++-----------------------------------+-----------------------------------------+
+| :mod:`clean <dolfyn.adv.clean>`   | A module containing functions for       |
+|                                   | cleaning data, filling NaN's,           |
 |                                   | different coordinate systems            |
 +-----------------------------------+-----------------------------------------+
-| :mod:`motion <dolfyn.adv.rotate>` | A module containing classes and         |
+| :mod:`motion <dolfyn.adv.motion>` | A module containing classes and         |
 |                                   | functions for performing motion         |
 |                                   | correction.                             |
 +-----------------------------------+-----------------------------------------+
-|  :class:`~dolfyn.\                | A class for breaking ADV data into      |
-|  adv.turbulence.TurbBinner`       | 'bins', averaging it and estimating     |
-|                                   | various turbulence statistics.          |
+| :class:`~dolfyn.adv.\             | A class for breaking ADV data into      |
+| turbulence.TurbBinner`            | 'bins', averaging it and calculating    |
+|                                   | various turbulence statistics           |
 +-----------------------------------+-----------------------------------------+
+| :func:`~dolfyn.adv.\              | Functional version of TurbBinner        |
+| turbulence.calc_turbulence`       |                                         |
++-----------------------------------+-----------------------------------------+
+
 
 Examples
 --------
@@ -32,9 +39,8 @@ Examples
 
 """
 
-
-from .turbulence import calc_turbulence, TurbBinner
-from . import clean
-from ..rotate import vector as rotate
-from . import motion
 from ..io.api import read, load
+from ..rotate import rotate2
+from . import clean
+from . import motion
+from .turbulence import calc_turbulence, TurbBinner

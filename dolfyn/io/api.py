@@ -4,6 +4,7 @@ from .rdi import read_rdi
 from .base import WrongFileType as _WTF
 # These are included here for use in the API
 from .hdf5 import load
+import pkg_resources
 
 
 def read(fname, userdata=True, nens=None):
@@ -39,3 +40,30 @@ def read(fname, userdata=True, nens=None):
             return dat
     raise _WTF("Unable to find a suitable reader for "
                "file {}.".format(fname))
+
+def read_example(name, **kwargs):
+    """Read an example data file.
+
+    Parameters
+    ==========
+    name : string
+        Available files:
+
+            AWAC_test01.wpr
+            BenchFile01.ad2cp
+            RDI_test01.000
+            burst_mode01.VEC
+            vector_data01.VEC
+            vector_data_imu01.VEC
+            winriver01.PD0
+            winriver02.PD0
+
+    Returns
+    =======
+    dat : ADV or ADP data object.
+
+    """
+    filename = pkg_resources.resource_filename(
+        'dolfyn',
+        'example_data/' + name)
+    return read(filename, **kwargs)

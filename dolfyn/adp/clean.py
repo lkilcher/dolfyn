@@ -90,13 +90,14 @@ def vel_exceeds_thresh(adcpo, thresh=10, source=None):
     elif source == 'earth':
         sources = ['u', 'v', 'w']
     elif source == 'inst':
-        sources = ['u_inst', 'v_inst', 'w_inst']
+        sources = ['u', 'v', 'w']
     bd = np.zeros(getattr(adcpo, sources[0]).shape, dtype='bool')
     for src in sources:
+        print(getattr(adcpo,  src)[:])
         bd |= (np.abs(getattr(adcpo, src)[:]) > thresh)
     for dt in ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel',
                'u', 'v', 'w', 'err_vel'
-               'u_inst', 'v_inst', 'w_inst', ]:
+               'u', 'v', 'w', 'err_vel']:
         if hasattr(adcpo, dt):
             getattr(adcpo, dt)[bd] = np.NaN
 
