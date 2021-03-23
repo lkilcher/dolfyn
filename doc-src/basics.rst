@@ -3,10 +3,36 @@
 The Basics
 ==========
 
-|dlfn| is a library of tools for reading, processing, and analyzing
-data from oceanographic velocity measurement instruments such as
-acoustic Doppler velocimeters (ADVs) and acoustic Doppler profilers
-(ADPs). This page documents general and basic usage of the |dlfn| package.
+|dlfn| data objects are built on (subclasses of) `pyDictH5
+<http://github.com/lkilcher/pyDictH5/blob/master/README.rst>`_ 
+data objects. These objects support all of the same basic 
+functionality of dictionaries (e.g., indexing, iterating, etc.), 
+with additional functionality that is designed to streamline 
+the process of analyzing and working with data. Most notably, 
+these data objects provide:
+
+- a summarized view of the data structure when in interactive mode::
+
+    >>> dat
+    <ADV data object>
+      . 1.05 hours (started: Jun 12, 2012 12:00)
+      . INST-frame
+      . (120530 pings @ 32Hz)
+      *------------
+      | mpltime                  : <time_array; (120530,); float64>
+      | vel                      : <array; (3, 120530); float32>
+      + config                   : + DATA GROUP
+      + env                      : + DATA GROUP
+      + orient                   : + DATA GROUP
+      + props                    : + DATA GROUP
+      + signal                   : + DATA GROUP
+      + sys                      : + DATA GROUP
+
+- attribute-style syntax (``dat.vel`` is equivalent to ``dat['vel']``)
+
+- direct access of items within sub-groups (``dat['env.temp']`` works,
+  and ``'env.temp' in dat`` evaluates to ``True``)
+ 
 
 Reading source data files
 -----------------------------
@@ -35,7 +61,20 @@ In an interactive shell, typing the variable name followed by enter/return will 
     + signal                   : + DATA GROUP
     + sys                      : + DATA GROUP
 
-This view reveals a few detailed attributes of the data object (above line), and the underlying data structure (below). The attributes indicate that this ADV dataset is 3.02 seconds long, started at noon on June 12, 2012, is in the 'instrument' reference-frame, and contains 99 pings at a 32Hz sample-rate. The information below the line shows the variable names in the ADV dataset. ``mpltime`` is a :class:`~dolfyn.data.time.time_array` that contains the time information in `MatPlotLib date <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_ format. ``vel`` is the velocity data. The other entries (with ``+`` next to them) are 'data groups', which contain additional data. These variables can be accessed using dict-style syntax, *or* attribute-style syntax. For example::
+This view reveals a few detailed attributes of the data object (above line), and the underlying data structure (below). The attributes indicate that this ADV dataset is 
+
+* 1.05 hours long
+* started at noon on June 12, 2012
+* is in the 'instrument' reference-frame
+* contains 120530 pings at a 32Hz sample-rate
+
+The information below the line shows the variable names in the ADV dataset.
+
+* ``mpltime`` is a :class:`~dolfyn.data.time.time_array` that contains the time information in `MatPlotLib date <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_ format 
+* ``vel`` is the velocity data
+* Other entries (with ``+`` next to them) are 'data groups', which contain additional data
+
+These variables can be accessed using dict-style syntax, *or* attribute-style syntax. For example::
 
   >>> dat['mpltime']
   time_array([734666.50003436, 734666.50003472, 734666.50003509, ...,
@@ -137,7 +176,7 @@ To load this data into memory (e.g., in a different script), use |dlfn|'s load f
 Cleaning data
 ----------------
 
-|dlfn| includes tools for cleaning ADV data in the ``dlfn.adv.clean`` module. Take a look at those functions for more details. Tools for cleaning ADP data are located in the ``dlfn.adcp.clean`` module.
+|dlfn| includes tools for cleaning ADV data in the ``dlfn.adv.clean`` module. Take a look at those functions for more details. Tools for cleaning ADP data are located in the ``dlfn.adp.clean`` module.
   
 Averaging data
 ------------------
@@ -157,11 +196,11 @@ compute averages or turbulence statistics. For example::
 Here, we have initialized an averaging tool, ``avg_tool``, to bin 16 Hz data into 4800-point ensembles (5 minutes). Then when we call the ``do_avg`` method in the averaging tool on a data object, it returns an 'averaged' data object, where all the data field names are the same, but the fields contain averaged data. The averaging tool also includes many other tools (methods) for computing statistics other than averages, for example::
 
   # Compute the power-spectral-density of the velocity data, and store it in 
-  >>> avg_dat['Spec.vel'] = avg_tool.psd(dat['vel'])
+  >>> avg_dat['Spec'] = avg_tool.do_spec(dat)
 
   # Compute the Reynold's stresses (cross-correlations) of the velocity data:
   >>> avg_dat['stress'] = avg_tool.calc_stress(dat['vel'])
 
-There is also the :class:`~dolfyn.adv.turbulence.TurbBinner`, which is based on
+There is also :class:`~dolfyn.adv.turbulence.TurbBinner`, which is based on
 :class:`~dolfyn.data.velocity.VelBinner`, and has several methods for computing additional statistics from ADV data. Take a look at the API documentation for both of
 those tools for more details.

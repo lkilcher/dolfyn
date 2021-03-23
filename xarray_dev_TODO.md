@@ -1,8 +1,9 @@
 Xarray DOLfYN to MHKit
 ---------------------------
-1. Update documentation to cover DOLfYN’s full capabilities shown in the previous slide
+1. Update documentation to cover DOLfYN’s full capabilities
 		- Format similarly to MHKiT documentation
-		- Add notes which objects/functions are still in developmental state
+		- Update old and fill in missing documentation
+		- Note which objects/functions are still in developmental state
 		- Review entire code and note where objects/functions and their dependencies are located
 		
 2. Switch base datatype from h5py “Dolfyn dataobject” to Xarray “Dataset”
@@ -13,7 +14,7 @@ Xarray DOLfYN to MHKit
 3. Refactor code to call/pull from xarray “Dataset”
 		- Start with ADV code
 		- Update this list as things become clearer
-		- Update ADCP code with xarray since it appears outdated
+		- Update ADCP code with xarray since some routines appear in need of updating
 		
 		- Testing - compare h5py DOLfYN to xarray DOLfYN output
 		- Update documentation from step 2 with xarray referencing – API object/function arguments and keywords shouldn’t change

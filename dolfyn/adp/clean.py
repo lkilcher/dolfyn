@@ -121,7 +121,7 @@ def medfilt_orientation(adcpo, kernel_size=7):
 
 def fillgaps_time(adcpo, vars=['u', 'v', 'w'], maxgap=np.inf):
     """
-    Fill gaps
+    Fill gaps (NaN values) linearly across time. Assumes a constant time delta.
     """
     for vr in vars:
         tbx.fillgaps(getattr(adcpo, vr), maxgap=maxgap, dim=-1)
@@ -129,7 +129,7 @@ def fillgaps_time(adcpo, vars=['u', 'v', 'w'], maxgap=np.inf):
 
 def fillgaps_depth(adcpo, vars=['u', 'v', 'w'], maxgap=np.inf):
     """
-    Fill gaps
+    Fill gaps (NaN values) linearly up and down the depth profile.
     """
     for vr in vars:
         tbx.fillgaps(getattr(adcpo, vr), maxgap=maxgap, dim=0)

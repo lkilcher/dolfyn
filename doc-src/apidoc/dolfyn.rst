@@ -1,4 +1,4 @@
-DOLfYN package
+DOLfYN Package
 ===============
 
 .. automodule:: dolfyn
@@ -9,9 +9,9 @@ DOLfYN package
 .. toctree::
    :maxdepth: 5
 
+   dolfyn.io
+   dolfyn.data
    dolfyn.adp
    dolfyn.adv
-   dolfyn.data
-   dolfyn.io
    dolfyn.rotate
    dolfyn.tools

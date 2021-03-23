@@ -1,35 +1,35 @@
 ﻿Name,Units,Group,Description/Notes
-mpltime,`matplotlib date format <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_,---,The time data
-vel,m/s,---,The velocity vector data
-range,m,---,The distance from the ADP head
-depth_m,m,---,The depth of the ADP
-c_sound,m/s,env,The speed of sound used in velocity calculations.
-press / pressure,dbar?,env,pressure measured by the instrument
-temp,degrees Celsius,env,The temperature measured by the instrument.
-accel,m/s\ :sup:`2`,orient,The vector acceleraton of the instrument
-angrt,rad/s,orient,The angular rotation rate of the instrument
-mag,???,orient,The magnetometer data.
-velraw,m/s,---,The velocity without motion-correction.
-velrot,m/s,orient,The rotational motion velocity (computed from angrt).
-velacc,m/s,orient,The translational motion velocity (computed from accel).
-acclow,m/s\ :sup:`2`,orient,The low-pass filtered acceleration signal.
-heading,degrees,orient,The instrument heading* (clockwise from North)
-pitch,degrees,orient,The instrument pitch*
-roll,degrees,orient,The instrument roll*
-orientmat,---,orient,The instrument's orientation matrix in the earth reference frame
-amp,???,signal,The acoustic signal return amplitude
-corr,percent,signal,correlation between the send and receive pings.
-ambig_vel,m/s,sys,The ambiguity velocity*
-batt_V / batt,voltage,sys,The battery voltage
-ensemble,---,sys,The ensemble counter
-error,---,sys,The instrument error code*
-status,---,sys,The instrument status code*
-temp_clock,degrees C?,sys,The instruments clock temperature
-temp_mag,degrees C?,sys,The instruments magnetometer temperature
-temp_press,degrees C?,sys,The instruments pressure sensor temperature
-tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,"Variance of velocity components (0: uu, 1: vv, 2: ww)"
-stress,m\ :sup:`2`/s\ :sup:`2`,---,"The Reynolds stress array (0: uv, 1: uw, 2: vw)"
-sigma_Uh,m/s,---,Standard deviation of horizontal velocity magnitude 
+mpltime,`matplotlib date format <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_,---,Time data
+vel,m/s,---,Velocity vector data
+range,m,---,Distance from the instrument's transducer head(s)
+depth_m,m,---,Instrument depth
+c_sound,m/s,env,Speed of sound used in velocity calculations
+press / pressure,dbar?,env,Pressure measured by the instrument
+temp,degrees Celsius,env,Temperature measured by the instrument
+accel,m/s\ :sup:`2`,orient,Vector acceleraton of the instrument
+angrt,rad/s,orient,Angular rotation rate of the instrument
+mag,milligauss,orient,Magnetometer data
+velraw,m/s,---,Velocity without motion-correction
+velrot,m/s,orient,Rotational motion velocity (computed from angrt)
+velacc,m/s,orient,Translational motion velocity (computed from accel)
+acclow,m/s\ :sup:`2`,orient,Low-pass filtered acceleration signal
+heading,degrees,orient,Instrument heading* (clockwise from North)
+pitch,degrees,orient,Instrument pitch*
+roll,degrees,orient,Instrument roll*
+orientmat,---,orient,Instrument's orientation matrix in the Earth reference frame
+amp,dB or counts,signal,Measured sound level amplitude
+corr,percent or counts,signal,Correlation between the sent and received pings.
+ambig_vel,m/s,sys,Ambiguity velocity*
+batt_V / batt,voltage,sys,Battery voltage
+ensemble,---,sys,Ensemble counter
+error,---,sys,Instrument error code*
+status,---,sys,Instrument status code*
+temp_clock,degrees C?,sys,Instrument's clock temperature
+temp_mag,degrees C?,sys,Instrument's magnetometer temperature
+temp_press,degrees C?,sys,Instrument's pressure sensor temperature
+tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,"Variance of velocity components (0: u'u', 1: v'v', 2: w'w')"
+stress,m\ :sup:`2`/s\ :sup:`2`,---,"Reynolds stress array (0: u'v', 1: u'w', 2: v'w')"
+sigma_Uh,m/s,---,Standard deviation of horizontal velocity magnitude
 epsilon,m\ :sup:`2`/s\ :sup:`3`,---,Turbulence dissipation rate
-Spec,<variables units>\ :sup:`2`/(rad/s),---,A data group containing spectra of variables above.
-omega,rad/s,Spec,Radial frequency.
+Spec,<variables units>\ :sup:`2`/(rad/s),---,Data group containing spectra of variables above
+omega,rad/s,Spec,Radial frequency

@@ -169,7 +169,7 @@ class TurbBinner(VelBinner):
 
     def calc_epsilon_SF(self, veldat, umag, fs=None, freq_rng=[.5, 5.]):
         """
-        Calculate epsilon using the "structure function" (SF) method.
+        Calculate dissipation rate using the "structure function" (SF) method.
 
         Parameters
         ----------
@@ -230,7 +230,7 @@ class TurbBinner(VelBinner):
 
     def calc_epsilon_TE01(self, advbin, advraw, omega_range=[6.28, 12.57]):
         """
-        Calculate the dissipation according to TE01.
+        Calculate the dissipation rate according to TE01.
 
         Parameters
         ----------

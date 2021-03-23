@@ -1,7 +1,7 @@
 .. _install:
 
-Download and Install
-====================
+Installation
+============
 
 |dlfn| can be installed using pip::
 
@@ -58,7 +58,7 @@ folder (including the data files). To run the tests, you'll need to
 <http://nose.readthedocs.io/en/latest/#installation-and-quick-start>`_,
 then open a command prompt and run::
 
-  $ nosetests
+  $ nosetests <test_*.py>
 
 If any of the tests do not pass, first confirm that you have installed
 all of the dependencies correctly, including :ref:`git-lfs
@@ -77,8 +77,7 @@ Dependencies
   and so there may still be lingering `2 to 3
   <https://docs.python.org/2/howto/pyporting.html>`_ conversion issues.
   If you encounter problems with Python 3 have a look at the
-  :repo:`issues <issues/>` page and potentially submit a new one (be
-  sure to indicate that you are using Python 3).
+  :repo:`issues <issues/>` page and potentially submit a new one.
 - `Numpy <http://www.numpy.org>`_ >=1.6.0
 - `h5py <http://www.h5py.org>`_ >=2.10.0
 - `SciPy <http://www.scipy.org>`_. >=1.5.0

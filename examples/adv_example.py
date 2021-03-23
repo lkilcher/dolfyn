@@ -1,45 +1,56 @@
-# To get started first import DOLfYN
-import dolfyn as dlfn
-
-# Import matplotlib tools for plotting the data:
+# Start by importing necessary packages and DOLfYN
+import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.dates as dt
-import numpy as np
 
-##############################
+import dolfyn as dlfn
+
+#############################################################################
 # User input and customization
 
 # The file to load:
 fname = '../dolfyn/example_data/vector_data_imu01.VEC'
-# This file is available at:
-# http://goo.gl/yckXtG
 
-# This is the vector from the ADV head to the body frame, in meters,
-# in the ADV coordinate system.
-# body2head_vec = np.array([0.48, -0.07, -0.27])
-# dat.props['body2head_vec'] = body2head_vec
-
-
-# This is the orientation matrix of the ADV head relative to the body.
-# In this case the head was aligned with the body, so it is the
-# identity matrix:
-# body2head_rotmat = np.eye(3)
-# dat.props['body2head_rotmat'] = body2head_rotmat
-
-# The time range of interest.
+# The time range of interest:
 t_range = [
-    # The instrument was in place starting at 12:08:30 on June 12,
-    # 2012.
+    # The instrument was in place starting at 12:08:30 on June 12, 2012
     dt.date2num(dt.datetime.datetime(2012, 6, 12, 12, 8, 30)),
-    # The data is good to the end of the file.
-    np.inf
-]
+    # The data is good to the end of the file
+    np.inf]
 
 # This is the filter to use for motion correction:
 accel_filter = 0.1
 
-# End user input section.
-###############################
+'''
+The ADV head to body vector and orientation matrix can be supplied via a 
+'.userdata.json' file in the same directory, written as follows:
+
+{"inst2head_rotmat": [[1, 0, 0],
+                     [ 0, 1, 0],
+                     [ 0, 0, 1]],
+ "inst2head_vec": [-1.0, 0.5, 0.2],
+ "motion accel_filtfreq Hz": 0.03,
+ "declination": 10.0
+}
+
+For the data loaded here, the file is named 'vector_data_imu01.userdata.json' 
+and is located in the same directory as 'vector_data_imu01.VEC'.
+
+Or it can be coded in:
+    
+The vector from the ADV head to the body frame, in meters,
+in the ADV coordinate system.
+>> inst2head_vec = np.array([0.48, -0.07, -0.27])
+>> dat.props['inst2head_vec'] = inst2head_vec
+
+The orientation matrix of the ADV head relative to the body.
+In this case the head was aligned with the body, so it is the
+identity matrix:
+>> inst2head_rotmat = np.eye(3)
+>> dat.props['inst2head_rotmat'] = inst2head_rotmat
+'''
+#############################################################################
+
 
 # Read a file containing adv data:
 dat_raw = dlfn.read(fname)
@@ -51,6 +62,7 @@ dat = dat_raw.subset[t_range_inds]
 
 # Then clean the file using the Goring+Nikora method:
 dlfn.adv.clean.GN2002(dat)
+
 
 ####
 # Create a figure for comparing screened data to the original.
@@ -109,6 +121,7 @@ fig.savefig('crop_data.png')
 # end cropping figure
 ####
 
+
 dat_cln = dat.copy()
 
 # Perform motion correction (including rotation into earth frame):
@@ -118,8 +131,6 @@ dlfn.adv.motion.correct_motion(dat, accel_filter, to_earth=True)
 # for comparison to motion correction:
 dat_cln = dlfn.rotate2(dat_cln, 'earth')
 
-#ax.plot(dat.mpltime, dat.u, 'b-')
-
 # Then rotate it into a 'principal axes frame':
 dat.props['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
 dat = dlfn.rotate2(dat, 'principal')
@@ -127,15 +138,18 @@ dat = dlfn.rotate2(dat, 'principal')
 dat_cln.props['principal_heading'] = dlfn.calc_principal_heading(dat_cln.vel)
 dat_cln = dlfn.rotate2(dat_cln, 'principal')
 
+
 # Average the data and compute turbulence statistics
-dat_bin = dlfn.adv.calc_turbulence(dat, n_bin=dat.props['fs']*180)
-dat_cln_bin = dlfn.adv.calc_turbulence(dat_cln, n_bin=dat_cln.props['fs']*180)
+dat_bin = dlfn.adv.calc_turbulence(dat, n_bin=dat.props['fs']*300)
+dat_cln_bin = dlfn.adv.calc_turbulence(dat_cln, n_bin=dat_cln.props['fs']*300)
+
 
 # At any point you can save the data:
 dat_bin.to_hdf5('adv_data_rotated2principal.h5')
 
 # And reload the data:
 dat_bin_copy = dlfn.load('adv_data_rotated2principal.h5')
+
 
 ####
 # Figure to look at spectra

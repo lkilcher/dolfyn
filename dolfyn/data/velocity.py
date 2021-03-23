@@ -190,6 +190,31 @@ class Velocity(TimeData):
             self.props['principal_heading'] += angle
         self.props._set('declination', declination)
         self.props._set('declination_in_orientmat', True)
+        
+    def rotate2(self, out_frame, inplace=False):
+        """Rotate the data object into a new coordinate system.
+
+        Parameters
+        ----------
+
+        out_frame : string {'beam', 'inst', 'earth', 'principal'}
+          The coordinate system to rotate the data into.
+
+        inplace : bool
+          Operate on self (True), or return a copy that
+          has been rotated (False, default).
+
+        Returns
+        -------
+        objout : :class:`Velocity`
+          The rotated data object. This is `self` if inplace is True.
+
+        See Also
+        --------
+        :func:`dolfyn.rotate2`
+
+        """
+        return rotate2(self, out_frame=out_frame, inplace=inplace)
 
     def __init__(self, *args, **kwargs):
         TimeData.__init__(self, *args, **kwargs)
@@ -281,31 +306,6 @@ class Velocity(TimeData):
         """
         return np.angle(self.U)
 
-    def rotate2(self, out_frame, inplace=False):
-        """Rotate the data object into a new coordinate system.
-
-        Parameters
-        ----------
-
-        out_frame : string {'beam', 'inst', 'earth', 'principal'}
-          The coordinate system to rotate the data into.
-
-        inplace : bool
-          Operate on self (True), or return a copy that
-          has been rotated (False, default).
-
-        Returns
-        -------
-        objout : :class:`Velocity`
-          The rotated data object. This is `self` if inplace is True.
-
-        See Also
-        --------
-        :func:`dolfyn.rotate2`
-
-        """
-        return rotate2(self, out_frame=out_frame, inplace=inplace)
-
     @property
     def _repr_header(self, ):
         time_string = '{:.2f} {} (started: {})'
@@ -355,7 +355,7 @@ class Velocity(TimeData):
 
 
 class TKEdata(Velocity):
-    """This is the Turbulence data-object class.
+    """This is the base class for turbulence data objects.
 
     The attributes and methods defined for this class assume that the
     ``'tke_vec'`` and ``'stress'`` data entries are included in the

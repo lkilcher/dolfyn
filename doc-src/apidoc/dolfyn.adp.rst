@@ -1,4 +1,4 @@
-dolfyn.adp module
+ADP/ADCP Module
 =====================
 
 .. automodule:: dolfyn.adp.api
@@ -6,10 +6,22 @@ dolfyn.adp module
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+Cleaning Data
+"""""""""""""
 
-.. toctree::
+Contains functions for cleaning ADP/ADCP data.
 
-   dolfyn.adp.base
-   dolfyn.adp.clean
+.. autosummary::
+	:nosignatures:
+	
+	~dolfyn.adp.clean.find_surface
+	~dolfyn.adp.clean.nan_above_surface
+	~dolfyn.adp.clean.vel_exceeds_thresh
+	~dolfyn.adp.clean.medfilt_orientation
+	~dolfyn.adp.clean.fillgaps_time
+	~dolfyn.adp.clean.fillgaps_depth
+
+.. automodule:: dolfyn.adp.clean
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -19,13 +19,12 @@ Table of Contents
    
    about
    install
-   usage
-   data-structure
+   basics
+   terminology
    rotations
-   motion-correction
    examples
-   API documentation <apidoc/dolfyn>
-   glossary
+   motion-correction
+   API Documentation <apidoc/dolfyn>
    
 
 Indices, tables and notes
@@ -34,4 +33,3 @@ Indices, tables and notes
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-* :doc:`glossary`

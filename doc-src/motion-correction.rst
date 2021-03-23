@@ -2,8 +2,8 @@
 
 .. _motion-correction:
 
-Motion Correction
-==================
+ADV Motion Correction
+=====================
 
 The Nortek Vector ADV can be purchased with an Inertial Motion Unit
 (IMU) that measures the ADV motion. These measurements can be used to
@@ -19,7 +19,7 @@ motion correction of ADV-IMU measurements. The accuracy and
 applicability of these measurements is beyond the scope of this
 documentation (journal articles are forthcoming).
 
-Nortek's Signature ADP's are now also available with an IMU, but
+Nortek's Signature ADCP's are now also available with an IMU, but
 |dlfn| does not yet support motion correction of ADP data. I hope to
 remedy this soon.
 
@@ -72,7 +72,7 @@ and configured correctly:
    :alt: ADV head and inst coordinate systems.
    :figwidth: 560px
 
-   Figure 1) The ADV 'inst' (magenta) and head (yellow) coordinate
+   The ADV 'inst' (magenta) and head (yellow) coordinate
    systems. The :math:`\hat{x}^\mathrm{head}` -direction is known by
    the black-band around the transducer arm, and the
    :math:`\hat{x}^*` -direction is marked by a notch on the end-cap
@@ -88,9 +88,9 @@ Data processing
 
 After making ADV-IMU measurements, the |dlfn| package can perform
 motion correction processing steps on the ADV data. Assuming you have
-created a ``vector_data_imu01.userdata.json`` file (to go with your
-``vector_data_imu01.vec`` data file) and it contains entries for
-``inst2head_rotmat`` and ``inst2head_vec`` attributes to it, motion
+created a ``../dolfyn/example_data/vector_data_imu01.userdata.json`` file 
+(to go with your ``vector_data_imu01.vec`` data file) and it contains entries 
+for ``inst2head_rotmat`` and ``inst2head_vec`` attributes to it, motion
 correction is fairly simple, you can either:
 
 1. Utilize the |dlfn| api perform motion-correction processing
@@ -161,3 +161,43 @@ see [Kilcher_etal_2016]_.
    Doppler Velocimeters" National Renewable Energy
    Lab, `Report Number 62979
    <http://www.nrel.gov/docs/fy16osti/62979.pdf>`_.
+   
+
+ADV head-to-body rotation matrix example
+........................................
+
+.. figure:: pic/turbulence_torpedo.png
+   :align: center
+   :scale: 60%
+   :alt: ADV mounted on a Columbus-type sounding weight.
+   
+   ADV mounted on a Columbus-type sounding weight.
+
+An example 'userdata.json' file corresponding to Figure 2 would look like:
+
+.. code-block:: text
+
+	{"inst2head_rotmat": [[0, 0, 1],
+	                     [ 0, 1, 0],
+	                     [-1, 0, 0]],
+	 "inst2head_vec": [0.20, 0, 0.04],
+	 "declination": 15.87,
+	 "lat": 48.08,
+	 "lon": -123.04,
+	 "depth": 8
+	}
+
+
+Motion Correction Full Examples
+...............................
+
+The two following examples depict the standard workflow for analyzing
+ADV-IMU data using |dlfn|.
+
+Example 1
+"""""""""
+.. literalinclude:: ../examples/adv_example.py
+
+Example 2
+"""""""""
+.. literalinclude:: ../examples/adv_example2.py

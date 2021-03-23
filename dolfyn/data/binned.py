@@ -11,9 +11,34 @@ import six
 
 class TimeBinner(object):
 
+    def calc_freq(self, fs=None, coh=False):    
+        """
+        Calculate the frequency vector for the PSD's.
+
+        Parameters
+        ----------
+        fs : float (optional)
+          The sample rate (Hz).
+        coh : bool
+          Calculate the frequency vector for coherence/cross-spectra
+          (default: False) i.e. use self.n_fft_coh instead of
+          self.n_fft.
+        """
+        n_fft = self.n_fft
+        freq_dim = 'freq'
+        fs = self._parse_fs(fs)
+        if coh:
+            n_fft = self.n_fft_coh
+            freq_dim = 'coh_freq'
+            
+        f = psd_freq(n_fft, fs*2*np.pi) / (2*np.pi)
+        dat = ma.marray(f, ma.varMeta('\freq', {'s': -1}, [freq_dim]))
+        
+        return dat
+
     def calc_omega(self, fs=None, coh=False):
         """
-        Calculate the radial-frequency vector for the psd's.
+        Calculate the radial-frequency vector for the PSD's.
 
         Parameters
         ----------
@@ -265,7 +290,7 @@ class TimeBinner(object):
         return out
 
     def do_avg(self, rawdat, outdat=None, names=None, n_time=None):
-        """
+        """Average data into bins/ensembles
 
         Parameters
         ----------

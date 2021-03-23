@@ -6,14 +6,14 @@ data. It contains:
 +-----------------------------------+-----------------------------------------+
 | Name                              | Description                             |
 +===================================+=========================================+
-| :func:`load <dolfyn.io.api.load>` | A function for loading DOLfYN's h5 data |
-|                                   | files.                                  |
-+-----------------------------------+-----------------------------------------+
 | :func:`read <dolfyn.io.api.read>` | A function for reading Nortek Vector    |
 |                                   | files.                                  |
 +-----------------------------------+-----------------------------------------+
+| :func:`load <dolfyn.io.api.load>` | A function for loading DOLfYN's h5 data |
+|                                   | files.                                  |
++-----------------------------------+-----------------------------------------+
 | :func:`rotate2 <dolfyn.rotate.\   | A function for rotating data            |
-| .rotate2>`                        | between different coordinate systems    |
+| .main.rotate2>`                   | between different coordinate systems    |
 +-----------------------------------+-----------------------------------------+
 | :mod:`clean <dolfyn.adv.clean>`   | A module containing functions for       |
 |                                   | cleaning data, filling NaN's,           |
@@ -23,11 +23,14 @@ data. It contains:
 |                                   | functions for performing motion         |
 |                                   | correction.                             |
 +-----------------------------------+-----------------------------------------+
-| :class:`~dolfyn.adv.\             | A class for breaking ADV data into      |
-| turbulence.TurbBinner`            | 'bins', averaging it and calculating    |
-|                                   | various turbulence statistics           |
+| :class:`VelBinner <dolfyn.data.\  | A class for breaking data into          |
+| velocity.VelBinner>`              | 'bins'/'ensembles', averaging it and    |
+|                                   | estimating basic turbulence statistics. |
 +-----------------------------------+-----------------------------------------+
-| :func:`~dolfyn.adv.\              | Functional version of TurbBinner        |
+| :class:`~dolfyn.adv.\             | A class that builds upon `VelBinner`    |
+| turbulence.TurbBinner`            | for calculating statistics from spectra |
++-----------------------------------+-----------------------------------------+
+| :func:`~dolfyn.adv.\              | Functional version of `TurbBinner`      |
 | turbulence.calc_turbulence`       |                                         |
 +-----------------------------------+-----------------------------------------+
 

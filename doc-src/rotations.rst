@@ -1,11 +1,11 @@
 .. _rotations:
 
-Rotations and Coordinate Systems
-================================
+Instrument Coordinate Systems
+=============================
 
-One of |dlfn|\ 's primary advantages is that it contains simple tools
-for managing the coordinate system (a.k.a. the reference frame) of the
-vector data of data objects. This has taken considerable effort
+One of |dlfn|\ 's primary advantages is that it contains tools
+for managing the coordinate system (a.k.a. the reference frame) of
+vector data. This has taken considerable effort
 because the coordinate system definitions used by instrument
 manufacturers are not consistent, and the math/concepts of coordinate
 rotations can be described as somewhere between *non-trivial* and
@@ -17,7 +17,7 @@ important.
 Having said that, the coordinate-system/rotation tools provided in
 |dlfn| have been tested to varying degrees on different types of
 instruments and configurations. Instrument manufacturers use different
-conventions, and can change conventions with firmware
+conventions and can change conventions with firmware
 updates. Therefore, we make no promises that these tools will work for
 any instrument type, but we do have higher confidence in some
 instruments and configurations than others. See :ref:`the table
@@ -50,15 +50,11 @@ directions, which are defined by the following coordinate systems:
   coordinate systems to beam coordinates.
 
 - **INST**: this is the 'instrument' coordinate system defined by the
-  manufacturer. This coordinate system is orth-normal, but is not
+  manufacturer. This coordinate system is ortho-normal, but is not
   necessarily fixed. That is, if the instrument is rotating, then this
   coordinate system changes relative to the earth. When the data
   object is in INST coordinates, the first dimension of the vectors
   are: [X, Y, Z, ...].
-
-  Note: instruments with more than three beams will have more than
-  three velocity components. **|dlfn| does not yet handle these extra
-  dimensions consistently**.
 
 - **EARTH**: When the data object is in EARTH coordinates, the first
   dimension of vectors are: [East, North, Up, ...]. This coordinate
@@ -67,8 +63,8 @@ directions, which are defined by the following coordinate systems:
   otherwise, East and North are magnetic. See the `Declination
   Handling`_ section for further details on setting declination.
 
-  Note that the ENU definition used here is different from the 'north,
-  east, down' coordinate system typically used by aircraft.
+  Note that the ENU definition used here is different from the 'North,
+  East, down' coordinate system typically used by aircraft.
   Also note that the earth coordinate system is a 'rotationally-fixed'
   coordinate system: it does not rotate, but it is not necessarily
   *inertial* or *stationary* if the instrument slides around
