@@ -138,7 +138,7 @@ To load this data into memory (e.g., in a different script), use |dlfn|'s load f
 Cleaning data
 ----------------
 
-|dlfn| includes tools for cleaning ADV data in the ``dlfn.adv.clean`` module. Take a look at those functions for more details. Tools for cleaning ADP data have not yet been developed.
+|dlfn| includes tools for cleaning ADV data in the ``dlfn.adv.clean`` module. Take a look at those functions for more details. Tools for cleaning ADP data are located in the ``dlfn.adcp.clean`` module.
   
 Averaging data
 ------------------
@@ -150,12 +150,12 @@ window details, and then you call methods of the averaging object to
 compute averages or turbulence statistics. For example::
 
   # First initalize the averaging tool
-  >>> avg_tool = dlfn.VelBinner(4800, fs=16)
+  >>> avg_tool = dlfn.VelBinner(n_bin=4800, fs=16)
 
-  # Then compute averages of all variables in dat
+  # Then create ensembles of all variables in dat
   >>> avg_dat = avg_tool.do_avg(dat)
 
-Here, we have initialized an averaging tool, ``avg_tool``, to bin 16 Hz data into 4800-point segments (5 minutes). Then when we call the ``do_avg`` method in the averaging tool on a data object, it returns an 'averaged' data object, where all the data field names are the same, but the fields contain averaged data. The averaging tool also includes many other tools (methods) for computing statistics other than averages, for example::
+Here, we have initialized an averaging tool, ``avg_tool``, to bin 16 Hz data into 4800-point ensembles (5 minutes). Then when we call the ``do_avg`` method in the averaging tool on a data object, it returns an 'averaged' data object, where all the data field names are the same, but the fields contain averaged data. The averaging tool also includes many other tools (methods) for computing statistics other than averages, for example::
 
   # Compute the power-spectral-density of the velocity data, and store it in 
   >>> avg_dat['Spec.vel'] = avg_tool.psd(dat['vel'])
@@ -163,7 +163,6 @@ Here, we have initialized an averaging tool, ``avg_tool``, to bin 16 Hz data int
   # Compute the Reynold's stresses (cross-correlations) of the velocity data:
   >>> avg_dat['stress'] = avg_tool.calc_stress(dat['vel'])
 
-There is also the :class:`~dlfn.adv.turbulence.TurbBinner`, which is based on
-:class:`~dolfyn.data.velocity.VelBinner`, and has several methods for computing additional
-statistics from ADV data. Take a look at the API documentation for both of
+There is also the :class:`~dolfyn.adv.turbulence.TurbBinner`, which is based on
+:class:`~dolfyn.data.velocity.VelBinner`, and has several methods for computing additional statistics from ADV data. Take a look at the API documentation for both of
 those tools for more details.

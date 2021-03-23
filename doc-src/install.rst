@@ -10,13 +10,22 @@ Download and Install
 If you want to download the source code locally so that you can modify
 it, you can clone the repository::
     
-   $ git clone https://github.com/lkilcher/dolfyn/ <download_location>
+   $ git clone https://github.com/lkilcher/dolfyn/
 
 And then use pip to install it as an 'editable' package::
 
-     $ cd <download_location>
+     $ cd dolfyn
      $ pip install -e ./
+	 
+Or install as a standard package::
 
+	 $ cd dolfyn
+	 $ python setup.py install
+
+To create documentation::
+
+	 $ cd dolfyn\doc-src
+	 $ make html
 
 .. _datafiles:
 
@@ -62,15 +71,14 @@ before creating a :repo:`new one <issues/>`.
 Dependencies
 ------------
 
-- |dlfn| was developed in `Python 2.7 <https://docs.python.org/2/>`_,
-  and has recently been updated to work under `Python 3
-  <https://docs.python.org/3/>`_. All of the existing unit tests work
-  in Python 3.5.2, but this testing is limited to a subset of the code
+- |dlfn| was developed in `Python 2.7 <https://docs.python.org/2/>`_.
+  All of the existing unit tests work in `Python 3.8 <https://docs.python.org/3/>`_,
+  but this testing is limited to a subset of the code
   and so there may still be lingering `2 to 3
   <https://docs.python.org/2/howto/pyporting.html>`_ conversion issues.
   If you encounter problems with Python 3 have a look at the
   :repo:`issues <issues/>` page and potentially submit a new one (be
   sure to indicate that you are using Python 3).
-- `Numpy <http://www.numpy.org>`_ >=1.6.
-- `h5py <www.h5py.org>`_
-- `SciPy <http://www.scipy.org>`_.
+- `Numpy <http://www.numpy.org>`_ >=1.6.0
+- `h5py <http://www.h5py.org>`_ >=2.10.0
+- `SciPy <http://www.scipy.org>`_. >=1.5.0

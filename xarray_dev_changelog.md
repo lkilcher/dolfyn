@@ -7,11 +7,12 @@ Xarray DOLfYN to MHKiT Changelog
 - Set up Travis CI - done
 - Fix 'latlon' vs 'lonlat' error in read adp tests - done
 - Set Travis CI to run doctests - done
+= Fix calc_turbulence __call__ error - done
 - Push changes in my fork to an xarray branch on dolfyn
 - Start updating documentation
 	- Create sphinx API doctree - done
 	- change that formatting theme in conf.py file to reflect MHKiT's
-	- Fill in and update API documentation
-	- Create ADCP and ADV examples
-	- Update documentation that's already there
+	- Fill in and update API documentation - done
+	- Create and update ADCP and ADV examples - in progress
+	- Update documentation that's already there - in progress
 	- Fix doctest errors

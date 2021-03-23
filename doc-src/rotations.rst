@@ -231,7 +231,7 @@ earth-frame can be rotated into the principal coordinate system like
 this::
 
   dat.props['principal_heading'] = dolfyn.calc_principal_heading(dat.vel)
-  dat.rotate2('principal')
+  dat = dat.rotate2('principal')
 
 Note here that if ``dat`` is in a coordinate system other than EARTH,
 you will get unexpected results, because you will calculate a

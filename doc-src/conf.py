@@ -14,13 +14,13 @@
 
 import sys
 import os
+import dolfyn._version as ver
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
 
-import dolfyn._version as ver
 
 # -- General configuration -----------------------------------------------
 
@@ -49,6 +49,14 @@ extensions = ['sphinx.ext.autodoc',
 # extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
 # 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
 # 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode','sphinx.ext.napoleon']
+napoleon_use_rtype = False
+viewcode_import = True
+numpydoc_show_class_members = True
+numpydoc_class_members_toctree = False
+autodoc_member_order = 'bysource'
+autoclass_content = 'both'
+numfig=True
+numfig_format = {'figure':  'Figure %s', 'table': 'Table %s', 'code-block': 'Listing %s'}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -119,6 +127,11 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
+# If true, keep warnings as "system message" paragraphs in the built documents.
+#keep_warnings = False
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
 
 # -- Options for HTML output ---------------------------------------------
 

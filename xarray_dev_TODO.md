@@ -11,8 +11,9 @@ Xarray DOLfYN to MHKit
 		- build into IO code if time permits
 
 3. Refactor code to call/pull from xarray “Dataset”
-		- Start with ADCP code because it's simpler than ADV code
+		- Start with ADV code
 		- Update this list as things become clearer
+		- Update ADCP code with xarray since it appears outdated
 		
 		- Testing - compare h5py DOLfYN to xarray DOLfYN output
 		- Update documentation from step 2 with xarray referencing – API object/function arguments and keywords shouldn’t change

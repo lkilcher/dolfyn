@@ -96,11 +96,11 @@ correction is fairly simple, you can either:
 1. Utilize the |dlfn| api perform motion-correction processing
    explicitly in Python::
 
-     from dolfyn.adv import api as adv
+     import dolfyn.adv as adv
 
    a. Load your data file, for example::
 
-        dat = adv.read_nortek('vector_data_imu01.vec')
+        dat = adv.read('vector_data_imu01.vec')
 
    b. Then perform motion correction::
 
