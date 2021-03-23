@@ -76,7 +76,7 @@ install:
 
 script:
     - nosetests --with-coverage --cover-package=dolfyn
-    - nosetests -v --nologcapture --with-coverage --with-doctest --doctest-extension=.rst --cover-package=dolfyn doc-src/*.rst dolfyn
+    #- nosetests -v --nologcapture --with-coverage --with-doctest --doctest-extension=.rst --cover-package=dolfyn doc-src/*.rst dolfyn
 
 after_success:
     coveralls

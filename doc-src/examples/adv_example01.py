@@ -9,8 +9,6 @@ dlfn.adv.clean.GN2002(dat)
 
 # Rotate that data from the instrument to earth frame:
 # First set the magnetic declination
-dat = dlfn.rotate2(dat, 'inst')
-
 dat.set_declination(10) # 10 degrees East
 dat = dlfn.rotate2(dat, 'earth')
 

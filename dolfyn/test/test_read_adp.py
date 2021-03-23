@@ -1,4 +1,4 @@
-from dolfyn.main import read_example as read
+from dolfyn.io.api import read_example as read
 import dolfyn.test.base as tb
 import sys
 import warnings
