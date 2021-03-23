@@ -399,8 +399,10 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
          - omega : the radial frequncy (radian / s)
 
     """
-    calculator = TurbBinner(n_bin, advr.props['fs'], n_fft=n_fft,
-                            out_type=out_type,
+    calculator = TurbBinner(n_bin, fs=advr.props['fs'], n_fft=n_fft)
+    
+    dat_binned = calculator(advr, out_type=out_type,
                             omega_range_epsilon=omega_range_epsilon,
                             Itke_thresh=Itke_thresh, window=window)
-    return calculator(advr)
+    
+    return dat_binned
