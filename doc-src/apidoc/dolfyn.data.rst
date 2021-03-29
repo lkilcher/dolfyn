@@ -31,3 +31,8 @@ Functions:
     :members:
     :undoc-members:
     :show-inheritance:
+	
+.. automoduel:: dolfyn.data.time
+    :members:
+    :undoc-members:
+    :show-inheritance:

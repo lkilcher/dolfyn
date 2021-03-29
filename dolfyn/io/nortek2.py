@@ -245,7 +245,7 @@ class Ad2cpReader(object):
         ens_stop = int(ens_stop)
         nens = ens_stop - ens_start
         outdat = self.init_data(ens_start, ens_stop)
-        outdat['filehead config'] = self.filehead_config
+        outdat['filehead_config'] = self.filehead_config
         print('Reading file %s ...' % self.fname)
         retval = None
         c = 0
@@ -376,7 +376,7 @@ def reorg(dat):
     """
     outdat = apb.ADPdata()
     cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
-    cfh = cfg['filehead config'] = dat['filehead config']
+    cfh = cfg['filehead_config'] = dat['filehead_config']
     cfg['model'] = (cfh['ID'].split(',')[0][5:-1])
     outdat['props'] = {}
     outdat['props']['inst_make'] = 'Nortek'
@@ -407,9 +407,9 @@ def reorg(dat):
             lib.collapse(dnow['beam_config'], exclude=collapse_exclude,
                          name='beam_config'), 21)
         cfg['ncells' + tag] = tmp['ncells']
-        cfg['coord_sys' + tag] = tmp['cy']
+        cfg['coord_sys_axes' + tag] = tmp['cy']
         cfg['nbeams' + tag] = tmp['nbeams']
-        for ky in ['SerialNum', 'cell_size', 'blanking',
+        for ky in ['SerialNum', 'cell_size', 'blank_dist',
                    'nom_corr', 'data_desc',
                    'vel_scale', 'power_level']:
             # These ones should 'collapse'
@@ -417,7 +417,7 @@ def reorg(dat):
             # So we only need that one value.
             cfg[ky + tag] = lib.collapse(dnow[ky], exclude=collapse_exclude,
                                          name=ky)
-        for ky in ['c_sound', 'temp', 'press',
+        for ky in ['c_sound', 'temp', 'pressure',
                    'heading', 'pitch', 'roll',
                    'batt_V',
                    'temp_mag', 'temp_clock',
@@ -471,15 +471,16 @@ def reorg(dat):
         outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
     outdat.props['coord_sys'] = {'XYZ': 'inst',
                                  'ENU': 'earth',
-                                 'BEAM': 'beam'}[cfg['coord_sys'].upper()]
+                                 'BEAM': 'beam'}[cfg['coord_sys_axes']]
     tmp = lib.status2data(outdat.sys.status)  # returns a dict
     outdat.orient['orient_up'] = tmp['orient_up']
     # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
     # Heading is: 0,1: Z; 4,5: X
-    for ky in ['accel', 'angrt']:
+    for ky in ['accel', 'angrt', 'mag']:
         for dky in outdat['orient'].keys():
             if dky == ky or dky.startswith(ky + '_'):
-                outdat.props['rotate_vars'].update({'orient.' + dky})
+                # outdat.props['rotate_vars'].update({'orient.' + dky})
+                outdat.props['rotate_vars'].update({dky})
     if 'vel_bt' in outdat:
         outdat.props['rotate_vars'].update({'vel_bt', })
     return outdat
@@ -492,7 +493,7 @@ def reduce(data):
     different data structures within the same ensemble --- by
     averaging.  """
     # Average these fields
-    for ky in ['c_sound', 'temp', 'press',
+    for ky in ['c_sound', 'temp', 'pressure',
                'temp_press', 'temp_clock', 'temp_mag',
                'batt_V']:
         grp = defs.get_group(ky)
@@ -508,24 +509,24 @@ def reduce(data):
 
     data['range'] = ((np.arange(data['vel'].shape[1])+1) *
                      data['config']['cell_size'] +
-                     data['config']['blanking'])
+                     data['config']['blank_dist'])
     if 'vel_b5' in data:
         data['range_b5'] = ((np.arange(data['vel_b5'].shape[1])+1) *
                             data['config']['cell_size_b5'] +
-                            data['config']['blanking_b5'])
+                            data['config']['blank_dist_b5'])
     if 'echo_echo' in data:
         data['echo'] = data.pop('echo_echo')
         data['range_echo'] = ((np.arange(data['echo'].shape[0])+1) *
                               data['config']['cell_size_echo'] +
-                              data['config']['blanking_echo'])
+                              data['config']['blank_dist_echo'])
 
     if 'orientmat' in data['orient']:
-        data['props']['has imu'] = True
+        data['props']['has_imu'] = True
     else:
-        data['props']['has imu'] = False
-    data.config['fs'] = data.config['filehead config']['BURST'].pop('SR')
+        data['props']['has_imu'] = False
+    data.config['fs'] = data.config['filehead_config']['BURST'].pop('SR')
     data['props']['fs'] = data.config['fs']
-    tmat = data.config['filehead config'].pop('XFBURST')
+    tmat = data.config['filehead_config'].pop('XFBURST')
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)
     for irow in range(tmat['ROWS']):
         for icol in range(tmat['COLS']):

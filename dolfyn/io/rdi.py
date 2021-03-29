@@ -111,7 +111,7 @@ data_defs = {'number': ([], 'sys', 'uint32'),
              'pitch': ([], 'orient', 'float32'),
              'roll': ([], 'orient', 'float32'),
              'heading': ([], 'orient', 'float32'),
-             'temperature_C': ([], 'env', 'float32'),
+             'temp': ([], 'env', 'float32'),
              'salinity': ([], 'env', 'float32'),
              'mpt_sec': ([], 'sys', 'float32'),
              'heading_std': ([], 'orient', 'float32'),
@@ -122,15 +122,15 @@ data_defs = {'number': ([], 'sys', 'uint32'),
              'pressure': ([], None, 'float32'),
              'pressure_std': ([], None, 'float32'),
              'vel': (['nc', 4], None, 'float32'),
-             'echo': (['nc', 4], 'signal', 'uint8'),
+             'amp': (['nc', 4], 'signal', 'uint8'),
              'corr': (['nc', 4], 'signal', 'uint8'),
              'prcnt_gd': (['nc', 4], 'signal', 'uint8'),
              'status': (['nc', 4], 'signal', 'float32'),
-             'bt_range': ([4], None, 'float32'),
-             'bt_vel': ([4], None, 'float32'),
-             'bt_corr': ([4], 'signal', 'uint8'),
-             'bt_ampl': ([4], 'signal', 'uint8'),
-             'bt_perc_gd': ([4], 'signal', 'uint8'),
+             'dist_bt': ([4], None, 'float32'),
+             'vel_bt': ([4], None, 'float32'),
+             'corr_bt': ([4], 'signal', 'uint8'),
+             'amp_bt': ([4], 'signal', 'uint8'),
+             'prcnt_gd_bt': ([4], 'signal', 'uint8'),
              'stime': ([], None, 'float64'),
              'etime': ([], None, 'float64'),
              'mpltime': ([], None, 'float64'),
@@ -287,7 +287,7 @@ class adcp_loader(object):
                         128: (self.read_var, []),     # 0080
                         256: (self.read_vel, []),     # 0100
                         512: (self.read_corr, []),    # 0200
-                        768: (self.read_echo, []),    # 0300
+                        768: (self.read_amp, []),    # 0300
                         1024: (self.read_prcnt_gd, []),  # 0400
                         1280: (self.read_status, []),  # 0500
                         1536: (self.read_bottom, []),  # 0600
@@ -387,7 +387,7 @@ class adcp_loader(object):
                            'pitch',
                            'roll',
                            'salinity',
-                           'temperature_C',
+                           'temp',
                            'mpt_sec',
                            'heading_std',
                            'pitch_std',
@@ -403,7 +403,7 @@ class adcp_loader(object):
         ens.pitch[k] = fd.read_i16(1) * 0.01
         ens.roll[k] = fd.read_i16(1) * 0.01
         ens.salinity[k] = fd.read_i16(1)
-        ens.temperature_C[k] = fd.read_i16(1) * 0.01
+        ens.temp[k] = fd.read_i16(1) * 0.01
         ens.mpt_sec[k] = (fd.read_ui8(3) * np.array([60, 1, .01])).sum()
         ens.heading_std[k] = fd.read_ui8(1)
         ens.pitch_std[k] = fd.read_i8(1) * 0.1
@@ -476,10 +476,10 @@ class adcp_loader(object):
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
-    def read_echo(self,):
+    def read_amp(self,):
         k = self.ensemble.k
-        self.vars_read += ['echo']
-        self.ensemble.echo[:, :, k] = np.array(
+        self.vars_read += ['amp']
+        self.ensemble.amp[:, :, k] = np.array(
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
@@ -499,8 +499,8 @@ class adcp_loader(object):
         self._nbyte = 2 + 4 * self.cfg['n_cells']
 
     def read_bottom(self,):
-        self.vars_read += ['bt_range', 'bt_vel', 'bt_corr', 'bt_ampl',
-                           'bt_perc_gd']
+        self.vars_read += ['dist_bt', 'vel_bt', 'corr_bt', 'amp_bt',
+                           'prcnt_gd_bt']
         fd = self.f
         ens = self.ensemble
         k = ens.k
@@ -515,11 +515,11 @@ class adcp_loader(object):
                 ens.slatitude[k] = np.NaN
         else:
             fd.seek(14, 1)
-        ens.bt_range[:, k] = fd.read_ui16(4) * 0.01
-        ens.bt_vel[:, k] = fd.read_i16(4) * 0.001
-        ens.bt_corr[:, k] = fd.read_ui8(4)
-        ens.bt_ampl[:, k] = fd.read_ui8(4)
-        ens.bt_perc_gd[:, k] = fd.read_ui8(4)
+        ens.dist_bt[:, k] = fd.read_ui16(4) * 0.01
+        ens.vel_bt[:, k] = fd.read_i16(4) * 0.001
+        ens.corr_bt[:, k] = fd.read_ui8(4)
+        ens.amp_bt[:, k] = fd.read_ui8(4)
+        ens.prcnt_gd_bt[:, k] = fd.read_ui8(4)
         if self._source == 2:
             fd.seek(2, 1)
             ens.slongitude[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
@@ -542,7 +542,7 @@ class adcp_loader(object):
             self._nbyte = 2 + 68
         if cfg['prog_ver'] >= 5.3:
             fd.seek(78 - 71, 1)
-            ens.bt_range[:, k] = ens.bt_range[:, k] + fd.read_ui8(4) * 655.36
+            ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
             if cfg['name'] == 'wh-adcp':
                 if cfg['prog_ver'] >= 16.20:
@@ -747,8 +747,8 @@ class adcp_loader(object):
         cfg['n_beam'] = fd.read_ui8(1)
         cfg['n_cells'] = fd.read_ui8(1)
         cfg['pings_per_ensemble'] = fd.read_ui16(1)
-        cfg['cell_size_m'] = fd.read_ui16(1) * .01
-        cfg['blank_m'] = fd.read_ui16(1) * .01
+        cfg['cell_size'] = fd.read_ui16(1) * .01
+        cfg['blank'] = fd.read_ui16(1) * .01
         cfg['prof_mode'] = fd.read_ui8(1)
         cfg['corr_threshold'] = fd.read_ui8(1)
         cfg['prof_codereps'] = fd.read_ui8(1)
@@ -759,7 +759,7 @@ class adcp_loader(object):
                    np.array([60., 1., .01])))
         coord_sys = fd.read_ui8(1)
         cfg['coord'] = np.binary_repr(coord_sys, 8)
-        cfg['coord_sys'] = (['beam', 'instrument',
+        cfg['coord_sys'] = (['beam', 'inst',
                              'ship', 'earth'][((coord_sys >> 3) & 3)])
         cfg['use_pitchroll'] = ['no', 'yes'][(coord_sys & 4) == 4]
         cfg['use_3beam'] = ['no', 'yes'][(coord_sys & 2) == 2]
@@ -849,7 +849,7 @@ class adcp_loader(object):
         outd.props = {}
         outd.props['inst_make'] = 'RDI'
         outd.props['inst_model'] = '<WORKHORSE?>'
-        outd.props['inst_type'] = 'ADP'
+        outd.props['inst_type'] = 'ADCP'
         outd.props['rotate_vars'] = {'vel', }
         # Currently RDI doesn't use IMUs
         outd.props['has imu'] = False
@@ -882,7 +882,7 @@ class adcp_loader(object):
         dat = self.outd
         dat['range'] = (self.cfg['bin1_dist_m'] +
                         np.arange(self.cfg['n_cells']) *
-                        self.cfg['cell_size_m'])
+                        self.cfg['cell_size'])
         dat['config'] = self.cfg
         if self.cfg['orientation'] == 1:
             dat['range'] *= -1
@@ -910,8 +910,8 @@ class adcp_loader(object):
             else:
                 dat['mpltime'][iens] = np.median(dats)
         self.finalize()
-        if 'bt_vel' in dat:
-            dat['props']['rotate_vars'].update({'bt_vel', })
+        if 'vel_bt' in dat:
+            dat['props']['rotate_vars'].update({'vel_bt', })
         return dat
 
     def finalize(self, ):

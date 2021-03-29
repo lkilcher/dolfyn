@@ -164,19 +164,19 @@ _burst_hdr = [
     ('usec100', 'H', [], None),
     ('c_sound', 'H', [], LinFunc(0.1, dtype=dt32)),  # m/s
     ('temp', 'H', [], LinFunc(0.01, dtype=dt32)),  # Celsius
-    ('press', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
+    ('pressure', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
     ('heading', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('pitch', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('roll', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('beam_config', 'H', [], None),
     ('cell_size', 'H', [], LinFunc(0.001)),  # m
-    ('blanking', 'H', [], LinFunc(0.01)),  # m
+    ('blank_dist', 'H', [], LinFunc(0.01)),  # m
     ('nom_corr', 'B', [], None),  # percent
     ('temp_press', 'B', [], LinFunc(0.2, -20, dtype=dt16)),  # Celsius
     ('batt_V', 'H', [], LinFunc(0.1, dtype=dt16)),  # Volts
     ('mag', 'h', [3], None),
     ('accel', 'h', [3], LinFunc(1. / 16384 * grav, dtype=dt32)),
-    ('ambig_vel', 'h', [], None),
+    ('ambig_vel', 'h', [], LinFunc(0.001, dtype=dt16)),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None),
     ('vel_scale', 'b', [], None),
@@ -203,19 +203,19 @@ _bt_hdr = [
     ('usec100', 'H', [], None),
     ('c_sound', 'H', [], LinFunc(0.1, dtype=dt32)),  # m/s
     ('temp', 'H', [], LinFunc(0.01, dtype=dt32)),  # Celsius
-    ('press', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
+    ('pressure', 'I', [], LinFunc(0.001, dtype=dt32)),  # dBar
     ('heading', 'H', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('pitch', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('roll', 'h', [], LinFunc(0.01, dtype=dt32)),  # degrees
     ('beam_config', 'H', [], None),
     ('cell_size', 'H', [], LinFunc(0.001)),  # m
-    ('blanking', 'H', [], LinFunc(0.01)),  # m
+    ('blank_dist', 'H', [], LinFunc(0.01)),  # m
     ('nom_corr', 'B', [], None),  # percent
     ('unused', 'B', [], None),  # Celsius
     ('batt_V', 'H', [], LinFunc(0.1, dtype=dt16)),  # Volts
     ('mag', 'h', [3], None),
     ('accel', 'h', [3], LinFunc(1. / 16384 * grav, dtype=dt32)),
-    ('ambig_vel', 'I', [], None),
+    ('ambig_vel', 'I', [], LinFunc(0.001, dtype=dt16)),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None),
     ('vel_scale', 'b', [], None),
@@ -244,7 +244,7 @@ _burst_group_org = {
     'orient': ['orientmat',
                'heading', 'pitch', 'roll',
                'angrt', 'mag', 'accel', 'quaternion'],
-    'env': ['c_sound', 'temp', 'press'],
+    'env': ['c_sound', 'temp', 'pressure'],
     'sys': ['temp_press', 'temp_mag', 'temp_clock',
             'batt_V', 'ambig_vel', 'xmit_energy',
             'error', 'status0', 'status',
@@ -279,7 +279,7 @@ def calc_bt_struct(config, nb):
 def calc_echo_struct(config, nc):
     flags = lib.headconfig_int2dict(config)
     dd = copy(_burst_hdr)
-    dd[19] = ('blanking', 'H', [], LinFunc(0.001))  # m, hack to fix this
+    dd[19] = ('blank_dist', 'H', [], LinFunc(0.001))  # m, hack to fix this
     if any([flags[nm] for nm in ['vel', 'amp', 'corr', 'alt', 'ast',
                                  'alt_raw', 'p_gd', 'std']]):
         raise Exception("Echosounder ping contains invalid data?")

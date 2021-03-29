@@ -5,6 +5,7 @@ from .base import WrongFileType as _WTF
 # These are included here for use in the API
 from .hdf5 import load
 import pkg_resources
+from .xarray_io import convert_xarray, save_xr, load_xr
 
 
 def read(fname, userdata=True, nens=None):
@@ -37,6 +38,7 @@ def read(fname, userdata=True, nens=None):
         except _WTF:
             continue
         else:
+            dat = convert_xarray(dat)
             return dat
     raise _WTF("Unable to find a suitable reader for "
                "file {}.".format(fname))
