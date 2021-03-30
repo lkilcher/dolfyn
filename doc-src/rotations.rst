@@ -1,7 +1,7 @@
 .. _rotations:
 
-Instrument Coordinate Systems
-=============================
+Rotations & Coordinate Systems
+==============================
 
 One of |dlfn|\ 's primary advantages is that it contains tools
 for managing the coordinate system (a.k.a. the reference frame) of

@@ -279,11 +279,12 @@ def calc_bt_struct(config, nb):
 def calc_echo_struct(config, nc):
     flags = lib.headconfig_int2dict(config)
     dd = copy(_burst_hdr)
+    dd[19] = ('blanking', 'H', [], LinFunc(0.001))  # m, hack to fix this
     if any([flags[nm] for nm in ['vel', 'amp', 'corr', 'alt', 'ast',
                                  'alt_raw', 'p_gd', 'std']]):
         raise Exception("Echosounder ping contains invalid data?")
     if flags['echo']:
-        dd += [('echo', 'H', [nc], None)]
+        dd += [('echo', 'H', [nc], LinFunc(0.01, dtype=dt16))]
     if flags['ahrs']:
         dd += _ahrs_def
     return DataDef(dd)
@@ -293,7 +294,7 @@ def calc_burst_struct(config, nb, nc):
     flags = lib.headconfig_int2dict(config)
     dd = copy(_burst_hdr)
     if flags['echo']:
-        raise Exception("Echousounder data found in velocity ping?")
+        raise Exception("Echosounder data found in velocity ping?")
     if flags['vel']:
         dd.append(('vel', 'h', [nb, nc], None))
     if flags['amp']:

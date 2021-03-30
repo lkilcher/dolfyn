@@ -1,12 +1,15 @@
 Data Types
 ==========
 
-Data is handled in DOLfYN through one of two classes, `Velocity` and `TKEdata`, and the properties attributed to each are listed in the *Data Structure* tab. Functions and properties listed below are called directly from DOLfYN data objects.
+Data is handled in DOLfYN through one of two data objects, `ADPdata` and `ADVdata`, which include the `Velocity` and `TKEdata` classes. The properties attributed to each are listed in the Terminology tab. Functions and properties listed below are called directly from the data variable.
 
 Classes:
 
 .. autosummary::
 	:nosignatures:
+	
+	~dolfyn.adp.base.ADPdata
+	~dolfyn.adv.base.ADVdata
 
 	~dolfyn.data.velocity.Velocity
 	~dolfyn.data.velocity.TKEdata
