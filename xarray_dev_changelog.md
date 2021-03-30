@@ -10,14 +10,22 @@ Xarray DOLfYN to MHKiT Changelog
 - Set Travis CI to run doctests - done
 - Fix calc_turbulence '__call__' error - done
 - Organize most relevent aspects of code to run straight from 'import dolfyn as dlfn' and correct import inconsistencies - done
+- Fixed mathmatical error in 'range' calculation (bin 1 dist = blank dist + cell size)
+- Fixed Nortek echosounder 'dB' scaling
 
-- Start updating documentation
+- Update documentation
 	- Create sphinx API doctree - done
 	- Fill in and update API documentation - done
-	- Create and update ADCP and ADV examples - in progress
-	- Update documentation that's already there - in progress
-	- Format docs similarly to MHKiT's - in progress
-	- Add 'About' section
-	- Fix doctest errors
+	- Create and update ADCP and ADV examples - done
+	- Update documentation that's already there - done
+	- Format docs similarly to MHKiT's - done
+	- Add 'About' section - done
+	- Fix doctest errors - once xarray update completed
 	
+- Convert DOLfYN object to xarray DataSet
+	- basic conversion file - done
+	- create function out of conversion file and incorporate into 'read' function - in progress
+			- take into consideration instrument type for rotation/reference frames
+			- need function that can change dataarray coordinates for "rotatable" variables
+			- need ability to save as 'netcdf' - doesn't like curly braces {}
 	

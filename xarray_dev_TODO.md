@@ -1,5 +1,5 @@
 Xarray DOLfYN to MHKit
----------------------------
+----------------------
 1. Update documentation to cover DOLfYN’s full capabilities
 		- Format similarly to MHKiT documentation
 		- Update old and fill in missing documentation
@@ -8,13 +8,14 @@ Xarray DOLfYN to MHKit
 		
 2. Switch base datatype from h5py “Dolfyn dataobject” to Xarray “Dataset”
 		- start with xarray_testing2.py (code to convert h5py data object to xarray format)
-		- string that code to "dlfn.read()" for now (loads into h5 data object then converts over)
-		- build into IO code if time permits
+		- string that code to "dlfn.read()" (loads into h5 data object then converts over to a DataSet)
+		- build xarray into IO code if time permits
 
 3. Refactor code to call/pull from xarray “Dataset”
-		- Start with ADV code
-		- Update this list as things become clearer
-		- Update ADCP code with xarray since some routines appear in need of updating
+		- Rotation code - update so that all instrument rotations still return the same
+		- Create xarray classes equivalent to 'Velocity', 'TKEdata' and 'Velbinner', 'TurbBinner'
+		- Update 'clean' and 'motion correction' functions to run off xarray
+		- Update this list as necessary
 		
 		- Testing - compare h5py DOLfYN to xarray DOLfYN output
 		- Update documentation from step 2 with xarray referencing – API object/function arguments and keywords shouldn’t change

@@ -490,7 +490,7 @@ class VelBinner(TimeBinner):
         binner = dlfn.VelBinner(n_bin=600, fs=rawdat['props']['fs'])
 
         # This computes the basic averages
-        avg = binner(rawdat)
+        avg = binner.do_avg(rawdat)
 
     """
 

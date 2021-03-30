@@ -1,5 +1,5 @@
-ADCP/ADV Example Scripts
-.....................
+Example Scripts
+...............
 
 ADCP Data
 """""""""

@@ -9,9 +9,9 @@ DOLfYN Package
 .. toctree::
    :maxdepth: 5
 
-   dolfyn.io
-   dolfyn.data
    dolfyn.adp
    dolfyn.adv
+   dolfyn.io
+   dolfyn.data
    dolfyn.rotate
    dolfyn.tools

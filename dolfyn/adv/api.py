@@ -16,8 +16,8 @@ data. It contains:
 | .main.rotate2>`                   | between different coordinate systems    |
 +-----------------------------------+-----------------------------------------+
 | :mod:`clean <dolfyn.adv.clean>`   | A module containing functions for       |
-|                                   | cleaning data, filling NaN's,           |
-|                                   | different coordinate systems            |
+|                                   | cleaning, "despiking" and filling       |
+|                                   | NaN's in data                           |
 +-----------------------------------+-----------------------------------------+
 | :mod:`motion <dolfyn.adv.motion>` | A module containing classes and         |
 |                                   | functions for performing motion         |

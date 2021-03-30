@@ -8,7 +8,7 @@ press / pressure,dbar?,env,Pressure measured by the instrument
 temp,degrees Celsius,env,Temperature measured by the instrument
 accel,m/s\ :sup:`2`,orient,Vector acceleraton of the instrument
 angrt,rad/s,orient,Angular rotation rate of the instrument
-mag,milligauss,orient,Magnetometer data
+mag,milligauss or gauss,orient,Magnetometer data
 velraw,m/s,---,Velocity without motion-correction
 velrot,m/s,orient,Rotational motion velocity (computed from angrt)
 velacc,m/s,orient,Translational motion velocity (computed from accel)
