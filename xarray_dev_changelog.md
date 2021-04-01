@@ -12,7 +12,7 @@ Xarray DOLfYN to MHKiT Changelog
 - Organize most relevent aspects of code to run straight from 'import dolfyn as dlfn' and correct import inconsistencies - done
 - Fixed mathmatical error in 'range' calculation (bin 1 dist = blank dist + cell size)
 - Fixed Nortek echosounder 'dB' scaling
-- when loading TRDI data with bottom-track, every subsequent datafile will contain the 'bt' variables even if the instrument didn't record them
+- Bug (unimportant) - when reading TRDI data with bottom-track, every subsequently read datafile will contain the 'bt' variables even if the instrument didn't record them
 
 - Update documentation
 	- Create sphinx API doctree - done
@@ -25,18 +25,21 @@ Xarray DOLfYN to MHKiT Changelog
 	
 - Convert DOLfYN object to xarray DataSet
 	- basic conversion file - done
-	- create function out of conversion file and incorporate into 'read' function - in progress
-			- need function that can change dataarray coordinates for "rotatable" variables - done
+	- create function out of conversion file and incorporate into 'read' function - in progress as bugs show up
+			- Need function that can change dataarray coordinates for "rotatable" variables - done
 				- take into consideration instrument type for rotation/reference frames
 				- going to feed this into the rotations code
+			- Need ability to save as 'netcdf' - done
+				- noted that it's impossible to save multivariable attributes in xarray
+				- transformation matrices are thus saved in the dataset variables list
 			- removed 'sys' variables from xarray dataset because it was near impossible to save them
 			- removed 'alt' variables because I'm not sure what they are <?>
 			- adjusted scaling on ambig_vel vars
 			- changed dataset 'keys' so that they're more consistent (including adding underscores)
 			- simplified 'config' dictionary in DOLfYN object so that it's easier to read
-				- really should just read straight into xarray if I had time
-			- need ability to save as 'netcdf' - done
-				- noted that it's impossible to save multivariable attributes in xarray
-				- transformation matrices are thus saved in the dataset variables list
-			
+		- Need to incorporate 'ast' and 'alt' keywords
+	- If time - attempt to read binary files straight into a dataset
+	
+- Refactor rotation code - in progress
+			- all functional, no classes here so should be straight forward
 	

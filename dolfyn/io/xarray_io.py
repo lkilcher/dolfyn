@@ -2,9 +2,12 @@ import numpy as np
 import xarray as xr
 from ..data.time import num2date
 
+
 def check_coords(dat):
-    # reference frames particular to instrument
-    # make sure assigned dataarray coordinates match what DOLfYN is reading in
+    '''
+    Check the current reference frame and adjust xarray coords/dims as necessary
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
+    '''
     make = dat.inst_make
     model = dat.inst_model
     coord_sys = dat.coord_sys
@@ -13,25 +16,33 @@ def check_coords(dat):
     ENU = ['E','N','U']
     beam = list(range(1,dat.vel.shape[0]+1))
     
-    if 'Nortek' in make:
+    # check make/model
+    if 'RDI' in make:
+        inst = ['X','Y','Z','err']
+        earth = ['E','N','U','err']
+        orient = {'beam':beam, 'ship':inst, 'inst':inst, 'earth':earth}
+        
+    elif 'Nortek' in make:
         if 'Sig' in model or '2' in model:
             inst = ['X','Y','Z1','Z2']
             earth = ['E','N','U1','U2']
             orient = {'beam':beam, 'inst':inst, 'earth':earth}
-        else:
+            
+        else: # AWAC or Vector
             inst = XYZ
             earth = ENU
             princ = ['streamwise','cross-stream','vertical']
             orient = {'beam':beam, 'inst':inst, 'earth':earth, 'princ':princ}
-    elif 'RDI' in make:
-        inst = ['X','Y','Z','err']
-        earth = ['E','N','U','err']
-        orient = {'beam':beam, 'ship':inst, 'inst':inst, 'earth':earth}
     
     orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
                  'princ':['streamwise','cross-stream','vertical']}
     
-    return orient[coord_sys], orientIMU[coord_sys]
+    # update 'orient' and 'orientIMU' dimensions
+    dat = dat.assign_coords({'orient': orient[coord_sys]})
+    dat.orient.attrs['ref_frame'] = dat.coord_sys
+    dat = dat.assign_coords({'orientIMU': orientIMU[coord_sys]})
+    
+    return dat
 
 
 def convert_xarray(dat):
@@ -47,6 +58,8 @@ def convert_xarray(dat):
     xdat = xr.Dataset()
     time = num2date(dat.mpltime)
     beam = list(range(1,dat.vel.shape[0]+1))
+    ax1 = ['x'+str(beam[n-1]) for n in beam]
+    ax2 = ['x'+str(beam[n-1])+'*' for n in beam]
     
     # Every dataset has velocity, range, mpltime
     try: #ADCPs
@@ -191,21 +204,24 @@ def convert_xarray(dat):
                             xdat[subkey].attrs['units'] = '%'
                             
             elif key=='orient':
-                subkeys = ['accel','angrt','mag','orientmat','raw','longitude','latitude']
+                #subkeys = ['accel','angrt','mag','orientmat','raw','longitude','latitude']
                 for subkey in subdat:
                     if 'orientmat' in subkey:
                         xdat[subkey] = xr.DataArray(dat.orient[subkey],
-                                                    coords={'inst':['X','Y','Z'], 
-                                                            'earth':['E','N','U'], 
-                                                            'time':time},
-                                                    dims=['inst', 'earth', 'time'], 
+                                                    coords={'inst': ['X','Y','Z'],
+                                                            'earth': ['E','N','U'], 
+                                                            'time': time},
+                                                    dims=['inst','earth','time'], 
                                                     attrs={'description':'orientation matrix for rotating data through coordinate frames'})
                     elif 'raw' in subkey:
-                        for ky in ['heading', 'pitch', 'roll']:
-                            xdat[ky] = xr.DataArray(dat['orient.raw'][ky],
-                                                    coords={'time': time},
-                                                    dims=['time'], 
-                                                    attrs={'units': 'deg'}) 
+                        for ky in ['heading', 'pitch', 'roll', 'orientation_down']:
+                            if ky in dat.orient.raw:
+                                xdat[ky] = xr.DataArray(dat['orient.raw'][ky],
+                                                        coords={'time': time},
+                                                        dims=['time'], 
+                                                        attrs={'units': 'deg'})
+                            else:
+                                pass # need orientation for signatures                     
                     elif len(np.shape(dat.orient[subkey]))==2:
                         try:
                             xdat[subkey] = xr.DataArray(dat.orient[subkey],
@@ -252,9 +268,12 @@ def convert_xarray(dat):
                             #                            dims='time')
                             xdat.attrs[subkey] = dat[key][subkey]
                         else:
-                            xdat[subkey] = xr.DataArray(dat[key][subkey])
-                    elif 'alt' in subkey:
-                        pass # because I'm not sure what to do with this at the moment
+                            xdat[subkey] = xr.DataArray(dat[key][subkey],
+                                                    coords={'ax1': ax1,
+                                                            'ax2': ax2},
+                                                    dims=['ax1','ax2'])
+                    elif 'alt' in subkey or 'ast' in subkey:
+                        pass # ?AD2CP second profiling configuration?
                     else:
                         xdat.attrs[subkey] = dat[key][subkey]
     
@@ -263,10 +282,10 @@ def convert_xarray(dat):
         xdat.range.attrs['units'] = 'm'
     
     # apply current reference frame to rotated variables
-    # 4-axis velocity terms vs 3-axis IMU data?
-    current_FoR, IMU_FoR = check_coords(xdat)
-    xdat = xdat.assign_coords({'orient':current_FoR})
-    xdat = xdat.assign_coords({'orientIMU':IMU_FoR})
+    xdat = check_coords(xdat)
+    
+    ## Base Classes
+    
     
     return xdat
 

@@ -435,7 +435,7 @@ def reorg(dat):
                 'altraw_nsamp', 'altraw_dist', 'altraw_samp',
                 'echo', 'dist', 'fom',
                 'orientmat', 'angrt', 'quaternion',
-                'percent_good', 'status0',
+                'prcnt_gd', 'status0',
                 'std_pitch', 'std_roll', 'std_heading', 'std_press'
         ]:
             if ky in dnow:

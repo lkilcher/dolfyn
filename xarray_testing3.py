@@ -12,16 +12,27 @@ from dolfyn.data.time import num2date
 #dat = dlfn.read_example('RDI_test01.000')
 #dat = dlfn.read_example('winriver01.PD0')
 #dat = dlfn.read_example('RDI_test01.000')
-dat = dlfn.read_example('vector_data_imu01.VEC')
+#dat = dlfn.read_example('vector_data_imu01.VEC')
+#dat = dlfn.read_example('burst_mode01.VEC')
 #dat = dlfn.read_example('AWAC_test01.wpr')
 #dat = dlfn.read_example('Sig1000_IMU.ad2cp')
-#dat = dlfn.read_example('VelEchoBT01.ad2cp')s
-#dat = dlfn.read_example('BenchFile01.ad2cp')
+#dat = dlfn.read_example('Sig1000_BadTime01.ad2cp')
+#dat = dlfn.read_example('VelEchoBT01.ad2cp')
+dat = dlfn.read_example('BenchFile01.ad2cp')
 #dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/Sig500 8202020 flood (pm)/Downloaded/S100687A014_Desdemona.ad2cp')
 #dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/WH300 8192020 ebb (am)/Downloaded/SequimBayInterf_of_20200819T065701_003_002_000000.ENX')
 #dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/ADV files from APL MSL bay tests/SQM_03.VEC')
 
+########################################################################################################
+# Most effective way I've found to sort this. 'DRY'er code that automates this 
+# in fewer lines adds variables that no one cares about.
+
+
 def check_coords(dat):
+    '''
+    Check the current reference frame and adjust xarray coords/dims as necessary
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
+    '''
     make = dat.inst_make
     model = dat.inst_model
     coord_sys = dat.coord_sys
@@ -30,51 +41,56 @@ def check_coords(dat):
     ENU = ['E','N','U']
     beam = list(range(1,dat.vel.shape[0]+1))
     
-    if 'Nortek' in make:
+    # check make/model
+    if 'RDI' in make:
+        inst = ['X','Y','Z','err']
+        earth = ['E','N','U','err']
+        orient = {'beam':beam, 'ship':inst, 'inst':inst, 'earth':earth}
+        
+    elif 'Nortek' in make:
         if 'Sig' in model or '2' in model:
             inst = ['X','Y','Z1','Z2']
             earth = ['E','N','U1','U2']
             orient = {'beam':beam, 'inst':inst, 'earth':earth}
-        else:
+            
+        else: # AWAC or Vector
             inst = XYZ
             earth = ENU
             princ = ['streamwise','cross-stream','vertical']
             orient = {'beam':beam, 'inst':inst, 'earth':earth, 'princ':princ}
-    elif 'RDI' in make:
-        inst = ['X','Y','Z','err']
-        earth = ['E','N','U','err']
-        orient = {'beam':beam, 'ship':inst, 'inst':inst, 'earth':earth}
     
     orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
                  'princ':['streamwise','cross-stream','vertical']}
     
-    return orient[coord_sys], orientIMU[coord_sys]
+    # update 'orient' and 'orientIMU' dimensions
+    dat = dat.assign_coords({'orient': orient[coord_sys]})
+    dat.orient.attrs['ref_frame'] = dat.coord_sys
+    dat = dat.assign_coords({'orientIMU': orientIMU[coord_sys]})
+    
+    return dat
 
-########################################################################################################
-# Most effective way I've found to sort this. 'DRY'er code that automates this 
-# in fewer lines adds variables that no one cares about.
+
 xdat = xr.Dataset()
 time = num2date(dat.mpltime)
 beam = list(range(1,dat.vel.shape[0]+1))
+ax1 = ['x'+str(beam[n-1]) for n in beam]
+ax2 = ['x'+str(beam[n-1])+'*' for n in beam]
 
 # Every dataset has velocity, range, mpltime
-try: #ADCP
+try: #ADCPs
     xdat['vel'] = xr.DataArray(dat['vel'],
-                             coords={'orient':beam,
-                                     'range':dat['range'], 
-                                     'time':time},
-                             dims=['orient','range','time'],
-                             attrs={'units':'m/s',
-                                    'description':'velocity'})
+                               coords={'orient':beam,'range':dat['range'],'time':time},
+                               dims=['orient','range','time'],
+                               attrs={'units':'m/s',
+                                      'description':'velocity'})
     xdat.orient.attrs['frame of reference'] = 'beam'
     xdat.range.attrs['units'] = 'm'
-except: #ADV
+except: #ADVs
     xdat['vel'] = xr.DataArray(dat['vel'],
-                             coords={'orient':beam, 
-                                     'time':time},
-                             dims=['orient','time'],
-                             attrs={'units':'m/s',
-                                    'description':'velocity'})
+                               coords={'orient':beam,'time':time},
+                               dims=['orient','time'],
+                               attrs={'units':'m/s',
+                                      'description':'velocity'})
     xdat.orient.attrs['frame of reference'] = 'inst'
 
 # Check for 5th beam, echosounder, or bottom track data (nortek & rdi)
@@ -88,20 +104,18 @@ for key in dat:
     if any(val in key for val in dtype):
         if 'b5' in key:
             xdat['vel_b5'] = xr.DataArray(dat['vel_b5'][0],
-                                        coords={'range':dat['range_b5'], 
-                                                'time':time},
-                                        dims=['range','time'],
-                                        attrs={'units':'m/s',
-                                               'description':'5th beam velocity'})
+                                          coords={'range':dat['range_b5'],'time':time},
+                                          dims=['range','time'],
+                                          attrs={'units':'m/s',
+                                                 'description':'5th beam velocity'})
             dtype.pop(dtype.index('vel_b5'))
             
         elif 'echo' in key:
             xdat['echo'] = xr.DataArray(dat['echo'],
-                            coords={'range_echo':dat['range_echo'], 
-                                    'time':time},
-                            dims=['range_echo','time'],
-                            attrs={'units':'dB',
-                                   'description':'echosounder return amplitude'})
+                                        coords={'range_echo':dat['range_echo'],'time':time},
+                                        dims=['range_echo','time'],
+                                        attrs={'units':'dB',
+                                               'description':'echosounder return amplitude'})
             xdat.range_echo.attrs['units'] = 'm'
             dtype.pop(dtype.index('echo'))
             
@@ -110,24 +124,24 @@ for key in dat:
             dtype.pop(dtype.index(key))
             if 'vel' in key:
                 xdat[key] = xr.DataArray(dat[key], 
-                                         coords = {'orient':beam, 'time':time},
+                                         coords = {'orient':beam,'time':time},
                                          dims = ['orient','time'],
                                          attrs = {'units':'m/s',
                                          'description':'velocity measured by bottom track'})         
 
             elif ('range' in key) or ('dist' in key):
                 xdat[key] = xr.DataArray(dat[key], 
-                                         coords = {'beam':beam, 'time':time},
+                                         coords = {'beam':beam,'time':time},
                                          dims = ['beam','time'],
                                          attrs = {'units':'m',
                                          'description':'depth to seafloor measured by bottom track'})                    
     
     elif 'depth' in key: # only for TRDI, converts pressure sensor?
         xdat['depth'] = xr.DataArray(dat['depth_m'],
-                                      coords={'time':time},
-                                      dims=['time'],
-                                      attrs={'units':'m',
-                                             'description':'depth of instrument'})
+                                     coords={'time':time},
+                                     dims=['time'],
+                                     attrs={'units':'m',
+                                            'description':'depth of instrument'})
     # the other dictionaries
     elif size==():
         subdat = dat[key]
@@ -136,8 +150,8 @@ for key in dat:
             #subkeys = ['c_sound','temp','salinity','pressure']
             for subkey in subdat:
                 xdat[subkey] = xr.DataArray(dat.env[subkey],
-                                          coords={'time':time},
-                                          dims=['time'])
+                                            coords={'time':time},
+                                            dims=['time'])
                 if 'c_sound' in subkey:
                     xdat[subkey].attrs['units'] = 'm/s'
                     xdat[subkey].attrs['description'] = 'speed of sound'
@@ -150,17 +164,17 @@ for key in dat:
 
         elif key=='signal':
             subkeys = ['amp','corr','amp_b5','corr_b5',
-                       'bt_amp','amp_bt','corr_bt','bt_corr',
-                       'prcnt_gd','bt_prcnt_gd']
+                       'amp_bt','corr_bt',
+                       'prcnt_gd','prcnt_gd_bt']
             for subkey in subdat:
                 
                 if (subkey=='amp' or subkey=='corr' or subkey=='prcnt_gd'):
                     try: # ADCPs
                         xdat[subkey] = xr.DataArray(dat.signal[subkey],
-                                                     coords={'beam':beam, 
-                                                             'range':dat['range'], 
-                                                             'time':time},
-                                                     dims=['beam','range','time'])
+                                                    coords={'beam':beam, 
+                                                            'range':dat['range'], 
+                                                            'time':time},
+                                                    dims=['beam','range','time'])
                     except: # ADVs
                         xdat[subkey] = xr.DataArray(dat.signal[subkey],
                                                     coords={'beam':beam, 
@@ -178,9 +192,9 @@ for key in dat:
                     
                 elif 'b5' in subkey:
                     xdat[subkey] = xr.DataArray(dat.signal[subkey][0],
-                                              coords={'range':dat['range_b5'], 
+                                                coords={'range':dat['range_b5'], 
                                                       'time':time},
-                                              dims=['range','time'])
+                                                dims=['range','time'])
                     subkeys.pop(subkeys.index(subkey))
                     if 'amp' in subkey:
                         xdat[subkey].attrs['units'] = 'dB'
@@ -209,10 +223,10 @@ for key in dat:
             for subkey in subdat:
                 if 'orientmat' in subkey:
                     xdat[subkey] = xr.DataArray(dat.orient[subkey],
-                                                coords={'inst':['X','Y','Z'], 
-                                                        'earth':['E','N','U'], 
-                                                        'time':time},
-                                                dims=['inst', 'earth', 'time'], 
+                                                coords={'inst': ['X','Y','Z'],
+                                                        'earth': ['E','N','U'], 
+                                                        'time': time},
+                                                dims=['inst','earth','time'],
                                                 attrs={'description':'orientation matrix for rotating data through coordinate frames'})
                 elif 'raw' in subkey:
                     for ky in ['heading', 'pitch', 'roll']:
@@ -250,6 +264,7 @@ for key in dat:
                                                 attrs={'units': 'degrees'},)
 
         # all the other stuff goes into attributes
+        # need to change datatype to be netcdf "compatible" in order to save
         elif any(val in key for val in other):
             for subkey in dat[key]:
                 subsize = np.shape(dat[key][subkey])
@@ -265,8 +280,12 @@ for key in dat:
                         #                            dims='time')
                         xdat.attrs[subkey] = dat[key][subkey]
                     else:
-                        xdat[subkey] = xr.DataArray(dat[key][subkey])
-                        
+                        xdat[subkey] = xr.DataArray(dat[key][subkey],
+                                                coords={'ax1': ax1,
+                                                        'ax2': ax2},
+                                                dims=['ax1','ax2'])
+                elif 'alt' in subkey:
+                    pass # ?AD2CP second profiling configuration?
                 else:
                     xdat.attrs[subkey] = dat[key][subkey]
 
@@ -275,10 +294,7 @@ if 'range' in xdat:
     xdat.range.attrs['units'] = 'm'
 
 # apply current reference frame to rotated variables
-# 4-axis velocity terms vs 3-axis IMU data?
-current_FoR, IMU_FoR = check_coords(xdat)
-xdat = xdat.assign_coords({'orient':current_FoR})
-xdat = xdat.assign_coords({'orientIMU':IMU_FoR})
+xdat = check_coords(xdat)
 
 
 

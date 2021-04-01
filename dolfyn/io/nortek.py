@@ -885,7 +885,7 @@ class NortekReader(object):
         dat['config'] = self.config
         dat.props = {}
         dat.props['inst_make'] = 'Nortek'
-        dat.props['inst_model'] = 'VECTOR'
+        dat.props['inst_model'] = 'Vector'
         dat.props['inst_type'] = 'ADV'
         dat.props['rotate_vars'] = {'vel', }
         # Question to Nortek: How do they determine how many samples are in a
