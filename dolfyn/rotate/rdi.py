@@ -74,9 +74,9 @@ def inst2earth(adcpo, reverse=False,
     # Only operate on the first 3-components, b/c the 4th is err_vel
     adcpo['vel'][:3] = np.einsum(sumstr, rotmat, adcpo['vel'][:3])
 
-    if 'bt_vel' in adcpo:
-        adcpo['bt_vel'][:3] = np.einsum(sumstr,
-                                        rotmat, adcpo['bt_vel'][:3])
+    if 'vel_bt' in adcpo:
+        adcpo['vel_bt'][:3] = np.einsum(sumstr,
+                                        rotmat, adcpo['vel_bt'][:3])
     adcpo.props._set('coord_sys', cs)
 
 

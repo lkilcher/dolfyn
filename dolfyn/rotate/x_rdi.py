@@ -1,15 +1,16 @@
 import numpy as np
-from .vector import earth2principal, inst2earth as nortek_inst2earth
-from .base import beam2inst
+from .x_vector import earth2principal, inst2earth as nortek_inst2earth
+from .x_main import beam2inst, _set_coords
 
 
 def inst2earth(adcpo, reverse=False,
                fixed_orientation=False, force=False):
-    """Rotate velocities from the instrument to earth coordinates.
+    """
+    Rotate velocities from the instrument to earth coordinates.
 
     This function also rotates data from the 'ship' frame, into the
     earth frame when it is in the ship frame (and
-    ``adcpo.config['use_pitchroll'] == 'yes'``). It does not support the
+    ``adcpo.use_pitchroll == 'yes'``). It does not support the
     'reverse' rotation back into the ship frame.
 
     Parameters
@@ -30,22 +31,15 @@ def inst2earth(adcpo, reverse=False,
     -----
     The rotation matrix is taken from the Teledyne RDI ADCP Coordinate
     Transformation manual January 2008
-
-    When performing the forward rotation, this function sets the
-    'inst2earth:fixed' flag to the value of `fixed_orientation`. When
-    performing the reverse rotation, that value is 'popped' from the
-    props dict and the input value to this function
-    `fixed_orientation` has no effect. If `'inst2earth:fixed'` is not
-    in the props dict than the input value *is* used.
+    
     """
-    if adcpo.props['inst_make'].lower() == 'nortek':
+    if adcpo.inst_make.lower() == 'nortek':
         # Handle nortek rotations with the nortek (adv) rotate fn.
         return nortek_inst2earth(adcpo, reverse=reverse, force=force)
 
-    csin = adcpo.props['coord_sys'].lower()
+    csin = adcpo.coord_sys.lower()
     cs_allowed = ['inst', 'ship']
     if reverse:
-        #cs_allowed = ['earth', 'enu']
         cs_allowed = ['earth']
     if not force and csin not in cs_allowed:
         raise ValueError("Invalid rotation for data in {}-frame "
@@ -56,28 +50,23 @@ def inst2earth(adcpo, reverse=False,
     # NOTE the double 'rollaxis' within this function, and here, has
     # minimal computational impact because np.rollaxis returns a
     # view (not a new array)
-    rotmat = np.rollaxis(adcpo['orient']['orientmat'], 1)
-
-    sumstr = 'ijt,j...t->i...t'
-    cs = 'earth'
+    rotmat = np.rollaxis(adcpo['orientmat'].values, 1)
     if reverse:
-        cs = 'inst'
-        fixed_orientation = adcpo.props.pop('inst2earth:fixed',
-                                            fixed_orientation)
-        sumstr = sumstr.replace('ij', 'ji')  # Transpose for reverse rotation
+        cs_new = 'inst'
+        sumstr = 'jik,j...k->i...k'
     else:
-        adcpo.props['inst2earth:fixed'] = fixed_orientation
-    if fixed_orientation:
-        sumstr = sumstr.replace('t,', ',')
-        rotmat = rotmat.mean(-1)
+        cs_new = 'earth'
+        sumstr = 'ijk,j...k->i...k'
 
     # Only operate on the first 3-components, b/c the 4th is err_vel
-    adcpo['vel'][:3] = np.einsum(sumstr, rotmat, adcpo['vel'][:3])
-
-    if 'bt_vel' in adcpo:
-        adcpo['bt_vel'][:3] = np.einsum(sumstr,
-                                        rotmat, adcpo['bt_vel'][:3])
-    adcpo.props._set('coord_sys', cs)
+    for nm in adcpo.rotate_vars:
+        dat = adcpo[nm].values
+        dat[:3] = np.einsum(sumstr, rotmat, dat[:3])
+        adcpo[nm].values = dat.copy()
+   
+    adcpo = _set_coords(adcpo, cs_new)
+    
+    return adcpo
 
 
 def calc_orientmat(adcpo):
@@ -102,12 +91,12 @@ def calc_orientmat(adcpo):
     Tilt2 is the measured roll from the internal sensor The raw pitch
     (Tilt 1) is recorded in the variable leader. P is set to 0 if the
     "use tilt" bit of the EX command is not set."""
-    odat = adcpo.orient
-    r = np.deg2rad(odat.roll)
-    p = np.arctan(np.tan(np.deg2rad(odat.pitch)) * np.cos(r))
-    h = np.deg2rad(odat.heading)
-    if adcpo.props['inst_make'].lower() == 'rdi':
-        if adcpo.config.orientation == 'up':
+
+    r = np.deg2rad(adcpo['roll'].values)
+    p = np.arctan(np.tan(np.deg2rad(adcpo['pitch'].values)) * np.cos(r))
+    h = np.deg2rad(adcpo['heading'].values)
+    if adcpo.inst_make.lower() == 'rdi':
+        if adcpo.orientation == 'up':
             """
             ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
             Since the roll describes the ship axes rather than the
@@ -118,8 +107,8 @@ def calc_orientmat(adcpo):
             to 0 if the "use tilt" bit of the EX command is not set.
             """
             r += np.pi
-        if (adcpo.props['coord_sys'] == 'ship' and
-                adcpo.config['use_pitchroll'] == 'yes'):
+        if (adcpo.coord_sys == 'ship' and
+                adcpo.use_pitchroll == 'yes'):
             r[:] = 0
             p[:] = 0
     ch = np.cos(h)

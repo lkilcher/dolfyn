@@ -7,27 +7,27 @@ class BadDeterminantWarning(UserWarning):
     """
     pass
 
+## This code does nothing because the for loops return nothing
+# def _find_method(obj, string):
+#     """Find methods in object that starts with `string`.
+#     """
+#     out = []
+#     for key in dir(obj):
+#         if key.startswith(string):
+#             out.append(getattr(obj, key))
+#     return out
 
-def _find_method(obj, string):
-    """Find methods in object that starts with `string`.
-    """
-    out = []
-    for key in dir(obj):
-        if key.startswith(string):
-            out.append(getattr(obj, key))
-    return out
 
+# def call_rotate_methods(velobj, rmat, cs_from, cs_to):
 
-def call_rotate_methods(velobj, rmat, cs_from, cs_to):
-
-    for rot_method in _find_method(velobj, '_rotate_'):
-        # Call the method:
-        rot_method(rmat, cs_from, cs_to)
-    # Now search subgroups
-    for subobj in velobj.iter_subgroups():
-        for rot_method in _find_method(subobj, '_rotate_'):
-            # And call their rotate methods
-            rot_method(rmat, cs_from, cs_to)
+#     for rot_method in _find_method(velobj, '_rotate_'):
+#         # Call the method:
+#         rot_method(rmat, cs_from, cs_to)
+#     # Now search subgroups
+#     for subobj in velobj.iter_subgroups():
+#         for rot_method in _find_method(subobj, '_rotate_'):
+#             # And call their rotate methods
+#             rot_method(rmat, cs_from, cs_to)
 
 
 def rotate_tensor(tensor, rmat):

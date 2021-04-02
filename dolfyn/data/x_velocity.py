@@ -15,7 +15,7 @@ import xarray as xr
 # operates as a normal class as well, , but raises warnings if they're the same name
 # that was easy
 @xr.register_dataset_accessor('Velocity')
-class VelocityAcc():
+class Velocity():
     """This is the base class for velocity data objects.
 
     All ADCP and ADV data objects inherit from this base class.
@@ -306,7 +306,7 @@ class VelocityAcc():
                               self.ds.inst_model).lower()
                               
 @xr.register_dataset_accessor('TKEdata')
-class TKEdataAcc(VelocityAcc):
+class TKEdata(Velocity):
     """This is the base class for turbulence data objects.
 
     The attributes and methods defined for this class assume that the

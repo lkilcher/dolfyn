@@ -42,22 +42,20 @@ Xarray DOLfYN to MHKiT Changelog
 	- Incorporate 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
 	
 - Refactor DOLfYN
-	- can't call x_*.py versions???
-		- Rotation code - in progress
+	- can't call x_*.py files?
+		- Rotation code - done & needs checking/testing
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
-			- Need to run through individual rotations code
-			- Orientation not taken into account for Nortek Signatures?
-			- Need to add function that changes xarray coords/dims
+			- Orientation up/down not taken into account for Nortek Signatures?
+			- Setters for 'coord_sys' and 'principal_heading' with xarray?
+			
+		- Motion correction code - 
 			
 		- TimeData, Velocity, TKEdata class refactoring - done (for now)
 			- TimeData is now void
 			- Add Velocity and TKEdata as xarray accessors
-				- xr accessors activate simply by creating the xarray dataset through read
-				- operates as a normal class as well, but raises warnings if they're the same name
-				- that was easy
 			- These will have to feed into the ADV and ADP objects, so they might lose their accessor status and simply inherit into ADPdata and ADVdata
 				- will change these two when I adjust the binary readers
 			
-		- TimeBinner, VelBinner, TurbBinner - keeping these as standalone classes that inherit off one another - on standby
+		- TimeBinner, VelBinner, TurbBinner - keeping these as standalone classes that inherit off one another - standby
 			
 	

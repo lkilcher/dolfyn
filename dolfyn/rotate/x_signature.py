@@ -1,21 +1,19 @@
-from . import base as rotb
-from .vector import earth2principal
-from .base import beam2inst
-from .vector import _euler2orient as euler2orient
+from .x_vector import earth2principal, _euler2orient as euler2orient
+from .x_main import beam2inst
+from . import x_main as rotb
 import numpy as np
 import warnings
 from numpy.linalg import inv
-from . import base as rotb
 
 
-def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
+def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     """
-    Rotate data in an ADV object to the earth from the instrument
+    Rotate data in an ADCP object to the earth from the instrument
     frame (or vice-versa).
 
     Parameters
     ----------
-    advo : The adv object containing the data.
+    adcpo : The adv object containing the data.
 
     reverse : bool (default: False)
            If True, this function performs the inverse rotation
@@ -23,7 +21,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     rotate_vars : iterable
       The list of variables to rotate. By default this is taken from
-      advo.props['rotate_vars'].
+      adcpo.props['rotate_vars'].
 
     force : Do not check which frame the data is in prior to
       performing this rotation.
@@ -42,12 +40,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         cs_new = 'earth'
 
     if rotate_vars is None:
-        if 'rotate_vars' in advo.props:
-            rotate_vars = advo.props['rotate_vars']
+        if 'rotate_vars' in adcpo.attrs:
+            rotate_vars = adcpo.rotate_vars
         else:
             rotate_vars = ['vel']
 
-    cs = advo.props['coord_sys'].lower()
+    cs = adcpo.coord_sys.lower()
     if not force:
         if cs == cs_new:
             print("Data is already in the '%s' coordinate system" % cs_new)
@@ -57,12 +55,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                 "Data must be in the '%s' frame when using this function" %
                 cs_now)
 
-    od = advo['orient']
-    if hasattr(od, 'orientmat'):
-        rmat = od['orientmat'].copy()
-
+    if hasattr(adcpo, 'orientmat'):
+        rmat = adcpo['orientmat'].values
     else:
-        rmat = euler2orient(od['heading'], od['pitch'], od['roll'])
+        rmat = euler2orient(adcpo['heading'].values, adcpo['pitch'].values,
+                            adcpo['roll'].values)
+        
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
     rmat = np.rollaxis(rmat, 1)
@@ -112,20 +110,17 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         rmd[4] = np.moveaxis(inv(np.moveaxis(rmd[4], -1, 0)), 0, -1)
 
     for nm in rotate_vars:
-        n = advo[nm].shape[0]
+        dat = adcpo[nm].values
+        n = dat.shape[0]
         if n == 3:
-            advo[nm] = np.einsum(sumstr, rmd[3], advo[nm])
+            dat = np.einsum(sumstr, rmd[3], dat)
         elif n == 4:
-            advo[nm] = np.einsum('ijk,j...k->i...k', rmd[4], advo[nm])
+            dat = np.einsum('ijk,j...k->i...k', rmd[4], dat)
         else:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
+        adcpo[nm].values = dat.copy()
 
-    if reverse:
-        rotb.call_rotate_methods(advo, np.rollaxis(rmd[3], 1), 'earth', 'inst')
-    else:
-        rotb.call_rotate_methods(advo, rmd[3], 'inst', 'earth')
+    adcpo = rotb._set_coords(adcpo, cs_new)
 
-    advo.props._set('coord_sys', cs_new)
-
-    return
+    return adcpo

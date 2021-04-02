@@ -96,10 +96,10 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                             "be rotated.".format(nm))
         advo[nm] = np.einsum(sumstr, rmat, advo[nm])
 
-    if reverse:
-        rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
-    else:
-        rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
+    # if reverse:
+    #     rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
+    # else:
+    #     rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
 
     advo.props._set('coord_sys', cs_new)
 

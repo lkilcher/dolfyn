@@ -11,17 +11,16 @@ from dolfyn.data.time import num2date
 #dat = dlfn.read_example('RDI_withBT.000')
 #dat = dlfn.read_example('RDI_test01.000')
 #dat = dlfn.read_example('winriver01.PD0')
-#dat = dlfn.read_example('RDI_test01.000')
 #dat = dlfn.read_example('vector_data_imu01.VEC')
 #dat = dlfn.read_example('burst_mode01.VEC')
 #dat = dlfn.read_example('AWAC_test01.wpr')
 #dat = dlfn.read_example('Sig1000_IMU.ad2cp')
 #dat = dlfn.read_example('Sig1000_BadTime01.ad2cp')
 #dat = dlfn.read_example('VelEchoBT01.ad2cp')
-dat = dlfn.read_example('BenchFile01.ad2cp')
+#dat = dlfn.read_example('BenchFile01.ad2cp')
 #dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/Sig500 8202020 flood (pm)/Downloaded/S100687A014_Desdemona.ad2cp')
 #dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/WH300 8192020 ebb (am)/Downloaded/SequimBayInterf_of_20200819T065701_003_002_000000.ENX')
-#dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/ADV files from APL MSL bay tests/SQM_03.VEC')
+dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/ADV files from APL MSL bay tests/SQM_03.VEC')
 
 ########################################################################################################
 # Most effective way I've found to sort this. 'DRY'er code that automates this 

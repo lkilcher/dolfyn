@@ -121,10 +121,10 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
 
-    if reverse:
-        rotb.call_rotate_methods(advo, np.rollaxis(rmd[3], 1), 'earth', 'inst')
-    else:
-        rotb.call_rotate_methods(advo, rmd[3], 'inst', 'earth')
+    # if reverse:
+    #     rotb.call_rotate_methods(advo, np.rollaxis(rmd[3], 1), 'earth', 'inst')
+    # else:
+    #     rotb.call_rotate_methods(advo, rmd[3], 'inst', 'earth')
 
     advo.props._set('coord_sys', cs_new)
 

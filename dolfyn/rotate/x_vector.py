@@ -1,9 +1,7 @@
 from __future__ import division
 import numpy as np
 import warnings
-from . import base as rotb
-from . import x_main
-import xarray as xr
+from . import x_main as rotb
 
 
 def beam2inst(dat, reverse=False, force=False):
@@ -70,9 +68,9 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     #odata = advo['orient']
     if hasattr(advo, 'orientmat'):
-        omat = advo['orientmat']
+        omat = advo['orientmat'].values
     else:
-        if advo._make_model.startswith('nortek vector'):
+        if 'nortek vector' in advo.Velocity._make_model:
             orientation_down = advo['orientation_down']
         else:
             orientation_down = None
@@ -96,16 +94,11 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         if n != 3:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
-        advo[nm] = np.einsum(sumstr, rmat, advo[nm])
+        advo[nm].values = np.einsum(sumstr, rmat, advo[nm])
+    
+    advo = rotb._set_coords(advo, cs_new)
 
-    if reverse:
-        rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
-    else:
-        rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
-
-    advo.props._set('coord_sys', cs_new)
-
-    return
+    return advo
       
 
 def calc_omat(hh, pp, rr, orientation_down=None):
@@ -186,21 +179,23 @@ def earth2principal(advo, reverse=False):
            (principal->earth).
 
     """
-
+    if not 'principal_heading' in advo.attrs:
+        advo.attrs['principal_heading'] = rotb.calc_principal_heading(advo.vel)
+    
     try:
         # this is in degrees CW from North
-        ang = np.deg2rad(90 - advo.props['principal_heading'])
+        ang = np.deg2rad(90 - advo.principal_heading)
         # convert this to radians CCW from east (which is expected by
         # the rest of the function)
     except KeyError:
-        if 'principal_angle' in advo['props']:
+        if 'principal_angle' in advo.attrs:
             warnings.warn(
                 "'principal_angle' will be deprecated in a future release of "
                 "DOLfYN. Please update your file to use ``principal_heading = "
                 "(90 - np.rad2deg(principal_angle))``."
             )
             # This is in radians CCW from east
-            ang = advo.props['principal_angle']
+            ang = advo.principal_angle
 
     if reverse:
         cs_now = 'principal'
@@ -210,7 +205,7 @@ def earth2principal(advo, reverse=False):
         cs_now = 'earth'
         cs_new = 'principal'
 
-    cs = advo.props['coord_sys'].lower()
+    cs = advo.coord_sys.lower()
     if cs == cs_new:
         print('Data is already in the %s coordinate system' % cs_new)
         return
@@ -226,12 +221,16 @@ def earth2principal(advo, reverse=False):
                        [0, 0, 1]], dtype=np.float32)
 
     # Perform the rotation:
-    for nm in advo.props['rotate_vars']:
-        dat = advo[nm]
+    for nm in advo.rotate_vars:
+        dat = advo[nm].values
         dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
-
+        advo[nm].values = dat.copy()
+    
     # Finalize the output.
-    advo.props._set('coord_sys', cs_new)
+    #advo.props._set('coord_sys', cs_new)
+    advo = rotb._set_coords(advo, cs_new)
+    
+    return advo
 
 
 def _euler2orient(heading, pitch, roll, units='degrees'):
