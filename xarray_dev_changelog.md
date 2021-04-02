@@ -33,13 +33,31 @@ Xarray DOLfYN to MHKiT Changelog
 				- noted that it's impossible to save multivariable attributes in xarray
 				- transformation matrices are thus saved in the dataset variables list
 			- removed 'sys' variables from xarray dataset because it was near impossible to save them
-			- removed 'alt' variables because I'm not sure what they are <?>
+			- removed 'alt' variables for now ...
 			- adjusted scaling on ambig_vel vars
 			- changed dataset 'keys' so that they're more consistent (including adding underscores)
 			- simplified 'config' dictionary in DOLfYN object so that it's easier to read
 		- Need to incorporate 'ast' and 'alt' keywords
-	- If time - attempt to read binary files straight into a dataset
+	- Attempt to read binary files straight into a dataset
+	- Incorporate 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
 	
-- Refactor rotation code - in progress
-			- all functional, no classes here so should be straight forward
+- Refactor DOLfYN
+	- can't call x_*.py versions???
+		- Rotation code - in progress
+			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
+			- Need to run through individual rotations code
+			- Orientation not taken into account for Nortek Signatures?
+			- Need to add function that changes xarray coords/dims
+			
+		- TimeData, Velocity, TKEdata class refactoring - done (for now)
+			- TimeData is now void
+			- Add Velocity and TKEdata as xarray accessors
+				- xr accessors activate simply by creating the xarray dataset through read
+				- operates as a normal class as well, but raises warnings if they're the same name
+				- that was easy
+			- These will have to feed into the ADV and ADP objects, so they might lose their accessor status and simply inherit into ADPdata and ADVdata
+				- will change these two when I adjust the binary readers
+			
+		- TimeBinner, VelBinner, TurbBinner - keeping these as standalone classes that inherit off one another - on standby
+			
 	
