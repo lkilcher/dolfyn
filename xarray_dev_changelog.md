@@ -48,7 +48,8 @@ Xarray DOLfYN to MHKiT Changelog
 			- Orientation up/down not taken into account for Nortek Signatures?
 			- Setters for 'coord_sys' and 'principal_heading' with xarray?
 			
-		- Motion correction code - 
+		- Motion correction code - done & needs trying
+			- motion correction object is now void as it was a copy of the function
 			
 		- TimeData, Velocity, TKEdata class refactoring - done (for now)
 			- TimeData is now void
