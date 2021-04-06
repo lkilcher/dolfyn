@@ -34,3 +34,5 @@ tmp*.py
 .DS_Store
 
 .vscode/
+
+xarray_testing3.py

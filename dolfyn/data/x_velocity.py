@@ -5,8 +5,8 @@ import numpy as np
 from .x_binned import TimeBinner
 import warnings
 #from .time import num2date
-from ..rotate.x_main import rotate2
-from ..rotate import base as rotb
+from ..rotate.main import rotate2
+from ..rotate import main as rotb
 from ..rotate.x_vector import _rotate_head2inst
 import xarray as xr
 

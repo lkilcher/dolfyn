@@ -1,6 +1,6 @@
 from .x_vector import earth2principal, _euler2orient as euler2orient
-from .x_main import beam2inst
-from . import x_main as rotb
+from .main import beam2inst
+from . import main as rotb
 import numpy as np
 import warnings
 from numpy.linalg import inv

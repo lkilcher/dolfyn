@@ -3,8 +3,8 @@ from .base import np, ma, TimeData, FreqData
 from .binned import TimeBinner
 import warnings
 from .time import num2date
-from ..rotate import rotate2
-from ..rotate import base as rotb
+from ..rotate.main import rotate2
+from ..rotate import main as rotb
 from ..rotate.vector import _rotate_head2inst
 
 

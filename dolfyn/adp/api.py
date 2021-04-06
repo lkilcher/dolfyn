@@ -30,6 +30,6 @@ Examples
 """
 
 from ..io.api import read, load
-from ..rotate import rotate2
+from ..rotate.main import rotate2
 from . import clean
 from ..data.velocity import VelBinner

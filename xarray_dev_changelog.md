@@ -42,14 +42,14 @@ Xarray DOLfYN to MHKiT Changelog
 	- Incorporate 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
 	
 - Refactor DOLfYN
-	- can't call x_*.py files?
-		- Rotation code - done & needs checking/testing
+	- started renaming files to x_*.py
+		- Rotation code - done, checking
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
 			- Orientation up/down not taken into account for Nortek Signatures?
 			- Setters for 'coord_sys' and 'principal_heading' with xarray?
 			
-		- Motion correction code - done & needs trying
-			- motion correction object is now void as it was a copy of the function
+		- Motion correction code - done
+			- motion correction object has been removed
 			
 		- TimeData, Velocity, TKEdata class refactoring - done (for now)
 			- TimeData is now void

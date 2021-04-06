@@ -43,7 +43,7 @@ Examples
 """
 
 from ..io.api import read, load
-from ..rotate import rotate2
+from ..rotate.main import rotate2
 from . import clean
-from . import motion
+from .x_motion import correct_motion
 from .turbulence import calc_turbulence, TurbBinner

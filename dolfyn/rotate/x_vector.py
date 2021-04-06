@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import warnings
-from . import x_main as rotb
+from . import main as rotb
 
 
 def beam2inst(dat, reverse=False, force=False):
@@ -15,8 +15,8 @@ def beam2inst(dat, reverse=False, force=False):
         # Now rotate to beam
         rotb.beam2inst(dat, reverse=reverse, force=force)
 
-# Set the docstring to match the default rotation func
-beam2inst.__doc_ = rotb.beam2inst.__doc__
+    # Set the docstring to match the default rotation func
+    beam2inst.__doc_ = rotb.beam2inst.__doc__
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
