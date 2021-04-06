@@ -65,7 +65,7 @@ class CalcMotion(object):
 
         self._set_Accel()
         self._set_acclow()
-        self.angrt = advo['angrt']  # No copy because not modified.
+        self.angrt = advo['angrt'].values  # No copy because not modified.
 
     def _check_filtfreqs(self, accel_filtfreq, vel_filtfreq):
         datval = self.advo.attrs.get('motion accel_filtfreq Hz', None)
@@ -283,7 +283,7 @@ def correct_motion(advo,
       a flag to perform motion-correction at the probe tips, and
       perform motion correction in beam-coordinates, then transform
       back into XYZ/earth coordinates. This correction seems to be
-      lower than the noise levels of the ADV, so the defualt is to not
+      lower than the noise levels of the ADV, so the default is to not
       use it (False).
 
     Returns
@@ -415,25 +415,27 @@ def correct_motion(advo,
                                      'accel', 'acclow',
                                      'angrt', 'mag']
     else:
-        advo.attrs['rotate_vars'].append(['velrot', 'velacc', 'acclow'])
+        advo.attrs['rotate_vars'].extend(['velrot', 'velacc', 'acclow'])
 
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
     if to_earth:
         advo['accel'].values = calcobj.accel
-        rot.inst2earth(advo, rotate_vars = advo.attrs['rotate_vars'].remove(
-                       ['accel', 'acclow', 'velacc']))
+        to_remove = ['accel', 'acclow', 'velacc']
+        advo = rot.inst2earth(advo, rotate_vars=[e for e in 
+                                                 advo.attrs['rotate_vars']
+                                                 if e not in to_remove])
     else:
         # rotate these variables back to the instrument frame.
-        rot.inst2earth(advo, reverse=True,
-                       rotate_vars=['acclow', 'velacc'],
-                       force=True)
+        advo = rot.inst2earth(advo, reverse=True,
+                              rotate_vars=['acclow', 'velacc'],
+                              force=True)
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    advo['velraw'] = xr.DataArray(advo.vel.copy(), dims=['orient','time'])
+    advo['vel_raw'] = xr.DataArray(advo.vel.copy(), dims=['orient','time'])
     # Add it to rotate_vars:
-    advo.attrs['rotate_vars'].append('velraw')
+    advo.attrs['rotate_vars'].append('vel_raw')
 
     ##########
     # Remove motion from measured velocity! <woot!>
