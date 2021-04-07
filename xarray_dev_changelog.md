@@ -45,10 +45,13 @@ Xarray DOLfYN to MHKiT Changelog
 	- started renaming files to x_*.py
 		- Rotation code - done, checking
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
-			- Orientation up/down not taken into account for Nortek Signatures?
-			- Setters for 'coord_sys' and 'principal_heading' with xarray?
 			
-		- Motion correction code - done
+			- Orientation up/down not taken into account for Nortek Signatures? - in progress
+			- Setters for 'coord_sys' and 'principal_heading' with xarray?
+			- Fixed two Nortek Signature rotation errors - one for upside down instruments (sign change) and one for upside up instruments (if-statement mistake)
+			- Still a (truncation?) 1% ish error for upside up signatures
+			
+		- Motion correction code - done, checked
 			- motion correction object has been removed
 			
 		- TimeData, Velocity, TKEdata class refactoring - done (for now)

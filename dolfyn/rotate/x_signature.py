@@ -1,6 +1,6 @@
 from .x_vector import earth2principal, _euler2orient as euler2orient
-from .main import beam2inst
-from . import main as rotb
+from .base import beam2inst
+from . import base as rotb
 import numpy as np
 import warnings
 from numpy.linalg import inv
@@ -25,7 +25,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
 
     force : Do not check which frame the data is in prior to
       performing this rotation.
-
+      
     """
 
     if reverse:
@@ -38,6 +38,14 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         sumstr = 'ijk,j...k->i...k'
         cs_now = 'inst'
         cs_new = 'earth'
+    
+    # if ADCP is upside down
+    if adcpo.orientation==5:
+        sign = np.array([1, -1, -1, -1])
+        down = True
+    else:
+        sign = np.array([1, 1, 1, 1])
+        down = False
 
     if rotate_vars is None:
         if 'rotate_vars' in adcpo.attrs:
@@ -60,7 +68,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     else:
         rmat = euler2orient(adcpo['heading'].values, adcpo['pitch'].values,
                             adcpo['roll'].values)
-        
+    
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
     rmat = np.rollaxis(rmat, 1)
@@ -105,7 +113,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     # tmp[0, 2:] = rmat[0, 2] / 3
     # tmp[1, 2:] = rmat[1, 2] / 3
 
-    if reverse:
+    if down:
         # 3-element inverse handled by sumstr definition (transpose)
         rmd[4] = np.moveaxis(inv(np.moveaxis(rmd[4], -1, 0)), 0, -1)
 
@@ -115,7 +123,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         if n == 3:
             dat = np.einsum(sumstr, rmd[3], dat)
         elif n == 4:
-            dat = np.einsum('ijk,j...k->i...k', rmd[4], dat)
+            dat = sign[:,None,None]*np.einsum('ijk,j...k->i...k', rmd[4], dat)
         else:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
