@@ -12,7 +12,7 @@ processing and data analysis tasks.
 
 from ._version import __version__
 from .io.api import read, load, read_example
-from .rotate.main import rotate2, orient2euler, euler2orient, calc_principal_heading
+from .rotate.main import rotate2, calc_principal_heading
 from .data.x_velocity import VelBinner, Velocity, TKEdata
 from .data.base import TimeData
 from .adv import api as adv

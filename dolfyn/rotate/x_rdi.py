@@ -1,6 +1,6 @@
 import numpy as np
 from .x_vector import earth2principal, inst2earth as nortek_inst2earth
-from .main import beam2inst, _set_coords
+from .base import beam2inst, _set_coords
 
 
 def inst2earth(adcpo, reverse=False,

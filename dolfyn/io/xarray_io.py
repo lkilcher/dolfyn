@@ -250,6 +250,8 @@ def convert_xarray(dat):
                                                     dims=['time'], 
                                                     coords={'time': time},
                                                     attrs={'units': 'degrees'},)
+                    elif 'orient_up' in subkey:
+                        xdat.attrs['orientation'] = dat.orient[subkey][0]
     
             # all the other stuff goes into attributes
             # need to change datatype to be netcdf "compatible" in order to save

@@ -2,32 +2,61 @@ import numpy as np
 from numpy.linalg import det, inv
 
 
+def _set_coords(ds, ref_frame, forced=False):
+    '''
+    Check the current reference frame and adjust xarray coords/dims as necessary
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
+    '''
+    
+    make = ds.Velocity._make_model
+    
+    XYZ = ['X','Y','Z']
+    ENU = ['E','N','U']
+    beam = list(range(1,ds.vel.shape[0]+1))
+    
+    # check make/model
+    if 'rdi' in make:
+        inst = ['X','Y','Z','err']
+        earth = ['E','N','U','err']
+        princ = ['streamwise','cross-stream','vertical','err']
+        
+    elif 'nortek' in make:
+        if 'signature' in make or 'ad2cp' in make:
+            inst = ['X','Y','Z1','Z2']
+            earth = ['E','N','U1','U2']
+            princ = ['streamwise','cross-stream','vertical1','vertical2']
+
+        else: # AWAC or Vector
+            inst = XYZ
+            earth = ENU
+            princ = ['streamwise','cross-stream','vertical']
+    
+    orient = {'beam':beam, 'inst':inst, 'ship': inst, 'earth':earth, 'principal':princ}
+    
+    orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
+                 'principal':['streamwise','cross-stream','vertical']}
+    
+    if forced:
+        ref_frame += '-forced'
+    
+    # update 'orient' and 'orientIMU' dimensions
+    ds = ds.assign_coords({'orient': orient[ref_frame]})
+    ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
+    ds.orient.attrs['ref_frame'] = ref_frame
+    ds.attrs['coord_sys'] = ref_frame    
+    
+    # This is essentially one extra line to scroll through
+    # Going to drop at some point
+    if hasattr(ds, 'coord_sys_axes'):
+        ds.attrs.pop('coord_sys_axes')
+    
+    return ds
+
+
 class BadDeterminantWarning(UserWarning):
     """A warning for the determinant is not equal to 1.
     """
     pass
-
-## This code does nothing because the for loops return nothing
-# def _find_method(obj, string):
-#     """Find methods in object that starts with `string`.
-#     """
-#     out = []
-#     for key in dir(obj):
-#         if key.startswith(string):
-#             out.append(getattr(obj, key))
-#     return out
-
-
-# def call_rotate_methods(velobj, rmat, cs_from, cs_to):
-
-#     for rot_method in _find_method(velobj, '_rotate_'):
-#         # Call the method:
-#         rot_method(rmat, cs_from, cs_to)
-#     # Now search subgroups
-#     for subobj in velobj.iter_subgroups():
-#         for rot_method in _find_method(subobj, '_rotate_'):
-#             # And call their rotate methods
-#             rot_method(rmat, cs_from, cs_to)
 
 
 def rotate_tensor(tensor, rmat):
@@ -53,6 +82,97 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
         rotmat = np.transpose(rotmat)
     return np.abs(det(rotmat) - 1) < thresh
 
+
+def _calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
+    """Calculate the rotation matrix from beam coordinates to
+    instrument head coordinates for an RDI ADCP.
+
+    Parameters
+    ----------
+    theta : is the angle of the heads (usually 20 or 30 degrees)
+
+    convex : is a flag for convex or concave head configuration.
+
+    degrees : is a flag which specifies whether theta is in degrees
+        or radians (default: degrees=True)
+    """
+    if degrees:
+        theta = np.deg2rad(theta)
+    if convex == 0 or convex == -1:
+        c = -1
+    else:
+        c = 1
+    a = 1 / (2. * np.sin(theta))
+    b = 1 / (4. * np.cos(theta))
+    d = a / (2. ** 0.5)
+    return np.array([[c * a, -c * a, 0, 0],
+                     [0, 0, -c * a, c * a],
+                     [b, b, b, b],
+                     [d, d, -d, -d]])
+
+
+def beam2inst(dat, reverse=False, force=False):
+    """Rotate velocities from beam to instrument coordinates.
+
+    Parameters
+    ----------
+    dat : The ADP object containing the data.
+
+    reverse : bool (default: False)
+           If True, this function performs the inverse rotation
+           (inst->beam).
+    force : bool (default: False), or list
+        When true do not check which coordinate system the data is in
+        prior to performing this rotation. When forced-rotations are
+        applied, the string '-forced!' is appended to the
+        dat.props['coord_sys'] string. If force is a list, it contains
+        a list of variables that should be rotated (rather than the
+        default values in adpo.props['rotate_vars']).
+
+    """
+    if not force:
+        if not reverse and dat.coord_sys.lower() != 'beam':
+            raise ValueError('The input must be in beam coordinates.')
+        if reverse and dat.coord_sys != 'inst':
+            raise ValueError('The input must be in inst coordinates.')
+
+    if dat.inst_make.lower() == 'rdi':
+        try:
+            rotmat = dat.config.rotmat
+        except AttributeError:
+            rotmat = _calc_beam_rotmatrix(
+                dat.beam_angle,
+                dat.beam_pattern == 'convex')
+    elif dat.inst_make.lower() == 'nortek':
+         rotmat = dat['beam2xyz_orientmat']
+    else:
+        raise Exception("Unrecognized device type.")
+
+    if isinstance(force, (list, set, tuple)):
+        # You can force a distinct set of variables to be rotated by
+        # specifying it here.
+        rotate_vars = force
+    else:
+        rotate_vars = {ky for ky in dat.rotate_vars
+                       if ky.startswith('vel')}
+
+    cs = 'inst'
+    if reverse:
+        # Can't use transpose because rotation is not between
+        # orthogonal coordinate systems
+        rotmat = inv(rotmat)
+        cs = 'beam'
+    for ky in rotate_vars:
+        dat[ky].values = np.einsum('ij,j...->i...', rotmat, dat[ky].values)
+        
+    if force:
+        dat = dat._set_coords(dat, cs, forced=True)
+        #dat.props._set('coord_sys', dat.props['coord_sys'] + '-forced')
+    else:
+        dat = _set_coords(dat, cs)
+        #dat.props._set('coord_sys', cs)
+    
+    return dat
 
 def euler2orient(heading, pitch, roll, units='degrees'):
     """
@@ -149,7 +269,7 @@ def orient2euler(omat):
 
     Parameters
     ----------
-    advo : np.ndarray (or :class:`<~dolfyn.data.velocity.Velocity>`)
+    omat : np.ndarray (or :class:`<~dolfyn.data.velocity.Velocity>`)
       The orientation matrix (or a data object containing one).
 
     Returns
@@ -170,8 +290,8 @@ def orient2euler(omat):
     if isinstance(omat, np.ndarray) and \
             omat.shape[:2] == (3, 3):
         pass
-    elif hasattr(omat['orient'], 'orientmat'):
-        omat = omat['orient'].orientmat
+    elif hasattr(omat, 'orientmat'):
+        omat = omat['orientmat'].values
     # #####
     # Heading is direction of +x axis clockwise from north.
     # So, for arctan (opposite/adjacent) we want arctan(east/north)
@@ -190,142 +310,3 @@ def orient2euler(omat):
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
     )
-
-def calc_principal_heading(vel, tidal_mode=True):
-    """
-    Compute the principal angle of the horizontal velocity.
-
-    Parameters
-    ----------
-    vel : np.ndarray (2,...,Nt), or (3,...,Nt)
-      The 2D or 3D velocity array (3rd-dim is ignored in this calculation)
-
-    tidal_mode : bool (default: True)
-
-    Returns
-    -------
-    p_heading : float or ndarray
-      The principal heading(s) in degrees clockwise from North.
-
-    Notes
-    -----
-
-    The tidal mode follows these steps:
-      1. rotates vectors with negative v by 180 degrees
-      2. then doubles those angles to make a complete circle again
-      3. computes a mean direction from this, and halves that angle again.
-      4. The returned angle is forced to be between 0 and 180. So, you
-         may need to add 180 to this if you want your positive
-         direction to be in the western-half of the plane.
-
-    Otherwise, this function simply compute the average direction
-    using a vector method.
-
-    """
-    dt = vel[0] + vel[1] * 1j
-    if tidal_mode:
-        # Flip all vectors that are below the x-axis
-        dt[dt.imag <= 0] *= -1
-        # Now double the angle, so that angles near pi and 0 get averaged
-        # together correctly:
-        dt *= np.exp(1j * np.angle(dt))
-        dt = np.ma.masked_invalid(dt)
-        # Divide the angle by 2 to remove the doubling done on the previous
-        # line.
-        pang = np.angle(
-            np.mean(dt, -1, dtype=np.complex128)) / 2
-    else:
-        pang = np.angle(np.mean(dt, -1))
-    return (90 - np.rad2deg(pang))
-
-
-def _calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
-    """Calculate the rotation matrix from beam coordinates to
-    instrument head coordinates for an RDI ADCP.
-
-    Parameters
-    ----------
-    theta : is the angle of the heads (usually 20 or 30 degrees)
-
-    convex : is a flag for convex or concave head configuration.
-
-    degrees : is a flag which specifies whether theta is in degrees
-        or radians (default: degrees=True)
-    """
-    if degrees:
-        theta = np.deg2rad(theta)
-    if convex == 0 or convex == -1:
-        c = -1
-    else:
-        c = 1
-    a = 1 / (2. * np.sin(theta))
-    b = 1 / (4. * np.cos(theta))
-    d = a / (2. ** 0.5)
-    return np.array([[c * a, -c * a, 0, 0],
-                     [0, 0, -c * a, c * a],
-                     [b, b, b, b],
-                     [d, d, -d, -d]])
-
-
-def beam2inst(dat, reverse=False, force=False):
-    """Rotate velocities from beam to instrument coordinates.
-
-    Parameters
-    ----------
-    dat : The ADP object containing the data.
-
-    reverse : bool (default: False)
-           If True, this function performs the inverse rotation
-           (inst->beam).
-    force : bool (default: False), or list
-        When true do not check which coordinate system the data is in
-        prior to performing this rotation. When forced-rotations are
-        applied, the string '-forced!' is appended to the
-        dat.props['coord_sys'] string. If force is a list, it contains
-        a list of variables that should be rotated (rather than the
-        default values in adpo.props['rotate_vars']).
-
-    """
-    if not force:
-        if not reverse and dat.props['coord_sys'].lower() != 'beam':
-            raise ValueError('The input must be in beam coordinates.')
-        if reverse and dat.props['coord_sys'] != 'inst':
-            raise ValueError('The input must be in inst coordinates.')
-
-    if dat.props['inst_make'].lower() == 'rdi':
-        try:
-            rotmat = dat.config.rotmat
-        except AttributeError:
-            rotmat = _calc_beam_rotmatrix(
-                dat.config.beam_angle,
-                dat.config.beam_pattern == 'convex')
-    elif dat.props['inst_make'].lower() == 'nortek':
-        try:
-            # Signature and "AD2CP"
-            rotmat = dat.config['TransMatrix']
-        except KeyError:
-            # Nortek Vector and AWAC
-            rotmat = dat.config['head']['TransMatrix']
-    else:
-        raise Exception("Unrecognized device type.")
-
-    if isinstance(force, (list, set, tuple)):
-        # You can force a distinct set of variables to be rotated by
-        # specifying it here.
-        rotate_vars = force
-    else:
-        rotate_vars = {ky for ky in dat.props['rotate_vars']
-                       if ky.startswith('vel')}
-
-    cs = 'inst'
-    if reverse:
-        # Can't use transpose because rotation is not between
-        # orthogonal coordinate systems
-        rotmat = inv(rotmat)
-        cs = 'beam'
-    for ky in rotate_vars:
-        dat[ky] = np.einsum('ij,j...->i...', rotmat, dat[ky])
-    if force:
-        dat.props._set('coord_sys', dat.props['coord_sys'] + '-forced')
-    else:
-        dat.props._set('coord_sys', cs)

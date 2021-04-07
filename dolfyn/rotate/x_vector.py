@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import warnings
-from . import main as rotb
+from . import base as rotb
 
 
 def beam2inst(dat, reverse=False, force=False):

@@ -531,7 +531,7 @@ def reduce(data):
     for irow in range(tmat['ROWS']):
         for icol in range(tmat['COLS']):
             tm[irow, icol] = tmat['M' + str(irow + 1) + str(icol + 1)]
-    data.config['TransMatrix'] = tm
+    data.config['beam2xyz_orientmat'] = tm
 
 
 if __name__ == '__main__':
