@@ -5,7 +5,6 @@ import numpy as np
 from .x_binned import TimeBinner
 import warnings
 #from .time import num2date
-from ..rotate.main import rotate2
 from ..rotate import main as rotb
 from ..rotate.x_vector import _rotate_head2inst
 import xarray as xr
@@ -118,7 +117,7 @@ class Velocity():
 
         """
         if 'declination' in self.ds.attrs:
-            angle = declination - self.ds.drop('declination')
+            angle = declination - self.ds.attrs.pop('declination')
         else:
             angle = declination
         cd = np.cos(-np.deg2rad(angle))
@@ -134,7 +133,7 @@ class Velocity():
 
         if self.ds.coord_sys == 'earth':
             rotate2earth = True
-            self.rotate2('inst', inplace=True)
+            self.ds = self.rotate2('inst', inplace=True)
         else:
             rotate2earth = False
 
@@ -144,13 +143,14 @@ class Velocity():
         if 'heading' in self.ds:
             self.ds['heading'] += angle
         if rotate2earth:
-            self.rotate2('earth', inplace=True)
+            self.ds = self.rotate2('earth', inplace=True)
         if 'principal_heading' in self.ds.attrs:
             self.ds.attrs['principal_heading'] += angle
         # These two lines below were originaly a '_set' subroutine of the h5 
         # object, I didn't check if that was a 'setter'
         self.ds.attrs['declination'] = declination
         self.ds.attrs['declination_in_orientmat'] = True
+        
         
     def rotate2(self, out_frame, inplace=False):
         """Rotate the data object into a new coordinate system.
@@ -175,7 +175,8 @@ class Velocity():
         :func:`dolfyn.rotate2`
 
         """
-        return rotate2(self.ds, out_frame=out_frame, inplace=inplace)
+        return rotb.rotate2(self.ds, out_frame=out_frame, inplace=inplace)
+
 
     @property
     def n_time(self, ):
@@ -304,6 +305,7 @@ class Velocity():
         """
         return '{} {}'.format(self.ds.inst_make,
                               self.ds.inst_model).lower()
+    
                               
 @xr.register_dataset_accessor('TKEdata')
 class TKEdata(Velocity):

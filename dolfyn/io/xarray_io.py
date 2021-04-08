@@ -100,7 +100,7 @@ def convert_xarray(dat):
                                             coords={'range_echo':dat['range_echo'],'time':time},
                                             dims=['range_echo','time'],
                                             attrs={'units':'dB',
-                                                   'description':'echosounder return amplitude'})
+                                                   'description':'echosounder'})
                 xdat.range_echo.attrs['units'] = 'm'
                 dtype.pop(dtype.index('echo'))
                 
@@ -119,14 +119,14 @@ def convert_xarray(dat):
                                              coords = {'beam':beam,'time':time},
                                              dims = ['beam','time'],
                                              attrs = {'units':'m',
-                                             'description':'depth to seafloor measured by bottom track'})                    
+                                             'description':'seafloor depth measured by bottom track'})                    
         
         elif 'depth' in key: # only for TRDI, converts pressure sensor?
             xdat['depth'] = xr.DataArray(dat['depth_m'],
                                          coords={'time':time},
                                          dims=['time'],
                                          attrs={'units':'m',
-                                                'description':'depth of instrument'})
+                                                'description':'instrument depth'})
         # the other dictionaries
         elif size==():
             subdat = dat[key]
@@ -168,7 +168,7 @@ def convert_xarray(dat):
                         subkeys.pop(subkeys.index(subkey))
                         if subkey=='amp':
                             xdat[subkey].attrs['units'] = 'dB or counts'
-                            xdat[subkey].attrs['description'] = 'beam return amplitude'
+                            xdat[subkey].attrs['description'] = 'beam amplitude'
                         elif subkey=='corr':
                             xdat[subkey].attrs['units'] = '% or counts'
                             xdat[subkey].attrs['description'] = 'beam correlation'

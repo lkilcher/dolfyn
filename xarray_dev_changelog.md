@@ -43,14 +43,17 @@ Xarray DOLfYN to MHKiT Changelog
 	
 - Refactor DOLfYN
 	- started renaming files to x_*.py
-		- Rotation code - done, checking
+		- Rotation code - done, checked
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
 			
 			- Orientation up/down not taken into account for Nortek Signatures? - in progress
 			- Setters for 'coord_sys' and 'principal_heading' with xarray?
 			- Fixed two Nortek Signature rotation errors - one for upside down instruments (sign change) and one for upside up instruments (if-statement mistake)
-			- Still a (truncation?) 1% ish error for upside up signatures
-			
+				- Still a (truncation?) 1% ish error for upside up signatures
+			- Verified with Nortek Signature data (facing up and down)
+			- Verified with TRDI Sentinel Workhorse (facing down - VMDAS)
+				- should work with those facing up, not verified
+				
 		- Motion correction code - done, checked
 			- motion correction object has been removed
 			
@@ -59,7 +62,12 @@ Xarray DOLfYN to MHKiT Changelog
 			- Add Velocity and TKEdata as xarray accessors
 			- These will have to feed into the ADV and ADP objects, so they might lose their accessor status and simply inherit into ADPdata and ADVdata
 				- will change these two when I adjust the binary readers
+				
+		- Cleaning code - done, needs checking
 			
 		- TimeBinner, VelBinner, TurbBinner - keeping these as standalone classes that inherit off one another - standby
-			
+		
+	
+	
+	
 	
