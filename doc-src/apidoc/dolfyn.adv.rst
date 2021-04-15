@@ -34,7 +34,6 @@ Contains functions for correcting Nortek Vector ADV data with data from the onbo
 	:nosignatures:
 	
 	~dolfyn.adv.motion.correct_motion
-	~dolfyn.adv.motion.CorrectMotion
 	
 .. automodule:: dolfyn.adv.motion
     :members:
@@ -51,26 +50,16 @@ Analysis in DOLfYN is primarily handled through the `VelBinner` class. Below is 
 	:nosignatures:
 	
 	~dolfyn.data.velocity.VelBinner
-	~dolfyn.data.binned.TimeBinner.reshape
-	~dolfyn.data.binned.TimeBinner.detrend
-	~dolfyn.data.binned.TimeBinner.demean
-	~dolfyn.data.binned.TimeBinner.mean
-	~dolfyn.data.binned.TimeBinner.mean_angle
-	~dolfyn.data.binned.TimeBinner.calc_acov
-	~dolfyn.data.binned.TimeBinner.calc_lag
-	~dolfyn.data.binned.TimeBinner.calc_xcov
 	~dolfyn.data.binned.TimeBinner.do_avg
 	~dolfyn.data.binned.TimeBinner.do_var
-	~dolfyn.data.binned.TimeBinner.cohere
-	~dolfyn.data.binned.TimeBinner.phase_angle
+	~dolfyn.data.binned.TimeBinner.calc_coh
+	~dolfyn.data.binned.TimeBinner.calc_phase_angle
+	~dolfyn.data.binned.TimeBinner.calc_acov
+	~dolfyn.data.binned.TimeBinner.calc_xcov
 	~dolfyn.data.velocity.VelBinner.do_tke
 	~dolfyn.data.velocity.VelBinner.calc_tke
 	~dolfyn.data.velocity.VelBinner.calc_stress
-	~dolfyn.data.velocity.VelBinner.do_spec
 	~dolfyn.data.velocity.VelBinner.calc_vel_psd
-	~dolfyn.data.binned.TimeBinner.calc_freq
-	~dolfyn.data.binned.TimeBinner.calc_omega
-	~dolfyn.data.velocity.VelBinner.do_cross_spec
 	~dolfyn.data.velocity.VelBinner.calc_vel_cpsd
 
 
@@ -87,8 +76,7 @@ Functions for analyzing ADV data via the `TurbBinner` class, beyond those descri
 	~dolfyn.adv.turbulence.TurbBinner.calc_epsilon_LT83
 	~dolfyn.adv.turbulence.TurbBinner.calc_epsilon_SF
 	~dolfyn.adv.turbulence.TurbBinner.calc_epsilon_TE01
-	~dolfyn.adv.turbulence.TurbBinner.up_angle
-	~dolfyn.adv.turbulence.TurbBinner.calc_Lint	
+	~dolfyn.adv.turbulence.TurbBinner.calc_L_int	
 
 .. automodule:: dolfyn.adv.turbulence
     :members:

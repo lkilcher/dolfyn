@@ -70,7 +70,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     if hasattr(advo, 'orientmat'):
         omat = advo['orientmat'].values
     else:
-        if 'nortek vector' in advo.Velocity._make_model:
+        if 'nortek vector' in advo.Veldata._make_model:
             orientation_down = advo['orientation_down']
         else:
             orientation_down = None

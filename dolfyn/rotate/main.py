@@ -26,8 +26,8 @@ def rotate2(ds, out_frame='earth', inplace=False):
     Parameters
     ----------
 
-    ds : :class:`~dolfyn.Velocity`
-      The dolfyn velocity-data (ADV or ADP) dsect to rotate.
+    ds : :class:`~dolfyn.Veldata`
+      The dolfyn Veldata-data (ADV or ADP) dsect to rotate.
 
     out_frame : string {'beam', 'inst', 'earth', 'principal'}
       The coordinate system to rotate the data into.
@@ -38,7 +38,7 @@ def rotate2(ds, out_frame='earth', inplace=False):
 
     Returns
     -------
-    dsout : :class:`~dolfyn.Velocity`
+    dsout : :class:`~dolfyn.Veldata`
       The rotated data dsect. Note that when ``inplace=True``, the
       input dsect is modified in-place *and* returned (i.e.,
       ``dsout`` is ``ds``).
@@ -66,12 +66,12 @@ def rotate2(ds, out_frame='earth', inplace=False):
 
     rmod = None
     for ky in rot_module_dict:
-        if ky in ds.Velocity._make_model:
+        if ky in ds.Veldata._make_model:
             rmod = rot_module_dict[ky]
             break
     if rmod is None:
         raise ValueError("Rotations are not defined for "
-                         "instrument '{}'.".format(ds.Velocity._make_model))
+                         "instrument '{}'.".format(ds.Veldata._make_model))
     if not inplace:
         ds = ds.copy()
 
@@ -119,7 +119,7 @@ def calc_principal_heading(vel, tidal_mode=True):
     Parameters
     ----------
     vel : np.ndarray (2,...,Nt), or (3,...,Nt)
-      The 2D or 3D velocity array (3rd-dim is ignored in this calculation)
+      The 2D or 3D Veldata array (3rd-dim is ignored in this calculation)
 
     tidal_mode : bool (default: True)
 

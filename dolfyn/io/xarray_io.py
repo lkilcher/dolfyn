@@ -56,7 +56,7 @@ def convert_xarray(dat):
     Outputs: xarray Dataset
     """
     xdat = xr.Dataset()
-    time = num2date(dat.mpltime)
+    time = dat.mpltime
     beam = list(range(1,dat.vel.shape[0]+1))
     ax1 = ['x'+str(beam[n-1]) for n in beam]
     ax2 = ['x'+str(beam[n-1])+'*' for n in beam]

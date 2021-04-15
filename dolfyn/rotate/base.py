@@ -8,7 +8,7 @@ def _set_coords(ds, ref_frame, forced=False):
     Makes sure assigned dataarray coordinates match what DOLfYN is reading in
     '''
     
-    make = ds.Velocity._make_model
+    make = ds.Veldata._make_model
     
     XYZ = ['X','Y','Z']
     ENU = ['E','N','U']

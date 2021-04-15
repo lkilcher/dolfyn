@@ -198,7 +198,7 @@ class CalcMotion(object):
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - get_body2imu(self.advo.Velocity._make_model)[:, None]
+        vec = vec - get_body2imu(self.advo.Veldata._make_model)[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -363,7 +363,7 @@ def correct_motion(advo,
                         'motion corrected.')
 
     if advo.coord_sys != 'inst':
-        advo = advo.Velocity.rotate2('inst', inplace=True)
+        advo = advo.Veldata.rotate2('inst', inplace=True)
 
     # Returns True/False if head2inst_rotmat has been set/not-set.
     # Bad configs raises errors (this is to check for those)
@@ -447,7 +447,7 @@ def correct_motion(advo,
     #if advo.inst_type == 'ADCP':
     #    velmot = velmot[:, None] # !!! Not sure this is necessary
     advo['vel'][:3] += velmot
-    if advo.Velocity._make_model.startswith('nortek signature') and \
+    if advo.Veldata._make_model.startswith('nortek signature') and \
        advo['vel'].shape[0] > 3:
         # This assumes these are w.
         advo['vel'][3:] += velmot[2:]

@@ -11,18 +11,28 @@ from dolfyn.data.time import num2date
 #dat = dlfn.read_example('RDI_withBT.000')
 #dat = dlfn.read_example('RDI_test01.000')
 #dat = dlfn.read_example('winriver01.PD0')
-dat = dlfn.read_example('vector_data_imu01.VEC')
+#dat = dlfn.read_example('vector_data_imu01.VEC')
 #dat = dlfn.read_example('burst_mode01.VEC')
 #dat = dlfn.read_example('AWAC_test01.wpr')
 #dat = dlfn.read_example('Sig1000_IMU.ad2cp')
 #dat = dlfn.read_example('Sig1000_BadTime01.ad2cp')
 #dat = dlfn.read_example('VelEchoBT01.ad2cp')
 #dat = dlfn.read_example('BenchFile01.ad2cp')
-dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/Sig500 8202020 flood (pm)/Downloaded/S100687A014_Desdemona.ad2cp')
+#dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/Sig500 8202020 flood (pm)/Downloaded/S100687A014_Desdemona.ad2cp')
 #dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/Sequim bay ADCP interference/survey data/WH300 8192020 ebb (am)/Downloaded/SequimBayInterf_of_20200819T065701_003_002_000000.ENX')
-#dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/ADV files from APL MSL bay tests/SQM_03.VEC')
+dat = dlfn.read('C:/Users/mcve343/OneDrive - PNNL/Documents/projects/VP wake measurements/ADV files from APL MSL bay tests/SQM_03.VEC')
 
-########################################################################################################
+dat = dlfn.adv.correct_motion(dat, to_earth=False)
+dat = dat.Veldata.rotate2('earth')
+dat.attrs['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
+dat = dlfn.rotate2(dat,'principal')
+avg_tool = dlfn.VelBinner(n_bin=dat.fs*300, fs=dat.fs)
+tdat = dlfn.adv.calc_turbulence(dat, n_bin=dat.fs*300)
+binner = dlfn.adv.TurbBinner(n_bin=dat.fs*300, fs=dat.fs)
+
+a_cov = binner.calc_acov(dat.vel)
+
+##############################################################################
 # Most effective way I've found to sort this. 'DRY'er code that automates this 
 # in fewer lines adds variables that no one cares about.
 

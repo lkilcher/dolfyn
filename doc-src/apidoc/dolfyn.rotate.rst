@@ -11,14 +11,9 @@ Contains functions for rotating data through frames of reference (FoR):
 	:nosignatures:
 	
 	~dolfyn.rotate.main.rotate2
-	~dolfyn.rotate.base.calc_principal_heading
+	~dolfyn.rotate.main.calc_principal_heading
 
 .. automodule:: dolfyn.rotate.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-	
-.. automodule:: dolfyn.rotate.base
     :members:
     :undoc-members:
     :show-inheritance:
