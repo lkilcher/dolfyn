@@ -14,4 +14,3 @@ DOLfYN Package
    dolfyn.io
    dolfyn.data
    dolfyn.rotate
-   dolfyn.tools
