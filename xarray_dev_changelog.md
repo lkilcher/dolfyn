@@ -81,15 +81,14 @@ Xarray DOLfYN to MHKiT Changelog
 				- Renamed 'cohere' and 'phase_angle' to 'calc_coh' and 'calc_phase_angle'
 				- Updated so that one can calculate coherence, auto-/cross-covariance with 1D or 3D velocity arrays
 			- Updated turbulence dissipation functions return correctly for xarray
-				- can't handle nan's without `np.nanmean`, etc
-
+				- Added 'np.nan*' so they can handle nans
 				
-		- Cleaning code - in progress
-			- need to update with xarray's nan interpolation
-			- ADCPs - done, needs checking
-			- ADVs - not started, just GN2002
+		- Cleaning code - done
+			- Need to update with xarray's nan interpolation - done
+			- ADCPs - individual cleaning functions
+			- ADVs - has masking methods that feed into a fill-in method
 			
-- Refactor DOLfYN's binary readers - starting soon
+- Refactor DOLfYN's binary readers - starting
 	
 	
 	
