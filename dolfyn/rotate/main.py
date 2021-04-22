@@ -21,7 +21,7 @@ rot_module_dict = {
 
 
 def rotate2(ds, out_frame='earth', inplace=False):
-    """Rotate a data dsect to a new coordinate system.
+    """Rotate a dataset to a new coordinate system.
 
     Parameters
     ----------

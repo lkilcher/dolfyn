@@ -5,8 +5,10 @@ from ..data.time import num2date
 
 def check_coords(dat):
     '''
-    Check the current reference frame and adjust xarray coords/dims as necessary
-    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
+    Check the current reference frame and adjust xarray coords/dims as 
+    necessary.
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in.
+    
     '''
     make = dat.inst_make
     model = dat.inst_model
@@ -293,9 +295,9 @@ def convert_xarray(dat):
 
 
 def save_xr(fname, dat):
-    dat.to_netcdf(fname + '.nc', format='NETCDF4', engine='h5netcdf', invalid_netcdf=True)
+    dat.to_netcdf(fname, format='NETCDF4', engine='h5netcdf', invalid_netcdf=True)
     
 
 def load_xr(fname):
-    return xr.load_dataset(fname + '.nc')
+    return xr.load_dataset(fname)
     

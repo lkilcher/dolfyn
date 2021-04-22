@@ -1,60 +1,13 @@
 """This is the top-level module for reading Nortek Signature (.ad2cp)
-files. It relies heavily on the `nortek2_defs` and `nortek2lib`
-modules.
+files. It relies heavily on the `nortek2_defs` and `nortek2lib` modules.
 """
-from struct import unpack
-from . import nortek2_defs as defs
-from . import nortek2lib as lib
-from ..adp import base as apb
 import numpy as np
-from .base import WrongFileType, read_userdata
-from ..data import base as db
+from struct import unpack
 import warnings
+from . import x_nortek2_defs as defs
+from . import nortek2lib as lib
+from .base import WrongFileType, read_userdata
 from ..rotate.vector import _euler2orient
-
-
-def split_to_hdf(infile, nens_per_file, outfile=None,
-                 ens_start=0, ens_stop=None,
-                 start_file_num=0):
-    """Split a Nortek .ad2cp file into multiple hdf5 format files.
-
-    Parameters
-    ==========
-    infile : string
-        The input .ad2cp filename.
-    nens_per_file : int
-        number of ensembles to include in each output file.
-    outfile : string
-        The output file format. This should include a '{:d}' format
-        specifier. By default, this is the input file path and prefix,
-        but with the ending '{:03d}.h5'.
-    ens_start : int
-        The ensemble number to start with.
-    ens_stop : int
-        The ensemble number to stop at.
-    start_file_num : int
-        The number to start the file-count with (default: 0).
-    """
-    if not infile.lower().endswith('.ad2cp'):
-        raise Exception("This function only works on "
-                        "Nortek '.ad2cp' format files.")
-    idx = lib.get_index(infile)
-    if ens_stop is None:
-        ens_stop = idx['ens'][-1]
-    ens_now = ens_start
-    file_count = start_file_num
-    if outfile is None:
-        outfile = infile.rsplit('.')[0] + '.{:03d}.h5'
-    elif '{' not in outfile and 'd}' not in outfile:
-        raise Exception("The output file must include a "
-                        "integer format specifier.")
-    while ens_now < ens_stop:
-        dat = read_signature(infile, nens=(ens_now,
-                                           min(ens_now + nens_per_file,
-                                               ens_stop)))
-        dat.to_hdf5(outfile.format(file_count))
-        file_count += 1
-        ens_now += nens_per_file
 
 
 def read_signature(filename, userdata=True, nens=None):
@@ -97,25 +50,25 @@ def read_signature(filename, userdata=True, nens=None):
     out = reorg(d)
     reduce(out)
 
-    od = out['orient']
-    if 'orient.orientmat' not in out:
-        od['orientmat'] = _euler2orient(od['heading'], od['pitch'], od['roll'])
+    # od = out['orient']
+    # if 'orient.orientmat' not in out:
+    #     od['orientmat'] = _euler2orient(od['heading'], od['pitch'], od['roll'])
 
-    # Move raw heading data into orient.raw
-    odr = od['raw'] = db.TimeData()
-    for ky in ['heading', 'pitch', 'roll']:
-        val = od.pop(ky, None)
-        if val is not None:
-            odr[ky] = val
+    # # Move raw heading data into orient.raw
+    # odr = od['raw'] = db.TimeData()
+    # for ky in ['heading', 'pitch', 'roll']:
+    #     val = od.pop(ky, None)
+    #     if val is not None:
+    #         odr[ky] = val
 
-    out['props'].update(userdata)
+    # out['props'].update(userdata)
 
-    # Handle properties with the PropsDict class.
-    out['props'] = db.PropsDict(out['props'])
+    # # Handle properties with the PropsDict class.
+    # out['props'] = db.PropsDict(out['props'])
 
-    declin = out['props'].pop('declination', None)
-    if declin is not None:
-        out.set_declination(declin)
+    # declin = out['props'].pop('declination', None)
+    # if declin is not None:
+    #     out.set_declination(declin)
 
     return out
 
@@ -146,9 +99,11 @@ class Ad2cpReader(object):
         self._burst_readers = {}
         for rdr_id, cfg in self._config.items():
             if rdr_id == 28:
-                self._burst_readers[rdr_id] = defs.calc_echo_struct(cfg['_config'], cfg['ncells'])  # noqa
+                self._burst_readers[rdr_id] = defs.calc_echo_struct(
+                    cfg['_config'], cfg['ncells'])  # noqa
             elif rdr_id == 23:
-                self._burst_readers[rdr_id] = defs.calc_bt_struct(cfg['_config'], cfg['nbeams'])  # noqa
+                self._burst_readers[rdr_id] = defs.calc_bt_struct(
+                    cfg['_config'], cfg['nbeams'])  # noqa
             else:
                 self._burst_readers[rdr_id] = defs.calc_burst_struct(
                     cfg['_config'], cfg['nbeams'], cfg['ncells'])
@@ -169,6 +124,7 @@ class Ad2cpReader(object):
                 n = nens
             outdat[ky] = self._burst_readers[ky].init_data(n)
             outdat[ky]['ensemble'] = ens
+            outdat[ky]['units'] = self._burst_readers[ky].data_units()
         return outdat
 
     def read_hdr(self, do_cs=False):
@@ -374,15 +330,14 @@ def reorg(dat):
     (organized by ID), and combines them into the
     :class:`dolfyn.ADPdata` object.
     """
-    outdat = apb.ADPdata()
-    cfg = outdat['config'] = db.config(_type='Nortek AD2CP')
+    outdat = {'data_vars':{},'coords':{},'attrs':{},
+              'units':{},'sys':{}} #apb.ADPdata()
+    cfg = outdat['attrs'] #db.config(_type='Nortek AD2CP')
     cfh = cfg['filehead_config'] = dat['filehead_config']
-    cfg['model'] = (cfh['ID'].split(',')[0][5:-1])
-    outdat['props'] = {}
-    outdat['props']['inst_make'] = 'Nortek'
-    outdat['props']['inst_model'] = cfg['model']
-    outdat['props']['inst_type'] = 'ADCP'
-    outdat['props']['rotate_vars'] = {'vel', }
+    cfg['inst_model'] = (cfh['ID'].split(',')[0][5:-1])
+    cfg['inst_make'] = 'Nortek'
+    cfg['inst_type'] = 'ADCP'
+    cfg['rotate_vars'] = ['vel',]
 
     for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
         if id in [24, 26]:
@@ -392,10 +347,11 @@ def reorg(dat):
         if id not in dat:
             continue
         dnow = dat[id]
+        outdat['units'].update(dnow['units'])
         cfg['burst_config' + tag] = lib.headconfig_int2dict(
             lib.collapse(dnow['config'], exclude=collapse_exclude,
                          name='config'))
-        outdat['mpltime' + tag] = lib.calc_time(
+        outdat['coords']['mpltime' + tag] = lib.calc_time(
             dnow['year'] + 1900,
             dnow['month'],
             dnow['day'],
@@ -415,74 +371,88 @@ def reorg(dat):
             # These ones should 'collapse'
             # (i.e., all values should be the same)
             # So we only need that one value.
-            cfg[ky + tag] = lib.collapse(dnow[ky], exclude=collapse_exclude,
+            cfg[ky + tag] = lib.collapse(dnow[ky], 
+                                         exclude=collapse_exclude,
                                          name=ky)
         for ky in ['c_sound', 'temp', 'pressure',
                    'heading', 'pitch', 'roll',
-                   'batt_V',
-                   'temp_mag', 'temp_clock',
-                   'mag', 'accel',
-                   'ambig_vel', 'xmit_energy',
-                   'error', 'status',
-                   '_ensemble', 'ensemble']:
+                   'mag', 'accel', 'ambig_vel',
+                   'xmit_energy', 'ensemble',
+                   ]:
             # No if statement here
-            outdat[ky + tag] = dnow[ky]
-        for ky in [
-                'vel', 'amp', 'corr',
-                'alt_dist', 'alt_quality', 'alt_status',
-                'ast_dist', 'ast_quality', 'ast_offset_time',
-                'ast_pressure', 'temp_press',
-                'altraw_nsamp', 'altraw_dist', 'altraw_samp',
-                'echo', 'dist', 'fom',
-                'orientmat', 'angrt', 'quaternion',
-                'prcnt_gd', 'status0',
-                'std_pitch', 'std_roll', 'std_heading', 'std_press'
-        ]:
+            outdat['data_vars'][ky + tag] = dnow[ky]
+            
+        for ky in ['batt_V', 'temp_mag', 'temp_clock',
+                   'error', 'status', '_ensemble',
+                   ]:
+            outdat['sys'][ky + tag] = dnow[ky]
+            
+        for ky in ['vel', 'amp', 'corr', 'prcnt_gd',
+                   'echo', 'dist', 
+                   'orientmat', 'angrt', 'quaternion',
+                   ]:
             if ky in dnow:
-                outdat[ky + tag] = dnow[ky]
+                outdat['data_vars'][ky + tag] = dnow[ky]
+        
+        for ky in ['alt_dist', 'alt_quality', 
+                   'ast_dist', 'ast_quality', 'ast_offset_time',
+                   'ast_pressure', 'std_press'
+                   'altraw_nsamp', 'altraw_dist', 'altraw_samp',
+                   ]:
+            if ky in dnow:
+                outdat['alt'][ky + tag] = dnow[ky]
+                
+        for ky in ['alt_status', 'temp_press', 'fom',
+                   'status0',
+                   'std_pitch', 'std_roll', 'std_heading',
+                   ]:
+            if ky in dnow:
+                outdat['sys'][ky + tag] = dnow[ky]  
+                
         for grp, keys in defs._burst_group_org.items():
             if grp not in outdat and \
-               len(set(defs._burst_group_org[grp])
-                   .intersection(outdat.keys())):
-                    outdat[grp] = db.TimeData()
+                len(set(defs._burst_group_org[grp])
+                    .intersection(outdat.keys())):
+                    outdat[grp] = {} #db.TimeData()
             for ky in keys:
-                if ky == grp and ky in outdat and \
-                   not isinstance(outdat[grp], db.TimeData):
+                if ky == grp and ky in outdat:
                     tmp = outdat.pop(grp)
-                    outdat[grp] = db.TimeData()
+                    outdat[grp] = {} #db.TimeData()
                     outdat[grp][ky] = tmp
                     #print(ky, tmp)
-                if ky + tag in outdat and not \
-                   isinstance(outdat[ky + tag], db.TimeData):
+                if ky + tag in outdat:
                     outdat[grp][ky + tag] = outdat.pop(ky + tag)
 
-    # Move 'altimeter raw' data to it's own down-sampled structure
-    if 26 in dat:
-        ard = outdat['altraw'] = db.MappedTime()
-        for ky in list(outdat.iter_data(include_hidden=True)):
-            if ky.endswith('_ar'):
-                grp = ky.split('.')[0]
-                if '.' in ky and grp not in ard:
-                    ard[grp] = db.TimeData()
-                ard[ky.rstrip('_ar')] = outdat.pop(ky)
-        N = ard['_map_N'] = len(outdat['mpltime'])
-        parent_map = np.arange(N)
-        ard['_map'] = parent_map[np.in1d(outdat.sys.ensemble, ard.sys.ensemble)]
-        outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
-    outdat.props['coord_sys'] = {'XYZ': 'inst',
+    #!!! 'altraw' key doesn't exist?
+    # # Move 'altimeter raw' data to it's own down-sampled structure
+    # if 26 in dat:
+    #     ard = outdat['altraw'] = db.MappedTime()
+    #     for ky in list(outdat.iter_data(include_hidden=True)):
+    #         if ky.endswith('_ar'):
+    #             grp = ky.split('.')[0]
+    #             if '.' in ky and grp not in ard:
+    #                 ard[grp] = db.TimeData()
+    #             ard[ky.rstrip('_ar')] = outdat.pop(ky)
+    #     N = ard['_map_N'] = len(outdat['mpltime'])
+    #     parent_map = np.arange(N)
+    #     ard['_map'] = parent_map[np.in1d(outdat.sys.ensemble, ard.sys.ensemble)]
+    #     outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
+        
+    outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
                                  'ENU': 'earth',
                                  'BEAM': 'beam'}[cfg['coord_sys_axes']]
-    tmp = lib.status2data(outdat.sys.status)  # returns a dict
-    outdat.orient['orient_up'] = tmp['orient_up']
+    tmp = lib.status2data(outdat['sys']['status'])  # returns a dict
+    outdat['attrs']['orient_up'] = tmp['orient_up']
     # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
     # Heading is: 0,1: Z; 4,5: X
     for ky in ['accel', 'angrt', 'mag']:
-        for dky in outdat['orient'].keys():
+        for dky in outdat['data_vars'].keys():
             if dky == ky or dky.startswith(ky + '_'):
                 # outdat.props['rotate_vars'].update({'orient.' + dky})
-                outdat.props['rotate_vars'].update({dky})
+                outdat['attrs']['rotate_vars'].append(dky)
     if 'vel_bt' in outdat:
-        outdat.props['rotate_vars'].update({'vel_bt', })
+        outdat['attrs']['rotate_vars'].append('vel_bt')
+        
     return outdat
 
 
@@ -505,33 +475,34 @@ def reduce(data):
 
     # Angle-averaging is treated separately
     for ky in ['heading', 'pitch', 'roll']:
-        lib.reduce_by_average_angle(data['orient'], ky, ky + '_b5')
+        lib.reduce_by_average_angle(data['data_vars'], ky, ky + '_b5')
 
-    data['range'] = ((np.arange(data['vel'].shape[1])+1) *
-                     data['config']['cell_size'] +
-                     data['config']['blank_dist'])
-    if 'vel_b5' in data:
-        data['range_b5'] = ((np.arange(data['vel_b5'].shape[1])+1) *
-                            data['config']['cell_size_b5'] +
-                            data['config']['blank_dist_b5'])
-    if 'echo_echo' in data:
-        data['echo'] = data.pop('echo_echo')
-        data['range_echo'] = ((np.arange(data['echo'].shape[0])+1) *
-                              data['config']['cell_size_echo'] +
-                              data['config']['blank_dist_echo'])
+    dv = data['data_vars']
+    da = data['attrs']
+    data['coords']['range'] = ((np.arange(dv['vel'].shape[1])+1) *
+                               da['cell_size'] +
+                               da['blank_dist'])
+    if 'vel_b5' in dv:
+        data['coords']['range_b5'] = ((np.arange(dv['vel_b5'].shape[1])+1) *
+                                      da['cell_size_b5'] +
+                                      da['blank_dist_b5'])
+    if 'echo_echo' in dv:
+        dv['echo'] = dv.pop('echo_echo')
+        data['coords']['range_echo'] = ((np.arange(dv['echo'].shape[0])+1) *
+                                        da['cell_size_echo'] +
+                                        da['blank_dist_echo'])
 
-    if 'orientmat' in data['orient']:
-        data['props']['has_imu'] = True
+    if 'orientmat' in data['data_vars']:
+        da['has_imu'] = True
     else:
-        data['props']['has_imu'] = False
-    data.config['fs'] = data.config['filehead_config']['BURST'].pop('SR')
-    data['props']['fs'] = data.config['fs']
-    tmat = data.config['filehead_config'].pop('XFBURST')
+        da['has_imu'] = False
+    da['fs'] = da['filehead_config']['BURST'].pop('SR')
+    tmat = da['filehead_config'].pop('XFBURST')
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)
     for irow in range(tmat['ROWS']):
         for icol in range(tmat['COLS']):
             tm[irow, icol] = tmat['M' + str(irow + 1) + str(icol + 1)]
-    data.config['beam2inst_orientmat'] = tm
+    dv['beam2inst_orientmat'] = tm
 
 
 if __name__ == '__main__':

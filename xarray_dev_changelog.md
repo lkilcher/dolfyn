@@ -45,11 +45,11 @@ Xarray DOLfYN to MHKiT Changelog
 	- started renaming files to x_*.py
 		- Rotation code - done, checked
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
-			- Orientation up/down not taken into account for Nortek Signatures? - fixed
-			- Fixed two Nortek Signature rotation errors - one for upside down instruments (sign change) and one for upside up instruments (if-statement mistake)
-				- Still a (truncation?) 1% ish error for upside up signatures
-			- Verified with Nortek Signature data (facing up and down)
-			- Verified with TRDI Sentinel Workhorse (facing down - VMDAS)
+			- *Orientation up/down not taken into account for Nortek Signatures? - takes '5' (down) or '7' (up) and adjusts
+				- Fixed two Nortek Signature rotation errors - one for upside-down instruments (a simple sign change according to Nortek docs) and one for upside-up instruments (if statement error)
+				- Still a (truncation?) 1% error for upside-up Signatures(?)
+			- Verified Nortek Signature data (facing up and down)
+			- Verified TRDI Sentinel Workhorse (facing down - VMDAS)
 				- should work with those facing up, not verified
 				
 		- Motion correction code - done, checked
@@ -80,15 +80,30 @@ Xarray DOLfYN to MHKiT Changelog
 			- Coherence and covariance functions
 				- Renamed 'cohere' and 'phase_angle' to 'calc_coh' and 'calc_phase_angle'
 				- Updated so that one can calculate coherence, auto-/cross-covariance with 1D or 3D velocity arrays
+				- Added comments
 			- Updated turbulence dissipation functions return correctly for xarray
-				- Added 'np.nan*' so they can handle nans
-				
+				- Changed U_mag (horizontal vel) to vel_avg (3D) in all three methods so that they use 'x' to calculate 'Sxx', where x=[1,2,3]
+				- Changed 'calc_Lint' to use the 3D velocity as well because 'calc_acov' returns the 3D autocovariance for each velocity term
+				- 'LT83' and 'TE01' methods can take either the 3D velocity or a single velocity array
+					- sanity note: dissipation rates within isotropic cascade for each velocity direction should theoretically be equal (def of isotropic)
+					- leaving to user to average 'LT83' returns together if they'd like
+					- 'TE01' natively returns the averaged dissipation rate
+				- 'SF' method can only handle one beam velocity array at a time
+				- Added 'np.nan*' so the functions can handle nans
+
 		- Cleaning code - done
 			- Need to update with xarray's nan interpolation - done
 			- ADCPs - individual cleaning functions
 			- ADVs - has masking methods that feed into a fill-in method
 			
-- Refactor DOLfYN's binary readers - starting
-	
+- Refactor DOLfYN's binary readers - in progress
+		1. Binary files read into a dictionary of dictionaries using netcdf naming conventions
+			- Should be easier to debug
+		2. Need to write (adjust the file I previously created) an xarray dataset constructor that'll build off that dictionary
+		3. Should be able to use the '_set_coords' subroutine located in `rotate.base` to set orientation coordinates
+	- Step 1 completed
+		- No pressure data from vectors or awacs?? Registering as 0 in binary?
+		- AWAC temp scaling is way off (?) - Added 0.01 factor
+		- Added 0.1 scale factor for Signature magnetometer to return in units of uT
 	
 	

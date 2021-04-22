@@ -11,7 +11,7 @@ processing and data analysis tasks.
 """
 
 from ._version import __version__
-from .io.api import read, load, read_example
+from .io.api import read, read_example, save, load
 from .rotate.main import rotate2, calc_principal_heading
 from .data.x_velocity import VelBinner #, Velocity, TKE
 #from .data.base import TimeData

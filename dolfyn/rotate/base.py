@@ -144,7 +144,7 @@ def beam2inst(dat, reverse=False, force=False):
                 dat.beam_angle,
                 dat.beam_pattern == 'convex')
     elif dat.inst_make.lower() == 'nortek':
-         rotmat = dat['beam2xyz_orientmat']
+         rotmat = dat['beam2inst_orientmat']
     else:
         raise Exception("Unrecognized device type.")
 
