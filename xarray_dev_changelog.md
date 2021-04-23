@@ -13,7 +13,7 @@ Xarray DOLfYN to MHKiT Changelog
 	- Organize most relevent aspects of code to run straight from 'import dolfyn as dlfn' and correct import inconsistencies - done
 	- Fixed mathmatical error in 'range' calculation (bin 1 dist = blank dist + cell size)
 	- Fixed Nortek echosounder 'dB' scaling
-	- Bug (unimportant) - when reading TRDI data with bottom-track, every subsequently read datafile will contain the 'bt' variables even if the instrument didn't record them
+
 
 - Update documentation
 	- Create sphinx API doctree - done
@@ -39,15 +39,14 @@ Xarray DOLfYN to MHKiT Changelog
 			- changed dataset 'keys' so that they're more consistent (including adding underscores)
 			- simplified 'config' dictionary in DOLfYN object so that it's easier to read
 	- Attempt to read binary files straight into a dataset - done
-	- *Need to incorporate 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
 	
 - Refactor DOLfYN
 	- started renaming files to x_*.py
 		- Rotation code - done, checked
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
-			- *Orientation up/down not taken into account for Nortek Signatures? - takes '5' (down) or '7' (up) and adjusts
+			- Orientation up/down wasn't taken into account for Nortek Signatures?
 				- Fixed two Nortek Signature rotation errors - one for upside-down instruments (a simple sign change according to Nortek docs) and one for upside-up instruments (if statement error)
-				- Still a (truncation?) 1% error for upside-up Signatures(?)
+				- Still a (truncation?) 1% error for upside-up Signature velocity data?
 			- Verified Nortek Signature data (facing up and down)
 			- Verified TRDI Sentinel Workhorse (facing down - VMDAS)
 				- should work with those facing up, not verified
@@ -63,7 +62,6 @@ Xarray DOLfYN to MHKiT Changelog
 			- Dubbed the Velocity class xarray accessor 'Veldata'
 			- Dubbed the TKE class xarray accessor 'TKEdata'
 			- All properties now return xr.DataArrays
-			- _xarray accessor warning due to inheritance?_
 			
 		- TimeBinner, VelBinner, TurbBinner class refactoring - done
 			- Ensured calc_vel_csd ran off the standard coherence length n_fft (bin size / 6)
@@ -83,13 +81,12 @@ Xarray DOLfYN to MHKiT Changelog
 				- Added comments
 			- Updated turbulence dissipation functions return correctly for xarray
 				- Changed U_mag (horizontal vel) to vel_avg (3D) in all three methods so that they use 'x' to calculate 'Sxx', where x=[1,2,3]
-				- Changed 'calc_Lint' to use the 3D velocity as well because 'calc_acov' returns the 3D autocovariance for each velocity term
-				- 'LT83' and 'TE01' methods can take either the 3D velocity or a single velocity array
+				- Changed 'calc_L_int' to use the 3D velocity as well because 'calc_acov' returns the 3D autocovariance for each velocity term
+				- methods can take either the 3D velocity or a single velocity array
 					- sanity note: dissipation rates within isotropic cascade for each velocity direction should theoretically be equal (def of isotropic)
 					- leaving to user to average 'LT83' returns together if they'd like
 					- 'TE01' natively returns the averaged dissipation rate
-				- 'SF' method can only handle one beam velocity array at a time
-				- Added 'np.nan*' so the functions can handle nans
+				- Added 'np.nan-' so the 'epsilon' functions can handle nans
 
 		- Cleaning code - done
 			- Need to update with xarray's nan interpolation - done
@@ -101,9 +98,29 @@ Xarray DOLfYN to MHKiT Changelog
 			- Should be easier to debug
 		2. Need to write (adjust the file I previously created) an xarray dataset constructor that'll build off that dictionary
 		3. Should be able to use the '_set_coords' subroutine located in `rotate.base` to set orientation coordinates
+		- is there a point to keeping a dedicated h5py DOLfYN to xarray DOLfYN conversion file?
 	- Step 1 completed
 		- No pressure data from vectors or awacs?? Registering as 0 in binary?
 		- AWAC temp scaling is way off (?) - Added 0.01 factor
 		- Added 0.1 scale factor for Signature magnetometer to return in units of uT
+	- Step 2 & 3 - done
+		- Need to move Vector rotation matrices from attributes to variables, and remove a lot of config junk - done
+		- Need a bit of code to chop off nan's - done
+		
+- Debugging:
+	- When reading TRDI data with bottom-track, every subsequently-read datafile will contain the 'bt' variables even if the instrument didn't record them - remnant/memory of global variables in the IO code?
+	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
+	- Bad AWAC IMU data reads as 6551.x?
+	- *xarray accessor warning due to 'Velocity' and 'TKE' inheritance?
+	- !!!*Broke rotation code - bad determinant warning in 'orientmat' at indices {} error- how did Levi chop this data off originally?
+
+- To do:
+	- Change mpltime to epoch time or something
+	- Optimize I/O code
+	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
+	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
+	- Save as mat function - done, working on loading a mat file
+	- Add functionality for dual profiling configurations - *Need to incorporate 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
+	- Add functionality for Nortek SigVM .ad2cp files
 	
 	

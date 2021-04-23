@@ -64,9 +64,7 @@ class Velocity():
             self.rotate2('inst', inplace=True)
         #dict.__setitem__(self.props, 'inst2head_rotmat', np.array(rotmat))
         self.ds['inst2head_rotmat'] = xr.DataArray(np.array(rotmat),
-                                                   coords={'ax1':['x1','x2','x3'],
-                                                           'ax2':['x1*','x2*','x3*']},
-                                                   dims=['ax1','ax2'])
+                                                   dims=['x','x*'])
         self.ds.attrs['inst2head_rotmat_was_set'] = True
         # Note that there is no validation that the user doesn't
         # change `ds.attrs['inst2head_rotmat']` after calling this
@@ -78,6 +76,8 @@ class Velocity():
             _rotate_head2inst(self.ds)
         if csin not in ['inst', 'beam']:
             self.rotate2(csin, inplace=True)
+            
+        return self.ds
 
     
     def set_declination(self, declination):
@@ -146,10 +146,11 @@ class Velocity():
             self.ds = self.rotate2('earth', inplace=True)
         if 'principal_heading' in self.ds.attrs:
             self.ds.attrs['principal_heading'] += angle
-        # These two lines below were originaly a '_set' subroutine of the h5 
-        # object, I didn't check if that was a 'setter'
+
         self.ds.attrs['declination'] = declination
         self.ds.attrs['declination_in_orientmat'] = True
+        
+        return self.ds
         
         
     def rotate2(self, out_frame, inplace=False):

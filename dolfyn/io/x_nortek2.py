@@ -2,12 +2,14 @@
 files. It relies heavily on the `nortek2_defs` and `nortek2lib` modules.
 """
 import numpy as np
+import xarray as xr
 from struct import unpack
 import warnings
 from . import x_nortek2_defs as defs
 from . import nortek2lib as lib
-from .base import WrongFileType, read_userdata
-from ..rotate.vector import _euler2orient
+from .x_base import WrongFileType, read_userdata, create_dataset, handle_nan
+from ..rotate.x_vector import _euler2orient
+from ..rotate.base import _set_coords
 
 
 def read_signature(filename, userdata=True, nens=None):
@@ -18,8 +20,8 @@ def read_signature(filename, userdata=True, nens=None):
     filename : string
         The filename of the file to load.
 
-    userdata : filename
-        <<currently unused, just a placeholder.>>
+    userdata : bool
+        To search for and use a .userdata.json or not
 
     nens : int, or tuple of 2 ints
         The number of ensembles to read, if int (starting at the
@@ -49,28 +51,32 @@ def read_signature(filename, userdata=True, nens=None):
     rdr.sci_data(d)
     out = reorg(d)
     reduce(out)
+    
+    declin = None
+    for nm in userdata:
+        if 'dec' in nm:
+            declin = userdata[nm]
+        else:
+            out['attrs'][nm] = userdata[nm]
+    
+    # NaN in time coordinate handling
+    handle_nan(out)
 
-    # od = out['orient']
-    # if 'orient.orientmat' not in out:
-    #     od['orientmat'] = _euler2orient(od['heading'], od['pitch'], od['roll'])
+    # Create xarray dataset from upper level dictionary
+    ds = create_dataset(out)
+    ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
-    # # Move raw heading data into orient.raw
-    # odr = od['raw'] = db.TimeData()
-    # for ky in ['heading', 'pitch', 'roll']:
-    #     val = od.pop(ky, None)
-    #     if val is not None:
-    #         odr[ky] = val
+    if 'orientmat' not in ds:
+        omat = _euler2orient(ds['heading'], ds['pitch'], ds['roll'])
+        ds['orientmat'] = xr.DataArray(omat,
+                                        coords={'inst': ['X','Y','Z'],
+                                                'earth': ['E','N','U'], 
+                                                'time': ds['time']},
+                                        dims=['inst','earth','time'])
+    if declin is not None:
+        ds.Veldata.set_declination(declin)
 
-    # out['props'].update(userdata)
-
-    # # Handle properties with the PropsDict class.
-    # out['props'] = db.PropsDict(out['props'])
-
-    # declin = out['props'].pop('declination', None)
-    # if declin is not None:
-    #     out.set_declination(declin)
-
-    return out
+    return ds
 
 
 class Ad2cpReader(object):
@@ -331,7 +337,7 @@ def reorg(dat):
     :class:`dolfyn.ADPdata` object.
     """
     outdat = {'data_vars':{},'coords':{},'attrs':{},
-              'units':{},'sys':{}} #apb.ADPdata()
+              'units':{},'sys':{},'altraw':{}} #apb.ADPdata()
     cfg = outdat['attrs'] #db.config(_type='Nortek AD2CP')
     cfh = cfg['filehead_config'] = dat['filehead_config']
     cfg['inst_model'] = (cfh['ID'].split(',')[0][5:-1])
@@ -351,7 +357,7 @@ def reorg(dat):
         cfg['burst_config' + tag] = lib.headconfig_int2dict(
             lib.collapse(dnow['config'], exclude=collapse_exclude,
                          name='config'))
-        outdat['coords']['mpltime' + tag] = lib.calc_time(
+        outdat['coords']['time' + tag] = lib.calc_time(
             dnow['year'] + 1900,
             dnow['month'],
             dnow['day'],
@@ -365,25 +371,35 @@ def reorg(dat):
         cfg['ncells' + tag] = tmp['ncells']
         cfg['coord_sys_axes' + tag] = tmp['cy']
         cfg['nbeams' + tag] = tmp['nbeams']
-        for ky in ['SerialNum', 'cell_size', 'blank_dist',
-                   'nom_corr', 'data_desc',
-                   'vel_scale', 'power_level']:
+        cfg['xmit_energy' + tag] = np.median(dnow['xmit_energy'])
+        cfg['ambig_vel' + tag] = np.median(dnow['ambig_vel'])
+        
+        for ky in ['SerialNum', 'cell_size', 'blank_dist']:
             # These ones should 'collapse'
             # (i.e., all values should be the same)
             # So we only need that one value.
             cfg[ky + tag] = lib.collapse(dnow[ky], 
                                          exclude=collapse_exclude,
                                          name=ky)
+        for ky in ['nom_corr', 'data_desc',
+                   'vel_scale', 'power_level']:
+            # These ones should 'collapse'
+            # (i.e., all values should be the same)
+            # So we only need that one value.
+            cfg['burst_config' + tag][ky + tag] = lib.collapse(dnow[ky], 
+                                         exclude=collapse_exclude,
+                                         name=ky)
+            
         for ky in ['c_sound', 'temp', 'pressure',
                    'heading', 'pitch', 'roll',
-                   'mag', 'accel', 'ambig_vel',
-                   'xmit_energy', 'ensemble',
+                   'mag', 'accel',
                    ]:
             # No if statement here
             outdat['data_vars'][ky + tag] = dnow[ky]
             
         for ky in ['batt_V', 'temp_mag', 'temp_clock',
-                   'error', 'status', '_ensemble',
+                   'error', 'status', #'xmit_energy',
+                   '_ensemble', 'ensemble', #'ambig_vel',
                    ]:
             outdat['sys'][ky + tag] = dnow[ky]
             
@@ -394,57 +410,69 @@ def reorg(dat):
             if ky in dnow:
                 outdat['data_vars'][ky + tag] = dnow[ky]
         
-        for ky in ['alt_dist', 'alt_quality', 
+        for ky in ['alt_dist', 'alt_quality', 'alt_status',
                    'ast_dist', 'ast_quality', 'ast_offset_time',
-                   'ast_pressure', 'std_press'
+                   'ast_pressure', 
                    'altraw_nsamp', 'altraw_dist', 'altraw_samp',
                    ]:
             if ky in dnow:
-                outdat['alt'][ky + tag] = dnow[ky]
+                outdat['altraw'][ky + tag] = dnow[ky]
                 
-        for ky in ['alt_status', 'temp_press', 'fom',
-                   'status0',
+        for ky in ['status0', 'fom',
+                   'temp_press', 'std_press'
                    'std_pitch', 'std_roll', 'std_heading',
                    ]:
             if ky in dnow:
                 outdat['sys'][ky + tag] = dnow[ky]  
-                
-        for grp, keys in defs._burst_group_org.items():
-            if grp not in outdat and \
-                len(set(defs._burst_group_org[grp])
-                    .intersection(outdat.keys())):
-                    outdat[grp] = {} #db.TimeData()
-            for ky in keys:
-                if ky == grp and ky in outdat:
-                    tmp = outdat.pop(grp)
-                    outdat[grp] = {} #db.TimeData()
-                    outdat[grp][ky] = tmp
-                    #print(ky, tmp)
-                if ky + tag in outdat:
-                    outdat[grp][ky + tag] = outdat.pop(ky + tag)
+
+        # for grp, keys in defs._burst_group_org.items():
+        #     if grp not in outdat and \
+        #         len(set(defs._burst_group_org[grp])
+        #             .intersection(outdat.keys())):
+        #             outdat[grp] = {} #db.TimeData()
+        #     for ky in keys:
+        #         if ky == grp and ky in outdat:
+        #             tmp = outdat.pop(grp)
+        #             outdat[grp] = {} #db.TimeData()
+        #             outdat[grp][ky] = tmp
+        #             #print(ky, tmp)
+        #         if ky + tag in outdat:
+        #             outdat[grp][ky + tag] = outdat.pop(ky + tag)
 
     #!!! 'altraw' key doesn't exist?
-    # # Move 'altimeter raw' data to it's own down-sampled structure
-    # if 26 in dat:
-    #     ard = outdat['altraw'] = db.MappedTime()
-    #     for ky in list(outdat.iter_data(include_hidden=True)):
-    #         if ky.endswith('_ar'):
-    #             grp = ky.split('.')[0]
-    #             if '.' in ky and grp not in ard:
-    #                 ard[grp] = db.TimeData()
-    #             ard[ky.rstrip('_ar')] = outdat.pop(ky)
-    #     N = ard['_map_N'] = len(outdat['mpltime'])
-    #     parent_map = np.arange(N)
-    #     ard['_map'] = parent_map[np.in1d(outdat.sys.ensemble, ard.sys.ensemble)]
-    #     outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
+    # Move 'altimeter raw' data to it's own down-sampled structure
+    if 26 in dat:
+        ard = outdat['altraw']
+        for ky in list(outdat['data_vars']):
+            if ky.endswith('_ar'):
+                grp = ky.split('.')[0]
+                if '.' in ky and grp not in ard:
+                    ard[grp] = {}
+                ard[ky.rstrip('_ar')] = outdat['data_vars'].pop(ky)
+        for ky in list(outdat['sys']):
+            if ky.endswith('_ar'):
+                grp = ky.split('.')[0]
+                if '.' in ky and grp not in ard:
+                    ard[grp] = {}            
+                ard[ky.rstrip('_ar')] = outdat['sys'].pop(ky)
+        N = ard['_map_N'] = len(outdat['coords']['time'])
+        parent_map = np.arange(N)
+        ard['_map'] = parent_map[np.in1d(outdat['sys']['ensemble'], ard['ensemble'])]
+        #outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
+        
         
     outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
-                                 'ENU': 'earth',
-                                 'BEAM': 'beam'}[cfg['coord_sys_axes']]
+                                    'ENU': 'earth',
+                                    'BEAM': 'beam'}[cfg['coord_sys_axes']]
     tmp = lib.status2data(outdat['sys']['status'])  # returns a dict
-    outdat['attrs']['orient_up'] = tmp['orient_up']
-    # 0: XUP, 1: XDOWN, 4: ZUP, 5: ZDOWN
+    
+    # Instrument direction
+    face = tmp['orient_up'][0]
+    # 0: XUP, 1: XDOWN, 4: ZUP(?), 5: ZDOWN, 7: ZUP
     # Heading is: 0,1: Z; 4,5: X
+    nortek_orient = {0:'horizontal', 1:'horizontal', 4:'up', 5:'down', 7:'up'}
+    outdat['attrs']['orientation'] = nortek_orient[face]
+    
     for ky in ['accel', 'angrt', 'mag']:
         for dky in outdat['data_vars'].keys():
             if dky == ky or dky.startswith(ky + '_'):

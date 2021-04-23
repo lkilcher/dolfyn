@@ -2,57 +2,6 @@ import numpy as np
 from numpy.linalg import det, inv
 
 
-def _set_coords(ds, ref_frame, forced=False):
-    '''
-    Check the current reference frame and adjust xarray coords/dims as necessary
-    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
-    '''
-    
-    make = ds.Veldata._make_model
-    
-    XYZ = ['X','Y','Z']
-    ENU = ['E','N','U']
-    beam = list(range(1,ds.vel.shape[0]+1))
-    
-    # check make/model
-    if 'rdi' in make:
-        inst = ['X','Y','Z','err']
-        earth = ['E','N','U','err']
-        princ = ['streamwise','cross-stream','vertical','err']
-        
-    elif 'nortek' in make:
-        if 'signature' in make or 'ad2cp' in make:
-            inst = ['X','Y','Z1','Z2']
-            earth = ['E','N','U1','U2']
-            princ = ['streamwise','cross-stream','vertical1','vertical2']
-
-        else: # AWAC or Vector
-            inst = XYZ
-            earth = ENU
-            princ = ['streamwise','cross-stream','vertical']
-    
-    orient = {'beam':beam, 'inst':inst, 'ship': inst, 'earth':earth, 'principal':princ}
-    
-    orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
-                 'principal':['streamwise','cross-stream','vertical']}
-    
-    if forced:
-        ref_frame += '-forced'
-    
-    # update 'orient' and 'orientIMU' dimensions
-    ds = ds.assign_coords({'orient': orient[ref_frame]})
-    ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
-    ds.orient.attrs['ref_frame'] = ref_frame
-    ds.attrs['coord_sys'] = ref_frame    
-    
-    # This is essentially one extra line to scroll through
-    # Going to drop at some point
-    if hasattr(ds, 'coord_sys_axes'):
-        ds.attrs.pop('coord_sys_axes')
-    
-    return ds
-
-
 class BadDeterminantWarning(UserWarning):
     """A warning for the determinant is not equal to 1.
     """
@@ -310,3 +259,54 @@ def orient2euler(omat):
         # roll
         np.rad2deg(np.arctan2(omat[1, 2], omat[2, 2])),
     )
+
+
+def _set_coords(ds, ref_frame, forced=False):
+    '''
+    Check the current reference frame and adjust xarray coords/dims as necessary
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
+    '''
+    
+    make = ds.Veldata._make_model
+    
+    XYZ = ['X','Y','Z']
+    ENU = ['E','N','U']
+    beam = list(range(1,ds.vel.shape[0]+1))
+    
+    # check make/model
+    if 'rdi' in make:
+        inst = ['X','Y','Z','err']
+        earth = ['E','N','U','err']
+        princ = ['streamwise','cross-stream','vertical','err']
+        
+    elif 'nortek' in make:
+        if 'signature' in make or 'ad2cp' in make:
+            inst = ['X','Y','Z1','Z2']
+            earth = ['E','N','U1','U2']
+            princ = ['streamwise','cross-stream','vertical1','vertical2']
+
+        else: # AWAC or Vector
+            inst = XYZ
+            earth = ENU
+            princ = ['streamwise','cross-stream','vertical']
+    
+    orient = {'beam':beam, 'inst':inst, 'ship': inst, 'earth':earth, 'principal':princ}
+    
+    orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
+                 'principal':['streamwise','cross-stream','vertical']}
+    
+    if forced:
+        ref_frame += '-forced'
+    
+    # update 'orient' and 'orientIMU' dimensions
+    ds = ds.assign_coords({'orient': orient[ref_frame]})
+    ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
+    ds.orient.attrs['ref_frame'] = ref_frame
+    ds.attrs['coord_sys'] = ref_frame    
+    
+    # This is essentially one extra line to scroll through
+    # Going to drop at some point
+    if hasattr(ds, 'coord_sys_axes'):
+        ds.attrs.pop('coord_sys_axes')
+    
+    return ds

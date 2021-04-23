@@ -121,7 +121,7 @@ class TurbBinner(VelBinner):
           'omega' (rad/s)
 
         vel_avg : |np.ndarray| (...,n_time)
-          The bin-averaged velocity magnitude [m/s] (calc'd from do_avg)
+          The bin-averaged velocity [m/s] (calc'd from do_avg)
 
         omega_range : iterable(2)
           The range over which to integrate/average the spectrum.
@@ -172,17 +172,17 @@ class TurbBinner(VelBinner):
     def calc_epsilon_SF(self, vel_raw, vel_avg, fs=None, freq_rng=[.25, 1.]):
         """
         Calculate dissipation rate using the "structure function" (SF) method
-        on along-beam velocity data (ADCP-specific)
+        on along-beam velocity data (ADCP-specific). 
 
         Parameters
         ----------
 
         vel_raw : |xr.DataArray|
-          The raw velocity data (last dimension time) upon which to
-          perform the SF technique.
+          The raw beam velocity data (last dimension time) upon which to
+          perform the SF technique. 
 
         vel_avg : |xr.DataArray|
-          The bin-averaged velocities
+          The bin-averaged beam velocity
 
         fs : float
           The sample rate of `vel_raw` [Hz]
@@ -200,6 +200,9 @@ class TurbBinner(VelBinner):
           
         Notes
         -----
+        
+        This function is limited to calculating epsilon for one beam 
+        at a time.
         
         Wiles, et al, "A novel technique for measuring the rate of 
         turbulent dissipation in the marine environment"

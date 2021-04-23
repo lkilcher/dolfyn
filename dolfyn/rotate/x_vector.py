@@ -68,7 +68,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     #odata = advo['orient']
     if hasattr(advo, 'orientmat'):
-        omat = advo['orientmat'].values
+        omat = advo['orientmat']
     else:
         if 'nortek vector' in advo.Veldata._make_model:
             orientation_down = advo['orientation_down']
@@ -79,7 +79,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
-    rmat = np.rollaxis(omat, 1)
+    rmat = np.rollaxis(omat.values, 1)
 
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
@@ -154,7 +154,7 @@ def _check_inst2head_rotmat(advo):
         raise Exception(
             "The inst2head rotation matrix exists in props, "
             "but it was not set using `set_inst2head_rotmat.")
-    if not rotb._check_rotmat_det(advo.inst2head_rotmat).all():
+    if not rotb._check_rotmat_det(advo.inst2head_rotmat.values):
         raise ValueError("Invalid inst2head_rotmat"
                          " (determinant != 1).")
     return True

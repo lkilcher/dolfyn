@@ -1,6 +1,8 @@
 import numpy as np
+import scipy.io as sio
 import xarray as xr
 from ..data.time import num2date
+from .x_base import create_dataset
 
 
 def check_coords(dat):
@@ -294,10 +296,63 @@ def convert_xarray(dat):
     return xdat
 
 
-def save_xr(fname, dat):
-    dat.to_netcdf(fname, format='NETCDF4', engine='h5netcdf', invalid_netcdf=True)
+def save_nc(filename, dat):
+    """
+    Save xarray dataset as netCDF (.nc).
+    Drops 'config' lines.
+    
+    """
+    for key in list(dat.attrs.keys()):
+        if 'config' in key:
+            dat.attrs.pop(key)
+    
+    dat.to_netcdf(filename, format='NETCDF4', engine='h5netcdf', invalid_netcdf=True)
     
 
-def load_xr(fname):
-    return xr.load_dataset(fname)
+def load_nc(filename):
+    """
+    Load xarray dataset from netCDF
+    
+    """
+    return xr.load_dataset(filename)
+
+
+def save_mat(filename, data):
+    """
+    Save xarray dataset as a MATLAB (.mat) file
+    
+    """
+    matfile = {'vars':{},'coords':{},'config':{},'units':{}}
+    for key in data.data_vars:
+        matfile['vars'][key] = data[key].values
+        if hasattr(data[key], 'units'):
+            matfile['units'][key] = data[key].units
+    for key in data.coords:
+        matfile['coords'][key] = data[key].values
+    matfile['config'] = data.attrs
+    
+    sio.savemat(filename, matfile)
+    
+    
+# def load_mat(filename):
+#     """
+#     Load xarray dataset from MATLAB (.mat) file
+#     
+#     Converting to Matlab messes up dimensions somehow
+#     """
+#     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
+    
+#     ds_dict = {'vars':{},'coords':{},'config':{},'units':{}}
+    
+#     for nm in ds_dict:
+#         key_list = data[nm]._fieldnames
+#         for ky in key_list:
+#             ds_dict[nm][ky] = getattr(data[nm], ky)
+    
+#     ds_dict['data_vars'] = ds_dict.pop('vars')
+#     ds_dict['attrs'] = ds_dict.pop('config')
+    
+#     ds = create_dataset(ds_dict)
+            
+#     return ds
     

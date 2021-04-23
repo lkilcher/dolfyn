@@ -40,10 +40,10 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         cs_new = 'earth'
     
     # if ADCP is upside down
-    if adcpo.orientation==5:
+    if adcpo.orientation=='down':
         sign = np.array([1, -1, -1, -1])
         down = True
-    else:
+    else: # orientation = 'up' or 'horizontal'
         sign = np.array([1, 1, 1, 1])
         down = False
 

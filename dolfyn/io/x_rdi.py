@@ -1,12 +1,13 @@
 from __future__ import print_function
 import numpy as np
 from scipy import nanmean
+import xarray as xr
 import datetime
 import warnings
 from os.path import getsize
 from ._read_bin import eofException, bin_reader
 from ..data.time import date2num
-from .base import WrongFileType, read_userdata
+from .x_base import WrongFileType, read_userdata, create_dataset, handle_nan
 from ..rotate.x_rdi import calc_orientmat as _calc_omat
 from ..rotate.base import _set_coords
 
@@ -41,15 +42,22 @@ def read_rdi(fname, userdata=None, nens=None):
 
     for nm in userdata:
         dat['attrs'][nm] = userdata[nm]
+        
+    # NaN in time coordinate handling
+    handle_nan(dat)
     
-    #!!! Create xarray dataset from upper level dictionary
-    #ds = create_dataset(dat)
+    # Create xarray dataset from upper level dictionary
+    ds = create_dataset(dat)
+    ds = _set_coords(ds, ref_frame=ds.coord_sys)
     
-    # ds = _set_coords(ds, ref_frame=ds.coord_sys)
-    # ds['orientmat'] = _calc_omat(ds)
-    # ds = _set_rdi_declination(ds, fname)
+    ds['orientmat'] = xr.DataArray(_calc_omat(ds),
+                                   coords={'inst': ['X','Y','Z'],
+                                           'earth': ['E','N','U'], 
+                                           'time': ds['time']},
+                                   dims=['inst','earth','time'])
+    ds = _set_rdi_declination(ds, fname)
     
-    return dat
+    return ds
 
 
 def _set_rdi_declination(dat, fname='????'):
@@ -57,13 +65,13 @@ def _set_rdi_declination(dat, fname='????'):
     # that the declination is already included in the heading,
     # and in the velocity data.
     # I'm assuming this is the case for now...
-    # Can confirm this is true - jrm
+    # Can confirm - jrm
 
     #declin = dat['props'].pop('declination', None)
     declin = hasattr(dat, 'declination')
 
     if dat.attrs['magnetic_var_deg'] != 0:
-        dat.attrs['declination'] = dat['magnetic_var_deg']
+        dat.attrs['declination'] = dat.attrs['magnetic_var_deg']
 
     if dat.attrs['magnetic_var_deg'] != 0 and declin:# is not None:
         warnings.warn(
@@ -80,7 +88,7 @@ def _set_rdi_declination(dat, fname='????'):
         # set_declination rotates by the difference between what is
         # already set in props['declination'] (i.e., above), and the
         # input value
-        dat = dat.set_declination(declin)
+        dat.Veldata.set_declination(dat.declination)
     return dat
 
 
@@ -102,10 +110,10 @@ century = 2000
 # changed group to xarray info type (data_var, coord, dim, attr)
 # added units to end
 global data_defs
-data_defs = {'number': ([], 'sys', 'uint32', 'n/a'),
-             'rtc': ([7], 'sys', 'uint16', 'n/a'),
-             'bit': ([], 'sys', 'bool', 'n/a'),
-             'ssp': ([], 'sys', 'uint16', 'n/a'),
+data_defs = {'number': ([], 'sys', 'uint32', ''),
+             'rtc': ([7], 'sys', 'uint16', ''),
+             'bit': ([], 'sys', 'bool', ''),
+             'ssp': ([], 'sys', 'uint16', ''),
              'depth': ([], 'data_vars', 'float32', 'm'),
              'pitch': ([], 'data_vars', 'float32', 'deg'),
              'roll': ([], 'data_vars', 'float32', 'deg'),
@@ -116,8 +124,8 @@ data_defs = {'number': ([], 'sys', 'uint32', 'n/a'),
              'heading_std': ([], 'sys', 'float32', 'deg'),
              'pitch_std': ([], 'sys', 'float32', 'deg'),
              'roll_std': ([], 'sys', 'float32', 'deg'),
-             'adc': ([8], 'sys', 'uint16', 'n/a'),
-             'error_status_wd': ([], 'attrs', 'float32', 'n/a'),
+             'adc': ([8], 'sys', 'uint16', ''),
+             'error_status_wd': ([], 'attrs', 'float32', ''),
              'pressure': ([], 'data_vars', 'float32', 'dbar'),
              'pressure_std': ([], 'data_vars', 'float32', 'dbar'),
              'vel': (['nc', 4], 'data_vars', 'float32', 'm/s'),
@@ -130,19 +138,19 @@ data_defs = {'number': ([], 'sys', 'uint32', 'n/a'),
              'corr_bt': ([4], 'data_vars', 'uint8', 'counts'),
              'amp_bt': ([4], 'data_vars', 'uint8', 'counts'),
              'prcnt_gd_bt': ([4], 'data_vars', 'uint8', '%'),
-             'stime': ([], 'coords', 'float64', 'n/a'),
-             'etime': ([], 'coords', 'float64', 'n/a'),
-             'mpltime': ([], 'coords', 'float64', 'n/a'),
+             'stime': ([], 'coords', 'float64', ''),
+             'etime': ([], 'coords', 'float64', ''),
+             'time': ([], 'coords', 'float64', ''),
              'slatitude': ([], 'data_vars', 'float64', 'deg'),
              'slongitude': ([], 'data_vars', 'float64', 'deg'),
              'elatitude': ([], 'data_vars', 'float64', 'deg'),
              'elongitude': ([], 'data_vars', 'float64', 'deg'),
              # These are the GPS times/lat/lons
-             'gtime': ([], 'coords', 'float64', 'n/a'),
+             'gtime': ([], 'coords', 'float64', ''),
              'glatitude': ([], 'data_vars', 'float64', 'deg'),
              'glongitude': ([], 'data_vars', 'float64', 'deg'),
-             'ntime': ([], 'coords', 'float64', 'n/a'),
-             'flags': ([], 'data_vars', 'float32', 'n/a'),
+             'ntime': ([], 'coords', 'float64', ''),
+             'flags': ([], 'data_vars', 'float32', ''),
              }
 
 
@@ -251,7 +259,7 @@ class adcp_loader(object):
     _winrivprob = False
     _search_num = 30000  # Maximum distance? to search
     _debug7f79 = None
-    vars_read = variable_setlist(['mpltime'])
+    vars_read = variable_setlist(['time'])
 
     def _debug_print(self, lvl, msg):
         if self._debug_level > lvl:
@@ -912,9 +920,9 @@ class adcp_loader(object):
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
-                dat['coords']['mpltime'][iens] = np.NaN
+                dat['coords']['time'][iens] = np.NaN
             else:
-                dat['coords']['mpltime'][iens] = np.median(dats)
+                dat['coords']['time'][iens] = np.median(dats)
         self.finalize()
         if 'vel_bt' in dat['data_vars']:
             #dat['props']['rotate_vars'].update({'vel_bt', })

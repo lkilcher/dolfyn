@@ -169,6 +169,7 @@ def index2ens_pos(index):
     index).
     """
     if (index['ens'] == 0).all() and (index['hw_ens'] == 1).all():
+        #!!!TODO
         # This is an ugly hack.
         # This is for when the system runs in 'raw/continuous mode' or something?
         # Is there a better way to detect this mode?

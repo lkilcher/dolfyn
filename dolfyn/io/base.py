@@ -19,39 +19,6 @@ except NameError:
 class WrongFileType(Exception):
     pass
 
-
-class DataFactory(object):
-
-    """
-    An abstract base class for writing :class:`main.Saveable` objects.
-    """
-    closefile = True
-
-    def __enter__(self,):
-        """
-        Allow data_factory objects to use python's 'with' statement.
-        """
-        return self
-
-    def __exit__(self, type, value, trace):
-        """
-        Close the file at the end of the with statement.
-        """
-        if self.closefile:
-            self.close()
-            if hasattr(self, '_extrafiles'):
-                for fl in self._extrafiles:
-                    fl.close()
-
-    @property
-    def filename(self, ):
-        return self._filename
-
-    @filename.setter
-    def filename(self, filename):
-        self._filename = expanduser(filename)
-
-
 def read_userdata(filename, userdata=True):
     """
     Reads a userdata.json file and returns the data it contains as a

@@ -50,7 +50,7 @@ class DataDef(object):
             if len(itm)==5:
                 self._units.append(itm[4])
             else:
-                self._units.append('n/a')
+                self._units.append('')
             if itm[2] == []:
                 self._N.append(1)
             else:
@@ -249,8 +249,7 @@ _burst_group_org = {
                   'pressure','orientmat',
                   'heading', 'pitch', 'roll',
                   'angrt', 'mag', 'accel', 'quaternion',
-                  'ambig_vel', 'xmit_energy',],
-    
+                  ],
     'alt': ['alt_dist', 'alt_quality', 'alt_status',
             'ast_dist', 'ast_quality',
             'ast_offset_time', 'ast_pressure',
@@ -260,7 +259,8 @@ _burst_group_org = {
             'batt_V', 'error', 'status0', 'status',
             # 'ensemble' is added in Ad2cpReader.init_data
             '_ensemble', 'ensemble', 'std_press',
-            'std_pitch', 'std_roll', 'std_heading'],
+            'std_pitch', 'std_roll', 'std_heading',
+            'ambig_vel', 'xmit_energy',],
 }
 
 
