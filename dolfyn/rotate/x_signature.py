@@ -41,10 +41,8 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     
     # if ADCP is upside down
     if adcpo.orientation=='down':
-        sign = np.array([1, -1, -1, -1])
         down = True
-    else: # orientation = 'up' or 'horizontal'
-        sign = np.array([1, 1, 1, 1])
+    else: # orientation = 'up' or '--'
         down = False
 
     if rotate_vars is None:
@@ -113,20 +111,47 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     # tmp[0, 2:] = rmat[0, 2] / 3
     # tmp[1, 2:] = rmat[1, 2] / 3
 
-    if down:
+    if (not reverse and not down) or (reverse and down):
+    # for up or VM instruments this should be 'if not reverse'
+    # for down facing instruments this should be 'if reverse'
         # 3-element inverse handled by sumstr definition (transpose)
         rmd[4] = np.moveaxis(inv(np.moveaxis(rmd[4], -1, 0)), 0, -1)
 
     for nm in rotate_vars:
         dat = adcpo[nm].values
         n = dat.shape[0]
-        if n == 3:
-            dat = np.einsum(sumstr, rmd[3], dat)
-        elif n == 4:
-            dat = sign[:,None,None]*np.einsum('ijk,j...k->i...k', rmd[4], dat)
-        else:
-            raise Exception("The entry {} is not a vector, it cannot"
-                            "be rotated.".format(nm))
+        # Nortek documents sign change for upside-down instruments (above link)
+        if not reverse and down: # runs for down and earth to beam
+            sign = np.array([1,-1,-1,-1], ndmin=dat.ndim).T
+            sign3 = np.array([1,-1,-1], ndmin=dat.ndim).T
+            if n == 3:
+                dat = np.einsum(sumstr, rmd[3], sign3*dat)
+            elif n == 4:
+                dat = np.einsum('ijk,j...k->i...k', rmd[4], sign*dat)
+            else:
+                raise Exception("The entry {} is not a vector, it cannot"
+                                "be rotated.".format(nm))
+                
+        elif reverse and down: # runs for down and beam to earth
+            sign = np.array([1,-1,-1,-1], ndmin=dat.ndim).T
+            sign3 = np.array([1,-1,-1], ndmin=dat.ndim).T
+            if n == 3:
+                dat = sign3*np.einsum(sumstr, rmd[3], dat)
+            elif n == 4:
+                dat = sign*np.einsum('ijk,j...k->i...k', rmd[4], dat)
+            else:
+                raise Exception("The entry {} is not a vector, it cannot"
+                                "be rotated.".format(nm))
+                
+        else: # 'up' and SigVMs
+            #sign = np.array([1, 1, 1, 1], ndmin=dat.ndim)
+            if n == 3:
+                dat = np.einsum(sumstr, rmd[3], dat)
+            elif n == 4:
+                dat = np.einsum('ijk,j...k->i...k', rmd[4], dat)
+            else:
+                raise Exception("The entry {} is not a vector, it cannot"
+                                "be rotated.".format(nm))
         adcpo[nm].values = dat.copy()
 
     adcpo = rotb._set_coords(adcpo, cs_new)

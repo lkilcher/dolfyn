@@ -1,8 +1,6 @@
 import numpy as np
-import scipy.io as sio
 import xarray as xr
-from ..data.time import num2date
-from .x_base import create_dataset
+#from ..data.time import num2date
 
 
 def check_coords(dat):
@@ -70,16 +68,14 @@ def convert_xarray(dat):
         xdat['vel'] = xr.DataArray(dat['vel'],
                                    coords={'orient':beam,'range':dat['range'],'time':time},
                                    dims=['orient','range','time'],
-                                   attrs={'units':'m/s',
-                                          'description':'velocity'})
+                                   attrs={'units':'m/s'})
         xdat.orient.attrs['frame of reference'] = 'beam'
         xdat.range.attrs['units'] = 'm'
     except: #ADVs
         xdat['vel'] = xr.DataArray(dat['vel'],
                                    coords={'orient':beam,'time':time},
                                    dims=['orient','time'],
-                                   attrs={'units':'m/s',
-                                          'description':'velocity'})
+                                   attrs={'units':'m/s'})
         xdat.orient.attrs['frame of reference'] = 'inst'
     
     # Check for 5th beam, echosounder, or bottom track data (nortek & rdi)
@@ -95,42 +91,34 @@ def convert_xarray(dat):
                 xdat['vel_b5'] = xr.DataArray(dat['vel_b5'][0],
                                               coords={'range':dat['range_b5'],'time':time},
                                               dims=['range','time'],
-                                              attrs={'units':'m/s',
-                                                     'description':'5th beam velocity'})
+                                              attrs={'units':'m/s'})
                 dtype.pop(dtype.index('vel_b5'))
                 
             elif 'echo' in key:
                 xdat['echo'] = xr.DataArray(dat['echo'],
                                             coords={'range_echo':dat['range_echo'],'time':time},
                                             dims=['range_echo','time'],
-                                            attrs={'units':'dB',
-                                                   'description':'echosounder'})
+                                            attrs={'units':'dB'})
                 xdat.range_echo.attrs['units'] = 'm'
                 dtype.pop(dtype.index('echo'))
                 
             elif 'bt' in key:
-                
                 dtype.pop(dtype.index(key))
                 if 'vel' in key:
                     xdat[key] = xr.DataArray(dat[key], 
                                              coords = {'orient':beam,'time':time},
                                              dims = ['orient','time'],
-                                             attrs = {'units':'m/s',
-                                             'description':'velocity measured by bottom track'})         
-
+                                             attrs = {'units':'m/s'})
                 elif ('range' in key) or ('dist' in key):
                     xdat[key] = xr.DataArray(dat[key], 
                                              coords = {'beam':beam,'time':time},
                                              dims = ['beam','time'],
-                                             attrs = {'units':'m',
-                                             'description':'seafloor depth measured by bottom track'})                    
-        
-        elif 'depth' in key: # only for TRDI, converts pressure sensor?
+                                             attrs = {'units':'m'})        
+        elif 'depth' in key:
             xdat['depth'] = xr.DataArray(dat['depth_m'],
                                          coords={'time':time},
                                          dims=['time'],
-                                         attrs={'units':'m',
-                                                'description':'instrument depth'})
+                                         attrs={'units':'m'})
         # the other dictionaries
         elif size==():
             subdat = dat[key]
@@ -143,7 +131,6 @@ def convert_xarray(dat):
                                                 dims=['time'])
                     if 'c_sound' in subkey:
                         xdat[subkey].attrs['units'] = 'm/s'
-                        xdat[subkey].attrs['description'] = 'speed of sound'
                     elif 'temp' in subkey:
                         xdat[subkey].attrs['units'] = 'deg C'
                     elif 'salinity' in subkey:
@@ -172,10 +159,8 @@ def convert_xarray(dat):
                         subkeys.pop(subkeys.index(subkey))
                         if subkey=='amp':
                             xdat[subkey].attrs['units'] = 'dB or counts'
-                            xdat[subkey].attrs['description'] = 'beam amplitude'
                         elif subkey=='corr':
                             xdat[subkey].attrs['units'] = '% or counts'
-                            xdat[subkey].attrs['description'] = 'beam correlation'
                         elif subkey=='prcnt_gd':
                             xdat[subkey].attrs['units'] = '%'
                         
@@ -187,10 +172,8 @@ def convert_xarray(dat):
                         subkeys.pop(subkeys.index(subkey))
                         if 'amp' in subkey:
                             xdat[subkey].attrs['units'] = 'dB'
-                            xdat[subkey].attrs['description'] = '5th beam return amplitude'
                         elif 'corr' in subkey:
                             xdat[subkey].attrs['units'] = '%'
-                            xdat[subkey].attrs['description'] = '5th beam correlation'
                     
                     elif 'bt' in subkey:
                         xdat[subkey] = xr.DataArray(dat.signal[subkey],
@@ -200,23 +183,19 @@ def convert_xarray(dat):
                         subkeys.pop(subkeys.index(subkey))
                         if 'amp' in subkey:
                             xdat[subkey].attrs['units'] = 'dB or counts'
-                            xdat[subkey].attrs['description'] = 'amplitude of bottom track return signal'
                         elif 'corr' in subkey:
                             xdat[subkey].attrs['units'] = '% or counts'
-                            xdat[subkey].attrs['description'] = 'correlation of bottom track return signal'
                         elif 'prcnt_gd' in subkey:
                             xdat[subkey].attrs['units'] = '%'
                             
             elif key=='orient':
-                #subkeys = ['accel','angrt','mag','orientmat','raw','longitude','latitude']
                 for subkey in subdat:
                     if 'orientmat' in subkey:
                         xdat[subkey] = xr.DataArray(dat.orient[subkey],
                                                     coords={'inst': ['X','Y','Z'],
                                                             'earth': ['E','N','U'], 
                                                             'time': time},
-                                                    dims=['inst','earth','time'], 
-                                                    attrs={'description':'orientation matrix for rotating data through coordinate frames'})
+                                                    dims=['inst','earth','time'])
                     elif 'raw' in subkey:
                         for ky in ['heading', 'pitch', 'roll', 'orientation_down']:
                             if ky in dat.orient.raw:
@@ -234,20 +213,15 @@ def convert_xarray(dat):
                                                         dims=['orientIMU', 'time'])
                         except:
                             xdat[subkey] = xr.DataArray(dat.orient[subkey],
-                                                        coords={'quat':['q1','q2','q3','q4'], 
+                                                        coords={'quat':[1,2,3,4], 
                                                                 'time':time},
                                                         dims=['quat','time'])                           
                         if 'accel' in subkey:
                             xdat[subkey].attrs['units'] =  'm^2/s'
-                            xdat[subkey].attrs['description'] = '3-axis accelerometer data'
                         elif 'angrt' in subkey:
-                            xdat[subkey].attrs['units'] =  'rad/s'
-                            xdat[subkey].attrs['description'] = 'angular rotation rate'     
+                            xdat[subkey].attrs['units'] =  'rad/s'   
                         elif 'mag' in subkey:
                             xdat[subkey].attrs['units'] =  'milligauss or gauss'
-                            xdat[subkey].attrs['description'] = '3-axis magnetometer data'
-                        elif 'quaternion' in subkey:
-                            xdat[subkey].attrs['description'] = 'unit quaternions'
                             
                     elif ('lon' in subkey) or ('lat' in subkey):
                         xdat[subkey] = xr.DataArray(dat.orient[subkey],
@@ -290,69 +264,5 @@ def convert_xarray(dat):
     # apply current reference frame to rotated variables
     xdat = check_coords(xdat)
     
-    ## Base Classes
-    
-    
     return xdat
-
-
-def save_nc(filename, dat):
-    """
-    Save xarray dataset as netCDF (.nc).
-    Drops 'config' lines.
-    
-    """
-    for key in list(dat.attrs.keys()):
-        if 'config' in key:
-            dat.attrs.pop(key)
-    
-    dat.to_netcdf(filename, format='NETCDF4', engine='h5netcdf', invalid_netcdf=True)
-    
-
-def load_nc(filename):
-    """
-    Load xarray dataset from netCDF
-    
-    """
-    return xr.load_dataset(filename)
-
-
-def save_mat(filename, data):
-    """
-    Save xarray dataset as a MATLAB (.mat) file
-    
-    """
-    matfile = {'vars':{},'coords':{},'config':{},'units':{}}
-    for key in data.data_vars:
-        matfile['vars'][key] = data[key].values
-        if hasattr(data[key], 'units'):
-            matfile['units'][key] = data[key].units
-    for key in data.coords:
-        matfile['coords'][key] = data[key].values
-    matfile['config'] = data.attrs
-    
-    sio.savemat(filename, matfile)
-    
-    
-# def load_mat(filename):
-#     """
-#     Load xarray dataset from MATLAB (.mat) file
-#     
-#     Converting to Matlab messes up dimensions somehow
-#     """
-#     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
-    
-#     ds_dict = {'vars':{},'coords':{},'config':{},'units':{}}
-    
-#     for nm in ds_dict:
-#         key_list = data[nm]._fieldnames
-#         for ky in key_list:
-#             ds_dict[nm][ky] = getattr(data[nm], ky)
-    
-#     ds_dict['data_vars'] = ds_dict.pop('vars')
-#     ds_dict['attrs'] = ds_dict.pop('config')
-    
-#     ds = create_dataset(ds_dict)
-            
-#     return ds
     

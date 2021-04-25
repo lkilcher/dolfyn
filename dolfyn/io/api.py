@@ -1,11 +1,12 @@
+import scipy.io as sio
+import xarray as xr
+import pkg_resources
+
 from .x_nortek import read_nortek
 from .x_nortek2 import read_signature
 from .x_rdi import read_rdi
-from .x_base import WrongFileType as _WTF
-# These are included here for use in the API
-#from .hdf5 import load
-import pkg_resources
-from .xarray_io import save_mat, save_nc as save, load_nc as load
+from .x_base import create_dataset, WrongFileType as _WTF
+#from .xarray_io import convert_xarray
 
 
 def read(fname, userdata=True, nens=None):
@@ -43,6 +44,7 @@ def read(fname, userdata=True, nens=None):
     raise _WTF("Unable to find a suitable reader for "
                "file {}.".format(fname))
 
+
 def read_example(name, **kwargs):
     """Read an example data file.
 
@@ -69,3 +71,67 @@ def read_example(name, **kwargs):
         'dolfyn',
         'example_data/' + name)
     return read(filename, **kwargs)
+
+
+def save(filename, dataset):
+    """
+    Save xarray dataset as netCDF (.nc).
+    Drops 'config' lines.
+    
+    """
+    for key in list(dataset.attrs.keys()):
+        if 'config' in key:
+            dataset.attrs.pop(key)
+    
+    dataset.to_netcdf(filename, 
+                      format='NETCDF4', 
+                      engine='h5netcdf', 
+                      invalid_netcdf=True)
+    
+
+def load(filename):
+    """
+    Load xarray dataset from netCDF
+    
+    """
+    return xr.load_dataset(filename)
+
+
+def save_mat(filename, data):
+    """
+    Save xarray dataset as a MATLAB (.mat) file
+    
+    """
+    matfile = {'vars':{},'coords':{},'config':{},'units':{}}
+    for key in data.data_vars:
+        matfile['vars'][key] = data[key].values
+        if hasattr(data[key], 'units'):
+            matfile['units'][key] = data[key].units
+    for key in data.coords:
+        matfile['coords'][key] = data[key].values
+    matfile['config'] = data.attrs
+    
+    sio.savemat(filename, matfile)
+    
+    
+# def load_mat(filename):
+#     """
+#     Load xarray dataset from MATLAB (.mat) file
+#     
+#     Converting to Matlab messes up dimensions somehow
+#     """
+#     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
+    
+#     ds_dict = {'vars':{},'coords':{},'config':{},'units':{}}
+    
+#     for nm in ds_dict:
+#         key_list = data[nm]._fieldnames
+#         for ky in key_list:
+#             ds_dict[nm][ky] = getattr(data[nm], ky)
+    
+#     ds_dict['data_vars'] = ds_dict.pop('vars')
+#     ds_dict['attrs'] = ds_dict.pop('config')
+    
+#     ds = create_dataset(ds_dict)
+            
+#     return ds

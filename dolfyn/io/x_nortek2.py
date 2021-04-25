@@ -58,10 +58,10 @@ def read_signature(filename, userdata=True, nens=None):
             declin = userdata[nm]
         else:
             out['attrs'][nm] = userdata[nm]
-    
-    # NaN in time coordinate handling
+            
+    # NaN in time and orientation data
     handle_nan(out)
-
+    
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(out)
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
@@ -459,8 +459,7 @@ def reorg(dat):
         parent_map = np.arange(N)
         ard['_map'] = parent_map[np.in1d(outdat['sys']['ensemble'], ard['ensemble'])]
         #outdat['config']['altraw'] = db.config(_type='ALTRAW', **ard.pop('config'))
-        
-        
+    
     outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
                                     'ENU': 'earth',
                                     'BEAM': 'beam'}[cfg['coord_sys_axes']]
@@ -468,9 +467,10 @@ def reorg(dat):
     
     # Instrument direction
     face = tmp['orient_up'][0]
-    # 0: XUP, 1: XDOWN, 4: ZUP(?), 5: ZDOWN, 7: ZUP
+    # 0: XUP, 1: XDOWN, 4: ZUP(?), 5: ZDOWN, 7: -- SigVM 1000 returns this as 
+    # well as up facing Sig 1000, handle as ZUP
     # Heading is: 0,1: Z; 4,5: X
-    nortek_orient = {0:'horizontal', 1:'horizontal', 4:'up', 5:'down', 7:'up'}
+    nortek_orient = {0:'horizontal', 1:'horizontal', 4:'up', 5:'down', 7:'--'}
     outdat['attrs']['orientation'] = nortek_orient[face]
     
     for ky in ['accel', 'angrt', 'mag']:
@@ -478,7 +478,7 @@ def reorg(dat):
             if dky == ky or dky.startswith(ky + '_'):
                 # outdat.props['rotate_vars'].update({'orient.' + dky})
                 outdat['attrs']['rotate_vars'].append(dky)
-    if 'vel_bt' in outdat:
+    if 'vel_bt' in outdat['data_vars']:
         outdat['attrs']['rotate_vars'].append('vel_bt')
         
     return outdat

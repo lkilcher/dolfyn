@@ -26,7 +26,7 @@ Xarray DOLfYN to MHKiT Changelog
 	
 - Convert DOLfYN object to xarray DataSet
 	- Basic conversion file - done
-	- Create function out of conversion file and incorporate into 'read' function - in progress as bugs show up
+	- Create function out of conversion file and incorporate into 'read' function - done and replaced by refactored I/O
 			- Need function that can change dataarray coordinates for "rotatable" variables - done
 				- take into consideration instrument type for rotation/reference frames
 				- going to feed this into the rotations code
@@ -38,18 +38,18 @@ Xarray DOLfYN to MHKiT Changelog
 			- adjusted scaling on ambig_vel vars
 			- changed dataset 'keys' so that they're more consistent (including adding underscores)
 			- simplified 'config' dictionary in DOLfYN object so that it's easier to read
-	- Attempt to read binary files straight into a dataset - done
 	
 - Refactor DOLfYN
 	- started renaming files to x_*.py
 		- Rotation code - done, checked
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
 			- Orientation up/down wasn't taken into account for Nortek Signatures?
-				- Fixed two Nortek Signature rotation errors - one for upside-down instruments (a simple sign change according to Nortek docs) and one for upside-up instruments (if statement error)
-				- Still a (truncation?) 1% error for upside-up Signature velocity data?
+				- Solved Nortek Signature rotation issues for up and down facing instruments
+				- Sig 1000 returns '7' when facing up as does SigVM 1000 when facing down? - Negative, VM data must be treated like 'up' facing instruments
 			- Verified Nortek Signature data (facing up and down)
-			- Verified TRDI Sentinel Workhorse (facing down - VMDAS)
-				- should work with those facing up, not verified
+			- Verified Nortek SignatureVM data
+			- Couldn't verify TRDI Worhorse or AWAC
+			- rotation accuracy due to input data truncation is 3 decimal places (1 mm/s for velocity data)
 				
 		- Motion correction code - done, checked
 			- motion correction object has been removed
@@ -104,23 +104,30 @@ Xarray DOLfYN to MHKiT Changelog
 		- AWAC temp scaling is way off (?) - Added 0.01 factor
 		- Added 0.1 scale factor for Signature magnetometer to return in units of uT
 	- Step 2 & 3 - done
-		- Need to move Vector rotation matrices from attributes to variables, and remove a lot of config junk - done
-		- Need a bit of code to chop off nan's - done
-		
-- Debugging:
-	- When reading TRDI data with bottom-track, every subsequently-read datafile will contain the 'bt' variables even if the instrument didn't record them - remnant/memory of global variables in the IO code?
+		- Moved Vector rotation matrices from attributes to variables
+		- Removed user-nonsensical configuration data
+		- Added 'save_mat' function
+		- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
+
+
+- Weird things:
+	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
 	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
 	- Bad AWAC IMU data reads as 6551.x?
-	- *xarray accessor warning due to 'Velocity' and 'TKE' inheritance?
-	- !!!*Broke rotation code - bad determinant warning in 'orientmat' at indices {} error- how did Levi chop this data off originally?
+	- No pressure data from Nortek Vectors?
 
 - To do:
-	- Change mpltime to epoch time or something
-	- Optimize I/O code
+	- Error reading Sig VM .ad2cp file echosounder data, only loads first column?
+	- Fix Nortek Signature burst read hack
+	- Add functionality for dual profiling configurations - *Incorporating 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
+	
+	- Optimize read code for the dictionary output?
+	- Change mpl time to epoch time or something
 	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
 	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
-	- Save as mat function - done, working on loading a mat file
-	- Add functionality for dual profiling configurations - *Need to incorporate 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
-	- Add functionality for Nortek SigVM .ad2cp files
+
+- Notes:
+	- DOLfYN loads data as returned by the instrument or software (generally if velocity in beam no correction has been done, if in earth it has)
+
 	
 	

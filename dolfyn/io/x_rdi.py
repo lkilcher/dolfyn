@@ -8,7 +8,7 @@ from os.path import getsize
 from ._read_bin import eofException, bin_reader
 from ..data.time import date2num
 from .x_base import WrongFileType, read_userdata, create_dataset, handle_nan
-from ..rotate.x_rdi import calc_orientmat as _calc_omat
+from ..rotate.x_rdi import calc_beam_orientmat as _calc_bmat, calc_orientmat as _calc_omat
 from ..rotate.base import _set_coords
 
 
@@ -43,13 +43,20 @@ def read_rdi(fname, userdata=None, nens=None):
     for nm in userdata:
         dat['attrs'][nm] = userdata[nm]
         
-    # NaN in time coordinate handling
+    # NaN in time and orientation data
     handle_nan(dat)
     
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(dat)
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
     
+    ds['beam2inst_orientmat'] = xr.DataArray(_calc_bmat(
+                            ds.beam_angle,
+                            ds.beam_pattern=='convex'),
+                                             coords={'x':[1,2,3,4],
+                                                     'x*':[1,2,3,4]},
+                                             dims=['x','x*'])
+                                 
     ds['orientmat'] = xr.DataArray(_calc_omat(ds),
                                    coords={'inst': ['X','Y','Z'],
                                            'earth': ['E','N','U'], 

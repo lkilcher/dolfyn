@@ -32,34 +32,6 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
     return np.abs(det(rotmat) - 1) < thresh
 
 
-def _calc_beam_rotmatrix(theta=20, convex=True, degrees=True):
-    """Calculate the rotation matrix from beam coordinates to
-    instrument head coordinates for an RDI ADCP.
-
-    Parameters
-    ----------
-    theta : is the angle of the heads (usually 20 or 30 degrees)
-
-    convex : is a flag for convex or concave head configuration.
-
-    degrees : is a flag which specifies whether theta is in degrees
-        or radians (default: degrees=True)
-    """
-    if degrees:
-        theta = np.deg2rad(theta)
-    if convex == 0 or convex == -1:
-        c = -1
-    else:
-        c = 1
-    a = 1 / (2. * np.sin(theta))
-    b = 1 / (4. * np.cos(theta))
-    d = a / (2. ** 0.5)
-    return np.array([[c * a, -c * a, 0, 0],
-                     [0, 0, -c * a, c * a],
-                     [b, b, b, b],
-                     [d, d, -d, -d]])
-
-
 def beam2inst(dat, reverse=False, force=False):
     """Rotate velocities from beam to instrument coordinates.
 
@@ -85,13 +57,8 @@ def beam2inst(dat, reverse=False, force=False):
         if reverse and dat.coord_sys != 'inst':
             raise ValueError('The input must be in inst coordinates.')
 
-    if dat.inst_make.lower() == 'rdi':
-        try:
-            rotmat = dat.config.rotmat
-        except AttributeError:
-            rotmat = _calc_beam_rotmatrix(
-                dat.beam_angle,
-                dat.beam_pattern == 'convex')
+    if 'rdi' in dat.inst_make.lower():
+        rotmat = _calc_beam_rotmatrix(dat.beam_angle, dat.beam_pattern)
     elif dat.inst_make.lower() == 'nortek':
          rotmat = dat['beam2inst_orientmat']
     else:
@@ -308,5 +275,9 @@ def _set_coords(ds, ref_frame, forced=False):
     # Going to drop at some point
     if hasattr(ds, 'coord_sys_axes'):
         ds.attrs.pop('coord_sys_axes')
+    if hasattr(ds, 'coord_sys_axes_echo'):
+        ds.attrs.pop('coord_sys_axes_echo')
+    if hasattr(ds, 'coord_sys_axes_bt'):
+        ds.attrs.pop('coord_sys_axes_bt')
     
     return ds

@@ -159,14 +159,16 @@ class TurbBinner(VelBinner):
         a = 0.5
         # using vel_avg.values because the first dimension is 'orient' as
         # opposed to 'spectra', though different names they are the same dir
-        D = np.nanmean(psd.isel(omega=idx) *
-                       omega.isel(omega=idx) ** (5/3) / a,
-                       axis=-1) ** (3/2) / vel_avg.values
+        out = np.nanmean(psd.isel(omega=idx) *
+                         omega.isel(omega=idx) ** (5/3) / a,
+                         axis=-1) ** (3/2) / vel_avg.values
         
-        D.name = 'dissipation rate'
-        D.attrs = {'units':'m^2/s^3',
-                   'method':'LT83'}
-        return D
+        out = xr.DataArray(out,
+                           coords=vel_avg.coords,
+                           dims=vel_avg.dims,
+                           attrs={'units':'m^2/s^3',
+                                  'method':'LT83'})
+        return out
 
 
     def calc_epsilon_SF(self, vel_raw, vel_avg, fs=None, freq_rng=[.25, 1.]):
@@ -230,7 +232,6 @@ class TurbBinner(VelBinner):
         out = xr.DataArray(out,
                            coords=vel_avg.coords,
                            dims=vel_avg.dims,
-                           name='dissipation rate',
                            attrs={'units':'m^2/s^3',
                                   'method':'structure function'})
         return out
@@ -299,9 +300,9 @@ class TurbBinner(VelBinner):
           The raw adv dataset
           
         dat_avg : |xr.Dataset|
-          The binned adv dataset. The spectra and basic
-          turbulence statistics ('tke_vec' and 'stress_vec')
-          must already be computed.
+          The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
+          'do_avg'). The spectra (psd) and basic turbulence statistics 
+          ('tke_vec' and 'stress_vec') must already be computed.
 
         Notes
         -----
@@ -346,7 +347,6 @@ class TurbBinner(VelBinner):
         
         return xr.DataArray(out, coords={'time':dat_avg.psd.time}, 
                             dims='time',
-                            name='dissipation rate',
                             attrs={'units':'m^2/s^3',
                                    'method':'TE01'})
 
@@ -391,7 +391,6 @@ class TurbBinner(VelBinner):
                             coords={'orient':a_cov.orient.values,
                                     'time':a_cov.time.values},
                             dims=['orient','time'],
-                            name = 'length scales',
                             attrs={'units':'m'})
 
 

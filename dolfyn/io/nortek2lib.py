@@ -183,7 +183,11 @@ def index2ens_pos(index):
 
 
 def getbit(val, n):
-    return bool((val >> n) & 1)
+    #!!! Traceback to sig vm echosounder data for this except
+    try:
+        return bool((val >> n) & 1)
+    except:
+        return bool((val[0] >> n) & 1)
 
 
 def crop_ensembles(infile, outfile, range):
@@ -325,11 +329,15 @@ def beams_cy_int2dict(val, id):
     """
     if id == 28:  # 0x1C (echosounder)
         return dict(ncells=val)
+    
+    #!!! Traceback to sig vm echosounder data for these two lines of code
+    if np.size(val)>1:
+        val = val[0]
+    
     return dict(
         ncells=val & (2 ** 10 - 1),
         cy=['ENU', 'XYZ', 'BEAM', None][val >> 10 & 3],
-        nbeams=val >> 12
-    )
+        nbeams=val >> 12)
 
 
 def isuniform(vec, exclude=[]):
@@ -351,7 +359,7 @@ def collapse(vec, name=None, exclude=[]):
     else:
         warnings.warn("The variable {} is expected to be uniform,"
                       " but it is not.".format(name))
-        return vec
+        return vec[0]
 
 
 def calc_config(index):

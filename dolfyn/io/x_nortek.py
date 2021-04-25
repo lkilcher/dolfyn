@@ -85,7 +85,7 @@ def read_nortek(filename,
         else:
             dat['attrs'][nm] = userdata[nm]
     
-    # NaN in time coordinate handling
+    # NaN in time and orientation data
     handle_nan(dat)
 
     # Create xarray dataset from upper level dictionary

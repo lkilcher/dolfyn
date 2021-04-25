@@ -71,16 +71,41 @@ def _read_userdata(fname):
 
 
 def handle_nan(data):
+    '''
+    Hunting down nan's and eliminating them.
+    
+    '''
+    nan = np.zeros(data['coords']['time'].shape, dtype=bool)
+    l = data['coords']['time'].size
+    
     if any(np.isnan(data['coords']['time'])):
-        l = data['coords']['time'].size
-        nan = ~np.isnan(data['coords']['time'])
-        data['coords']['time'] = data['coords']['time'][nan]
+        nan += np.isnan(data['coords']['time'])
+    
+    var = ['heading', 'pitch', 'roll', 'accel', 'angrt', 'mag']
+    for key in data['data_vars']:
+        if any(val in key for val in var):
+            shp = data['data_vars'][key].shape
+            if shp[-1]==l:
+                if len(shp)==1:
+                    if any(np.isnan(data['data_vars'][key])):
+                        nan += np.isnan(data['data_vars'][key])
+                elif len(shp)==2:
+                    if any(np.isnan(data['data_vars'][key][-1])):
+                        nan += np.isnan(data['data_vars'][key][-1])
+
+    if nan.sum()>0:
+        data['coords']['time'] = data['coords']['time'][~nan]
         for key in data['data_vars']:
             if data['data_vars'][key].shape[-1]==l:
-                data['data_vars'][key] = data['data_vars'][key][...,nan]
+                data['data_vars'][key] = data['data_vars'][key][...,~nan]
 
 
 def create_dataset(data):
+    '''
+    Creates an xarray dataset from dictionary created from binary datafile 
+    readers
+    
+    '''
     ds = xr.Dataset()
     Time = data['coords']['time']
     beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
@@ -139,7 +164,8 @@ def create_dataset(data):
                     ds[key] = ds[key].assign_coords({'orientIMU':[1,2,3],
                                                      'time':Time})
                 else:
-                    print(key)
+                    warnings.warn('Variable not included in dataset: {}'
+                                  .format(key))
 
             elif l==3: # 3D variables
                 dtype = ['b5']
@@ -158,7 +184,8 @@ def create_dataset(data):
                     ds[key] = ds[key].assign_coords({'range_b5':data['coords']['range_b5'],
                                                      'time':Time})
                 else:
-                    print(key)
+                    warnings.warn('Variable not included in dataset: {}'
+                                  .format(key))
     ds.attrs = data['attrs']
     
     return ds
