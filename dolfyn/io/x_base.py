@@ -113,13 +113,13 @@ def create_dataset(data):
     for key in data['data_vars']:
         # orientation matrices
         if 'mat' in key:
-            try: # orientmat
+            try: # orientmat (inst2earth)
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'inst':['X','Y','Z'],
-                                               'earth':['E','N','U'], 
+                                               'earth':['E','N','U'],
                                                'time':Time},
                                        dims=['inst','earth','time'])
-            except: # the other 2
+            except: # the other 2 (beam2inst & inst2head)
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'x':beam,
                                                'x*':beam},

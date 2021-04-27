@@ -220,11 +220,12 @@ class TimeBinner:
         Function for setting up a new data-array irregardless of how many 
         dimensions the input data-array has
         '''
+        dims = array.dims
         dims_list = []
         coords_dict = {}
         if len(array.shape)==1 & ('orient' in array.coords):
             array = array.drop('orient')
-        for ky in array.coords:
+        for ky in dims:
             dims_list.append(ky)
             if 'time' in ky:
                 coords_dict[ky] = self._mean(array.time.values)
@@ -256,7 +257,8 @@ class TimeBinner:
         #     n_time = rawdat.n_time
         if outdat is None:
             outdat = type(rawdat)()
-            props['description'] = 'Binned averages calculated from ensembles of size "n_bin"'
+            props['description'] = 'Binned averages calculated from ' \
+                                    'ensembles of size "n_bin"'
             props['fs'] = self.fs
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
@@ -316,7 +318,8 @@ class TimeBinner:
         #     n_time = rawdat.n_time
         if outdat is None:
             outdat = type(rawdat)()
-            props['description'] = 'Variances calculated from ensembles of size "n_bin"'
+            props['description'] = 'Variances calculated from ensembles '\
+                                    'of size "n_bin"'
             props['n_bin'] = self.n_bin          
         if names is None:
             names = rawdat.data_vars
@@ -488,7 +491,8 @@ class TimeBinner:
                         [int(n_bin // 4)], dtype=indat.dtype)
         dt1 = self._reshape(indat, n_pad=n_bin / 2 - 2)
         # Here we de-mean only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(n_bin // 4):int(-n_bin // 4)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(n_bin // 4):
+                                int(-n_bin // 4)].mean(-1)[..., None]
         dt2 = self._demean(indat)  # Don't pad the second variable.
         dt2 = dt2 - dt2.mean(-1)[..., None]
         se = slice(int(n_bin // 4) - 1, None, 1)
@@ -504,7 +508,7 @@ class TimeBinner:
             else:
                 # For the others we take the average of the two sides.
                 out[slc] = (tmp[se] + tmp[sb]) / 2
-                
+
         dims_list, coords_dict = self._new_coords(veldat)
         # tack on new coordinate
         dims_list.append('dt')

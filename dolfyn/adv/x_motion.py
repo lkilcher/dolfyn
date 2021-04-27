@@ -359,8 +359,11 @@ def correct_motion(advo,
     """
 
     if hasattr(advo, 'velrot') or advo.attrs.get('motion corrected', False):
-        raise Exception('The data object appears to already have been '
+        raise Exception('The data appears to already have been '
                         'motion corrected.')
+    
+    if not hasattr(advo, 'has_imu') or ('accel' not in advo):
+        raise Exception('The instrument does not appear to have an IMU.')        
 
     if advo.coord_sys != 'inst':
         advo = advo.Veldata.rotate2('inst', inplace=True)
@@ -377,9 +380,11 @@ def correct_motion(advo,
 
     ##########
     # Calculate the translational velocity (from the accel):
-    advo['velacc'] = xr.DataArray(calcobj.calc_velacc(), dims=['orient','time'])
+    advo['velacc'] = xr.DataArray(calcobj.calc_velacc(), 
+                                  dims=['orient','time'])
     # Copy acclow to the adv-object.
-    advo['acclow'] = xr.DataArray(calcobj.acclow, dims=['orientIMU','time'])
+    advo['acclow'] = xr.DataArray(calcobj.acclow, 
+                                  dims=['orient','time'])
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -387,9 +392,9 @@ def correct_motion(advo,
     # Calculate the velocity of the head (or probes).
     velrot = calcobj.calc_velrot(pos, to_earth=False)
     if separate_probes:
-        # The head->beam transformation matrix
-        transMat = advo.get('TransMatrix', None)
-        # The body->head transformation matrix
+        # The head->beam transformation matrix (should this say 'beam->head'?)
+        transMat = advo.get('beam2inst_orientmat', None)
+        # The inst->head transformation matrix (should this say 'head->inst'?)
         rmat = advo['inst2head_rotmat']
 
         # 1) Rotate body-coordinate velocities to head-coord.

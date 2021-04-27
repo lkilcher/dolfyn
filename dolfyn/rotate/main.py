@@ -112,7 +112,7 @@ def rotate2(ds, out_frame='earth', inplace=False):
     return ds
 
 
-def calc_principal_heading(vel, tidal_mode=True):
+def calc_principal_heading(data, tidal_mode=True):
     """
     Compute the principal angle of the horizontal velocity.
 
@@ -143,6 +143,8 @@ def calc_principal_heading(vel, tidal_mode=True):
     using a vector method.
 
     """
+    vel = data['vel']
+    
     dt = vel[0] + vel[1] * 1j
     if tidal_mode:
         # Flip all vectors that are below the x-axis
@@ -157,4 +159,7 @@ def calc_principal_heading(vel, tidal_mode=True):
             np.mean(dt, -1, dtype=np.complex128)) / 2
     else:
         pang = np.angle(np.mean(dt, -1))
-    return (90 - np.rad2deg(pang))
+        
+    data.attrs['principal_heading'] = np.round((90 - np.rad2deg(pang)), 
+                                               decimals=4)
+    return data

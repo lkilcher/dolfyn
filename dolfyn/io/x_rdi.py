@@ -44,7 +44,7 @@ def read_rdi(fname, userdata=None, nens=None):
         dat['attrs'][nm] = userdata[nm]
         
     # NaN in time and orientation data
-    handle_nan(dat)
+    #handle_nan(dat)
     
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(dat)

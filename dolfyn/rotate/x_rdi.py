@@ -68,6 +68,7 @@ def inst2earth(adcpo, reverse=False,
     
     return adcpo
 
+
 def calc_beam_orientmat(theta=20, convex=True, degrees=True):
     """Calculate the rotation matrix from beam coordinates to
     instrument head coordinates for an RDI ADCP.
@@ -97,12 +98,11 @@ def calc_beam_orientmat(theta=20, convex=True, degrees=True):
 
 
 def calc_orientmat(adcpo):
-
-    # Calculate the orientation matrix using the raw 
-    # heading, pitch, roll values from the RDI binary file.
-
     """
-     Parameters
+    Calculate the orientation matrix using the raw 
+    heading, pitch, roll values from the RDI binary file.
+
+    Parameters
     ----------
     adcpo : The ADP object containing the data.
     
@@ -122,7 +122,8 @@ def calc_orientmat(adcpo):
     r = np.deg2rad(adcpo['roll'].values)
     p = np.arctan(np.tan(np.deg2rad(adcpo['pitch'].values)) * np.cos(r))
     h = np.deg2rad(adcpo['heading'].values)
-    if adcpo.inst_make.lower() == 'rdi':
+    
+    if 'rdi' in adcpo.inst_make.lower():
         if adcpo.orientation == 'up':
             """
             ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
@@ -134,10 +135,10 @@ def calc_orientmat(adcpo):
             to 0 if the "use tilt" bit of the EX command is not set.
             """
             r += np.pi
-        if (adcpo.coord_sys == 'ship' and
-                adcpo.use_pitchroll == 'yes'):
+        if (adcpo.coord_sys == 'ship' and adcpo.use_pitchroll == 'yes'):
             r[:] = 0
             p[:] = 0
+            
     ch = np.cos(h)
     sh = np.sin(h)
     cr = np.cos(r)

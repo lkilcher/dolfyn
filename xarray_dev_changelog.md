@@ -48,8 +48,8 @@ Xarray DOLfYN to MHKiT Changelog
 				- Sig 1000 returns '7' when facing up as does SigVM 1000 when facing down? - Negative, VM data must be treated like 'up' facing instruments
 			- Verified Nortek Signature data (facing up and down)
 			- Verified Nortek SignatureVM data
-			- Couldn't verify TRDI Worhorse or AWAC
-			- rotation accuracy due to input data truncation is 3 decimal places (1 mm/s for velocity data)
+			- Verified TRDI Worhorse (facing down)
+			- Not verfied for TRDI facing up or AWAC
 				
 		- Motion correction code - done, checked
 			- motion correction object has been removed
@@ -114,15 +114,14 @@ Xarray DOLfYN to MHKiT Changelog
 	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
 	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
 	- Bad AWAC IMU data reads as 6551.x?
-	- No pressure data from Nortek Vectors?
 
 - To do:
-	- Error reading Sig VM .ad2cp file echosounder data, only loads first column?
 	- Fix Nortek Signature burst read hack
+	- Error reading Sig VM .ad2cp file echosounder data, only loads first column?
 	- Add functionality for dual profiling configurations - *Incorporating 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
 	
 	- Optimize read code for the dictionary output?
-	- Change mpl time to epoch time or something
+	- Change mpl time to epoch time or something?
 	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
 	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
 

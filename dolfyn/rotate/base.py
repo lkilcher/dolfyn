@@ -57,11 +57,9 @@ def beam2inst(dat, reverse=False, force=False):
         if reverse and dat.coord_sys != 'inst':
             raise ValueError('The input must be in inst coordinates.')
 
-    if 'rdi' in dat.inst_make.lower():
-        rotmat = _calc_beam_rotmatrix(dat.beam_angle, dat.beam_pattern)
-    elif dat.inst_make.lower() == 'nortek':
+    try:
          rotmat = dat['beam2inst_orientmat']
-    else:
+    except:
         raise Exception("Unrecognized device type.")
 
     if isinstance(force, (list, set, tuple)):
@@ -69,8 +67,7 @@ def beam2inst(dat, reverse=False, force=False):
         # specifying it here.
         rotate_vars = force
     else:
-        rotate_vars = {ky for ky in dat.rotate_vars
-                       if ky.startswith('vel')}
+        rotate_vars = [ky for ky in dat.rotate_vars if ky.startswith('vel')]
 
     cs = 'inst'
     if reverse:
@@ -230,44 +227,47 @@ def orient2euler(omat):
 
 def _set_coords(ds, ref_frame, forced=False):
     '''
-    Check the current reference frame and adjust xarray coords/dims as necessary
-    Makes sure assigned dataarray coordinates match what DOLfYN is reading in
-    '''
+    Check the current reference frame and adjust xarray coords/dims 
+    as necessary.
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in.
     
+    '''
     make = ds.Veldata._make_model
     
     XYZ = ['X','Y','Z']
     ENU = ['E','N','U']
     beam = list(range(1,ds.vel.shape[0]+1))
+    principal = ['streamwise','x-stream','vert']
     
     # check make/model
     if 'rdi' in make:
         inst = ['X','Y','Z','err']
         earth = ['E','N','U','err']
-        princ = ['streamwise','cross-stream','vertical','err']
+        princ = ['streamwise','x-stream','vert','err']
         
     elif 'nortek' in make:
         if 'signature' in make or 'ad2cp' in make:
             inst = ['X','Y','Z1','Z2']
             earth = ['E','N','U1','U2']
-            princ = ['streamwise','cross-stream','vertical1','vertical2']
+            princ = ['streamwise','x-stream','vert1','vert2']
 
         else: # AWAC or Vector
             inst = XYZ
             earth = ENU
-            princ = ['streamwise','cross-stream','vertical']
+            princ = principal
     
-    orient = {'beam':beam, 'inst':inst, 'ship': inst, 'earth':earth, 'principal':princ}
-    
+    orient = {'beam':beam, 'inst':inst, 'ship':inst, 'earth':earth,
+              'principal':princ}
     orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
-                 'principal':['streamwise','cross-stream','vertical']}
+                 'principal':principal}
     
     if forced:
         ref_frame += '-forced'
     
     # update 'orient' and 'orientIMU' dimensions
     ds = ds.assign_coords({'orient': orient[ref_frame]})
-    ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
+    if hasattr(ds, 'orientIMU'):
+        ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
     ds.orient.attrs['ref_frame'] = ref_frame
     ds.attrs['coord_sys'] = ref_frame    
     

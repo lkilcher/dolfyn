@@ -60,7 +60,7 @@ def read_signature(filename, userdata=True, nens=None):
             out['attrs'][nm] = userdata[nm]
             
     # NaN in time and orientation data
-    handle_nan(out)
+    #handle_nan(out)
     
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(out)
@@ -69,10 +69,10 @@ def read_signature(filename, userdata=True, nens=None):
     if 'orientmat' not in ds:
         omat = _euler2orient(ds['heading'], ds['pitch'], ds['roll'])
         ds['orientmat'] = xr.DataArray(omat,
-                                        coords={'inst': ['X','Y','Z'],
-                                                'earth': ['E','N','U'], 
-                                                'time': ds['time']},
-                                        dims=['inst','earth','time'])
+                                       coords={'inst': ['X','Y','Z'],
+                                               'earth': ['E','N','U'], 
+                                               'time': ds['time']},
+                                       dims=['inst','earth','time'])
     if declin is not None:
         ds.Veldata.set_declination(declin)
 
