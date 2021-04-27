@@ -1,2 +1,0 @@
-Add max_file_size to saver object.  This includes linking between files in the hdf5 format.  This may also need a check on the h5py version to see if it supports multiple file sizes.
-Allow for a data variable to be a member of multiple groups.  This requires linking within hdf5 files.  May require h5py version check.

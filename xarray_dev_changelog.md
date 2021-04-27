@@ -93,7 +93,7 @@ Xarray DOLfYN to MHKiT Changelog
 			- ADCPs - individual cleaning functions
 			- ADVs - has masking methods that feed into a fill-in method
 			
-- Refactor DOLfYN's binary readers - in progress
+- Refactor DOLfYN's binary readers - done
 		1. Binary files read into a dictionary of dictionaries using netcdf naming conventions
 			- Should be easier to debug
 		2. Need to write (adjust the file I previously created) an xarray dataset constructor that'll build off that dictionary
@@ -109,6 +109,13 @@ Xarray DOLfYN to MHKiT Changelog
 		- Added 'save_mat' function
 		- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
 
+- Write testing - starting
+	- read
+	- rotate
+	- motion correction
+	- function output
+	- save
+	
 
 - Weird things:
 	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?

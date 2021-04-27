@@ -1,7 +1,7 @@
-from . import x_vector as r_vec
-from . import x_awac as r_awac
-from . import x_signature as r_sig
-from . import x_rdi as r_rdi
+from . import vector as r_vec
+from . import awac as r_awac
+from . import signature as r_sig
+from . import rdi as r_rdi
 import numpy as np
 import warnings
 

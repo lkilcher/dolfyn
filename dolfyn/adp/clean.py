@@ -1,72 +1,129 @@
 import numpy as np
 from scipy.signal import medfilt
+import xarray as xr
 from ..tools import misc as tbx
 
 
-def find_surface(apd, thresh=10, nfilt=1001):
+def find_surface(adcpo, thresh=10, nfilt=None):
     """
-    Find the surface, from the echo data of the *apd* adcp object.
+    Find the surface, from the amplitude data of the *adp* adcp object.
 
-    *thresh* specifies the threshold used in detecting the surface.
-    (The amount that echo must increase by near the surface for it to
-    be considered a surface hit)
-
-    *nfilt* specifies the width of the nanmedianfilter applied to
-     produce *d_range_filt*.
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    thresh : numeric
+      Specifies the threshold used in detecting the surface.
+      (The amount that amplitude must increase by near the surface for it to
+       be considered a surface hit)
+    nfilt : numeric
+      Specifies the width of the median filter applied, must be odd
 
     """
-    # This finds the minimum of the echo profile:
-    inds = np.argmin(apd.echo[:], axis=0)
+    # This finds the maximum of the echo profile:
+    inds = np.argmax(adcpo.amp.values, axis=1)
     # This finds the first point that increases (away from the profiler) in
     # the echo profile
-    edf = np.diff(apd.echo[:].astype(np.int16), axis=0)
+    edf = np.diff(adcpo.amp.values.astype(np.int16), axis=1)
     inds2 = np.max((edf < 0) *
-                   np.arange(apd.shape[0] - 1,
-                             dtype=np.uint8)[:, None, None], axis=0) + 1
+                   np.arange(adcpo.vel.shape[1] - 1,
+                             dtype=np.uint8)[None,:,None], axis=1) + 1
 
     # Calculate the depth of these quantities
-    d1 = apd.ranges[inds]
-    d2 = apd.ranges[inds2]
+    d1 = adcpo.range.values[inds]
+    d2 = adcpo.range.values[inds2]
     # Combine them:
     D = np.vstack((d1, d2))
     # Take the median value as the estimate of the surface:
     d = np.median(D, axis=0)
 
     # Throw out values that do not increase near the surface by *thresh*
-    for ip in range(apd.shape[1]):
+    for ip in range(adcpo.vel.shape[1]):
         itmp = np.min(inds[:, ip])
         if (edf[itmp:, :, ip] < thresh).all():
             d[ip] = np.NaN
-    dfilt = tbx.medfiltnan(d, nfilt, thresh=.4)
-    dfilt[dfilt == 0] = np.NaN
-    apd.add_data('d_range', d, '_essential')
-    apd.add_data('d_range_filt', dfilt, '_essential')
+    
+    if nfilt:
+        dfilt = tbx.medfiltnan(d, nfilt, thresh=.4)
+        dfilt[dfilt==0] = np.NaN
+        d = dfilt
+        
+    adcpo['d_range'] = xr.DataArray(
+        d, 
+        dims=['time'], 
+        attrs={'units':'m', 
+               'description': 'distance to surface'})
+    return adcpo
 
 
-def nan_above_surface(adp, dfrac=0.9,
-                      vars=['u', 'v', 'w', 'err_vel',
-                            'beam1vel', 'beam2vel', 'beam3vel', 'beam4vel',
-                            'u_inst', 'v_inst', 'w_inst'],
-                      val=np.NaN):
+def surface_from_alt(adcpo, salinity=35):
+    '''
+    Approximates distance to water surface above ADCP from the altimeter.
+    Requires that the instrument's pressure sensor was calibrated/zeroed
+    before deployment to remove atmospheric pressure.
+
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    salinity: numeric
+      Water salinity in psu.
+      
+    '''
+    if hasattr(adcpo, 'salinity'):
+        rho = adcpo.salinity + 1000 # kg/m^3
+    else:
+        rho = salinity + 1000
+        
+    # pressure conversion from dbar to MPa / water weight
+    d = (adcpo.pressure*10000)/(9.81*rho)
+    
+    adcpo['d_range'] = xr.DataArray(
+        d, 
+        dims=['time'], 
+        attrs={'units':'m', 
+               'description': 'distance to surface'})
+    return adcpo   
+
+
+def nan_beyond_surface(adcpo, val=np.nan):
     """
-    NaN the values of the data that are above the surface (from the
-    variable *d_range_filt*) in the *adp* object.
+    NaN the values of the data that are beyond the surface.
 
-    *vars* specifies the values to NaN out.
-
-    *dfrac* specifies the fraction of the depth range that is
-     considered good (default 0.9).
-
-    *val* specifies the value to set the bad values to (default np.NaN).
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    val : nan or numeric
+      Specifies the value to set the bad values to (default np.nan).
+    
+    Notes
+    -----
+    Surface interference expected to happen at `r > d_range * cos(beam_angle)`
 
     """
-    bds = adp.ranges[:, None] > adp.d_range_filt
-    for nm in vars:
-        if hasattr(adp, nm):
-            getattr(adp, nm)[bds] = val
+    var = [h for h in adcpo.keys() if hasattr(adcpo[h],'range')]
+    
+    if 'nortek' in adcpo.Veldata._make_model.lower():
+        beam_angle = 25 *(np.pi/180)
+    else: #TRDI
+        beam_angle = 20 *(np.pi/180)
+        
+    bds = adcpo.range > adcpo.d_range * np.cos(beam_angle)
+    
+    for nm in var:
+        # workaround for xarray since it can't handle 2D boolean arrays
+        a = adcpo[nm].values
+        try:
+            a[...,bds] = val
+        except: # correlation
+            a[...,bds] = 0 
+        adcpo[nm].values = a
+    
+    return adcpo
 
 
-def vel_exceeds_thresh(adcpo, thresh=10, source=None):
+def vel_exceeds_thresh(adcpo, thresh=5, val=np.nan):
     """
     Find values of the velocity data that exceed a threshold value,
     and assign NaN to the velocity data where the threshold is
@@ -74,62 +131,122 @@ def vel_exceeds_thresh(adcpo, thresh=10, source=None):
 
     Parameters
     ----------
-    adcpo : :class:`adp_raw <base.adp_raw>`
-      The adp object to clean.
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
     thresh : numeric
       The maximum value of velocity to screen.
-    source : string {`beam` (default),`earth`,`inst`}
-      This specifies whether to use beam, earth or instrument
-      velocities to find bad values.  All of these data sources (if
-      they exist) are cleaned.
+    val : nan or numeric
+      Specifies the value to set the bad values to (default np.nan).
 
     """
-
-    if source is None or source == 'beam':
-        sources = ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel']
-    elif source == 'earth':
-        sources = ['u', 'v', 'w']
-    elif source == 'inst':
-        sources = ['u', 'v', 'w']
-    bd = np.zeros(getattr(adcpo, sources[0]).shape, dtype='bool')
-    for src in sources:
-        print(getattr(adcpo,  src)[:])
-        bd |= (np.abs(getattr(adcpo, src)[:]) > thresh)
-    for dt in ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel',
-               'u', 'v', 'w', 'err_vel'
-               'u', 'v', 'w', 'err_vel']:
-        if hasattr(adcpo, dt):
-            getattr(adcpo, dt)[bd] = np.NaN
+    bd = np.zeros(adcpo.vel.shape, dtype='bool')
+    bd |= (np.abs(adcpo.vel.values) > thresh)
+    
+    adcpo.vel.values[bd] = val
+    
+    return adcpo
 
 
-def medfilt_orientation(adcpo, kernel_size=7):
+def correlation_filter(adcpo, thresh=70, val=np.nan):
+    '''
+    Filters out velocity data where correlation is below a 
+    threshold in the beam correlation data.
+    
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    thresh : numeric
+      The maximum value of correlation to screen.
+    
+    '''
+    mask = (adcpo.corr.values<=thresh)
+    
+    if hasattr(adcpo, 'vel_b5'):
+        mask_b5 = (adcpo.corr_b5.values<=thresh)
+        adcpo.vel_b5.values[mask_b5] = val
+    
+    adcpo = adcpo.Veldata.rotate2('beam')
+    adcpo.vel.values[mask] = val
+    adcpo = adcpo.Veldata.rotate2('earth')
+
+    return adcpo
+
+
+def medfilt_orientation(adcpo, nfilt=7):
     """
     Median filters the orientation data (pitch, roll, heading).
 
-    *kernel_size* is the length of the median-filtering kernel.
-       *kernel_size* must be odd.
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    nfilt : numeric
+      The length of the median-filtering kernel.
+       *nfilt must be odd.
 
     see also:
     scipy.signal.medfilt
 
     """
-
-    do_these = ['pitch_deg', 'roll_deg', 'heading_deg']
+    do_these = ['pitch', 'roll', 'heading']
     for nm in do_these:
-        setattr(adcpo, nm, medfilt(getattr(adcpo, nm), kernel_size))
+        adcpo[nm].values = medfilt(adcpo[nm].values, nfilt)
+        
+    return adcpo
 
 
-def fillgaps_time(adcpo, vars=['u', 'v', 'w'], maxgap=np.inf):
+def fillgaps_time(adcpo, method='linear', max_gap=None):
     """
-    Fill gaps (NaN values) linearly across time. Assumes a constant time delta.
+    Fill gaps (NaN values) across time by 'method'
+    
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    method : string
+      Interpolation method to use
+    max_gap : numeric
+      Max number of consective NaN's to interpolate across
+      
+    see also :
+        xr.DataArray.interpolate_na()
+        
     """
-    for vr in vars:
-        tbx.fillgaps(getattr(adcpo, vr), maxgap=maxgap, dim=-1)
+    adcpo['vel'] = adcpo.vel.interpolate_na(dim='time', method=method,
+                                            use_coordinate=True,
+                                            max_gap=max_gap)
+    if hasattr(adcpo, 'vel_b5'):
+        adcpo['vel_b5'] = adcpo.vel.interpolate_na(dim='time', method=method,
+                                                   use_coordinate=True,
+                                                   max_gap=max_gap)
+    #tbx.fillgaps(adcpo.vel.values, maxgap=maxgap, dim=-1)
+    return adcpo
 
 
-def fillgaps_depth(adcpo, vars=['u', 'v', 'w'], maxgap=np.inf):
+def fillgaps_depth(adcpo, method='linear', max_gap=None):
     """
-    Fill gaps (NaN values) linearly up and down the depth profile.
+    Fill gaps (NaN values) up and down the depth profile by 'method'
+
+    Parameters
+    ----------
+    adcpo : |xr.Dataset|
+      The adcp dataset to clean.
+    method : string
+      Interpolation method to use
+    max_gap : numeric
+      Max number of consective NaN's to interpolate across
+
+    see also:
+        xr.DataArray.interpolate_na()
+        
     """
-    for vr in vars:
-        tbx.fillgaps(getattr(adcpo, vr), maxgap=maxgap, dim=0)
+    adcpo['vel'] = adcpo.vel.interpolate_na(dim='range', method=method,
+                                            use_coordinate=False,
+                                            max_gap=max_gap)
+    if hasattr(adcpo, 'vel_b5'):
+        adcpo['vel_b5'] = adcpo.vel.interpolate_na(dim='range', method=method,
+                                                   use_coordinate=True,
+                                                   max_gap=max_gap)
+    #tbx.fillgaps(adcpo.vel.values, maxgap=maxgap, dim=0)
+    return adcpo

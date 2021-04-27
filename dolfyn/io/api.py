@@ -2,10 +2,10 @@ import scipy.io as sio
 import xarray as xr
 import pkg_resources
 
-from .x_nortek import read_nortek
-from .x_nortek2 import read_signature
-from .x_rdi import read_rdi
-from .x_base import create_dataset, WrongFileType as _WTF
+from .nortek import read_nortek
+from .nortek2 import read_signature
+from .rdi import read_rdi
+from .base import create_dataset, WrongFileType as _WTF
 #from .xarray_io import convert_xarray
 
 

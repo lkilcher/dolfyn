@@ -44,6 +44,6 @@ Examples
 
 from ..io.api import read, load
 from ..rotate.main import rotate2
-from . import x_clean
-from .x_motion import correct_motion
-from .x_turbulence import calc_turbulence, TurbBinner
+from . import clean
+from .motion import correct_motion
+from .turbulence import calc_turbulence, TurbBinner

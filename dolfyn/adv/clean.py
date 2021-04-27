@@ -8,113 +8,123 @@ warnings.filterwarnings('ignore', category=np.RankWarning)
 sin = np.sin
 cos = np.cos
 
-
-def cleanFill(indat, bad):
+def cleanFill(advo, mask, method='linear', max_gap=None):
     """
-    Interpolate (linearly) over the points in `bad` that are True.
+    Interpolate over nan values in velocity data using the specific method
 
     Parameters
     ----------
-    indat : |np.ndarray|
-      The field to be cleaned.
-    bad : |np.ndarray| (dtype=bool, shape=u.shape)
-      The bad indices to interpolate.
-
-    Notes
-    -----
-
-    This function returns None, it operates on the `indat` array.
-
-    """
-    indat[bad] = np.NaN
-    fillgaps(indat)
-
-
-def fillpoly(indat, deg, npt):
-    """
-    Interpolate (polynomial) over the points in `bad` that are True.
-
-    Parameters
-    ----------
-    indat : |np.ndarray|
-      The field to be cleaned.
-    deg : int
-      The degree of the polynomial (see polyfit)
-    npt : int
-      The number of points on either side of the gap that the fit
-      occurs over.  Must be >deg/2.
-
-    Notes
-    -----
-
-    This function returns None, it operates on the `indat` array.
+    advo : |xr.Dataset|
+      The adv dataset to clean.
+    mask : bool
+      Logical vector of values to 'NaN' out (from `spikeThresh`, `rangeLimit`,
+      or `GN2002`)
+    method : string
+      Interpolation scheme to use (linear, nearest, cubic, polynomial, etc)
+    max_gap : numeric
+      Max number of consective NaN's to interpolate across
+      
+    see also:
+        xr.DataArray.interpolate_na()
 
     """
-
-    searching = True
-    bds = np.isnan(indat)
-    ntail = 0
-    pos = 0
-    # The index array:
-    i = np.arange(len(indat), dtype=np.uint32)
-
-    while pos < len(indat):
-        if searching:
-            # Check the point
-            if bds[pos]:
-                # If it's bad, mark the start
-                start = max(pos - npt, 0)
-                # And stop searching.
-                searching = False
-            pos += 1
-            # Continue...
-        else:
-            # Another bad point?
-            if bds[pos]:  # Yes
-                # Reset ntail
-                ntail = 0
-            else:  # No
-                # Add to the tail of the block.
-                ntail += 1
-            pos += 1
-
-            if (ntail == npt or pos == len(indat)):
-                # This is the block we are interpolating over
-                itmp = i[start:pos]
-                # good and bad points:
-                igd = itmp[~bds[start:pos]]
-                ibd = itmp[bds[start:pos]]
-                # Fill them:
-                indat[ibd] = np.polyval(np.polyfit(igd,
-                                                   indat[igd],
-                                                   deg),
-                                        ibd).astype(indat.dtype)
-                # Reset!
-                searching = True
-                ntail = 0
+    advo.vel.values[...,mask] = np.nan
+    #fillgaps(indat)
+    
+    advo['vel'] = advo.vel.interpolate_na(dim='time', method=method,
+                                          use_coordinate=True,
+                                          max_gap=max_gap)
+    return advo
 
 
-def _spikeThresh(u, thresh):
+def spikeThresh(u, thresh=10):
     """
-    Returns a logical vector where a spike of magnitude greater than
+    Returns a logical vector where a spike in `u` of magnitude greater than
     `thresh` occurs.  'Negative' and 'positive' spikes are both
     caught.
 
     `thresh` must be positive.
+    
     """
-    du = np.diff(u)
-    bds1 = ((du[1:] > thresh) & (du[:-1] < -thresh))
-    bds2 = ((du[1:] < -thresh) & (du[:-1] > thresh))
-    return np.concatenate(([False], bds1 | bds2, [False]))
+    du = np.diff(u.values, prepend=0)
+    bds1 = ((du > thresh) & (du < -thresh))
+    bds2 = ((du < -thresh) & (du > thresh))
+    
+    return bds1 + bds2
+    #return np.concatenate(([False], bds1 | bds2, [False]))
 
 
-def rangeLimit(u, range):
+def rangeLimit(u, range=[-5, 5]):
     """
     Returns a logical vector that is True where the
     values of `u` are outside of `range`.
+    
     """
     return ~((range[0] < u) & (u < range[1]))
 
+
+# def _fillpoly(indat, deg, npt):
+#     """
+#     Interpolate (polynomial) over the points in `bad` that are True.
+
+#     Parameters
+#     ----------
+#     indat : |np.ndarray|
+#       The field to be cleaned.
+#     deg : int
+#       The degree of the polynomial (see polyfit)
+#     npt : int
+#       The number of points on either side of the gap that the fit
+#       occurs over.  Must be >deg/2.
+
+#     Notes
+#     -----
+
+#     This function returns None, it operates on the `indat` array.
+
+#     """
+
+#     searching = True
+#     bds = np.isnan(indat)
+#     ntail = 0
+#     pos = 0
+#     # The index array:
+#     i = np.arange(len(indat), dtype=np.uint32)
+
+#     while pos < len(indat):
+#         if searching:
+#             # Check the point
+#             if bds[pos]:
+#                 # If it's bad, mark the start
+#                 start = max(pos - npt, 0)
+#                 # And stop searching.
+#                 searching = False
+#             pos += 1
+#             # Continue...
+#         else:
+#             # Another bad point?
+#             if bds[pos]:  # Yes
+#                 # Reset ntail
+#                 ntail = 0
+#             else:  # No
+#                 # Add to the tail of the block.
+#                 ntail += 1
+#             pos += 1
+
+#             if (ntail == npt or pos == len(indat)):
+#                 # This is the block we are interpolating over
+#                 itmp = i[start:pos]
+#                 # good and bad points:
+#                 igd = itmp[~bds[start:pos]]
+#                 ibd = itmp[bds[start:pos]]
+#                 # Fill them:
+#                 indat[ibd] = np.polyval(np.polyfit(igd,
+#                                                     indat[igd],
+#                                                     deg),
+#                                         ibd).astype(indat.dtype)
+#                 # Reset!
+#                 searching = True
+#                 ntail = 0
 
 def _calcab(al, Lu_std_u, Lu_std_d2u):
     """
@@ -178,13 +188,13 @@ def _phaseSpaceThresh(u):
 
 def GN2002(u, npt=5000):
     """
-    Clean an velocity dataset according to the Goring+Nikora2002
-    method.
+    Clean a velocity data-array according to the Goring & Nikora 2002
+    'despiking' method.
 
     Parameters
     ----------
 
-    u : ndarray
+    u : |xr.DataArray|
       The velocity array to clean.
 
     npt : int
@@ -193,8 +203,8 @@ def GN2002(u, npt=5000):
     Returns
     -------
 
-    bads : ndarray(boolean)
-      The points in `u` that were cleaned.
+    mask : |np.ndarray|
+      Logical vector with spikes labeled as 'True'
 
     Notes
     -----
@@ -205,16 +215,17 @@ def GN2002(u, npt=5000):
     This function operates on the `indat` array (doesn't return it).
 
     """
-    if not isinstance(u, np.ndarray):
+    if not isinstance(u.values, np.ndarray):
         return GN2002(u['vel'], npt=npt)
 
     if u.ndim > 1:
-        bds = np.zeros(u.shape, dtype='bool')
+        mask = np.zeros(u.shape, dtype='bool')
         for slc in slice1d_along_axis(u.shape, -1):
-            bds[slc] = GN2002(u[slc], npt=npt)
-        return bds
-
-    bds = np.zeros(len(u), dtype='bool')
+            mask[slc] = GN2002(u[slc], npt=npt)
+        return mask
+    
+    u = u.values
+    mask = np.zeros(len(u), dtype='bool')
 
     # Find large bad segments (>npt/10):
     # group returns a vector of slice objects.
@@ -235,31 +246,31 @@ def GN2002(u, npt=5000):
         for ind in range(len(bad_segs)):
             bs = bad_segs[ind]  # bs is a slice object.
             # Clean the good region:
-            bds[sp:bs.start] = GN2002(u[sp:bs.start], npt=npt)
+            mask[sp:bs.start] = GN2002(u[sp:bs.start], npt=npt)
             sp = bs.stop
         # Clean the last good region.
-        bds[sp:ep] = GN2002(u[sp:ep], npt=npt)
-        return bds
+        mask[sp:ep] = GN2002(u[sp:ep], npt=npt)
+        return mask
 
     c = 0
     ntot = len(u)
     nbins = int(ntot // npt)
-    bds_last = np.zeros_like(bds) + np.inf
-    bds[0] = True  # make sure we start.
-    while bds.any():
-        bds[:nbins * npt] = _phaseSpaceThresh(
+    mask_last = np.zeros_like(mask) + np.inf
+    mask[0] = True  # make sure we start.
+    while mask.any():
+        mask[:nbins * npt] = _phaseSpaceThresh(
             np.array(np.reshape(u[:(nbins * npt)], (npt, nbins), order='F')))
-        bds[-npt:] = _phaseSpaceThresh(u[-npt:])
-        u[bds] = np.NaN
-        fillpoly(u, 3, 12)
-        # print( 'GN2002: found %d bad points on loop %d' % (bds.sum(),c) )
+        mask[-npt:] = _phaseSpaceThresh(u[-npt:])
+        #u[mask] = np.NaN
+        #_fillpoly(u, 3, 12)
+        # print( 'GN2002: found %d bad points on loop %d' % (mask.sum(),c) )
         c += 1
         if c >= 100:
             raise Exception('GN2002 loop-limit exceeded.')
-        if bds.sum() >= bds_last.sum():
+        if mask.sum() >= mask_last.sum():
             break
-        bds_last = bds.copy()
-    return bds
+        mask_last = mask.copy()
+    return mask
 
 
 # class adv_cleaner(object):
@@ -348,43 +359,43 @@ def GN2002(u, npt=5000):
 # (du[2:]-du[:-2])/2.,np.ones(1)*np.NaN))/2.
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    import adv as avm
-    from pylab import figure, clf, plot
-    if 'dat' not in vars():
-        dat = avm.load(
-            '/home/lkilcher/data/ttm_dem_june2012/TTM_Vectors/TTM_NRELvector_Jun2012.h5')
-        uorig = dat.u.copy()
-        vorig = dat.v.copy()
-        worig = dat.w.copy()
-        bds = rangeLimit(dat.u, [-2.5, 1])  # | spikeThresh(dat.u,0.5)
-        # bds=rangeLimit(dat.v,[-1.5,1])# | spikeThresh(dat.u,0.5)
-        # bds=rangeLimit(dat.w,[-2.5,1])# | spikeThresh(dat.u,0.5)
-        dat.u[bds] = np.NaN
-        fillgaps(dat.u)
-        rng = slice(610000, 5886900)
-        newd = dat.subset(rng)
-    inds = slice(2150000, 2160000, 1)
-    inds = slice(2151290, 2151310, 1)
+#     import adv as avm
+#     from pylab import figure, clf, plot
+#     if 'dat' not in vars():
+#         dat = avm.load(
+#             '/home/lkilcher/data/ttm_dem_june2012/TTM_Vectors/TTM_NRELvector_Jun2012.h5')
+#         uorig = dat.u.copy()
+#         vorig = dat.v.copy()
+#         worig = dat.w.copy()
+#         bds = rangeLimit(dat.u, [-2.5, 1])  # | spikeThresh(dat.u,0.5)
+#         # bds=rangeLimit(dat.v,[-1.5,1])# | spikeThresh(dat.u,0.5)
+#         # bds=rangeLimit(dat.w,[-2.5,1])# | spikeThresh(dat.u,0.5)
+#         dat.u[bds] = np.NaN
+#         fillgaps(dat.u)
+#         rng = slice(610000, 5886900)
+#         newd = dat.subset(rng)
+#     inds = slice(2150000, 2160000, 1)
+#     inds = slice(2151290, 2151310, 1)
 
-    bds = GN2002(newd.u)
-    bds = GN2002(newd.w)
+#     bds = GN2002(newd.u)
+#     bds = GN2002(newd.w)
 
-    # figure(2)
-    # clf()
-    # plot(uorig[inds],'ko')
-    # plot(dat.u[inds])
-    # plot(dat.v[inds])
-    # plot(dat.w[inds])
-    # plot(du[inds])
-    # plot(du[1:][inds])
+#     # figure(2)
+#     # clf()
+#     # plot(uorig[inds],'ko')
+#     # plot(dat.u[inds])
+#     # plot(dat.v[inds])
+#     # plot(dat.w[inds])
+#     # plot(du[inds])
+#     # plot(du[1:][inds])
 
-    inds = slice(None, None, 10)
-    figure(3)
-    clf()
-    plot(uorig[rng][inds], '.')
-    plot(newd.u[inds], '-')
-    plot(worig[rng][inds], '.')
-    plot(newd.w[inds], '-')
-    # plot(newd.u[inds])
+#     inds = slice(None, None, 10)
+#     figure(3)
+#     clf()
+#     plot(uorig[rng][inds], '.')
+#     plot(newd.u[inds], '-')
+#     plot(worig[rng][inds], '.')
+#     plot(newd.w[inds], '-')
+#     # plot(newd.u[inds])

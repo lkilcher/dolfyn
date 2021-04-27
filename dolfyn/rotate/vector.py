@@ -15,8 +15,8 @@ def beam2inst(dat, reverse=False, force=False):
         # Now rotate to beam
         rotb.beam2inst(dat, reverse=reverse, force=force)
 
-# Set the docstring to match the default rotation func
-beam2inst.__doc_ = rotb.beam2inst.__doc__
+    # Set the docstring to match the default rotation func
+    beam2inst.__doc_ = rotb.beam2inst.__doc__
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
@@ -51,12 +51,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         cs_new = 'earth'
 
     if rotate_vars is None:
-        if 'rotate_vars' in advo.props:
-            rotate_vars = advo.props['rotate_vars']
+        if 'rotate_vars' in advo:
+            rotate_vars = advo.rotate_vars
         else:
             rotate_vars = ['vel']
 
-    cs = advo.props['coord_sys'].lower()
+    cs = advo.coord_sys.lower()
     if not force:
         if cs == cs_new:
             print("Data is already in the '%s' coordinate system" % cs_new)
@@ -66,20 +66,20 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                 "Data must be in the '%s' frame when using this function" %
                 cs_now)
 
-    odata = advo['orient']
-    if hasattr(odata, 'orientmat'):
-        omat = odata['orientmat']
+    #odata = advo['orient']
+    if hasattr(advo, 'orientmat'):
+        omat = advo['orientmat']
     else:
-        if advo._make_model.startswith('nortek vector'):
-            orientation_down = odata['orientation_down']
+        if 'nortek vector' in advo.Veldata._make_model:
+            orientation_down = advo['orientation_down']
         else:
             orientation_down = None
-        omat = calc_omat(odata['heading'], odata['pitch'], odata['roll'],
+        omat = calc_omat(advo['heading'], advo['pitch'], advo['roll'],
                          orientation_down)
 
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
-    rmat = np.rollaxis(omat, 1)
+    rmat = np.rollaxis(omat.values, 1)
 
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
@@ -94,17 +94,12 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         if n != 3:
             raise Exception("The entry {} is not a vector, it cannot"
                             "be rotated.".format(nm))
-        advo[nm] = np.einsum(sumstr, rmat, advo[nm])
+        advo[nm].values = np.einsum(sumstr, rmat, advo[nm])
+    
+    advo = rotb._set_coords(advo, cs_new)
 
-    # if reverse:
-    #     rotb.call_rotate_methods(advo, np.rollaxis(rmat, 1), 'earth', 'inst')
-    # else:
-    #     rotb.call_rotate_methods(advo, rmat, 'inst', 'earth')
-
-    advo.props._set('coord_sys', cs_new)
-
-    return
-
+    return advo
+      
 
 def calc_omat(hh, pp, rr, orientation_down=None):
     rr = rr.copy()
@@ -139,27 +134,27 @@ def _rotate_head2inst(advo, reverse=False):
     if not reverse: # head->inst
         # This is usually what we want.
         # transpose of inst2head gives head->inst
-        advo['vel'] = np.dot(advo.props['inst2head_rotmat'].T, advo['vel'])
+        advo['vel'].values = np.dot(advo['inst2head_rotmat'].T, advo['vel'])
     else:
-        advo['vel'] = np.dot(advo.props['inst2head_rotmat'], advo['vel'])
+        advo['vel'].values = np.dot(advo['inst2head_rotmat'], advo['vel'])
 
 
 def _check_inst2head_rotmat(advo):
-    if advo.props.get('body2head_rotmat', None) is not None:
+    if advo.get('body2head_rotmat', None) is not None:
         warnings.warn(
             "body2head_rotmat will be deprecated in future versions of DOLfYN."
             "Use the `set_inst2head_rotmat` method instead.",
             DeprecationWarning)
         # head2inst is transpose of body2head
-        advo.set_inst2head_rotmat(advo.props.pop('body2head_rotmat'))
-    if advo.props.get('inst2head_rotmat', None) is None:
+        advo.set_inst2head_rotmat(advo.drop('body2head_rotmat'))
+    if advo.get('inst2head_rotmat', None) is None:
         # This is the default value, and we do nothing.
         return False
-    if not advo.props.get('inst2head_rotmat_was_set', None):
+    if not advo.inst2head_rotmat_was_set:
         raise Exception(
             "The inst2head rotation matrix exists in props, "
             "but it was not set using `set_inst2head_rotmat.")
-    if not rotb._check_rotmat_det(advo.props['inst2head_rotmat']).all():
+    if not rotb._check_rotmat_det(advo.inst2head_rotmat.values):
         raise ValueError("Invalid inst2head_rotmat"
                          " (determinant != 1).")
     return True
@@ -184,21 +179,23 @@ def earth2principal(advo, reverse=False):
            (principal->earth).
 
     """
-
+    if not 'principal_heading' in advo.attrs:
+        advo.attrs['principal_heading'] = rotb.calc_principal_heading(advo.vel)
+    
     try:
         # this is in degrees CW from North
-        ang = np.deg2rad(90 - advo.props['principal_heading'])
+        ang = np.deg2rad(90 - advo.principal_heading)
         # convert this to radians CCW from east (which is expected by
         # the rest of the function)
     except KeyError:
-        if 'principal_angle' in advo['props']:
+        if 'principal_angle' in advo.attrs:
             warnings.warn(
                 "'principal_angle' will be deprecated in a future release of "
                 "DOLfYN. Please update your file to use ``principal_heading = "
                 "(90 - np.rad2deg(principal_angle))``."
             )
             # This is in radians CCW from east
-            ang = advo.props['principal_angle']
+            ang = advo.principal_angle
 
     if reverse:
         cs_now = 'principal'
@@ -208,7 +205,7 @@ def earth2principal(advo, reverse=False):
         cs_now = 'earth'
         cs_new = 'principal'
 
-    cs = advo.props['coord_sys'].lower()
+    cs = advo.coord_sys.lower()
     if cs == cs_new:
         print('Data is already in the %s coordinate system' % cs_new)
         return
@@ -224,12 +221,16 @@ def earth2principal(advo, reverse=False):
                        [0, 0, 1]], dtype=np.float32)
 
     # Perform the rotation:
-    for nm in advo.props['rotate_vars']:
-        dat = advo[nm]
+    for nm in advo.rotate_vars:
+        dat = advo[nm].values
         dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
-
+        advo[nm].values = dat.copy()
+    
     # Finalize the output.
-    advo.props._set('coord_sys', cs_new)
+    #advo.props._set('coord_sys', cs_new)
+    advo = rotb._set_coords(advo, cs_new)
+    
+    return advo
 
 
 def _euler2orient(heading, pitch, roll, units='degrees'):

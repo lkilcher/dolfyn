@@ -1,15 +1,15 @@
 from __future__ import print_function
 import numpy as np
-import datetime
-from ..data.time import date2num
-from ..data.base import config, TimeData as data, PropsDict
-from os.path import getsize
-from ..adp.base import ADPdata
-from .base import WrongFileType, read_userdata
-from ._read_bin import eofException, bin_reader
 from scipy import nanmean
+import xarray as xr
+import datetime
 import warnings
-from ..rotate.rdi import calc_orientmat as _calc_omat
+from os.path import getsize
+from ._read_bin import eofException, bin_reader
+from ..data.time import date2num
+from .base import WrongFileType, read_userdata, create_dataset, handle_nan
+from ..rotate.rdi import calc_beam_orientmat as _calc_bmat, calc_orientmat as _calc_omat
+from ..rotate.base import _set_coords
 
 
 def read_rdi(fname, userdata=None, nens=None):
@@ -34,29 +34,37 @@ def read_rdi(fname, userdata=None, nens=None):
     adp_data : :class:`ADPdata <dolfyn.adp.base.ADPdata>`
 
     """
+    # Reads into a dictionary of dictionaries using netcdf naming conventions
+    # Should be easier to debug
     userdata = read_userdata(fname, userdata)
     with adcp_loader(fname) as ldr:
         dat = ldr.load_data(nens=nens)
-    dat['props'].update(userdata)
 
-    od = dat['orient']
-
-    od['orientmat'] = _calc_omat(dat)
-
-    # Move raw heading data into orient.raw
-    odr = od['raw'] = data()
-    for ky in ['heading', 'pitch', 'roll',
-               'heading_std', 'pitch_std', 'roll_std']:
-        val = od.pop(ky, None)
-        if val is not None:
-            odr[ky] = val
-
-    # Handle properties with the PropsDict class.
-    dat['props'] = PropsDict(dat['props'])
-
-    _set_rdi_declination(dat, fname)
+    for nm in userdata:
+        dat['attrs'][nm] = userdata[nm]
+        
+    # NaN in time and orientation data
+    #handle_nan(dat)
     
-    return dat
+    # Create xarray dataset from upper level dictionary
+    ds = create_dataset(dat)
+    ds = _set_coords(ds, ref_frame=ds.coord_sys)
+    
+    ds['beam2inst_orientmat'] = xr.DataArray(_calc_bmat(
+                            ds.beam_angle,
+                            ds.beam_pattern=='convex'),
+                                             coords={'x':[1,2,3,4],
+                                                     'x*':[1,2,3,4]},
+                                             dims=['x','x*'])
+                                 
+    ds['orientmat'] = xr.DataArray(_calc_omat(ds),
+                                   coords={'inst': ['X','Y','Z'],
+                                           'earth': ['E','N','U'], 
+                                           'time': ds['time']},
+                                   dims=['inst','earth','time'])
+    ds = _set_rdi_declination(ds, fname)
+    
+    return ds
 
 
 def _set_rdi_declination(dat, fname='????'):
@@ -64,13 +72,15 @@ def _set_rdi_declination(dat, fname='????'):
     # that the declination is already included in the heading,
     # and in the velocity data.
     # I'm assuming this is the case for now...
+    # Can confirm - jrm
 
-    declin = dat['props'].pop('declination', None)
+    #declin = dat['props'].pop('declination', None)
+    declin = hasattr(dat, 'declination')
 
-    if dat.config['magnetic_var_deg'] != 0:
-        dat.props._set('declination', dat.config['magnetic_var_deg'])
+    if dat.attrs['magnetic_var_deg'] != 0:
+        dat.attrs['declination'] = dat.attrs['magnetic_var_deg']
 
-    if dat.config['magnetic_var_deg'] != 0 and declin is not None:
+    if dat.attrs['magnetic_var_deg'] != 0 and declin:# is not None:
         warnings.warn(
             "'magnetic_var_deg' is set to {:.2f} degrees in the binary "
             "file '{}', AND 'declination' is set in the 'userdata.json' "
@@ -78,14 +88,15 @@ def _set_rdi_declination(dat, fname='????'):
             "userdata.json. If you want to use the value in "
             "'magnetic_var_deg', delete the value from userdata.json and "
             "re-read the file."
-            .format(dat['config']['magnetic_var_deg'], fname,
-                    dat.props['declination']))
+            .format(dat.attrs['magnetic_var_deg'], fname,
+                    dat.attrs['declination']))
 
-    if declin is not None:
+    if declin:# is not None:
         # set_declination rotates by the difference between what is
         # already set in props['declination'] (i.e., above), and the
         # input value
-        dat.set_declination(declin)
+        dat.Veldata.set_declination(dat.declination)
+    return dat
 
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
@@ -103,47 +114,50 @@ time_offset = 0
 #century=1900
 century = 2000
 
-data_defs = {'number': ([], 'sys', 'uint32'),
-             'rtc': ([7], 'sys', 'uint16'),
-             'bit': ([], 'sys', 'bool'),
-             'ssp': ([], 'sys', 'uint16'),
-             'depth_m': ([], None, 'float32'),
-             'pitch': ([], 'orient', 'float32'),
-             'roll': ([], 'orient', 'float32'),
-             'heading': ([], 'orient', 'float32'),
-             'temp': ([], 'env', 'float32'),
-             'salinity': ([], 'env', 'float32'),
-             'mpt_sec': ([], 'sys', 'float32'),
-             'heading_std': ([], 'orient', 'float32'),
-             'pitch_std': ([], 'orient', 'float32'),
-             'roll_std': ([], 'orient', 'float32'),
-             'adc': ([8], 'sys', 'uint16'),
-             'error_status_wd': ([], 'signal', 'float32'),
-             'pressure': ([], None, 'float32'),
-             'pressure_std': ([], None, 'float32'),
-             'vel': (['nc', 4], None, 'float32'),
-             'amp': (['nc', 4], 'signal', 'uint8'),
-             'corr': (['nc', 4], 'signal', 'uint8'),
-             'prcnt_gd': (['nc', 4], 'signal', 'uint8'),
-             'status': (['nc', 4], 'signal', 'float32'),
-             'dist_bt': ([4], None, 'float32'),
-             'vel_bt': ([4], None, 'float32'),
-             'corr_bt': ([4], 'signal', 'uint8'),
-             'amp_bt': ([4], 'signal', 'uint8'),
-             'prcnt_gd_bt': ([4], 'signal', 'uint8'),
-             'stime': ([], None, 'float64'),
-             'etime': ([], None, 'float64'),
-             'mpltime': ([], None, 'float64'),
-             'slatitude': ([], 'orient', 'float64'),
-             'slongitude': ([], 'orient', 'float64'),
-             'elatitude': ([], 'orient', 'float64'),
-             'elongitude': ([], 'orient', 'float64'),
+# changed group to xarray info type (data_var, coord, dim, attr)
+# added units to end
+global data_defs
+data_defs = {'number': ([], 'sys', 'uint32', ''),
+             'rtc': ([7], 'sys', 'uint16', ''),
+             'bit': ([], 'sys', 'bool', ''),
+             'ssp': ([], 'sys', 'uint16', ''),
+             'depth': ([], 'data_vars', 'float32', 'm'),
+             'pitch': ([], 'data_vars', 'float32', 'deg'),
+             'roll': ([], 'data_vars', 'float32', 'deg'),
+             'heading': ([], 'data_vars', 'float32', 'deg'),
+             'temp': ([], 'data_vars', 'float32', 'C'),
+             'salinity': ([], 'data_vars', 'float32', 'psu'),
+             'mpt_sec': ([], 'sys', 'float32', 's'),
+             'heading_std': ([], 'sys', 'float32', 'deg'),
+             'pitch_std': ([], 'sys', 'float32', 'deg'),
+             'roll_std': ([], 'sys', 'float32', 'deg'),
+             'adc': ([8], 'sys', 'uint16', ''),
+             'error_status_wd': ([], 'attrs', 'float32', ''),
+             'pressure': ([], 'data_vars', 'float32', 'dbar'),
+             'pressure_std': ([], 'data_vars', 'float32', 'dbar'),
+             'vel': (['nc', 4], 'data_vars', 'float32', 'm/s'),
+             'amp': (['nc', 4], 'data_vars', 'uint8', 'counts'),
+             'corr': (['nc', 4], 'data_vars', 'uint8', 'counts'),
+             'prcnt_gd': (['nc', 4], 'data_vars', 'uint8', '%'),
+             'status': (['nc', 4], 'data_vars', 'float32', ''),
+             'dist_bt': ([4], 'data_vars', 'float32', 'm'),
+             'vel_bt': ([4], 'data_vars', 'float32', 'm/s'),
+             'corr_bt': ([4], 'data_vars', 'uint8', 'counts'),
+             'amp_bt': ([4], 'data_vars', 'uint8', 'counts'),
+             'prcnt_gd_bt': ([4], 'data_vars', 'uint8', '%'),
+             'stime': ([], 'coords', 'float64', ''),
+             'etime': ([], 'coords', 'float64', ''),
+             'time': ([], 'coords', 'float64', ''),
+             'slatitude': ([], 'data_vars', 'float64', 'deg'),
+             'slongitude': ([], 'data_vars', 'float64', 'deg'),
+             'elatitude': ([], 'data_vars', 'float64', 'deg'),
+             'elongitude': ([], 'data_vars', 'float64', 'deg'),
              # These are the GPS times/lat/lons
-             'gtime': ([], None, '<U9'),
-             'glatitude': ([], 'orient', 'float64'),
-             'glongitude': ([], 'orient', 'float64'),
-             'ntime': ([], 'sys', 'float64'),
-             'flags': ([], 'signal', 'float32'),
+             'gtime': ([], 'coords', 'float64', ''),
+             'glatitude': ([], 'data_vars', 'float64', 'deg'),
+             'glongitude': ([], 'data_vars', 'float64', 'deg'),
+             'ntime': ([], 'coords', 'float64', ''),
+             'flags': ([], 'data_vars', 'float32', ''),
              }
 
 
@@ -182,17 +196,21 @@ def setd(dat, nm, val):
 
 
 def idata(dat, nm, sz):
+    # Complete
     group = data_defs[nm][1]
     dtype = data_defs[nm][2]
+    units = data_defs[nm][3]
     arr = np.empty(sz, dtype=dtype)
     if dtype.startswith('float'):
         arr[:] = np.NaN
-    if group is None:
-        dat[nm] = arr
-    else:
-        if group not in dat:
-            dat[group] = data()
-        dat[group][nm] = arr
+    #if group is None:
+    #    dat[nm] = arr
+    #else:
+        # if group not in dat:
+        #     dat[group] = data()
+    dat[group][nm] = arr
+    dat['units'][nm] = units
+    return dat
 
 
 class variable_setlist(set):
@@ -248,7 +266,7 @@ class adcp_loader(object):
     _winrivprob = False
     _search_num = 30000  # Maximum distance? to search
     _debug7f79 = None
-    vars_read = variable_setlist(['mpltime'])
+    vars_read = variable_setlist(['time'])
 
     def _debug_print(self, lvl, msg):
         if self._debug_level > lvl:
@@ -382,7 +400,7 @@ class adcp_loader(object):
                            'number',
                            'bit',
                            'ssp',
-                           'depth_m',
+                           'depth',
                            'heading',
                            'pitch',
                            'roll',
@@ -398,7 +416,7 @@ class adcp_loader(object):
         ens.number[k] += 65535 * fd.read_ui8(1)
         ens.bit[k] = fd.read_ui16(1)
         ens.ssp[k] = fd.read_ui16(1)
-        ens.depth_m[k] = fd.read_ui16(1) * 0.1
+        ens.depth[k] = fd.read_ui16(1) * 0.1
         ens.heading[k] = fd.read_ui16(1) * 0.01
         ens.pitch[k] = fd.read_i16(1) * 0.01
         ens.roll[k] = fd.read_i16(1) * 0.01
@@ -824,11 +842,11 @@ class adcp_loader(object):
         self.fname = fname
         print('\nReading file {} ...'.format(fname))
         self._debug_level = debug_level
-        self.cfg = config(_type='ADCP')
+        self.cfg = {} #config(_type='ADCP')
         self.cfg['name'] = 'wh-adcp'
         self.cfg['sourceprog'] = 'instrument'
-        self.cfg.prog_ver = 0
-        self.hdr = config(_type='RDI-HEADER')
+        self.cfg['prog_ver'] = 0
+        self.hdr = {} #config(_type='RDI-HEADER')
         #self.f=io.npfile(fname,'r','l')
         self.f = bin_reader(fname)
         self.read_hdr()
@@ -838,28 +856,30 @@ class adcp_loader(object):
         self.n_avg = navg
         self.ensemble = ensemble(self.n_avg, self.cfg['n_cells'])
         self._filesize = getsize(fname)
-        self._npings = int(self._filesize / (self.hdr.nbyte + 2 +
+        self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
                                              self.extrabytes))
         if self._debug_level > 0:
             print('  %d pings estimated in this file' % self._npings)
         self.avg_func = getattr(self, avg_func)
 
     def init_data(self,):
-        outd = ADPdata()
-        outd.props = {}
-        outd.props['inst_make'] = 'RDI'
-        outd.props['inst_model'] = '<WORKHORSE?>'
-        outd.props['inst_type'] = 'ADCP'
-        outd.props['rotate_vars'] = {'vel', }
+        # Complete
+        #outd = ADPdata()
+        outd = {'data_vars':{},'coords':{},'attrs':{},'units':{},'sys':{}}
+        #outd.props = {}
+        outd['attrs']['inst_make'] = 'TRDI'
+        outd['attrs']['inst_model'] = '<WORKHORSE?>'
+        outd['attrs']['inst_type'] = 'ADCP'
+        outd['attrs']['rotate_vars'] = ['vel', ]
         # Currently RDI doesn't use IMUs
-        outd.props['has imu'] = False
+        outd['attrs']['has imu'] = False
         for nm in data_defs:
-            idata(outd, nm,
-                  sz=get_size(nm, self._nens,
-                              self.cfg['n_cells']))
+            outd = idata(outd, nm,
+                         sz=get_size(nm, self._nens, self.cfg['n_cells']))
         self.outd = outd
 
     def load_data(self, nens=None):
+        # Complete
         if nens is None:
             self._nens = int(self._npings / self.n_avg)
             self._ens_range = (0, self._nens)
@@ -870,7 +890,7 @@ class adcp_loader(object):
                 nens[1] = self._npings
             self._nens = int((nens[1] - nens[0]) / self.n_avg)
             self._ens_range = nens
-            self.f.seek((self.hdr.nbyte + 2 + self.extrabytes) *
+            self.f.seek((self.hdr['nbyte'] + 2 + self.extrabytes) *
                         self._ens_range[0], 1)
         else:
             self._nens = nens
@@ -880,12 +900,13 @@ class adcp_loader(object):
             print('  %d ensembles will be produced.' % self._nens)
         self.init_data()
         dat = self.outd
-        dat['range'] = (self.cfg['bin1_dist_m'] +
-                        np.arange(self.cfg['n_cells']) *
-                        self.cfg['cell_size'])
-        dat['config'] = self.cfg
+        dat['coords']['range'] = (self.cfg['bin1_dist_m'] +
+                                  np.arange(self.cfg['n_cells']) *
+                                  self.cfg['cell_size'])
+        for nm in self.cfg:
+            dat['attrs'][nm] = self.cfg[nm]
         if self.cfg['orientation'] == 1:
-            dat['range'] *= -1
+            dat['coords']['range'] *= -1
         for iens in range(self._nens):
             try:
                 self.read_buffer()
@@ -906,25 +927,28 @@ class adcp_loader(object):
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
-                dat['mpltime'][iens] = np.NaN
+                dat['coords']['time'][iens] = np.NaN
             else:
-                dat['mpltime'][iens] = np.median(dats)
+                dat['coords']['time'][iens] = np.median(dats)
         self.finalize()
-        if 'vel_bt' in dat:
-            dat['props']['rotate_vars'].update({'vel_bt', })
+        if 'vel_bt' in dat['data_vars']:
+            #dat['props']['rotate_vars'].update({'vel_bt', })
+            dat['attrs']['rotate_vars'].append('vel_bt')
         return dat
 
     def finalize(self, ):
         """
         Remove the attributes from the data that were never loaded.
+        Complete
         """
         dat = self.outd
         for nm in set(data_defs.keys()) - self.vars_read:
             pop(dat, nm)
-        dat.config = self.cfg
-        dat.props['fs'] = (dat.config['sec_between_ping_groups'] *
-                           dat.config['pings_per_ensemble']) ** -1
-        dat.props['coord_sys'] = dat.config.coord_sys
+        for nm in self.cfg:
+            dat['attrs'][nm] = self.cfg[nm]
+        dat['attrs']['fs'] = (dat['attrs']['sec_between_ping_groups'] *
+                              dat['attrs']['pings_per_ensemble']) **(-1)
+        #dat.props['coord_sys'] = dat.config.coord_sys
         for nm in data_defs:
             shp = data_defs[nm][0]
             if len(shp) and shp[0] == 'nc' and in_group(dat, nm):
@@ -932,10 +956,10 @@ class adcp_loader(object):
 
     def remove_end(self, iens):
         dat = self.outd
-        if iens < dat.shape[-1]:
-            print('  Encountered end of file.  Cleaning up data.')
-            for nm in self.vars_read:
-                setd(dat, nm, get(dat, nm)[..., :iens])
+        #if iens < dat.shape[-1]:
+        print('  Encountered end of file.  Cleaning up data.')
+        for nm in self.vars_read:
+            setd(dat, nm, get(dat, nm)[..., :iens])
 
     def search_buffer(self):
         """
@@ -1069,19 +1093,3 @@ class adcp_loader(object):
         if self._debug_level > 1:
             print("  ###Leaving checkheader.")
         return valid
-
-
-if __name__ == '__main__':
-
-    import tools as tbx
-    madcp = tbx.mload('/home/lkilcher/data/cr05/adcp1200/enxRaw/cr05024000ENX.mat')['adcp']
-    mcfg = madcp.cfg
-
-    #with adcp_loader("/home/lkilcher/data/cr05/adcp1200/bin/cr05024_000_000000.ENX") as ldr:
-    #    adcpd=ldr.load_data()
-
-    ldr = adcp_loader("/home/lkilcher/data/pnnl/adcp/raw/From_Instrument/_RDI_000.001")
-    # with
-    # adcp_loader("/home/lkilcher/data/pnnl/adcp/raw/From_Instrument/_RDI_000.001")
-    # as ldr:
-    adcpd = ldr.load_data()

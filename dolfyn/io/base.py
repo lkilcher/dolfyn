@@ -2,22 +2,24 @@
 The base module for the io package.
 """
 
-from os.path import expanduser
 import numpy as np
-from ..data import base as db
+import xarray as xr
 from ..data import time
 import six
 import json
 import io
 import os
 import warnings
+
 try:
     file_types = (file, io.IOBase)
 except NameError:
     file_types = io.IOBase
-
+    
+    
 class WrongFileType(Exception):
     pass
+
 
 def read_userdata(filename, userdata=True):
     """
@@ -68,134 +70,122 @@ def _read_userdata(fname):
     return data
 
 
-class VarAtts(object):
+def handle_nan(data):
+    '''
+    Hunting down nan's and eliminating them.
+    
+    '''
+    nan = np.zeros(data['coords']['time'].shape, dtype=bool)
+    l = data['coords']['time'].size
+    
+    if any(np.isnan(data['coords']['time'])):
+        nan += np.isnan(data['coords']['time'])
+    
+    var = ['heading', 'pitch', 'roll', 'accel', 'angrt', 'mag']
+    for key in data['data_vars']:
+        if any(val in key for val in var):
+            shp = data['data_vars'][key].shape
+            if shp[-1]==l:
+                if len(shp)==1:
+                    if any(np.isnan(data['data_vars'][key])):
+                        nan += np.isnan(data['data_vars'][key])
+                elif len(shp)==2:
+                    if any(np.isnan(data['data_vars'][key][-1])):
+                        nan += np.isnan(data['data_vars'][key][-1])
 
-    """
-    A data variable attributes class.
+    if nan.sum()>0:
+        data['coords']['time'] = data['coords']['time'][~nan]
+        for key in data['data_vars']:
+            if data['data_vars'][key].shape[-1]==l:
+                data['data_vars'][key] = data['data_vars'][key][...,~nan]
 
-    Parameters
-    ----------
 
-    dims : (list, optional)
-        The dimensions of the array other than the 'time'
-        dimension. By default the time dimension is appended to the
-        end. To specify a point to place it, place 'n' in that
-        location.
-
-    dtype : (type, optional)
-        The data type of the array to create (default: float32).
-
-    group : (string, optional)
-        The data group to which this variable should be a part
-        (default: 'main').
-
-    view_type : (type, optional)
-        Specify a numpy view to cast the array into.
-
-    default_val : (numeric, optional)
-        The value to initialize with (default: use an empty array).
-
-    offset : (numeric, optional)
-        The offset, 'b', by which to adjust the data when converting to
-        scientific units.
-
-    factor : (numeric, optional)
-        The factor, 'm', by which to adjust the data when converting to
-        scientific units.
-
-    title_name : (string, optional)
-        The name of the variable\*\*.
-
-    units : (:class:`<ma.unitsDict>`, optional)
-        The units of this variable\*\*.
-
-    dim_names : (list, optional)
-        A list of names for each dimension of the array\*\*.
-
-    Notes
-    -----
-
-    \*\*: These variables are only used when meta-arrays are being
-    used by DOLfYN (meta-arrays are currently sidelined).
-
-    """
-
-    def __init__(self, dims=[], dtype=None, group='main',
-                 view_type=None, default_val=None,
-                 offset=0, factor=1,
-                 title_name=None, units=None, dim_names=None,
-                 ):
-        self.dims = list(dims)
-        if dtype is None:
-            dtype = np.float32
-        self.dtype = dtype
-        self.group = group
-        self.view_type = view_type
-        self.default_val = default_val
-        self.offset = offset
-        self.factor = factor
-        self.title_name = title_name
-        self.units = units
-        self.dim_names = dim_names
-
-    def shape(self, **kwargs):
-        a = list(self.dims)
-        hit = False
-        for ky in kwargs:
-            if ky in self.dims:
-                hit = True
-                a[a.index(ky)] = kwargs[ky]
-        if hit:
-            return a
+def create_dataset(data):
+    '''
+    Creates an xarray dataset from dictionary created from binary datafile 
+    readers
+    
+    '''
+    ds = xr.Dataset()
+    Time = data['coords']['time']
+    beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
+    # orient coordinates get reset in _set_coords()
+    for key in data['data_vars']:
+        # orientation matrices
+        if 'mat' in key:
+            try: # orientmat (inst2earth)
+                ds[key] = xr.DataArray(data['data_vars'][key],
+                                       coords={'inst':['X','Y','Z'],
+                                               'earth':['E','N','U'],
+                                               'time':Time},
+                                       dims=['inst','earth','time'])
+            except: # the other 2 (beam2inst & inst2head)
+                ds[key] = xr.DataArray(data['data_vars'][key],
+                                       coords={'x':beam,
+                                               'x*':beam},
+                                       dims=['x','x*'])
+        # quaternion units never change
+        elif 'quat' in key: 
+            ds[key] = xr.DataArray(data['data_vars'][key],
+                                   coords={'q':[1,2,3,4],
+                                           'time':Time},
+                                   dims=['q','time'])
+        # the rest of the madness
         else:
-            try:
-                return self.dims + [kwargs['n']]
+            ds[key] = xr.DataArray(data['data_vars'][key])
+            try: # not all variables have units
+                ds[key].attrs['units'] = data['units'][key]
             except:
-                return self.dims
+                pass
+            
+            shp = data['data_vars'][key].shape
+            vshp = data['data_vars']['vel'].shape
+            l = len(shp)
+            if l==1: # 1D variables
+                ds[key] = ds[key].rename({'dim_0':'time'})
+                ds[key] = ds[key].assign_coords({'time':Time})
 
-    def _empty_array(self, **kwargs):
-        out = np.empty(self.shape(**kwargs), dtype=self.dtype)
-        try:
-            out[:] = np.NaN
-        except:
-            pass
-        if self.view_type is not None:
-            out = out.view(self.view_type)
-        if self.default_val is not None:
-            out[:] = self.default_val
-        return out
+            elif l==2: # 2D variables
+                if key=='echo':
+                    ds[key] = ds[key].rename({'dim_0':'range_echo',
+                                              'dim_1':'time'})
+                    ds[key] = ds[key].assign_coords({'range_echo':data['coords']['range_echo'],
+                                                     'time':Time})
+                # 3- & 4-beam instrument data, bottom tracking
+                elif shp[0]==vshp[0]: 
+                    ds[key] = ds[key].rename({'dim_0':'orient',
+                                              'dim_1':'time'})
+                    ds[key] = ds[key].assign_coords({'orient':beam,
+                                                     'time':Time})
+                # 4-beam instrument IMU data
+                elif shp[0]==vshp[0]-1:
+                    ds[key] = ds[key].rename({'dim_0':'orientIMU',
+                                              'dim_1':'time'})
+                    ds[key] = ds[key].assign_coords({'orientIMU':[1,2,3],
+                                                     'time':Time})
+                else:
+                    warnings.warn('Variable not included in dataset: {}'
+                                  .format(key))
 
-    def sci_func(self, data):
-        """Scale the data to scientific units.
-
-        Parameters
-        ----------
-        data : :class:`<numpy.ndarray>`
-            The data to scale.
-
-        Returns
-        -------
-        retval : {None, data}
-          If this funciton modifies the data in place it returns None,
-          otherwise it returns the new data object.
-        """
-        if self.offset != 0:
-            data += self.offset
-        if self.factor != 1:
-            data *= self.factor
-        if db.ma.valid:
-            data = db.ma.marray(data,
-                                db.ma.varMeta(self.title_name,
-                                              self.units,
-                                              self.dim_names)
-                                )
-            return data
-
-
-if __name__ == '__main__':
-    # filename='/home/lkilcher/data/eastriver/advb_10m_6_09.h5'
-    filename = '/home/lkilcher/data/ttm_dem_june2012/\
-    TTM_Vectors/TTM_NRELvector_Jun2012_b5m.h5'
-    import adv
-    ldr = adv.loader(filename, adv.type_map)
-    dat = ldr.load()
+            elif l==3: # 3D variables
+                dtype = ['b5']
+                if not any(val in key for val in dtype):
+                    ds[key] = ds[key].rename({'dim_0':'orient',
+                                              'dim_1':'range',
+                                              'dim_2':'time'})
+                    ds[key] = ds[key].assign_coords({'orient':beam,
+                                                     'range':data['coords']['range'],
+                                                     'time':Time})
+      
+                elif 'b5' in key:
+                    ds[key] = ds[key][0] # xarray can't handle coords of length 1
+                    ds[key] = ds[key].rename({'dim_1':'range_b5',
+                                              'dim_2':'time'})
+                    ds[key] = ds[key].assign_coords({'range_b5':data['coords']['range_b5'],
+                                                     'time':Time})
+                else:
+                    warnings.warn('Variable not included in dataset: {}'
+                                  .format(key))
+    ds.attrs = data['attrs']
+    
+    return ds

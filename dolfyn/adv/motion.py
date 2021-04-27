@@ -1,7 +1,8 @@
 from __future__ import division
 import numpy as np
-import scipy.signal as sig
+import scipy.signal as ss
 from scipy.integrate import cumtrapz
+import xarray as xr
 from ..rotate import vector as rot
 import warnings
 
@@ -17,7 +18,6 @@ def get_body2imu(make_model):
 
 
 class CalcMotion(object):
-
     """
     A 'calculator' for computing the velocity of points that are
     rigidly connected to an ADV-body with an IMU.
@@ -30,7 +30,7 @@ class CalcMotion(object):
 
     accel_filtfreq : float
       the frequency at which to high-pass filter the acceleration
-      signal to remove low-frequency drift. (default: 0.03 Hz)
+      sigal to remove low-frequency drift. (default: 0.03 Hz)
 
     vel_filtfreq : float (optional)
       a second frequency to high-pass filter the integrated
@@ -65,10 +65,10 @@ class CalcMotion(object):
 
         self._set_Accel()
         self._set_acclow()
-        self.angrt = advo['orient']['angrt']  # No copy because not modified.
+        self.angrt = advo['angrt'].values  # No copy because not modified.
 
     def _check_filtfreqs(self, accel_filtfreq, vel_filtfreq):
-        datval = self.advo.props.get('motion accel_filtfreq Hz', None)
+        datval = self.advo.attrs.get('motion accel_filtfreq Hz', None)
         if datval is None:
             if accel_filtfreq is None:
                 accel_filtfreq = self._default_accel_filtfreq
@@ -80,11 +80,11 @@ class CalcMotion(object):
                 if datval != accel_filtfreq:
                     # Neither are None!?!
                     warnings.warn(
-                        "The data object specifies a value for accel_filtfreq "
-                        "of {} Hz. Overriding this with the user-specified "
+                        "The default accel_filtfreq "
+                        "is {} Hz. Overriding this with the user-specified "
                         "value: {} Hz.".format(datval, accel_filtfreq))
         if vel_filtfreq is None:
-            vel_filtfreq = self.advo.props.get('motion vel_filtfreq Hz', None)
+            vel_filtfreq = self.advo.attrs.get('motion vel_filtfreq Hz', None)
         if vel_filtfreq is None:
             vel_filtfreq = accel_filtfreq / 3.0
         self.accel_filtfreq = accel_filtfreq
@@ -92,28 +92,26 @@ class CalcMotion(object):
 
     def _set_Accel(self, ):
         advo = self.advo
-        if advo.props['coord_sys'] == 'inst':
+        if advo.coord_sys == 'inst':
             self.accel = np.einsum('ij...,i...->j...',
-                                   advo['orient']['orientmat'],
-                                   advo['orient']['accel'])
-        elif self.advo.props['coord_sys'] == 'earth':
-            self.accel = advo['orient']['accel'].copy()
+                                   advo['orientmat'].values,
+                                   advo['accel'].values)
+        elif self.advo.coord_sys == 'earth':
+            self.accel = advo['accel'].values.copy()
         else:
             raise Exception(("Invalid coordinate system '%s'. The coordinate "
                              "system must either be 'earth' or 'inst' to "
                              "perform motion correction.")
-                            % (self.advo.props['coord_sys'], ))
+                            % (self.advo.coord_sys))
 
     def _set_acclow(self, ):
-        """
-        """
         self.acclow = acc = self.accel.copy()
         if self.accel_filtfreq == 0:
             acc[:] = acc.mean(-1)[..., None]
         else:
-            flt = sig.butter(1, self.accel_filtfreq / (self.advo['props']['fs'] / 2))
+            flt = ss.butter(1, self.accel_filtfreq / (self.advo.fs / 2))
             for idx in range(3):
-                acc[idx] = sig.filtfilt(flt[0], flt[1], acc[idx])
+                acc[idx] = ss.filtfilt(flt[0], flt[1], acc[idx])
 
     def __call__(self, vec):
         """
@@ -139,14 +137,14 @@ class CalcMotion(object):
     def calc_velacc(self, ):
         """
         Calculates the translational velocity from the high-pass
-        filtered acceleration signal.
+        filtered acceleration sigal.
 
         Returns
         -------
         velacc : |np.ndarray| (3 x n_time)
                The acceleration-induced velocity array (3, n_time).
         """
-        samp_freq = self.advo['props']['fs']
+        samp_freq = self.advo.fs
 
         # Get high-pass accelerations
         hp = self.accel - self.acclow
@@ -160,9 +158,9 @@ class CalcMotion(object):
             filt_freq = self.accelvel_filtfreq
             # 2nd order Butterworth filter
             # Applied twice by 'filtfilt' = 4th order butterworth
-            filt = sig.butter(2, float(filt_freq) / (samp_freq / 2))
+            filt = ss.butter(2, float(filt_freq) / (samp_freq / 2))
             for idx in range(hp.shape[0]):
-                dat[idx] = dat[idx] - sig.filtfilt(filt[0], filt[1], dat[idx])
+                dat[idx] = dat[idx] - ss.filtfilt(filt[0], filt[1], dat[idx])
         return dat
 
     def calc_velrot(self, vec, to_earth=None):
@@ -200,7 +198,7 @@ class CalcMotion(object):
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - get_body2imu(self.advo._make_model)[:, None]
+        vec = vec - get_body2imu(self.advo.Veldata._make_model)[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -215,7 +213,7 @@ class CalcMotion(object):
                            ])
 
         if to_earth:
-            velrot = np.einsum('ji...,j...->i...', self.advo['orientmat'], velrot)
+            velrot = np.einsum('ji...,j...->i...', self.advo['orientmat'].values, velrot)
 
         if dimflag:
             return velrot[:, 0, :]
@@ -235,22 +233,22 @@ def _calc_probe_pos(advo, separate_probes=False):
     # (!!!checkthis) to get acoustic receiver center, this is
     # 7.6cm.  In the coordinate sys of the center of the probe
     # then, the positions of the centers of the receivers is:
-    p = advo.props
-    if separate_probes and p['inst_make'].lower() == 'nortek' and\
-       p['inst_model'].lower == 'vector':
+    # p = advo.props
+    # if separate_probes and p['inst_make'].lower() == 'nortek' and\
+    #    p['inst_model'].lower == 'vector':
+    if separate_probes and advo.Velocity._make_model=='nortek vector':
         r = 0.076
         # The angle between the x-y plane and the probes
         phi = np.deg2rad(-30)
         # The angles of the probes from the x-axis:
         theta = np.deg2rad(np.array([0., 120., 240.]))
-        return (np.dot(advo.props['inst2head_rotmat'].T,
+        return (np.dot(advo.attrs['inst2head_rotmat'].values.T,
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
                                  r * np.tan(phi) * np.ones(3)])) +
-                advo.props['inst2head_vec'][:, None]
-                )
+                advo.inst2head_vec[:, None])
     else:
-        return advo.props['inst2head_vec']
+        return advo.inst2head_vec
 
 
 def correct_motion(advo,
@@ -270,7 +268,7 @@ def correct_motion(advo,
 
     accel_filtfreq : float
       the frequency at which to high-pass filter the acceleration
-      signal to remove low-frequency drift.
+      sigal to remove low-frequency drift.
 
     vel_filtfreq : float (optional)
       a second frequency to high-pass filter the integrated
@@ -285,7 +283,7 @@ def correct_motion(advo,
       a flag to perform motion-correction at the probe tips, and
       perform motion correction in beam-coordinates, then transform
       back into XYZ/earth coordinates. This correction seems to be
-      lower than the noise levels of the ADV, so the defualt is to not
+      lower than the noise levels of the ADV, so the default is to not
       use it (False).
 
     Returns
@@ -299,36 +297,36 @@ def correct_motion(advo,
                  angrt)
 
       ``velacc`` is the translational component of the head motion (from
-                 accel, the high-pass filtered accel signal)
+                 accel, the high-pass filtered accel sigal)
 
-      ``acclow`` is the low-pass filtered accel signal (i.e., 
+      ``acclow`` is the low-pass filtered accel sigal (i.e., 
 
     The primary velocity vector attribute, ``vel``, is motion corrected
     such that:
 
           vel = velraw + velrot + velacc
 
-    The signs are correct in this equation. The measured velocity
+    The sigs are correct in this equation. The measured velocity
     induced by head-motion is *in the opposite direction* of the head
     motion.  i.e. when the head moves one way in stationary flow, it
     measures a velocity in the opposite direction. Therefore, to
-    remove the motion from the raw signal we *add* the head motion.
+    remove the motion from the raw sigal we *add* the head motion.
 
     Notes
     -----
 
     Acceleration signals from inertial sensors are notorious for
     having a small bias that can drift slowly in time. When
-    integrating these signals to estimate velocity the bias is
+    integrating these sigals to estimate velocity the bias is
     amplified and leads to large errors in the estimated
     velocity. There are two methods for removing these errors,
 
-    1) high-pass filter the acceleration signal prior and/or after
+    1) high-pass filter the acceleration sigal prior and/or after
        integrating. This implicitly assumes that the low-frequency
        translational velocity is zero.
     2) provide a slowly-varying reference position (often from a GPS)
-       to an IMU that can use the signal (usually using Kalman
-       filters) to debias the acceleration signal.
+       to an IMU that can use the sigal (usually using Kalman
+       filters) to debias the acceleration sigal.
 
     Because method (1) removes `real` low-frequency acceleration,
     method (2) is more accurate. However, providing reference position
@@ -345,7 +343,7 @@ def correct_motion(advo,
     motion and the measured velocity on long time scales.  If
     low-frequency motion is known separate from the ADV (e.g. from a
     bottom-tracking ADP, or from a ship's GPS), it may be possible to
-    remove that signal from the ADV signal in post-processing. The
+    remove that sigal from the ADV sigal in post-processing. The
     accuracy of this approach has not, to my knowledge, been tested
     yet.
 
@@ -360,12 +358,15 @@ def correct_motion(advo,
 
     """
 
-    if hasattr(advo, 'velrot') or advo.props.get('motion corrected', False):
-        raise Exception('The data object appears to already have been '
+    if hasattr(advo, 'velrot') or advo.attrs.get('motion corrected', False):
+        raise Exception('The data appears to already have been '
                         'motion corrected.')
+    
+    if not hasattr(advo, 'has_imu') or ('accel' not in advo):
+        raise Exception('The instrument does not appear to have an IMU.')        
 
-    if advo.props['coord_sys'] != 'inst':
-        advo.rotate2('inst', inplace=True)
+    if advo.coord_sys != 'inst':
+        advo = advo.Veldata.rotate2('inst', inplace=True)
 
     # Returns True/False if head2inst_rotmat has been set/not-set.
     # Bad configs raises errors (this is to check for those)
@@ -379,9 +380,11 @@ def correct_motion(advo,
 
     ##########
     # Calculate the translational velocity (from the accel):
-    advo['orient']['velacc'] = calcobj.calc_velacc()
+    advo['velacc'] = xr.DataArray(calcobj.calc_velacc(), 
+                                  dims=['orient','time'])
     # Copy acclow to the adv-object.
-    advo['orient']['acclow'] = calcobj.acclow
+    advo['acclow'] = xr.DataArray(calcobj.acclow, 
+                                  dims=['orient','time'])
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -389,10 +392,10 @@ def correct_motion(advo,
     # Calculate the velocity of the head (or probes).
     velrot = calcobj.calc_velrot(pos, to_earth=False)
     if separate_probes:
-        # The head->beam transformation matrix
-        transMat = advo.config.head.get('TransMatrix', None)
-        # The body->head transformation matrix
-        rmat = advo.props['inst2head_rotmat']
+        # The head->beam transformation matrix (should this say 'beam->head'?)
+        transMat = advo.get('beam2inst_orientmat', None)
+        # The inst->head transformation matrix (should this say 'head->inst'?)
+        rmat = advo['inst2head_rotmat']
 
         # 1) Rotate body-coordinate velocities to head-coord.
         velrot = np.dot(rmat, velrot)
@@ -406,298 +409,55 @@ def correct_motion(advo,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    advo['orient']['velrot'] = velrot
+    advo['velrot'] = xr.DataArray(velrot, dims=['orient','time'])
 
     ##########
     # Rotate the data into the correct coordinate system.
     # inst2earth expects a 'rotate_vars' property.
     # Add velrot, velacc, acclow, to it.
-    if 'rotate_vars' not in advo.props:
-        advo.props['rotate_vars'] = {'vel', 'orient.velrot', 'orient.velacc',
-                                     'orient.accel', 'orient.acclow',
-                                     'orient.angrt', 'orient.mag'}
+    if 'rotate_vars' not in advo.attrs:
+        advo.attrs['rotate_vars'] = ['vel', 'velrot', 'velacc',
+                                     'accel', 'acclow',
+                                     'angrt', 'mag']
     else:
-        advo.props['rotate_vars'].update({'orient.velrot',
-                                          'orient.velacc',
-                                          'orient.acclow'})
+        advo.attrs['rotate_vars'].extend(['velrot', 'velacc', 'acclow'])
 
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
     if to_earth:
-        advo['orient']['accel'] = calcobj.accel
-        rot.inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
-                       {'orient.accel', 'orient.acclow',
-                        'orient.velacc', })
+        advo['accel'].values = calcobj.accel
+        to_remove = ['accel', 'acclow', 'velacc']
+        advo = rot.inst2earth(advo, rotate_vars=[e for e in 
+                                                 advo.attrs['rotate_vars']
+                                                 if e not in to_remove])
     else:
         # rotate these variables back to the instrument frame.
-        rot.inst2earth(advo, reverse=True,
-                       rotate_vars={'orient.acclow', 'orient.velacc', },
-                       force=True, )
+        advo = rot.inst2earth(advo, reverse=True,
+                              rotate_vars=['acclow', 'velacc'],
+                              force=True)
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    advo['velraw'] = advo.vel.copy()
+    advo['vel_raw'] = xr.DataArray(advo.vel.copy(), dims=['orient','time'])
     # Add it to rotate_vars:
-    advo.props['rotate_vars'].update({'velraw', })
+    advo.attrs['rotate_vars'].append('vel_raw')
 
     ##########
-    # Remove motion from measured velocity!
+    # Remove motion from measured velocity! <woot!>
     # NOTE: The plus sign is because the measured-induced velocities
     #       are in the opposite direction of the head motion.
     #       i.e. when the head moves one way in stationary flow, it
     #       measures a velocity in the opposite direction.
-    velmot = advo['orient']['velrot'] + advo['orient']['velacc']
-    if advo.props['inst_type'] == 'ADP':
-        velmot = velmot[:, None]
+    velmot = advo['velrot'] + advo['velacc']
+    #if advo.inst_type == 'ADCP':
+    #    velmot = velmot[:, None] # !!! Not sure this is necessary
     advo['vel'][:3] += velmot
-    if advo._make_model.startswith('nortek signature') and \
+    if advo.Veldata._make_model.startswith('nortek signature') and \
        advo['vel'].shape[0] > 3:
         # This assumes these are w.
         advo['vel'][3:] += velmot[2:]
-    advo.props['motion corrected'] = True
-    advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
-
-
-class CorrectMotion(object):
-
-    """
-    This object performs motion correction on an IMU-ADV data
-    object. The IMU and ADV data should be tightly synchronized and
-    contained in a single data object.
-
-    Parameters
-    ----------
-
-    accel_filtfreq : float
-      the frequency at which to high-pass filter the acceleration
-      signal to remove low-frequency drift.
-
-    vel_filtfreq : float (optional)
-      a second frequency to high-pass filter the integrated
-      acceleration.  (default: 1/3 of accel_filtfreq)
-
-    separate_probes : bool (optional: False)
-      a flag to perform motion-correction at the probe tips, and
-      perform motion correction in beam-coordinates, then transform
-      back into XYZ/earth coordinates. This correction seems to be
-      lower than the noise levels of the ADV, so the defualt is to not
-      use it (False).
-
-    Notes
-    -----
-
-    Acceleration signals from inertial sensors are notorious for
-    having a small bias that can drift slowly in time. When
-    integrating these signals to estimate velocity the bias is
-    amplified and leads to large errors in the estimated
-    velocity. There are two methods for removing these errors,
-
-    1) high-pass filter the acceleration signal prior and/or after
-       integrating. This implicitly assumes that the low-frequency
-       translational velocity is zero.
-    2) provide a slowly-varying reference position (often from a GPS)
-       to an IMU that can use the signal (usually using Kalman
-       filters) to debias the acceleration signal.
-
-    Because method (1) removes `real` low-frequency acceleration,
-    method (2) is more accurate. However, providing reference position
-    estimates to undersea instruments is practically challenging and
-    expensive. Therefore, lacking the ability to use method (2), this
-    function utilizes method (1).
-
-    For deployments in which the ADV is mounted on a mooring, or other
-    semi-fixed structure, the assumption of zero low-frequency
-    translational velocity is a reasonable one. However, for
-    deployments on ships, gliders, or other moving objects it is
-    not. The measured velocity, after motion-correction, will still
-    hold some of this contamination and will be a sum of the ADV
-    motion and the measured velocity on long time scales.  If
-    low-frequency motion is known separate from the ADV (e.g. from a
-    bottom-tracking ADP, or from a ship's GPS), it may be possible to
-    remove that signal from the ADV signal in post-processing. The
-    accuracy of this approach has not, to my knowledge, been tested
-    yet.
-
-    Examples
-    --------
-
-    >> from dolfyn.adv import api as avm
-    >> dat = avm.read_nortek('my_data_file.vec')
-    >> mc = avm.CorrectMotion(0.1)
-    >> corrected_data = mc(dat)
-
-    """
-
-    def __init__(self, accel_filtfreq=None,
-                 vel_filtfreq=None,
-                 separate_probes=False):
-
-        self.accel_filtfreq = accel_filtfreq
-        self.accelvel_filtfreq = vel_filtfreq
-        self.separate_probes = separate_probes
-        warnings.warn("The 'CorrectMotion' class is being deprecated "
-                      "and will be removed in a future DOLfYN release. "
-                      "Use the 'correct_motion' function instead.",
-                      DeprecationWarning)
-
-    def _calc_rot_vel(self, calcobj):
-        """
-        Calculate the 'rotational' velocity as measured by the IMU
-        rate sensor.
-        """
-        advo = calcobj.advo
-
-        # This returns a 3x3 array of probe positions if
-        # separate_probes is True.
-        pos = self._calc_probe_pos(advo)
-
-        # Calculate the velocity of the head (or probes).
-        velrot = calcobj.calc_velrot(pos, to_earth=False)
-
-        if self.separate_probes:
-            # The head->beam transformation matrix
-            transMat = advo.config.head.get('TransMatrix', None)
-            # The body->head transformation matrix
-            rmat = advo.props['inst2head_rotmat']
-
-            # 1) Rotate body-coordinate velocities to head-coord.
-            velrot = np.dot(rmat, velrot)
-            # 2) Rotate body-coord to beam-coord (einsum),
-            # 3) Take along beam-component (diagonal),
-            # 4) Rotate back to head-coord (einsum),
-            velrot = np.einsum('ij,kj->ik',
-                               transMat,
-                               np.diagonal(np.einsum('ij,j...->i...',
-                                                     np.linalg.inv(transMat),
-                                                     velrot)))
-            # 5) Rotate back to body-coord.
-            velrot = np.dot(rmat.T, velrot)
-
-        advo['orient']['velrot'] = velrot
-
-    def _calc_probe_pos(self, advo):
-        """
-        !!!Currently this only works for Nortek Vectors!
-
-        In the future, we could use the transformation matrix (and a
-        probe-length lookup-table?)
-        """
-        # According to the ADV_DataSheet, the probe-length radius is
-        # 8.6cm @ 120deg from probe-stem axis.  If I subtract 1cm
-        # (!!!checkthis) to get acoustic receiver center, this is
-        # 7.6cm.  In the coordinate sys of the center of the probe
-        # then, the positions of the centers of the receivers is:
-        p = advo.props
-        if self.separate_probes and p['inst_make'].lower() == 'nortek' and \
-           p['inst_model'].lower == 'vector':
-            r = 0.076
-            # The angle between the x-y plane and the probes
-            phi = np.deg2rad(-30)
-            # The angles of the probes from the x-axis:
-            theta = np.deg2rad(np.array([0., 120., 240.]))
-            return (np.dot(advo.props['inst2head_rotmat'].T,
-                           np.array([r * np.cos(theta),
-                                     r * np.sin(theta),
-                                     r * np.tan(phi) * np.ones(3)])) +
-                    advo.props['inst2head_vec'][:, None]
-                    )
-        else:
-            return advo.props['inst2head_vec']
-
-    def _calc_accel_vel(self, calcobj):
-        advo = calcobj.advo
-        advo['orient']['velacc'] = calcobj.calc_velacc()
-
-    def __call__(self, advo, to_earth=True):
-        """
-        Perform motion correction on an IMU-equipped ADV object.
-
-        Parameters
-        ----------
-        advo : :class:`ADVdata <base.ADVdata>`
-          The adv object on which to perform motion correction.
-          It must contain the following data attributes:
-
-          - vel : The velocity array.
-          - accel : The translational acceleration array.
-          - angrt : The rotation-rate array.
-          - orientmat : The orientation matrix.
-          - props : a dictionary that has 'inst2head_vec' and
-            'coord_sys'.
-
-        to_earth : bool (optional, default: True)
-          A boolean that specifies whether the data should be
-          rotated into the earth frame.
-
-        Notes
-        -----
-
-        After calling this function, `advo` will have *velrot* and
-        *velacc* data attributes. The velocity vector attribute ``vel``
-        will be motion corrected according to:
-
-            u_corr = u_raw + velacc + velrot
-
-        Therefore, to recover the 'raw' velocity, subtract velacc and
-        velrot from ``vel``.
-
-        This method does not return a data object, it operates on
-        (motion corrects) the input `advo`.
-
-        """
-        if hasattr(advo, 'velrot') or \
-           advo.props.get('motion corrected', False):
-            raise Exception('The data object appears to already have been '
-                            'motion corrected.')
-
-        if not advo.props['inst_type'] == 'ADV':
-            raise Exception("This motion correction tool currently only works "
-                            "for ADV data objects.")
-
-        if advo.props['coord_sys'] != 'inst':
-            advo.rotate2('inst', inplace=True)
-
-        # Returns True/False if head2inst_rotmat has been set/not-set.
-        # Bad configs raises errors (this is to check for those)
-        rot._check_inst2head_rotmat(advo)
-
-        calcobj = CalcMotion(advo,
-                             accel_filtfreq=self.accel_filtfreq,
-                             vel_filtfreq=self.accelvel_filtfreq,
-                             to_earth=to_earth)
-
-        if 'rotate_vars' not in advo.props:
-            advo.props['rotate_vars'] = {'vel', 'velraw',
-                                         'orient.velrot', 'orient.velacc',
-                                         'orient.accel', 'orient.acclow',
-                                         'orient.angrt', 'orient.mag'}
-        else:
-            advo.props['rotate_vars'].update({'velraw',
-                                              'orient.velrot', 'orient.velacc',
-                                              'orient.acclow', })
-
-        self._calc_rot_vel(calcobj)
-        self._calc_accel_vel(calcobj)
-
-        # calcobj.accel, calcobj.acclow, and velacc are already in
-        # the earth frame.
-        advo['orient']['acclow'] = calcobj.acclow
-        advo['velraw'] = advo.vel.copy()
-        if to_earth:
-            advo['orient']['accel'] = calcobj.accel
-            rot.inst2earth(advo, rotate_vars=advo.props['rotate_vars'] -
-                           {'orient.accel', 'orient.acclow',
-                            'orient.velacc', })
-        else:
-            # rotate these variables back to the instrument frame.
-            rot.inst2earth(advo, reverse=True,
-                           rotate_vars={'orient.acclow',
-                                        'orient.velacc', },
-                           force=True, )
-        # NOTE: The plus sign is because the measured-induced velocities
-        #       are in the opposite direction of the head motion.
-        #       i.e. when the head moves one way in stationary flow, it
-        #       measures a velocity in the opposite direction.
-        advo['vel'] += (advo['orient']['velrot'] + advo['orient']['velacc'])
-        advo.props['motion corrected'] = True
-        advo.props['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
+        
+    advo.attrs['motion corrected'] = True
+    advo.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
+    
+    return advo
