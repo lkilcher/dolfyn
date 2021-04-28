@@ -51,12 +51,11 @@ def find_surface(adcpo, thresh=10, nfilt=None):
     adcpo['d_range'] = xr.DataArray(
         d, 
         dims=['time'], 
-        attrs={'units':'m', 
-               'description': 'distance to surface'})
+        attrs={'units':'m'})
     return adcpo
 
 
-def surface_from_alt(adcpo, salinity=35):
+def surface_from_P(adcpo, salinity=35):
     '''
     Approximates distance to water surface above ADCP from the altimeter.
     Requires that the instrument's pressure sensor was calibrated/zeroed
@@ -81,9 +80,8 @@ def surface_from_alt(adcpo, salinity=35):
     adcpo['d_range'] = xr.DataArray(
         d, 
         dims=['time'], 
-        attrs={'units':'m', 
-               'description': 'distance to surface'})
-    return adcpo   
+        attrs={'units':'m'})
+    return adcpo
 
 
 def nan_beyond_surface(adcpo, val=np.nan):
@@ -107,7 +105,7 @@ def nan_beyond_surface(adcpo, val=np.nan):
     if 'nortek' in adcpo.Veldata._make_model.lower():
         beam_angle = 25 *(np.pi/180)
     else: #TRDI
-        beam_angle = 20 *(np.pi/180)
+        beam_angle = adcpo.beam_angle #20 *(np.pi/180)
         
     bds = adcpo.range > adcpo.d_range * np.cos(beam_angle)
     

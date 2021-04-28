@@ -288,7 +288,7 @@ def calc_bt_struct(config, nb):
 def calc_echo_struct(config, nc):
     flags = lib.headconfig_int2dict(config)
     dd = copy(_burst_hdr)
-    dd[19] = ('blank_dist', 'H', [], LinFunc(0.001))  # m, hack to fix this
+    dd[19] = ('blank_dist', 'H', [], LinFunc(0.001))  # m
     if any([flags[nm] for nm in ['vel', 'amp', 'corr', 'alt', 'ast',
                                  'alt_raw', 'p_gd', 'std']]):
         raise Exception("Echosounder ping contains invalid data?")

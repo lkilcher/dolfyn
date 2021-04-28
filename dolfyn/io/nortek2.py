@@ -221,7 +221,7 @@ class Ad2cpReader(object):
             id = hdr['id']
             if id in [21, 23, 24, 28]: # vel, bt, vel_b5, echo
                 self.read_burst(id, outdat[id], c)
-            elif id in [26]:  # alt_raw
+            elif id in [26]:  # alt_raw (altimeter burst)
                 # warnings.warn(
                 #     "Unhandled ID: 0x1A (26)\n"
                 #     "    There still seems to be a discrepancy between\n"
@@ -266,7 +266,8 @@ class Ad2cpReader(object):
                 outdat[id]['ensemble'][c26] = c
                 c26 += 1
 
-            elif id in [22, 23, 27, 29, 30, 31]:
+            elif id in [22, 27, 29, 30, 31, 35, 36]: # avg, bt record, DVL, 
+            # alt record, avg alt_raw record, raw echo, raw echo transmit
                 warnings.warn(
                     "Unhandled ID: 0x{:02X} ({:02d})\n"
                     "    This ID is not yet handled by DOLfYN.\n"
@@ -439,7 +440,7 @@ def reorg(dat):
         #         if ky + tag in outdat:
         #             outdat[grp][ky + tag] = outdat.pop(ky + tag)
 
-    #!!! 'altraw' key doesn't exist?
+    #!!! 'altraw' key doesn't exist? Maybe he meant 'alt'?
     # Move 'altimeter raw' data to it's own down-sampled structure
     if 26 in dat:
         ard = outdat['altraw']
@@ -467,10 +468,10 @@ def reorg(dat):
     
     # Instrument direction
     face = tmp['orient_up'][0]
-    # 0: XUP, 1: XDOWN, 4: ZUP(?), 5: ZDOWN, 7: -- SigVM 1000 returns this as 
-    # well as up facing Sig 1000, handle as ZUP
-    # Heading is: 0,1: Z; 4,5: X
-    nortek_orient = {0:'horizontal', 1:'horizontal', 4:'up', 5:'down', 7:'--'}
+    # 0: XUP, 1: XDOWN, 2: YUP, 3: YDOWN, 4: ZUP, 5: ZDOWN, 7: AHRS, handle as ZUP
+    # Heading is: 0,1: Z; 2,3:Y 4,5: X
+    nortek_orient = {0:'horizontal', 1:'horizontal', 2:'horizontal',
+                     3:'horizontal', 4:'up', 5:'down', 7:'AHRS'}
     outdat['attrs']['orientation'] = nortek_orient[face]
     
     for ky in ['accel', 'angrt', 'mag']:

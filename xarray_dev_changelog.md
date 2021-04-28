@@ -45,11 +45,10 @@ Xarray DOLfYN to MHKiT Changelog
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
 			- Orientation up/down wasn't taken into account for Nortek Signatures?
 				- Solved Nortek Signature rotation issues for up and down facing instruments
-				- Sig 1000 returns '7' when facing up as does SigVM 1000 when facing down? - Negative, VM data must be treated like 'up' facing instruments
-			- Verified Nortek Signature data (facing up and down)
-			- Verified Nortek SignatureVM data
-			- Verified TRDI Worhorse (facing down)
-			- Not verfied for TRDI facing up or AWAC
+				- AHRS data ??? - 1% error discrepancy after rotations from .mat files
+			- Verified Nortek Signature data (facing up and down) with Nortek-generated .mat files
+			- Have not verified Nortek Signature AHRS data rotations work perfectly
+			- Verified TRDI, AWAC, and Vector match h5py dolfyn output
 				
 		- Motion correction code - done, checked
 			- motion correction object has been removed
@@ -80,9 +79,8 @@ Xarray DOLfYN to MHKiT Changelog
 				- Updated so that one can calculate coherence, auto-/cross-covariance with 1D or 3D velocity arrays
 				- Added comments
 			- Updated turbulence dissipation functions return correctly for xarray
-				- Changed U_mag (horizontal vel) to vel_avg (3D) in all three methods so that they use 'x' to calculate 'Sxx', where x=[1,2,3]
-				- Changed 'calc_L_int' to use the 3D velocity as well because 'calc_acov' returns the 3D autocovariance for each velocity term
-				- methods can take either the 3D velocity or a single velocity array
+				- LT83 or TE01 methods can take either the 3D velocity or a single velocity array
+				- SF method only can handle single beam at a time
 					- sanity note: dissipation rates within isotropic cascade for each velocity direction should theoretically be equal (def of isotropic)
 					- leaving to user to average 'LT83' returns together if they'd like
 					- 'TE01' natively returns the averaged dissipation rate
@@ -122,9 +120,10 @@ Xarray DOLfYN to MHKiT Changelog
 	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
 	- Bad AWAC IMU data reads as 6551.x?
 
-- To do:
+- Debugging:
+	- Signatures equipped with AHRS have a ~1% error discrepancy between DOLfYN & Nortek Matlab output after rotating data through coordinate systems - error magnitude isn't consistent between beams/directions and varies between datasets - motion correction or quaternion correction?
 	- Fix Nortek Signature burst read hack
-	- Error reading Sig VM .ad2cp file echosounder data, only loads first column?
+	- Error reading Sig VM .ad2cp file echosounder data, only loads first column? - related to burst read hack above
 	- Add functionality for dual profiling configurations - *Incorporating 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
 	
 	- Optimize read code for the dictionary output?

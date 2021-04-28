@@ -17,7 +17,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
 
     reverse : bool (default: False)
            If True, this function performs the inverse rotation
-           (principal->earth).
+           (earth->inst).
 
     rotate_vars : iterable
       The list of variables to rotate. By default this is taken from
@@ -42,8 +42,14 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     # if ADCP is upside down
     if adcpo.orientation=='down':
         down = True
-    else: # orientation = 'up' or '--'
+    else: # orientation = 'up' or 'AHRS'
         down = False
+    
+    # An AHRS changes things
+    if getattr(adcpo, 'has_imu', None):
+        ahrs = True
+    else:
+        ahrs = False
 
     if rotate_vars is None:
         if 'rotate_vars' in adcpo.attrs:
@@ -111,9 +117,9 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     # tmp[0, 2:] = rmat[0, 2] / 3
     # tmp[1, 2:] = rmat[1, 2] / 3
 
-    if (not reverse and not down) or (reverse and down):
-    # for up or VM instruments this should be 'if not reverse'
-    # for down facing instruments this should be 'if reverse'
+    if (not reverse and ahrs) or (reverse and not ahrs):
+    #!!! for AHRS-equipped ADCPs this should be 'if not reverse' - ???
+    # for non-IMU instruments this should be 'if reverse'
         # 3-element inverse handled by sumstr definition (transpose)
         rmd[4] = np.moveaxis(inv(np.moveaxis(rmd[4], -1, 0)), 0, -1)
 
@@ -143,7 +149,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                 raise Exception("The entry {} is not a vector, it cannot"
                                 "be rotated.".format(nm))
                 
-        else: # 'up' and SigVMs
+        else: # 'up' and AHRS
             #sign = np.array([1, 1, 1, 1], ndmin=dat.ndim)
             if n == 3:
                 dat = np.einsum(sumstr, rmd[3], dat)

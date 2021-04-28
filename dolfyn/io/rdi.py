@@ -62,7 +62,7 @@ def read_rdi(fname, userdata=None, nens=None):
                                            'earth': ['E','N','U'], 
                                            'time': ds['time']},
                                    dims=['inst','earth','time'])
-    ds = _set_rdi_declination(ds, fname)
+    _set_rdi_declination(ds, fname)
     
     return ds
 
@@ -74,8 +74,7 @@ def _set_rdi_declination(dat, fname='????'):
     # I'm assuming this is the case for now...
     # Can confirm - jrm
 
-    #declin = dat['props'].pop('declination', None)
-    declin = hasattr(dat, 'declination')
+    declin = dat.attrs.pop('declination', None)
 
     if dat.attrs['magnetic_var_deg'] != 0:
         dat.attrs['declination'] = dat.attrs['magnetic_var_deg']
@@ -91,12 +90,11 @@ def _set_rdi_declination(dat, fname='????'):
             .format(dat.attrs['magnetic_var_deg'], fname,
                     dat.attrs['declination']))
 
-    if declin:# is not None:
+    if declin is not None:
         # set_declination rotates by the difference between what is
         # already set in props['declination'] (i.e., above), and the
         # input value
-        dat.Veldata.set_declination(dat.declination)
-    return dat
+        dat.Veldata.set_declination(declin)
 
 
 # Four pound symbols ("####"), indicate a duplication of a comment from

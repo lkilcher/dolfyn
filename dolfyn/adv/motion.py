@@ -227,6 +227,7 @@ def _calc_probe_pos(advo, separate_probes=False):
 
     In the future, we could use the transformation matrix (and a
     probe-length lookup-table?)
+    
     """
     # According to the ADV_DataSheet, the probe-length radius is
     # 8.6cm @ 120deg from probe-stem axis.  If I subtract 1cm
@@ -357,7 +358,6 @@ def correct_motion(advo,
     ``dat`` will now have motion-corrected.
 
     """
-
     if hasattr(advo, 'velrot') or advo.attrs.get('motion corrected', False):
         raise Exception('The data appears to already have been '
                         'motion corrected.')
@@ -381,10 +381,10 @@ def correct_motion(advo,
     ##########
     # Calculate the translational velocity (from the accel):
     advo['velacc'] = xr.DataArray(calcobj.calc_velacc(), 
-                                  dims=['orient','time'])
+                                  dims=['orientIMU','time'])
     # Copy acclow to the adv-object.
     advo['acclow'] = xr.DataArray(calcobj.acclow, 
-                                  dims=['orient','time'])
+                                  dims=['orientIMU','time'])
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -392,9 +392,9 @@ def correct_motion(advo,
     # Calculate the velocity of the head (or probes).
     velrot = calcobj.calc_velrot(pos, to_earth=False)
     if separate_probes:
-        # The head->beam transformation matrix (should this say 'beam->head'?)
+        # The head->beam transformation matrix
         transMat = advo.get('beam2inst_orientmat', None)
-        # The inst->head transformation matrix (should this say 'head->inst'?)
+        # The inst->head transformation matrix
         rmat = advo['inst2head_rotmat']
 
         # 1) Rotate body-coordinate velocities to head-coord.
@@ -409,7 +409,10 @@ def correct_motion(advo,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    advo['velrot'] = xr.DataArray(velrot, dims=['orient','time'])
+    try:
+        advo['velrot'] = xr.DataArray(velrot, dims=['orientIMU','time'])
+    except:
+        advo['velrot'] = xr.DataArray(velrot, dims=['orientIMU','range','time'])
 
     ##########
     # Rotate the data into the correct coordinate system.
@@ -424,6 +427,7 @@ def correct_motion(advo,
 
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
+    # !!! Signatures will fail here since it's Vector code
     if to_earth:
         advo['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']
@@ -438,7 +442,7 @@ def correct_motion(advo,
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    advo['vel_raw'] = xr.DataArray(advo.vel.copy(), dims=['orient','time'])
+    advo['vel_raw'] = xr.DataArray(advo.vel.copy(), dims=advo.vel.dims)
     # Add it to rotate_vars:
     advo.attrs['rotate_vars'].append('vel_raw')
 
@@ -448,15 +452,21 @@ def correct_motion(advo,
     #       are in the opposite direction of the head motion.
     #       i.e. when the head moves one way in stationary flow, it
     #       measures a velocity in the opposite direction.
-    velmot = advo['velrot'] + advo['velacc']
-    #if advo.inst_type == 'ADCP':
-    #    velmot = velmot[:, None] # !!! Not sure this is necessary
+    
+    # use xarray to keep dimensions consistent
+    velmot = advo['velrot'] + advo['velacc'] 
+    # drop xarray to not break code between ADV and AD2CP
+    velmot = velmot.values
     advo['vel'][:3] += velmot
+    
     if advo.Veldata._make_model.startswith('nortek signature') and \
-       advo['vel'].shape[0] > 3:
+        advo['vel'].shape[0] > 3:
         # This assumes these are w.
         advo['vel'][3:] += velmot[2:]
-        
+        advo.attrs.pop('inst2head_vec')
+        # No support yet for vel_bt since it depends on bt-depth
+    
+    
     advo.attrs['motion corrected'] = True
     advo.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
     

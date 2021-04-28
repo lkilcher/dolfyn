@@ -150,7 +150,7 @@ class TimeBinner:
         Reshape the array `dat` and remove the mean from each ensemble.
         """
         dt = self._reshape(dat, n_pad=n_pad, n_bin=n_bin)
-        return dt - (np.nanmean(dt,-1)[..., None])
+        return dt - dt.mean(-1)[..., None]
 
 
     def _mean(self, dat, axis=-1, n_bin=None):
@@ -170,7 +170,7 @@ class TimeBinner:
         n_bin = self._parse_nbin(n_bin)
         tmp = self._reshape(dat, n_bin=n_bin)
         
-        return np.nanmean(tmp,-1)
+        return tmp.mean(-1)
 
 
     # def mean_angle(self, dat, axis=-1, units='radians',

@@ -109,7 +109,7 @@ class TurbBinner(VelBinner):
         return out
 
 
-    def calc_epsilon_LT83(self, psd, vel_avg, omega_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, psd, U_mag, omega_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate from the PSD.
 
@@ -120,8 +120,8 @@ class TurbBinner(VelBinner):
           The spectrum array [m^2/s/rad] with frequency vector 
           'omega' (rad/s)
 
-        vel_avg : |np.ndarray| (...,n_time)
-          The bin-averaged velocity [m/s] (calc'd from do_avg)
+        U_mag : |np.ndarray| (...,n_time)
+          The bin-averaged horizontal velocity [m/s]
 
         omega_range : iterable(2)
           The range over which to integrate/average the spectrum.
@@ -161,17 +161,14 @@ class TurbBinner(VelBinner):
         # opposed to 'spectra', though different names they are the same dir
         out = np.nanmean(psd.isel(omega=idx) *
                          omega.isel(omega=idx) ** (5/3) / a,
-                         axis=-1) ** (3/2) / vel_avg.values
+                         axis=-1) ** (3/2) / U_mag
         
-        out = xr.DataArray(out,
-                           coords=vel_avg.coords,
-                           dims=vel_avg.dims,
-                           attrs={'units':'m^2/s^3',
-                                  'method':'LT83'})
+        out = xr.DataArray(out, attrs={'units':'m^2/s^3',
+                                       'method':'LT83'})
         return out
 
 
-    def calc_epsilon_SF(self, vel_raw, vel_avg, fs=None, freq_rng=[.25, 1.]):
+    def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_rng=[.25, 1.]):
         """
         Calculate dissipation rate using the "structure function" (SF) method
         on along-beam velocity data (ADCP-specific). 
@@ -180,11 +177,11 @@ class TurbBinner(VelBinner):
         ----------
 
         vel_raw : |xr.DataArray|
-          The raw beam velocity data (last dimension time) upon which to
-          perform the SF technique. 
+          The raw beam velocity data (one beam, last dimension time) upon 
+          which to perform the SF technique. 
 
-        vel_avg : |xr.DataArray|
-          The bin-averaged beam velocity
+        U_mag : |xr.DataArray|
+          The bin-averaged beam horizontal velocity
 
         fs : float
           The sample rate of `vel_raw` [Hz]
@@ -221,7 +218,7 @@ class TurbBinner(VelBinner):
         out = np.empty(dt.shape[:-1], dtype=dt.dtype)
         for slc in slice1d_along_axis(dt.shape, -1):
             up = dt[slc]
-            lag = vel_avg.values[slc[:-1]] / fs * np.arange(up.shape[0])
+            lag = U_mag.values[slc[:-1]] / fs * np.arange(up.shape[0])
             DAA = nans_like(lag)
             for L in range(int(fs / freq_rng[1]), int(fs / freq_rng[0])):
                 DAA[L] = np.nanmean((up[L:] - up[:-L]) ** 2, dtype=np.float64)
@@ -230,8 +227,8 @@ class TurbBinner(VelBinner):
             out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
             
         out = xr.DataArray(out,
-                           coords=vel_avg.coords,
-                           dims=vel_avg.dims,
+                           coords=U_mag.coords,
+                           dims=U_mag.dims,
                            attrs={'units':'m^2/s^3',
                                   'method':'structure function'})
         return out
@@ -351,7 +348,7 @@ class TurbBinner(VelBinner):
                                    'method':'TE01'})
 
 
-    def calc_L_int(self, a_cov, vel_avg, fs=None):
+    def calc_L_int(self, a_cov, U_mag, fs=None):
         """
         Calculate integral length scales.
 
@@ -361,8 +358,8 @@ class TurbBinner(VelBinner):
         a_cov : |xr.DataArray|
           The auto-covariance array (i.e. computed using `calc_acov`).
 
-        vel_avg : |xr.DataArray|
-          The bin-averaged velocity (calc'd from `do_avg`)
+        U_mag : |xr.DataArray|
+          The bin-averaged horizontal velocity
 
         fs : float
           The raw sample rate
@@ -381,17 +378,12 @@ class TurbBinner(VelBinner):
 
         """
         acov = a_cov.values
-        u = vel_avg.values
         fs = self._parse_fs(fs)
         
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
-        L_int = (u / fs * scale)
+        L_int = (U_mag / fs * scale)
         
-        return xr.DataArray(L_int, 
-                            coords={'orient':a_cov.orient.values,
-                                    'time':a_cov.time.values},
-                            dims=['orient','time'],
-                            attrs={'units':'m'})
+        return xr.DataArray(L_int, attrs={'units':'m'})
 
 
 def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
