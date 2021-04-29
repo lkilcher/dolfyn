@@ -68,11 +68,6 @@ def test_read(make_data=False):
         save(td_wr2, 'winriver02.h5')
         return
 
-    # Drop these variables until we update data files again...
-    for nm in ['mpltime_b5', 'sys.ensemble_b5', 'sys._ensemble_b5']:
-        for d in [td_sig, td_sigi, td_sigi_echo_bt]:
-            d.pop(nm)
-
     if sys.version_info.major == 2:
         # This is a HACK for Py2
         # for some reason a very small numer of the values in temp_mag
