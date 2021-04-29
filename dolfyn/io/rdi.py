@@ -901,8 +901,8 @@ class adcp_loader(object):
             for nm in self.vars_read:
                 get(dat, nm)[..., iens] = self.avg_func(self.ensemble[nm])
             try:
-                dats = date2num(datetime.datetime(*clock[:6],
-                                                  microsecond=clock[6] * 10000))
+                dats = date2num(datetime.datetime(*clock[:6, 0],
+                                                  microsecond=clock[6, 0] * 10000))
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
