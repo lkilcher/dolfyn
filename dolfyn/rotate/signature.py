@@ -74,7 +74,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                             adcpo['roll'].values)
     
     # Take the transpose of the orientation to get the inst->earth rotation
-    # matrix.
+    # matrix. AHRS already is in inst->earth
     if not ahrs:
         rmat = np.rollaxis(rmat, 1)
 
@@ -118,9 +118,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     # tmp[0, 2:] = rmat[0, 2] / 3
     # tmp[1, 2:] = rmat[1, 2] / 3
 
-    if (not reverse and ahrs) or (reverse and not ahrs):
-    #!!! for AHRS-equipped ADCPs this should be 'if not reverse' - ???
-    # for non-IMU instruments this should be 'if reverse'
+    if reverse:
         # 3-element inverse handled by sumstr definition (transpose)
         rmd[4] = np.moveaxis(inv(np.moveaxis(rmd[4], -1, 0)), 0, -1)
 
@@ -131,7 +129,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         if down:
             sign = np.array([1,-1,-1,-1], ndmin=dat.ndim).T
             signIMU = np.array([1,-1,-1], ndmin=dat.ndim).T    
-            if not reverse: # runs for down and earth to beam
+            if not reverse:
                 if n == 3:
                     dat = np.einsum(sumstr, rmd[3], signIMU*dat)
                 elif n == 4:
@@ -140,7 +138,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                     raise Exception("The entry {} is not a vector, it cannot"
                                     "be rotated.".format(nm))
                     
-            elif reverse: # runs for down and beam to earth
+            elif reverse:
                 if n == 3:
                     dat = signIMU*np.einsum(sumstr, rmd[3], dat)
                 elif n == 4:
