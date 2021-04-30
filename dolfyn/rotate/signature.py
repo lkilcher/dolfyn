@@ -46,7 +46,7 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         down = False
     
     # An AHRS changes things
-    if getattr(adcpo, 'has_imu', None):
+    if adcpo.orientation=='AHRS':
         ahrs = True
     else:
         ahrs = False
@@ -75,7 +75,8 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
-    rmat = np.rollaxis(rmat, 1)
+    if not ahrs:
+        rmat = np.rollaxis(rmat, 1)
 
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
@@ -127,27 +128,26 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         dat = adcpo[nm].values
         n = dat.shape[0]
         # Nortek documents sign change for upside-down instruments (above link)
-        if not reverse and down: # runs for down and earth to beam
+        if down:
             sign = np.array([1,-1,-1,-1], ndmin=dat.ndim).T
-            sign3 = np.array([1,-1,-1], ndmin=dat.ndim).T
-            if n == 3:
-                dat = np.einsum(sumstr, rmd[3], sign3*dat)
-            elif n == 4:
-                dat = np.einsum('ijk,j...k->i...k', rmd[4], sign*dat)
-            else:
-                raise Exception("The entry {} is not a vector, it cannot"
-                                "be rotated.".format(nm))
-                
-        elif reverse and down: # runs for down and beam to earth
-            sign = np.array([1,-1,-1,-1], ndmin=dat.ndim).T
-            sign3 = np.array([1,-1,-1], ndmin=dat.ndim).T
-            if n == 3:
-                dat = sign3*np.einsum(sumstr, rmd[3], dat)
-            elif n == 4:
-                dat = sign*np.einsum('ijk,j...k->i...k', rmd[4], dat)
-            else:
-                raise Exception("The entry {} is not a vector, it cannot"
-                                "be rotated.".format(nm))
+            signIMU = np.array([1,-1,-1], ndmin=dat.ndim).T    
+            if not reverse: # runs for down and earth to beam
+                if n == 3:
+                    dat = np.einsum(sumstr, rmd[3], signIMU*dat)
+                elif n == 4:
+                    dat = np.einsum('ijk,j...k->i...k', rmd[4], sign*dat)
+                else:
+                    raise Exception("The entry {} is not a vector, it cannot"
+                                    "be rotated.".format(nm))
+                    
+            elif reverse: # runs for down and beam to earth
+                if n == 3:
+                    dat = signIMU*np.einsum(sumstr, rmd[3], dat)
+                elif n == 4:
+                    dat = sign*np.einsum('ijk,j...k->i...k', rmd[4], dat)
+                else:
+                    raise Exception("The entry {} is not a vector, it cannot"
+                                    "be rotated.".format(nm))
                 
         else: # 'up' and AHRS
             #sign = np.array([1, 1, 1, 1], ndmin=dat.ndim)
