@@ -7,16 +7,18 @@ from . import base as rotb
 def beam2inst(dat, reverse=False, force=False):
     # Remember: order of rotations matters!
     if not reverse: # beam->inst
-        rotb.beam2inst(dat, reverse=reverse, force=force)
-        _rotate_head2inst(dat)
+        dat = rotb.beam2inst(dat, reverse=reverse, force=force)
+        dat = _rotate_head2inst(dat)
     else: # inst->beam
         # First rotate velocities back to head frame
-        _rotate_head2inst(dat, reverse)
+        dat = _rotate_head2inst(dat, reverse)
         # Now rotate to beam
-        rotb.beam2inst(dat, reverse=reverse, force=force)
+        dat = rotb.beam2inst(dat, reverse=reverse, force=force)
 
     # Set the docstring to match the default rotation func
     beam2inst.__doc_ = rotb.beam2inst.__doc__
+    
+    return dat
 
 def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     """
@@ -68,18 +70,18 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     #odata = advo['orient']
     if hasattr(advo, 'orientmat'):
-        omat = advo['orientmat']
+        omat = advo['orientmat'].values
     else:
         if 'nortek vector' in advo.Veldata._make_model:
             orientation_down = advo['orientation_down']
         else:
             orientation_down = None
-        omat = calc_omat(advo['heading'], advo['pitch'], advo['roll'],
-                         orientation_down)
+        omat = calc_omat(advo['heading'].values, advo['pitch'].values,
+                         advo['roll'].values, orientation_down)
 
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix.
-    rmat = np.rollaxis(omat.values, 1)
+    rmat = np.rollaxis(omat, 1)
 
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():
@@ -130,7 +132,7 @@ def calc_omat(hh, pp, rr, orientation_down=None):
 def _rotate_head2inst(advo, reverse=False):
     if not _check_inst2head_rotmat(advo): # RAISE on bad values.
         # This object doesn't have a head2inst_rotmat, so we do nothing.
-        return
+        return advo
     if not reverse: # head->inst
         # This is usually what we want.
         # transpose of inst2head gives head->inst
@@ -138,6 +140,7 @@ def _rotate_head2inst(advo, reverse=False):
     else:
         advo['vel'].values = np.dot(advo['inst2head_rotmat'], advo['vel'])
 
+    return advo
 
 def _check_inst2head_rotmat(advo):
     if advo.get('body2head_rotmat', None) is not None:

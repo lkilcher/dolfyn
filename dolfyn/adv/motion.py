@@ -237,7 +237,7 @@ def _calc_probe_pos(advo, separate_probes=False):
     # p = advo.props
     # if separate_probes and p['inst_make'].lower() == 'nortek' and\
     #    p['inst_model'].lower == 'vector':
-    if separate_probes and advo.Velocity._make_model=='nortek vector':
+    if separate_probes and advo.Veldata._make_model=='nortek vector':
         r = 0.076
         # The angle between the x-y plane and the probes
         phi = np.deg2rad(-30)

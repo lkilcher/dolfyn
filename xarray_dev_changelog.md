@@ -43,11 +43,9 @@ Xarray DOLfYN to MHKiT Changelog
 	- started renaming files to x_*.py
 		- Rotation code - done, checked
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
-			- Orientation up/down wasn't taken into account for Nortek Signatures?
-				- Solved Nortek Signature rotation issues for up and down facing instruments
-				- AHRS data ??? - 1% error discrepancy after rotations from .mat files
-			- Verified Nortek Signature data (facing up and down) with Nortek-generated .mat files
-			- Have not verified Nortek Signature AHRS data rotations work perfectly
+			- Orientation wasn't taken into account for Nortek Signatures
+				- Solved Nortek Signature rotation issues for fixed up vs down 
+				- Doesn't handle AHRS-equipped instrument rotations well??
 			- Verified TRDI, AWAC, and Vector match h5py dolfyn output
 				
 		- Motion correction code - done, checked
@@ -107,32 +105,28 @@ Xarray DOLfYN to MHKiT Changelog
 		- Added 'save_mat' function
 		- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
 
-- Write testing - starting
-	- read
-	- rotate
-	- motion correction
-	- function output
-	- save
-	
+- Update testing - in progress
+	- Added check signature velocity rotations against nortek matfiles - done
+	- Logical values are auto-dropped when saving netCDF - changed true/false attributes to 1/0
+	- Need to add tests against h5 data
+	- dropped support for python 2.x because xarray doesn't support it
 
-- Weird things:
-	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
-	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
-	- Bad AWAC IMU data reads as 6551.x?
 
-- Debugging:
-	- Signatures equipped with AHRS have a ~1% error discrepancy between DOLfYN & Nortek Matlab output after rotating data through coordinate systems - error magnitude isn't consistent between beams/directions and varies between datasets - motion correction or quaternion correction?
+- TODO:
+	- Change mpl time to epoch time
+	- Something really funky with Nortek AHRS orientation matrix where 1-5% of rotated values are beyond 1e-3 tolerance (and appear randomly distributed)
+	- Add motion-correction for ADCPs
 	- Fix Nortek Signature burst read hack
-	- Error reading Sig VM .ad2cp file echosounder data, only loads first column? - related to burst read hack above
-	- Add functionality for dual profiling configurations - *Incorporating 'alt' and 'ast' variable keys into readers (they're keys for the AD2CP's second profiling configuration)
+	- Error reading Sig VM .ad2cp file echosounder data, only loads first column? - related to burst read hack
 	
-	- Optimize read code for the dictionary output?
-	- Change mpl time to epoch time or something?
 	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
 	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
 
 - Notes:
+	- deep copy absolutely everything. <-period <-endstop (Is there a way to disable global variables?)
 	- DOLfYN loads data as returned by the instrument or software (generally if velocity in beam no correction has been done, if in earth it has)
-
+	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
+	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
+	- Bad AWAC IMU data reads as 6551.x?
 	
 	

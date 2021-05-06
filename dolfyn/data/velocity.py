@@ -63,7 +63,7 @@ class Velocity():
         #dict.__setitem__(self.props, 'inst2head_rotmat', np.array(rotmat))
         self.ds['inst2head_rotmat'] = xr.DataArray(np.array(rotmat),
                                                    dims=['x','x*'])
-        self.ds.attrs['inst2head_rotmat_was_set'] = True
+        self.ds.attrs['inst2head_rotmat_was_set'] = 1 # logical
         # Note that there is no validation that the user doesn't
         # change `ds.attrs['inst2head_rotmat']` after calling this
         # function. I suppose I could do:
@@ -136,7 +136,7 @@ class Velocity():
             rotate2earth = False
 
         self.ds['orientmat'].values = np.einsum('kj...,ij->ki...',
-                                                self.ds['orientmat'],
+                                                self.ds['orientmat'].values,
                                                 Rdec, )
         if 'heading' in self.ds:
             self.ds['heading'] += angle
@@ -146,7 +146,7 @@ class Velocity():
             self.ds.attrs['principal_heading'] += angle
 
         self.ds.attrs['declination'] = declination
-        self.ds.attrs['declination_in_orientmat'] = True
+        self.ds.attrs['declination_in_orientmat'] = 1 # logical
         
         return self.ds
         

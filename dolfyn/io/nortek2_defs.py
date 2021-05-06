@@ -308,29 +308,28 @@ def calc_burst_struct(config, nb, nc):
         dd.append(('vel', 'h', [nb, nc], None, 'm/s'))
     if flags['amp']:
         dd.append(('amp', 'B', [nb, nc],
-                   LinFunc(0.5, dtype=dt16), 'dB'))  # dB
+                   LinFunc(0.5, dtype=dt16), 'dB'))
     if flags['corr']:
-        dd.append(('corr', 'B', [nb, nc], None, '%'))  # percent
+        dd.append(('corr', 'B', [nb, nc], None, '%'))
     if flags['alt']:
         # There may be a problem here with reading 32bit floats if
         # nb and nc are odd?
-        dd += [('alt_dist', 'f', [], LinFunc(dtype=dt16), 'm'),  # m
-               ('alt_quality', 'H', [], None),
+        dd += [('alt_dist', 'f', [], LinFunc(dtype=dt16), 'm'),
+               ('alt_quality', 'H', [], LinFunc(0.01,dtype=dt32), 'dB'),
                ('alt_status', 'H', [], None)]
     if flags['ast']:
         dd += [
-            ('ast_dist', 'f', [], LinFunc(dtype=dt16), 'm'),  # m
-            ('ast_quality', 'H', [], None),
-            ('ast_offset_time', 'h', [],
-             LinFunc(0.0001, dtype=dt32)),  # seconds
-            ('ast_pressure', 'f', [], None),  # dbar
+            ('ast_dist', 'f', [], LinFunc(dtype=dt16), 'm'),
+            ('ast_quality', 'H', [], LinFunc(0.01,dtype=dt32), 'dB'),
+            ('ast_offset_time', 'h', [], LinFunc(0.0001, dtype=dt32), 's'),
+            ('ast_pressure', 'f', [], None, 'dbar'),
             # This use of 'x' here is a hack
             ('ast_spare', 'B7x', [], None),
         ]
     if flags['alt_raw']:
         dd += [
             ('altraw_nsamp', 'I', [], None),
-            ('altraw_dist', 'H', [], LinFunc(0.0001, dtype=dt32), 'm'),  # m
+            ('altraw_dsamp', 'H', [], LinFunc(0.0001, dtype=dt32), 'm'),
             ('altraw_samp', 'h', [], None),
         ]
     if flags['ahrs']:

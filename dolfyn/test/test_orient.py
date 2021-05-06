@@ -1,15 +1,16 @@
-from dolfyn import euler2orient, orient2euler
 import numpy as np
-from dolfyn.test.base import load_tdata as load
+from numpy.testing import assert_allclose
+from dolfyn.rotate.base import euler2orient, orient2euler
+from dolfyn.test.base import load
 
 
 def check_hpr(h, p, r, omatin):
     omat = euler2orient(h, p, r)
-    assert np.allclose(omat, omatin), (
+    assert_allclose(omat, omatin, atol=1e-13, err_msg=
         'Orientation matrix different than expected!\nExpected:\n{}\nGot:\n{}'
         .format(np.array(omatin), omat))
     hpr = orient2euler(omat)
-    assert np.allclose(hpr, [h, p, r]), (
+    assert_allclose(hpr, [h, p, r], atol=1e-13, err_msg=
         "Angles different than specified, orient2euler and euler2orient are "
         "antisymmetric!\nExpected:\n{}\nGot:\n{}"
         .format(hpr, np.array([h, p, r]), ))
@@ -81,16 +82,16 @@ def test_pr_declination():
     # declination
     declin = 15.37
 
-    dat = load('vector_data_imu01.h5')
-    h0, p0, r0 = orient2euler(dat['orient']['orientmat'])
+    dat = load('data/vector_data_imu01.nc')
+    h0, p0, r0 = orient2euler(dat['orientmat'].values)
 
-    dat.set_declination(declin)
-    h1, p1, r1 = orient2euler(dat['orient']['orientmat'])
+    dat.Veldata.set_declination(declin)
+    h1, p1, r1 = orient2euler(dat['orientmat'].values)
 
-    assert np.allclose(p0, p1), "Pitch changes when setting declination"
-    assert np.allclose(r0, r1), "Roll changes when setting declination"
-    assert np.allclose(h0 + declin, h1), "incorrect heading change when " \
-        "setting declination"
+    assert_allclose(p0, p1, atol=1e-5, err_msg="Pitch changes when setting declination")
+    assert_allclose(r0, r1, atol=1e-5, err_msg="Roll changes when setting declination")
+    assert_allclose(h0 + declin, h1, atol=1e-5, err_msg="incorrect heading change when " \
+        "setting declination")
 
 
 if __name__ == '__main__':

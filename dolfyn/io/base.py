@@ -127,7 +127,7 @@ def create_dataset(data):
         # quaternion units never change
         elif 'quat' in key: 
             ds[key] = xr.DataArray(data['data_vars'][key],
-                                   coords={'q':[1,2,3,4],
+                                   coords={'q':['w','x','y','z'],
                                            'time':Time},
                                    dims=['q','time'])
         # the rest of the madness

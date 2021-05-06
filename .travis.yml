@@ -8,12 +8,6 @@ sudo: false # if false, use TravisCI's container based build
 
 matrix:
     include:
-    - python: 2.7
-      dist: xenial
-      env: CONDA_ENV=py27
-      services:
-      - xvfb
-      sudo: true
     - python: 3.6
       dist: xenial
       env: CONDA_ENV=py36
@@ -83,5 +77,4 @@ after_success:
 
 branches:
   only:
-    - master
     - xarray-dev

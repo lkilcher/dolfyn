@@ -259,7 +259,7 @@ class NortekReader(object):
                               #'BEAM': 'beam'}[self.config.user.coord_sys_axes]
                               'BEAM': 'beam'}[self.config['coord_sys_axes']]
         # This just initializes it; this gets overwritten in read_microstrain
-        props['has_imu'] = False
+        props['has_imu'] = 0
 
     def read(self, nbyte):
         byts = self.f.read(nbyte)
@@ -719,7 +719,7 @@ class NortekReader(object):
         c = self.c
         dat = self.data
         dat_o = dat['data_vars']
-        dat['attrs']['has_imu'] = True
+        dat['attrs']['has_imu'] = 1 # logical
         if 'accel' not in dat_o:
             self._dtypes += ['microstrain']
             if ahrsid == 195:
@@ -920,7 +920,7 @@ class NortekReader(object):
         dat['attrs']['inst_make'] = 'Nortek'
         dat['attrs']['inst_model'] = 'Vector'
         dat['attrs']['inst_type'] = 'ADV'
-        dat['attrs']['rotate_vars'] = ['vel', ]
+        dat['attrs']['rotate_vars'] = ['vel']
         dat['attrs']['freq'] = self.config['freq']
         dat['attrs']['SerialNum'] = self.config.pop('serialNum')
         dat['data_vars']['beam2inst_orientmat'] = self.config.pop('beam2inst_orientmat')
@@ -942,7 +942,7 @@ class NortekReader(object):
         dat['attrs']['inst_make'] = 'Nortek'
         dat['attrs']['inst_model'] = 'AWAC'
         dat['attrs']['inst_type'] = 'ADCP'
-        dat['attrs']['rotate_vars'] = ['vel', ]
+        dat['attrs']['rotate_vars'] = ['vel']
         dat['attrs']['freq'] = self.config['freq']
         dat['attrs']['SerialNum'] = self.config.pop('serialNum')
         dat['data_vars']['beam2inst_orientmat'] = self.config.pop('beam2inst_orientmat')

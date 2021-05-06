@@ -9,9 +9,6 @@ data. It contains:
 | :func:`read <dolfyn.io.api.read>` | A function for reading Nortek Vector    |
 |                                   | files.                                  |
 +-----------------------------------+-----------------------------------------+
-| :func:`load <dolfyn.io.api.load>` | A function for loading DOLfYN's h5 data |
-|                                   | files.                                  |
-+-----------------------------------+-----------------------------------------+
 | :func:`rotate2 <dolfyn.rotate.\   | A function for rotating data            |
 | .main.rotate2>`                   | between different coordinate systems    |
 +-----------------------------------+-----------------------------------------+
@@ -42,7 +39,7 @@ Examples
 
 """
 
-from ..io.api import read, load
+from ..io.api import read
 from ..rotate.main import rotate2
 from . import clean
 from .motion import correct_motion

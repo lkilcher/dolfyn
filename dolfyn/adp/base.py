@@ -1,6 +1,5 @@
 from ..data import velocity as dbvel
 import numpy as np
-from dolfyn.rotate import rdi
 import warnings
 
 

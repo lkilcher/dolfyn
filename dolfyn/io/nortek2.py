@@ -414,10 +414,10 @@ def reorg(dat):
         for ky in ['alt_dist', 'alt_quality', 'alt_status',
                    'ast_dist', 'ast_quality', 'ast_offset_time',
                    'ast_pressure', 
-                   'altraw_nsamp', 'altraw_dist', 'altraw_samp',
+                   'altraw_nsamp', 'altraw_dsamp', 'altraw_samp',
                    ]:
             if ky in dnow:
-                outdat['altraw'][ky + tag] = dnow[ky]
+                outdat['data_vars'][ky + tag] = dnow[ky]
                 
         for ky in ['status0', 'fom',
                    'temp_press', 'std_press'
@@ -440,7 +440,6 @@ def reorg(dat):
         #         if ky + tag in outdat:
         #             outdat[grp][ky + tag] = outdat.pop(ky + tag)
 
-    #!!! 'altraw' key doesn't exist? Maybe he meant 'alt'?
     # Move 'altimeter raw' data to it's own down-sampled structure
     if 26 in dat:
         ard = outdat['altraw']
@@ -467,12 +466,13 @@ def reorg(dat):
     tmp = lib.status2data(outdat['sys']['status'])  # returns a dict
     
     # Instrument direction
-    face = tmp['orient_up'][0]
-    # 0: XUP, 1: XDOWN, 2: YUP, 3: YDOWN, 4: ZUP, 5: ZDOWN, 7: AHRS, handle as ZUP
-    # Heading is: 0,1: Z; 2,3:Y 4,5: X
+    # 0: XUP, 1: XDOWN, 2: YUP, 3: YDOWN, 4: ZUP, 5: ZDOWN, 
+    # 7: AHRS, handle as ZUP?
     nortek_orient = {0:'horizontal', 1:'horizontal', 2:'horizontal',
                      3:'horizontal', 4:'up', 5:'down', 7:'AHRS'}
-    outdat['attrs']['orientation'] = nortek_orient[face]
+    outdat['attrs']['orientation'] = nortek_orient[tmp['orient_up'][0]]
+    orient_status = {0:'fixed', 1:'auto_UD', 3: 'AHRS-3D'}
+    outdat['attrs']['orient_status'] = orient_status[tmp['auto orientation'][0]]
     
     for ky in ['accel', 'angrt', 'mag']:
         for dky in outdat['data_vars'].keys():
@@ -522,9 +522,9 @@ def reduce(data):
                                         da['blank_dist_echo'])
 
     if 'orientmat' in data['data_vars']:
-        da['has_imu'] = True
+        da['has_imu'] = 1 # logical
     else:
-        da['has_imu'] = False
+        da['has_imu'] = 0
     da['fs'] = da['filehead_config']['BURST'].pop('SR')
     tmat = da['filehead_config'].pop('XFBURST')
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)

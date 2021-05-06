@@ -870,7 +870,7 @@ class adcp_loader(object):
         outd['attrs']['inst_type'] = 'ADCP'
         outd['attrs']['rotate_vars'] = ['vel', ]
         # Currently RDI doesn't use IMUs
-        outd['attrs']['has imu'] = False
+        outd['attrs']['has imu'] = 0
         for nm in data_defs:
             outd = idata(outd, nm,
                          sz=get_size(nm, self._nens, self.cfg['n_cells']))

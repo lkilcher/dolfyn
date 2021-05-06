@@ -12,15 +12,14 @@ processing and data analysis tasks.
 
 from ._version import __version__
 from .io.api import read, read_example, save, load
-from .rotate.main import rotate2, calc_principal_heading
+from .rotate.main import rotate2
+from .rotate.base import calc_principal_heading
 from .data.velocity import VelBinner #, Velocity, TKE
 from .data import time
-#from .data.base import TimeData
-from .adv import api as adv
-from .adp import api as adcp
-#from .adp.base import ADPdata, ADPbinner
-#from .adv.base import ADVdata
-from . import doctools as _dt
+from dolfyn import adv
+from dolfyn import adp
+from dolfyn import h5
+#from . import doctools as _dt
 #from .adv import api as advtools
 
 

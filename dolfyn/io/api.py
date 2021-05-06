@@ -73,7 +73,7 @@ def read_example(name, **kwargs):
     return read(filename, **kwargs)
 
 
-def save(filename, dataset):
+def save(dataset, filename):
     """
     Save xarray dataset as netCDF (.nc).
     Drops 'config' lines.
@@ -94,22 +94,27 @@ def load(filename):
     Load xarray dataset from netCDF
     
     """
-    return xr.load_dataset(filename)
+    ds = xr.load_dataset(filename)
+    
+    if hasattr(ds, 'rotate_vars') and type(ds.rotate_vars) is not list:
+        ds.attrs['rotate_vars'] = [ds.rotate_vars]
+    
+    return ds
 
 
-def save_mat(filename, data):
+def save_mat(dataset, filename):
     """
     Save xarray dataset as a MATLAB (.mat) file
     
     """
     matfile = {'vars':{},'coords':{},'config':{},'units':{}}
-    for key in data.data_vars:
-        matfile['vars'][key] = data[key].values
-        if hasattr(data[key], 'units'):
-            matfile['units'][key] = data[key].units
-    for key in data.coords:
-        matfile['coords'][key] = data[key].values
-    matfile['config'] = data.attrs
+    for key in dataset.data_vars:
+        matfile['vars'][key] = dataset[key].values
+        if hasattr(dataset[key], 'units'):
+            matfile['units'][key] = dataset[key].units
+    for key in dataset.coords:
+        matfile['coords'][key] = dataset[key].values
+    matfile['config'] = dataset.attrs
     
     sio.savemat(filename, matfile)
     
