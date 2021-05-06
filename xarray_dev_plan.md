@@ -17,13 +17,11 @@ Xarray DOLfYN to MHKit
 		- Update '*data' classes - add 'Velocity' and 'TKEdata' as xarray accessors
 		- Update 'binner' classes
 		- Update 'clean' functions
-		- Manual testing 
+		- Rewrite I/O code to read binary data into xarray datasets
+		- Testing 
 			- compare h5py DOLfYN to xarray DOLfYN output
 			- compare xarray dolfyn to matlab output
-		- Rewrite I/O code to read binary data into xarray datasets
 		- Change 'time' basetype
-		
-		- Write testing
 		- Update documentation from step 2 with xarray referencing – API object/function arguments and keywords shouldn’t change
 		
 4. Port DOLfYN into MHKit

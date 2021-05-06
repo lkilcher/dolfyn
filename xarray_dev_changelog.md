@@ -45,7 +45,7 @@ Xarray DOLfYN to MHKiT Changelog
 			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
 			- Orientation wasn't taken into account for Nortek Signatures
 				- Solved Nortek Signature rotation issues for fixed up vs down 
-				- Doesn't handle AHRS-equipped instrument rotations well??
+				- Doesn't handle AHRS-equipped instrument rotations well
 			- Verified TRDI, AWAC, and Vector match h5py dolfyn output
 				
 		- Motion correction code - done, checked
@@ -53,11 +53,8 @@ Xarray DOLfYN to MHKiT Changelog
 			
 		- TimeData, Velocity, TKEdata class refactoring - done
 			- TimeData is now void
-			- Added Velocity and TKEdata as xarray accessors
-				- These will have to feed into the ADV and ADP objects, so they might lose their accessor status and simply inherit into ADPdata and ADVdata
-			- Renamed TKEdata class to 'TKE'
-			- Dubbed the Velocity class xarray accessor 'Veldata'
-			- Dubbed the TKE class xarray accessor 'TKEdata'
+			- Added TKEdata as an xarray accessors named 'Veldata'
+			- 'Velocity' remains as is
 			- All properties now return xr.DataArrays
 			
 		- TimeBinner, VelBinner, TurbBinner class refactoring - done
@@ -109,16 +106,16 @@ Xarray DOLfYN to MHKiT Changelog
 	- Added check signature velocity rotations against nortek matfiles - done
 	- Logical values are auto-dropped when saving netCDF - changed true/false attributes to 1/0
 	- Need to add tests against h5 data
-	- dropped support for python 2.x because xarray doesn't support it
+	- Dropped testing for python 2.x because xarray doesn't support it
 
 
 - TODO:
 	- Change mpl time to epoch time
 	- Something really funky with Nortek AHRS orientation matrix where 1-5% of rotated values are beyond 1e-3 tolerance (and appear randomly distributed)
-	- Add motion-correction for ADCPs
 	- Fix Nortek Signature burst read hack
 	- Error reading Sig VM .ad2cp file echosounder data, only loads first column? - related to burst read hack
-	
+
+	- Add motion-correction for ADCPs
 	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
 	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
 

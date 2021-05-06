@@ -274,17 +274,10 @@ class Velocity():
                     attrs={'units':'rad',
                            'description':'''horizontal velocity flow direction, 
                            CW from X/east/streamwise'''})                            
-  
-    
+
+
 @xr.register_dataset_accessor('Veldata')
-class data(Velocity):
-    """
-    Xarray accessors return a warning if one accessor class inherits from
-    another. This is my workaround.
-    """
-                              
-@xr.register_dataset_accessor('TKEdata')
-class TKE(Velocity):
+class TKEdata(Velocity):
     """This is the base class for turbulence data objects.
 
     The attributes and methods defined for this class assume that the
@@ -467,18 +460,34 @@ class VelBinner(TimeBinner):
     # This defines how cross-spectra and stresses are computed.
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
 
-    def do_tke(self, indat, out=None):
+    def do_tke(self, dat, out=None):
+        """
+        Calculate the tke (variances of u,v,w) and stresses (cross-variances 
+        of u,v,w)
+        
+        Parameters
+        ----------
+        dat : xarray dataset containing raw velocity data
+        
+        out : binned dataset to save tke and stress data to (calculated from 
+              'do_avg')
+        
+        Returns
+        -------
+        An xr.Dataset of tke and stress
+        
+        """
         props = {}
         if out is None:
-            out = type(indat)()
+            out = type(dat)()
             props['fs'] = self.fs
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
+            out.attrs = props
             
-        out['tke_vec'] = self.calc_tke(indat['vel'])
-        out['stress_vec'] = self.calc_stress(indat['vel'])
+        out['tke_vec'] = self.calc_tke(dat['vel'])
+        out['stress_vec'] = self.calc_stress(dat['vel'])
         
-        out.attrs = props
         return out
     
 
@@ -495,21 +504,35 @@ class VelBinner(TimeBinner):
 
         Returns
         -------
-        An xr.DataArray of tke values.
+        An xr.DataArray of tke values
+        
         """
-        out = np.mean(self._demean(veldat[:3].values) ** 2, # originally self.detrend
-                      -1, dtype=np.float64).astype('float32')
+        if 'orient' in veldat.dims:
+            vel = veldat[:3].values
+        else: # for single beam input
+            vel = veldat.values
         time = self._mean(veldat.time.values)
+        
+        # originally self.detrend
+        out = np.mean(self._demean(vel)**2, -1, 
+                      dtype=np.float64).astype('float32')
         
         out[0] -= noise[0] ** 2
         out[1] -= noise[1] ** 2
         out[2] -= noise[2] ** 2
-        
-        return xr.DataArray(out, name='tke_vec',
-                            coords={'tke':["u'u'_", "v'v'_", "w'w'_"],
-                                    'time':time},
-                            dims=['tke','time'],
-                            attrs={'units':'m^2/^2'})
+
+        da = xr.DataArray(out, name='tke_vec',
+                          dims=veldat.dims,
+                          attrs={'units':'m^2/^2'})
+
+        if 'orient' in veldat.dims:
+            da = da.rename({'orient':'tke'})
+            da = da.assign_coords({'tke':["u'u'_", "v'v'_", "w'w'_"],
+                                   'time':time})
+        else: 
+            da = da.assign_coords({'time':time})
+            
+        return da
 
 
     def calc_stress(self, veldat):
@@ -527,23 +550,25 @@ class VelBinner(TimeBinner):
         
         """
         time = self._mean(veldat.time.values)
-        veldat = veldat.values
+        vel = veldat.values
         
-        out = np.empty(self._outshape(veldat[:3].shape)[:-1],
+        out = np.empty(self._outshape(vel[:3].shape)[:-1],
                        dtype=np.float32)
         
         for idx, p in enumerate(self._cross_pairs):
             out[idx] = np.mean(
-                self._demean(veldat[p[0]]) * # originally self.detrend
-                self._demean(veldat[p[1]]),  # originally self.detrend
+                self._demean(vel[p[0]]) * # originally self.detrend
+                self._demean(vel[p[1]]),  # originally self.detrend
                 -1, dtype=np.float64
             ).astype(np.float32)
         
-        return xr.DataArray(out, name='stress_vec',
-                            coords={'stress':["u'v'_", "u'w'_", "v'w'_"],
-                                    'time':time},
-                            dims=['stress','time'],
-                            attrs={'units':'m^2/^2'})
+        da = xr.DataArray(out, name='stress_vec',
+                          dims=veldat.dims,
+                          attrs={'units':'m^2/^2'})
+        da = da.rename({'orient':'stress'})
+        da = da.assign_coords({'stress':["u'v'_", "u'w'_", "v'w'_"],
+                               'time':time})    
+        return da
     
 
     def calc_vel_psd(self, veldat,
@@ -560,7 +585,7 @@ class VelBinner(TimeBinner):
         Parameters
         ----------
         veldat : xr.DataArray
-          The raw velocity data.
+          The raw velocity data (of dims 'orient' and 'time').
         rotate_u : bool (optional)
           If True, each 'bin' of horizontal velocity is rotated into
           its principal axis prior to calculating the psd.  (default:

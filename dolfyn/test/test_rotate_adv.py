@@ -7,7 +7,7 @@ from nose.tools import raises
 from xarray.testing import assert_allclose
 from numpy.testing import assert_allclose as assert_ac
 
-data_equiv = tr.data_equiv
+#data_equiv = tr.data_equiv
 
 
 #@raises(KeyError)

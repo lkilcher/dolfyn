@@ -100,7 +100,7 @@ def nan_beyond_surface(adcpo, val=np.nan):
     Surface interference expected to happen at `r > d_range * cos(beam_angle)`
 
     """
-    var = [h for h in adcpo.keys() if hasattr(adcpo[h],'range')]
+    var = [h for h in adcpo.keys() if any(s for s in adcpo[h].dims if 'range' in s)]
     
     if 'nortek' in adcpo.Veldata._make_model.lower():
         beam_angle = 25 *(np.pi/180)

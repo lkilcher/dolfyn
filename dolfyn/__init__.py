@@ -19,11 +19,4 @@ from .data import time
 from dolfyn import adv
 from dolfyn import adp
 from dolfyn import h5
-#from . import doctools as _dt
-#from .adv import api as advtools
-
-
-#__doc__ = __doc__.format(
-#    object_table=_dt.table_obj([Velocity, TKEdata, ]),
-#    func_table=_dt.table_obj([read, read_example, load, rotate2, VelBinner]))
 

@@ -1,5 +1,5 @@
 from dolfyn.test import test_read_adp as tr
-from dolfyn.test.base import load, save, data_equiv
+from dolfyn.test.base import load, save#, data_equiv
 from dolfyn import calc_principal_heading
 import numpy as np
 from xarray.testing import assert_allclose

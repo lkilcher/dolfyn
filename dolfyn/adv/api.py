@@ -9,6 +9,9 @@ data. It contains:
 | :func:`read <dolfyn.io.api.read>` | A function for reading Nortek Vector    |
 |                                   | files.                                  |
 +-----------------------------------+-----------------------------------------+
+| :func:`load <dolfyn.io.api.load>` | A function for loading xarray-saved     |
+|                                   | netCDF files.                           |
++-----------------------------------+-----------------------------------------+
 | :func:`rotate2 <dolfyn.rotate.\   | A function for rotating data            |
 | .main.rotate2>`                   | between different coordinate systems    |
 +-----------------------------------+-----------------------------------------+
@@ -16,16 +19,16 @@ data. It contains:
 |                                   | cleaning, "despiking" and filling       |
 |                                   | NaN's in data                           |
 +-----------------------------------+-----------------------------------------+
-| :mod:`motion <dolfyn.adv.motion>` | A module containing classes and         |
-|                                   | functions for performing motion         |
-|                                   | correction.                             |
+| :mod:`motion <dolfyn.adv.motion.\ | A function for performing motion        |
+| .correct_motion>`                 | correction on ADV velocity data         |
 +-----------------------------------+-----------------------------------------+
 | :class:`VelBinner <dolfyn.data.\  | A class for breaking data into          |
-| velocity.VelBinner>`              | 'bins'/'ensembles', averaging it and    |
+| velocity.VelBinner>`              | 'bins' or 'ensembles', averaging it and |
 |                                   | estimating basic turbulence statistics. |
 +-----------------------------------+-----------------------------------------+
 | :class:`~dolfyn.adv.\             | A class that builds upon `VelBinner`    |
-| turbulence.TurbBinner`            | for calculating statistics from spectra |
+| turbulence.TurbBinner`            | for calculating turbulence statistics   |
+|                                   | and velocity spectra                    |
 +-----------------------------------+-----------------------------------------+
 | :func:`~dolfyn.adv.\              | Functional version of `TurbBinner`      |
 | turbulence.calc_turbulence`       |                                         |
@@ -39,7 +42,7 @@ Examples
 
 """
 
-from ..io.api import read
+from ..io.api import read, load
 from ..rotate.main import rotate2
 from . import clean
 from .motion import correct_motion
