@@ -82,7 +82,7 @@ class TimeBinner:
         return n_fft_coh
 
 
-    def _reshape(self, arr, n_pad=0, n_bin=None):
+    def reshape(self, arr, n_pad=0, n_bin=None):
         """
         Reshape the array `arr` to shape (...,n,n_bin+n_pad).
 
@@ -142,14 +142,14 @@ class TimeBinner:
 
         ... Need to fix this to deal with NaNs...
         """
-        return detrend(self._reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
+        return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
 
 
     def _demean(self, dat, n_pad=0, n_bin=None):
         """
         Reshape the array `dat` and remove the mean from each ensemble.
         """
-        dt = self._reshape(dat, n_pad=n_pad, n_bin=n_bin)
+        dt = self.reshape(dat, n_pad=n_pad, n_bin=n_bin)
         return dt - dt.mean(-1)[..., None]
 
 
@@ -168,7 +168,7 @@ class TimeBinner:
         if axis != -1:
             dat = np.swapaxes(dat, axis, -1)
         n_bin = self._parse_nbin(n_bin)
-        tmp = self._reshape(dat, n_bin=n_bin)
+        tmp = self.reshape(dat, n_bin=n_bin)
         
         return tmp.mean(-1)
 
@@ -203,7 +203,7 @@ class TimeBinner:
         
         Returns a numpy.ndarray
         '''
-        return self._reshape(dat, n_bin=n_bin).var(-1)
+        return self.reshape(dat, n_bin=n_bin).var(-1)
 
 
     def _std(self, dat, n_bin=None):
@@ -212,7 +212,7 @@ class TimeBinner:
         
         Returns a numpy.ndarray
         '''
-        return self._reshape(dat, n_bin=n_bin).std(-1)
+        return self.reshape(dat, n_bin=n_bin).std(-1)
     
     def _new_coords(self, array):
         '''
@@ -285,7 +285,7 @@ class TimeBinner:
                 pass
             
             # +1 for standard deviation
-            std = (np.std(self._reshape(rawdat.Veldata.U_mag.values), axis=-1,
+            std = (np.std(self.reshape(rawdat.Veldata.U_mag.values), axis=-1,
                           dtype=np.float64) - (noise[0] + noise[1])/2)
             outdat['U_std'] = xr.DataArray(
                         std,
@@ -400,8 +400,8 @@ class TimeBinner:
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         out = np.empty(oshp, dtype=dat1.dtype)
         # The data is detrended in psd, so we don't need to do it here.
-        dat1 = self._reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
-        dat2 = self._reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
+        dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
+        dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
         for slc in slice1d_along_axis(out.shape, -1):
             out[slc] = cohere(dat1[slc], dat2[slc],
                               n_fft, debias=debias, noise=noise)
@@ -452,8 +452,8 @@ class TimeBinner:
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         # The data is detrended in psd, so we don't need to do it here:
-        dat1 = self._reshape(dat1, n_pad=n_fft)
-        dat2 = self._reshape(dat2, n_pad=n_fft)
+        dat1 = self.reshape(dat1, n_pad=n_fft)
+        dat2 = self.reshape(dat2, n_pad=n_fft)
         out = np.empty(oshp, dtype='c{}'.format(dat1.dtype.itemsize * 2))
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
@@ -489,7 +489,7 @@ class TimeBinner:
         n_bin = self._parse_nbin(n_bin)
         out = np.empty(self._outshape(indat.shape, n_bin=n_bin)[:-1] +
                         [int(n_bin // 4)], dtype=indat.dtype)
-        dt1 = self._reshape(indat, n_pad=n_bin / 2 - 2)
+        dt1 = self.reshape(indat, n_pad=n_bin / 2 - 2)
         # Here we de-mean only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(n_bin // 4):
                                 int(-n_bin // 4)].mean(-1)[..., None]
@@ -548,7 +548,7 @@ class TimeBinner:
         # reshape indt1 to be the same size as indt2
         out = np.empty(shp[:-1] + [npt], dtype=indt1.dtype)
         tmp = int(n_bin2) - int(n_bin1) + npt
-        dt1 = self._reshape(indt1, n_pad=tmp-1, n_bin=n_bin1)
+        dt1 = self.reshape(indt1, n_pad=tmp-1, n_bin=n_bin1)
         
         # Note here I am demeaning only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
@@ -597,7 +597,7 @@ class TimeBinner:
             n_pad = min(n_bin - n_fft, n_fft)
         out = np.empty(self._outshape_fft(dat.shape, n_fft=n_fft, n_bin=n_bin))
         # The data is detrended in psd, so we don't need to do it here.
-        dat = self._reshape(dat, n_pad=n_pad)
+        dat = self.reshape(dat, n_pad=n_pad)
         
         for slc in slice1d_along_axis(dat.shape, -1):
             # PSD's are computed in radian units: - set prior to function
@@ -642,8 +642,8 @@ class TimeBinner:
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         
         # The data is detrended in psd, so we don't need to do it here:
-        dat1 = self._reshape(dat1, n_pad=n_fft)
-        dat2 = self._reshape(dat2, n_pad=n_fft)
+        dat1 = self.reshape(dat1, n_pad=n_fft)
+        dat2 = self.reshape(dat2, n_pad=n_fft)
         out = np.empty(oshp, dtype='c{}'.format(dat1.dtype.itemsize * 2))
         if dat1.shape == dat2.shape:
             cross = cpsd

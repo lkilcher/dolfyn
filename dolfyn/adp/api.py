@@ -34,3 +34,4 @@ from ..io.api import read, load
 from ..rotate.main import rotate2
 from . import clean
 from ..data.velocity import VelBinner
+from .base import ADPbinner

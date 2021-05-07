@@ -1,5 +1,5 @@
 Xarray DOLfYN to MHKiT Changelog
-------------------------------------------
+--------------------------------
 - Step 'initialization'
 	- Create xarray branch on dolfyn - done
 	- Fix Nortek Signature binary file to load burst data - rough hack completed
@@ -102,28 +102,21 @@ Xarray DOLfYN to MHKiT Changelog
 		- Added 'save_mat' function
 		- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
 
-- Update testing - in progress
+- Update testing - done
 	- Added check signature velocity rotations against nortek matfiles - done
 	- Logical values are auto-dropped when saving netCDF - changed true/false attributes to 1/0
 	- Dropped testing for python 2.x because xarray doesn't support it
-	- Tests against h5:
-		- ADV motion correction is 17.1% off?
-		- earth2principal rotations fail because np.nanmean is built into xarray's 'mean' attribute(!) when calculating principal heading vs ndarray.mean(), so that's cool to know.
+	- Tests against h5 - done
+		- earth2principal fails when xarray's built in mean (np.nanmean) fills in values within principal heading calculation
+		- dimension mismatch affects motion correction filters
 
 
 - TODO:
 	- Change mpl time to epoch time
-	- Something really funky with Nortek AHRS orientation matrix where 1-5% of rotated values are beyond 1e-3 tolerance (and appear randomly distributed)
-	- Fix Nortek Signature burst read hack
-	- Error reading Sig VM .ad2cp file echosounder data, only loads first column? - related to burst read hack
 
-	- Add motion-correction for ADCPs
-	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
-	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
-	- pseudo-TI function for ADCPs?
 
 - Notes:
-	- deep copy absolutely everything. <-period <-endstop (Is there a way to disable global variables?)
+	- Deep copy absolutely everything. <-period <-endstop (Is there a way to disable global variables?)
 	- DOLfYN loads data as returned by the instrument or software (generally if velocity in beam no correction has been done, if in earth it has)
 	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
 	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)

@@ -8,7 +8,6 @@ warnings.simplefilter('ignore', UserWarning)
 
 load = tb.load
 save = tb.save
-load_h5 = tb.load_h5data
 
 dat_rdi = load('data/RDI_test01.nc')
 dat_rdi_bt = load('data/RDI_withBT.nc')
@@ -23,20 +22,6 @@ dat_sig_ieb = load('data/VelEchoBT01.nc')
 #dat_sig_vm = load('data/SigVM1000.nc')
 dat_wr1 = load('data/winriver01.nc')
 dat_wr2 = load('data/winriver02.nc')
-
-# h5_rdi_orientraw = load_h5('RDI_test01.h5')
-# h5_rdi = dat_rdi_orientraw.copy()
-# h5_rdi['orient'].pop('raw')
-# h5_rdi_bt = load_h5('RDI_withBT.h5')
-# h5_rdi_i = load_h5('RDI_test01_rotate_beam2inst.h5')
-# h5_awac = load_h5('AWAC_test01.h5')
-# h5_awac_ud = load_h5('AWAC_test01_ud.h5')
-# h5_sig = load_h5('BenchFile01.h5')
-# h5_sigi = load_h5('Sig1000_IMU.h5')
-# h5_sigi_ud = load_h5('Sig1000_IMU_ud.h5')
-# h5_sigi_echo_bt = load_h5('VelEchoBT01.h5')
-# h5_wr1 = load_h5('winriver01.h5')
-# h5_wr2 = load_h5('winriver02.h5')
 
 
 def test_badtime():

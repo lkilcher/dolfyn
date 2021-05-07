@@ -1,24 +1,25 @@
-#from dolfyn.h5.test import test_read_adp as tr_h5
 from dolfyn.h5.test.base import load_tdata as load_h5
-#from dolfyn.test import test_read_adp as tr_nc
 from dolfyn.test.base import load as load_nc
 from numpy.testing import assert_allclose
 
+# earth2principal fails when nanmean fills in values within principal heading 
+# calculation
+# dimension mismatch of 1 affects motion-correction filters
 f_names = ['RDI_test01',
            'RDI_test01_rotate_beam2inst',
            'RDI_test01_rotate_inst2earth',
-           #'RDI_test01_rotate_earth2principal', # fail because nanmean
+           #'RDI_test01_rotate_earth2principal',
            'RDI_withBT',
            'RDI_test01_rotate_beam2inst',
-           'AWAC_test01', # dimension mismatch
+           'AWAC_test01',
            'AWAC_test01_ud',
            'AWAC_test01_earth2inst',
-           #'AWAC_test01_earth2principal', # fail because nanmean
+           #'AWAC_test01_earth2principal',
            'AWAC_test01_inst2beam',
            'BenchFile01',
            'BenchFile01_rotate_beam2inst',
            'BenchFile01_rotate_inst2earth',
-           #'BenchFile01_rotate_earth2principal', # fail because nanmean
+           #'BenchFile01_rotate_earth2principal',
            'Sig1000_IMU',
            'Sig1000_IMU_ud',
            'Sig1000_IMU_rotate_beam2inst',
@@ -28,15 +29,15 @@ f_names = ['RDI_test01',
            'winriver01',
            'winriver02',
            'winriver02_rotate_ship2earth',
-           'vector_data01', # all have dimension mismatch
+           'vector_data01', # all vector data have dimension mismatch
            'vector_data01_rotate_inst2beam',
            'vector_data01_rotate_inst2earth',
            'vector_data_imu01',
            'vector_data_imu01-json',
-           #'vector_data_imu01-json_mc', # 17.1% off - check accel values tomorrow
-           'vector_data_imu01_mc', # 17.1% off
-           #'vector_data_imu01_mcDeclin10', # 17.1% off
-           #'vector_data_imu01_rotate_earth2principal', # fail because nanmean
+           #'vector_data_imu01-json_mc', # 0.4% off
+           #'vector_data_imu01_mc', # 0.4% off
+           #'vector_data_imu01_mcDeclin10', # 0.4% off
+           #'vector_data_imu01_rotate_earth2principal', # 0.04% off
            'vector_data_imu01_rotate_inst2beam',
            'vector_data_imu01_rotate_inst2earth',
            'burst_mode01']

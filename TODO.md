@@ -5,6 +5,7 @@ Separate backwards-compatability release from a new/clean release:
 
 - Search the code for `# !CLEANUP!`
 - remove all `_legacy.py`
+- Find all instances of !FIXTHIS! and fix them!
 
 Testing
 =======
@@ -27,14 +28,9 @@ Create a file I/O page
 Create a 'contributing to DOLfYN' page.
 - Email me!
 - Create tasks on github 'projects'? or something like [MPL enhacement proposals (MEPs)](https://matplotlib.org/devel/MEP/index.html)?
-  - I could create a few starter entries from `TODO-later`
+
 - Document need for git-lfs. (Are there other options? Maybe a `get_test_data.py`?)
 - Document how to run tests. (switch to `py.test`?)
-
-FIXTHIS
-=======
-
-Find all instances of !FIXTHIS! and fix them!
 
 Testing
 =======
@@ -45,7 +41,6 @@ Tests should use API-level functions.
 - This means I need to better define the API.
 
 Coverage
-- Add `earth2principal` rotation tests for ADPs?
 - Add averaging tests for ADP.
 
 Packaging
@@ -87,9 +82,12 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
 
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
 
-``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
+Depth of adcp for range for nortek instruments? - not taken into account natively by Nortek - add to documentation
 
-Support for motion-correcting ADP data.
+``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
+					 ADCP structure function?
+Support for motion-correcting ADCP data.
+
 
 Ideas
 =====

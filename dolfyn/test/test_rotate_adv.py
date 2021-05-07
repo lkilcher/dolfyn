@@ -96,8 +96,8 @@ def test_rotate_earth2inst():
     #         (tdm, cdm, msg.format('vector_data_imu01')),
     # ):
     #     yield data_equiv, t, c, msg
-    assert_allclose(td, cd, rtol=1e-7, atol=1e-7)
-    assert_allclose(tdm, cdm)
+    assert_allclose(td, cd, atol=1e-6)
+    assert_allclose(tdm, cdm, atol=1e-6)
 
 
 def test_rotate_inst2beam(make_data=False):
@@ -120,8 +120,8 @@ def test_rotate_inst2beam(make_data=False):
     #         (tdm, cdm, msg.format('vector_data_imu01')),
     # ):
     #     yield data_equiv, t, c, msg
-    assert_allclose(td, cd, rtol=1e-7, atol=1e-7)
-    assert_allclose(tdm, cdm, rtol=1e-7, atol=1e-7)
+    assert_allclose(td, cd, atol=1e-6)
+    assert_allclose(tdm, cdm, atol=1e-6)
 
 
 def test_rotate_beam2inst():
@@ -139,8 +139,8 @@ def test_rotate_beam2inst():
     #         (tdm, cdm, msg.format('vector_data_imu01')),
     # ):
     #     yield data_equiv, t, c, msg
-    assert_allclose(td, cd, rtol=1e-7, atol=1e-7)
-    assert_allclose(tdm, cdm, rtol=1e-7, atol=1e-7)
+    assert_allclose(td, cd, atol=1e-6)
+    assert_allclose(tdm, cdm, atol=1e-6)
 
 
 def test_rotate_earth2principal(make_data=False):
@@ -165,8 +165,8 @@ def test_rotate_earth2principal(make_data=False):
     #         (tdm, cdm, msg.format('vector_data_imu01')),
     # ):
     #     yield data_equiv, t, c, msg
-    assert_allclose(td, cd, rtol=1e-7, atol=1e-7)
-    assert_allclose(tdm, cdm, rtol=1e-7, atol=1e-7)
+    assert_allclose(td, cd, atol=1e-6)
+    assert_allclose(tdm, cdm, atol=1e-6)
 
 
 def test_rotate_earth2principal_set_declination():
@@ -186,7 +186,7 @@ def test_rotate_earth2principal_set_declination():
     # data_equiv(td0, td,
     #            "Something is wrong with declination "
     #            "handling w/r/t principal_heading.")
-    assert_allclose(td0, td, rtol=1e-7, atol=1e-6)
+    assert_allclose(td0, td, atol=1e-6)
 
 
 if __name__=='__main__':

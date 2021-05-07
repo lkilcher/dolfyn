@@ -171,17 +171,16 @@ class TurbBinner(VelBinner):
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_rng=[.25, 1.]):
         """
         Calculate dissipation rate using the "structure function" (SF) method
-        on along-beam velocity data (ADCP-specific). 
 
         Parameters
         ----------
 
         vel_raw : |xr.DataArray|
-          The raw beam velocity data (one beam, last dimension time) upon 
+          The raw velocity data (last dimension time) upon 
           which to perform the SF technique. 
 
         U_mag : |xr.DataArray|
-          The bin-averaged beam horizontal velocity
+          The bin-averaged horizontal velocity
 
         fs : float
           The sample rate of `vel_raw` [Hz]
@@ -194,18 +193,8 @@ class TurbBinner(VelBinner):
         Returns
         -------
 
-        epsilon : |np.ndarray| (..., n_time)
+        epsilon : |xr.DataArray|
           The dissipation rate
-          
-        Notes
-        -----
-        
-        This function is limited to calculating epsilon for one beam 
-        at a time.
-        
-        Wiles, et al, "A novel technique for measuring the rate of 
-        turbulent dissipation in the marine environment"
-        GRL, 2006, 33, L21608.
 
         """
         veldat = vel_raw.values
@@ -214,7 +203,7 @@ class TurbBinner(VelBinner):
         if freq_rng[1] > fs:
             warnings.warn('Max freq_range cannot be greater than fs')
         
-        dt = self._reshape(veldat)
+        dt = self.reshape(veldat)
         out = np.empty(dt.shape[:-1], dtype=dt.dtype)
         for slc in slice1d_along_axis(dt.shape, -1):
             up = dt[slc]
@@ -226,12 +215,10 @@ class TurbBinner(VelBinner):
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
             out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
             
-        out = xr.DataArray(out,
-                           coords=U_mag.coords,
-                           dims=U_mag.dims,
-                           attrs={'units':'m^2/s^3',
+        return xr.DataArray(out, coords=U_mag.coords,
+                            dims=U_mag.dims,
+                            attrs={'units':'m^2/s^3',
                                   'method':'structure function'})
-        return out
 
 
     def _up_angle(self, U_complex):

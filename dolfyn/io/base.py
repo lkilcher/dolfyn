@@ -81,7 +81,8 @@ def handle_nan(data):
     if any(np.isnan(data['coords']['time'])):
         nan += np.isnan(data['coords']['time'])
     
-    var = ['heading', 'pitch', 'roll', 'accel', 'angrt', 'mag']
+    #var = ['heading', 'pitch', 'roll', 'accel', 'angrt', 'mag']
+    var = ['accel', 'angrt', 'mag']
     for key in data['data_vars']:
         if any(val in key for val in var):
             shp = data['data_vars'][key].shape

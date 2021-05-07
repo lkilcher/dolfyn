@@ -44,12 +44,12 @@ rfnm = ResourceFilename('dolfyn.test', prefix='data/')
 exdt = ResourceFilename('dolfyn', prefix='example_data/')
 
 
-def load_h5data(name, *args, **kwargs):
-    return load_h5(rfnm(name), *args, **kwargs)
+def load_ncdata(name, *args, **kwargs):
+    return load(rfnm(name), *args, **kwargs)
 
 
-# def save_h5data(data, name, *args, **kwargs):
-#     to_hdf5(rfnm(name), *args, **kwargs)
+def save_ncdata(data, name, *args, **kwargs):
+    save(rfnm(name), *args, **kwargs)
 
 
 def load_nortek_matfile(filename):
