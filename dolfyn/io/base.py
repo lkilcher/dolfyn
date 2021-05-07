@@ -187,6 +187,7 @@ def create_dataset(data):
                 else:
                     warnings.warn('Variable not included in dataset: {}'
                                   .format(key))
+    ds.time.attrs['description'] = 'seconds since 1/1/1970'
     ds.attrs = data['attrs']
     
     return ds

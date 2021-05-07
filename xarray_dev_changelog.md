@@ -110,9 +110,9 @@ Xarray DOLfYN to MHKiT Changelog
 		- earth2principal fails when xarray's built in mean (np.nanmean) fills in values within principal heading calculation
 		- dimension mismatch affects motion correction filters
 
-
-- TODO:
+- Time - done
 	- Change mpl time to epoch time
+	- Add conversion functions
 
 
 - Notes:

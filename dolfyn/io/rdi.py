@@ -6,7 +6,7 @@ import datetime
 import warnings
 from os.path import getsize
 from ._read_bin import eofException, bin_reader
-from ..data.time import date2num
+#from ..data.time import date2num
 from .base import WrongFileType, read_userdata, create_dataset, handle_nan
 from ..rotate.rdi import calc_beam_orientmat as _calc_bmat, calc_orientmat as _calc_omat
 from ..rotate.base import _set_coords
@@ -101,15 +101,6 @@ def _set_rdi_declination(dat, fname='????'):
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
 # Rich Pawlawicz' rdadcp routines.
-
-# ## This causes the time information to be returned in python's
-# ## datenum format.  See pylab's date2num and num2date functions for
-# ## more information.
-# matlab or python date format:
-time_offset = 0
-
-# time_offset=366 ### Uncommenting this line puts the data in "Matlab's
-# datenum" format.
 
 #century=1900
 century = 2000
@@ -593,12 +584,12 @@ class adcp_loader(object):
         date = datetime.datetime(utim[2] + utim[3] * 256, utim[1], utim[0])
         # This byte is in hundredths of seconds (10s of milliseconds):
         time = datetime.timedelta(milliseconds=(int(fd.read_ui32(1) * 10)))
-        ens.stime[k] = date2num(date + time) + time_offset
+        ens.stime[k] = (date + time).timestamp()
         fd.seek(4, 1)  # "PC clock offset from UTC"
         ens.slatitude[k] = fd.read_i32(1) * self._cfac
         ens.slongitude[k] = fd.read_i32(1) * self._cfac
-        ens.etime[k] = date2num(date + datetime.timedelta(
-            milliseconds=int(fd.read_ui32(1) * 10))) + time_offset
+        ens.etime[k] = (date + datetime.timedelta(
+            milliseconds=int(fd.read_ui32(1) * 10))).timestamp()
         ens.elatitude[k] = fd.read_i32(1) * self._cfac
         ens.elongitude[k] = fd.read_i32(1) * self._cfac
         fd.seek(12, 1)
@@ -606,8 +597,8 @@ class adcp_loader(object):
         fd.seek(6, 1)
         utim = fd.read_ui8(4)
         date = datetime.datetime(utim[0] + utim[1] * 256, utim[3], utim[2])
-        ens.ntime[k] = date2num(date + datetime.timedelta(
-            milliseconds=int(fd.read_ui32(1) * 10))) + time_offset
+        ens.ntime[k] = (date + datetime.timedelta(
+            milliseconds=int(fd.read_ui32(1) * 10))).timestamp()
         fd.seek(16, 1)
         self._nbyte = 2 + 76
 
@@ -922,8 +913,8 @@ class adcp_loader(object):
             for nm in self.vars_read:
                 get(dat, nm)[..., iens] = self.avg_func(self.ensemble[nm])
             try:
-                dats = date2num(datetime.datetime(*clock.T[0][:6],
-                                                  microsecond=clock.T[0][6] * 10000))
+                dats = datetime.datetime(*clock.T[0][:6],
+                                         microsecond=clock.T[0][6] * 10000).timestamp()
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))

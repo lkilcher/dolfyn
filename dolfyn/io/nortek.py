@@ -10,6 +10,7 @@ import warnings
 from . import nortek_defs
 from .base import WrongFileType, read_userdata, create_dataset, handle_nan
 from ..data import time
+from datetime import datetime
 from ..tools import misc as tbx
 from ..rotate.vector import calc_omat as _calc_omat
 from ..rotate.base import _set_coords
@@ -98,10 +99,10 @@ def read_nortek(filename,
                           ds['roll'].values,
                           ds.get('orientation_down', None))
         ds['orientmat'] = xr.DataArray(omat,
-                                       coords={'inst': ['X','Y','Z'],
-                                               'earth': ['E','N','U'], 
-                                               'time': ds['time']},
-                                       dims=['inst','earth','time'])
+                                        coords={'inst': ['X','Y','Z'],
+                                                'earth': ['E','N','U'], 
+                                                'time': ds['time']},
+                                        dims=['inst','earth','time'])
     if rotmat is not None:
         ds = ds.Veldata.set_inst2head_rotmat(rotmat)
     if declin is not None:
@@ -619,7 +620,7 @@ class NortekReader(object):
         tbx.interpgaps(dat['data_vars']['pitch'], t)
         tbx.interpgaps(dat['data_vars']['roll'], t)
         tbx.interpgaps(dat['data_vars']['temp'], t)
-        t = t.view(time.time_array)
+        #t = t.view(time.time_array)
         
     # Step 3.5
     def read_vec_sysdata(self,):
@@ -971,17 +972,23 @@ class NortekReader(object):
         Read the time from the first 6bytes of the input string.
         """
         min, sec, day, hour, year, month = unpack('BBBBBB', strng[:6])
-        try:
-            return time.date2num(time.datetime(
-                time._fullyear(_bcd2char(year)),
-                _bcd2char(month),
-                _bcd2char(day),
-                _bcd2char(hour),
-                _bcd2char(min),
-                _bcd2char(sec)
-            ))
-        except ValueError:
-            return np.NaN
+        return datetime(time._fullyear(_bcd2char(year)), 
+                        _bcd2char(month), 
+                        _bcd2char(day), 
+                        _bcd2char(hour), 
+                        _bcd2char(min), 
+                        _bcd2char(sec)).timestamp()
+        # try:
+        #     return time.date2num(time.datetime(
+        #         time._fullyear(_bcd2char(year)),
+        #         _bcd2char(month),
+        #         _bcd2char(day),
+        #         _bcd2char(hour),
+        #         _bcd2char(min),
+        #         _bcd2char(sec)
+        #     ))
+        # except ValueError:
+        #     return np.NaN
         
     # Step 3
     def findnext(self, do_cs=True):

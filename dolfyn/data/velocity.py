@@ -337,13 +337,13 @@ class TKEdata(Velocity):
     def I_tke(self, thresh=0):
         """Turbulent kinetic energy intensity.
 
-        Ratio of sqrt(tke) to velocity magnitude.
+        Ratio of sqrt(tke) to horizontal velocity magnitude.
         """
         I_tke = np.ma.masked_where(self.U_mag < thresh,
                                    np.sqrt(2 * self.tke) / self.U_mag)
         return xr.DataArray(I_tke.data, 
-                            coords={'time':self.U_mag.time}, 
-                            dims=['time'],
+                            coords=self.U_mag.coords, 
+                            dims=self.U_mag.dims,
                             attrs={'units':'% [0,1]'},
                             name='TKE intensity')
     @property
@@ -356,8 +356,8 @@ class TKEdata(Velocity):
         I = np.ma.masked_where(self.U_mag < thresh,
                                   self.ds['U_std'] / self.U_mag)
         return xr.DataArray(I.data, 
-                            coords={'time':self.U_mag.time}, 
-                            dims=['time'],
+                            coords=self.U_mag.coords, 
+                            dims=self.U_mag.dims,
                             attrs={'units':'% [0,1]'},
                             name='turbulence intensity')
     @property

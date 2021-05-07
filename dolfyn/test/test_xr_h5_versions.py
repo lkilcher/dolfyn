@@ -61,7 +61,7 @@ def test_data(f_names):
         ds_vel = ds.vel.values[...,:min(sh1[-1],sh2[-1])]
         h5_vel = h5.vel[...,:min(sh1[-1],sh2[-1])]
         
-        assert_allclose(ds_vel, h5_vel, atol=1e-7, err_msg="{}".format(ky))
+        assert_allclose(ds_vel, h5_vel, atol=1e-6, err_msg="{}".format(ky))
         #assert_allclose(ds.vel.values, h5.vel, atol=1e-7, err_msg="{}".format(ky))
 
 

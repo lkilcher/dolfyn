@@ -177,7 +177,7 @@ vec_sysdata = {
     'time': VarAtts(dims=[],
                        dtype=np.float64,
                        group='coords',
-                       view_type=time.time_array,
+                       #view_type=time.time_array,
                        default_val=nan,
                        units='',
                        ),
@@ -258,7 +258,7 @@ vec_sysdata = {
 awac_profile = {
     'time': VarAtts(dims=[],
                        dtype=np.float64,
-                       view_type=time.time_array,
+                       #view_type=time.time_array,
                        group='coords',
                        # dim_names=['time'],
                        units='',

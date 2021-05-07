@@ -5,7 +5,8 @@ import struct
 import os.path as path
 import numpy as np
 import warnings
-from ..data import time
+#from ..data import time
+from datetime import datetime
 
 
 def reduce_by_average(data, ky0, ky1):
@@ -85,14 +86,14 @@ def calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
                 s == 0 and u == 0):
             continue
         try:
-            # Note that month is zero-based
-            dt[idx] = time.datetime(y, mo + 1, d, h, mi, s, u)
+            # Note that month is zero-based, seconds since Jan 1 1970
+            dt[idx] = datetime(y, mo + 1, d, h, mi, s, u).timestamp()
         except ValueError:
             # One of the time values is out-of-range (e.g., mi > 60)
             # This probably indicates a corrupted byte, so we just insert None.
             dt[idx] = None
     # None -> NaN in this step
-    return time.time_array(time.date2num(dt))
+    return dt#time.time_array(time.date2num(dt))
 
 
 def create_index_slow(infile, outfile, N_ens):
