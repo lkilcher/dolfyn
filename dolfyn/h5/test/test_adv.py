@@ -83,23 +83,26 @@ def test_read(make_data=False):
 def test_motion(make_data=False):
     mc = avm.motion.CorrectMotion()
     tdm = dat_imu.copy()
-    mc(tdm)
-    tdm10 = dat_imu.copy()
+    
+    tdm10 = tdm.copy()
     # Include the declination.
     tdm10.set_declination(10.0)
     mc(tdm10)
-    tdm0 = dat_imu.copy()
+    tdm0 = tdm.copy()
     # Include the declination.
     tdm0.set_declination(0.0)
     mc(tdm0)
+    
     tdmj = dat_imu_json.copy()
     mc(tdmj)
 
-    tdmE = dat_imu.copy()
+    tdmE = tdm.copy()
     # Include declination
     tdmE.set_declination(10.0)
     tdmE.rotate2('earth', inplace=True)
     mc(tdmE)
+    
+    mc(tdm)
 
     if make_data:
         save(tdm, 'vector_data_imu01_mc.h5')

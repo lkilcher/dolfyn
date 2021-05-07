@@ -59,7 +59,7 @@ class Velocity():
                 "been set. You can only set it once.")
         csin = self.ds.coord_sys
         if csin not in ['inst', 'beam']:
-            self.rotate2('inst', inplace=True)
+            self.ds = self.ds.Veldata.rotate2('inst', inplace=True)
         #dict.__setitem__(self.props, 'inst2head_rotmat', np.array(rotmat))
         self.ds['inst2head_rotmat'] = xr.DataArray(np.array(rotmat),
                                                    dims=['x','x*'])
@@ -71,9 +71,9 @@ class Velocity():
         # But then I'd also have to check for that!? Is it worth it?
 
         if not csin == 'beam': # csin not 'beam', then we're in inst
-            _rotate_head2inst(self.ds)
+            self.ds = _rotate_head2inst(self.ds)
         if csin not in ['inst', 'beam']:
-            self.rotate2(csin, inplace=True)
+            self.ds = self.ds.Veldata.rotate2(csin, inplace=True)
             
         return self.ds
 

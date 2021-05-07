@@ -138,38 +138,38 @@ def test_rotate_earth2inst():
         yield data_equiv, t, c, msg
 
 
-# def test_rotate_earth2principal(make_data=False):
+def test_rotate_earth2principal(make_data=False):
 
-#     td_rdi = load('RDI_test01_rotate_inst2earth.h5')
-#     td_sig = load('BenchFile01_rotate_inst2earth.h5')
-#     td_awac = tr.dat_awac.copy()
+    td_rdi = load('RDI_test01_rotate_inst2earth.h5')
+    td_sig = load('BenchFile01_rotate_inst2earth.h5')
+    td_awac = tr.dat_awac.copy()
 
-#     td_rdi.props['principal_heading'] = calc_principal_heading(
-#         td_rdi.vel.mean(1))
-#     td_sig.props['principal_heading'] = calc_principal_heading(
-#         td_sig.vel.mean(1))
-#     td_awac.props['principal_heading'] = calc_principal_heading(
-#         td_sig.vel.mean(1), tidal_mode=False)
+    td_rdi.props['principal_heading'] = calc_principal_heading(
+        td_rdi.vel.mean(1))
+    td_sig.props['principal_heading'] = calc_principal_heading(
+        td_sig.vel.mean(1))
+    td_awac.props['principal_heading'] = calc_principal_heading(
+        td_sig.vel.mean(1), tidal_mode=False)
 
-#     td_rdi.rotate2('principal', inplace=True)
-#     td_sig.rotate2('principal', inplace=True)
-#     td_awac.rotate2('principal', inplace=True)
+    td_rdi.rotate2('principal', inplace=True)
+    td_sig.rotate2('principal', inplace=True)
+    td_awac.rotate2('principal', inplace=True)
 
-#     if make_data:
-#         save(td_rdi, 'RDI_test01_rotate_earth2principal.h5')
-#         save(td_sig, 'BenchFile01_rotate_earth2principal.h5')
-#         save(td_awac, 'AWAC_test01_earth2principal.h5')
-#         return
+    if make_data:
+        save(td_rdi, 'RDI_test01_rotate_earth2principal.h5')
+        save(td_sig, 'BenchFile01_rotate_earth2principal.h5')
+        save(td_awac, 'AWAC_test01_earth2principal.h5')
+        return
 
-#     cd_rdi = load('RDI_test01_rotate_earth2principal.h5')
-#     cd_sig = load('BenchFile01_rotate_earth2principal.h5')
-#     cd_awac = load('AWAC_test01_earth2principal.h5')
+    cd_rdi = load('RDI_test01_rotate_earth2principal.h5')
+    cd_sig = load('BenchFile01_rotate_earth2principal.h5')
+    cd_awac = load('AWAC_test01_earth2principal.h5')
     
 
-#     msg = "adp.rotate.earth2principal gives unexpected results for {}"
-#     for t, c, msg in (
-#             (td_rdi, cd_rdi, msg.format('RDI_test01')),
-#             (td_awac, cd_awac, msg.format('AWAC_test01')),
-#             (td_sig, cd_sig, msg.format('BenchFile01')),
-#     ):
-#         yield data_equiv, t, c, msg
+    msg = "adp.rotate.earth2principal gives unexpected results for {}"
+    for t, c, msg in (
+            (td_rdi, cd_rdi, msg.format('RDI_test01')),
+            (td_awac, cd_awac, msg.format('AWAC_test01')),
+            (td_sig, cd_sig, msg.format('BenchFile01')),
+    ):
+        yield data_equiv, t, c, msg

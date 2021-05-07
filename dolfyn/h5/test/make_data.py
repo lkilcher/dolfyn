@@ -23,8 +23,8 @@ print(__doc__)
 # rungen(advro.test_rotate_earth2principal(make_data=True))
 
 
-#rungen(adpr.test_read(make_data=True))
-#rungen(adpro.test_rotate_beam2inst(make_data=True))
-#rungen(adpro.test_rotate_inst2earth(make_data=True))
-#rungen(adpro.test_rotate_inst2beam(make_data=True))
-# #rungen(adpro.test_rotate_earth2principal(make_data=False))
+# rungen(adpr.test_read(make_data=True))
+# rungen(adpro.test_rotate_beam2inst(make_data=True))
+# rungen(adpro.test_rotate_inst2earth(make_data=True))
+# rungen(adpro.test_rotate_inst2beam(make_data=True))
+# rungen(adpro.test_rotate_earth2principal(make_data=False))

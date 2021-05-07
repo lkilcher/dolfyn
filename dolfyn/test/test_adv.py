@@ -43,6 +43,11 @@ def test_read(make_data=False):
     tdm2 = read('vector_data_imu01.VEC',
                 userdata=tb.exdt('vector_data_imu01.userdata.json'),
                 nens=100)
+    
+    # These values are not correct for this data but I'm adding them for
+    # test purposes only.
+    tdm = tdm.Veldata.set_inst2head_rotmat(np.eye(3))
+    tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
         save(td, 'data/vector_data01.nc')
@@ -76,15 +81,14 @@ def test_read(make_data=False):
 def test_motion(make_data=False):
     #mc = avm.motion.CorrectMotion()
     tdm = dat_imu.copy(deep=True)
-    tdm = tdm.Veldata.set_inst2head_rotmat(np.eye(3))
-    tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
+    tdm = avm.correct_motion(tdm)
     
-    tdm10 = tdm.copy(deep=True)
+    tdm10 = dat_imu.copy(deep=True)
     # Include the declination.
     tdm10 = tdm10.Veldata.set_declination(10.0)
     tdm10 = avm.correct_motion(tdm10)
     
-    tdm0 = tdm.copy(deep=True)
+    tdm0 = dat_imu.copy(deep=True)
     # Include the declination.
     tdm0 = tdm0.Veldata.set_declination(0.0)
     tdm0 = avm.correct_motion(tdm0)
@@ -92,12 +96,10 @@ def test_motion(make_data=False):
     tdmj = dat_imu_json.copy(deep=True)
     tdmj = avm.correct_motion(tdmj)
 
-    tdmE = tdm.copy(deep=True)
+    tdmE = dat_imu.copy(deep=True)
     tdmE = tdmE.Veldata.set_declination(10.0)
     tdmE = tdmE.Veldata.rotate2('earth', inplace=True)
     tdmE = avm.correct_motion(tdmE)
-    
-    tdm = avm.correct_motion(tdm)
 
     if make_data:
         save(tdm, 'data/vector_data_imu01_mc.nc')

@@ -105,8 +105,10 @@ Xarray DOLfYN to MHKiT Changelog
 - Update testing - in progress
 	- Added check signature velocity rotations against nortek matfiles - done
 	- Logical values are auto-dropped when saving netCDF - changed true/false attributes to 1/0
-	- Need to add tests against h5 data
 	- Dropped testing for python 2.x because xarray doesn't support it
+	- Tests against h5:
+		- ADV motion correction is 17.1% off?
+		- earth2principal rotations fail because np.nanmean is built into xarray's 'mean' attribute(!) when calculating principal heading vs ndarray.mean(), so that's cool to know.
 
 
 - TODO:
@@ -118,6 +120,7 @@ Xarray DOLfYN to MHKiT Changelog
 	- Add motion-correction for ADCPs
 	- depth of adcp for range for nortek instruments? - not taken into account natively by Nortek
 	- Function to calculate 'S(k)'? Already wrote one for the wavenumber
+	- pseudo-TI function for ADCPs?
 
 - Notes:
 	- deep copy absolutely everything. <-period <-endstop (Is there a way to disable global variables?)

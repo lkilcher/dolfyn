@@ -72,7 +72,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     if hasattr(advo, 'orientmat'):
         omat = advo['orientmat'].values
     else:
-        if 'nortek vector' in advo.Veldata._make_model:
+        if 'vector' in advo.inst_model.lower():
             orientation_down = advo['orientation_down']
         else:
             orientation_down = None
@@ -182,7 +182,7 @@ def earth2principal(advo, reverse=False):
            (principal->earth).
 
     """
-    if not 'principal_heading' in advo.attrs:
+    if 'principal_heading' not in advo.attrs:
         advo.attrs['principal_heading'] = rotb.calc_principal_heading(advo.vel)
     
     try:
@@ -230,7 +230,6 @@ def earth2principal(advo, reverse=False):
         advo[nm].values = dat.copy()
     
     # Finalize the output.
-    #advo.props._set('coord_sys', cs_new)
     advo = rotb._set_coords(advo, cs_new)
     
     return advo

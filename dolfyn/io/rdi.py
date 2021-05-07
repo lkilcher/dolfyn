@@ -62,7 +62,7 @@ def read_rdi(fname, userdata=None, nens=None):
                                            'earth': ['E','N','U'], 
                                            'time': ds['time']},
                                    dims=['inst','earth','time'])
-    _set_rdi_declination(ds, fname)
+    ds = _set_rdi_declination(ds, fname)
     
     return ds
 
@@ -94,7 +94,9 @@ def _set_rdi_declination(dat, fname='????'):
         # set_declination rotates by the difference between what is
         # already set in props['declination'] (i.e., above), and the
         # input value
-        dat.Veldata.set_declination(declin)
+        dat = dat.Veldata.set_declination(declin)
+        
+    return dat
 
 
 # Four pound symbols ("####"), indicate a duplication of a comment from
@@ -594,7 +596,7 @@ class adcp_loader(object):
         ens.stime[k] = date2num(date + time) + time_offset
         fd.seek(4, 1)  # "PC clock offset from UTC"
         ens.slatitude[k] = fd.read_i32(1) * self._cfac
-        ens.slatitude[k] = fd.read_ui32(1) * self._cfac
+        ens.slongitude[k] = fd.read_i32(1) * self._cfac
         ens.etime[k] = date2num(date + datetime.timedelta(
             milliseconds=int(fd.read_ui32(1) * 10))) + time_offset
         ens.elatitude[k] = fd.read_i32(1) * self._cfac

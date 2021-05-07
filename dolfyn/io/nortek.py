@@ -96,17 +96,17 @@ def read_nortek(filename,
         omat = _calc_omat(ds['heading'].values,
                           ds['pitch'].values, 
                           ds['roll'].values,
-                          ds.attrs.get('orientation_down', None))
+                          ds.get('orientation_down', None))
         ds['orientmat'] = xr.DataArray(omat,
                                        coords={'inst': ['X','Y','Z'],
                                                'earth': ['E','N','U'], 
                                                'time': ds['time']},
                                        dims=['inst','earth','time'])
     if rotmat is not None:
-        ds.Veldata.set_inst2head_rotmat(rotmat)
+        ds = ds.Veldata.set_inst2head_rotmat(rotmat)
     if declin is not None:
-        ds.Veldata.set_declination(declin)
-
+        ds = ds.Veldata.set_declination(declin)
+    
     return ds
 
 

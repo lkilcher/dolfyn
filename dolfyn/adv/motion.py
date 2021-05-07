@@ -63,7 +63,7 @@ class CalcMotion(object):
                               vel_filtfreq)
         self.to_earth = to_earth
 
-        self._set_Accel()
+        self._set_accel()
         self._set_acclow()
         self.angrt = advo['angrt'].values  # No copy because not modified.
 
@@ -90,7 +90,7 @@ class CalcMotion(object):
         self.accel_filtfreq = accel_filtfreq
         self.accelvel_filtfreq = vel_filtfreq
 
-    def _set_Accel(self, ):
+    def _set_accel(self, ):
         advo = self.advo
         if advo.coord_sys == 'inst':
             self.accel = np.einsum('ij...,i...->j...',
@@ -437,12 +437,12 @@ def correct_motion(advo,
     else:
         # rotate these variables back to the instrument frame.
         advo = rot.inst2earth(advo, reverse=True,
-                              rotate_vars=['acclow', 'velacc'],
+                              rotate_vars=['accel', 'acclow', 'velacc'],
                               force=True)
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    advo['vel_raw'] = xr.DataArray(advo.vel.copy(), dims=advo.vel.dims)
+    advo['vel_raw'] = xr.DataArray(advo.vel.copy(deep=True), dims=advo.vel.dims)
     # Add it to rotate_vars:
     advo.attrs['rotate_vars'].append('vel_raw')
 
@@ -464,8 +464,6 @@ def correct_motion(advo,
         # This assumes these are w.
         advo['vel'][3:] += velmot[2:]
         advo.attrs.pop('inst2head_vec')
-        # No support yet for vel_bt since it depends on bt-depth
-    
     
     advo.attrs['motion corrected'] = True
     advo.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
