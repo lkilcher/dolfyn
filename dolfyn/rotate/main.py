@@ -21,13 +21,13 @@ rot_module_dict = {
 
 
 def rotate2(ds, out_frame='earth', inplace=False):
-    """Rotate a dataset to a new coordinate system.
+    """
+    Rotate a dataset to a new coordinate system.
 
     Parameters
     ----------
-
-    ds : :class:`~dolfyn.Veldata`
-      The dolfyn Veldata-data (ADV or ADP) dsect to rotate.
+    ds : xr.Dataset
+      The dolfyn dataset (ADV or ADCP) to rotate.
 
     out_frame : string {'beam', 'inst', 'earth', 'principal'}
       The coordinate system to rotate the data into.
@@ -38,14 +38,11 @@ def rotate2(ds, out_frame='earth', inplace=False):
 
     Returns
     -------
-    dsout : :class:`~dolfyn.Veldata`
-      The rotated data dsect. Note that when ``inplace=True``, the
-      input dataset is modified in-place *and* returned (i.e.,
-      ``dsout`` is ``ds``).
-
+    ds_out : |xr.Dataset|
+      The rotated dataset
+      
     Notes
     -----
-
     This function rotates all variables in ``ds.props['rotate_vars']``.
 
     """

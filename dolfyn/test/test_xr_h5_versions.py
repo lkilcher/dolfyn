@@ -2,8 +2,8 @@ from dolfyn.h5.test.base import load_tdata as load_h5
 from dolfyn.test.base import load as load_nc
 from numpy.testing import assert_allclose
 
-# earth2principal fails when nanmean fills in values within principal heading 
-# calculation
+# earth2principal fails miserably when nanmean (xarray built-in mean) fills in 
+# values within principal heading calculation (instead of np.mean)
 # dimension mismatch of 1 affects motion-correction filters
 f_names = ['RDI_test01',
            'RDI_test01_rotate_beam2inst',

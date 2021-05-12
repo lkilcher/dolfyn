@@ -1,5 +1,5 @@
-Rotate Module
-=====================
+Rotate Functions
+================
 
 Contains functions for rotating data through frames of reference (FoR):
 	1. **'beam'**: Follows the acoustic beam FoR, where velocity data is organized by beam number 1-3 or 1-4.
@@ -7,13 +7,22 @@ Contains functions for rotating data through frames of reference (FoR):
 	3. **'earth'**: *East North UP* (*ENU*) FoR. Based on either magnetic or true North, depending on whether or not DOLfYN has a magnetic declination associated with the dataset. Instruments do not internally record magnetic declination, unless it has been supplied via external software like TRDI's VMDAS.
 	4. **'princ'**: Rotates velocity data into a *streamwise*, *cross-stream*, and *vertical* FoR based on the principal flow direction. Only applies to ADV data. One must calculate principal heading first.
 
+Primary functions of note for users, others are documented for reference:
+
 .. autosummary::
 	:nosignatures:
 	
 	~dolfyn.rotate.main.rotate2
-	~dolfyn.rotate.main.calc_principal_heading
+	~dolfyn.rotate.base.calc_principal_heading
+	~dolfyn.data.velocity.Velocity.set_declination
+	~dolfyn.data.velocity.Velocity.set_inst2head_rotmat
 
 .. automodule:: dolfyn.rotate.main
+    :members:
+    :undoc-members:
+    :show-inheritance:
+	
+.. automodule:: dolfyn.rotate.base
     :members:
     :undoc-members:
     :show-inheritance:

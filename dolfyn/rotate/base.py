@@ -16,7 +16,7 @@ def calc_principal_heading(vel, tidal_mode=True):
     Returns
     -------
     p_heading : float or ndarray
-      The principal heading(s) in degrees clockwise from North.
+      The principal heading in degrees clockwise from North.
 
     Notes
     -----
@@ -29,7 +29,7 @@ def calc_principal_heading(vel, tidal_mode=True):
          may need to add 180 to this if you want your positive
          direction to be in the western-half of the plane.
 
-    Otherwise, this function simply compute the average direction
+    Otherwise, this function simply computes the average direction
     using a vector method.
 
     """    
@@ -44,9 +44,9 @@ def calc_principal_heading(vel, tidal_mode=True):
         # Divide the angle by 2 to remove the doubling done on the previous
         # line.
         pang = np.angle(
-            np.mean(dt, -1, dtype=np.complex128)) / 2
+            np.nanmean(dt, -1, dtype=np.complex128)) / 2
     else:
-        pang = np.angle(np.mean(dt, -1))
+        pang = np.angle(np.nanmean(dt, -1))
         
     return np.round((90 - np.rad2deg(pang)), decimals=4)
 
@@ -135,6 +135,7 @@ def beam2inst(dat, reverse=False, force=False):
         #dat.props._set('coord_sys', cs)
     
     return dat
+    
 
 def euler2orient(heading, pitch, roll, units='degrees'):
     """

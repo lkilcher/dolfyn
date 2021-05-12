@@ -13,20 +13,6 @@ class Velocity():
 
     All ADCP and ADV data objects inherit from this base class.
 
-    Indexing
-    ........
-
-    You can directly access an item in a subgroup by::
-
-        >> dat['env.c_sound']
-        array([1520.9   , 1520.8501, 1520.8501, ..., 1522.3   , 1522.3   ,
-               1522.3   ], dtype=float32)
-
-    # And you can test for the presence of a variable by::
-
-        >> 'signal.amp' in dat
-        True
-
     """
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
@@ -43,6 +29,14 @@ class Velocity():
         """
         Set the instrument to head rotation matrix for the Nortek ADV if it
         hasn't already been set through a '.userdata.json' file.
+                
+        To call: ``>> dat = dat.Veldata.set_inst2head_rotmat()``
+        
+        Parameters
+        ----------
+        rotmat : float
+            3x3 rotation matrix
+        
         """
         if not self._make_model.startswith('nortek vector'):
             raise Exception("Setting 'inst2head_rotmat' is only supported "
@@ -79,7 +73,10 @@ class Velocity():
 
     
     def set_declination(self, declination):
-        """Set the declination of the dataset.
+        """
+        Set the declination of the dataset.
+        
+        To call: ``>> dat = dat.Veldata.set_declination()``
 
         Parameters
         ----------
@@ -91,22 +88,22 @@ class Velocity():
         -----
         This method modifies the data object in the following ways:
 
-        - If the data-object is in the *earth* reference frame at the time of
+        - If the dataset is in the *earth* reference frame at the time of
           setting declination, it will be rotated into the "*True-East*,
           *True-North*, Up" (hereafter, ETU) coordinate system
 
-        - ``dat['orient']['orientmat']`` is modified to be an ETU to
+        - ``dat['orientmat']`` is modified to be an ETU to
           instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
           XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
           frame will now be to/from this ETU coordinate system.
 
         - The value of the specified declination will be stored in
-          ``dat.props['declination']``
+          ``dat.attrs['declination']``
 
-        - ``dat['orient']['heading']`` is adjusted for declination
+        - ``dat['heading']`` is adjusted for declination
           (i.e., it is relative to True North).
 
-        - If ``dat['props']['principal_heading']`` is set, it is
+        - If ``dat.attrs['principal_heading']`` is set, it is
           adjusted to account for the orientation of the new 'True'
           earth coordinate system (i.e., calling set_declination on a
           data object in the principal coordinate system, then calling
@@ -152,7 +149,8 @@ class Velocity():
         
         
     def rotate2(self, out_frame, inplace=False):
-        """Rotate the data object into a new coordinate system.
+        """
+        Rotate the data object into a new coordinate system.
 
         Parameters
         ----------
@@ -166,7 +164,7 @@ class Velocity():
 
         Returns
         -------
-        objout : :class:`Velocity`
+        out : xr.Dataset
           The rotated data object. This is `self` if inplace is True.
 
         See Also
@@ -204,7 +202,7 @@ class Velocity():
 
         This is simply a shortcut to self['vel'][0]. Therefore,
         depending on the coordinate system of the data object
-        (self['props']['coord_sys']), it is:
+        (self.attrs['coord_sys']), it is:
 
         - beam:      beam1
         - inst:      x
@@ -220,7 +218,7 @@ class Velocity():
 
         This is simply a shortcut to self['vel'][1]. Therefore,
         depending on the coordinate system of the data object
-        (self['props']['coord_sys']), it is:
+        (self.attrs['coord_sys']), it is:
 
         - beam:      beam2
         - inst:      y
@@ -236,7 +234,7 @@ class Velocity():
 
         This is simply a shortcut to self['vel'][2]. Therefore,
         depending on the coordinate system of the data object
-        (self['props']['coord_sys']), it is:
+        (self.attrs['coord_sys']), it is:
 
         - beam:      beam3
         - inst:      z
@@ -451,7 +449,7 @@ class VelBinner(TimeBinner):
         rawdat = dlfn.read_example('BenchFile01.ad2cp')
 
         # Now initialize the averaging tool:
-        binner = dlfn.VelBinner(n_bin=600, fs=rawdat['props']['fs'])
+        binner = dlfn.VelBinner(n_bin=600, fs=rawdat.fs)
 
         # This computes the basic averages
         avg = binner.do_avg(rawdat)
@@ -467,10 +465,12 @@ class VelBinner(TimeBinner):
         
         Parameters
         ----------
-        dat : xarray dataset containing raw velocity data
+        dat : xr.Dataset
+            Xarray dataset containing raw velocity data
         
-        out : binned dataset to save tke and stress data to (calculated from 
-              'do_avg')
+        out : xr.Dataset
+            Binned dataset to save tke and stress data to (calculated from 
+            'do_avg')
         
         Returns
         -------
@@ -492,15 +492,18 @@ class VelBinner(TimeBinner):
     
 
     def calc_tke(self, veldat, noise=[0, 0, 0]):
-        """Calculate the tke (variances of u,v,w).
+        """
+        Calculate the tke (variances of u,v,w).
 
         Parameters
         ----------
-        veldat : a velocity data array. The last dimension is assumed
-                 to be time.
+        veldat : xr.DataArray
+            a velocity data array. The last dimension is assumed
+            to be time.
 
-        noise : a three-element vector of the noise levels of the
-                velocity data for ach component of velocity.
+        noise : float
+            a three-element vector of the noise levels of the
+            velocity data for ach component of velocity.
 
         Returns
         -------
@@ -536,13 +539,14 @@ class VelBinner(TimeBinner):
 
 
     def calc_stress(self, veldat):
-        """Calculate the stresses (cross-covariances of u,v,w), i.e.
-        Reynold's stresses assuming constant density.
+        """
+        Calculate the stresses (cross-covariances of u,v,w)
 
         Parameters
         ----------
-        veldat : a velocity data array. The last dimension is assumed
-                 to be time.
+        veldat : xr.DataArray
+            A velocity data array. The last dimension is assumed
+            to be time.
 
         Returns
         -------
@@ -572,12 +576,12 @@ class VelBinner(TimeBinner):
     
 
     def calc_vel_psd(self, veldat,
-                     rotate_u=False,
+                     freq_units='Hz',
                      fs=None,
                      window='hann', 
-                     freq_units='Hz',
                      noise=[0, 0, 0],
                      n_bin=None, n_fft=None, n_pad=None,
+                     rotate_u=False,
                      step=None):
         """
         Calculate the power spectral density of velocity.
@@ -586,16 +590,13 @@ class VelBinner(TimeBinner):
         ----------
         veldat : xr.DataArray
           The raw velocity data (of dims 'orient' and 'time').
-        rotate_u : bool (optional)
-          If True, each 'bin' of horizontal velocity is rotated into
-          its principal axis prior to calculating the psd.  (default:
-          False).
+        freq_units : string
+          Frequency units in either Hz or rad/s (`f` or :math:`\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array
           Specify the window function.
-        freq_units : string
-          Frequency units in either Hz or rad/s (f or omega)
+
         noise : list(3 floats) (optional)
           Noise level of each component's velocity measurement
           (default 0).
@@ -605,6 +606,10 @@ class VelBinner(TimeBinner):
           The fft size (default: from the binner).
         n_pad : int (optional)
           The number of values to pad with zero (default: 0)
+        rotate_u : bool (optional)
+          If True, each 'bin' of horizontal velocity is rotated into
+          its principal axis prior to calculating the psd.  (default:
+          False).
         step : int (optional)
           Controls amount of overlap in fft (default: the step size is
           chosen to maximize data use, minimize nens, and have a
@@ -624,7 +629,7 @@ class VelBinner(TimeBinner):
         
         if rotate_u:
             tmpdat = self._reshape(veldat[0] + 1j * veldat[1])
-            tmpdat *= np.exp(-1j * np.angle(tmpdat.mean(-1)))
+            tmpdat *= np.exp(-1j * np.angle(np.nanmean(tmpdat,-1)))
             veldat[0] = tmpdat.real
             veldat[1] = tmpdat.imag
             if noise[0] != noise[1]:
@@ -666,11 +671,11 @@ class VelBinner(TimeBinner):
     
 
     def calc_vel_csd(self, veldat,
-                     rotate_u=False,
+                     freq_units='Hz',
                      fs=None,
                      window='hann',
-                     freq_units='Hz',
                      n_bin=None, n_fft=None, n_pad=None,
+                     rotate_u=False,
                      step=None):
         """
         Calculate the cross-spectral density of velocity components.
@@ -679,22 +684,22 @@ class VelBinner(TimeBinner):
         ----------
         veldat   : np.ndarray
           The raw velocity data.
-        rotate_u : bool (optional)
-          If True, each 'bin' of horizontal velocity is rotated into
-          its principal axis prior to calculating the psd.  (default:
-          False).
+        freq_units : string
+          Frequency units in either Hz or rad/s (`f` or :math:`\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array
           Specify the window function.
-        freq_units : string
-          Frequency units in either Hz or rad/s (f or omega)
         n_bin : int (optional)
           The bin-size (default: from the binner).
         n_fft : int (optional)
           The fft size (default: n_fft_coh from the binner).
         n_pad : int (optional)
           The number of values to pad with zero (default: 0)
+        rotate_u : bool (optional)
+          If True, each 'bin' of horizontal velocity is rotated into
+          its principal axis prior to calculating the psd.  (default:
+          False).
         step : int (optional)
           Controls amount of overlap in fft (default: the step size is
           chosen to maximize data use, minimize nens, and have a

@@ -72,7 +72,8 @@ def _read_userdata(fname):
 
 def handle_nan(data):
     '''
-    Hunting down nan's and eliminating them.
+    Finds nan's that cause issues in running the rotation algorithms
+    and deletes them. 
     
     '''
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
@@ -103,7 +104,7 @@ def handle_nan(data):
 
 def create_dataset(data):
     '''
-    Creates an xarray dataset from dictionary created from binary datafile 
+    Creates an xarray dataset from dictionary created from binary
     readers
     
     '''
@@ -163,6 +164,11 @@ def create_dataset(data):
                     ds[key] = ds[key].rename({'dim_0':'orientIMU',
                                               'dim_1':'time'})
                     ds[key] = ds[key].assign_coords({'orientIMU':[1,2,3],
+                                                     'time':Time})
+                elif 'b5' in key:
+                    ds[key] = ds[key].rename({'dim_0':'range_b5',
+                                              'dim_1':'time'})
+                    ds[key] = ds[key].assign_coords({'range_b5':data['coords']['range_b5'],
                                                      'time':Time})
                 else:
                     warnings.warn('Variable not included in dataset: {}'

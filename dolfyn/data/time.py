@@ -4,20 +4,27 @@ from datetime import datetime, timedelta
 
 def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
     '''
-    Convert from seconds since 1/1/1970 to datetime object
+    Convert from epoch time (seconds since 1/1/1970) to datetime object
     
-    ds_time : |xr.DataArray|
-        Time coordinate data-array
+    Parameters
+    ----------
+    ds_time : xr.DataArray
+        Time coordinate data-array or single time element
     
     utc : logical, default=False
-        If True, converts to UTC. If False, data is in instrument's 
-        timezone (unknown to dolfyn)
+        If True, converts to UTC. If False, data remains in instrument's 
+        timezone (unknown to dolfyn: is set at instrument deployment, 
+        usually sync'd to the user's computer)
     
     offset_hr : int
         Number of hours to offset time by (e.g. UTC -7 hours = PDT)
     
     to_str : logical
-        Converts epoch time to a readable string
+        Converts datetime object to a readable string
+        
+    Returns
+    -------
+    time : The converted datetime object or list(strings) 
         
     '''
     ds_time = ds_time.values
@@ -36,31 +43,32 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
 
 def date2str(dt, format_str=None):
     '''
-    Convert datetimes to actual legible times
+    Convert array of datetime objects to actual legible timestamps
     
     '''
     if format_str is None:
         format_str = '%Y-%m-%d %H:%M:%S.%f'
+
+    if not isinstance(dt, list):
+        dt = [dt]
         
     return [t.strftime(format_str) for t in dt]
-    
-    
-def matlab2date(matlab_dn):
+
+
+def date2epoch(dt):
     '''
-    Convert matlab datenum to python datetime
+    Convert datetime object to epoch time
     
     '''
-    time = list()
-    for i in range(len(matlab_dn)):
-        day = datetime.fromordinal(int(matlab_dn[i]))
-        dayfrac = timedelta(days=matlab_dn[i]%1) - timedelta(days=366)
-        time.append(day + dayfrac)
-        
-    return time
+    if not isinstance(dt, list):
+        dt = [dt]
+    
+    return [t.timestamp() for t in dt]
+
 
 def date2matlab(dt):
     '''
-    Convert python datetime to matlab datenum
+    Convert python datetime object to matlab datenum
     
     '''
     time = list()
@@ -71,12 +79,23 @@ def date2matlab(dt):
         time.append(mdn.toordinal() + frac_seconds + frac_microseconds)
         
     return time
+    
+    
+def matlab2date(matlab_dn):
+    '''
+    Convert matlab datenum to python datetime object
+    
+    '''
+    time = list()
+    for i in range(len(matlab_dn)):
+        day = datetime.fromordinal(int(matlab_dn[i]))
+        dayfrac = timedelta(days=matlab_dn[i]%1) - timedelta(days=366)
+        time.append(day + dayfrac)
+        
+    return time
 
 
 def _fullyear(year):
-    """
-    Convert
-    """
     if year > 100:
         return year
     year += 1900 + 100 * (year < 90)

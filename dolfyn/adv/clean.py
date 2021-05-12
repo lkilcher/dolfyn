@@ -14,7 +14,7 @@ def cleanFill(advo, mask, method='linear', max_gap=None):
 
     Parameters
     ----------
-    advo : |xr.Dataset|
+    advo : xr.Dataset
       The adv dataset to clean.
     mask : bool
       Logical vector of values to 'NaN' out (from `spikeThresh`, `rangeLimit`,
@@ -24,8 +24,9 @@ def cleanFill(advo, mask, method='linear', max_gap=None):
     max_gap : numeric
       Max number of consective NaN's to interpolate across
       
-    see also:
-        xr.DataArray.interpolate_na()
+    See Also
+    --------
+    xarray.DataArray.interpolate_na
 
     """
     advo.vel.values[...,mask] = np.nan
@@ -194,7 +195,7 @@ def GN2002(u, npt=5000):
     Parameters
     ----------
 
-    u : |xr.DataArray|
+    u : xr.DataArray
       The velocity array to clean.
 
     npt : int
@@ -212,11 +213,9 @@ def GN2002(u, npt=5000):
     Implements the Goring+Nikora2002 despiking method, with Wahl2003
     correction.
 
-    This function operates on the `indat` array (doesn't return it).
-
     """
-    if not isinstance(u.values, np.ndarray):
-        return GN2002(u['vel'], npt=npt)
+    if not isinstance(u, np.ndarray):
+        return GN2002(u.values, npt=npt)
 
     if u.ndim > 1:
         mask = np.zeros(u.shape, dtype='bool')
@@ -224,7 +223,6 @@ def GN2002(u, npt=5000):
             mask[slc] = GN2002(u[slc], npt=npt)
         return mask
     
-    u = u.values
     mask = np.zeros(len(u), dtype='bool')
 
     # Find large bad segments (>npt/10):

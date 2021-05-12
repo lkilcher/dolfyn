@@ -1,5 +1,5 @@
 ﻿Name,Units,Group,Description/Notes
-mpltime,`matplotlib date format <https://matplotlib.org/api/dates_api.html#matplotlib.dates.date2num>`_,---,Time data
+time,sec since 1/1/1970,---,Time data
 vel,m/s,---,Velocity vector data
 range,m,---,Distance from the instrument's transducer head(s)
 depth_m,m,---,Instrument depth
@@ -24,12 +24,10 @@ batt_V / batt,voltage,sys,Battery voltage
 ensemble,---,sys,Ensemble counter
 error,---,sys,Instrument error code*
 status,---,sys,Instrument status code*
-temp_clock,degrees C?,sys,Instrument's clock temperature
-temp_mag,degrees C?,sys,Instrument's magnetometer temperature
-temp_press,degrees C?,sys,Instrument's pressure sensor temperature
 tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,"Variance of velocity components (0: u'u', 1: v'v', 2: w'w')"
 stress,m\ :sup:`2`/s\ :sup:`2`,---,"Reynolds stress array (0: u'v', 1: u'w', 2: v'w')"
-sigma_Uh,m/s,---,Standard deviation of horizontal velocity magnitude
+U_std,m/s,---,Standard deviation of horizontal velocity magnitude
 epsilon,m\ :sup:`2`/s\ :sup:`3`,---,Turbulence dissipation rate
-Spec,<variables units>\ :sup:`2`/(rad/s),---,Data group containing spectra of variables above
-omega,rad/s,Spec,Radial frequency
+psd,<variables units>\ :sup:`2`/<freq units>,---,Data group containing spectra of variables above
+f,Hz,psd,Frequency
+omega,rad/s,psd,Radial frequency

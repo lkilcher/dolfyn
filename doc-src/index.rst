@@ -22,8 +22,8 @@ Table of Contents
    basics
    terminology
    rotations
-   examples
    motion-correction
+   examples
    API Documentation <apidoc/dolfyn>
    
 

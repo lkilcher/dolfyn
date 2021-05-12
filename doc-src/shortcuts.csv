@@ -1,17 +1,14 @@
 ﻿Name,units,Description/Notes
-shape, ---, Shape of ``dat.u`` (see below)
-n_time, ---, Length of ``dat['mpltime']``
-subset, ---, Function for indexing a subset of the data object (e.g. dat.subset[])
 u, m/s, ``dat['vel'][0]``
 v, m/s, ``dat['vel'][1]``
 w, m/s, ``dat['vel'][2]``
 U, m/s, Horizontal velocity as a complex quantity (dat.u + 1j * dat.v)
 U_mag, m/s, Magnitude of the horizontal velocity
 U_angle, radians, "Direction of the horizontal velocity (counter-clockwise from X, East, or streamwise direction depending on coordinate system)"
-tauij, m\ :sup:`2`/s\ :sup:`2`, Reynold's stress tensor
+tau_ij, m\ :sup:`2`/s\ :sup:`2`, Reynold's stress tensor
 tke, m\ :sup:`2`/s\ :sup:`2`, Turbulent kinetic energy (half the sum of the data in `'tke_vec'`)
-Ecoh, m\ :sup:`2`/s\ :sup:`2`, Coherent turbulent kinetic energy (root-sum-square of Reynold's stresses)
-I, ---, Turbulence Intensity: ratio of sigma_Uh to horizontal velocity magnitude
+E_coh, m\ :sup:`2`/s\ :sup:`2`, Coherent turbulent kinetic energy (root-sum-square of Reynold's stresses)
+I, ---, Turbulence Intensity: ratio of U_std to horizontal velocity magnitude
 Itke, ---, TKE Intensity: Ratio of sqrt(2*tke) to horizontal velocity magnitude
 upup\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][0]``
 vpvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][1]``
@@ -19,3 +16,4 @@ wpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][2]``
 upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][0]``
 upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][1]``
 vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][2]``
+k, 1/m, wavenumber calculated from spectral frequency vector and velocity

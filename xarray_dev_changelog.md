@@ -86,21 +86,25 @@ Xarray DOLfYN to MHKiT Changelog
 			- ADCPs - individual cleaning functions
 			- ADVs - has masking methods that feed into a fill-in method
 			
-- Refactor DOLfYN's binary readers - done
-		1. Binary files read into a dictionary of dictionaries using netcdf naming conventions
-			- Should be easier to debug
-		2. Need to write (adjust the file I previously created) an xarray dataset constructor that'll build off that dictionary
-		3. Should be able to use the '_set_coords' subroutine located in `rotate.base` to set orientation coordinates
-		- is there a point to keeping a dedicated h5py DOLfYN to xarray DOLfYN conversion file?
-	- Step 1 completed
-		- No pressure data from vectors or awacs?? Registering as 0 in binary?
-		- AWAC temp scaling is way off (?) - Added 0.01 factor
-		- Added 0.1 scale factor for Signature magnetometer to return in units of uT
-	- Step 2 & 3 - done
-		- Moved Vector rotation matrices from attributes to variables
-		- Removed user-nonsensical configuration data
-		- Added 'save_mat' function
-		- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
+		- Time - done
+			- Change mpl time to epoch time
+			- Add conversion functions
+			
+		- Refactor binary readers - done
+				1. Binary files read into a dictionary of dictionaries using netcdf naming conventions
+					- Should be easier to debug
+				2. Need to write (adjust the file I previously created) an xarray dataset constructor that'll build off that dictionary
+				3. Should be able to use the '_set_coords' subroutine located in `rotate.base` to set orientation coordinates
+				- is there a point to keeping a dedicated h5py DOLfYN to xarray DOLfYN conversion file?
+			- Step 1 completed
+				- No pressure data from vectors or awacs?? Registering as 0 in binary?
+				- AWAC temp scaling is way off (?) - Added 0.01 factor
+				- Added 0.1 scale factor for Signature magnetometer to return in units of uT
+			- Step 2 & 3 - done
+				- Moved Vector rotation matrices from attributes to variables
+				- Removed user-nonsensical configuration data
+				- Added 'save_mat' function
+				- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
 
 - Update testing - done
 	- Added check signature velocity rotations against nortek matfiles - done
@@ -110,10 +114,6 @@ Xarray DOLfYN to MHKiT Changelog
 		- earth2principal fails when xarray's built in mean (np.nanmean) fills in values within principal heading calculation
 		- dimension mismatch affects motion correction filters
 
-- Time - done
-	- Change mpl time to epoch time
-	- Add conversion functions
-
 
 - Notes:
 	- Deep copy absolutely everything. <-period <-endstop (Is there a way to disable global variables?)
@@ -121,5 +121,4 @@ Xarray DOLfYN to MHKiT Changelog
 	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
 	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
 	- Bad AWAC IMU data reads as 6551.x?
-	
 	

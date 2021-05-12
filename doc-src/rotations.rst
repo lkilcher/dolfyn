@@ -129,7 +129,7 @@ Heading, Pitch, Roll
 Some (most?) instruments do not calculate or output the orientation
 matrix by default. Instead, these instruments typically provide
 *heading*, *pitch*, and *roll* data (hereafter, *h,p,r*).  Instruments that provide an ``orientmat`` directly will have
-``dat.props['has_imu'] = True``. Otherwise, the ``orientmat`` was
+``dat.attrs['has_imu'] = True``. Otherwise, the ``orientmat`` was
 calculated from *h,p,r*.
 
 Note that an orientation matrix calculated
@@ -144,7 +144,7 @@ to utilize consistent definitions of orientation data (``orientmat``,
 and *h,p,r*), the following things are true:
 
   - |dlfn| uses instrument-specific functions to calculate a
-    consistent ``dat['orient']['orientmat']`` from the inconsistent
+    consistent ``dat['orientmat']`` from the inconsistent
     definitions of *h,p,r*
 
   - |dlfn|\ 's consistent definitions *h,p,r* are generally different
@@ -203,10 +203,10 @@ Declination Handling
 of the declination must be specified by the user. There are two ways
 to set a data-object's declination:
 
-1. Set declination explicitly using the ``dat.set_declination``
+1. Set declination explicitly using the ``set_declination``
    method, for example::
 
-     dat.set_declination(16.53)
+     dat = dat.Veldata.set_declination(16.53)
 
 2. Set declination in the ``<data_filename>.userdata.json`` file
    (`more details <json-userdata>`_ ), then read the binary data
@@ -226,7 +226,7 @@ identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
 this::
 
-  dat.props['principal_heading'] = dolfyn.calc_principal_heading(dat.vel)
+  dat.attrs['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
   dat = dat.rotate2('principal')
 
 Note here that if ``dat`` is in a coordinate system other than EARTH,

@@ -16,7 +16,7 @@ acoustic Doppler velocimeters (ADVs) and acoustic Doppler current profilers
 * Coordinate system rotation for vector data (beam to instrument to Earth frames of reference)
 * Motion correction for buoy-mounted ADV velocity measurements (via onboard IMU data)
 * Ensemble averaging
-* Turbulence statistics (ADV only)
+* Calculate turbulence statistics
 
 .. _about.history:
 

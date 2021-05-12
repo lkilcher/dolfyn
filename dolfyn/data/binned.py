@@ -150,7 +150,7 @@ class TimeBinner:
         Reshape the array `dat` and remove the mean from each ensemble.
         """
         dt = self.reshape(dat, n_pad=n_pad, n_bin=n_bin)
-        return dt - dt.mean(-1)[..., None]
+        return dt - np.nanmean(dt,-1)[..., None]
 
 
     def _mean(self, dat, axis=-1, n_bin=None):
@@ -170,7 +170,7 @@ class TimeBinner:
         n_bin = self._parse_nbin(n_bin)
         tmp = self.reshape(dat, n_bin=n_bin)
         
-        return tmp.mean(-1)
+        return np.nanmean(tmp,-1)
 
 
     # def mean_angle(self, dat, axis=-1, units='radians',
@@ -298,15 +298,16 @@ class TimeBinner:
 
 
     def do_var(self, rawdat, outdat=None, names=None, suffix='_var'):
-        """Calculate the variance of data attributes.
+        """
+        Find the variance of data in bins/ensembles
 
         Parameters
         ----------
-        rawdat : raw_data_object
+        rawdat : xr.Dataset
            The raw data structure to be binned.
 
-        outdat : avg_data_object
-           The bin'd (output) data object to which variance data is added.
+        outdat : xr.Dataset
+           The binned (output) dataset to which variance data is added.
 
         names : list of strings
            The names of variables of which to calculate variance.  If
@@ -378,9 +379,9 @@ class TimeBinner:
         
         Parameters
         ----------
-        veldat1 : |xr.DataArray|
+        veldat1 : xr.DataArray
           The first raw-data array of which to calculate coherence
-        veldat2 : |xr.DataArray|
+        veldat2 : xr.DataArray
           The second raw-data array of which to calculate coherence
         window : string
           String indicating the window function to use (default: 'hanning')
@@ -429,9 +430,9 @@ class TimeBinner:
 
         Parameters
         ----------
-        veldat1 : |xr.DataArray|
+        veldat1 : xr.DataArray
           The first 1D raw-data array of which to calculate phase angle
-        veldat2 : |xr.DataArray|
+        veldat2 : xr.DataArray
           The second 1D raw-data array of which to calculate phase angle
         window : string
           String indicating the window function to use (default: 'hanning').
@@ -483,6 +484,14 @@ class TimeBinner:
 
         This has the advantage that the 0 index is actually zero-lag.
         
+        Parameters
+        ----------
+        veldat : xr.DataArray
+          The raw-data array of which to calculate auto-covariance
+         
+        n_bin : float
+          Number of data elements to use
+        
         """
         indat = veldat.values
         
@@ -530,10 +539,10 @@ class TimeBinner:
         
         Parameters
         ----------
-        veldat1 : |xr.DataArray|
-          The first raw-data array of which to calculate coherence
-        veldat2 : |xr.DataArray|
-          The second raw-data array of which to calculate coherence
+        veldat1 : xr.DataArray
+          The first raw-data array of which to calculate x-covariance
+        veldat2 : xr.DataArray
+          The second raw-data array of which to calculate x-covariance
         npt : number of timesteps (lag) to calculate covariance
         
         """

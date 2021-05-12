@@ -7,10 +7,12 @@ DOLfYN Package
     :show-inheritance:
 
 .. toctree::
-   :maxdepth: 5
+   :maxdepth: 7
 
    dolfyn.adp
    dolfyn.adv
    dolfyn.io
-   dolfyn.data
    dolfyn.rotate
+   dolfyn.binners
+   dolfyn.shortcuts
+   dolfyn.data.time

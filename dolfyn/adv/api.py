@@ -13,18 +13,18 @@ data. It contains:
 |                                   | netCDF files.                           |
 +-----------------------------------+-----------------------------------------+
 | :func:`rotate2 <dolfyn.rotate.\   | A function for rotating data            |
-| .main.rotate2>`                   | between different coordinate systems    |
+| main.rotate2>`                    | between different coordinate systems    |
 +-----------------------------------+-----------------------------------------+
 | :mod:`clean <dolfyn.adv.clean>`   | A module containing functions for       |
 |                                   | cleaning, "despiking" and filling       |
 |                                   | NaN's in data                           |
 +-----------------------------------+-----------------------------------------+
-| :mod:`motion <dolfyn.adv.motion.\ | A function for performing motion        |
-| .correct_motion>`                 | correction on ADV velocity data         |
+| :func:`correct_motion <dolfyn.\   | A function for performing motion        |
+| adv.motion.correct_motion>`       | correction on ADV velocity data         |
 +-----------------------------------+-----------------------------------------+
 | :class:`VelBinner <dolfyn.data.\  | A class for breaking data into          |
 | velocity.VelBinner>`              | 'bins' or 'ensembles', averaging it and |
-|                                   | estimating basic turbulence statistics. |
+|                                   | estimating basic turbulence statistics  |
 +-----------------------------------+-----------------------------------------+
 | :class:`~dolfyn.adv.\             | A class that builds upon `VelBinner`    |
 | turbulence.TurbBinner`            | for calculating turbulence statistics   |

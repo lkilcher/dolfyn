@@ -15,21 +15,21 @@ dat_imu_json = load('data/vector_data_imu01-json.nc')
 dat_burst = load('data/burst_mode01.nc')
 
 
-def data_equiv(dat1, dat2, message=''):
-    if 'principal_heading' in dat1:
-        pa1 = dat1.pop('principal_heading')
-        pa2 = dat2.pop('principal_heading')
-        assert np.abs(pa1 - pa2) < 1e-4, "The principal headings do not agree."
-    assert dat1 == dat2, message
+# def data_equiv(dat1, dat2, message=''):
+#     if 'principal_heading' in dat1:
+#         pa1 = dat1.pop('principal_heading')
+#         pa2 = dat2.pop('principal_heading')
+#         assert np.abs(pa1 - pa2) < 1e-4, "The principal headings do not agree."
+#     assert dat1 == dat2, message
 
 
-def check_except(fn, args, errors=Exception, message=''):
-    try:
-        fn(args)
-    except errors:
-        pass
-    else:
-        raise Exception(message)
+# def check_except(fn, args, errors=Exception, message=''):
+#     try:
+#         fn(args)
+#     except errors:
+#         pass
+#     else:
+#         raise Exception(message)
 
 
 def test_read(make_data=False):
@@ -161,7 +161,7 @@ def test_heading(make_data=False):
 
 def test_turbulence(make_data=False):
     tmp = dat.copy(deep=True)
-    bnr = avm.TurbBinner(20.0, tmp.fs)
+    bnr = avm.TurbBinner(n_bin=20.0, fs=tmp.fs)
     td = bnr(tmp)
 
     if make_data:

@@ -11,8 +11,8 @@ import xarray as xr
 
 class TurbBinner(VelBinner):
     """
-    Computes various averages and turbulence statistics from cleaned
-    ADV data.
+    A class that builds upon `VelBinner` for calculating turbulence 
+    statistics and velocity spectra
 
     Parameters
     ----------
@@ -35,7 +35,7 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        advr : |xr.Dataset|
+        advr : xr.Dataset
           The raw adv dataset to `bin`, average and compute
           turbulence statistics of.
 
@@ -49,7 +49,7 @@ class TurbBinner(VelBinner):
         Returns
         -------
 
-        advb : |xr.Dataset|
+        advb : xr.Dataset
           Returns an 'binned' (i.e. 'averaged') dataset. All
           fields (variables) of the input dataset are averaged in n_bin
           chunks. This object also computes the following items over
@@ -72,8 +72,8 @@ class TurbBinner(VelBinner):
 
           - psd: An xr.DataArray containing the spectra of the velocity
             in radial frequency units. The data-array contains:
-             - spectra : the velocity spectra array (m^2/s/rad))
-             - omega : the radial frequency (rad/s)
+            - spectra : the velocity spectra array (m^2/s/rad))
+            - omega : the radial frequency (rad/s)
 
         """
         # warnings.warn("The instance.__call__ syntax of turbulence averaging"
@@ -116,7 +116,7 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        psd : |xr.DataArray| (...,n_time,n_f)
+        psd : xr.DataArray (...,n_time,n_f)
           The spectrum array [m^2/s/rad] with frequency vector 
           'omega' (rad/s)
 
@@ -128,24 +128,24 @@ class TurbBinner(VelBinner):
 
         Returns
         -------
-        epsilon : np.ndarray (...,n_time)
+        epsilon : xr.DataArray (...,n_time)
           The dissipation rate.
 
         Notes
         -----
-
+        
         This uses the `standard` formula for dissipation:
-
-        .. math:: S(k) = \alpha \epsilon^{2/3} k^{-5/3}
-
-        where :math:`\alpha = 0.5` (1.5 for all three velocity
+            
+        .. math:: S(k) = \\alpha \epsilon^{2/3} k^{-5/3}
+        
+        where :math:`\\alpha = 0.5` (1.5 for all three velocity
         components), `k` is wavenumber and `S(k)` is the turbulent
         kinetic energy spectrum.
-
-        With :math:`k \rightarrow \omega / U` then--to preserve variance--
-        :math:`S(k) = U S(\omega)` and so this becomes:
-
-        .. math:: S(\omega) = \alpha \epsilon^{2/3} \omega^{-5/3} U^{2/3}
+        
+        With :math:`k \\rightarrow \omega / U`, then -- to preserve variance -- 
+        :math:`S(k) = U S(\omega)`, and so this becomes:
+            
+        .. math:: S(\omega) = \\alpha \epsilon^{2/3} \omega^{-5/3} U^{2/3}
 
         LT83 : Lumley and Terray "Kinematics of turbulence convected
         by a random wave field" JPO, 1983, 13, 2000-2007.
@@ -175,11 +175,11 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        vel_raw : |xr.DataArray|
+        vel_raw : xr.DataArray
           The raw velocity data (last dimension time) upon 
           which to perform the SF technique. 
 
-        U_mag : |xr.DataArray|
+        U_mag : xr.DataArray
           The bin-averaged horizontal velocity
 
         fs : float
@@ -193,7 +193,7 @@ class TurbBinner(VelBinner):
         Returns
         -------
 
-        epsilon : |xr.DataArray|
+        epsilon : xr.DataArray
           The dissipation rate
 
         """
@@ -280,10 +280,10 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        dat_raw : |xr.Dataset|
+        dat_raw : xr.Dataset
           The raw adv dataset
           
-        dat_avg : |xr.Dataset|
+        dat_avg : xr.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
           'do_avg'). The spectra (psd) and basic turbulence statistics 
           ('tke_vec' and 'stress_vec') must already be computed.
@@ -292,7 +292,7 @@ class TurbBinner(VelBinner):
         -----
 
         TE01 : Trowbridge, J and Elgar, S, "Turbulence measurements in
-               the Surf Zone" JPO, 2001, 31, 2403-2417.
+        the Surf Zone" JPO, 2001, 31, 2403-2417.
                
         """
 
@@ -342,10 +342,10 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        a_cov : |xr.DataArray|
+        a_cov : xr.DataArray
           The auto-covariance array (i.e. computed using `calc_acov`).
 
-        U_mag : |xr.DataArray|
+        U_mag : xr.DataArray
           The bin-averaged horizontal velocity
 
         fs : float
@@ -373,17 +373,17 @@ class TurbBinner(VelBinner):
         return xr.DataArray(L_int, attrs={'units':'m'})
 
 
-def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
+def calc_turbulence(ds_raw, n_bin, n_fft=None, out_type=None,
                     omega_range_epsilon=[6.28, 12.57],
                     window='hann'):
     """
-    Compute a suite of turbulence statistics for the input data
-    advr, and return a `binned` data object.
+    Functional version of `TurbBinner` that computes a suite of turbulence 
+    statistics for the input dataset, and returns a `binned` data object.
 
     Parameters
     ----------
 
-    advr : |xr.Dataset|
+    ds_raw : xr.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
 
@@ -397,7 +397,7 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
     Returns
     -------
 
-    advb : |xr.Dataset|
+    advb : xr.Dataset
       Returns an 'binned' (i.e. 'averaged') data object. All
       fields (variables) of the input data object are averaged in n_bin
       chunks. This object also computes the following items over
@@ -418,16 +418,14 @@ def calc_turbulence(advr, n_bin, n_fft=None, out_type=None,
       - U_std : The standard deviation of the horizontal
         velocity `U_mag`.
 
-      - psd : |xr.DataArray| containing the spectra of the velocity
+      - psd : xr.DataArray containing the spectra of the velocity
         in radial frequency units. The data-array contains:
-         - vel : the velocity spectra array (m^2/s/rad))
-         - omega : the radial frequncy (rad/s)
+        - vel : the velocity spectra array (m^2/s/rad))
+        - omega : the radial frequncy (rad/s)
 
     """
-    calculator = TurbBinner(n_bin, fs=advr.fs, n_fft=n_fft)
+    calculator = TurbBinner(n_bin, fs=ds_raw.fs, n_fft=n_fft)
     
-    dat_binned = calculator(advr, out_type=out_type,
-                            omega_range_epsilon=omega_range_epsilon,
-                            window=window)
-    
-    return dat_binned
+    return calculator(ds_raw, out_type=out_type,
+                      omega_range_epsilon=omega_range_epsilon,
+                      window=window)

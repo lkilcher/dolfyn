@@ -1,4 +1,4 @@
-ADP/ADCP Module
+ADP Module
 =====================
 
 .. automodule:: dolfyn.adp.api
@@ -15,8 +15,10 @@ Contains functions for cleaning ADP/ADCP data.
 	:nosignatures:
 	
 	~dolfyn.adp.clean.find_surface
-	~dolfyn.adp.clean.nan_above_surface
+	~dolfyn.adp.clean.surface_from_P
+	~dolfyn.adp.clean.nan_beyond_surface
 	~dolfyn.adp.clean.vel_exceeds_thresh
+	~dolfyn.adp.clean.correlation_filter
 	~dolfyn.adp.clean.medfilt_orientation
 	~dolfyn.adp.clean.fillgaps_time
 	~dolfyn.adp.clean.fillgaps_depth

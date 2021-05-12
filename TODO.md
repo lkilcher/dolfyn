@@ -13,17 +13,17 @@ Testing
 Coverage
 - Look at coverage report.
 
-Add tests to confirm that matlab file I/O works.
-
 Default to not including test folder (or just data?) in a release.
+
+Add tests to confirm that all *scripts* work.
+
+Tests should use API-level functions.
+
+Coverage
+- Add averaging tests for ADP.
 
 Documentation
 =============
-
-Create a file I/O page
-- Document read function (io.api.read)
-  - What types of data files does this function read?
-    - add 'timezone' handling to `dat.props`?
 
 Create a 'contributing to DOLfYN' page.
 - Email me!
@@ -31,17 +31,6 @@ Create a 'contributing to DOLfYN' page.
 
 - Document need for git-lfs. (Are there other options? Maybe a `get_test_data.py`?)
 - Document how to run tests. (switch to `py.test`?)
-
-Testing
-=======
-
-Add tests to confirm that all *scripts* work.
-
-Tests should use API-level functions.
-- This means I need to better define the API.
-
-Coverage
-- Add averaging tests for ADP.
 
 Packaging
 =========
@@ -55,7 +44,7 @@ Build a conda install
 File I/O
 ========
 
-Add support for csv files? What do these look like?
+Fix Nortek burst read hack
 
 Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
 
@@ -84,11 +73,13 @@ What about dropping data from averaging? Is this something we should support? Vi
 
 Depth of adcp for range for nortek instruments? - not taken into account natively by Nortek - add to documentation
 
-``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
-					 ADCP structure function?
+Support for calculating principal heading by ensemble
+
 Support for motion-correcting ADCP data.
 
-
+``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
+					 ADCP structure function?
+					 
 Ideas
 =====
 
