@@ -37,11 +37,11 @@ config = dict(
         #'Topic :: Scientific/Engineering :: Earth Science',
     ],
     url='http://github.com/lkilcher/dolfyn',
-    packages=find_packages(exclude=['*.test']),
+    packages=find_packages(exclude=['*.test', '*.h5']),
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.meta', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
-    install_requires=['numpy', 'scipy', 'h5py', 'pyDictH5'],
+    install_requires=['numpy', 'scipy', 'xarray'],
     provides=['dolfyn', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],
     # entry_points = {
@@ -59,5 +59,6 @@ config = dict(
 if include_tests:
     config['packages'].append('dolfyn.test')
     config['package_data'].update({'dolfyn.test': ['data/*']},)
+    config['packages'].append('dolfyn.h5')
 
 setup(**config)

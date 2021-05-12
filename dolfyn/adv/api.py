@@ -19,6 +19,10 @@ data. It contains:
 |                                   | cleaning, "despiking" and filling       |
 |                                   | NaN's in data                           |
 +-----------------------------------+-----------------------------------------+
+| :func:`set_inst2head_rotmat       | A function for setting inst2head        |
+| <dolfyn.rotate.base.\             | rotation matrix for motion-correction   |
+| set_inst2head_rotmat>`            | if not set in userdata.json file        |
++-----------------------------------+-----------------------------------------+
 | :func:`correct_motion <dolfyn.\   | A function for performing motion        |
 | adv.motion.correct_motion>`       | correction on ADV velocity data         |
 +-----------------------------------+-----------------------------------------+
@@ -44,6 +48,7 @@ Examples
 
 from ..io.api import read, load
 from ..rotate.main import rotate2
+from ..rotate.base import set_inst2head_rotmat
 from . import clean
 from .motion import correct_motion
 from .turbulence import calc_turbulence, TurbBinner

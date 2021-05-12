@@ -4,7 +4,6 @@ The base module for the io package.
 
 import numpy as np
 import xarray as xr
-from ..data import time
 import six
 import json
 import io
@@ -59,9 +58,6 @@ def _read_userdata(fname):
     for nm in ['inst2head_rotmat', 'inst2head_vec']:
         if nm in data:
             data[nm] = np.array(data[nm])
-    if 'time_range' in data:
-        if isinstance(data['time_range'][0], six.string_types):
-            data['time_range'] = time.isotime2mpltime(data['time_range'])
     if 'coord_sys' in data:
         raise Exception("The instrument coordinate system "
                         "('coord_sys') should not be specified in "

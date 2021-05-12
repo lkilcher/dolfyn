@@ -41,10 +41,9 @@ ax.set_title('Raw vs Despiked Data')
 plt.legend(loc='upper right')
 plt.show()
 
-
-## Perform motion correction
 data_cleaned = data.copy(deep=True)
 
+## Perform motion correction
 data = avm.correct_motion(data, accel_filter, to_earth=False)
 # For reference, dolfyn defines ‘inst’ as the IMU frame of reference, not 
 # the ADV sensor head
@@ -96,7 +95,7 @@ mc_spec = ensemble_tool.calc_vel_psd(data.vel, freq_units='Hz')
 unm_spec = ensemble_tool.calc_vel_psd(data_uncorrected.vel, freq_units='Hz')
 # Find motion spectra from IMU velocity
 uh_spec = ensemble_tool.calc_vel_psd(data['velacc'] + data['velrot'], 
-                                        freq_units='Hz')
+                                     freq_units='Hz')
 
 # Plot U, V, W spectra
 U = ['u','v','w'] # u:0, v:1, w:2

@@ -12,7 +12,7 @@ import h5py as h5
 import numpy as np
 from . import base
 from ..data import base_legacy as db
-from dolfyn.data import time as dt
+from dolfyn.h5.data import time as dt
 import copy
 from six import string_types
 import sys

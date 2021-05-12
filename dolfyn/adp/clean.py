@@ -57,9 +57,7 @@ def find_surface(adcpo, thresh=10, nfilt=None):
 
 def surface_from_P(adcpo, salinity=35):
     '''
-    Approximates distance to water surface above ADCP from the pressure sensor
-    Requires that the instrument's pressure sensor was calibrated/zeroed
-    before deployment to remove atmospheric pressure.
+    Approximates distance to water surface above ADCP from the pressure sensor.
 
     Parameters
     ----------
@@ -67,6 +65,11 @@ def surface_from_P(adcpo, salinity=35):
       The adcp dataset to clean.
     salinity: numeric
       Water salinity in psu.
+      
+    Notes
+    -----
+    Requires that the instrument's pressure sensor was calibrated/zeroed
+    before deployment to remove atmospheric pressure.
       
     '''
     if hasattr(adcpo, 'salinity'):

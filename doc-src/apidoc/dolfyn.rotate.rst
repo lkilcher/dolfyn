@@ -14,8 +14,7 @@ Primary functions of note for users, others are documented for reference:
 	
 	~dolfyn.rotate.main.rotate2
 	~dolfyn.rotate.base.calc_principal_heading
-	~dolfyn.data.velocity.Velocity.set_declination
-	~dolfyn.data.velocity.Velocity.set_inst2head_rotmat
+	~dolfyn.rotate.base.set_declination
 
 .. automodule:: dolfyn.rotate.main
     :members:

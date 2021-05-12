@@ -47,10 +47,10 @@ t_range_inds = (t_range[0] < dat_raw.time) & (dat_raw.time < t_range[1])
 dat = dat_raw.isel(time=t_range_inds)
 
 # Datetime for plotting
-dt = time.epoch2date(dat.time)
+t = time.epoch2date(dat.time)
 
 # Set the inst2head rotation matrix and vector
-dat = dat.Veldata.set_inst2head_rotmat(inst2head_rotmat)
+dat = avm.set_inst2head_rotmat(dat, inst2head_rotmat)
 dat.attrs['inst2head_vec'] = inst2head_vec
 
 # Then clean the file using the Goring+Nikora method:
@@ -64,10 +64,10 @@ fig.clf()
 ax = fig.add_axes([.14, .14, .8, .74])
 
 # Plot the raw (unscreened) data:
-ax.plot(dt, dat_raw.Veldata.u, 'r-', rasterized=True)
+ax.plot(t, dat_raw.Veldata.u, 'r-', rasterized=True)
 
 # Plot the screened data:
-ax.plot(dt, dat.Veldata.u, 'g-', rasterized=True)
+ax.plot(t, dat.Veldata.u, 'g-', rasterized=True)
 bads = np.abs(dat.Veldata.u - dat_raw.Veldata.u.isel(time=t_range_inds))
 ax.text(0.55, 0.95,
         "%0.2f%% of the data were 'cleaned'\nby the Goring and Nikora method."

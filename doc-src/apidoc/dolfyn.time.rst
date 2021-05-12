@@ -8,13 +8,13 @@ are listed below.
 .. autosummary::
 	:nosignatures:
 	
-	~dolfyn.data.time.epoch2date
-	~dolfyn.data.time.date2str
-	~dolfyn.data.time.date2epoch
-	~dolfyn.data.time.date2matlab
-	~dolfyn.data.time.matlab2date
+	~dolfyn.time.epoch2date
+	~dolfyn.time.date2str
+	~dolfyn.time.date2epoch
+	~dolfyn.time.date2matlab
+	~dolfyn.time.matlab2date
 
-.. automodule:: dolfyn.data.time
+.. automodule:: dolfyn.time
     :members:
     :undoc-members:
     :show-inheritance:

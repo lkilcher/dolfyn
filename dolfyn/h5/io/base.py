@@ -5,7 +5,7 @@ The base module for the io package.
 from os.path import expanduser
 import numpy as np
 from ..data import base as db
-from dolfyn.data import time
+from dolfyn.h5.data import time
 import six
 import json
 import io

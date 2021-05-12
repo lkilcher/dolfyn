@@ -15,4 +15,4 @@ DOLfYN Package
    dolfyn.rotate
    dolfyn.binners
    dolfyn.shortcuts
-   dolfyn.data.time
+   dolfyn.time

@@ -9,7 +9,7 @@ from struct import unpack
 import warnings
 from . import nortek_defs
 from .base import WrongFileType, read_userdata, create_dataset, handle_nan
-from ..data import time
+from .. import time
 from datetime import datetime
 from ..tools import misc as tbx
 from ..rotate.vector import calc_omat as _calc_omat

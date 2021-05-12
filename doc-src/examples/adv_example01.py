@@ -11,7 +11,7 @@ dat_cln = avm.clean.cleanFill(dat, mask, method='cubic')
 
 # Rotate that data from the instrument to earth frame:
 # First set the magnetic declination
-dat_cln = dat_cln.Veldata.set_declination(10) # 10 degrees East
+dat_cln = dlfn.set_declination(dat_cln, 10) # 10 degrees East
 dat_earth = dlfn.rotate2(dat_cln, 'earth')
 
 # Rotate it into a 'principal axes frame':

@@ -2,12 +2,8 @@ name: dolfyn
 dependencies:
     - python=3.6
     - numpy
-    - h5py
-    - matplotlib
     - scipy
+    - xarray
     - six
     - sphinx
-    - xarray
     - pip
-    - pip:
-        - "--editable=git+https://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5"

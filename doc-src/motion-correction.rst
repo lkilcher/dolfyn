@@ -181,10 +181,6 @@ An example 'userdata.json' file corresponding to Figure 2 would look like:
 	                     [ 0, 1, 0],
 	                     [-1, 0, 0]],
 	 "inst2head_vec": [0.20, 0, 0.04],
-	 "declination": 15.87,
-	 "lat": 48.08,
-	 "lon": -123.04,
-	 "depth": 8
 	}
 
 

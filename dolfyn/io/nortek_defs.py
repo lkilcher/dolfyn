@@ -1,4 +1,3 @@
-from ..data import time
 import numpy as np
 
 nan = np.nan

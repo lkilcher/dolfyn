@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.linalg import det, inv
+from scipy.spatial.transform import Rotation as R
 
 
 def calc_principal_heading(vel, tidal_mode=True):
@@ -51,6 +52,70 @@ def calc_principal_heading(vel, tidal_mode=True):
     return np.round((90 - np.rad2deg(pang)), decimals=4)
 
 
+def set_declination(ds, declin):
+    """
+    Set the magnetic declination
+
+    Parameters
+    ----------
+    declination : float
+       The value of the magnetic declination in degrees (positive
+       values specify that Magnetic North is clockwise from True North)
+
+    Returns
+    ----------
+    ds : xarray.Dataset
+        Dataset adjusted for the magnetic declination
+        
+    Notes
+    -----
+    This method modifies the data object in the following ways:
+
+    - If the dataset is in the *earth* reference frame at the time of
+      setting declination, it will be rotated into the "*True-East*,
+      *True-North*, Up" (hereafter, ETU) coordinate system
+
+    - ``dat['orientmat']`` is modified to be an ETU to
+      instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
+      XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
+      frame will now be to/from this ETU coordinate system.
+
+    - The value of the specified declination will be stored in
+      ``dat.attrs['declination']``
+
+    - ``dat['heading']`` is adjusted for declination
+      (i.e., it is relative to True North).
+
+    - If ``dat.attrs['principal_heading']`` is set, it is
+      adjusted to account for the orientation of the new 'True'
+      earth coordinate system (i.e., calling set_declination on a
+      data object in the principal coordinate system, then calling
+      dat.rotate2('earth') will yield a data object in the new
+      'True' earth coordinate system)
+
+    """
+    return ds.Veldata.set_declination(declin)
+
+
+def set_inst2head_rotmat(adv_ds, rotmat):
+    """
+    Set the instrument to head rotation matrix for the Nortek ADV if it
+    hasn't already been set through a '.userdata.json' file.
+    
+    Parameters
+    ----------
+    rotmat : float
+        3x3 rotation matrix
+    
+    Returns
+    ----------
+    ds : xarray.Dataset
+        Dataset with rotation matrix applied
+        
+    """
+    return adv_ds.Veldata.set_inst2head_rotmat(rotmat)
+
+
 class BadDeterminantWarning(UserWarning):
     """A warning for the determinant is not equal to 1.
     """
@@ -79,6 +144,64 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
     if rotmat.ndim > 2:
         rotmat = np.transpose(rotmat)
     return np.abs(det(rotmat) - 1) < thresh
+
+
+def _set_coords(ds, ref_frame, forced=False):
+    '''
+    Check the current reference frame and adjust xarray coords/dims 
+    as necessary.
+    Makes sure assigned dataarray coordinates match what DOLfYN is reading in.
+    
+    '''
+    make = ds.Veldata._make_model
+    
+    XYZ = ['X','Y','Z']
+    ENU = ['E','N','U']
+    beam = list(range(1,ds.vel.shape[0]+1))
+    principal = ['streamwise','x-stream','vert']
+    
+    # check make/model
+    if 'rdi' in make:
+        inst = ['X','Y','Z','err']
+        earth = ['E','N','U','err']
+        princ = ['streamwise','x-stream','vert','err']
+        
+    elif 'nortek' in make:
+        if 'signature' in make or 'ad2cp' in make:
+            inst = ['X','Y','Z1','Z2']
+            earth = ['E','N','U1','U2']
+            princ = ['streamwise','x-stream','vert1','vert2']
+
+        else: # AWAC or Vector
+            inst = XYZ
+            earth = ENU
+            princ = principal
+    
+    orient = {'beam':beam, 'inst':inst, 'ship':inst, 'earth':earth,
+              'principal':princ}
+    orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
+                 'principal':principal}
+    
+    if forced:
+        ref_frame += '-forced'
+    
+    # update 'orient' and 'orientIMU' dimensions
+    ds = ds.assign_coords({'orient': orient[ref_frame]})
+    if hasattr(ds, 'accel'):
+        ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
+    ds.orient.attrs['ref_frame'] = ref_frame
+    ds.attrs['coord_sys'] = ref_frame    
+    
+    # This is essentially one extra line to scroll through
+    # Going to drop at some point
+    if hasattr(ds, 'coord_sys_axes'):
+        ds.attrs.pop('coord_sys_axes')
+    if hasattr(ds, 'coord_sys_axes_echo'):
+        ds.attrs.pop('coord_sys_axes_echo')
+    if hasattr(ds, 'coord_sys_axes_bt'):
+        ds.attrs.pop('coord_sys_axes_bt')
+    
+    return ds
 
 
 def beam2inst(dat, reverse=False, force=False):
@@ -275,59 +398,17 @@ def orient2euler(omat):
     )
 
 
-def _set_coords(ds, ref_frame, forced=False):
+def quat_omat(quaternions):
     '''
-    Check the current reference frame and adjust xarray coords/dims 
-    as necessary.
-    Makes sure assigned dataarray coordinates match what DOLfYN is reading in.
+    Calculate orientation from Nortek AHRS quaternions
     
     '''
-    make = ds.Veldata._make_model
-    
-    XYZ = ['X','Y','Z']
-    ENU = ['E','N','U']
-    beam = list(range(1,ds.vel.shape[0]+1))
-    principal = ['streamwise','x-stream','vert']
-    
-    # check make/model
-    if 'rdi' in make:
-        inst = ['X','Y','Z','err']
-        earth = ['E','N','U','err']
-        princ = ['streamwise','x-stream','vert','err']
+    omat = np.empty((3, 3, quaternions.time.size))
+    for i in range(quaternions.time.size):
+        r = R.from_quat([quaternions.isel(q=1, time=i), 
+                         quaternions.isel(q=2, time=i), 
+                         quaternions.isel(q=3, time=i), 
+                         quaternions.isel(q=0, time=i)])
+        omat[...,i] = r.as_matrix()
         
-    elif 'nortek' in make:
-        if 'signature' in make or 'ad2cp' in make:
-            inst = ['X','Y','Z1','Z2']
-            earth = ['E','N','U1','U2']
-            princ = ['streamwise','x-stream','vert1','vert2']
-
-        else: # AWAC or Vector
-            inst = XYZ
-            earth = ENU
-            princ = principal
-    
-    orient = {'beam':beam, 'inst':inst, 'ship':inst, 'earth':earth,
-              'principal':princ}
-    orientIMU = {'beam':XYZ, 'inst':XYZ, 'ship':XYZ, 'earth':ENU,
-                 'principal':principal}
-    
-    if forced:
-        ref_frame += '-forced'
-    
-    # update 'orient' and 'orientIMU' dimensions
-    ds = ds.assign_coords({'orient': orient[ref_frame]})
-    if hasattr(ds, 'accel'):
-        ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
-    ds.orient.attrs['ref_frame'] = ref_frame
-    ds.attrs['coord_sys'] = ref_frame    
-    
-    # This is essentially one extra line to scroll through
-    # Going to drop at some point
-    if hasattr(ds, 'coord_sys_axes'):
-        ds.attrs.pop('coord_sys_axes')
-    if hasattr(ds, 'coord_sys_axes_echo'):
-        ds.attrs.pop('coord_sys_axes_echo')
-    if hasattr(ds, 'coord_sys_axes_bt'):
-        ds.attrs.pop('coord_sys_axes_bt')
-    
-    return ds
+    return omat

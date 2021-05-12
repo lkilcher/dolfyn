@@ -67,7 +67,9 @@ def inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                 "Data must be in the '%s' frame when using this function" %
                 cs_now)
 
-    if hasattr(adcpo, 'orientmat'):
+    # if ahrs:
+    #     rmat = rotb.quat_omat(adcpo['quaternion'])
+    if 'orientmat' in adcpo:
         rmat = adcpo['orientmat'].values
     else:
         rmat = euler2orient(adcpo['heading'].values, adcpo['pitch'].values,
