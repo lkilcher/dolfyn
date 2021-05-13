@@ -6,9 +6,9 @@ libraries for reading binary Nortek(tm) and Teledyne-RDI(tm) data
 files.
 
 For details visit
-the [DOLfYN homepage](http://lkilcher.github.io/dolfyn/).  For
+the [DOLfYN homepage](https://dolfyn-xarray.readthedocs.io/en/latest/).  For
 *INSTALL* instructions, visit
-the [install page](http://lkilcher.github.io/dolfyn/install.html).
+the [install page](https://dolfyn-xarray.readthedocs.io/en/latest/install.html).
 
 License
 =======

@@ -27,7 +27,7 @@ config = dict(
     name='dolfyn',
     version=version['__version__'],
     description='Doppler Ocean Library for pYthoN.',
-    author='Levi Kilcher',
+    author='DOLfYN Developers',
     author_email='levi.kilcher@nrel.gov',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -36,12 +36,12 @@ config = dict(
         'Natural Language :: English',
         #'Topic :: Scientific/Engineering :: Earth Science',
     ],
-    url='http://github.com/lkilcher/dolfyn',
-    packages=find_packages(exclude=['*.test', '*.h5']),
+    url='http://github.com/jmcvey3/dolfyn',
+    packages=find_packages(exclude=['dolfyn.test','dolfyn.h5','dolfyn.h5.*',]),
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
-    #           'dolfyn.meta', 'dolfyn.tools', 'dolfyn.adp', ],
+    #           'dolfyn.rotate', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
-    install_requires=['numpy', 'scipy', 'xarray'],
+    install_requires=['numpy', 'scipy', 'xarray', 'six'],
     provides=['dolfyn', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],
     # entry_points = {
@@ -49,8 +49,8 @@ config = dict(
     #    ['motcorrect_vector = dolfyn.adv.scripts:motcorrect_vector',
     #     ],
     #    },
-    dependency_links=['https://pypi.python.org/pypi/',
-                      'https://github.com/lkilcher/pyDictH5/tarball/master#egg=pyDictH5'],
+    dependency_links=['https://pypi.python.org/pypi/',]
+                      #'https://github.com/lkilcher/pyDictH5/tarball/master#egg=pyDictH5'],
     # cmdclass =
     # {'install_data':chmod_install_data,'install':chmod_install,},
 )
@@ -60,5 +60,6 @@ if include_tests:
     config['packages'].append('dolfyn.test')
     config['package_data'].update({'dolfyn.test': ['data/*']},)
     config['packages'].append('dolfyn.h5')
+    config['packages'].append('dolfyn.h5.*')
 
 setup(**config)
