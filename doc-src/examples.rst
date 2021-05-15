@@ -1,5 +1,5 @@
 Example Scripts
-...............
+===============
 
 ADCP Data
 """""""""
@@ -20,3 +20,18 @@ principal flow axes frame, 4) calculate fundamental turbulence
 statistics.
 
 .. literalinclude:: examples/adv_example01.py
+
+
+Motion Correction Examples
+..........................
+
+The two following examples depict the standard workflow for analyzing
+ADV-IMU data using |dlfn|.
+
+ADV Motion Correction Ex1
+"""""""""""""""""""""""""
+.. literalinclude:: ../examples/adv_example.py
+
+ADV Motion Correction Ex2
+"""""""""""""""""""""""""
+.. literalinclude:: ../examples/adv_example2.py

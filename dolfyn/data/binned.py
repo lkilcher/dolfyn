@@ -235,7 +235,7 @@ class TimeBinner:
         return dims_list, coords_dict
 
 
-    def do_avg(self, rawdat, outdat=None, names=None, 
+    def do_avg(self, rawdat, out=None, names=None, 
                n_time=None, noise=[0,0,0]):
         """Average data into bins/ensembles
 
@@ -243,7 +243,7 @@ class TimeBinner:
         ----------
         rawdat : raw_data_object
            The raw data structure to be binned
-        outdat : avg_data_object
+        out : avg_data_object
            The bin'd (output) data object to which averaged data is added.
         names : list of strings
            The names of variables to be averaged.  If `names` is None,
@@ -255,8 +255,8 @@ class TimeBinner:
 
         # if n_time is None:
         #     n_time = rawdat.n_time
-        if outdat is None:
-            outdat = type(rawdat)()
+        if out is None:
+            out = type(rawdat)()
             props['description'] = 'Binned averages calculated from ' \
                                     'ensembles of size "n_bin"'
             props['fs'] = self.fs
@@ -277,7 +277,7 @@ class TimeBinner:
                     
             # create Dataset
             try:
-                outdat[ky] = xr.DataArray(self._mean(rawdat[ky].values),
+                out[ky] = xr.DataArray(self._mean(rawdat[ky].values),
                                           coords=coords_dict,
                                           dims=dims_list,
                                           attrs=rawdat[ky].attrs)
@@ -287,17 +287,17 @@ class TimeBinner:
             # +1 for standard deviation
             std = (np.std(self.reshape(rawdat.Veldata.U_mag.values), axis=-1,
                           dtype=np.float64) - (noise[0] + noise[1])/2)
-            outdat['U_std'] = xr.DataArray(
+            out['U_std'] = xr.DataArray(
                         std,
                         dims=rawdat.vel.dims[1:],
                         attrs={'units':'m/s',
                                'description':'horizontal velocity std dev'})
         
-        outdat.attrs = props
-        return outdat
+        out.attrs = props
+        return out
 
 
-    def do_var(self, rawdat, outdat=None, names=None, suffix='_var'):
+    def do_var(self, rawdat, out=None, names=None, suffix='_var'):
         """
         Find the variance of data in bins/ensembles
 
@@ -306,7 +306,7 @@ class TimeBinner:
         rawdat : xr.Dataset
            The raw data structure to be binned.
 
-        outdat : xr.Dataset
+        out : xr.Dataset
            The binned (output) dataset to which variance data is added.
 
         names : list of strings
@@ -317,8 +317,8 @@ class TimeBinner:
         props = {}
         # if n_time is None:
         #     n_time = rawdat.n_time
-        if outdat is None:
-            outdat = type(rawdat)()
+        if out is None:
+            out = type(rawdat)()
             props['description'] = 'Variances calculated from ensembles '\
                                     'of size "n_bin"'
             props['n_bin'] = self.n_bin          
@@ -337,15 +337,15 @@ class TimeBinner:
                     
             # create dataarray
             try:
-                outdat[ky] = xr.DataArray(self._var(rawdat[ky].values),
+                out[ky] = xr.DataArray(self._var(rawdat[ky].values),
                                           coords=coords_dict,
                                           dims=dims_list,
                                           attrs=rawdat[ky].attrs)
             except:
                 pass
         
-        outdat.attrs = props
-        return outdat
+        out.attrs = props
+        return out
 
     # def _check_indata(self, rawdat):
     #     if np.any(np.array(rawdat.shape) == 0):

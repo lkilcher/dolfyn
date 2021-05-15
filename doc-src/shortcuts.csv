@@ -9,11 +9,11 @@ tau_ij, m\ :sup:`2`/s\ :sup:`2`, Reynold's stress tensor
 tke, m\ :sup:`2`/s\ :sup:`2`, Turbulent kinetic energy (half the sum of the data in `'tke_vec'`)
 E_coh, m\ :sup:`2`/s\ :sup:`2`, Coherent turbulent kinetic energy (root-sum-square of Reynold's stresses)
 I, ---, Turbulence Intensity: ratio of U_std to horizontal velocity magnitude
-Itke, ---, TKE Intensity: Ratio of sqrt(2*tke) to horizontal velocity magnitude
+I_tke, ---, TKE Intensity: Ratio of sqrt(2*tke) to horizontal velocity magnitude
 upup\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][0]``
 vpvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][1]``
 wpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'][2]``
-upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][0]``
-upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][1]``
-vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'][2]``
+upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'][0]``
+upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'][1]``
+vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'][2]``
 k, 1/m, wavenumber calculated from spectral frequency vector and velocity

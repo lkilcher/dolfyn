@@ -29,9 +29,9 @@ def test_inst2head_rotmat():
     td = tr.dat.copy(deep=True)
 
     #Swap x,y, reverse z
-    td.Veldata.set_inst2head_rotmat([[0, 1, 0],
-                                     [1, 0, 0],
-                                     [0, 0, -1]])
+    td = td.Veldata.set_inst2head_rotmat([[0, 1, 0],
+                                          [1, 0, 0],
+                                          [0, 0, -1]])
 
     # assert ((td.Veldata.u == tr.dat.Veldata.v).all() and
     #         (td.Veldata.v == tr.dat.Veldata.u).all() and
@@ -45,7 +45,7 @@ def test_inst2head_rotmat():
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
     R = euler2orient(20, 30, 60, units='degrees') # arbitrary angles
-    td = td.Veldata.set_inst2head_rotmat(R)
+    td = td.Veldata.set_inst2head_rotmat(R.T)
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R.T, tr.dat.vel)

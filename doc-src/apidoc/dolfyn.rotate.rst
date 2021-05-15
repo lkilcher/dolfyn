@@ -13,8 +13,8 @@ Primary functions of note for users, others are documented for reference:
 	:nosignatures:
 	
 	~dolfyn.rotate.main.rotate2
-	~dolfyn.rotate.base.calc_principal_heading
 	~dolfyn.rotate.base.set_declination
+	~dolfyn.rotate.base.calc_principal_heading
 
 .. automodule:: dolfyn.rotate.main
     :members:

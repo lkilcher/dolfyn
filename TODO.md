@@ -13,8 +13,6 @@ Testing
 Coverage
 - Look at coverage report.
 
-Default to not including test folder (or just data?) in a release.
-
 Add tests to confirm that all *scripts* work.
 
 Tests should use API-level functions.
@@ -73,7 +71,7 @@ What about dropping data from averaging? Is this something we should support? Vi
 
 Depth of adcp for range for nortek instruments? - not taken into account natively by Nortek - add to documentation
 
-Support for calculating principal heading by ensemble
+Support for calculating principal heading by ensemble?
 
 Support for motion-correcting ADCP data.
 

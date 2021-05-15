@@ -133,11 +133,11 @@ def _rotate_head2inst(advo, reverse=False):
     if not _check_inst2head_rotmat(advo): # RAISE on bad values.
         # This object doesn't have a head2inst_rotmat, so we do nothing.
         return advo
-    if not reverse: # head->inst
-        # This is usually what we want.
+    if reverse: 
         # transpose of inst2head gives head->inst
         advo['vel'].values = np.dot(advo['inst2head_rotmat'].T, advo['vel'])
-    else:
+    else: # head->inst
+        # velocity is recorded by Nortek in inst coordinates
         advo['vel'].values = np.dot(advo['inst2head_rotmat'], advo['vel'])
 
     return advo

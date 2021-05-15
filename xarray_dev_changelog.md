@@ -113,6 +113,7 @@ Xarray DOLfYN to MHKiT Changelog
 	- Tests against h5 - done
 		- earth2principal fails when xarray's built in mean (np.nanmean) fills in values within principal heading calculation
 		- dimension mismatch affects motion correction filters
+	- Testing and h5 folders not included in setup.py
 
 
 - Notes:

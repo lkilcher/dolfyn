@@ -86,8 +86,6 @@ release = ver.__version__
 rst_prolog = """
 .. |dlfn| replace:: DOLfYN
 .. |np.ndarray| replace:: :class:`numpy.ndarray`
-.. |xr.DataArray| replace:: :class: 'xarray.dataarray'
-.. |xr.Dataset| replace:: :class: 'xarray.dataset'
 """
 
 extlinks = {'repo': ('http://github.com/jmcvey3/dolfyn/%s', None)}

@@ -17,11 +17,11 @@ contaminates motion estimates at those frequencies.
 This documentation is designed to document the methods for performing
 motion correction of ADV-IMU measurements. The accuracy and
 applicability of these measurements is beyond the scope of this
-documentation (journal articles are forthcoming).
+documentation [Harding_etal_2017]_, [Kilcher_etal_2017]_.
 
-Nortek's Signature ADCP's are now also available with an IMU, but
-|dlfn| does not yet support motion correction of ADP data. I hope to
-remedy this soon.
+Nortek's Signature ADCP's are now also available with an AHRS (altitude
+and heading reference system), but |dlfn| does not yet support motion 
+correction of ADCP data.
 
 Pre-Deployment Requirements
 ...........................
@@ -51,20 +51,20 @@ and configured correctly:
      'inst' coordinate system, to the ADV
      'head' coordinate system. For fixed-head ADVs this is the identify
      matrix, but for cable-head ADVs it is an arbitrary unimodular
-     (determinant of 1) matrix. This property must be in the
-     ``dat.props`` in order to do motion correction.
+     (determinant of 1) matrix. This property must be in
+     ``dat.data_vars`` in order to do motion correction.
 
    inst2head_vec
      The 3-element vector that specifies the position of the ADV head in
      the inst coordinate system (Figure 1). This property must be in
-     ``dat.props`` in order to do motion correction.
+     ``dat.attrs`` in order to do motion correction.
 
    These variables are set in either the `userdata.json file
    <json-userdata>`_ (prior to calling ``dolfyn.read``), or by setting
    them explicitly after the data file has been read::
 
      dat.set_inst2head_rotmat(<3x3 rotation matrix>)
-     dat.props['inst2head_vec'] = [3-element vector]
+     dat.attrs['inst2head_vec'] = [3-element vector]
      
 .. figure:: pic/adv_coord_sys3_warr.png
    :align: center
@@ -82,6 +82,24 @@ and configured correctly:
    \parallel - \hat{z}^*` , :math:`\hat{y}^\mathrm{head} \parallel
    -\hat{y}^*` , and :math:`\hat{z}^\mathrm{head} \parallel
    -\hat{x}^*` .
+   
+.. figure:: pic/turbulence_torpedo.png
+   :align: center
+   :scale: 60%
+   :alt: ADV mounted on a Columbus-type sounding weight.
+   
+   ADV mounted on a Columbus-type sounding weight.
+
+An example 'userdata.json' file corresponding to Figure 2 would look like:
+
+.. code-block:: text
+
+	{"inst2head_rotmat": [[ 0, 0,-1],
+	                      [ 0, 1, 0],
+	                      [ 1, 0, 0]],
+	 "inst2head_vec": [0.20, 0, 0.04],
+	}
+
 
 Data processing
 ...............
@@ -96,15 +114,15 @@ correction is fairly simple, you can either:
 1. Utilize the |dlfn| api perform motion-correction processing
    explicitly in Python::
 
-     import dolfyn.adv as adv
+     import dolfyn.adv.api as avm
 
    a. Load your data file, for example::
 
-        dat = adv.read('vector_data_imu01.vec')
+        dat = avm.read('vector_data_imu01.vec')
 
    b. Then perform motion correction::
 
-        adv.motion.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
+        avm.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
 
 2. For users who want to perform motion correction with minimal Python
    scripting, the :repo:`motcorrect_vectory.py
@@ -156,44 +174,20 @@ period). By default, |dlfn| uses a value of 0.03 Hz. For more details
 on choosing the appropriate value for a particular application, please
 see [Kilcher_etal_2016]_.
 
+
 .. [Kilcher_etal_2016] Kilcher, L.; Thomson, J.; Talbert, J.; DeKlerk, A.; 2016,
    "Measuring Turbulence from Moored Acoustic
    Doppler Velocimeters" National Renewable Energy
    Lab, `Report Number 62979
    <http://www.nrel.gov/docs/fy16osti/62979.pdf>`_.
-   
 
-ADV head-to-body rotation matrix example
-........................................
+.. [Harding_etal_2017] Harding, S., Kilcher, L., Thomson, J. (2017).
+   Turbulence Measurements from Compliant Moorings. Part I: Motion Characterization.
+   *Journal of Atmospheric and Oceanic Technology*, 34(6), 1235-1247.
+   doi: 10.1175/JTECH-D-16-0189.1
+	
+.. [Kilcher_etal_2017] Kilcher, L., Thomson, J., Harding, S., & Nylund, S. (2017).
+   Turbulence Measurements from Compliant Moorings. Part II: Motion Correction.
+   *Journal of Atmospheric and Oceanic Technology*, 34(6), 1249-1266.
+   doi: 10.1175/JTECH-D-16-0213.1
 
-.. figure:: pic/turbulence_torpedo.png
-   :align: center
-   :scale: 60%
-   :alt: ADV mounted on a Columbus-type sounding weight.
-   
-   ADV mounted on a Columbus-type sounding weight.
-
-An example 'userdata.json' file corresponding to Figure 2 would look like:
-
-.. code-block:: text
-
-	{"inst2head_rotmat": [[0, 0, 1],
-	                     [ 0, 1, 0],
-	                     [-1, 0, 0]],
-	 "inst2head_vec": [0.20, 0, 0.04],
-	}
-
-
-Motion Correction Full Examples
-...............................
-
-The two following examples depict the standard workflow for analyzing
-ADV-IMU data using |dlfn|.
-
-Example 1
-"""""""""
-.. literalinclude:: ../examples/adv_example.py
-
-Example 2
-"""""""""
-.. literalinclude:: ../examples/adv_example2.py
