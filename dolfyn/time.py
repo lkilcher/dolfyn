@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 
 def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
     '''
-    Convert from epoch time (seconds since 1/1/1970) to datetime object
+    Convert from epoch time (seconds since 1/1/1970) to a list 
+    of datetime objects
     
     Parameters
     ----------
@@ -43,7 +44,7 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
 
 def date2str(dt, format_str=None):
     '''
-    Convert array of datetime objects to actual legible timestamps
+    Convert list of datetime objects to legible strings
     
     '''
     if format_str is None:
@@ -57,7 +58,7 @@ def date2str(dt, format_str=None):
 
 def date2epoch(dt):
     '''
-    Convert datetime object to epoch time
+    Convert list of datetime objects to epoch time
     
     '''
     if not isinstance(dt, list):
@@ -68,7 +69,7 @@ def date2epoch(dt):
 
 def date2matlab(dt):
     '''
-    Convert python datetime object to matlab datenum
+    Convert list of datetime objects to matlab datenum
     
     '''
     time = list()
@@ -83,7 +84,7 @@ def date2matlab(dt):
     
 def matlab2date(matlab_dn):
     '''
-    Convert matlab datenum to python datetime object
+    Convert matlab datenum to list of datetime objects
     
     '''
     time = list()

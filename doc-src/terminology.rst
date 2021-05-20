@@ -1,39 +1,38 @@
 .. _units:
 
-Terminology
-===========
+Metadata
+========
+
+Units
+-----
 
 |dlfn| generally uses the `*MKS* system
-<https://en.wikipedia.org/wiki/MKS_system_of_units>`_, with most
-angles in degrees.
+<https://en.wikipedia.org/wiki/MKS_system_of_units>`_. Common variables and units are listed in Table 1:
 
-.. csv-table:: Table 1: The units of common variables found in |dlfn| data objects.
+.. csv-table:: : The units of common variables found in |dlfn| data objects.
                :header-rows: 1
                :widths: 15, 20, 15, 50
                :file: ./units.csv
 
-User Metadata
--------------
+|dlfn| Attributes
+-----------------
 
-The ``props`` data-group of |dlfn| data objects is a place for
+The ``attrs`` data-group of xarray Datasets is a place for
 user-specified meta-data and |dlfn|-specific implementation data. The
 most common variables found here are described in Table 2.
 
 .. |dagger| unicode:: 0x02020 .. the dagger-symbol
 
-.. csv-table:: Table 3: The entries in ``dat.props`` that are used in |dlfn|.
+.. csv-table:: The entries in ``dat.props`` that are used in |dlfn|.
                :header-rows: 1
                :widths: 15, 105
                :file: ./props_info.csv
 
 \*: These entries are set and controlled by |dlfn|, and are not meant
-to be modified directly by the user. Attempts to set or change them
-directly (e.g., ``dat.props['fs'] = 10``) will raise an error.
+to be modified directly by the user.
 
 \*\*: These entries are set and controlled via
-``dat.set_<property name>`` methods. Attempts to set or change
-them directly (e.g., ``dat.props['declination'] = 20``) will be
-deprecated in future versions of |dlfn|.
+``dat.set_<property name>`` methods.
 
 |dagger|: These entries are not used or set by |dlfn|, but they are
 useful measurement meta-data and are listed here to assist in
@@ -41,10 +40,10 @@ standardizing the location and format of this information.
 
 .. _json-userdata
 
-Specify meta-data in a JSON file
+Specify metadata in a JSON file
 --------------------------------
 
-The values in ``dat.props`` can also be set in a json file,
+The values in ``dat.attrs`` can also be set in a json file,
 ``<data_filename>.userdata.json``, containing a single `json-object
 <https://json.org/>`_. For example, the contents of these files should
 look something like::
@@ -60,6 +59,6 @@ Prior to reading a binary data file ``my_data.VEC``, you can
 create a ``my_data.userdata.json`` file. Then when you do
 ``dolfyn.read('my_data.VEC')``, |dlfn| will read the contents of
 ``my_data.userdata.json`` and include that information in the
-``dat.props`` attribute of the returned data object. This
+``dat.attrs`` attribute of the returned data object. This
 feature is provided so that meta-data can live alongside your
 binary data files.

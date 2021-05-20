@@ -1,3 +1,5 @@
+.. _bin:
+
 Binning Tools
 =============
 

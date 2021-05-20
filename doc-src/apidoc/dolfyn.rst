@@ -1,5 +1,7 @@
-DOLfYN Package
-===============
+.. _package:
+
+DOLfYN API
+==========
 
 .. automodule:: dolfyn
     :members:

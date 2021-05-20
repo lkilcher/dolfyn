@@ -398,9 +398,9 @@ def orient2euler(omat):
     )
 
 
-def quat_omat(quaternions):
+def quat2orient(quaternions):
     '''
-    Calculate orientation from Nortek AHRS quaternions
+    Calculate orientation from Nortek AHRS quaternions, where q = [W, X, Y, Z] instead of the standard q = [X, Y, Z, W]
     
     '''
     omat = np.empty((3, 3, quaternions.time.size))

@@ -2,7 +2,7 @@ Example Scripts
 ===============
 
 ADCP Data
-"""""""""
+---------
 
 The following example 1) reads in ADCP data, 2) cleans it for
 erroneous and missing data, 3) rotate to true North Earth frame,
@@ -12,7 +12,7 @@ erroneous and missing data, 3) rotate to true North Earth frame,
 
 
 ADV Data
-""""""""
+--------
 
 The following shows an example of how to 1) read in ADV data,
 2) clean or "despike" the data, 3) rotate the data to the
@@ -23,15 +23,15 @@ statistics.
 
 
 Motion Correction Examples
-..........................
+--------------------------
 
 The two following examples depict the standard workflow for analyzing
 ADV-IMU data using |dlfn|.
 
-ADV Motion Correction Ex1
-"""""""""""""""""""""""""
+ADV Motion Correction Ex.1
+..........................
 .. literalinclude:: ../examples/adv_example.py
 
-ADV Motion Correction Ex2
-"""""""""""""""""""""""""
+ADV Motion Correction Ex.2
+..........................
 .. literalinclude:: ../examples/adv_example2.py

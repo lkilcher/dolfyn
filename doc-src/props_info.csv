@@ -1,20 +1,17 @@
 ﻿Name,Description/Notes
 fs*, This is the sample rate of the instrument [Hz]
-coord_sys*, "The coordinate system of the data object. When a data object is rotated to a new coordinate system using the ``dat.rotate2()`` method, the value of ``dat.props['coord_sys']`` is updated to reflect the final coordinate system. Valid values are: **beam**, **inst**, **earth**, and **principal**. For further details on these coordinate systems see the :ref:`rotations` section."
+coord_sys*, "The coordinate system of the data object. When a data object is rotated to a new coordinate system using the ``dat.rotate2()`` method, the value of ``dat.attrs['coord_sys']`` is updated to reflect the final coordinate system. Valid values are: **beam**, **inst**, **earth**, and **principal**. For further details on these coordinate systems see the :ref:`rotations` section."
 rotate_vars*,The variables in the data object that should be rotated when rotating the data object.
 declination**,"The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North). Set this value using ``dat.set_declination(<value>)``."
-declination_in_heading*,"A boolean specifying whether the heading includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
-declination_in_orientmat*,"A boolean specifying whether the ``orient.orientmat`` includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
+declination_in_orientmat*,"A boolean specifying whether the ``dat.orientmat`` includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
 principal_heading,"The heading of the +u direction for the 'principal' coordinate system [degrees clockwise from north]."
-has imu*, A boolean indicating whether the instrument has an inertial motion sensor/unit.
+has imu*, A boolean indicating whether the instrument has an IMU (inertial measurement unit) or AHRS (attitude heading reference system).
 inst_make*, The manufacturer name.
 inst_model*, The instrument model.
 DutyCycle_NBurst*, The number of pings in a burst.
 DutyCycle_NCycle*, "The time -- in number of pings -- before the next burst starts. (this may be incorrect for some instrument types, please :repo:`report issues <issues/>`)"
 inst2head_vec, "The vector from the center of the ADV inst reference frame to the center of the head's reference frame, *in coordinates of the inst reference frame*. It must be specified in order to perform motion correction. For ADPs this is always zero because the two coordinate systems are centered at the same place."
 inst2head_rotmat**, "The rotation matrix that rotates vectors from the instrument reference-frame to the head reference-frame. For ADPs this is always the identity matrix. Valid values are: 3-by-3 valid rotation matrices, or: ``'eye'``, ``'identity'``, or ``1`` all of which specify that it is the identity matrix. This is typically used for cable-head ADVs where the ADV head is not oriented the same as the ADV pressure case. It must be specified in order to perform motion correction."
-body2head_vec, "*DEPRECATED as of v0.12. Please use inst2head_vec instead.*"
-body2head_rotmat, "*DEPRECATED as of v0.12. Please use inst2head_rotmat instead.*"
 motion accel_filtfreq Hz, "The filter-frequency for the computing translational motion from the acceleration signal of an IMU. This is only used for motion correction. This high-pass filter is applied prior to integrating acceleration. This value is only used if when ``accel_filtfreq`` is not explicitly specified when motion-correcting"
 motion vel_filtfreq Hz, "The filter-frequency for the computing translational motion from the acceleration signal of an IMU. This is only used for motion correction. This high-pass filter is applied after integrating acceleration. This value is only used if when ``vel_filtfreq`` is not explicitly specified when motion-correcting."
 latlon\ |dagger|, "The location of the measurements in decimal degrees. Latitude is positive North of the equator, longitude is positive west of the prime-meridian."

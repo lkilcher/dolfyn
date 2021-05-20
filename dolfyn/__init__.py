@@ -13,7 +13,7 @@ processing and data analysis tasks.
 from ._version import __version__
 from .io.api import read, read_example, save, load
 from .rotate.main import rotate2
-from .rotate.base import calc_principal_heading, set_declination
+from .rotate.base import calc_principal_heading, set_declination, euler2orient, orient2euler, quat2orient
 from .data.velocity import VelBinner #, Velocity, TKEdata
 from dolfyn import adv
 from dolfyn import adp

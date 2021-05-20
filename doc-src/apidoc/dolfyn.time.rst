@@ -1,9 +1,7 @@
 Time Conversion
 ===============
 
-Time is handled primary through epoch time, or seconds since 1/1/1970.
-Conversion functions to timestamps, datetime, and MATLAB datenum
-are listed below.
+Time is handled primary through epoch time, or seconds since 1/1/1970, and includes conversion to Unix timestamps, datetime objects, and MATLAB datenum.
 
 .. autosummary::
 	:nosignatures:

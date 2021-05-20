@@ -15,6 +15,15 @@ Primary functions of note for users, others are documented for reference:
 	~dolfyn.rotate.main.rotate2
 	~dolfyn.rotate.base.set_declination
 	~dolfyn.rotate.base.calc_principal_heading
+	
+These functions pertain to both ADCP's and ADV's, though rotations of ADCP data into principal coordinates is still under development::
+
+	>> import dolfyn as dlfn
+	>> dat = dlfn.read_example('burst_mode01.VEC')
+	>> dat_mag = dlfn.set_declination(dat, 12) # 12 degrees East
+	>> dat_earth = dlfn.rotate2(dat_mag, 'earth') # data is now rotated to true ENU coordinates
+	>> dat_earth.attrs['principal_heading'] = dlfn.calc_principal_heading(dat_earth['vel'])
+	>> dat_flow = dlfn.rotate2(dat_earth, 'principal') # data is now in principal flow directions
 
 .. automodule:: dolfyn.rotate.main
     :members:

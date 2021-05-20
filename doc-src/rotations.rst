@@ -27,12 +27,12 @@ that has occurred for several instrument types. With your help, we
 hope to improve our confidence in these tools for the wide-array of
 instruments and configurations that exist.
 
-The values in the list ``dat.props['rotate_vars']`` specifies the
+The values in the list ``dat.attrs['rotate_vars']`` specifies the
 vectors that are rotated when changing between different coordinate
 systems.  The first dimension of these vectors are their coordinate
 directions, which are defined by the following coordinate systems:
 
-- **BEAM**: this is the coordinate system of the 'along-beam'
+- **Beam**: this is the coordinate system of the 'along-beam'
   velocities.  When the data object is in BEAM coordinates, the first
   dimension of the velocity vectors are: [beam1, beam2,
   ... beamN]. This coordinate system is *not* ortho-normal, which
@@ -49,14 +49,14 @@ directions, which are defined by the following coordinate systems:
   that is in beam coordinates, and also when rotating from other
   coordinate systems to beam coordinates.
 
-- **INST**: this is the 'instrument' coordinate system defined by the
+- **Inst**: this is the 'instrument' coordinate system defined by the
   manufacturer. This coordinate system is ortho-normal, but is not
   necessarily fixed. That is, if the instrument is rotating, then this
   coordinate system changes relative to the earth. When the data
   object is in INST coordinates, the first dimension of the vectors
   are: [X, Y, Z, ...].
 
-- **EARTH**: When the data object is in EARTH coordinates, the first
+- **Earth**: When the data object is in EARTH coordinates, the first
   dimension of vectors are: [East, North, Up, ...]. This coordinate
   system is also sometimes denoted as "ENU". If the declination is set
   the earth coordinate system is "True-East, True-North, Up"
@@ -64,19 +64,19 @@ directions, which are defined by the following coordinate systems:
   Handling`_ section for further details on setting declination.
 
   Note that the ENU definition used here is different from the 'North,
-  East, down' coordinate system typically used by aircraft.
+  East, Down' local coordinate system typically used by aircraft.
   Also note that the earth coordinate system is a 'rotationally-fixed'
   coordinate system: it does not rotate, but it is not necessarily
   *inertial* or *stationary* if the instrument slides around
   translationally (see the :ref:`motion-correction` section for
   details on how to correct for translational motion).
 
-- **PRINCIPAL**: the principal coordinate system is a fixed coordinate
+- **Principal**: the principal coordinate system is a fixed coordinate
   system that has been rotated in the horizontal plane (around the Up
   axis) to align with the flow. In this coordinate system the first
   dimension of a vector is meant to be: [Stream-wise, Cross-stream,
   Up]. This coordinate system is defined by the variable
-  ``dat.props['principal_heading']``, which specifies the
+  ``dat.attrs['principal_heading']``, which specifies the
   principal coordinate system's :math:`+u` direction. The
   :math:`v` direction is then defined by the right-hand-rule (with
   :math:`w` up). See the `Principal Heading`_ section for further
@@ -85,28 +85,54 @@ directions, which are defined by the following coordinate systems:
 To rotate a data object into one of these coordinate systems, simply
 use the ``rotate2`` method::
 
-  >>> dat_earth = dat.rotate2('earth')  # ("rotate to earth") 
-  >>> dat_earth
-  <ADV data object>
-    . 1.05 hours (started: Jun 12, 2012 12:00)
-    . EARTH-frame
-    . (120530 pings @ 32Hz)
-    *------------
-    | mpltime                  : <time_array; (120530,); float64>
-    | vel                      : <array; (3, 120530); float32>
-    + config                   : + DATA GROUP
-    + env                      : + DATA GROUP
-    + orient                   : + DATA GROUP
-    + props                    : + DATA GROUP
-    + signal                   : + DATA GROUP
-    + sys                      : + DATA GROUP
+	>> dat_earth = dlfn.rotate2(dat, 'earth')
+	>> dat_earth
+	<xarray.Dataset>
+	Dimensions:              (earth: 3, inst: 3, orient: 3, time: 90, x: 3, x*: 3)
+	Coordinates:
+	  * time                 (time) float64 1.439e+09 1.439e+09 ... 1.439e+09
+	  * orient               (orient) <U1 'E' 'N' 'U'
+	  * x                    (x) int32 1 2 3
+	  * x*                   (x*) int32 1 2 3
+	  * inst                 (inst) <U1 'X' 'Y' 'Z'
+	  * earth                (earth) <U1 'E' 'N' 'U'
+	Data variables:
+		beam2inst_orientmat  (x, x*) float64 2.674 -1.335 -1.339 ... -0.3435 -0.3445
+		c_sound              (time) float32 1.487e+03 1.487e+03 ... nan nan
+		heading              (time) float32 215.6 215.6 215.6 215.6 ... nan nan nan
+		pitch                (time) float32 -1.5 -1.5 -1.5 -1.5 ... nan nan nan nan
+		roll                 (time) float32 -3.3 -3.3 -3.3 -3.3 ... nan nan nan nan
+		temp                 (time) float32 18.83 18.83 18.83 18.83 ... nan nan nan
+		vel                  (orient, time) float64 -2.632 0.2576 ... 0.4999 0.4007
+		amp                  (orient, time) uint8 52 52 50 47 52 ... 52 53 50 50 51
+		corr                 (orient, time) uint8 28 6 12 30 8 38 ... 22 10 19 30 38
+		orientation_down     (time) bool False False False ... False False False
+		pressure             (time) float64 0.0 0.0 0.0 0.0 0.0 ... 0.0 0.0 0.0 0.0
+		orientmat            (inst, earth, time) float64 -0.5819 -0.5819 ... 0.9984
+	Attributes:
+		config:                    {'ProLogID': 32, 'ProLogFWver': '    ', 'confi...
+		inst_make:                 Nortek
+		inst_model:                Vector
+		inst_type:                 ADV
+		rotate_vars:               ['vel']
+		freq:                      6000
+		SerialNum:                 VEC11089
+		Comments:                  
+		DutyCycle_NBurst:          10
+		DutyCycle_NCycle:          320.0
+		fs:                        32.0
+		coord_sys:                 earth
+		has_imu:                   0
+		declination:               10
+		declination_in_orientmat:  1
+
 
 Orientation Data
 ----------------
   
 The instrument orientation data in |dlfn| data objects is contained in
-the ``orient`` data group. The ``orientmat`` data item in this group
-is the orientation matrix, :math:`R`, of the instrument in the earth
+``orientmat`` and ``beam2inst_orientmat``. The ``orientmat`` data item
+is the earth2inst orientation matrix, :math:`R`, of the instrument in the earth
 reference frame. It is a 3x3xNt array, where each 3x3 array is the `rotation matrix
 <http://en.wikipedia.org/wiki/Rotation_matrix>`_ that rotates vectors
 in the earth frame, :math:`v_e`, into the instrument coordinate system,
@@ -126,11 +152,9 @@ the inverse rotation matrix is simply the transpose:
 Heading, Pitch, Roll
 --------------------
 
-Some (most?) instruments do not calculate or output the orientation
+Most instruments do not calculate or output the orientation
 matrix by default. Instead, these instruments typically provide
-*heading*, *pitch*, and *roll* data (hereafter, *h,p,r*).  Instruments that provide an ``orientmat`` directly will have
-``dat.attrs['has_imu'] = True``. Otherwise, the ``orientmat`` was
-calculated from *h,p,r*.
+*heading*, *pitch*, and *roll* data (hereafter, *h,p,r*).  Instruments that provide an ``orientmat`` directly will contain ``dat.attrs['has_imu'] = 1``. Otherwise, the ``orientmat`` was calculated from *h,p,r*.
 
 Note that an orientation matrix calculated
 from *h,p,r* can have larger error associated with it, partly because
@@ -144,7 +168,7 @@ to utilize consistent definitions of orientation data (``orientmat``,
 and *h,p,r*), the following things are true:
 
   - |dlfn| uses instrument-specific functions to calculate a
-    consistent ``dat['orientmat']`` from the inconsistent
+    consistent ``orientmat`` from the inconsistent
     definitions of *h,p,r*
 
   - |dlfn|\ 's consistent definitions *h,p,r* are generally different
@@ -188,11 +212,11 @@ Instrument heading, pitch, roll
 ...............................
     
 The raw *h,p,r* data as defined by the instrument manufacturer is
-available in ``dat['orient']['raw']``. Note that this data does not
+available in ``dat.data_vars``. Note that this data does not
 obey the above definitions, and instead obeys the instrument
 manufacturer's definitions of these variables (i.e., it is exactly the
 data contained in the binary file). Also note that
-``dat['orient']['raw']['heading']`` is unaffected by setting
+``dat['heading']`` is unaffected by setting
 declination as described in the next section.
     
 Declination Handling
@@ -206,7 +230,7 @@ to set a data-object's declination:
 1. Set declination explicitly using the ``set_declination``
    method, for example::
 
-     dat = dat.Veldata.set_declination(16.53)
+     dat = dlfn.set_declination(dat, 16.53)
 
 2. Set declination in the ``<data_filename>.userdata.json`` file
    (`more details <json-userdata>`_ ), then read the binary data
@@ -234,7 +258,7 @@ you will get unexpected results, because you will calculate a
 *principal_heading* in the coordinate system that the data is in.
 
 It should also be noted that by setting
-``dat.props['principal_heading']`` the user can choose any horizontal
+``dat.attrs['principal_heading']`` the user can choose any horizontal
 coordinate system, and this might not be consistent with the
 *streamwise, cross-stream, up* definition described here. In those
 cases, the user should take care to clarify this point with

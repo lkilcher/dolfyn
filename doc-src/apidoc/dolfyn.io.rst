@@ -12,6 +12,12 @@ Contains high level routines for reading in instrument binary data, and saving a
 	~dolfyn.io.api.load
 	~dolfyn.io.api.save_mat
 	~dolfyn.io.api.load_mat
+	
+I/O functions can be accessed directly::
+
+	>> import dolfyn as dlfn
+	>> dat = dlfn.read(<path/to/my_data_file>)
+	>> dlfn.save(<path/to/save_file.nc>)
 
 .. automodule:: dolfyn.io.api
     :members:

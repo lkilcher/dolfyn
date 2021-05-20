@@ -10,17 +10,12 @@ Installation
 If you want to download the source code locally so that you can modify
 it, you can clone the repository::
     
-   $ git clone https://github.com/lkilcher/dolfyn/
+   $ git clone https://github.com/jmcvey3/dolfyn/
 
 And then use pip to install it as an 'editable' package::
 
      $ cd dolfyn
      $ pip install -e ./
-	 
-Or install as a standard package::
-
-	 $ cd dolfyn
-	 $ python setup.py install
 
 To create documentation::
 
@@ -65,19 +60,16 @@ all of the dependencies correctly, including :ref:`git-lfs
 <datafiles>`, then check to see if others are having a similar issue
 before creating a :repo:`new one <issues/>`.
 
-
 .. _dependencies:
 
 Dependencies
 ------------
 
-- |dlfn| was developed in `Python 2.7 <https://docs.python.org/2/>`_.
-  All of the existing unit tests work in `Python 3.8 <https://docs.python.org/3/>`_,
-  but this testing is limited to a subset of the code
-  and so there may still be lingering `2 to 3
-  <https://docs.python.org/2/howto/pyporting.html>`_ conversion issues.
-  If you encounter problems with Python 3 have a look at the
-  :repo:`issues <issues/>` page and potentially submit a new one.
-- `Numpy <http://www.numpy.org>`_ >=1.6.0
-- `h5py <http://www.h5py.org>`_ >=2.10.0
-- `SciPy <http://www.scipy.org>`_. >=1.5.0
+|dlfn| was developed in `Python 2.7 <https://docs.python.org/2/>`_.
+All of the existing unit tests work in `Python 3.8 <https://docs.python.org/3/>`_, but this testing is limited to a subset of the code and so there may still be lingering `2 to 3 <https://docs.python.org/2/howto/pyporting.html>`_ conversion issues.
+If you encounter problems with Python 3 have a look at the :repo:`issues <issues/>` page and potentially submit a new one.
+
+ - `NumPy <http://www.numpy.org>`_ >=1.17.0
+ - `SciPy <http://www.scipy.org>`_. >=1.5.0
+ - `xarray <http://xarray.pydata.org/en/stable/>`_ >= 1.17
+ - `h5netcdf <https://github.com/h5netcdf/h5netcdf>`_ >= 0.11

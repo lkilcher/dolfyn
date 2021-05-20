@@ -7,15 +7,15 @@ data from oceanographic velocity measurement instruments such as
 acoustic Doppler velocimeters (ADVs) and acoustic Doppler current profilers
 (ADCPs). It includes tools to
 
-* Read in binary data files from Nortek and Teledyne RD Instruments
+* Read in binary data files from Nortek and Teledyne RD Instruments:
 
-   * Nortek AWAC, Signature, Vector
+   * Nortek AWAC, Signature, & Vector
    * TRDI Workhorse (Monitor & Sentinel)
    
 * Clean velocity data 
-* Coordinate system rotation for vector data (beam to instrument to Earth frames of reference)
+* Rotate vector data through coordinate systems (i.e. beam to instrument to Earth frames of reference)
 * Motion correction for buoy-mounted ADV velocity measurements (via onboard IMU data)
-* Ensemble averaging
+* Bin/ensemble averaging
 * Calculate turbulence statistics
 
 .. _about.history:
@@ -25,7 +25,6 @@ History
 
 DOLfYN was originally created to provide open-source software for analyzing turbulence data
 from ADVs mounted on compliant moorings, and has since been expanded to include reading and analyzing ADCP data.
-
 
 
 License
