@@ -378,7 +378,7 @@ class NortekReader(object):
         cfg_u['TimCtrlReg'] = int2binarray(tmp[8], 16)
         # From the nortek system integrator manual
         # (note: bit numbering is zero-based)
-        treg = cfg_u['TimCtrlReg']
+        treg = cfg_u['TimCtrlReg'].astype(int)
         cfg_u['Profile_Timing'] = ['single', 'continuous'][treg[1]]
         cfg_u['Burst_Mode'] = bool(~treg[2])
         # How is this different from the power level in PwrCtrlReg?
@@ -425,17 +425,17 @@ class NortekReader(object):
         cfg_u['mode']['user_sound'] = cfg_u['Mode0'][0]
         cfg_u['mode']['diagnostics_mode'] = cfg_u['Mode0'][1]
         cfg_u['mode']['analog_output_mode'] = cfg_u['Mode0'][2]
-        cfg_u['mode']['output_format'] = ['Vector', 'ADV'][cfg_u['Mode0'][3]]  # noqa
-        cfg_u['mode']['vel_scale'] = [1, 0.1][cfg_u['Mode0'][4]]
+        cfg_u['mode']['output_format'] = ['Vector', 'ADV'][int(cfg_u['Mode0'][3])]  # noqa
+        cfg_u['mode']['vel_scale'] = [1, 0.1][int(cfg_u['Mode0'][4])]
         cfg_u['mode']['serial_output'] = cfg_u['Mode0'][5]
         cfg_u['mode']['reserved_EasyQ'] = cfg_u['Mode0'][6]
         cfg_u['mode']['stage'] = cfg_u['Mode0'][7]
         cfg_u['mode']['output_power'] = cfg_u['Mode0'][8]
         cfg_u['mode']['mode_test_use_DSP'] = cfg_u['ModeTest'][0]
-        cfg_u['mode']['mode_test_filter_output'] = ['total', 'correction_only'][cfg_u['ModeTest'][1]]  # noqa
-        cfg_u['mode']['rate'] = ['1hz', '2hz'][cfg_u['Mode1'][0]]
-        cfg_u['mode']['cell_position'] = ['fixed', 'dynamic'][cfg_u['Mode1'][1]]  # noqa
-        cfg_u['mode']['dynamic_pos_type'] = ['pct of mean press', 'pct of min re'][cfg_u['Mode1'][2]]  # noqa
+        cfg_u['mode']['mode_test_filter_output'] = ['total', 'correction_only'][int(cfg_u['ModeTest'][1])]  # noqa
+        cfg_u['mode']['rate'] = ['1hz', '2hz'][int(cfg_u['Mode1'][0])]
+        cfg_u['mode']['cell_position'] = ['fixed', 'dynamic'][int(cfg_u['Mode1'][1])]  # noqa
+        cfg_u['mode']['dynamic_pos_type'] = ['pct of mean press', 'pct of min re'][int(cfg_u['Mode1'][2])]  # noqa
    
     # Step 3.2
     def read_head_cfg(self,):

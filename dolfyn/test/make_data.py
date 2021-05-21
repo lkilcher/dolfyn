@@ -11,7 +11,6 @@ print(__doc__)
 # import test_read_adp as adpr
 # import test_rotate_adp as adpro
 
-
 # advt.test_read(make_data=True)
 # advt.test_motion(make_data=True)
 # advt.test_heading(make_data=True)

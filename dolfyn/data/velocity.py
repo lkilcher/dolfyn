@@ -514,7 +514,11 @@ class VelBinner(TimeBinner):
             vel = veldat[:3].values
         else: # for single beam input
             vel = veldat.values
-        time = self._mean(veldat.time.values)
+        
+        if 'b5' in veldat.name:
+            time = self._mean(veldat.time_b5.values)
+        else:
+            time = self._mean(veldat.time.values)
         
         # originally self.detrend
         out = np.mean(self._demean(vel)**2, -1, 
@@ -532,8 +536,11 @@ class VelBinner(TimeBinner):
             da = da.rename({'orient':'tke'})
             da = da.assign_coords({'tke':["u'u'_", "v'v'_", "w'w'_"],
                                    'time':time})
-        else: 
-            da = da.assign_coords({'time':time})
+        else:
+            if 'b5' in veldat.name:
+                da = da.assign_coords({'time_b5':time})
+            else:
+                da = da.assign_coords({'time':time})
             
         return da
 

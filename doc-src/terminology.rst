@@ -38,8 +38,6 @@ to be modified directly by the user.
 useful measurement meta-data and are listed here to assist in
 standardizing the location and format of this information.
 
-.. _json-userdata
-
 Specify metadata in a JSON file
 --------------------------------
 

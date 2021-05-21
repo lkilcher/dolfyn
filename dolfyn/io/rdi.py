@@ -745,12 +745,12 @@ class adcp_loader(object):
         cfg['config'] = (np.binary_repr(config[1], 8) + '-' +
                          np.binary_repr(config[0], 8))
         cfg['beam_angle'] = [15, 20, 30][(config[1] & 3)]
-        cfg['numbeams'] = [4, 5][(config[1] & 16) == 16]
+        cfg['numbeams'] = [4, 5][int((config[1] & 16) == 16)]
         cfg['beam_freq_khz'] = ([75, 150, 300,
                                 600, 1200, 2400, 38][(config[0] & 7)])
         cfg['beam_pattern'] = (['concave',
-                                'convex'][(config[0] & 8) == 8])
-        cfg['orientation'] = ['down', 'up'][(config[0] & 128) == 128]
+                                'convex'][int((config[0] & 8) == 8)])
+        cfg['orientation'] = ['down', 'up'][int((config[0] & 128) == 128)]
         cfg['simflag'] = ['real', 'simulated'][tmp[4]]
         fd.seek(1, 1)
         cfg['n_beam'] = fd.read_ui8(1)

@@ -4,10 +4,9 @@ channels:
 dependencies:
     - python=3.8
     - numpy
-    - h5py
-    - matplotlib
     - scipy
-    - six
     - xarray
+    - six
+    - h5netcdf
     - pip:
         - coveralls

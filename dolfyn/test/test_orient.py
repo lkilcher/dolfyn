@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from dolfyn.rotate.base import euler2orient, orient2euler
-from dolfyn.test.base import load
+from dolfyn.test.base import load_ncdata as load
 
 
 def check_hpr(h, p, r, omatin):
@@ -82,7 +82,7 @@ def test_pr_declination():
     # declination
     declin = 15.37
 
-    dat = load('data/vector_data_imu01.nc')
+    dat = load('vector_data_imu01.nc')
     h0, p0, r0 = orient2euler(dat['orientmat'].values)
 
     dat.Veldata.set_declination(declin)

@@ -1,28 +1,11 @@
 from dolfyn.test import test_adv as tr
 from dolfyn import rotate2 as rotate, calc_principal_heading
-from dolfyn.test.base import load, save
+from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.base import euler2orient
 import numpy as np
-from nose.tools import raises
 from xarray.testing import assert_allclose
 from numpy.testing import assert_allclose as assert_ac
 
-#data_equiv = tr.data_equiv
-
-
-#@raises(KeyError)
-#def test_props_enforcement():
-#    td = tr.dat.copy()
-#    td.props['fs'] = 16
-#    # I'm not checking every value that should be enforced, just
-#    # making sure it's happening.
-
-#@raises(KeyError)
-#def test_props_enforcement2():
-#    td = tr.dat.copy()
-#    td.props['declination'] = 10
-#    # I'm not checking every value that should be enforced, just
-#    # making sure it's happening.
 
 def test_inst2head_rotmat():
     # Validated test
@@ -45,10 +28,10 @@ def test_inst2head_rotmat():
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
     R = euler2orient(20, 30, 60, units='degrees') # arbitrary angles
-    td = td.Veldata.set_inst2head_rotmat(R.T)
+    td = td.Veldata.set_inst2head_rotmat(R)
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
-    vel2 = np.dot(R.T, tr.dat.vel)
+    vel2 = np.dot(R, tr.dat.vel)
     #assert (vel1 == vel2).all(), "head->inst rotations give unexpeced results."
     assert_ac(vel1.values, vel2)
     
@@ -60,12 +43,12 @@ def test_rotate_inst2earth(make_data=False):
     tdm = rotate(tdm, 'earth', inplace=True)
 
     if make_data:
-        save(td, 'data/vector_data01_rotate_inst2earth.nc')
-        save(tdm, 'data/vector_data_imu01_rotate_inst2earth.nc')
+        save(td, 'vector_data01_rotate_inst2earth.nc')
+        save(tdm, 'vector_data_imu01_rotate_inst2earth.nc')
         return
 
-    cd = load('data/vector_data01_rotate_inst2earth.nc')
-    cdm = load('data/vector_data_imu01_rotate_inst2earth.nc')
+    cd = load('vector_data01_rotate_inst2earth.nc')
+    cdm = load('vector_data_imu01_rotate_inst2earth.nc')
 
     # msg = "adv.rotate.inst2earth gives unexpected results for {}"
     # for t, c, msg in (
@@ -78,17 +61,17 @@ def test_rotate_inst2earth(make_data=False):
 
 
 def test_rotate_earth2inst():
-    td = load('data/vector_data01_rotate_inst2earth.nc')
+    td = load('vector_data01_rotate_inst2earth.nc')
     td = rotate(td, 'inst', inplace=True)
-    tdm = load('data/vector_data_imu01_rotate_inst2earth.nc')
+    tdm = load('vector_data_imu01_rotate_inst2earth.nc')
     tdm = rotate(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy(deep=True)
     cdm = tr.dat_imu.copy(deep=True)
     # The heading/pitch/roll data gets modified during rotation, so it
     # doesn't go back to what it was.
-    cdm = cdm.drop(['heading','pitch','roll'])
-    tdm = tdm.drop(['heading','pitch','roll'])
+    cdm = cdm.drop_vars(['heading','pitch','roll'])
+    tdm = tdm.drop_vars(['heading','pitch','roll'])
 
     # msg = "adv.rotate.inst2earth gives unexpected REVERSE results for {}"
     # for t, c, msg in (
@@ -107,12 +90,12 @@ def test_rotate_inst2beam(make_data=False):
     tdm = rotate(tdm, 'beam', inplace=True)
 
     if make_data:
-        save(td, 'data/vector_data01_rotate_inst2beam.nc')
-        save(tdm, 'data/vector_data_imu01_rotate_inst2beam.nc')
+        save(td, 'vector_data01_rotate_inst2beam.nc')
+        save(tdm, 'vector_data_imu01_rotate_inst2beam.nc')
         return
 
-    cd = load('data/vector_data01_rotate_inst2beam.nc')
-    cdm = load('data/vector_data_imu01_rotate_inst2beam.nc')
+    cd = load('vector_data01_rotate_inst2beam.nc')
+    cdm = load('vector_data_imu01_rotate_inst2beam.nc')
 
     # msg = "adv.rotate.beam2inst gives unexpected REVERSE results for {}"
     # for t, c, msg in (
@@ -125,9 +108,9 @@ def test_rotate_inst2beam(make_data=False):
 
 
 def test_rotate_beam2inst():
-    td = load('data/vector_data01_rotate_inst2beam.nc')
+    td = load('vector_data01_rotate_inst2beam.nc')
     td = rotate(td, 'inst', inplace=True)
-    tdm = load('data/vector_data_imu01_rotate_inst2beam.nc')
+    tdm = load('vector_data_imu01_rotate_inst2beam.nc')
     tdm = rotate(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy(deep=True)
@@ -144,20 +127,20 @@ def test_rotate_beam2inst():
 
 
 def test_rotate_earth2principal(make_data=False):
-    td = load('data/vector_data01_rotate_inst2earth.nc')
+    td = load('vector_data01_rotate_inst2earth.nc')
     td.attrs['principal_heading'] = calc_principal_heading(td['vel'])
     td = rotate(td, 'principal', inplace=True)
-    tdm = load('data/vector_data_imu01_rotate_inst2earth.nc')
+    tdm = load('vector_data_imu01_rotate_inst2earth.nc')
     tdm.attrs['principal_heading'] = calc_principal_heading(tdm['vel'])
     tdm = rotate(tdm, 'principal', inplace=True)
 
     if make_data:
-        save(td, 'data/vector_data01_rotate_earth2principal.nc')
-        save(tdm, 'data/vector_data_imu01_rotate_earth2principal.nc')
+        save(td, 'vector_data01_rotate_earth2principal.nc')
+        save(tdm, 'vector_data_imu01_rotate_earth2principal.nc')
         return
 
-    cd = load('data/vector_data01_rotate_earth2principal.nc')
-    cdm = load('data/vector_data_imu01_rotate_earth2principal.nc')
+    cd = load('vector_data01_rotate_earth2principal.nc')
+    cdm = load('vector_data_imu01_rotate_earth2principal.nc')
 
     # msg = "adv.rotate.earth2principal gives unexpected results for {}"
     # for t, c, msg in (
@@ -171,7 +154,7 @@ def test_rotate_earth2principal(make_data=False):
 
 def test_rotate_earth2principal_set_declination():
     declin = 3.875
-    td = load('data/vector_data01_rotate_inst2earth.nc')
+    td = load('vector_data01_rotate_inst2earth.nc')
     td0 = td.copy(deep=True)
     
     td.attrs['calc_principal_heading'] = calc_principal_heading(td['vel'])

@@ -47,5 +47,5 @@ def load_ncdata(name, *args, **kwargs):
 
 
 def save_ncdata(data, name, *args, **kwargs):
-    save(rfnm(name), *args, **kwargs)
+    save(data, rfnm(name), *args, **kwargs)
 

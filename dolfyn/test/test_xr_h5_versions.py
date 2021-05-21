@@ -1,5 +1,5 @@
 from dolfyn.h5.test.base import load_tdata as load_h5
-from dolfyn.test.base import load as load_nc
+from dolfyn.test.base import load_ncdata as load_nc
 from numpy.testing import assert_allclose
 
 # earth2principal fails miserably when nanmean (xarray built-in mean) fills in 
@@ -45,12 +45,12 @@ f_names = ['RDI_test01',
 
 def load_data(filename, ext):
     if ext=='.nc':
-        return load_nc('data/' + filename + ext)
+        return load_nc(filename + ext)
     elif ext=='.h5':
         return load_h5(filename + ext)
 
 
-def test_data(f_names):
+def test_data():
     for ky in f_names:
         ds = load_data(ky, '.nc')
         h5 = load_data(ky, '.h5')
@@ -66,5 +66,5 @@ def test_data(f_names):
 
 
 if __name__=='__main__':
-    test_data(f_names)
+    test_data()
     

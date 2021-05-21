@@ -6,13 +6,13 @@ import dolfyn.test.base as tb
 from xarray.testing import assert_allclose
 
 
-load = tb.load
-save = tb.save
+load = tb.load_ncdata
+save = tb.save_ncdata
 
-dat = load('data/vector_data01.nc')
-dat_imu = load('data/vector_data_imu01.nc')
-dat_imu_json = load('data/vector_data_imu01-json.nc')
-dat_burst = load('data/burst_mode01.nc')
+dat = load('vector_data01.nc')
+dat_imu = load('vector_data_imu01.nc')
+dat_imu_json = load('vector_data_imu01-json.nc')
+dat_burst = load('burst_mode01.nc')
 
 
 # def data_equiv(dat1, dat2, message=''):
@@ -50,10 +50,10 @@ def test_read(make_data=False):
     tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
-        save(td, 'data/vector_data01.nc')
-        save(tdm, 'data/vector_data_imu01.nc')
-        save(tdb, 'data/burst_mode01.nc')
-        save(tdm2, 'data/vector_data_imu01-json.nc')
+        save(td, 'vector_data01.nc')
+        save(tdm, 'vector_data_imu01.nc')
+        save(tdb, 'burst_mode01.nc')
+        save(tdm2, 'vector_data_imu01-json.nc')
         return
 
     # msg_form = "The output of read('{}.VEC') does not match '{}.nc'."
@@ -102,17 +102,17 @@ def test_motion(make_data=False):
     tdmE = avm.correct_motion(tdmE)
 
     if make_data:
-        save(tdm, 'data/vector_data_imu01_mc.nc')
-        save(tdm10, 'data/vector_data_imu01_mcDeclin10.nc')
-        save(tdmj, 'data/vector_data_imu01-json_mc.nc')
+        save(tdm, 'vector_data_imu01_mc.nc')
+        save(tdm10, 'vector_data_imu01_mcDeclin10.nc')
+        save(tdmj, 'vector_data_imu01-json_mc.nc')
         return
 
-    cdm10 = load('data/vector_data_imu01_mcDeclin10.nc')
+    cdm10 = load('vector_data_imu01_mcDeclin10.nc')
     
     # msg_form = "Motion correction '{}' does not match expectations."
     # for dat1, dat2, msg in [
     #         (tdm,
-    #          load('data/vector_data_imu01_mc.nc'),
+    #          load('vector_data_imu01_mc.nc'),
     #          'basic motion correction'),
     #         (tdm10,
     #          cdm10,
@@ -121,14 +121,14 @@ def test_motion(make_data=False):
     #          cdm10,
     #          'earth-rotation first, with declination=10'),
     #         (tdmj,
-    #          load('data/vector_data_imu01-json_mc.nc'),
+    #          load('vector_data_imu01-json_mc.nc'),
     #          'with reading userdata.json'),
     # ]:
     #     yield data_equiv, dat1, dat2, msg_form.format(msg)
-    assert_allclose(tdm, load('data/vector_data_imu01_mc.nc'))
+    assert_allclose(tdm, load('vector_data_imu01_mc.nc'))
     assert_allclose(tdm10, cdm10)
     assert_allclose(tdmE, cdm10, rtol=1e-7, atol=1e-3)
-    assert_allclose(tdmj, load('data/vector_data_imu01-json_mc.nc'))
+    assert_allclose(tdmj, load('vector_data_imu01-json_mc.nc'))
         
     # yield data_equiv, tdm10, tdmj, \
     #     ".userdata.json motion correction does not match explicit expectations."
@@ -150,10 +150,10 @@ def test_heading(make_data=False):
     td['heading'].values = head
 
     if make_data:
-        save(td, 'data/vector_data_imu01_head_pitch_roll.nc')
+        save(td, 'vector_data_imu01_head_pitch_roll.nc')
         return
 
-    cd = load('data/vector_data_imu01_head_pitch_roll.nc')
+    cd = load('vector_data_imu01_head_pitch_roll.nc')
 
     #assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
     assert_allclose(td, cd)
@@ -165,10 +165,10 @@ def test_turbulence(make_data=False):
     td = bnr(tmp)
 
     if make_data:
-        save(td, 'data/vector_data01_bin.nc')
+        save(td, 'vector_data01_bin.nc')
         return
 
-    cd = load('data/vector_data01_bin.nc')
+    cd = load('vector_data01_bin.nc')
 
     #assert cd == td, "TurbBinner gives unexpected results!"
     assert_allclose(td, cd)
@@ -179,10 +179,10 @@ def test_clean(make_data=False):
     td['vel'].values[0] = avm.clean.GN2002(td.Veldata.u, 20)
 
     if make_data:
-        save(td, 'data/vector_data01_uclean.nc')
+        save(td, 'vector_data01_uclean.nc')
         return
 
-    cd = load('data/vector_data01_uclean.nc')
+    cd = load('vector_data01_uclean.nc')
 
     #assert cd == td, "adv.clean.GN2002 gives unexpected results!"
     assert_allclose(td, cd)

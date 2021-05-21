@@ -105,19 +105,23 @@ def create_dataset(data):
     
     '''
     ds = xr.Dataset()
-    Time = data['coords']['time']
     beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
-    tag = ['b5', 'bt', 'echo']
+    tag = ['_b5', '_echo', '_bt']
     # orient coordinates get reset in _set_coords()
     for key in data['data_vars']:
         # orientation matrices
         if 'mat' in key:
             try: # orientmat (inst2earth)
+                if any(val in key for val in tag):
+                    tg = [val for val in tag if val in key]
+                    tg = tg[0]
+                else:
+                    tg = ''
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'inst':['X','Y','Z'],
                                                'earth':['E','N','U'],
-                                               'time':Time},
-                                       dims=['inst','earth','time'])
+                                               'time'+tg:data['coords']['time'+tg]},
+                                       dims=['inst','earth','time'+tg])
             except: # the other 2 (beam2inst & inst2head)
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'x':beam,
@@ -125,16 +129,21 @@ def create_dataset(data):
                                        dims=['x','x*'])
         # quaternion units never change
         elif 'quat' in key: 
+            if any(val in key for val in tag):
+                tg = [val for val in tag if val in key]
+                tg = tg[0]
+            else:
+                tg = ''
             ds[key] = xr.DataArray(data['data_vars'][key],
                                    coords={'q':['w','x','y','z'],
-                                           'time':Time},
-                                   dims=['q','time'])
+                                           'time'+tg:data['coords']['time'+tg]},
+                                   dims=['q','time'+tg])
         # the rest of the madness
         else:
             ds[key] = xr.DataArray(data['data_vars'][key])
             try: # not all variables have units
                 ds[key].attrs['units'] = data['units'][key]
-            except:
+            except: # make sure ones with tags get units
                 if any(val in key for val in tag):
                     if 'echo' not in key:
                         ds[key].attrs['units'] = data['units'][key[:-3]]
@@ -147,32 +156,52 @@ def create_dataset(data):
             vshp = data['data_vars']['vel'].shape
             l = len(shp)
             if l==1: # 1D variables
-                ds[key] = ds[key].rename({'dim_0':'time'})
-                ds[key] = ds[key].assign_coords({'time':Time})
-
+                if any(val in key for val in tag):
+                    tg = [val for val in tag if val in key]
+                    tg = tg[0]
+                else:
+                    tg = ''
+                ds[key] = ds[key].rename({'dim_0':'time'+tg})
+                ds[key] = ds[key].assign_coords({'time'+tg:data['coords']['time'+tg]})
+                
             elif l==2: # 2D variables
                 if key=='echo':
                     ds[key] = ds[key].rename({'dim_0':'range_echo',
                                               'dim_1':'time_echo'})
                     ds[key] = ds[key].assign_coords({'range_echo':data['coords']['range_echo'],
                                                      'time_echo':data['coords']['time_echo']})
-                # 3- & 4-beam instrument data, bottom tracking
-                elif shp[0]==vshp[0]: 
+                # 3- & 4-beam instrument vector data, bottom tracking
+                elif shp[0]==vshp[0] and not any(val in key for val in tag[:2]):
+                    if 'bt' in key and 'time_bt' in data['coords']: # b/c rdi time
+                        tg = '_bt'
+                    else:
+                        tg = ''
                     ds[key] = ds[key].rename({'dim_0':'orient',
-                                              'dim_1':'time'})
+                                              'dim_1':'time'+tg})
                     ds[key] = ds[key].assign_coords({'orient':beam,
-                                                     'time':Time})
+                                                     'time'+tg:data['coords']['time'+tg]})
                 # 4-beam instrument IMU data
                 elif shp[0]==vshp[0]-1:
+                    if not any(val in key for val in tag):
+                        tg = ''
+                    else:
+                        tg = [val for val in tag if val in key]
+                        tg = tg[0]
+                        
                     ds[key] = ds[key].rename({'dim_0':'orientIMU',
-                                              'dim_1':'time'})
+                                              'dim_1':'time'+tg})
                     ds[key] = ds[key].assign_coords({'orientIMU':[1,2,3],
-                                                     'time':Time})
-                elif 'b5' in key:
-                    ds[key] = ds[key].rename({'dim_0':'range_b5',
-                                              'dim_1':'time_b5'})
-                    ds[key] = ds[key].assign_coords({'range_b5':data['coords']['range_b5'],
-                                                     'time_b5':data['coords']['time_b5']})
+                                                     'time'+tg:data['coords']['time'+tg]})                            
+                
+                # b5 and echo tagged variables
+                elif any(val in key for val in tag[:2]):
+                    tg = [val for val in tag if val in key]
+                    tg = tg[0]
+
+                    ds[key] = ds[key].rename({'dim_0':'range'+tg,
+                                              'dim_1':'time'+tg})
+                    ds[key] = ds[key].assign_coords({'range'+tg:data['coords']['range'+tg],
+                                                     'time'+tg:data['coords']['time'+tg]})
                 else:
                     warnings.warn('Variable not included in dataset: {}'
                                   .format(key))
@@ -184,8 +213,7 @@ def create_dataset(data):
                                               'dim_2':'time'})
                     ds[key] = ds[key].assign_coords({'orient':beam,
                                                      'range':data['coords']['range'],
-                                                     'time':Time})
-      
+                                                     'time':data['coords']['time']})
                 elif 'b5' in key:
                     ds[key] = ds[key][0] # xarray can't handle coords of length 1
                     ds[key] = ds[key].rename({'dim_1':'range_b5',
@@ -195,7 +223,7 @@ def create_dataset(data):
                 else:
                     warnings.warn('Variable not included in dataset: {}'
                                   .format(key))
-                    
+    # coordinate units
     r_list = [r for r in ds.coords if 'range' in r]
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'

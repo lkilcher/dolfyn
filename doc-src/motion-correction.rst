@@ -59,9 +59,7 @@ and configured correctly:
      the inst coordinate system (Figure 1). This property must be in
      ``dat.attrs`` in order to do motion correction.
 
-   These variables are set in either the `userdata.json file
-   <json-userdata>`_ (prior to calling ``dolfyn.read``), or by setting
-   them explicitly after the data file has been read::
+   These variables are set in either the userdata.json file (prior to calling ``dolfyn.read``), or by setting them explicitly after the data file has been read::
 
      dat.set_inst2head_rotmat(<3x3 rotation matrix>)
      dat.attrs['inst2head_vec'] = [3-element vector]

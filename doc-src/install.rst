@@ -49,11 +49,11 @@ The |dlfn| developers are slowly building a collection of unit-tests
 using the `Nose <http://nose.readthedocs.io/>`_ testing
 framework. Currently the unit-tests are all housed in the ``test/``
 folder (including the data files). To run the tests, you'll need to
-`install Nose
-<http://nose.readthedocs.io/en/latest/#installation-and-quick-start>`_,
+`install pytest
+<https://docs.pytest.org/en/6.2.x/getting-started.html>`_,
 then open a command prompt and run::
 
-  $ nosetests <test_*.py>
+  $ python -m pytest
 
 If any of the tests do not pass, first confirm that you have installed
 all of the dependencies correctly, including :ref:`git-lfs

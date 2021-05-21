@@ -64,7 +64,7 @@ install:
     - ls -l /home/travis/miniconda/envs/test_env/lib
     #- pip install . # use pip to automatically install anything not in the yml files (i.e. numpy/scipy/pandas for py3*)
     #- pip install scipy # won't do anything if already installed
-    - pip install -e git://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5
+    #- pip install -e git://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5
     - pip install nose
     - python setup.py install
 

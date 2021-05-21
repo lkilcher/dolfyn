@@ -113,11 +113,16 @@ def load(filename):
     if filename[-3:] != '.nc':
         filename += '.nc'
         
-    ds = xr.load_dataset(filename)
+    # this engine reorders attributes into alphabetical order
+    ds = xr.load_dataset(filename, engine='h5netcdf')
     
     # xarray converts single list items to ints or strings
+    if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars)==1:
+        ds.attrs['rotate_vars'] = list(ds.rotate_vars)
+        
+    # reloads lists as numpy arrays???
     if hasattr(ds, 'rotate_vars') and type(ds.rotate_vars) is not list:
-        ds.attrs['rotate_vars'] = [ds.rotate_vars]
+        ds.attrs['rotate_vars'] = list(ds.rotate_vars)
     
     return ds
 
