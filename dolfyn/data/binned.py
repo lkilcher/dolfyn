@@ -18,6 +18,8 @@ class TimeBinner:
         ----------
         n_bin : int
           the number of data points to include in a 'bin' (average).
+        fs : int
+          instrument sampling frequency
         n_fft : int
           the number of data points to use for fft (`n_fft`<=`n_bin`).
           Default: `n_fft`=`n_bin`
@@ -379,15 +381,20 @@ class TimeBinner:
         
         Parameters
         ----------
-        veldat1 : xr.DataArray
+        veldat1 : xarray.DataArray
           The first raw-data array of which to calculate coherence
-        veldat2 : xr.DataArray
+        veldat2 : xarray.DataArray
           The second raw-data array of which to calculate coherence
         window : string
           String indicating the window function to use (default: 'hanning')
-        noise  : float
+        noise : float
           The white-noise level of the measurement (in the same units
           as `veldat`).
+          
+        Returns
+        -------
+        out : xarray.DataArray
+          The coherence between signal veldat1 and veldat2.
 
         """
         dat1 = veldat1.values
@@ -430,16 +437,16 @@ class TimeBinner:
 
         Parameters
         ----------
-        veldat1 : xr.DataArray
+        veldat1 : xarray.DataArray
           The first 1D raw-data array of which to calculate phase angle
-        veldat2 : xr.DataArray
+        veldat2 : xarray.DataArray
           The second 1D raw-data array of which to calculate phase angle
         window : string
           String indicating the window function to use (default: 'hanning').
 
         Returns
         -------
-        out : xr.DataArray
+        out : xarray.DataArray
           The phase difference between signal veldat1 and veldat2.
           
         """
@@ -463,10 +470,14 @@ class TimeBinner:
         
         freq = self.calc_freq(self.fs, coh=True)
         
+        dims_list, coords_dict = self._new_coords(veldat1)
+        # tack on new coordinate
+        dims_list.append('f')
+        coords_dict['f'] = freq
+        
         da =  xr.DataArray(out, name='phase_angle',
-                            coords={'time':self._mean(veldat1.time.values),
-                                    'f':freq},                 
-                            dims=['time','f'])
+                           coords=coords_dict,         
+                           dims=dims_list)
         da['f'].attrs['units'] = 'Hz'
             
         return da
@@ -486,11 +497,16 @@ class TimeBinner:
         
         Parameters
         ----------
-        veldat : xr.DataArray
+        veldat : xarray.DataArray
           The raw-data array of which to calculate auto-covariance
          
         n_bin : float
           Number of data elements to use
+          
+        Returns
+        -------
+        out : xarray.DataArray
+          The auto-covariance between signal veldat1 and veldat2.
         
         """
         indat = veldat.values
@@ -535,7 +551,6 @@ class TimeBinner:
                   n_bin1=None, n_bin2=None, normed=False):
         """
         Calculate the cross-covariance between arrays veldat1 and veldat2
-        for each bin
         
         Parameters
         ----------
@@ -544,6 +559,11 @@ class TimeBinner:
         veldat2 : xr.DataArray
           The second raw-data array of which to calculate x-covariance
         npt : number of timesteps (lag) to calculate covariance
+        
+        Returns
+        -------
+        out : xarray.DataArray
+          The cross-covariance between signal veldat1 and veldat2.
         
         """
         indt1 = veldat1.values

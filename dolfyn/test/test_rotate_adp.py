@@ -1,4 +1,5 @@
 from dolfyn.test import test_read_adp as tr
+from dolfyn import rotate2, set_declination
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn import calc_principal_heading
 import numpy as np
@@ -34,13 +35,13 @@ def test_rotate_beam2inst(make_data=False):
 def test_rotate_inst2beam(make_data=False):
 
     td = load('RDI_test01_rotate_beam2inst.nc')
-    td = td.Veldata.rotate2('beam', inplace=True)
+    td = rotate2(td, 'beam', inplace=True)
     td_awac = load('AWAC_test01_earth2inst.nc')
-    td_awac = td_awac.Veldata.rotate2('beam', inplace=True)
+    td_awac = rotate2(td_awac, 'beam', inplace=True)
     td_sig = load('BenchFile01_rotate_beam2inst.nc')
-    td_sig = td_sig.Veldata.rotate2('beam', inplace=True)
+    td_sig = rotate2(td_sig, 'beam', inplace=True)
     td_sig_i = load('Sig1000_IMU_rotate_beam2inst.nc')
-    td_sig_i = td_sig_i.Veldata.rotate2('beam', inplace=True)
+    td_sig_i = rotate2(td_sig_i, 'beam', inplace=True)
 
     if make_data:
         save(td_awac, 'AWAC_test01_inst2beam.nc')
@@ -65,13 +66,13 @@ def test_rotate_inst2beam(make_data=False):
 def test_rotate_inst2earth(make_data=False):
     # AWAC is loaded in earth
     td_awac = tr.dat_awac.copy(deep=True)
-    td_awac = td_awac.Veldata.rotate2('inst')
-    td = tr.dat_rdi.Veldata.rotate2('earth')
-    tdwr2 = tr.dat_wr2.Veldata.rotate2('earth')
+    td_awac = rotate2(td_awac, 'inst')
+    td = rotate2(tr.dat_rdi, 'earth')
+    tdwr2 = rotate2(tr.dat_wr2, 'earth')
     td_sig = load('BenchFile01_rotate_beam2inst.nc')
-    td_sig = td_sig.Veldata.rotate2('earth', inplace=True)
+    td_sig = rotate2(td_sig, 'earth', inplace=True)
     td_sig_i = load('Sig1000_IMU_rotate_beam2inst.nc')
-    td_sig_i = td_sig_i.Veldata.rotate2('earth', inplace=True)
+    td_sig_i = rotate2(td_sig_i, 'earth', inplace=True)
 
     if make_data:
         save(td_awac, 'AWAC_test01_earth2inst.nc')
@@ -80,7 +81,7 @@ def test_rotate_inst2earth(make_data=False):
         save(td_sig_i, 'Sig1000_IMU_rotate_inst2earth.nc')
         save(tdwr2, 'winriver02_rotate_ship2earth.nc')
         return
-    td_awac = td_awac.Veldata.rotate2('earth', inplace=True)
+    td_awac = rotate2(td_awac, 'earth', inplace=True)
 
     cd = load('RDI_test01_rotate_inst2earth.nc')
     cdwr2 = load('winriver02_rotate_ship2earth.nc')
@@ -96,16 +97,16 @@ def test_rotate_inst2earth(make_data=False):
 
 
 def test_rotate_earth2inst():
-    td_rdi = (load('RDI_test01_rotate_inst2earth.nc')
-          .Veldata.rotate2('inst', inplace=True))
+    td_rdi = load('RDI_test01_rotate_inst2earth.nc')
+    td_rdi = rotate2(td_rdi, 'inst', inplace=True)
     tdwr2 = load('winriver02_rotate_ship2earth.nc')
-    tdwr2 = tdwr2.Veldata.rotate2('inst', inplace=True)
+    tdwr2 = rotate2(tdwr2, 'inst', inplace=True)
     td_awac = tr.dat_awac.copy(deep=True)
-    td_awac = td_awac.Veldata.rotate2('inst')  # AWAC is in earth coords
+    td_awac = rotate2(td_awac, 'inst')  # AWAC is in earth coords
     td_sig = load('BenchFile01_rotate_inst2earth.nc')
-    td_sig = td_sig.Veldata.rotate2('inst', inplace=True)
+    td_sig = rotate2(td_sig, 'inst', inplace=True)
     td_sigi = load('Sig1000_IMU_rotate_inst2earth.nc')
-    td_sig_i = td_sigi.Veldata.rotate2('inst', inplace=True)
+    td_sig_i = rotate2(td_sigi, 'inst', inplace=True)
 
     cd_rdi = load('RDI_test01_rotate_beam2inst.nc')
     cd_awac = load('AWAC_test01_earth2inst.nc')
@@ -138,9 +139,9 @@ def test_rotate_earth2principal(make_data=False):
     td_sig.attrs['principal_heading'] = calc_principal_heading(td_sig.vel.mean('range'))
     td_awac.attrs['principal_heading'] = calc_principal_heading(td_sig.vel.mean('range'), 
                                                                 tidal_mode=False)
-    td_rdi = td_rdi.Veldata.rotate2('principal')
-    td_sig = td_sig.Veldata.rotate2('principal')
-    td_awac = td_awac.Veldata.rotate2('principal')
+    td_rdi = rotate2(td_rdi, 'principal')
+    td_sig = rotate2(td_sig, 'principal')
+    td_awac = rotate2(td_awac, 'principal')
 
     if make_data:
         save(td_rdi, 'RDI_test01_rotate_earth2principal.nc')

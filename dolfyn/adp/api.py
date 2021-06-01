@@ -12,7 +12,7 @@ data. It contains:
 |                                   | netCDF files.                           |
 +-----------------------------------+-----------------------------------------+
 | :func:`rotate2 <dolfyn.rotate.\   | A function for rotating data            |
-| .main.rotate2>`                   | between different coordinate systems    |
+| .api.rotate2>`                    | between different coordinate systems    |
 +-----------------------------------+-----------------------------------------+
 | :mod:`clean <dolfyn.adp.clean>`   | A module containing functions for       |
 |                                   | cleaning data, filling NaN's,           |
@@ -31,7 +31,7 @@ Examples
 """
 
 from ..io.api import read, load
-from ..rotate.main import rotate2
+from ..rotate.api import rotate2
 from . import clean
 from ..data.velocity import VelBinner
 from .base import ADPbinner

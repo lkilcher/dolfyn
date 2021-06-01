@@ -2,9 +2,8 @@ from __future__ import division
 import numpy as np
 from .binned import TimeBinner
 import warnings
-#from .time import num2date
-from ..rotate import main as rotb
-from ..rotate.vector import _rotate_head2inst
+from ..rotate import base as rotb
+from ..rotate import api as rot
 import xarray as xr
 
 
@@ -16,13 +15,6 @@ class Velocity():
     """
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
-        #TimeData.__init__(self, *args, **kwargs)
-        #self['props'] = {'coord_sys': '????',
-        #                 'fs': -1,
-        #                 'inst_type': '?',
-        #                 'inst_make': '?',
-        #                 'inst_model': '?',
-        #                 'has imu': False}
 
 
     def set_inst2head_rotmat(self, rotmat):
@@ -38,38 +30,7 @@ class Velocity():
             3x3 rotation matrix
         
         """
-        if not self._make_model.startswith('nortek vector'):
-            raise Exception("Setting 'inst2head_rotmat' is only supported "
-                            "for Nortek Vector ADVs.")
-        if self.ds.get('inst2head_rotmat', None) is not None:
-            # Technically we could support changing this (unrotate with the
-            # original, then rotate with the new one), but WHY?!
-            # If you REALLY need to change this, simply rotate to
-            # beam-coords, change this by
-            # `obj.props['inst2head_rotmat'] = rotmat`, then rotate
-            # to the coords of your choice.
-            raise Exception(
-                "You are setting 'inst2head_rotmat' after it has already "
-                "been set. You can only set it once.")
-        csin = self.ds.coord_sys
-        if csin not in ['inst', 'beam']:
-            self.ds = self.ds.Veldata.rotate2('inst', inplace=True)
-        #dict.__setitem__(self.props, 'inst2head_rotmat', np.array(rotmat))
-        self.ds['inst2head_rotmat'] = xr.DataArray(np.array(rotmat),
-                                                   dims=['x','x*'])
-        self.ds.attrs['inst2head_rotmat_was_set'] = 1 # logical
-        # Note that there is no validation that the user doesn't
-        # change `ds.attrs['inst2head_rotmat']` after calling this
-        # function. I suppose I could do:
-        #     self.ds.attrs['inst2head_rotmat_was_set'] = hash(rotmat)
-        # But then I'd also have to check for that!? Is it worth it?
-
-        if not csin == 'beam': # csin not 'beam', then we're in inst
-            self.ds = _rotate_head2inst(self.ds)
-        if csin not in ['inst', 'beam']:
-            self.ds = self.ds.Veldata.rotate2(csin, inplace=True)
-            
-        return self.ds
+        return rot.set_inst2head_rotmat(self.ds, rotmat)
 
     
     def set_declination(self, declination):
@@ -111,41 +72,7 @@ class Velocity():
           'True' earth coordinate system)
 
         """
-        if 'declination' in self.ds.attrs:
-            angle = declination - self.ds.attrs.pop('declination')
-        else:
-            angle = declination
-        cd = np.cos(-np.deg2rad(angle))
-        sd = np.sin(-np.deg2rad(angle))
-
-        #The ordering is funny here because orientmat is the
-        #transpose of the inst->earth rotation matrix:
-        Rdec = np.array([[cd, -sd, 0],
-                         [sd, cd, 0],
-                         [0, 0, 1]])
-
-        #odata = self['orient']
-
-        if self.ds.coord_sys == 'earth':
-            rotate2earth = True
-            self.ds = self.rotate2('inst', inplace=True)
-        else:
-            rotate2earth = False
-
-        self.ds['orientmat'].values = np.einsum('kj...,ij->ki...',
-                                                self.ds['orientmat'].values,
-                                                Rdec, )
-        if 'heading' in self.ds:
-            self.ds['heading'] += angle
-        if rotate2earth:
-            self.ds = self.rotate2('earth', inplace=True)
-        if 'principal_heading' in self.ds.attrs:
-            self.ds.attrs['principal_heading'] += angle
-
-        self.ds.attrs['declination'] = declination
-        self.ds.attrs['declination_in_orientmat'] = 1 # logical
-        
-        return self.ds
+        return rot.set_declination(self.ds, declination)
         
         
     def rotate2(self, out_frame, inplace=False):
@@ -172,7 +99,7 @@ class Velocity():
         :func:`dolfyn.rotate2`
 
         """
-        return rotb.rotate2(self.ds, out_frame=out_frame, inplace=inplace)
+        return rot.rotate2(self.ds, out_frame=out_frame, inplace=inplace)
 
 
     @property
@@ -427,8 +354,8 @@ class TKEdata(Velocity):
         k3 = c*self.ds[ky] / self.w
         # transposes dimensions for some reason
         k = xr.DataArray([k1.T.values, k2.T.values, k3.T.values],
-                         coords = self.ds.psd.coords,
-                         dims = self.ds.psd.dims,
+                         coords = self.ds.S.coords,
+                         dims = self.ds.S.dims,
                          name = 'wavenumber',
                          attrs={'units':'1/m'})
         return k
@@ -624,9 +551,8 @@ class VelBinner(TimeBinner):
 
         Returns
         -------
-        psd : xr.DataArray (3, M, N_FFT)
-          The first-dimension of the spectrum is the three
-          different spectra: 'uu', 'vv', 'ww'.
+        S : xarray.DataArray (3, M, N_FFT)
+          The spectra in the 'u', 'v', and 'w' directions.
           
         """
         fs = self._parse_fs(fs)
@@ -665,7 +591,7 @@ class VelBinner(TimeBinner):
                                 window=window, n_bin=n_bin,
                                 n_pad=n_pad, n_fft=n_fft, step=step)
         
-        da =  xr.DataArray(out, name='psd',
+        da =  xr.DataArray(out, name='S',
                             coords={'spectra':['Suu','Svv','Sww'],
                                     'time':time,
                                     f_key:freq},                              

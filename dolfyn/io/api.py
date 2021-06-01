@@ -6,6 +6,7 @@ from .nortek import read_nortek
 from .nortek2 import read_signature
 from .rdi import read_rdi
 from .base import create_dataset, WrongFileType as _WTF
+from ..rotate.base import _set_coords
 
 
 def read(fname, userdata=True, nens=None):
@@ -80,7 +81,7 @@ def save(dataset, filename):
     dataset : xr.Dataset
     
     filename : str
-               Filename and/or path with the '.nc' extension
+        Filename and/or path with the '.nc' extension
     
     Notes
     -----
@@ -107,7 +108,7 @@ def load(filename):
     Parameters
     ----------
     filename : str
-           Filename and/or path with the '.nc' extension
+        Filename and/or path with the '.nc' extension
     
     """
     if filename[-3:] != '.nc':
@@ -136,7 +137,7 @@ def save_mat(dataset, filename):
     dataset : xr.Dataset
     
     filename : str
-               Filename and/or path with the '.mat' extension
+        Filename and/or path with the '.mat' extension
     
     """
     if filename[-4:] != '.mat':
@@ -158,12 +159,13 @@ def load_mat(filename):
     """
     Load xarray dataset from MATLAB (.mat) file
     
-    .mat file must contain the fields: {'vars','coords','config','units'}
+    .mat file must contain the fields: {vars, coords, config, units},
+    where 'coords' contain the dimensions of all variables in 'vars'.
     
     Parameters
     ----------
     filename : str
-           Filename and/or path with the '.nc' extension
+        Filename and/or path with the '.nc' extension
     
     """
     if filename[-4:] != '.mat':
@@ -182,5 +184,7 @@ def load_mat(filename):
     ds_dict['attrs'] = ds_dict.pop('config')
     
     ds = create_dataset(ds_dict)
-            
+    ds = _set_coords(ds, ds.coord_sys)
+    ds.attrs['rotate_vars'] = [x.strip(' ') for x in list(ds.rotate_vars)]
+    
     return ds

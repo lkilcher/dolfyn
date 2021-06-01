@@ -1,15 +1,15 @@
 from __future__ import print_function
 import numpy as np
-from scipy import nanmean
 import xarray as xr
 import datetime
 import warnings
 from os.path import getsize
+
 from ._read_bin import eofException, bin_reader
-#from ..data.time import date2num
 from .base import WrongFileType, read_userdata, create_dataset, handle_nan
 from ..rotate.rdi import calc_beam_orientmat as _calc_bmat, calc_orientmat as _calc_omat
 from ..rotate.base import _set_coords
+from ..rotate.api import set_declination
 
 
 def read_rdi(fname, userdata=None, nens=None):
@@ -94,7 +94,7 @@ def _set_rdi_declination(dat, fname='????'):
         # set_declination rotates by the difference between what is
         # already set in props['declination'] (i.e., above), and the
         # input value
-        dat = dat.Veldata.set_declination(declin)
+        dat = set_declination(dat, declin)
         
     return dat
 
@@ -267,7 +267,7 @@ class adcp_loader(object):
         if self.n_avg == 1:
             return dat[..., 0]
         if np.isnan(dat).any():
-            return nanmean(dat, axis=-1)
+            return np.nanmean(dat, axis=-1)
         return np.mean(dat, axis=-1)
 
     def print_progress(self,):

@@ -14,6 +14,7 @@ from datetime import datetime
 from ..tools import misc as tbx
 from ..rotate.vector import calc_omat as _calc_omat
 from ..rotate.base import _set_coords
+from ..rotate import api as rot
 
 
 def recatenate(obj):
@@ -104,9 +105,9 @@ def read_nortek(filename,
                                                 'time': ds['time']},
                                         dims=['inst','earth','time'])
     if rotmat is not None:
-        ds = ds.Veldata.set_inst2head_rotmat(rotmat)
+        ds = rot.set_inst2head_rotmat(ds, rotmat)
     if declin is not None:
-        ds = ds.Veldata.set_declination(declin)
+        ds = rot.set_declination(ds, declin)
     
     return ds
 

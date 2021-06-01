@@ -5,7 +5,6 @@ from dolfyn import read_example as read
 import dolfyn.test.base as tb
 from xarray.testing import assert_allclose
 
-
 load = tb.load_ncdata
 save = tb.save_ncdata
 
@@ -13,23 +12,6 @@ dat = load('vector_data01.nc')
 dat_imu = load('vector_data_imu01.nc')
 dat_imu_json = load('vector_data_imu01-json.nc')
 dat_burst = load('burst_mode01.nc')
-
-
-# def data_equiv(dat1, dat2, message=''):
-#     if 'principal_heading' in dat1:
-#         pa1 = dat1.pop('principal_heading')
-#         pa2 = dat2.pop('principal_heading')
-#         assert np.abs(pa1 - pa2) < 1e-4, "The principal headings do not agree."
-#     assert dat1 == dat2, message
-
-
-# def check_except(fn, args, errors=Exception, message=''):
-#     try:
-#         fn(args)
-#     except errors:
-#         pass
-#     else:
-#         raise Exception(message)
 
 
 def test_read(make_data=False):
@@ -55,22 +37,6 @@ def test_read(make_data=False):
         save(tdb, 'burst_mode01.nc')
         save(tdm2, 'vector_data_imu01-json.nc')
         return
-
-    # msg_form = "The output of read('{}.VEC') does not match '{}.nc'."
-    # for dat1, dat2, msg in [
-    #         (td, dat,
-    #          msg_form.format('vector_data01', 'vector_data01')),
-    #         (td_orientraw, dat_orientraw,
-    #          msg_form.format('vector_data01+orientraw', 'vector_data01+orientraw')),
-    #         (tdm, dat_imu,
-    #          msg_form.format('vector_data_imu01', 'vector_data_imu01')),
-    #         (tdb, dat_burst,
-    #          msg_form.format('burst_mode01', 'burst_mode01')),
-    #         (tdm2, dat_imu_json,
-    #          msg_form.format('vector_data_imu01-json',
-    #                          'vector_data_imu01-json')),
-    # ]:
-    #     yield data_equiv, dat1, dat2, msg
     
     assert_allclose(td, dat)
     assert_allclose(tdm, dat_imu)
@@ -109,22 +75,6 @@ def test_motion(make_data=False):
 
     cdm10 = load('vector_data_imu01_mcDeclin10.nc')
     
-    # msg_form = "Motion correction '{}' does not match expectations."
-    # for dat1, dat2, msg in [
-    #         (tdm,
-    #          load('vector_data_imu01_mc.nc'),
-    #          'basic motion correction'),
-    #         (tdm10,
-    #          cdm10,
-    #          'with declination=10'),
-    #         (tdmE,
-    #          cdm10,
-    #          'earth-rotation first, with declination=10'),
-    #         (tdmj,
-    #          load('vector_data_imu01-json_mc.nc'),
-    #          'with reading userdata.json'),
-    # ]:
-    #     yield data_equiv, dat1, dat2, msg_form.format(msg)
     assert_allclose(tdm, load('vector_data_imu01_mc.nc'))
     assert_allclose(tdm10, cdm10)
     assert_allclose(tdmE, cdm10, rtol=1e-7, atol=1e-3)
@@ -188,31 +138,9 @@ def test_clean(make_data=False):
     assert_allclose(td, cd)
 
 
-# Built into xarray
-# def test_subset(make_data=False):
-#     td = dat.copy().subset[10:20]
-
-#     if make_data:
-#         save(td, 'vector_data01_subset.h5')
-#         return
-
-#     cd = load('vector_data01_subset.h5')
-
-#     # First check that subsetting works correctly
-#     yield data_equiv, cd, td, "ADV data object `subset` method gives unexpected results."
-
-#     # Now check that empty subsetting raises an error
-#     for index in [slice(0),
-#                   td.mpltime < 0,
-#                   slice(td.mpltime.shape[0] + 5, td.mpltime.shape[0] + 100)]:
-#         yield (check_except, td._subset, index, IndexError,
-#                "Attempts to subset to an empty data-object should raise an error.")
-
-
 if __name__ == '__main__':
     test_read()
     test_motion()
     test_heading()
     test_turbulence()
     test_clean()
-    #rungen(test_subset())

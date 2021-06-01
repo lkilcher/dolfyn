@@ -10,6 +10,7 @@ from . import nortek2lib as lib
 from .base import WrongFileType, read_userdata, create_dataset, handle_nan
 from ..rotate.vector import _euler2orient
 from ..rotate.base import _set_coords
+from ..rotate.api import set_declination
 
 
 def read_signature(filename, userdata=True, nens=None):
@@ -74,7 +75,7 @@ def read_signature(filename, userdata=True, nens=None):
                                                'time': ds['time']},
                                        dims=['inst','earth','time'])
     if declin is not None:
-        ds.Veldata.set_declination(declin)
+        ds = set_declination(ds, declin)
 
     return ds
 

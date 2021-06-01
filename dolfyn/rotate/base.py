@@ -3,119 +3,6 @@ from numpy.linalg import det, inv
 from scipy.spatial.transform import Rotation as R
 
 
-def calc_principal_heading(vel, tidal_mode=True):
-    """
-    Compute the principal angle of the horizontal velocity.
-
-    Parameters
-    ----------
-    vel : np.ndarray (2,...,Nt), or (3,...,Nt)
-      The 2D or 3D Veldata array (3rd-dim is ignored in this calculation)
-
-    tidal_mode : bool (default: True)
-
-    Returns
-    -------
-    p_heading : float or ndarray
-      The principal heading in degrees clockwise from North.
-
-    Notes
-    -----
-
-    The tidal mode follows these steps:
-      1. rotates vectors with negative v by 180 degrees
-      2. then doubles those angles to make a complete circle again
-      3. computes a mean direction from this, and halves that angle again.
-      4. The returned angle is forced to be between 0 and 180. So, you
-         may need to add 180 to this if you want your positive
-         direction to be in the western-half of the plane.
-
-    Otherwise, this function simply computes the average direction
-    using a vector method.
-
-    """    
-    dt = vel[0] + vel[1] * 1j
-    if tidal_mode:
-        # Flip all vectors that are below the x-axis
-        dt[dt.imag <= 0] *= -1
-        # Now double the angle, so that angles near pi and 0 get averaged
-        # together correctly:
-        dt *= np.exp(1j * np.angle(dt))
-        dt = np.ma.masked_invalid(dt)
-        # Divide the angle by 2 to remove the doubling done on the previous
-        # line.
-        pang = np.angle(
-            np.nanmean(dt, -1, dtype=np.complex128)) / 2
-    else:
-        pang = np.angle(np.nanmean(dt, -1))
-        
-    return np.round((90 - np.rad2deg(pang)), decimals=4)
-
-
-def set_declination(ds, declin):
-    """
-    Set the magnetic declination
-
-    Parameters
-    ----------
-    declination : float
-       The value of the magnetic declination in degrees (positive
-       values specify that Magnetic North is clockwise from True North)
-
-    Returns
-    ----------
-    ds : xarray.Dataset
-        Dataset adjusted for the magnetic declination
-        
-    Notes
-    -----
-    This method modifies the data object in the following ways:
-
-    - If the dataset is in the *earth* reference frame at the time of
-      setting declination, it will be rotated into the "*True-East*,
-      *True-North*, Up" (hereafter, ETU) coordinate system
-
-    - ``dat['orientmat']`` is modified to be an ETU to
-      instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
-      XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
-      frame will now be to/from this ETU coordinate system.
-
-    - The value of the specified declination will be stored in
-      ``dat.attrs['declination']``
-
-    - ``dat['heading']`` is adjusted for declination
-      (i.e., it is relative to True North).
-
-    - If ``dat.attrs['principal_heading']`` is set, it is
-      adjusted to account for the orientation of the new 'True'
-      earth coordinate system (i.e., calling set_declination on a
-      data object in the principal coordinate system, then calling
-      dat.rotate2('earth') will yield a data object in the new
-      'True' earth coordinate system)
-
-    """
-    return ds.Veldata.set_declination(declin)
-
-
-def set_inst2head_rotmat(adv_ds, rotmat):
-    """
-    Set the instrument to head rotation matrix for the Nortek ADV if it
-    hasn't already been set through a '.userdata.json' file.
-    
-    Parameters
-    ----------
-    rotmat : float
-        3x3 rotation matrix
-    
-    Returns
-    ----------
-    ds : xarray.Dataset
-        Dataset with rotation matrix applied
-        
-    """
-    return adv_ds.Veldata.set_inst2head_rotmat(rotmat)
-
-
 class BadDeterminantWarning(UserWarning):
     """A warning for the determinant is not equal to 1.
     """
@@ -148,7 +35,7 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
 
 def _set_coords(ds, ref_frame, forced=False):
     '''
-    Check the current reference frame and adjust xarray coords/dims 
+    Checks the current reference frame and adjusts xarray coords/dims 
     as necessary.
     Makes sure assigned dataarray coordinates match what DOLfYN is reading in.
     
@@ -314,11 +201,13 @@ def euler2orient(heading, pitch, roll, units='degrees'):
         pass
     else:
         raise Exception("Invalid units")
-
-    heading = np.pi / 2 - heading # Converts the DOLfYN-defined heading to one that follows the right-hand-rule; 
-                                  # reports heading as rotation of the y-axis positive counterclockwise from North.
-
-    pitch = -pitch # Converts the DOLfYN-defined pitch to one that follows the right-hand-rule.
+        
+    # Converts the DOLfYN-defined heading to one that follows the right-hand-rule
+    # reports heading as rotation of the y-axis positive counterclockwise from North
+    heading = np.pi / 2 - heading 
+                                  
+    # Converts the DOLfYN-defined pitch to one that follows the right-hand-rule.
+    pitch = -pitch
 
     ch = np.cos(heading)
     sh = np.sin(heading)
@@ -398,9 +287,24 @@ def orient2euler(omat):
     )
 
 
-def quat2orient(quaternions):
+def q2orient(quaternions):
     '''
-    Calculate orientation from Nortek AHRS quaternions, where q = [W, X, Y, Z] instead of the standard q = [X, Y, Z, W]
+    Calculate orientation from Nortek AHRS quaternions, where q = [W, X, Y, Z] 
+    (instead of the standard q = [X, Y, Z, W])
+    
+    Parameters
+    ----------
+    quaternions : xarray.DataArray
+        Quaternion dataArray from the raw dataset
+        
+    Returns
+    -------
+    orientmat : |np.ndarray|
+        The inst2earth rotation maxtrix as calculated from the quaternions
+        
+    See Also
+    --------
+    `scipy.spatial.transform.Rotation`
     
     '''
     omat = np.empty((3, 3, quaternions.time.size))

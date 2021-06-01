@@ -124,8 +124,8 @@ dat = avm.rotate2(dat, 'principal')
 dat_cln = avm.rotate2(dat_cln, 'principal')
 
 # Average the data and compute turbulence statistics
-dat_bin = avm.calc_turbulence(dat, n_bin=19200, n_fft=4096)
-dat_cln_bin = avm.calc_turbulence(dat_cln, n_bin=19200, n_fft=4096)
+dat_bin = avm.calc_turbulence(dat, n_bin=19200, fs=dat.fs, n_fft=4096)
+dat_cln_bin = avm.calc_turbulence(dat_cln, n_bin=19200, fs=dat_cln.fs, n_fft=4096)
 
 ####
 # Figure to look at spectra

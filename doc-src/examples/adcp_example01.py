@@ -9,7 +9,7 @@ dat = dlfn.read_example('BenchFile01.ad2cp')
 # Filter beam data with correlation < 50%
 dat_cln = apm.clean.correlation_filter(dat, thresh=50)
 
-# Fill in NaN's in data by depth bin first
+# Fill in NaN's in data by time first
 dat_cln = apm.clean.fillgaps_time(dat_cln)
 # Data can also be filled in by profile
 dat_cln = apm.clean.fillgaps_depth(dat_cln)

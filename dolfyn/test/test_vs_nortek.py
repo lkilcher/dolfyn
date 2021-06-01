@@ -8,10 +8,11 @@ import scipy.io as sio
 '''
 Testing against velocity and bottom-track velocity data in Nortek mat files
 exported from SignatureDeployment.
+
 inst2earth rotation fails for AHRS-equipped istruments and I don't know why - 
-I believe it's a compounding (trunctation?) error on Nortek's side. (Look at
-difference colorplots compared to non-AHRS instruments) Using HPR- or quat-
-calc'd orientmats doesn't close the gap
+I believe it's due to an RC filter (or some such) on Nortek's side. 
+(Check out the difference colorplots compared to non-AHRS instruments.)
+Using HPR- or quaterion-calc'd orientation matrices doesn't close the gap.
 
 '''
 
@@ -71,9 +72,9 @@ def rotate(axis):
     #td_sig_ie_vel = load_nortek_matfile('data/Sig500_Echo.mat')
     #td_sig_vm_vel, vm_vel_bt = load_nortek_matfile('data/SigVM1000.mat')
     
-    # ARHS inst2earth orientation matrix
-    # checks the 11 element because the nortek orientmat is [9,:] as opposed
-    # to [3,3,:]
+    #ARHS inst2earth orientation matrix check
+    # Checks the 1,1 element because the nortek orientmat's shape is [9,:] as 
+    # opposed to [3,3,:]
     if axis=='inst':
         assert_allclose(td_sig_i.orientmat[0][0].values, 
                         td_sig_i_vel['omat'][0,:], atol=1e-7)
@@ -84,9 +85,9 @@ def rotate(axis):
     #plt.figure(); plt.pcolormesh(td_sig.vel[0].values-td_sig_vel[axis][0]); plt.colorbar()
     assert_allclose(td_sig.vel.values, td_sig_vel[axis], atol=1e-5)
     #plt.figure(); plt.pcolormesh(td_sig_i.vel[0].values-td_sig_i_vel[axis][0]); plt.colorbar()
-    assert_allclose(td_sig_i.vel.values, td_sig_i_vel[axis], atol=1e-2)
+    assert_allclose(td_sig_i.vel.values, td_sig_i_vel[axis], atol=5e-3)
     #plt.figure(); plt.pcolormesh(td_sig_ieb.vel[0].values-td_sig_ieb_vel[axis][0][...,:-1]); plt.colorbar()
-    assert_allclose(td_sig_ieb.vel.values, td_sig_ieb_vel[axis][...,:-1], atol=1e-2)
+    assert_allclose(td_sig_ieb.vel.values, td_sig_ieb_vel[axis][...,:-1], atol=5e-3)
     #assert_allclose(td_sig_ie.vel.values, td_sig_ie_vel[axis][...,:-1], atol=1e-5)
     #assert_allclose(td_sig_vm.vel.values, td_sig_vm_vel[axis][...,1:-1], atol=1e-5)
     
@@ -96,7 +97,7 @@ def rotate(axis):
         assert_allclose(td_sig_ieb.vel_b5.values, td_sig_ieb_vel['b5'][...,:-1], atol=1e-5)
     
     # bottom-track
-    assert_allclose(td_sig_ieb.vel_bt.values, vel_bt[axis], atol=1e-2)
+    assert_allclose(td_sig_ieb.vel_bt.values, vel_bt[axis], atol=5e-3)
     #assert_allclose(td_sig_vm.vel_bt.values, vm_vel_bt[axis][...,:-1], atol=1e-5)
 
 def test_rotate2_beam():

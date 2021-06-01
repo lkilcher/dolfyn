@@ -165,11 +165,11 @@ def _check_inst2head_rotmat(advo):
 
 def earth2principal(advo, reverse=False):
     """
-    Rotate data in an ADV object to/from principal axes. If the
-    principal angle is not yet computed it will be computed.
+    Rotate data in an ADV dataset to/from principal axes. Principal
+    heading must be within the dataset.
 
-    All data in the advo.props['rotate_vars'] list will be
-    rotated by the principal angle, and also if the data objet has an
+    All data in the advo.attrs['rotate_vars'] list will be
+    rotated by the principal heading, and also if the data objet has an
     orientation matrix (orientmat) it will be rotated so that it
     represents the orientation of the ADV in the principal
     (reverse:earth) frame.
@@ -182,8 +182,8 @@ def earth2principal(advo, reverse=False):
            (principal->earth).
 
     """
-    if 'principal_heading' not in advo.attrs:
-        advo.attrs['principal_heading'] = rotb.calc_principal_heading(advo.vel)
+    #if 'principal_heading' not in advo.attrs:
+    #    advo.attrs['principal_heading'] = calc_principal_heading(advo.vel)
     
     try:
         # this is in degrees CW from North

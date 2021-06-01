@@ -1,7 +1,3 @@
-"""
-The base module for the io package.
-"""
-
 import numpy as np
 import xarray as xr
 import six

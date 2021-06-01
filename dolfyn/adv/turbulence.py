@@ -35,7 +35,7 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        advr : xr.Dataset
+        advr : xarray.Dataset
           The raw adv dataset to `bin`, average and compute
           turbulence statistics of.
 
@@ -49,7 +49,7 @@ class TurbBinner(VelBinner):
         Returns
         -------
 
-        advb : xr.Dataset
+        advb : xarray.Dataset
           Returns an 'binned' (i.e. 'averaged') dataset. All
           fields (variables) of the input dataset are averaged in n_bin
           chunks. This object also computes the following items over
@@ -70,8 +70,8 @@ class TurbBinner(VelBinner):
           - U_std : The standard deviation of the horizontal
             velocity `U_mag`.
 
-          - psd: An xr.DataArray containing the spectra of the velocity
-            in radial frequency units. The data-array contains:
+          - S: A DataArray containing the spectra of the velocity
+            in radial frequency units. This DataArray contains:
             - spectra : the velocity spectra array (m^2/s/rad))
             - omega : the radial frequency (rad/s)
 
@@ -94,10 +94,10 @@ class TurbBinner(VelBinner):
         out['stress_vec'] = self.calc_stress(advr['vel'])
 
         #out.attrs['Itke_thresh'] = Itke_thresh
-        out['psd'] = self.calc_vel_psd(advr['vel'],
-                                       window=window,
-                                       freq_units='rad/s',
-                                       noise=noise)
+        out['S'] = self.calc_vel_psd(advr['vel'],
+                                     window=window,
+                                     freq_units='rad/s',
+                                     noise=noise)
         out.attrs['n_bin'] = self.n_bin
         out.attrs['n_fft'] = self.n_fft
         out.attrs['n_fft_coh'] = self.n_fft_coh
@@ -109,19 +109,19 @@ class TurbBinner(VelBinner):
         return out
 
 
-    def calc_epsilon_LT83(self, psd, U_mag, omega_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, S, U_mag, omega_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate from the PSD.
 
         Parameters
         ----------
 
-        psd : xr.DataArray (...,n_time,n_f)
+        S : xarray.DataArray (...,n_time,n_f)
           The spectrum array [m^2/s/rad] with frequency vector 
           'omega' (rad/s)
 
         U_mag : |np.ndarray| (...,n_time)
-          The bin-averaged horizontal velocity [m/s]
+          The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
 
         omega_range : iterable(2)
           The range over which to integrate/average the spectrum.
@@ -151,36 +151,34 @@ class TurbBinner(VelBinner):
         by a random wave field" JPO, 1983, 13, 2000-2007.
 
         """
-        omega = psd.omega
+        omega = S.omega
 
         idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
         idx = idx[0]
         
         a = 0.5
-        # using vel_avg.values because the first dimension is 'orient' as
-        # opposed to 'spectra', though different names they are the same dir
-        out = np.nanmean(psd.isel(omega=idx) *
-                         omega.isel(omega=idx) ** (5/3) / a,
-                         axis=-1) ** (3/2) / U_mag
+        out = (S.isel(omega=idx) *
+               omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
         
-        out = xr.DataArray(out, attrs={'units':'m^2/s^3',
+        out = xr.DataArray(out, name='dissipation_rate',
+                           attrs={'units':'m^2/s^3',
                                        'method':'LT83'})
         return out
 
 
-    def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_rng=[.25, 1.]):
+    def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_rng=[2., 4.]):
         """
         Calculate dissipation rate using the "structure function" (SF) method
 
         Parameters
         ----------
 
-        vel_raw : xr.DataArray
-          The raw velocity data (last dimension time) upon 
+        vel_raw : xarray.DataArray
+          The raw velocity data (with dimension time) upon 
           which to perform the SF technique. 
 
-        U_mag : xr.DataArray
-          The bin-averaged horizontal velocity
+        U_mag : xarray.DataArray
+          The bin-averaged horizontal velocity (from dataset shortcut)
 
         fs : float
           The sample rate of `vel_raw` [Hz]
@@ -215,7 +213,8 @@ class TurbBinner(VelBinner):
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
             out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
             
-        return xr.DataArray(out, coords=U_mag.coords,
+        return xr.DataArray(out, name='dissipation_rate',
+                            coords=U_mag.coords,
                             dims=U_mag.dims,
                             attrs={'units':'m^2/s^3',
                                   'method':'structure function'})
@@ -280,12 +279,12 @@ class TurbBinner(VelBinner):
         Parameters
         ----------
 
-        dat_raw : xr.Dataset
-          The raw adv dataset
+        dat_raw : xarray.Dataset
+          The raw (off the instrument) adv dataset
           
-        dat_avg : xr.Dataset
+        dat_avg : xarray.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
-          'do_avg'). The spectra (psd) and basic turbulence statistics 
+          'do_avg'). The spectra (S) and basic turbulence statistics 
           ('tke_vec' and 'stress_vec') must already be computed.
 
         Notes
@@ -297,11 +296,11 @@ class TurbBinner(VelBinner):
         """
 
         # Assign local names
-        U_mag = dat_avg.TKEdata.U_mag.values
-        I_tke = dat_avg.TKEdata.I_tke.values
-        theta = dat_avg.TKEdata.U_dir.values - \
+        U_mag = dat_avg.Veldata.U_mag.values
+        I_tke = dat_avg.Veldata.I_tke.values
+        theta = dat_avg.Veldata.U_dir.values - \
                 self._up_angle(dat_raw.Veldata.U.values)
-        omega = dat_avg.psd.omega.values
+        omega = dat_avg.S.omega.values
 
         # Calculate constants
         alpha = 1.5
@@ -309,51 +308,52 @@ class TurbBinner(VelBinner):
 
         # Index data to be used
         inds = (omega_range[0] < omega) & (omega < omega_range[1])
-        psd = dat_avg.psd[..., inds].values
-        omega = omega[inds].reshape([1] * (dat_avg.psd.ndim - 2) + [sum(inds)])
+        spec = dat_avg.S[..., inds].values
+        omega = omega[inds].reshape([1] * (dat_avg.S.ndim - 2) + [sum(inds)])
 
         # Estimate values (u and v component calculations are added together)
         # u component (equation 6)
-        out = (np.nanmean((psd[0] + psd[1]) * omega**(5/3), -1) /
+        out = (np.nanmean((spec[0] + spec[1]) * omega**(5/3), -1) /
                (21/55 * alpha * intgrl))**(3/2) / U_mag
 
         # # v component
-        # out = (np.mean((psd[0] + psd[1]) * (omega) ** (5 / 3), -1) /
+        # out = (np.mean((spec[0] + spec[1]) * (omega) ** (5 / 3), -1) /
         #        (21 / 55 * alpha * intgrl)
         #        ) ** (3 / 2) / U_mag
         
         # Add w component
-        out += (np.nanmean(psd[2] * omega**(5/3), -1) /
+        out += (np.nanmean(spec[2] * omega**(5/3), -1) /
                 (12/55 * alpha * intgrl))**(3/2) / U_mag
 
         # Average the two estimates
         out *= 0.5
         
-        return xr.DataArray(out, coords={'time':dat_avg.psd.time}, 
+        return xr.DataArray(out, name='dissipation_rate',
+                            coords={'time':dat_avg.S.time}, 
                             dims='time',
                             attrs={'units':'m^2/s^3',
                                    'method':'TE01'})
 
 
-    def calc_L_int(self, a_cov, U_mag, fs=None):
+    def calc_L_int(self, a_cov, vel_avg, fs=None):
         """
         Calculate integral length scales.
 
         Parameters
         ----------
 
-        a_cov : xr.DataArray
+        a_cov : xarray.DataArray
           The auto-covariance array (i.e. computed using `calc_acov`).
 
-        U_mag : xr.DataArray
-          The bin-averaged horizontal velocity
+        vel_avg : xarray.DataArray
+          The bin-averaged velocity (from dataset shortcut)
 
         fs : float
           The raw sample rate
 
         Returns
         -------
-        Lint : |np.ndarray| (..., n_time)
+        L_int : |np.ndarray| (..., n_time)
           The integral length scale (Tint*U_mag).
 
         Notes
@@ -368,12 +368,12 @@ class TurbBinner(VelBinner):
         fs = self._parse_fs(fs)
         
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
-        L_int = (U_mag / fs * scale)
+        L_int = (abs(vel_avg) / fs * scale)
         
-        return xr.DataArray(L_int, attrs={'units':'m'})
+        return xr.DataArray(L_int, name='L_int', attrs={'units':'m'})
 
 
-def calc_turbulence(ds_raw, n_bin, n_fft=None, out_type=None,
+def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
                     omega_range_epsilon=[6.28, 12.57],
                     window='hann'):
     """
@@ -383,7 +383,7 @@ def calc_turbulence(ds_raw, n_bin, n_fft=None, out_type=None,
     Parameters
     ----------
 
-    ds_raw : xr.Dataset
+    ds_raw : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
 
@@ -397,7 +397,7 @@ def calc_turbulence(ds_raw, n_bin, n_fft=None, out_type=None,
     Returns
     -------
 
-    advb : xr.Dataset
+    advb : xarray.Dataset
       Returns an 'binned' (i.e. 'averaged') data object. All
       fields (variables) of the input data object are averaged in n_bin
       chunks. This object also computes the following items over
@@ -418,13 +418,13 @@ def calc_turbulence(ds_raw, n_bin, n_fft=None, out_type=None,
       - U_std : The standard deviation of the horizontal
         velocity `U_mag`.
 
-      - psd : xr.DataArray containing the spectra of the velocity
+      - S : DataArray containing the spectra of the velocity
         in radial frequency units. The data-array contains:
         - vel : the velocity spectra array (m^2/s/rad))
         - omega : the radial frequncy (rad/s)
 
     """
-    calculator = TurbBinner(n_bin, fs=ds_raw.fs, n_fft=n_fft)
+    calculator = TurbBinner(n_bin, fs, n_fft=n_fft)
     
     return calculator(ds_raw, out_type=out_type,
                       omega_range_epsilon=omega_range_epsilon,

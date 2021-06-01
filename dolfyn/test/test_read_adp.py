@@ -2,12 +2,11 @@ from dolfyn.io.api import read_example as read
 import dolfyn.test.base as tb
 #import sys
 import warnings
-import numpy as np
-from xarray.testing import assert_equal
+from xarray.testing import assert_equal, assert_identical
 warnings.simplefilter('ignore', UserWarning)
-
 load = tb.load_ncdata
 save = tb.save_ncdata
+
 
 dat_rdi = load('RDI_test01.nc')
 dat_rdi_bt = load('RDI_withBT.nc')
@@ -30,10 +29,9 @@ def test_badtime():
     "A good timestamp was found where a bad value is expected."
 
 
-def test_read(make_data=False):
+def test_io(make_data=False):
     # This uses the built-in declination!
-    td_rdi_orientraw = tb.drop_config(read('RDI_test01.000'))
-    td_rdi = td_rdi_orientraw.copy()
+    td_rdi = tb.drop_config(read('RDI_test01.000'))
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000'))
 
     td_sig = tb.drop_config(read('BenchFile01.ad2cp'))
@@ -45,18 +43,9 @@ def test_read(make_data=False):
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
 
-    # # We don't need the raw orientation data for most tests.
-    # td_rdi['orient'].pop('raw')
-    # td_rdi_bt['orient'].pop('raw')
-    # td_sig['orient'].pop('raw')
-    # td_awac['orient'].pop('raw')
-    # td_awac_ud['orient'].pop('raw')
-    # td_wr1['orient'].pop('raw')
-    # td_wr2['orient'].pop('raw')
-
     if make_data:
         #dlfn.save(dlfn.read_example('RDI_test01.000'),'RDI_test01.nc')
-        save(td_rdi_orientraw, 'RDI_test01.nc')
+        save(td_rdi, 'RDI_test01.nc')
         save(td_rdi_bt, 'RDI_withBT.nc')
         save(td_sig, 'BenchFile01.nc')
         save(td_sig_i, 'Sig1000_IMU.nc')
@@ -83,6 +72,19 @@ def test_read(make_data=False):
     assert_equal(td_wr1, dat_wr1)
     assert_equal(td_wr2, dat_wr2)
     
+    
+def test_matlab_io(make_data=False):
+    mat_rdi_bt = tb.load_matlab('dat_rdi_bt')
+    mat_sig_ieb = tb.load_matlab('dat_sig_ieb')
+    
+    if make_data:
+        tb.save_matlab(dat_rdi_bt, 'dat_rdi_bt')
+        tb.save_matlab(dat_sig_ieb, 'dat_sig_ieb')
+        
+    assert_identical(mat_rdi_bt, dat_rdi_bt)
+    assert_identical(mat_sig_ieb, dat_sig_ieb)
+    
 
 if __name__ == '__main__':
-    test_read()
+    test_io()
+    test_matlab_io()
