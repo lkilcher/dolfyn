@@ -1,7 +1,6 @@
 import pkg_resources
 import atexit
 import dolfyn.io.api as io
-from dolfyn.h5.io.hdf5 import load as load_h5
 
 atexit.register(pkg_resources.cleanup_resources)
 
