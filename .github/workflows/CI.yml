@@ -13,7 +13,7 @@ jobs:
       
     strategy:
       matrix:
-          python-version: ["3.6", "3.7", "3.8"]
+          python-version: ["3.7", "3.8", "3.9"]
 
     steps:
       - uses: "actions/checkout@v2"
@@ -24,7 +24,6 @@ jobs:
       - name: Install dependencies
         run:
           python -m pip install --upgrade pip
-          pip install -e git://github.com/lkilcher/pyDictH5.git@master#egg=pyDictH5
           pip install numpy scipy xarray six h5netcdf nose coveralls
       - name: Run tests
         run:

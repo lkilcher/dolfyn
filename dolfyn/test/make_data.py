@@ -11,6 +11,7 @@ print(__doc__)
 # import test_read_adp as adpr
 # import test_rotate_adp as adpro
 # import test_analysis as ta
+# import test_shortcuts as ts
 
 # advt.test_read(make_data=True)
 # advt.test_motion(make_data=True)
@@ -42,3 +43,5 @@ print(__doc__)
 # ta.test_calc_turbulence(make_data=True)
 # ta.test_calc_epsilon(make_data=True)
 # ta.test_calc_L_int(make_data=True)
+
+# ts.test_shortcuts(make_data=True)

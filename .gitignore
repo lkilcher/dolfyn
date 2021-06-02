@@ -34,3 +34,9 @@ tmp*.py
 .DS_Store
 
 .vscode/
+
+dolfyn/test/data/test_save.mat
+
+dolfyn/test/data/test_save.nc
+
+dolfyn/test/.coverage

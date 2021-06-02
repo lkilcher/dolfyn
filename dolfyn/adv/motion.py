@@ -4,6 +4,7 @@ import scipy.signal as ss
 from scipy.integrate import cumtrapz
 import xarray as xr
 from ..rotate import vector as rot
+from ..rotate.api import rotate2
 import warnings
 
 
@@ -366,7 +367,7 @@ def correct_motion(advo,
         raise Exception('The instrument does not appear to have an IMU.')        
 
     if advo.coord_sys != 'inst':
-        advo = advo.Veldata.rotate2('inst', inplace=True)
+        advo = rotate2(advo, 'inst', inplace=True)
 
     # Returns True/False if head2inst_rotmat has been set/not-set.
     # Bad configs raises errors (this is to check for those)

@@ -59,9 +59,6 @@ def read_signature(filename, userdata=True, nens=None):
             declin = userdata[nm]
         else:
             out['attrs'][nm] = userdata[nm]
-            
-    # NaN in time and orientation data
-    #handle_nan(out)
     
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(out)

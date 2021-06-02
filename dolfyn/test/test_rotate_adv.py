@@ -1,8 +1,10 @@
 from dolfyn.test import test_adv as tr
+import dolfyn.adv.api as avm
 from dolfyn import rotate2, calc_principal_heading, set_declination
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.base import euler2orient
 import numpy as np
+import unittest
 from xarray.testing import assert_allclose
 from numpy.testing import assert_allclose as assert_ac
 
@@ -12,9 +14,9 @@ def test_inst2head_rotmat():
     td = tr.dat.copy(deep=True)
 
     #Swap x,y, reverse z
-    td = td.Veldata.set_inst2head_rotmat([[0, 1, 0],
-                                          [1, 0, 0],
-                                          [0, 0, -1]])
+    td = avm.set_inst2head_rotmat(td, [[0, 1, 0],
+                                       [1, 0, 0],
+                                       [0, 0,-1]])
 
     # assert ((td.Veldata.u == tr.dat.Veldata.v).all() and
     #         (td.Veldata.v == tr.dat.Veldata.u).all() and
@@ -28,7 +30,7 @@ def test_inst2head_rotmat():
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
     R = euler2orient(20, 30, 60, units='degrees') # arbitrary angles
-    td = td.Veldata.set_inst2head_rotmat(R)
+    td = avm.set_inst2head_rotmat(td, R)
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R, tr.dat.vel)
@@ -161,7 +163,8 @@ def test_rotate_earth2principal_set_declination():
     td = rotate2(td, 'principal', inplace=True)
     td = set_declination(td, declin)
     td = rotate2(td, 'earth', inplace=True)
-
+    
+    td0 = set_declination(td0, -1)
     td0 = set_declination(td0, declin)
     td0.attrs['principal_heading'] = calc_principal_heading(td0['vel'])
     td0 = rotate2(td0, 'earth')
@@ -170,6 +173,26 @@ def test_rotate_earth2principal_set_declination():
     #            "Something is wrong with declination "
     #            "handling w/r/t principal_heading.")
     assert_allclose(td0, td, atol=1e-6)
+    
+
+class warnings_testcase(unittest.TestCase):
+    def test_rotate_warnings(self):
+        warn1 = tr.dat.copy(deep=True)
+        warn2 = tr.dat.copy(deep=True)
+        warn2.attrs['coord_sys'] = 'flow'
+        warn3 = tr.dat.copy(deep=True)
+        warn3.attrs['inst_model'] = 'ADV'
+        
+        with self.assertRaises(Exception):
+            rotate2(warn1, 'ship')
+        with self.assertRaises(Exception):
+            rotate2(warn2, 'earth')
+        with self.assertRaises(Exception):
+            avm.set_inst2head_rotmat(warn3, np.eye(3))
+        with self.assertRaises(Exception):
+            avm.set_inst2head_rotmat(warn3, np.eye(3))
+            avm.set_inst2head_rotmat(warn3, np.eye(3))
+        
 
 
 if __name__=='__main__':
@@ -180,4 +203,5 @@ if __name__=='__main__':
     test_rotate_inst2beam()
     test_rotate_earth2principal()
     test_rotate_earth2principal_set_declination()
+    unittest.main()
     

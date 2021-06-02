@@ -53,8 +53,9 @@ Xarray DOLfYN to MHKiT Changelog
 			
 		- TimeData, Velocity, TKEdata class refactoring - done
 			- TimeData is now void
-			- Added TKEdata as an xarray accessors named 'Veldata'
-			- 'Velocity' remains as is
+			- Combined Velocity and TKEdata
+			- Moved methods (`set_declination`, `set_inst2head_rotmat`) into the 'rotate' module
+			- Velocity has xarray accessor 'Veldata'
 			- All properties now return xr.DataArrays
 			
 		- TimeBinner, VelBinner, TurbBinner class refactoring - done

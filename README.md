@@ -1,6 +1,6 @@
 DOLfYN
 ======
-
+[![Actions Status](https://github.com/jmcvey3/dolfyn/workflows/CI/badge.svg)](https://github.com/jmcvey3/dolfyn/actions)
 [![Documentation Status](https://readthedocs.org/projects/dolfyn-xarray/badge/?version=latest)](https://dolfyn-xarray.readthedocs.io/en/latest/?badge=latest)
 
 DOLfYN is the Doppler Oceanography Library for pYthoN.

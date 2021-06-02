@@ -37,7 +37,7 @@ config = dict(
         #'Topic :: Scientific/Engineering :: Earth Science',
     ],
     url='http://github.com/jmcvey3/dolfyn',
-    packages=find_packages(exclude=['dolfyn.test','dolfyn.h5','dolfyn.h5.*',]),
+    packages=find_packages(exclude=['dolfyn.test']),
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.rotate', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
@@ -55,7 +55,5 @@ config = dict(
 if include_tests:
     config['packages'].append('dolfyn.test')
     config['package_data'].update({'dolfyn.test': ['data/*']},)
-    config['packages'].append('dolfyn.h5')
-    config['packages'].append('dolfyn.h5.*')
 
 setup(**config)

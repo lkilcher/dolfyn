@@ -171,7 +171,6 @@ def index2ens_pos(index):
     """
     if (index['ens'] == 0).all() and (index['hw_ens'] == 1).all():
         #!!!TODO
-        # This is an ugly hack.
         # This is for when the system runs in 'raw/continuous mode' or something?
         # Is there a better way to detect this mode?
         n_IDs = {id:(index['ID'] == id).sum() for id in np.unique(index['ID'])}
@@ -184,11 +183,7 @@ def index2ens_pos(index):
 
 
 def getbit(val, n):
-    #!!! Traceback to sig vm echosounder data for this except
-    try:
-        return bool((val >> n) & 1)
-    except:
-        return bool((val[0] >> n) & 1)
+    return bool((val >> n) & 1)
 
 
 def crop_ensembles(infile, outfile, range):
@@ -331,10 +326,6 @@ def beams_cy_int2dict(val, id):
     if id == 28:  # 0x1C (echosounder)
         return dict(ncells=val)
     
-    #!!! Traceback to sig vm echosounder data for these two lines of code
-    if np.size(val)>1:
-        val = val[0]
-    
     return dict(
         ncells=val & (2 ** 10 - 1),
         cy=['ENU', 'XYZ', 'BEAM', None][val >> 10 & 3],
@@ -358,8 +349,8 @@ def collapse(vec, name=None, exclude=[]):
     elif isuniform(vec, exclude=exclude):
         return list(set(np.unique(vec)) - set(exclude))[0]
     else:
-        warnings.warn("The variable {} is expected to be uniform,"
-                      " but it is not.".format(name))
+        # warnings.warn("The variable {} is expected to be uniform,"
+        #               " but it is not.".format(name))
         return vec[0]
 
 

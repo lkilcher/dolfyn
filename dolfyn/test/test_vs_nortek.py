@@ -1,5 +1,6 @@
 from dolfyn.test import test_read_adp as tr
 from dolfyn.test import base
+from dolfyn import rotate2
 from numpy.testing import assert_allclose
 import numpy as np
 import scipy.io as sio
@@ -60,11 +61,11 @@ def load_nortek_matfile(filename):
         return vel
 
 def rotate(axis):
-    td_sig = tr.dat_sig.Veldata.rotate2(axis) # BenchFile01.ad2cp
-    td_sig_i = tr.dat_sig_i.Veldata.rotate2(axis) # Sig1000_IMU.ad2cp no userdata
-    td_sig_ieb = tr.dat_sig_ieb.Veldata.rotate2(axis) #VelEchoBT01.ad2cp
-    #td_sig_ie = tr.dat_sig_ie.Veldata.rotate2(axis) #Sig500_Echo.ad2cp
-    #td_sig_vm = tr.dat_sig_vm.Veldata.rotate2(axis) #SigVM1000.ad2cp
+    td_sig = rotate2(tr.dat_sig, axis) # BenchFile01.ad2cp
+    td_sig_i = rotate2(tr.dat_sig_i, axis) # Sig1000_IMU.ad2cp no userdata
+    td_sig_ieb = rotate2(tr.dat_sig_ieb, axis) #VelEchoBT01.ad2cp
+    #td_sig_ie = rotate2(tr.dat_sig_ie, axis) #Sig500_Echo.ad2cp
+    #td_sig_vm = rotate2(tr.dat_sig_vm, axis) #SigVM1000.ad2cp
     
     td_sig_vel = load_nortek_matfile(base.rfnm('BenchFile01.mat'))
     td_sig_i_vel = load_nortek_matfile(base.rfnm('Sig1000_IMU.mat'))

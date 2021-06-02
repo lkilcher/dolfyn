@@ -3,103 +3,28 @@ import numpy as np
 from .binned import TimeBinner
 import warnings
 from ..rotate import base as rotb
-from ..rotate import api as rot
 import xarray as xr
 
 
+@xr.register_dataset_accessor('Veldata')
 class Velocity():
-    """This is the base class for velocity data objects.
-
+    """
     All ADCP and ADV data objects inherit from this base class.
+    
+    The turbulence-related attributes defined within this class 
+    assume that the  ``'tke_vec'`` and ``'stress_vec'`` data entries are 
+    included in the dataset. These are typically calculated using a
+    :class:`VelBinner` tool, but the method for calculating these
+    variables can depend on the details of the measurement
+    (instrument, it's configuration, orientation, etc.).
+
+    See Also
+    ========
+    :class:`VelBinner`
 
     """
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
-
-
-    def set_inst2head_rotmat(self, rotmat):
-        """
-        Set the instrument to head rotation matrix for the Nortek ADV if it
-        hasn't already been set through a '.userdata.json' file.
-                
-        To call: ``>> dat = dat.Veldata.set_inst2head_rotmat()``
-        
-        Parameters
-        ----------
-        rotmat : float
-            3x3 rotation matrix
-        
-        """
-        return rot.set_inst2head_rotmat(self.ds, rotmat)
-
-    
-    def set_declination(self, declination):
-        """
-        Set the declination of the dataset.
-        
-        To call: ``>> dat = dat.Veldata.set_declination()``
-
-        Parameters
-        ----------
-        declination : float
-           The value of the magnetic declination in degrees (positive
-           values specify that Magnetic North is clockwise from True North)
-
-        Notes
-        -----
-        This method modifies the data object in the following ways:
-
-        - If the dataset is in the *earth* reference frame at the time of
-          setting declination, it will be rotated into the "*True-East*,
-          *True-North*, Up" (hereafter, ETU) coordinate system
-
-        - ``dat['orientmat']`` is modified to be an ETU to
-          instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
-          XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
-          frame will now be to/from this ETU coordinate system.
-
-        - The value of the specified declination will be stored in
-          ``dat.attrs['declination']``
-
-        - ``dat['heading']`` is adjusted for declination
-          (i.e., it is relative to True North).
-
-        - If ``dat.attrs['principal_heading']`` is set, it is
-          adjusted to account for the orientation of the new 'True'
-          earth coordinate system (i.e., calling set_declination on a
-          data object in the principal coordinate system, then calling
-          dat.rotate2('earth') will yield a data object in the new
-          'True' earth coordinate system)
-
-        """
-        return rot.set_declination(self.ds, declination)
-        
-        
-    def rotate2(self, out_frame, inplace=False):
-        """
-        Rotate the data object into a new coordinate system.
-
-        Parameters
-        ----------
-
-        out_frame : string {'beam', 'inst', 'earth', 'principal'}
-          The coordinate system to rotate the data into.
-
-        inplace : bool
-          Operate on self (True), or return a copy that
-          has been rotated (False, default).
-
-        Returns
-        -------
-        out : xr.Dataset
-          The rotated data object. This is `self` if inplace is True.
-
-        See Also
-        --------
-        :func:`dolfyn.rotate2`
-
-        """
-        return rot.rotate2(self.ds, out_frame=out_frame, inplace=inplace)
 
 
     @property
@@ -198,44 +123,31 @@ class Velocity():
                     np.angle(self.U),
                     attrs={'units':'rad',
                            'description':'''horizontal velocity flow direction, 
-                           CW from X/east/streamwise'''})                            
-
-
-@xr.register_dataset_accessor('Veldata')
-class TKEdata(Velocity):
-    """This is the base class for turbulence data objects.
-
-    The attributes and methods defined for this class assume that the
-    ``'tke_vec'`` and ``'stress'`` data entries are included in the
-    data object. These are typically calculated using a
-    :class:`VelBinner` tool, but the method for calculating these
-    variables can depend on the details of the measurement
-    (instrument, it's configuration, orientation, etc.).
-
-    See Also
-    ========
-    :class:`VelBinner`
-
-    """
-    # @property
-    # def shape(self,):
-    #     return self.ds.tke_vec[0].shape
+                           CW from X/east/streamwise'''})
 
     @property
     def tau_ij(self,):
         """Total stress tensor
         """
         n = self.ds.tke_vec
-        s = self.ds.stress
-        return np.array([[n[0], s[0], s[1]],
-                         [s[0], n[1], s[2]],
-                         [s[1], s[2], n[2]]])
+        s = self.ds.stress_vec
+        out = np.array([[n[0], s[0], s[1]],
+                        [s[0], n[1], s[2]],
+                        [s[1], s[2], n[2]]])
+        
+        return xr.DataArray(out,
+                            dims=["x'","x'*",'time'],
+                            coords={"x'":["u'","v'","w'"],
+                                    "x'*":["u'","v'","w'"],
+                                    'time':self.ds['stress_vec'].time},
+                            attrs={'units':self.ds['stress_vec'].units},
+                            name='stress tensor')
 
     def _rotate_tau(self, rmat, cs_from, cs_to):
         # Transpose second index of rmat for rotation
         t = rotb.rotate_tensor(self.ds.tau_ij, rmat)
         self.ds['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
-        self.ds['stress'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
+        self.ds['stress_vec'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
 
     def _tau_is_pd(self, ):
         rotb.is_positive_definite(self.tau_ij)
@@ -349,9 +261,9 @@ class TKEdata(Velocity):
             ky = 'f'
             c = 2*np.pi
         
-        k1 = c*self.ds[ky] / self.u
-        k2 = c*self.ds[ky] / self.v
-        k3 = c*self.ds[ky] / self.w
+        k1 = c*self.ds[ky] / abs(self.u)
+        k2 = c*self.ds[ky] / abs(self.v)
+        k3 = c*self.ds[ky] / abs(self.w)
         # transposes dimensions for some reason
         k = xr.DataArray([k1.T.values, k2.T.values, k3.T.values],
                          coords = self.ds.S.coords,

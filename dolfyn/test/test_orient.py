@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from dolfyn.rotate.base import euler2orient, orient2euler
+from dolfyn import set_declination
 from dolfyn.test.base import load_ncdata as load
 
 
@@ -85,7 +86,7 @@ def test_pr_declination():
     dat = load('vector_data_imu01.nc')
     h0, p0, r0 = orient2euler(dat['orientmat'].values)
 
-    dat.Veldata.set_declination(declin)
+    dat = set_declination(dat, declin)
     h1, p1, r1 = orient2euler(dat['orientmat'].values)
 
     assert_allclose(p0, p1, atol=1e-5, err_msg="Pitch changes when setting declination")

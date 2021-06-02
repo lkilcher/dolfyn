@@ -1,7 +1,8 @@
 import numpy as np
+import os
 import dolfyn.adv.api as avm
 from dolfyn.rotate.base import orient2euler
-from dolfyn import read_example as read
+from dolfyn import read_example as read, rotate2, set_declination
 import dolfyn.test.base as tb
 from xarray.testing import assert_allclose
 
@@ -12,6 +13,14 @@ dat = load('vector_data01.nc')
 dat_imu = load('vector_data_imu01.nc')
 dat_imu_json = load('vector_data_imu01-json.nc')
 dat_burst = load('burst_mode01.nc')
+
+
+def test_save():
+    save(dat, 'test_save')
+    tb.save_matlab(dat, 'test_save')
+    
+    assert os.path.exists(tb.rfnm('test_save.nc'))
+    assert os.path.exists(tb.rfnm('test_save.mat'))
 
 
 def test_read(make_data=False):
@@ -28,7 +37,7 @@ def test_read(make_data=False):
     
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
-    tdm = tdm.Veldata.set_inst2head_rotmat(np.eye(3))
+    tdm = avm.set_inst2head_rotmat(tdm, np.eye(3))
     tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:
@@ -51,20 +60,20 @@ def test_motion(make_data=False):
     
     tdm10 = dat_imu.copy(deep=True)
     # Include the declination.
-    tdm10 = tdm10.Veldata.set_declination(10.0)
+    tdm10 = set_declination(tdm10, 10.0)
     tdm10 = avm.correct_motion(tdm10)
     
     tdm0 = dat_imu.copy(deep=True)
     # Include the declination.
-    tdm0 = tdm0.Veldata.set_declination(0.0)
+    tdm0 = set_declination(tdm0, 0.0)
     tdm0 = avm.correct_motion(tdm0)
     
     tdmj = dat_imu_json.copy(deep=True)
     tdmj = avm.correct_motion(tdmj)
 
     tdmE = dat_imu.copy(deep=True)
-    tdmE = tdmE.Veldata.set_declination(10.0)
-    tdmE = tdmE.Veldata.rotate2('earth', inplace=True)
+    tdmE = set_declination(tdmE, 10.0)
+    tdmE = rotate2(tdmE, 'earth', inplace=True)
     tdmE = avm.correct_motion(tdmE)
 
     if make_data:
@@ -139,6 +148,7 @@ def test_clean(make_data=False):
 
 
 if __name__ == '__main__':
+    test_save()
     test_read()
     test_motion()
     test_heading()

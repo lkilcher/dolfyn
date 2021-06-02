@@ -9,10 +9,10 @@ from numpy.testing import assert_allclose as assert_ac
 
 def test_rotate_beam2inst(make_data=False):
 
-    td_rdi = tr.dat_rdi.Veldata.rotate2('inst')
-    td_sig = tr.dat_sig.Veldata.rotate2('inst')
-    td_sig_i = tr.dat_sig_i.Veldata.rotate2('inst')
-    td_sig_ieb = tr.dat_sig_ieb.Veldata.rotate2('inst')
+    td_rdi = rotate2(tr.dat_rdi, 'inst')
+    td_sig = rotate2(tr.dat_sig, 'inst')
+    td_sig_i = rotate2(tr.dat_sig_i, 'inst')
+    td_sig_ieb = rotate2(tr.dat_sig_ieb, 'inst')
 
     if make_data:
         save(td_rdi, 'RDI_test01_rotate_beam2inst.nc')

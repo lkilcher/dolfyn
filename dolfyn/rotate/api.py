@@ -44,7 +44,7 @@ def rotate2(ds, out_frame='earth', inplace=False):
       
     Notes
     -----
-    This function rotates all variables in ``ds.props['rotate_vars']``.
+    This function rotates all variables in ``ds.attrs['rotate_vars']``.
 
     """
     csin = ds.coord_sys.lower()
@@ -58,9 +58,9 @@ def rotate2(ds, out_frame='earth', inplace=False):
     if out_frame == 'principal' and csin != 'earth':
         warnings.warn(
             "You are attempting to rotate into the 'principal' "
-            "coordinate system, but the data dsect is in the {} "
+            "coordinate system, but the dataset is in the {} "
             "coordinate system. Be sure that 'principal_angle' is "
-            "defined based on the earth coordinate system." .format(csin))
+            "defined based on the earth coordinate system.".format(csin))
 
     rmod = None
     for ky in rot_module_dict:
@@ -78,12 +78,12 @@ def rotate2(ds, out_frame='earth', inplace=False):
         iframe_in = rc.index(csin)
     except ValueError:
         raise Exception("The coordinate system of the input "
-                        "data dsect, '{}', is invalid."
+                        "dataset, '{}', is invalid."
                         .format(ds.coord_sys))
     try:
         iframe_out = rc.index(out_frame.lower())
     except ValueError:
-        raise Exception("The specifid output coordinate system "
+        raise Exception("The specified output coordinate system "
                         "is invalid, please select one of: 'beam', 'inst', "
                         "'earth', 'principal'.")
 

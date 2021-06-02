@@ -42,9 +42,6 @@ def read_rdi(fname, userdata=None, nens=None):
 
     for nm in userdata:
         dat['attrs'][nm] = userdata[nm]
-        
-    # NaN in time and orientation data
-    #handle_nan(dat)
     
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(dat)
@@ -72,12 +69,13 @@ def _set_rdi_declination(dat, fname='????'):
     # that the declination is already included in the heading,
     # and in the velocity data.
     # I'm assuming this is the case for now...
-    # Can confirm - jrm
+    ## Can confirm - jrm
 
     declin = dat.attrs.pop('declination', None)
 
     if dat.attrs['magnetic_var_deg'] != 0:
         dat.attrs['declination'] = dat.attrs['magnetic_var_deg']
+        dat.attrs['declination_in_orientmat'] = 1 # logical
 
     if dat.attrs['magnetic_var_deg'] != 0 and declin:# is not None:
         warnings.warn(
@@ -91,9 +89,6 @@ def _set_rdi_declination(dat, fname='????'):
                     dat.attrs['declination']))
 
     if declin is not None:
-        # set_declination rotates by the difference between what is
-        # already set in props['declination'] (i.e., above), and the
-        # input value
         dat = set_declination(dat, declin)
         
     return dat
@@ -259,16 +254,14 @@ class adcp_loader(object):
     _debug7f79 = None
     vars_read = variable_setlist(['time'])
 
-    def _debug_print(self, lvl, msg):
-        if self._debug_level > lvl:
-            print(msg)
+    # def _debug_print(self, lvl, msg):
+    #     if self._debug_level > lvl:
+    #         print(msg)
 
     def mean(self, dat):
         if self.n_avg == 1:
             return dat[..., 0]
-        if np.isnan(dat).any():
-            return np.nanmean(dat, axis=-1)
-        return np.mean(dat, axis=-1)
+        return np.nanmean(dat, axis=-1)
 
     def print_progress(self,):
         if (self.f.tell() - self.progress) < 1048576:
