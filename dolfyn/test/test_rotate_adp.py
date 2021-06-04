@@ -97,10 +97,12 @@ def test_rotate_inst2earth(make_data=False):
 
 
 def test_rotate_earth2inst():
+    
     td_rdi = load('RDI_test01_rotate_inst2earth.nc')
     td_rdi = rotate2(td_rdi, 'inst', inplace=True)
     tdwr2 = load('winriver02_rotate_ship2earth.nc')
     tdwr2 = rotate2(tdwr2, 'inst', inplace=True)
+    
     td_awac = tr.dat_awac.copy(deep=True)
     td_awac = rotate2(td_awac, 'inst')  # AWAC is in earth coords
     td_sig = load('BenchFile01_rotate_inst2earth.nc')
@@ -125,6 +127,7 @@ def test_rotate_earth2inst():
     assert_allclose(tdwr2, tr.dat_wr2, rtol=1e-7, atol=1e-3)
     assert_allclose(td_awac, cd_awac, rtol=1e-7, atol=1e-3)
     assert_allclose(td_sig, cd_sig, rtol=1e-7, atol=1e-3)
+    #known failure due to orientmat, see test_vs_nortek
     #assert_allclose(td_sig_i, cd_sig_i, rtol=1e-7, atol=1e-3)
     assert_ac(td_sig_i.accel.values, cd_sig_i.accel.values, rtol=1e-7, atol=1e-3)
 

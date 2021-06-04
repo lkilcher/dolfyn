@@ -6,7 +6,7 @@ import warnings
 from os.path import getsize
 
 from ._read_bin import eofException, bin_reader
-from .base import WrongFileType, read_userdata, create_dataset, handle_nan
+from .base import WrongFileType, read_userdata, create_dataset
 from ..rotate.rdi import calc_beam_orientmat as _calc_bmat, calc_orientmat as _calc_omat
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -36,17 +36,34 @@ def read_rdi(fname, userdata=None, nens=None):
     """
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
-    userdata = read_userdata(fname, userdata)
     with adcp_loader(fname) as ldr:
         dat = ldr.load_data(nens=nens)
-
+        
+    # Read in userdata    
+    userdata = read_userdata(fname, userdata)
     for nm in userdata:
         dat['attrs'][nm] = userdata[nm]
+
+    # If GPS data is sampling at a different rate for WinRiver or VMDAS
+    if 'time_gps' in dat['coords']:
+        dat['coords']['time_gps'], idx = np.unique(dat['coords']['time_gps'],
+                                                   return_index=True)
+        nan = np.zeros(dat['coords']['time'].shape, dtype=bool)
+        if any(np.isnan(dat['coords']['time_gps'])):
+            nan = np.isnan(dat['coords']['time_gps'])
+            dat['coords']['time_gps'] = dat['coords']['time_gps'][~nan]
+            
+        for key in dat['data_vars']:
+            if 'gps' in key:
+                dat['data_vars'][key] = dat['data_vars'][key][idx]
+                if sum(nan) > 0:
+                    dat['data_vars'][key] = dat['data_vars'][key][~nan]
     
     # Create xarray dataset from upper level dictionary
     ds = create_dataset(dat)
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
     
+    # Create orientation matrices
     ds['beam2inst_orientmat'] = xr.DataArray(_calc_bmat(
                             ds.beam_angle,
                             ds.beam_pattern=='convex'),
@@ -59,6 +76,8 @@ def read_rdi(fname, userdata=None, nens=None):
                                            'earth': ['E','N','U'], 
                                            'time': ds['time']},
                                    dims=['inst','earth','time'])
+    
+    # Check magnetic declination if provided via software and/or userdata
     ds = _set_rdi_declination(ds, fname)
     
     return ds
@@ -102,7 +121,6 @@ century = 2000
 
 # changed group to xarray info type (data_var, coord, dim, attr)
 # added units to end
-global data_defs
 data_defs = {'number': ([], 'sys', 'uint32', ''),
              'rtc': ([7], 'sys', 'uint16', ''),
              'bit': ([], 'sys', 'bool', ''),
@@ -131,17 +149,13 @@ data_defs = {'number': ([], 'sys', 'uint32', ''),
              'corr_bt': ([4], 'data_vars', 'uint8', 'counts'),
              'amp_bt': ([4], 'data_vars', 'uint8', 'counts'),
              'prcnt_gd_bt': ([4], 'data_vars', 'uint8', '%'),
-             'stime': ([], 'coords', 'float64', ''),
-             'etime': ([], 'coords', 'float64', ''),
              'time': ([], 'coords', 'float64', ''),
-             'slatitude': ([], 'data_vars', 'float64', 'deg'),
-             'slongitude': ([], 'data_vars', 'float64', 'deg'),
-             'elatitude': ([], 'data_vars', 'float64', 'deg'),
-             'elongitude': ([], 'data_vars', 'float64', 'deg'),
-             # These are the GPS times/lat/lons
-             'gtime': ([], 'coords', 'float64', ''),
-             'glatitude': ([], 'data_vars', 'float64', 'deg'),
-             'glongitude': ([], 'data_vars', 'float64', 'deg'),
+             'etime_gps': ([], 'coords', 'float64', ''),
+             'elatitude_gps': ([], 'data_vars', 'float64', 'deg'),
+             'elongitude_gps': ([], 'data_vars', 'float64', 'deg'),
+             'time_gps': ([], 'coords', 'float64', ''),
+             'latitude_gps': ([], 'data_vars', 'float64', 'deg'),
+             'longitude_gps': ([], 'data_vars', 'float64', 'deg'),
              'ntime': ([], 'coords', 'float64', ''),
              'flags': ([], 'data_vars', 'float32', ''),
              }
@@ -200,7 +214,6 @@ def idata(dat, nm, sz):
 
 
 class variable_setlist(set):
-
     def __iadd__(self, vals):
         if vals[0] not in self:
             self |= set(vals)
@@ -218,7 +231,6 @@ def get_size(name, n=None, ncell=0):
 
 
 class ensemble(object):
-
     n_avg = 1
     k = -1  # This is the counter for filling the ensemble object
 
@@ -252,7 +264,6 @@ class adcp_loader(object):
     _winrivprob = False
     _search_num = 30000  # Maximum distance? to search
     _debug7f79 = None
-    vars_read = variable_setlist(['time'])
 
     # def _debug_print(self, lvl, msg):
     #     if self._debug_level > lvl:
@@ -284,7 +295,6 @@ class adcp_loader(object):
                   (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
 
     def read_dat(self, id):
-
         function_map = {0: (self.read_fixed, []),   # 0000
                         128: (self.read_var, []),     # 0080
                         256: (self.read_vel, []),     # 0100
@@ -508,13 +518,13 @@ class adcp_loader(object):
         k = ens.k
         cfg = self.cfg
         if self._source == 2:
-            self.vars_read += ['slatitude', 'slongitude']
+            self.vars_read += ['latitude_gps', 'longitude_gps']
             fd.seek(2, 1)
             long1 = fd.read_ui16(1)
             fd.seek(6, 1)
-            ens.slatitude[k] = fd.read_i32(1) * self._cfac
-            if ens.slatitude[k] == 0:
-                ens.slatitude[k] = np.NaN
+            ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
+            if ens.latitude_gps[k] == 0:
+                ens.latitude_gps[k] = np.NaN
         else:
             fd.seek(14, 1)
         ens.dist_bt[:, k] = fd.read_ui16(4) * 0.01
@@ -524,19 +534,19 @@ class adcp_loader(object):
         ens.prcnt_gd_bt[:, k] = fd.read_ui8(4)
         if self._source == 2:
             fd.seek(2, 1)
-            ens.slongitude[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
-            if ens.slongitude[k] > 180:
-                ens.slongitude[k] = ens.slongitude[k] - 360
-            if ens.slongitude[k] == 0:
-                ens.slongitude[k] = np.NaN
+            ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
+            if ens.longitude_gps[k] > 180:
+                ens.longitude_gps[k] = ens.longitude_gps[k] - 360
+            if ens.longitude_gps[k] == 0:
+                ens.longitude_gps[k] = np.NaN
             fd.seek(16, 1)
             qual = fd.read_ui8(1)
             if qual == 0:
                 print('  qual==%d,%f %f' % (qual,
-                                            ens.slatitude[k],
-                                            ens.slongitude[k]))
-                ens.slatitude[k] = np.NaN
-                ens.slongitude[k] = np.NaN
+                                            ens.latitude_gps[k],
+                                            ens.longitude_gps[k]))
+                ens.latitude_gps[k] = np.NaN
+                ens.longitude_gps[k] = np.NaN
             fd.seek(71 - 45 - 16 - 17, 1)
             self._nbyte = 2 + 68
         else:
@@ -565,33 +575,33 @@ class adcp_loader(object):
         if self._source != 1 and self._debug_level >= 1:
             print('  \n***** Apparently a VMDAS file \n\n')
         self._source = 1
-        self.vars_read += ['etime',
-                           'slatitude',
-                           'slongitude',
-                           'stime',
-                           'elatitude',
-                           'elongitude',
+        self.vars_read += ['time_gps',
+                           'latitude_gps',
+                           'longitude_gps',
+                           'etime_gps',
+                           'elatitude_gps',
+                           'elongitude_gps',
                            'flags',
                            'ntime', ]
         utim = fd.read_ui8(4)
         date = datetime.datetime(utim[2] + utim[3] * 256, utim[1], utim[0])
         # This byte is in hundredths of seconds (10s of milliseconds):
-        time = datetime.timedelta(milliseconds=(int(fd.read_ui32(1) * 10)))
-        ens.stime[k] = (date + time).timestamp()
-        fd.seek(4, 1)  # "PC clock offset from UTC"
-        ens.slatitude[k] = fd.read_i32(1) * self._cfac
-        ens.slongitude[k] = fd.read_i32(1) * self._cfac
-        ens.etime[k] = (date + datetime.timedelta(
+        time = datetime.timedelta(milliseconds=(int(fd.read_ui32(1) / 10)))
+        fd.seek(4, 1)  # "PC clock offset from UTC" - clock drift in ms?
+        ens.time_gps[k] = (date + time).timestamp()
+        ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
+        ens.longitude_gps[k] = fd.read_i32(1) * self._cfac
+        ens.etime_gps[k] = (date + datetime.timedelta(
             milliseconds=int(fd.read_ui32(1) * 10))).timestamp()
-        ens.elatitude[k] = fd.read_i32(1) * self._cfac
-        ens.elongitude[k] = fd.read_i32(1) * self._cfac
+        ens.elatitude_gps[k] = fd.read_i32(1) * self._cfac
+        ens.elongitude_gps[k] = fd.read_i32(1) * self._cfac
         fd.seek(12, 1)
         ens.flags[k] = fd.read_ui16(1)
         fd.seek(6, 1)
         utim = fd.read_ui8(4)
         date = datetime.datetime(utim[0] + utim[1] * 256, utim[3], utim[2])
         ens.ntime[k] = (date + datetime.timedelta(
-            milliseconds=int(fd.read_ui32(1) * 10))).timestamp()
+            milliseconds=int(fd.read_ui32(1) / 10))).timestamp()
         fd.seek(16, 1)
         self._nbyte = 2 + 76
 
@@ -618,22 +628,30 @@ class adcp_loader(object):
                         '  WARNING: Invalid GPGGA string found in ensemble {},'
                         ' skipping...'.format(k))
                 return 'FAIL'
-            ens.gtime[k] = self.f.reads(9)
+            gga_time = str(self.f.reads(9))
+            time = datetime.timedelta(hours=int(gga_time[0:2]), 
+                                      minutes=int(gga_time[2:4]),
+                                      seconds=int(gga_time[4:6]),
+                                      milliseconds=int(gga_time[7:])*100)
+            clock = self.ensemble.rtc[:, :]
+            if clock[0, 0] < 100:
+                clock[0, :] += century
+            ens.time_gps[k] = (datetime.datetime(*clock[:3, 0]) + time).timestamp()
             self.f.seek(1, 1)
-            ens.glatitude[k] = self.f.read_f64(1)
+            ens.latitude_gps[k] = self.f.read_f64(1)
             tcNS = self.f.reads(1)
             if tcNS == 'S':
-                ens.glatitude[k] *= -1
+                ens.latitude_gps[k] *= -1
             elif tcNS != 'N':
                 if self._debug_level > 1:
                     print(
                         '  WARNING: Invalid GPGGA string found in ensemble {},'
                         ' skipping...'.format(k))
                 return 'FAIL'
-            ens.glongitude[k] = self.f.read_f64(1)
+            ens.longitude_gps[k] = self.f.read_f64(1)
             tcEW = self.f.reads(1)
             if tcEW == 'W':
-                ens.glongitude[k] *= -1
+                ens.longitude_gps[k] *= -1
             elif tcEW != 'E':
                 if self._debug_level > 1:
                     print(
@@ -664,11 +682,11 @@ class adcp_loader(object):
             # 4 unknown bytes (2 reserved+2 checksum?)
             # 78 bytes for GPGGA string (including \r\n)
             # 2 reserved + 2 checksum
-            self.vars_read += ['glongitude', 'glatitude', 'gtime']
+            self.vars_read += ['longitude_gps', 'latitude_gps', 'time_gps']
             self._nbyte = self.f.tell() - startpos + 2
             if self._debug_level >= 5:
                 print('')
-                print(sz, ens.glongitude[k])
+                print(sz, ens.longitude_gps[k])
 
     def read_winriver(self, nbt):
         self._winrivprob = True
@@ -842,15 +860,14 @@ class adcp_loader(object):
         self._filesize = getsize(fname)
         self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
                                              self.extrabytes))
+        self.vars_read = variable_setlist(['time'])
+        
         if self._debug_level > 0:
             print('  %d pings estimated in this file' % self._npings)
         self.avg_func = getattr(self, avg_func)
 
     def init_data(self,):
-        # Complete
-        #outd = ADPdata()
         outd = {'data_vars':{},'coords':{},'attrs':{},'units':{},'sys':{}}
-        #outd.props = {}
         outd['attrs']['inst_make'] = 'TRDI'
         outd['attrs']['inst_model'] = '<WORKHORSE?>'
         outd['attrs']['inst_type'] = 'ADCP'
@@ -906,8 +923,8 @@ class adcp_loader(object):
             for nm in self.vars_read:
                 get(dat, nm)[..., iens] = self.avg_func(self.ensemble[nm])
             try:
-                dats = datetime.datetime(*clock.T[0][:6],
-                                         microsecond=clock.T[0][6] * 10000).timestamp()
+                dats = datetime.datetime(*clock[:6, 0],
+                                         microsecond=clock[6, 0] * 10000).timestamp()
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
@@ -923,7 +940,7 @@ class adcp_loader(object):
     def finalize(self, ):
         """
         Remove the attributes from the data that were never loaded.
-        Complete
+
         """
         dat = self.outd
         for nm in set(data_defs.keys()) - self.vars_read:
