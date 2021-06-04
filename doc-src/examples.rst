@@ -8,7 +8,7 @@ The following example 1) reads in ADCP data, 2) cleans it for
 erroneous and missing data, 3) rotate to true North Earth frame,
 4) bin data into ensembles.
 
-.. literalinclude:: examples/adcp_example01.py
+.. literalinclude:: ../examples/adcp_example01.py
 
 
 ADV Data
@@ -19,7 +19,7 @@ The following shows an example of how to 1) read in ADV data,
 principal flow axes frame, 4) calculate fundamental turbulence 
 statistics.
 
-.. literalinclude:: examples/adv_example01.py
+.. literalinclude:: ../examples/adv_example01.py
 
 
 Motion Correction Examples
@@ -30,8 +30,8 @@ ADV-IMU data using |dlfn|.
 
 ADV Motion Correction Ex.1
 ..........................
-.. literalinclude:: ../examples/adv_example.py
+.. literalinclude:: ../examples/adv_example_mc1.py
 
 ADV Motion Correction Ex.2
 ..........................
-.. literalinclude:: ../examples/adv_example2.py
+.. literalinclude:: ../examples/adv_example_mc2.py

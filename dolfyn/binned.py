@@ -1,8 +1,8 @@
 from __future__ import division
 import numpy as np
-from ..tools.psd import psd_freq, cohere, psd, cpsd_quasisync, \
+from .tools.psd import psd_freq, cohere, psd, cpsd_quasisync, \
     cpsd, phase_angle
-from ..tools.misc import slice1d_along_axis, detrend
+from .tools.misc import slice1d_along_axis, detrend
 #from .base import ma, TimeData
 #import copy
 #import warnings

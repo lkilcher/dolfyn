@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 from .binned import TimeBinner
 import warnings
-from ..rotate import base as rotb
+from .rotate import base as rotb
 import xarray as xr
 
 

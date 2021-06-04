@@ -14,7 +14,7 @@ from ._version import __version__
 from .io.api import read, read_example, save, load
 from .rotate.api import rotate2, calc_principal_heading, set_declination
 from .rotate.base import euler2orient, orient2euler, q2orient
-from .data.velocity import VelBinner
+from .velocity import VelBinner
 from dolfyn import adv
 from dolfyn import adp
 from dolfyn import time

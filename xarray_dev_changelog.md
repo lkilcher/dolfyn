@@ -4,25 +4,13 @@ Xarray DOLfYN to MHKiT Changelog
 	- Create xarray branch on dolfyn - done
 	- Fix Nortek Signature binary file to load burst data - rough hack completed
 	- Fix loading of VMDAS reprocessed .enx files - done
-	- Comment out the code that forbids access to data object cause it's aggravating- done
 	- Update documentation to build off 'make html' - done
 	- Set up Travis CI - done
 	- Fix 'latlon' vs 'lonlat' error in read adp tests - done
-	- Set Travis CI to run doctests - done
 	- Fix calc_turbulence '__call__' error - done
 	- Organize most relevent aspects of code to run straight from 'import dolfyn as dlfn' and correct import inconsistencies - done
 	- Fixed mathmatical error in 'range' calculation (bin 1 dist = blank dist + cell size)
 	- Fixed Nortek echosounder 'dB' scaling
-
-
-- Update documentation
-	- Create sphinx API doctree - done
-	- Fill in and update API documentation - done
-	- Create and update ADCP and ADV examples - done
-	- Update documentation that's already there - done
-	- Format docs similarly to MHKiT's - done
-	- Add 'About' section - done
-	- Fix doctest errors - once xarray update completed
 	
 - Convert DOLfYN object to xarray DataSet
 	- Basic conversion file - done
@@ -34,18 +22,17 @@ Xarray DOLfYN to MHKiT Changelog
 				- noted that it's impossible to save multivariable attributes in xarray
 				- transformation matrices are thus saved in the dataset variables list
 			- removed 'sys' variables from xarray dataset because it was near impossible to save them
-			- removed 'alt' variables for now ...
 			- adjusted scaling on ambig_vel vars
 			- changed dataset 'keys' so that they're more consistent (including adding underscores)
 			- simplified 'config' dictionary in DOLfYN object so that it's easier to read
 	
 - Refactor DOLfYN
 	- started renaming files to x_*.py
-		- Rotation code - done, checked
-			- 'set_inst2head_rotmat' is located in the Velocity class, everything else is functional
+		- Rotation code - done
+			- `rotate2`, `set_inst2head_rotmat`, `calc_principal_heading`, and `set_declination` now located in 'rotate.base'
 			- Orientation wasn't taken into account for Nortek Signatures
 				- Solved Nortek Signature rotation issues for fixed up vs down 
-				- Doesn't handle AHRS-equipped instrument rotations well
+				- AHRS orientmat is the transpose of dolfyn's HPR-calculated
 			- Verified TRDI, AWAC, and Vector match h5py dolfyn output
 				
 		- Motion correction code - done, checked
@@ -53,9 +40,9 @@ Xarray DOLfYN to MHKiT Changelog
 			
 		- TimeData, Velocity, TKEdata class refactoring - done
 			- TimeData is now void
-			- Combined Velocity and TKEdata
-			- Moved methods (`set_declination`, `set_inst2head_rotmat`) into the 'rotate' module
+			- Combined Velocity and TKEdata in Velocity
 			- Velocity has xarray accessor 'Veldata'
+			- Moved methods (`set_declination`, `set_inst2head_rotmat`) into the 'rotate' module
 			- All properties now return xr.DataArrays
 			
 		- TimeBinner, VelBinner, TurbBinner class refactoring - done
@@ -73,54 +60,52 @@ Xarray DOLfYN to MHKiT Changelog
 			- Coherence and covariance functions
 				- Renamed 'cohere' and 'phase_angle' to 'calc_coh' and 'calc_phase_angle'
 				- Updated so that one can calculate coherence, auto-/cross-covariance with 1D or 3D velocity arrays
-				- Added comments
 			- Updated turbulence dissipation functions return correctly for xarray
 				- LT83 or TE01 methods can take either the 3D velocity or a single velocity array
 				- SF method only can handle single beam at a time
 					- sanity note: dissipation rates within isotropic cascade for each velocity direction should theoretically be equal (def of isotropic)
 					- leaving to user to average 'LT83' returns together if they'd like
 					- 'TE01' natively returns the averaged dissipation rate
-				- Added 'np.nan-' so the 'epsilon' functions can handle nans
+				- Changed '.mean()' to 'np.nanmean' so the 'epsilon' functions can handle nans
 
 		- Cleaning code - done
-			- Need to update with xarray's nan interpolation - done
+			- Updated with xarray's nativenan interpolation
 			- ADCPs - individual cleaning functions
 			- ADVs - has masking methods that feed into a fill-in method
 			
 		- Time - done
-			- Change mpl time to epoch time
-			- Add conversion functions
+			- Changed mpl time to epoch time
+			- Added conversion functions
 			
 		- Refactor binary readers - done
 				1. Binary files read into a dictionary of dictionaries using netcdf naming conventions
 					- Should be easier to debug
-				2. Need to write (adjust the file I previously created) an xarray dataset constructor that'll build off that dictionary
-				3. Should be able to use the '_set_coords' subroutine located in `rotate.base` to set orientation coordinates
-				- is there a point to keeping a dedicated h5py DOLfYN to xarray DOLfYN conversion file?
+				2. Wrote an xarray dataset constructor that'll build off that dictionary
+				3. Using the `_set_coords` subroutine located in `rotate.base` to set orientation coordinates
 			- Step 1 completed
 				- No pressure data from vectors or awacs?? Registering as 0 in binary?
-				- AWAC temp scaling is way off (?) - Added 0.01 factor
+				- Fixed AWAC temp scaling - Added 0.01 factor
 				- Added 0.1 scale factor for Signature magnetometer to return in units of uT
+				- Fixed GPS timestamps for TRDI WinRiver and VMDAS data
 			- Step 2 & 3 - done
 				- Moved Vector rotation matrices from attributes to variables
 				- Removed user-nonsensical configuration data
-				- Added 'save_mat' function
-				- Fixed - Broke rotation code - bad determinant warning in 'orientmat' at indices {} error - added rough code to search for nan's
+				- Added matlab I/O capabilities
+				- Added code to search for nan's in Nortek classic instrument's orientation data - bad determinant warning in 'orientmat' at indices {} error
+				- Added code to trim GPS data to its native length - TRDI doesn't save lat/lon interpolated to velocity data timestamps
 
 - Update testing - done
 	- Added check signature velocity rotations against nortek matfiles - done
-	- Logical values are auto-dropped when saving netCDF - changed true/false attributes to 1/0
+	- Changed true/false attributes to 1/0 - Logical values are auto-dropped when saving netCDF
 	- Dropped testing for python 2.x because xarray doesn't support it
-	- Tests against h5 - done
-		- earth2principal fails when xarray's built in mean (np.nanmean) fills in values within principal heading calculation
-		- dimension mismatch affects motion correction filters
+	- Updated test data to handle `np.nanmean` changes in source code
+	- Verified xarray output against h5py and dropped h5py-based source code from package
 	- Testing and h5 folders not included in setup.py
 
 
 - Notes:
 	- Deep copy absolutely everything. <-period <-endstop (Is there a way to disable global variables?)
 	- DOLfYN loads data as returned by the instrument or software (generally if velocity in beam no correction has been done, if in earth it has)
-	- Subsequently-read TRDI datafiles will contain variables from previous instrument even if the instrument didn't record them - remnant/memory of global variables in the IO code?
 	- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
 	- Bad AWAC IMU data reads as 6551.x?
 	

@@ -18,7 +18,7 @@ data. It contains:
 |                                   | cleaning data, filling NaN's,           |
 |                                   | different coordinate systems            |
 +-----------------------------------+-----------------------------------------+
-| :class:`VelBinner <dolfyn.data.\  | A class that breaks data into           |
+| :class:`VelBinner <dolfyn.\       | A class that breaks data into           |
 | velocity.VelBinner>`              | 'bins'/'ensembles' and contains         |
 |                                   | analysis functions                      |
 +-----------------------------------+-----------------------------------------+
@@ -33,5 +33,5 @@ Examples
 from ..io.api import read, load
 from ..rotate.api import rotate2
 from . import clean
-from ..data.velocity import VelBinner
+from ..velocity import VelBinner
 from .base import ADPbinner

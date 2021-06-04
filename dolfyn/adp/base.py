@@ -1,4 +1,4 @@
-from ..data import velocity as dbvel
+import dolfyn.velocity as dbvel
 import numpy as np
 import warnings
 import xarray as xr
@@ -11,7 +11,6 @@ def diffz_first(dat, z, axis=0):
 #    return np.diff(dat,axis=0)/(np.diff(z)[:,None])
 
 
-#@xr.register_dataset_accessor('ADPdata')
 class ADPdata(dbvel.Velocity):
     """The acoustic Doppler profiler (ADP) data type.
 
@@ -141,73 +140,6 @@ class ADPbinner(dbvel.VelBinner):
     #     # self.meta['upup_']=db.varMeta("u'u'",{2:'m',-2:'s'})
     #     # self.meta['vpvp_']=db.varMeta("v'v'",{2:'m',-2:'s'})
     #     # self.meta['wpwp_']=db.varMeta("w'w'",{2:'m',-2:'s'})
-
-
-    def calc_epsilon_SFz(self, vel_raw, vel_avg, r=2, noise=0):
-        """
-        Calculate dissipation rate using the "structure function" (SF) method.
-        Currently limited to caculating off a single beam at a time
-        
-        Parameters
-        ----------
-        
-        vel_raw : |xr.DataArray|
-          The raw beam velocity data (last dimension time) upon 
-          which to perform the SF technique. 
-
-        vel_avg : |xr.DataArray|
-          The bin-averaged beam velocity (calc'd from 'do_avg')
-                                          
-        r: 
-            Vertical dist [m] to calc dissipation from structure function
-        
-        noise:
-            Dopper noise [m/s]
-        
-        Returns
-        -------
-
-        epsilon : |xr.DataArray|
-          The dissipation rate
-        
-        Notes
-        -----
-               
-        Wiles, et al, "A novel technique for measuring the rate of 
-        turbulent dissipation in the marine environment"
-        GRL, 2006, 33, L21608.
-        
-        """        
-        # self.ds here is binned averaged velocity (from do_avg)
-        e = np.empty(vel_avg.shape, dtype='float32')
-        D = np.empty(vel_avg.shape) # should be [beam, [range, time]
-        
-        # bm shape is [range, ensemble time, 'data within ensemble']
-        bm = self.reshape(vel_raw.values) # will fail if not in beam coord
-        bm -= vel_avg.values[:,:,None] # take out the ensemble mean
-
-        #for ind in range(veldat.shape[0]-1): # one beam at a time
-        # should be velocity variance
-        #bm = self._reshape(veldat.sel(orient=ind+1).values) # will fail if not in beam coord
-        #bm -= self.ds.vel.isel(orient=ind+1).values[:,:,None] # take out the ensemble mean
-
-        for idx in range(len(vel_avg.time)): # for each ensemble
-            # subtract the var of adjacent depth cells and avg each ensemble
-            # the '1' in d should be a variable of r, r/np.diff(range) or something?
-            d = np.nanmean((bm[:-1,idx,:] - bm[1:,idx,:]) ** 2, axis=-1)
-            # have to insert 0 in first bin to match length
-            #D[ind,:,idx] = np.insert(tmp, obj=0, values=0)
-            D[:,idx] = np.insert(d, obj=0, values=0) + noise
-        
-            # plt.plot(D[:,idx], r**(2/3))
-
-        #e[ind,...] = (2.1 * D[ind] * r**(3/2)) ** (3/2)
-        e = (1/2.1 * D * r**(-2/3)) ** (3/2)
-        
-        return xr.DataArray(e, coords=vel_avg.coords,
-                            dims=vel_avg.dims,
-                            attrs={'units':'m^2/s^3',
-                                  'method':'structure function'})
             
 
     def calc_ustar_fitstress(self, dinds=slice(None), H=None):

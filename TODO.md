@@ -4,7 +4,6 @@ General
 Separate backwards-compatability release from a new/clean release:
 
 - Search the code for `# !CLEANUP!`
-- remove all `_legacy.py`
 - Find all instances of !FIXTHIS! and fix them!
 
 Testing
@@ -15,10 +14,6 @@ Coverage
 
 Add tests to confirm that all *scripts* work.
 
-Tests should use API-level functions.
-
-Coverage
-- Add averaging tests for ADP.
 
 Documentation
 =============
@@ -28,7 +23,7 @@ Create a 'contributing to DOLfYN' page.
 - Create tasks on github 'projects'? or something like [MPL enhacement proposals (MEPs)](https://matplotlib.org/devel/MEP/index.html)?
 
 - Document need for git-lfs. (Are there other options? Maybe a `get_test_data.py`?)
-- Document how to run tests. (switch to `py.test`?)
+
 
 Packaging
 =========
@@ -39,12 +34,14 @@ New PyPi entry
 
 Build a conda install
 
+
 File I/O
 ========
 
 Fix Nortek burst read hack
 
 Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
+
 
 Data Processing
 ===============
@@ -69,14 +66,11 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
 
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
 
-Depth of adcp for range for nortek instruments? - not taken into account natively by Nortek - add to documentation
-
-Support for calculating principal heading by ensemble?
-
-Support for motion-correcting ADCP data.
-
-``adp.base.binner``: support for calculating stresses using Stacey++1999 method.
-					 ADCP structure function?
+ADCP's:
+  - Depth of adcp for range for nortek instruments? - not taken into account natively by Nortek - add to documentation
+  - Support for calculating principal heading by ensemble?
+  - Support for motion-correcting ADCP data.
+  - Support for calculating stresses using Stacey++1999 method.
 					 
 Ideas
 =====

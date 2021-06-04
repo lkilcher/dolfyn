@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from ..data.velocity import VelBinner
+from ..velocity import VelBinner
 #from ..data import base as db
 import warnings
 from ..tools.misc import slice1d_along_axis, nans_like
@@ -191,7 +191,7 @@ class TurbBinner(VelBinner):
         Returns
         -------
 
-        epsilon : xr.DataArray
+        epsilon : xarray.DataArray
           The dissipation rate
 
         """
@@ -371,6 +371,88 @@ class TurbBinner(VelBinner):
         L_int = (abs(vel_avg) / fs * scale)
         
         return xr.DataArray(L_int, name='L_int', attrs={'units':'m'})
+    
+    
+    # def calc_epsilon_SFz(self, vel_raw, vel_avg, r_range=[0,3], noise=0):
+    #     """
+    #     Calculate dissipation rate from ADCP beam velocity using the 
+    #     "structure function" (SF) method.
+        
+    #     Parameters
+    #     ----------
+    #     vel_raw : |xr.DataArray|
+    #       The raw beam velocity data (last dimension time) upon 
+    #       which to perform the SF technique. 
+
+    #     vel_avg : |xr.DataArray|
+    #       The bin-averaged beam velocity (calc'd from 'do_avg')
+                                          
+    #     r_range: numeric
+    #         Range of r in [m] to calc dissipation across
+        
+    #     noise: numeric
+    #         Dopper noise level [m/s]
+        
+    #     Returns
+    #     -------
+    #     epsilon : |xr.DataArray|
+    #       The dissipation rate
+        
+    #     Notes
+    #     -----
+    #     Velocity data should be cleaned of surface interference
+        
+    #     Wiles, et al, "A novel technique for measuring the rate of 
+    #     turbulent dissipation in the marine environment"
+    #     GRL, 2006, 33, L21608.
+        
+    #     """
+    #     e = np.empty(vel_avg.shape, dtype='float32')*np.nan
+    #     n = np.empty(vel_avg.shape, dtype='float32')*np.nan
+        
+    #     # bm shape is [range, ensemble time, 'data within ensemble']
+    #     bm = self.reshape(vel_raw.values) # will fail if not in beam coord
+    #     bm -= vel_avg.values[:,:,None] # take out the ensemble mean
+        
+    #     bin_size = round(np.diff(vel_raw.range)[0],3)
+    #     #surface = np.count_nonzero(~np.isnan(vel_raw.isel(time_b5=0)))
+    #     R = int(r_range[0]/bin_size)
+    #     r = np.arange(bin_size, r_range[1], bin_size)
+        
+    #     D = np.zeros((vel_avg.shape[0], r.size, vel_avg.shape[1])) # D(z,r,time)
+    #     for r_value in r:
+    #         # the i in d is the index based on r and bin size
+    #         # bin size index, > 1
+    #         i = int(r_value/round(np.diff(vel_raw.range)[0],3))
+    #         for idx in range(vel_avg.time.size): # for each ensemble
+    #             # subtract the variance of adjacent depth cells
+    #             d = np.nanmean((bm[:-i,idx,:] - bm[i:,idx,:]) ** 2, axis=-1)
+                
+    #             # have to insert 0/nan in first bin to match length
+    #             spaces = np.empty((i,))
+    #             spaces[:] = np.NaN
+    #             D[:,i-1,idx] = np.concatenate((spaces, d))
+                
+    #     # find best fit line y = mx + b (aka D(z,r) = A*r^2/3 + N) to solve
+    #     # epsilon for each depth and ensemble
+    #     # only analyze r on "flat" part of curve (select r values)
+    #     # plt.figure()
+    #     for idx in range(vel_avg.time.size): # for each ensemble
+    #         for i in range(D.shape[1],D.shape[0]): #for depth cells
+    #             #plt.plot(r**2/3, D[i,:,100])
+    #             try:
+    #                 e[i,idx], n[i,idx] = np.polyfit(r[R:] ** 2/3, 
+    #                                                 D[i, R:, idx], 
+    #                                                 deg=1)
+    #             except:
+    #                 e[i,idx], n[i,idx] = np.nan, np.nan
+    #     epsilon = (e/2.1)**(3/2)
+        
+    #     return xr.DataArray(epsilon, name='dissipation_rate',
+    #                         coords=vel_avg.coords,
+    #                         dims=vel_avg.dims,
+    #                         attrs={'units':'m^2/s^3',
+    #                               'method':'structure function'})
 
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,

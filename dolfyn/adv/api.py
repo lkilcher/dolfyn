@@ -26,7 +26,7 @@ data. It contains:
 | :func:`correct_motion <dolfyn.\   | A function for performing motion        |
 | adv.motion.correct_motion>`       | correction on ADV velocity data         |
 +-----------------------------------+-----------------------------------------+
-| :class:`VelBinner <dolfyn.data.\  | A class for breaking data into          |
+| :class:`VelBinner <dolfyn.\       | A class for breaking data into          |
 | velocity.VelBinner>`              | 'bins' or 'ensembles', averaging it and |
 |                                   | estimating basic turbulence statistics  |
 +-----------------------------------+-----------------------------------------+
@@ -50,4 +50,5 @@ from ..io.api import read, load
 from ..rotate.api import rotate2, set_inst2head_rotmat
 from . import clean
 from .motion import correct_motion
+from ..velocity import VelBinner
 from .turbulence import calc_turbulence, TurbBinner
