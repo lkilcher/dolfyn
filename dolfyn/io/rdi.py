@@ -12,9 +12,9 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-def read_rdi(fname, userdata=None, nens=None):
+def read_rdi(fname, userdata=None, nens=None, debug=0):
     """
-    Read an RDI binary data file.
+    Read a TRDI binary data file.
 
     Parameters
     ----------
@@ -36,7 +36,7 @@ def read_rdi(fname, userdata=None, nens=None):
     """
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
-    with adcp_loader(fname) as ldr:
+    with adcp_loader(fname, debug_level=debug) as ldr:
         dat = ldr.load_data(nens=nens)
         
     # Read in userdata    
@@ -90,13 +90,13 @@ def _set_rdi_declination(dat, fname='????'):
     # I'm assuming this is the case for now...
     ## Can confirm - jrm
 
-    declin = dat.attrs.pop('declination', None)
+    declin = dat.attrs.pop('declination', None) # userdata declination
 
-    if dat.attrs['magnetic_var_deg'] != 0:
+    if dat.attrs['magnetic_var_deg'] != 0: # from TRDI software if set
         dat.attrs['declination'] = dat.attrs['magnetic_var_deg']
         dat.attrs['declination_in_orientmat'] = 1 # logical
 
-    if dat.attrs['magnetic_var_deg'] != 0 and declin:# is not None:
+    if dat.attrs['magnetic_var_deg'] != 0 and declin is not None:
         warnings.warn(
             "'magnetic_var_deg' is set to {:.2f} degrees in the binary "
             "file '{}', AND 'declination' is set in the 'userdata.json' "
@@ -104,8 +104,8 @@ def _set_rdi_declination(dat, fname='????'):
             "userdata.json. If you want to use the value in "
             "'magnetic_var_deg', delete the value from userdata.json and "
             "re-read the file."
-            .format(dat.attrs['magnetic_var_deg'], fname,
-                    dat.attrs['declination']))
+            .format(dat.attrs['magnetic_var_deg'], fname, declin))
+        dat.attrs['declination'] = declin
 
     if declin is not None:
         dat = set_declination(dat, declin)
@@ -264,10 +264,43 @@ class adcp_loader(object):
     _winrivprob = False
     _search_num = 30000  # Maximum distance? to search
     _debug7f79 = None
+    extrabytes = 0
 
     # def _debug_print(self, lvl, msg):
     #     if self._debug_level > lvl:
     #         print(msg)
+    
+    def __exit__(self, type, value, traceback):
+        self.f.close()
+
+    def __enter__(self,):
+        return self
+
+    def __init__(self, fname, navg=1, avg_func='mean', debug_level=0):
+        self.fname = fname
+        print('\nReading file {} ...'.format(fname))
+        self._debug_level = debug_level
+        self.cfg = {} #config(_type='ADCP')
+        self.cfg['name'] = 'wh-adcp'
+        self.cfg['sourceprog'] = 'instrument'
+        self.cfg['prog_ver'] = 0
+        self.hdr = {} #config(_type='RDI-HEADER')
+        #self.f=io.npfile(fname,'r','l')
+        self.f = bin_reader(fname)
+        self.read_hdr()
+        self.read_cfg()
+        # Seek back to the beginning of the file:
+        self.f.seek(self._pos, 0)
+        self.n_avg = navg
+        self.ensemble = ensemble(self.n_avg, self.cfg['n_cells'])
+        self._filesize = getsize(fname)
+        self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
+                                             self.extrabytes))
+        self.vars_read = variable_setlist(['time'])
+        
+        if self._debug_level > 0:
+            print('  %d pings estimated in this file' % self._npings)
+        self.avg_func = getattr(self, avg_func)
 
     def mean(self, dat):
         if self.n_avg == 1:
@@ -275,12 +308,12 @@ class adcp_loader(object):
         return np.nanmean(dat, axis=-1)
 
     def print_progress(self,):
-        if (self.f.tell() - self.progress) < 1048576:
-            return
         self.progress = self.f.tell()
         if self._debug_level > 1:
             print('  pos %0.0fmb/%0.0fmb\r' %
                   (self.f.tell() / 1048576., self._filesize / 1048576.))
+        if (self.f.tell() - self.progress) < 1048576:
+            return
 
     def print_pos(self, byte_offset=-1):
         """
@@ -422,50 +455,51 @@ class adcp_loader(object):
         ens.roll_std[k] = fd.read_i8(1) * 0.1
         ens.adc[:, k] = fd.read_ui8(8)
         self._nbyte = 2 + 40
-        cfg = self.cfg
-
-        if cfg['name'] == 'bb-adcp':
-            if cfg['prog_ver'] >= 5.55:
-                fd.seek(15, 1)
-                cent = fd.read_ui8(1)
-                ens.rtc[:, k] = fd.read_ui8(7)
-                ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
-                self._nbyte += 23
-        elif cfg['name'] == 'wh-adcp':
-            ens.error_status_wd[k] = fd.read_ui32(1)
-            self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
-            self._nbyte += 4
-            if (np.fix(cfg['prog_ver']) == [8, 16]).any():
-                if cfg['prog_ver'] >= 8.13:
-                    # Added pressure sensor stuff in 8.13
-                    fd.seek(2, 1)
-                    ens.pressure[k] = fd.read_ui32(1)
-                    ens.pressure_std[k] = fd.read_ui32(1)
-                    self._nbyte += 10
-                if cfg['prog_ver'] >= 8.24:
-                    # Spare byte added 8.24
-                    fd.seek(1, 1)
-                    self._nbyte += 1
-                if cfg['prog_ver'] >= 16.05:
-                    # Added more fields with century in clock
-                    cent = fd.read_ui8(1)
-                    ens.rtc[:, k] = fd.read_ui8(7)
-                    ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
-                    self._nbyte += 8
-            elif np.fix(cfg['prog_ver']) == 9:
-                fd.seek(2, 1)
-                ens.pressure[k] = fd.read_ui32(1)
-                ens.pressure_std[k] = fd.read_ui32(1)
-                self._nbyte += 10
-                if cfg['prog_ver'] >= 9.10:  # Spare byte added...
-                    fd.seek(1, 1)
-                    self._nbyte += 1
-        elif cfg['name'] == 'os-adcp':
-            fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
-            self._nbyte += 16
-            if cfg['prog_ver'] > 23:
-                fd.seek(2, 1)
-                self._nbyte += 2
+        
+        #!!! TRDI changed pressure to depth?
+        #cfg = self.cfg
+        # if cfg['name'] == 'bb-adcp':
+        #     if cfg['prog_ver'] >= 5.55:
+        #         fd.seek(15, 1)
+        #         cent = fd.read_ui8(1)
+        #         ens.rtc[:, k] = fd.read_ui8(7)
+        #         ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
+        #         self._nbyte += 23
+        # elif cfg['name'] == 'wh-adcp':
+        #     ens.error_status_wd[k] = fd.read_ui32(1)
+        #     self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
+        #     self._nbyte += 4
+        #     if (np.fix(cfg['prog_ver']) == [8, 16]).any():
+        #         if cfg['prog_ver'] >= 8.13:
+        #             # Added pressure sensor stuff in 8.13
+        #             fd.seek(2, 1)
+        #             ens.pressure[k] = fd.read_ui32(1)
+        #             ens.pressure_std[k] = fd.read_ui32(1)
+        #             self._nbyte += 10
+        #         if cfg['prog_ver'] >= 8.24:
+        #             # Spare byte added 8.24
+        #             fd.seek(1, 1)
+        #             self._nbyte += 1
+        #         if cfg['prog_ver'] >= 16.05:
+        #             # Added more fields with century in clock
+        #             cent = fd.read_ui8(1)
+        #             ens.rtc[:, k] = fd.read_ui8(7)
+        #             ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
+        #             self._nbyte += 8
+        #     elif np.fix(cfg['prog_ver']) == 9:
+        #         fd.seek(2, 1)
+        #         ens.pressure[k] = fd.read_ui32(1)
+        #         ens.pressure_std[k] = fd.read_ui32(1)
+        #         self._nbyte += 10
+        #         if cfg['prog_ver'] >= 9.10:  # Spare byte added...
+        #             fd.seek(1, 1)
+        #             self._nbyte += 1
+        # elif cfg['name'] == 'os-adcp':
+        #     fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
+        #     self._nbyte += 16
+        #     if cfg['prog_ver'] > 23:
+        #         fd.seek(2, 1)
+        #         self._nbyte += 2
 
     def read_vel(self,):
         ens = self.ensemble
@@ -518,13 +552,14 @@ class adcp_loader(object):
         k = ens.k
         cfg = self.cfg
         if self._source == 2:
-            self.vars_read += ['latitude_gps', 'longitude_gps']
-            fd.seek(2, 1)
-            long1 = fd.read_ui16(1)
-            fd.seek(6, 1)
-            ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
-            if ens.latitude_gps[k] == 0:
-                ens.latitude_gps[k] = np.NaN
+            print('Warning: lat/lon bottom reading passed')
+            # self.vars_read += ['latitude_gps', 'longitude_gps']
+            # fd.seek(2, 1)
+            # long1 = fd.read_ui16(1)
+            # fd.seek(6, 1)
+            # ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
+            # if ens.latitude_gps[k] == 0:
+            #     ens.latitude_gps[k] = np.NaN
         else:
             fd.seek(14, 1)
         ens.dist_bt[:, k] = fd.read_ui16(4) * 0.01
@@ -533,22 +568,23 @@ class adcp_loader(object):
         ens.amp_bt[:, k] = fd.read_ui8(4)
         ens.prcnt_gd_bt[:, k] = fd.read_ui8(4)
         if self._source == 2:
-            fd.seek(2, 1)
-            ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
-            if ens.longitude_gps[k] > 180:
-                ens.longitude_gps[k] = ens.longitude_gps[k] - 360
-            if ens.longitude_gps[k] == 0:
-                ens.longitude_gps[k] = np.NaN
-            fd.seek(16, 1)
-            qual = fd.read_ui8(1)
-            if qual == 0:
-                print('  qual==%d,%f %f' % (qual,
-                                            ens.latitude_gps[k],
-                                            ens.longitude_gps[k]))
-                ens.latitude_gps[k] = np.NaN
-                ens.longitude_gps[k] = np.NaN
-            fd.seek(71 - 45 - 16 - 17, 1)
-            self._nbyte = 2 + 68
+            print('Warning: lat/lon bottom reading passed')
+            # fd.seek(2, 1)
+            # ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
+            # if ens.longitude_gps[k] > 180:
+            #     ens.longitude_gps[k] = ens.longitude_gps[k] - 360
+            # if ens.longitude_gps[k] == 0:
+            #     ens.longitude_gps[k] = np.NaN
+            # fd.seek(16, 1)
+            # qual = fd.read_ui8(1)
+            # if qual == 0:
+            #     print('  qual==%d,%f %f' % (qual,
+            #                                 ens.latitude_gps[k],
+            #                                 ens.longitude_gps[k]))
+            #     ens.latitude_gps[k] = np.NaN
+            #     ens.longitude_gps[k] = np.NaN
+            # fd.seek(71 - 45 - 16 - 17, 1)
+            # self._nbyte = 2 + 68
         else:
             fd.seek(71 - 45, 1)
             self._nbyte = 2 + 68
@@ -556,13 +592,14 @@ class adcp_loader(object):
             fd.seek(78 - 71, 1)
             ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
-            if cfg['name'] == 'wh-adcp':
-                if cfg['prog_ver'] >= 16.20:
-                    # RDI documentation claims these extra bytes were added in
-                    # v8.17, but they don't appear in my 8.33 data -
-                    # conversation with Egil suggests they were added in 16.20
-                    fd.seek(4, 1)
-                    self._nbyte += 4
+            #!!! Assumption: never running bottom-tracking without WinRiver or VMDAS
+            # if cfg['name'] == 'wh-adcp':
+            #     if cfg['prog_ver'] >= 16.20:
+            #         # RDI documentation claims these extra bytes were added in
+            #         # v8.17, but they don't appear in my 8.33 data -
+            #         # conversation with Egil suggests they were added in 16.20
+            #         fd.seek(4, 1)
+            #         self._nbyte += 4
 
     def read_vmdas(self,):
         """ Read something from VMDAS """
@@ -730,10 +767,10 @@ class adcp_loader(object):
                 print('  Still looking for valid cfgid at file '
                       'position %d ...' % pos)
         self._pos = self.f.tell() - 2
-        if nread > 0:
-            print('  Junk found at BOF... skipping %d bytes until\n'
-                  '  cfgid: (%x,%x) at file pos %d.'
-                  % (self._pos, cfgid[0], cfgid[1], nread))
+        # if nread > 0:
+        #     print('  Junk found at BOF... skipping %d bytes until\n'
+        #           '  cfgid: (%x,%x) at file pos %d.'
+        #           % (self._pos, cfgid[0], cfgid[1], nread))
         if self._debug_level > 0:
             print(fd.tell())
         self.read_hdrseg()
@@ -796,29 +833,30 @@ class adcp_loader(object):
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
 
-        if prog_ver0 in [8, 16]:
-            if cfg['prog_ver'] >= 8.14:
-                cfg['serialnum'] = fd.read_ui8(8)
-                self._nbyte += 8
-            if cfg['prog_ver'] >= 8.24:
-                cfg['sysbandwidth'] = fd.read_ui8(2)
-                self._nbyte += 2
-            if cfg['prog_ver'] >= 16.05:
-                cfg['syspower'] = fd.read_ui8(1)
-                self._nbyte += 1
-            if cfg['prog_ver'] >= 16.27:
-                cfg['navigator_basefreqindex'] = fd.read_ui8(1)
-                cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
-                cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
-                self._nbyte += 6
-        elif prog_ver0 == 9:
-            if cfg['prog_ver'] >= 9.10:
-                cfg['serialnum'] = fd.read_ui8(8)
-                cfg['sysbandwidth'] = fd.read_ui8(2)
-                self._nbyte += 10
-        elif prog_ver0 in [14, 23]:
-            cfg['serialnum'] = fd.read_ui8(8)
-            self._nbyte += 8
+        #!!! Legacy (no test data for this?)
+        # if prog_ver0 in [8, 16]:
+        #     if cfg['prog_ver'] >= 8.14:
+        #         cfg['serialnum'] = fd.read_ui8(8)
+        #         self._nbyte += 8
+        #     if cfg['prog_ver'] >= 8.24:
+        #         cfg['sysbandwidth'] = fd.read_ui8(2)
+        #         self._nbyte += 2
+        #     if cfg['prog_ver'] >= 16.05:
+        #         cfg['syspower'] = fd.read_ui8(1)
+        #         self._nbyte += 1
+        #     if cfg['prog_ver'] >= 16.27:
+        #         cfg['navigator_basefreqindex'] = fd.read_ui8(1)
+        #         cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
+        #         cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
+        #         self._nbyte += 6
+        # elif prog_ver0 == 9:
+        #     if cfg['prog_ver'] >= 9.10:
+        #         cfg['serialnum'] = fd.read_ui8(8)
+        #         cfg['sysbandwidth'] = fd.read_ui8(2)
+        #         self._nbyte += 10
+        # elif prog_ver0 in [14, 23]:
+        #     cfg['serialnum'] = fd.read_ui8(8)
+        #     self._nbyte += 8
         self.configsize = self.f.tell() - cfgstart
 
     def read_hdrseg(self,):
@@ -832,40 +870,6 @@ class adcp_loader(object):
         hdr['dat_offsets'] = fd.read_i16(ndat)
         self._nbyte = 4 + ndat * 2
 
-    def __exit__(self, type, value, traceback):
-        self.f.close()
-
-    def __enter__(self,):
-        return self
-
-    extrabytes = 0
-
-    def __init__(self, fname, navg=1, avg_func='mean', debug_level=0):
-        self.fname = fname
-        print('\nReading file {} ...'.format(fname))
-        self._debug_level = debug_level
-        self.cfg = {} #config(_type='ADCP')
-        self.cfg['name'] = 'wh-adcp'
-        self.cfg['sourceprog'] = 'instrument'
-        self.cfg['prog_ver'] = 0
-        self.hdr = {} #config(_type='RDI-HEADER')
-        #self.f=io.npfile(fname,'r','l')
-        self.f = bin_reader(fname)
-        self.read_hdr()
-        self.read_cfg()
-        # Seek back to the beginning of the file:
-        self.f.seek(self._pos, 0)
-        self.n_avg = navg
-        self.ensemble = ensemble(self.n_avg, self.cfg['n_cells'])
-        self._filesize = getsize(fname)
-        self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
-                                             self.extrabytes))
-        self.vars_read = variable_setlist(['time'])
-        
-        if self._debug_level > 0:
-            print('  %d pings estimated in this file' % self._npings)
-        self.avg_func = getattr(self, avg_func)
-
     def init_data(self,):
         outd = {'data_vars':{},'coords':{},'attrs':{},'units':{},'sys':{}}
         outd['attrs']['inst_make'] = 'TRDI'
@@ -873,14 +877,13 @@ class adcp_loader(object):
         outd['attrs']['inst_type'] = 'ADCP'
         outd['attrs']['rotate_vars'] = ['vel', ]
         # Currently RDI doesn't use IMUs
-        outd['attrs']['has imu'] = 0
+        outd['attrs']['has_imu'] = 0
         for nm in data_defs:
             outd = idata(outd, nm,
                          sz=get_size(nm, self._nens, self.cfg['n_cells']))
         self.outd = outd
 
     def load_data(self, nens=None):
-        # Complete
         if nens is None:
             self._nens = int(self._npings / self.n_avg)
             self._ens_range = (0, self._nens)
@@ -906,8 +909,8 @@ class adcp_loader(object):
                                   self.cfg['cell_size'])
         for nm in self.cfg:
             dat['attrs'][nm] = self.cfg[nm]
-        if self.cfg['orientation'] == 1:
-            dat['coords']['range'] *= -1
+        # if self.cfg['orientation'] == 1: # keeping range positive always
+        #     dat['coords']['range'] *= -1
         for iens in range(self._nens):
             try:
                 self.read_buffer()
@@ -982,8 +985,7 @@ class adcp_loader(object):
             id1[0] = nextbyte
         if search_cnt == self._search_num:
             raise WrongFileType(
-                'Searched {} entries... Not a workhorse/broadband'
-                ' file or bad data encountered. -> {}'
+                'Searched {} entries... Bad data encountered. -> {}'
                 .format(search_cnt, id1))
         elif search_cnt > 0:
             if self._debug_level > 0:
@@ -1022,7 +1024,7 @@ class adcp_loader(object):
                     if hdr['nbyte'] - 2 != byte_offset:
                         if not self._winrivprob:
                             if self._debug_level > 0:
-                                print('  {:s}: Adjust location by {:d}\n'
+                                print('  {:d}: Adjust location by {:d}\n'
                                       .format(id, hdr['nbyte'] - 2 - byte_offset))
                             self.f.seek(hdr['nbyte'] - 2 - byte_offset, 1)
                     byte_offset = hdr['nbyte'] - 2
@@ -1083,10 +1085,9 @@ class adcp_loader(object):
                             "sync-code.  If possible, please notify the "
                             "DOLfYN developers that you are recieving "
                             "this warning by posting the hardware and "
-                            "softadetails on how you acquired this file "
+                            "software details on how you acquired this file "
                             "to "
-                            "http://github.com/lkilcher/dolfyn/issues/7"
-                        )
+                            "http://github.com/lkilcher/dolfyn/issues/7")
                     valid = 1
         else:
             fd.seek(-2, 1)

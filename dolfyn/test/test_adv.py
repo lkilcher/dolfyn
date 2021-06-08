@@ -1,11 +1,11 @@
 import numpy as np
 import os
 import dolfyn.adv.api as avm
+import dolfyn.io.nortek as vector
 from dolfyn.rotate.base import orient2euler
 from dolfyn import read_example as read, rotate2, set_declination
 import dolfyn.test.base as tb
-from xarray.testing import assert_allclose
-
+from xarray.testing import assert_allclose, assert_equal
 load = tb.load_ncdata
 save = tb.save_ncdata
 
@@ -24,7 +24,6 @@ def test_save():
 
 
 def test_read(make_data=False):
-
     td = read('vector_data01.VEC', nens=100)
     tdm = read('vector_data_imu01.VEC',
                userdata=False,
@@ -34,6 +33,8 @@ def test_read(make_data=False):
     tdm2 = read('vector_data_imu01.VEC',
                 userdata=tb.exdt('vector_data_imu01.userdata.json'),
                 nens=100)
+    td_debug = tb.drop_config(vector.read_nortek(tb.exdt('vector_data_imu01.VEC'), 
+                              debug=True, do_checksum=True, nens=100))
     
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
@@ -47,10 +48,11 @@ def test_read(make_data=False):
         save(tdm2, 'vector_data_imu01-json.nc')
         return
     
-    assert_allclose(td, dat)
-    assert_allclose(tdm, dat_imu)
-    assert_allclose(tdb, dat_burst)
-    assert_allclose(tdm2, dat_imu_json)
+    assert_equal(td, dat)
+    assert_equal(tdm, dat_imu)
+    assert_equal(tdb, dat_burst)
+    assert_equal(tdm2, dat_imu_json)
+    assert_equal(td_debug, tdm2)
 
 
 def test_motion(make_data=False):
@@ -84,20 +86,20 @@ def test_motion(make_data=False):
 
     cdm10 = load('vector_data_imu01_mcDeclin10.nc')
     
-    assert_allclose(tdm, load('vector_data_imu01_mc.nc'))
-    assert_allclose(tdm10, cdm10)
-    assert_allclose(tdmE, cdm10, rtol=1e-7, atol=1e-3)
-    assert_allclose(tdmj, load('vector_data_imu01-json_mc.nc'))
+    assert_equal(tdm, load('vector_data_imu01_mc.nc'))
+    assert_allclose(tdm10, cdm10, atol=1e-5)
+    assert_allclose(tdmE, cdm10, atol=1e-5)
+    assert_allclose(tdmj, load('vector_data_imu01-json_mc.nc'), atol=1e-5)
         
     # yield data_equiv, tdm10, tdmj, \
     #     ".userdata.json motion correction does not match explicit expectations."
-    assert_allclose(tdm10, tdmj, rtol=1e-7, atol=1e-3)
+    assert_allclose(tdm10, tdmj, atol=1e-5)
 
     tdm0.attrs.pop('declination')
     tdm0.attrs.pop('declination_in_orientmat')
     # yield data_equiv, tdm0, tdm, \
     #     "The data changes when declination is specified as 0!"
-    assert_allclose(tdm0, tdm, rtol=1e-7, atol=1e-3)
+    assert_allclose(tdm0, tdm, atol=1e-5)
 
 
 def test_heading(make_data=False):
@@ -115,7 +117,7 @@ def test_heading(make_data=False):
     cd = load('vector_data_imu01_head_pitch_roll.nc')
 
     #assert td == cd, "adv.rotate.orient2euler gives unexpected results!"
-    assert_allclose(td, cd)
+    assert_equal(td, cd)
     
 
 def test_turbulence(make_data=False):
@@ -130,7 +132,7 @@ def test_turbulence(make_data=False):
     cd = load('vector_data01_bin.nc')
 
     #assert cd == td, "TurbBinner gives unexpected results!"
-    assert_allclose(td, cd)
+    assert_equal(td, cd)
     
 
 def test_clean(make_data=False):
@@ -144,7 +146,7 @@ def test_clean(make_data=False):
     cd = load('vector_data01_uclean.nc')
 
     #assert cd == td, "adv.clean.GN2002 gives unexpected results!"
-    assert_allclose(td, cd)
+    assert_equal(td, cd)
 
 
 if __name__ == '__main__':

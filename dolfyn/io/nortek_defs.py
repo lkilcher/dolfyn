@@ -3,8 +3,7 @@ import numpy as np
 nan = np.nan
 
 class VarAtts(object):
-    """
-    A data variable attributes class.
+    """A data variable attributes class.
 
     Parameters
     ----------
@@ -74,17 +73,17 @@ class VarAtts(object):
         if hit:
             return a
         else:
-            try:
-                return self.dims + [kwargs['n']]
-            except:
-                return self.dims
+            #try:
+            return self.dims + [kwargs['n']]
+            #except:
+            #    return self.dims
 
     def _empty_array(self, **kwargs):
         out = np.empty(self.shape(**kwargs), dtype=self.dtype)
-        try:
-            out[:] = np.NaN
-        except:
-            pass
+        #try:
+        out[:] = np.NaN
+        # except:
+        #     pass
         if self.view_type is not None:
             out = out.view(self.view_type)
         if self.default_val is not None:

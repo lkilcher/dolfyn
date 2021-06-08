@@ -4,7 +4,7 @@ from __future__ import print_function
 import struct
 import os.path as path
 import numpy as np
-import warnings
+#import warnings
 #from ..data import time
 from datetime import datetime
 
@@ -186,25 +186,25 @@ def getbit(val, n):
     return bool((val >> n) & 1)
 
 
-def crop_ensembles(infile, outfile, range):
-    """This function is for cropping certain pings out of an AD2CP
-    file to create a new AD2CP file. It properly grabs the header from
-    infile.
+# def crop_ensembles(infile, outfile, range):
+#     """This function is for cropping certain pings out of an AD2CP
+#     file to create a new AD2CP file. It properly grabs the header from
+#     infile.
 
-    The range is the `ensemble/ping` counter as defined in the first column
-    of the INDEX.
+#     The range is the `ensemble/ping` counter as defined in the first column
+#     of the INDEX.
 
-    """
-    idx = get_index(infile)
-    with open(infile, 'rb') as fin:
-        with open(outfile, 'wb') as fout:
-            fout.write(fin.read(idx['pos'][0]))
-            i0 = np.nonzero(idx['ens'] == range[0])[0][0]
-            ie = np.nonzero(idx['ens'] == range[1])[0][0]
-            pos = idx['pos'][i0]
-            nbyte = idx['pos'][ie] - pos
-            fin.seek(pos, 0)
-            fout.write(fin.read(nbyte))
+#     """
+#     idx = get_index(infile)
+#     with open(infile, 'rb') as fin:
+#         with open(outfile, 'wb') as fout:
+#             fout.write(fin.read(idx['pos'][0]))
+#             i0 = np.nonzero(idx['ens'] == range[0])[0][0]
+#             ie = np.nonzero(idx['ens'] == range[1])[0][0]
+#             pos = idx['pos'][i0]
+#             nbyte = idx['pos'][ie] - pos
+#             fin.seek(pos, 0)
+#             fout.write(fin.read(nbyte))
 
 
 class BitIndexer(object):
@@ -216,13 +216,13 @@ class BitIndexer(object):
     def _data_is_array(self, ):
         return isinstance(self.data, np.ndarray)
 
-    @property
-    def nbits(self, ):
-        if self._data_is_array:
-            return self.data.dtype.itemsize * 8
-        else:
-            raise ValueError("You must specify the end-range "
-                             "for non-ndarray input data.")
+    # @property
+    # def nbits(self, ):
+    #     if self._data_is_array:
+    #         return self.data.dtype.itemsize * 8
+    #     else:
+    #         raise ValueError("You must specify the end-range "
+    #                          "for non-ndarray input data.")
 
     def _get_out_type(self, mask):
         # The mask indicates how big this item is.
@@ -247,10 +247,10 @@ class BitIndexer(object):
                              "not support steps")
         start = slc.start
         stop = slc.stop
-        if start is None:
-            start = 0
-        if stop is None:
-            stop = self.nbits
+        # if start is None:
+        #     start = 0
+        # if stop is None:
+        #     stop = self.nbits
         mask = 2 ** (stop - start) - 1
         out = (self.data >> start) & mask
         ot = self._get_out_type(mask)
@@ -342,8 +342,8 @@ def collapse(vec, name=None, exclude=[]):
     """Check that the input vector is uniform, then collapse it to a
     single value, otherwise raise a warning.
     """
-    if name is None:
-        name = '**unkown**'
+    # if name is None:
+    #     name = '**unkown**'
     if isuniform(vec):
         return vec[0]
     elif isuniform(vec, exclude=exclude):

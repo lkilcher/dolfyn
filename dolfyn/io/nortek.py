@@ -17,18 +17,18 @@ from ..rotate.base import _set_coords
 from ..rotate import api as rot
 
 
-def recatenate(obj):
-    out = obj[0].__class__(_type=obj[0]['_type'])
-    for ky in list(obj[0].keys()):
-        if ky in ['__data_groups__', '_type']:
-            continue
-        val0 = obj[0][ky]
-        if isinstance(val0, np.ndarray) and val0.size > 1:
-            out[ky] = np.concatenate([val[ky][..., None] for val in obj],
-                                     axis=-1)
-        else:
-            out[ky] = np.array([val[ky] for val in obj])
-    return out
+# def recatenate(obj):
+#     out = obj[0].__class__(_type=obj[0]['_type'])
+#     for ky in list(obj[0].keys()):
+#         if ky in ['__data_groups__', '_type']:
+#             continue
+#         val0 = obj[0][ky]
+#         if isinstance(val0, np.ndarray) and val0.size > 1:
+#             out[ky] = np.concatenate([val[ky][..., None] for val in obj],
+#                                      axis=-1)
+#         else:
+#             out[ky] = np.array([val[ky] for val in obj])
+#     return out
 
 
 def int2binarray(val, n):
@@ -199,9 +199,9 @@ class NortekReader(object):
             elif unpack('>HH', self.read(4)) == (1445, 24):
                 endian = '>'
             else:
-                raise WrongFileType("I/O error: could not determine the \
-                'endianness' of the file.  Are you sure this is a Nortek \
-                file?")
+                raise WrongFileType("I/O error: could not determine the "
+                "'endianness' of the file.  Are you sure this is a Nortek "
+                "file?")
         self.endian = endian
         self.f.seek(0, 0)
         # print( unpack(self.endian+'HH',self.read(4)) )
@@ -321,7 +321,7 @@ class NortekReader(object):
         Perform a checksum on `byts` and read the checksum value.
         """
         if self.do_checksum:
-            if not np.sum(unpack(self.endian + (1 + len(byts) / 2) * 'H',
+            if not np.sum(unpack(self.endian + str(int(1 + len(byts) / 2)) + 'H',
                                  self._thisid_bytes + byts)) + \
                     46476 - unpack(self.endian + 'H', self.read(2)):
 
@@ -1023,10 +1023,8 @@ class NortekReader(object):
     def readnext(self,):
         id = '0x%02x' % self.read_id()
         if id in self.fun_map:
-            # Step 2.2
             func_name = self.fun_map[id]
-            # Step 2.3
-            out = getattr(self, func_name)()
+            out = getattr(self, func_name)() # Should return None
             self._lastread = [func_name[5:]] + self._lastread[:-1]
             return out
         else:
@@ -1039,14 +1037,11 @@ class NortekReader(object):
         # self.progbar=db.progress_bar(self.filesz)
         # self.progbar.init()
         retval = None
-        # Start loop
         try:
             while not retval:
                 if self.c == nlines:
                     break
-                # Step 2.1
                 retval = self.readnext()
-                # Step 3
                 if retval == 10:
                     self.findnext()
                     retval = None
@@ -1079,6 +1074,5 @@ class NortekReader(object):
 
 def crop_data(obj, range, n_lastdim):
     for nm, dat in obj.items():
-        if isinstance(dat, np.ndarray) and \
-           (dat.shape[-1] == n_lastdim):
+        if isinstance(dat, np.ndarray) and (dat.shape[-1]==n_lastdim):
             obj[nm] = dat[..., range]

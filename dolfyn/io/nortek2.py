@@ -264,8 +264,8 @@ class Ad2cpReader(object):
                 outdat[id]['ensemble'][c26] = c
                 c26 += 1
 
-            elif id in [22, 27, 29, 30, 31, 35, 36]: # avg, bt record, DVL, 
-            # alt record, avg alt_raw record, raw echo, raw echo transmit
+            elif id in [22, 27, 29, 30, 31, 35, 36]: # avg record, bt record, 
+            # DVL, alt record, avg alt_raw record, raw echo, raw echo transmit
                 warnings.warn(
                     "Unhandled ID: 0x{:02X} ({:02d})\n"
                     "    This ID is not yet handled by DOLfYN.\n"
