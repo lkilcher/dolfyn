@@ -1,6 +1,6 @@
 from dolfyn.io.api import read_example as read
 import dolfyn.test.base as tb
-#import sys
+import dolfyn.io.nortek as awac
 import warnings
 from xarray.testing import assert_equal, assert_identical
 warnings.simplefilter('ignore', UserWarning)
@@ -17,6 +17,7 @@ dat_wr2 = load('winriver02.nc')
 
 dat_awac = load('AWAC_test01.nc')
 dat_awac_ud = load('AWAC_test01_ud.nc')
+dat_hwac = load('H-AWAC_test01.nc')
 dat_sig = load('BenchFile01.nc')
 dat_sig_i = load('Sig1000_IMU.nc')
 dat_sig_i_ud = load('Sig1000_IMU_ud.nc')
@@ -38,7 +39,6 @@ def test_io_rdi(make_data=False):
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
     
     if make_data:
-        #dlfn.save(dlfn.read_example('RDI_test01.000'),'RDI_test01.nc')
         save(td_rdi, 'RDI_test01.nc')
         save(td_rdi_bt, 'RDI_withBT.nc')
         save(td_vm, 'vmdas01.nc')
@@ -54,31 +54,44 @@ def test_io_rdi(make_data=False):
 
 
 def test_io_nortek(make_data=False):
+    td_awac = tb.drop_config(read('AWAC_test01.wpr', userdata=False))
+    td_awac_ud = tb.drop_config(read('AWAC_test01.wpr'))
+    td_hwac = tb.drop_config(read('H-AWAC_test01.wpr'))
+    td_debug = tb.drop_config(awac.read_nortek(tb.rfnm('../../example_data/AWAC_test01.wpr'),
+                                               debug=True))
+
+    if make_data:
+        save(td_awac, 'AWAC_test01.nc')
+        save(td_awac_ud, 'AWAC_test01_ud.nc')
+        save(td_hwac, 'H-AWAC_test01.nc')
+        return
+    
+    assert_equal(td_awac, dat_awac)
+    assert_equal(td_awac_ud, dat_awac_ud)
+    assert_equal(td_hwac, dat_hwac)
+    assert_equal(td_awac_ud, td_debug)
+    
+
+def test_io_nortek2(make_data=False):
     td_sig = tb.drop_config(read('BenchFile01.ad2cp'))
     td_sig_i = tb.drop_config(read('Sig1000_IMU.ad2cp', userdata=False))
     td_sig_i_ud = tb.drop_config(read('Sig1000_IMU.ad2cp'))
     td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp'))
     td_sig_ie = tb.drop_config(read('Sig500_Echo.ad2cp'))
-    td_awac = tb.drop_config(read('AWAC_test01.wpr', userdata=False))
-    td_awac_ud = tb.drop_config(read('AWAC_test01.wpr'))
-
+    
     if make_data:
         save(td_sig, 'BenchFile01.nc')
         save(td_sig_i, 'Sig1000_IMU.nc')
         save(td_sig_i_ud, 'Sig1000_IMU_ud.nc')
         save(td_sig_ieb, 'VelEchoBT01.nc')
         save(td_sig_ie, 'Sig500_Echo.nc')
-        save(td_awac, 'AWAC_test01.nc')
-        save(td_awac_ud, 'AWAC_test01_ud.nc')
         return
-    
+
     assert_equal(td_sig, dat_sig)
     assert_equal(td_sig_i, dat_sig_i)
     assert_equal(td_sig_i_ud, dat_sig_i_ud)
     assert_equal(td_sig_ieb, dat_sig_ieb)
     assert_equal(td_sig_ie, dat_sig_ie)
-    assert_equal(td_awac, dat_awac)
-    assert_equal(td_awac_ud, dat_awac_ud)
     
     
 def test_matlab_io(make_data=False):
@@ -96,4 +109,5 @@ def test_matlab_io(make_data=False):
 if __name__ == '__main__':
     test_io_rdi()
     test_io_nortek()
+    test_io_nortek2()
     test_matlab_io()

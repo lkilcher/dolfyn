@@ -140,7 +140,7 @@ def test_rotate_earth2principal(make_data=False):
 
     td_rdi.attrs['principal_heading'] = calc_principal_heading(td_rdi.vel.mean('range'))
     td_sig.attrs['principal_heading'] = calc_principal_heading(td_sig.vel.mean('range'))
-    td_awac.attrs['principal_heading'] = calc_principal_heading(td_sig.vel.mean('range'), 
+    td_awac.attrs['principal_heading'] = calc_principal_heading(td_awac.vel.mean('range'), 
                                                                 tidal_mode=False)
     td_rdi = rotate2(td_rdi, 'principal')
     td_sig = rotate2(td_sig, 'principal')
