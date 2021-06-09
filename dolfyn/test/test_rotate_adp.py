@@ -26,10 +26,10 @@ def test_rotate_beam2inst(make_data=False):
     cd_sig_i = load('Sig1000_IMU_rotate_beam2inst.nc')
     cd_sig_ieb = load('VelEchoBT01_rotate_beam2inst.nc')
     
-    assert_allclose(td_rdi, cd_rdi, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig, cd_sig, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig_i, cd_sig_i, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig_ieb, cd_sig_ieb, rtol=1e-7, atol=1e-3)   
+    assert_allclose(td_rdi, cd_rdi, atol=1e-5)
+    assert_allclose(td_sig, cd_sig, atol=1e-5)
+    assert_allclose(td_sig_i, cd_sig_i, atol=1e-5)
+    assert_allclose(td_sig_ieb, cd_sig_ieb, atol=1e-5)  
 
 
 def test_rotate_inst2beam(make_data=False):
@@ -42,31 +42,38 @@ def test_rotate_inst2beam(make_data=False):
     td_sig = rotate2(td_sig, 'beam', inplace=True)
     td_sig_i = load('Sig1000_IMU_rotate_beam2inst.nc')
     td_sig_i = rotate2(td_sig_i, 'beam', inplace=True)
+    td_sig_ie = load('Sig500_Echo_earth2inst.nc')
+    td_sig_ie = rotate2(td_sig_ie, 'beam')
 
     if make_data:
         save(td_awac, 'AWAC_test01_inst2beam.nc')
+        save(td_sig_ie, 'Sig500_Echo_inst2beam.nc')
         return
 
     cd_td = tr.dat_rdi.copy(deep=True)
     cd_awac = load('AWAC_test01_inst2beam.nc')
     cd_sig = tr.dat_sig.copy(deep=True)
     cd_sig_i = tr.dat_sig_i.copy(deep=True)
+    cd_sig_ie = load('Sig500_Echo_inst2beam.nc')
 
     # # The reverse RDI rotation doesn't work b/c of NaN's in one beam
     # # that propagate to others, so we impose that here.
     cd_td['vel'].values[:, np.isnan(cd_td['vel'].values).any(0)] = np.NaN
     
-    assert_allclose(td, cd_td, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_awac, cd_awac, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig, cd_sig, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig_i, cd_sig_i, rtol=1e-7, atol=1e-3)
-    #assert_ac(td_sig_i.vel.values, cd_sig_i.vel.values, rtol=1e-7, atol=1e-3)
+    assert_allclose(td, cd_td, atol=1e-5)
+    assert_allclose(td_awac, cd_awac, atol=1e-5)
+    assert_allclose(td_sig, cd_sig, atol=1e-5)
+    assert_allclose(td_sig_i, cd_sig_i, atol=1e-5)
+    assert_allclose(td_sig_ie, cd_sig_ie, atol=1e-5)
 
 
 def test_rotate_inst2earth(make_data=False):
-    # AWAC is loaded in earth
+    # AWAC & Sig500 are loaded in earth
     td_awac = tr.dat_awac.copy(deep=True)
     td_awac = rotate2(td_awac, 'inst')
+    td_sig_ie = tr.dat_sig_ie.copy(deep=True)
+    td_sig_ie = rotate2(rotate2(td_sig_ie,'earth'), 'inst')
+    
     td = rotate2(tr.dat_rdi, 'earth')
     tdwr2 = rotate2(tr.dat_wr2, 'earth')
     td_sig = load('BenchFile01_rotate_beam2inst.nc')
@@ -76,24 +83,27 @@ def test_rotate_inst2earth(make_data=False):
 
     if make_data:
         save(td_awac, 'AWAC_test01_earth2inst.nc')
+        save(td_sig_ie, 'Sig500_Echo_earth2inst.nc')
         save(td, 'RDI_test01_rotate_inst2earth.nc')
         save(td_sig, 'BenchFile01_rotate_inst2earth.nc')
         save(td_sig_i, 'Sig1000_IMU_rotate_inst2earth.nc')
         save(tdwr2, 'winriver02_rotate_ship2earth.nc')
         return
     td_awac = rotate2(td_awac, 'earth', inplace=True)
+    td_sig_ie = rotate2(td_sig_ie, 'earth')
 
     cd = load('RDI_test01_rotate_inst2earth.nc')
     cdwr2 = load('winriver02_rotate_ship2earth.nc')
     cd_sig = load('BenchFile01_rotate_inst2earth.nc')
     cd_sig_i = load('Sig1000_IMU_rotate_inst2earth.nc')
     
-    assert_allclose(td, cd, rtol=1e-7, atol=1e-3)
-    assert_allclose(tdwr2, cdwr2, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_awac, tr.dat_awac, rtol=1e-7, atol=1e-3)
+    assert_allclose(td, cd, atol=1e-5)
+    assert_allclose(tdwr2, cdwr2, atol=1e-5)
+    assert_allclose(td_awac, tr.dat_awac, atol=1e-5)
     #assert_ac(td_awac.vel.values, tr.dat_awac.vel.values, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig, cd_sig, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig_i, cd_sig_i, rtol=1e-7, atol=1e-3)
+    assert_allclose(td_sig, cd_sig, atol=1e-5)
+    assert_allclose(td_sig_i, cd_sig_i, atol=1e-5)
+    assert_allclose(td_sig_ie, tr.dat_sig_ie, atol=1e-5)
 
 
 def test_rotate_earth2inst():
@@ -123,13 +133,13 @@ def test_rotate_earth2inst():
     #                "adp.rotate.inst2earth gives unexpected ACCEL results for" \
     #                    "'Sig1000_IMU_rotate_beam2inst.nc'"
     
-    assert_allclose(td_rdi, cd_rdi, rtol=1e-7, atol=1e-3)
-    assert_allclose(tdwr2, tr.dat_wr2, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_awac, cd_awac, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig, cd_sig, rtol=1e-7, atol=1e-3)
+    assert_allclose(td_rdi, cd_rdi, atol=1e-5)
+    assert_allclose(tdwr2, tr.dat_wr2, atol=1e-5)
+    assert_allclose(td_awac, cd_awac, atol=1e-5)
+    assert_allclose(td_sig, cd_sig, atol=1e-5)
     #known failure due to orientmat, see test_vs_nortek
-    #assert_allclose(td_sig_i, cd_sig_i, rtol=1e-7, atol=1e-3)
-    assert_ac(td_sig_i.accel.values, cd_sig_i.accel.values, rtol=1e-7, atol=1e-3)
+    #assert_allclose(td_sig_i, cd_sig_i, atol=1e-3)
+    assert_ac(td_sig_i.accel.values, cd_sig_i.accel.values, atol=1e-3)
 
 
 def test_rotate_earth2principal(make_data=False):
@@ -156,9 +166,9 @@ def test_rotate_earth2principal(make_data=False):
     cd_sig = load('BenchFile01_rotate_earth2principal.nc')
     cd_awac = load('AWAC_test01_earth2principal.nc')
 
-    assert_allclose(td_rdi, cd_rdi, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_awac, cd_awac, rtol=1e-7, atol=1e-3)
-    assert_allclose(td_sig, cd_sig, rtol=1e-7, atol=1e-3)
+    assert_allclose(td_rdi, cd_rdi, atol=1e-5)
+    assert_allclose(td_awac, cd_awac, atol=1e-5)
+    assert_allclose(td_sig, cd_sig, atol=1e-5)
     
 
 if __name__=='__main__':

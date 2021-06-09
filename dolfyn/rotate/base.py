@@ -9,16 +9,16 @@ class BadDeterminantWarning(UserWarning):
     pass
 
 
-def rotate_tensor(tensor, rmat):
-    return np.einsum('ij...,jlm...,nl...->inm...', rmat, tensor, rmat)
+# def rotate_tensor(tensor, rmat):
+#     return np.einsum('ij...,jlm...,nl...->inm...', rmat, tensor, rmat)
 
 
-def is_positive_definite(tensor):
-    t = np.moveaxis(tensor, [0, 1], [-2, -1])
-    val = t[..., 0, 0] > 0
-    for idx in [2, 3]:
-        val &= det(t[..., :idx, :idx]) > 0
-    return val
+# def is_positive_definite(tensor):
+#     t = np.moveaxis(tensor, [0, 1], [-2, -1])
+#     val = t[..., 0, 0] > 0
+#     for idx in [2, 3]:
+#         val &= det(t[..., :idx, :idx]) > 0
+#     return val
 
 
 def _check_rotmat_det(rotmat, thresh=1e-3):
@@ -290,7 +290,7 @@ def orient2euler(omat):
 def q2orient(quaternions):
     '''
     Calculate orientation from Nortek AHRS quaternions, where q = [W, X, Y, Z] 
-    (instead of the standard q = [X, Y, Z, W])
+    instead of the standard q = [X, Y, Z, W]
     
     Parameters
     ----------
@@ -307,12 +307,16 @@ def q2orient(quaternions):
     `scipy.spatial.transform.Rotation`
     
     '''
-    omat = np.empty((3, 3, quaternions.time.size))
+    omat = type(quaternions)(np.empty((3, 3, quaternions.time.size)))
+    omat = omat.rename({'dim_0':'inst', 'dim_1':'earth', 'dim_2':'time'})
+    
     for i in range(quaternions.time.size):
         r = R.from_quat([quaternions.isel(q=1, time=i), 
-                         quaternions.isel(q=2, time=i), 
-                         quaternions.isel(q=3, time=i), 
-                         quaternions.isel(q=0, time=i)])
+                          quaternions.isel(q=2, time=i), 
+                          quaternions.isel(q=3, time=i), 
+                          quaternions.isel(q=0, time=i)])
         omat[...,i] = r.as_matrix()
         
-    return omat
+    xyz = ['X','Y','Z']
+    enu = ['E','N','U']
+    return omat.assign_coords({'inst':xyz, 'earth':enu, 'time':quaternions.time})

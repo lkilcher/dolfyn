@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from dolfyn.rotate.base import euler2orient, orient2euler
+from dolfyn.rotate.base import euler2orient, orient2euler, q2orient
 from dolfyn import set_declination
 from dolfyn.test.base import load_ncdata as load
 
@@ -94,7 +94,15 @@ def test_pr_declination():
     assert_allclose(h0 + declin, h1, atol=1e-5, err_msg="incorrect heading change when " \
         "setting declination")
 
+def test_q_hpr():
+    dat = load('Sig1000_IMU.nc')
+    
+    dcm = q2orient(dat.quaternion)
+    
+    assert_allclose(dat.orientmat, dcm, atol=5e-4, 
+                    err_msg="Disagreement b/t quaternion-calc'd & HPR-calc'd orientmat")
 
 if __name__ == '__main__':
     test_hpr_defs()
     test_pr_declination()
+    test_q_hpr()

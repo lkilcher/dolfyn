@@ -89,6 +89,7 @@ def rotate2(ds, out_frame='earth', inplace=False):
 
     if iframe_out == iframe_in:
         # Should this generate an error?
+        print("Data is already in the {} coordinate system".format(out_frame))
         return ds
 
     if iframe_out > iframe_in:

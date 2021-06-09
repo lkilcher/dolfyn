@@ -53,7 +53,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         cs_new = 'earth'
 
     if rotate_vars is None:
-        if 'rotate_vars' in advo:
+        if 'rotate_vars' in advo.attrs:
             rotate_vars = advo.rotate_vars
         else:
             rotate_vars = ['vel']
@@ -68,7 +68,6 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
                 "Data must be in the '%s' frame when using this function" %
                 cs_now)
 
-    #odata = advo['orient']
     if hasattr(advo, 'orientmat'):
         omat = advo['orientmat'].values
     else:
@@ -143,13 +142,13 @@ def _rotate_head2inst(advo, reverse=False):
     return advo
 
 def _check_inst2head_rotmat(advo):
-    if advo.get('body2head_rotmat', None) is not None:
-        warnings.warn(
-            "body2head_rotmat will be deprecated in future versions of DOLfYN."
-            "Use the `set_inst2head_rotmat` method instead.",
-            DeprecationWarning)
-        # head2inst is transpose of body2head
-        advo.set_inst2head_rotmat(advo.drop('body2head_rotmat'))
+    # if advo.get('body2head_rotmat', None) is not None:
+    #     warnings.warn(
+    #         "body2head_rotmat will be deprecated in future versions of DOLfYN."
+    #         "Use the `set_inst2head_rotmat` method instead.",
+    #         DeprecationWarning)
+    #     # head2inst is transpose of body2head
+    #     advo.set_inst2head_rotmat(advo.drop('body2head_rotmat'))
     if advo.get('inst2head_rotmat', None) is None:
         # This is the default value, and we do nothing.
         return False
@@ -185,20 +184,20 @@ def earth2principal(advo, reverse=False):
     #if 'principal_heading' not in advo.attrs:
     #    advo.attrs['principal_heading'] = calc_principal_heading(advo.vel)
     
-    try:
-        # this is in degrees CW from North
-        ang = np.deg2rad(90 - advo.principal_heading)
-        # convert this to radians CCW from east (which is expected by
-        # the rest of the function)
-    except KeyError:
-        if 'principal_angle' in advo.attrs:
-            warnings.warn(
-                "'principal_angle' will be deprecated in a future release of "
-                "DOLfYN. Please update your file to use ``principal_heading = "
-                "(90 - np.rad2deg(principal_angle))``."
-            )
-            # This is in radians CCW from east
-            ang = advo.principal_angle
+    #try:
+    # this is in degrees CW from North
+    ang = np.deg2rad(90 - advo.principal_heading)
+    # convert this to radians CCW from east (which is expected by
+    # the rest of the function)
+    # except KeyError:
+    #     if 'principal_angle' in advo.attrs:
+    #         warnings.warn(
+    #             "'principal_angle' will be deprecated in a future release of "
+    #             "DOLfYN. Please update your file to use ``principal_heading = "
+    #             "(90 - np.rad2deg(principal_angle))``."
+    #         )
+    #         # This is in radians CCW from east
+    #         ang = advo.principal_angle
 
     if reverse:
         cs_now = 'principal'
