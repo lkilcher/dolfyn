@@ -26,7 +26,7 @@ data. It contains:
 Examples
 --------
 
-.. literalinclude:: ../examples/adcp_example01.py
+.. literalinclude:: ../../examples/adcp_example.py
 
 """
 
@@ -34,4 +34,3 @@ from ..io.api import read, load
 from ..rotate.api import rotate2
 from . import clean
 from ..velocity import VelBinner
-from .base import ADPbinner

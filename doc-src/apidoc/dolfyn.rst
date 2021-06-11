@@ -9,7 +9,7 @@ DOLfYN API
     :show-inheritance:
 
 .. toctree::
-   :maxdepth: 7
+   :maxdepth: 3
 
    dolfyn.adp
    dolfyn.adv

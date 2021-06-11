@@ -7,7 +7,7 @@ dat = dlfn.read_example('vector_data01.VEC')
 
 # Clean the file using the Goring+Nikora method:
 mask = avm.clean.GN2002(dat.vel)
-dat_cln = avm.clean.cleanFill(dat, mask, method='cubic')
+dat_cln = avm.clean.cleanFill(dat, mask, method='pchip')
 
 # Rotate that data from the instrument to earth frame:
 # First set the magnetic declination
@@ -24,7 +24,7 @@ binner = avm.TurbBinner(n_bin=19200, fs=dat_princ.fs, n_fft=4096)
 dat_binned = binner(dat_princ)
 
 # At any point you can save the data:
-dlfn.save(dat_binned,'adv_data_rotated2principal.nc')
+dlfn.save(dat_binned,'adv_data.nc')
 
 # And reload the data:
-dat_bin_copy = dlfn.load('adv_data_rotated2principal.nc')
+dat_bin_copy = dlfn.load('adv_data.nc')

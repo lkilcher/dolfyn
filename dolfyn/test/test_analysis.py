@@ -1,19 +1,20 @@
-from dolfyn.test import test_read_adp as tr, test_adv as tv
+from dolfyn.test import test_read_adp as tr, test_read_adv as tv
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from xarray.testing import assert_allclose
+from xarray.testing import assert_equal
 import numpy as np
-from dolfyn import VelBinner
+from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
 
 class adv_setup():
     def __init__(self, tv):
-        self.dat1 = tv.dat
-        self.dat2 = tv.dat_imu
+        self.dat1 = tv.dat.copy(deep=True)
+        self.dat2 = tv.dat_imu.copy(deep=True)
+        self.dat3 = read_example('burst_mode01.VEC', nens=200)
         self.avg_tool = VelBinner(self.dat1.fs, self.dat1.fs)
         
 class adp_setup():
     def __init__(self, tr):
-        self.dat = tr.dat_sig
+        self.dat = tr.dat_sig.copy(deep=True)
         self.avg_tool = VelBinner(self.dat.fs*20, self.dat.fs)
         
         
@@ -30,11 +31,8 @@ def test_do_avg(make_data=False):
         save(adat_sig, 'ADCP_average.nc')
         return
     
-    saved_adat_vec = load('ADV_average.nc')
-    saved_adat_sig = load('ADCP_average.nc')
-    
-    assert_allclose(adat_vec, saved_adat_vec, atol=1e-5)
-    assert_allclose(adat_sig, saved_adat_sig, atol=1e-5)
+    assert_equal(adat_vec, load('ADV_average.nc'))
+    assert_equal(adat_sig, load('ADCP_average.nc'))
     
     
 def test_do_var(make_data=False):
@@ -47,37 +45,45 @@ def test_do_var(make_data=False):
     if make_data:
         save(vdat_vec, 'ADV_variance.nc')
         save(vdat_sig, 'ADCP_variance.nc')
-        return
+        return 
     
-    saved_vdat_vec = load('ADV_variance.nc')
-    saved_vdat_sig = load('ADCP_variance.nc')
-    
-    assert_allclose(vdat_vec, saved_vdat_vec, atol=1e-5)
-    assert_allclose(vdat_sig, saved_vdat_sig, atol=1e-5)
+    assert_equal(vdat_vec, load('ADV_variance.nc'))
+    assert_equal(vdat_sig, load('ADCP_variance.nc'))
     
     
 def test_calc_coh(make_data=False):
     dat_vec = adv_setup(tv)
-    coh = dat_vec.avg_tool.calc_coh(dat_vec.dat1.vel, dat_vec.dat2.vel)
+    coh = type(dat_vec.dat1)()
+    # about same size
+    coh['same'] = dat_vec.avg_tool.calc_coh(dat_vec.dat1.vel, dat_vec.dat2.vel)
+    # larger one should come first if dif lengths
+    coh['dif'] = dat_vec.avg_tool.calc_coh(dat_vec.dat3.vel, dat_vec.dat1.vel)
     
     if make_data:
         save(coh, 'coherence.nc')
         return
+    
     saved_coh = load('coherence.nc')
     
-    assert_allclose(coh, saved_coh.coherence, atol=1e-5)
+    assert_equal(coh['same'], saved_coh['same'])
+    assert_equal(coh['dif'], saved_coh['dif'])
     
     
 def test_calc_phase_angle(make_data=False):
     dat_vec = adv_setup(tv)
-    pang = dat_vec.avg_tool.calc_phase_angle(dat_vec.dat1.vel, 
-                                                dat_vec.dat2.vel)
+    pang = type(dat_vec.dat1)()
+    pang['same'] = dat_vec.avg_tool.calc_phase_angle(dat_vec.dat1.vel,
+                                                     dat_vec.dat2.vel)
+    pang['dif'] = dat_vec.avg_tool.calc_phase_angle(dat_vec.dat3.vel,
+                                                    dat_vec.dat1.vel)
     if make_data:
         save(pang, 'phase_angle.nc')
         return
+    
     saved_pang = load('phase_angle.nc')
     
-    assert_allclose(pang, saved_pang.phase_angle, atol=1e-5)
+    assert_equal(pang['same'], saved_pang['same'])
+    assert_equal(pang['dif'], saved_pang['dif'])
     
     
 def test_calc_acov(make_data=False):
@@ -89,7 +95,7 @@ def test_calc_acov(make_data=False):
         return
     saved_acov = load('auto-cov.nc')
     
-    assert_allclose(acov, saved_acov['auto-covariance'], atol=1e-5)
+    assert_equal(acov, saved_acov['auto-covariance'])
     
     
 def test_calc_xcov(make_data=False):
@@ -101,7 +107,7 @@ def test_calc_xcov(make_data=False):
         return
     saved_xcov = load('cross-cov.nc')
     
-    assert_allclose(xcov, saved_xcov['cross-covariance'], atol=1e-5)
+    assert_equal(xcov, saved_xcov['cross-covariance'])
     
      
 def test_calc_tke(make_data=False):
@@ -113,7 +119,7 @@ def test_calc_tke(make_data=False):
         return
     saved_tke = load('tke_vector.nc')
     
-    assert_allclose(tke, saved_tke.tke_vec, atol=1e-5)
+    assert_equal(tke, saved_tke.tke_vec)
     
     
 def test_calc_stress(make_data=False):
@@ -125,20 +131,20 @@ def test_calc_stress(make_data=False):
         return
     saved_stress = load('stress_vector.nc')
     
-    assert_allclose(stress, saved_stress.stress_vec, atol=1e-5)
+    assert_equal(stress, saved_stress.stress_vec)
     
     
 def test_do_tke(make_data=False):
     dat_vec = adv_setup(tv)
     adat = dat_vec.avg_tool.do_avg(dat_vec.dat1)
-    tkedat = dat_vec.avg_tool.do_tke(adat, out=adat)
+    tkedat = dat_vec.avg_tool.do_tke(adat, out_ds=adat)
     
     if make_data:
         save(tkedat, 'ADV_avg+tke.nc')
         return
     saved_tkedat = load('ADV_avg+tke.nc')
     
-    assert_allclose(tkedat, saved_tkedat, atol=1e-5)
+    assert_equal(tkedat, saved_tkedat)
     
     
 def test_calc_freq(make_data=False):
@@ -160,7 +166,7 @@ def test_calc_vel_psd(make_data=False):
         return
     saved_spec = load('spectra.nc')
     
-    assert_allclose(spec, saved_spec.S, atol=1e-5)
+    assert_equal(spec, saved_spec.S)
     
     
 def test_calc_vel_csd(make_data=False):
@@ -172,7 +178,7 @@ def test_calc_vel_csd(make_data=False):
         return
     saved_cspec = load('cross-spectra.nc')
     
-    assert_allclose(cspec, saved_cspec.csd, atol=1e-5)
+    assert_equal(cspec, saved_cspec.csd)
 
 
 # test each of TurbBinner's functions on an ADV
@@ -185,7 +191,7 @@ def test_calc_turbulence(make_data=False):
         return
     saved_tdat = load('turb_data.nc')
     
-    assert_allclose(tdat, saved_tdat, atol=1e-5)
+    assert_equal(tdat, saved_tdat)
     
     
 def test_calc_epsilon(make_data=False):
@@ -193,27 +199,24 @@ def test_calc_epsilon(make_data=False):
     bnr = avm.TurbBinner(n_bin=20.0, fs=dat.fs)
     tdat = bnr(dat)
     
-    LT83 = bnr.calc_epsilon_LT83(tdat.S, tdat.Veldata.U_mag)
-    SF = bnr.calc_epsilon_SF(dat.vel[0], tdat.Veldata.U_mag)
-    TE01 = bnr.calc_epsilon_TE01(dat, tdat)
+    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.S, tdat.Veldata.U_mag)
+    tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.Veldata.U_mag)
+    tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
     
     if make_data:
-        save(LT83, 'dissipation_LT83.nc')
-        save(SF, 'dissipation_SF.nc')
-        save(TE01, 'dissipation_TE01.nc')
+        save(tdat, 'vector_data01_bin.nc')
         return
     
-    saved_LT83 = load('dissipation_LT83.nc')
-    saved_SF = load('dissipation_SF.nc')
-    saved_TE01 = load('dissipation_TE01.nc')
+    saved_tdat = load('vector_data01_bin.nc')
     
-    assert_allclose(LT83, saved_LT83.dissipation_rate, atol=1e-5)
-    assert_allclose(SF, saved_SF.dissipation_rate, atol=1e-5)
-    assert_allclose(TE01, saved_TE01.dissipation_rate, atol=1e-5)
+    assert_equal(tdat, saved_tdat)
+    assert_equal(tdat['LT83'], saved_tdat['LT83'])
+    assert_equal(tdat['SF'], saved_tdat['SF'])
+    assert_equal(tdat['TE01'], saved_tdat['TE01'])
     
     
 def test_calc_L_int(make_data=False):
-    dat = tv.dat
+    dat = tv.dat.copy(deep=True)
     bnr = avm.TurbBinner(n_bin=20.0, fs=dat.fs)
     tdat = bnr(dat)
     acov = bnr.calc_acov(dat.vel)
@@ -225,8 +228,16 @@ def test_calc_L_int(make_data=False):
         return
     saved_L = load('length_scales.nc')
     
-    assert_allclose(L, saved_L.L_int, atol=1e-5)
-    
+    assert_equal(L, saved_L.L_int)
+
+# class warnings_testcase(unittest.TestCase):
+#     def test_read_warnings(self):
+#         with self.assertRaises(Exception):
+#             wh.read_rdi(tb.exdt('H-AWAC_test01.wpr'))
+#         with self.assertRaises(Exception):
+#             awac.read_nortek(tb.exdt('BenchFile01.ad2cp'))
+#         with self.assertRaises(Exception):
+#             sig.read_signature(tb.exdt('AWAC_test01.wpr'))
     
 if __name__ == '__main__':
     test_do_avg()

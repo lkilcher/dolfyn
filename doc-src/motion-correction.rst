@@ -24,7 +24,7 @@ and heading reference system), but |dlfn| does not yet support motion
 correction of ADCP data.
 
 Pre-Deployment Requirements
-...........................
+---------------------------
 
 In order to perform motion correction the ADV-IMU must be assembled
 and configured correctly:
@@ -62,7 +62,7 @@ and configured correctly:
    These variables are set in either the userdata.json file (prior to calling ``dolfyn.read``), or by setting them explicitly after the data file has been read::
 
      dat.set_inst2head_rotmat(<3x3 rotation matrix>)
-     dat.attrs['inst2head_vec'] = [3-element vector]
+     dat.attrs['inst2head_vec'] = np.array([3-element vector])
      
 .. figure:: pic/adv_coord_sys3_warr.png
    :align: center
@@ -81,6 +81,29 @@ and configured correctly:
    -\hat{y}^*` , and :math:`\hat{z}^\mathrm{head} \parallel
    -\hat{x}^*` .
    
+Specify metadata in a JSON file
+--------------------------------
+
+The values in ``dat.attrs`` can also be set in a json file,
+``<data_filename>.userdata.json``, containing a single `json-object
+<https://json.org/>`_. For example, the contents of these files should
+look something like::
+
+    {"inst2head_rotmat": "identity",
+     "inst2head_vec": [-1.0, 0.5, 0.2],
+     "motion accel_filtfreq Hz": 0.03,
+     "declination": 8.28,
+     "latlon": [39.9402, -105.2283]
+    }
+
+Prior to reading a binary data file ``my_data.VEC``, you can
+create a ``my_data.userdata.json`` file. Then when you do
+``dolfyn.read('my_data.VEC')``, |dlfn| will read the contents of
+``my_data.userdata.json`` and include that information in the
+``dat.attrs`` attribute of the returned data object. This
+feature is provided so that meta-data can live alongside your
+binary data files.
+
 .. figure:: pic/turbulence_torpedo.png
    :align: center
    :scale: 60%
@@ -88,7 +111,7 @@ and configured correctly:
    
    ADV mounted on a Columbus-type sounding weight.
 
-An example 'userdata.json' file corresponding to Figure 2 would look like:
+The 'userdata.json' file corresponding to the ADV sounding weight in Figure 2 looks like:
 
 .. code-block:: text
 
@@ -96,21 +119,20 @@ An example 'userdata.json' file corresponding to Figure 2 would look like:
 	                      [ 0, 1, 0],
 	                      [ 1, 0, 0]],
 	 "inst2head_vec": [0.20, 0, 0.04],
+	 "motion accel_filtfreq Hz": 0.03,
 	}
 
 
-Data processing
-...............
+Data Processing
+---------------
 
 After making ADV-IMU measurements, the |dlfn| package can perform
 motion correction processing steps on the ADV data. Assuming you have
-created a ``../dolfyn/example_data/vector_data_imu01.userdata.json`` file 
-(to go with your ``vector_data_imu01.vec`` data file) and it contains entries 
-for ``inst2head_rotmat`` and ``inst2head_vec`` attributes to it, motion
-correction is fairly simple, you can either:
+created a ``vector_data_imu.userdata.json`` file 
+(to go with your ``vector_data_imu.vec`` data file), motion
+correction is fairly simple. You can either:
 
-1. Utilize the |dlfn| api perform motion-correction processing
-   explicitly in Python::
+1. Utilize the |dlfn| API to perform motion-correction explicitly in Python::
 
      import dolfyn.adv.api as avm
 
@@ -133,7 +155,7 @@ correction is fairly simple, you can either:
 
    By default this will write a Matlab file containing your
    motion-corrected ADV data in ENU coordinates. Note that for
-   fixed-stem ADVs (no cable-head), the standard values for
+   fixed-head ADVs (no cable b/t head and battery case), the standard values for
    ``inst2head_rotmat`` and ``inst2head_vec`` can be specified by
    using the ``--fixed-head`` command-line parameter::
      
@@ -158,7 +180,7 @@ correction is fairly simple, you can either:
    the specified file and save the data in ENU coordinates, in Matlab
    format.  Happy motion-correcting!
 
-After following one of these paths, your data will be motion corrected and it's ``.u``,
+After following one of these paths, your data will be motion corrected and its ``.u``,
 ``.v`` and ``.w`` attributes are in an East, North and Up (ENU)
 coordinate system, respectively.  In fact, all vector quantities
 in ``dat`` are now in this ENU coordinate system.  See the
@@ -167,10 +189,9 @@ function for more information.
 
 A key input parameter of motion-correction is the high-pass filter
 frequency that removes low-frequency bias drift from the IMU
-accelerometer signal (the default value is 0.033Hz, 30second
-period). By default, |dlfn| uses a value of 0.03 Hz. For more details
-on choosing the appropriate value for a particular application, please
-see [Kilcher_etal_2016]_.
+accelerometer signal (the default value is 0.03 Hz, a ~30 second
+period). For more details on choosing the appropriate value for 
+a particular application, please see [Kilcher_etal_2016]_.
 
 
 .. [Kilcher_etal_2016] Kilcher, L.; Thomson, J.; Talbert, J.; DeKlerk, A.; 2016,
@@ -188,4 +209,19 @@ see [Kilcher_etal_2016]_.
    Turbulence Measurements from Compliant Moorings. Part II: Motion Correction.
    *Journal of Atmospheric and Oceanic Technology*, 34(6), 1249-1266.
    doi: 10.1175/JTECH-D-16-0213.1
+   
+   
+Motion Correction Examples
+--------------------------
+
+The two following examples depict the standard workflow for analyzing
+ADV-IMU data using |dlfn|.
+
+ADV Motion Correction Ex.1
+..........................
+.. literalinclude:: ../examples/adv_example_mc1.py
+
+ADV Motion Correction Ex.2
+..........................
+.. literalinclude:: ../examples/adv_example_mc2.py
 

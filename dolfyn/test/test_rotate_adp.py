@@ -1,9 +1,9 @@
 from dolfyn.test import test_read_adp as tr
-from dolfyn import rotate2, set_declination
+from dolfyn import rotate2
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn import calc_principal_heading
 import numpy as np
-from xarray.testing import assert_allclose
+from xarray.testing import assert_allclose, assert_equal
 from numpy.testing import assert_allclose as assert_ac
 
 
@@ -73,6 +73,7 @@ def test_rotate_inst2earth(make_data=False):
     td_awac = rotate2(td_awac, 'inst')
     td_sig_ie = tr.dat_sig_ie.copy(deep=True)
     td_sig_ie = rotate2(rotate2(td_sig_ie,'earth'), 'inst')
+    td_sig_o = td_sig_ie.copy(deep=True)
     
     td = rotate2(tr.dat_rdi, 'earth')
     tdwr2 = rotate2(tr.dat_wr2, 'earth')
@@ -91,6 +92,7 @@ def test_rotate_inst2earth(make_data=False):
         return
     td_awac = rotate2(td_awac, 'earth', inplace=True)
     td_sig_ie = rotate2(td_sig_ie, 'earth')
+    td_sig_o = rotate2(td_sig_o.drop_vars('orientmat'), 'earth')
 
     cd = load('RDI_test01_rotate_inst2earth.nc')
     cdwr2 = load('winriver02_rotate_ship2earth.nc')
@@ -104,6 +106,7 @@ def test_rotate_inst2earth(make_data=False):
     assert_allclose(td_sig, cd_sig, atol=1e-5)
     assert_allclose(td_sig_i, cd_sig_i, atol=1e-5)
     assert_allclose(td_sig_ie, tr.dat_sig_ie, atol=1e-5)
+    assert_ac(td_sig_o.vel, tr.dat_sig_ie.vel, atol=1e-5)
 
 
 def test_rotate_earth2inst():

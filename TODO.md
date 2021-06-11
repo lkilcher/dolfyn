@@ -38,6 +38,10 @@ Build a conda install
 File I/O
 ========
 
+Support for AWAC waves data (AST)
+
+Support for TRDI Sentinel V ADCP
+
 Fix Nortek burst read hack
 
 Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
@@ -45,6 +49,11 @@ Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
 
 Data Processing
 ===============
+
+ADCP's:
+  - Support for calculating principal heading by ensemble?
+  - Support for motion-correcting ADCP data
+  - 5-beam turbulence analysis
 
 Coordinate systems:
 - Support for rotating directly from 'inst' to 'principal'
@@ -66,11 +75,6 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
 
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
 
-ADCP's:
-  - Depth of adcp for range for nortek instruments? - not taken into account natively by Nortek - add to documentation
-  - Support for calculating principal heading by ensemble?
-  - Support for motion-correcting ADCP data.
-  - Support for calculating stresses using Stacey++1999 method.
 					 
 Ideas
 =====

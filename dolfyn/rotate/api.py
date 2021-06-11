@@ -255,9 +255,9 @@ def set_inst2head_rotmat(ds, rotmat):
         Dataset with rotation matrix applied
         
     """
-    if not ds.inst_model.lower()=='vector':
-        raise Exception("Setting 'inst2head_rotmat' is only supported "
-                        "for Nortek Vector ADVs.")
+    # if not ds.inst_model.lower()=='vector':
+    #     raise Exception("Setting 'inst2head_rotmat' is only supported "
+    #                     "for Nortek Vector ADVs.")
     if ds.get('inst2head_rotmat', None) is not None:
         # Technically we could support changing this (unrotate with the
         # original, then rotate with the new one), but WHY?!

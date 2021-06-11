@@ -790,18 +790,17 @@ class adcp_loader(object):
         cfg['name'] = self._cfgnames.get(tmp[0],
                                          'unrecognized firmware version')
         config = tmp[2:4]
-        cfg['config'] = (np.binary_repr(config[1], 8) + '-' +
-                         np.binary_repr(config[0], 8))
+        #cfg['config'] = (np.binary_repr(config[1], 8) + '-' +
+        #                 np.binary_repr(config[0], 8))
         cfg['beam_angle'] = [15, 20, 30][(config[1] & 3)]
-        cfg['numbeams'] = [4, 5][int((config[1] & 16) == 16)]
-        cfg['beam_freq_khz'] = ([75, 150, 300,
-                                600, 1200, 2400, 38][(config[0] & 7)])
+        #cfg['numbeams'] = [4, 5][int((config[1] & 16) == 16)]
+        cfg['freq'] = ([75, 150, 300, 600, 1200, 2400, 38][(config[0] & 7)])
         cfg['beam_pattern'] = (['concave',
                                 'convex'][int((config[0] & 8) == 8)])
         cfg['orientation'] = ['down', 'up'][int((config[0] & 128) == 128)]
-        cfg['simflag'] = ['real', 'simulated'][tmp[4]]
+        #cfg['simflag'] = ['real', 'simulated'][tmp[4]]
         fd.seek(1, 1)
-        cfg['n_beam'] = fd.read_ui8(1)
+        cfg['n_beams'] = fd.read_ui8(1)
         cfg['n_cells'] = fd.read_ui8(1)
         cfg['pings_per_ensemble'] = fd.read_ui16(1)
         cfg['cell_size'] = fd.read_ui16(1) * .01
@@ -815,7 +814,7 @@ class adcp_loader(object):
             np.sum(np.array(fd.read_ui8(3)) *
                    np.array([60., 1., .01])))
         coord_sys = fd.read_ui8(1)
-        cfg['coord'] = np.binary_repr(coord_sys, 8)
+        #cfg['coord'] = np.binary_repr(coord_sys, 8)
         cfg['coord_sys'] = (['beam', 'inst',
                              'ship', 'earth'][((coord_sys >> 3) & 3)])
         cfg['use_pitchroll'] = ['no', 'yes'][(coord_sys & 4) == 4]

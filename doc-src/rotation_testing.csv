@@ -1,8 +1,8 @@
 Make,Model,Config,Confidence,Notes
 Nortek,Vector,modern (~2019) firmware,Medium,"""Some direct ""instrument on the desk"" confirmation of orientation-matrix and p,r,h calcs."""
 Nortek,Vector,"with IMU, modern (2019) firmware",High,"""Lots of direct 'instrument on the desk' confirmation of orientation-matrix and p,r,h calcs."""
+Nortek,AWAC,modern (~2019) firmware,Low,"""This works, but there has been almost no testing to validate results"""
 Nortek,Signature,modern (~2019) firmware,High,"""Lots of direct 'instrument on the desk' confirmation of orientation-matrix and p,r,h calcs."""
 Nortek,Signature,"with IMU, modern (2019) firmware",Medium,"""Some validation by reasonable results when working with data."""
-Teledyne,Workhorse,modern (~2019-ish) firmware,Medium,"""Some cross-validation with other sensors in post-processing, but minimal 'instrument on the desk' testing."""
+Teledyne RDI,Workhorse,modern (~2019-ish) firmware,Medium,"""Some cross-validation with other sensors in post-processing, but minimal 'instrument on the desk' testing."""
 ALL,ALL,External input orientation data,NONE,"""There has been no testing of external heading, pitch, or roll inputs"""
-Nortek,AWAC,modern (~2019) firmware,Low,"""This works, but there has been almost no testing to validate results"""

@@ -336,38 +336,38 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
                      a[gd[inds[i2]]]).astype(a.dtype)
 
 
-def medfiltnan(a, kernel, thresh=0):
-    """
-    Do a running median filter of the data.
+# def medfiltnan(a, kernel, thresh=0):
+#     """
+#     Do a running median filter of the data.
 
-    Regions where more than *thresh* fraction of the points are NaN
-    are set to NaN.
+#     Regions where more than *thresh* fraction of the points are NaN
+#     are set to NaN.
 
-    Currently only work for vectors.
-    """
-    flag_1D = False
-    if a.ndim == 1:
-        a = a[None, :]
-        flag_1D = True
-    try:
-        len(kernel)
-    except:
-        kernel = [1, kernel]
-    out = medfilt2d(a, kernel)
-    if thresh > 0:
-        out[convolve2d(np.isnan(a),
-                       np.ones(kernel) / np.prod(kernel),
-                       'same') > thresh] = np.NaN
-    if flag_1D:
-        return out[0]
-    return out
+#     Currently only work for vectors.
+#     """
+#     flag_1D = False
+#     if a.ndim == 1:
+#         a = a[None, :]
+#         flag_1D = True
+#     try:
+#         len(kernel)
+#     except:
+#         kernel = [1, kernel]
+#     out = medfilt2d(a, kernel)
+#     if thresh > 0:
+#         out[convolve2d(np.isnan(a),
+#                        np.ones(kernel) / np.prod(kernel),
+#                        'same') > thresh] = np.NaN
+#     if flag_1D:
+#         return out[0]
+#     return out
 
 
-def degN2cartDeg(angN,):
-    """
-    Convert degrees True North to 'cartesian Degrees'
-    (counter-clockwise from the East).
-    """
-    out = 90 - angN
-    out[out < -180] += 360
-    return out
+# def degN2cartDeg(angN,):
+#     """
+#     Convert degrees True North to 'cartesian Degrees'
+#     (counter-clockwise from the East).
+#     """
+#     out = 90 - angN
+#     out[out < -180] += 360
+#     return out

@@ -3,28 +3,28 @@
 Binning Tools
 =============
 
-VelBinner
-"""""""""
+Velocity Analysis
+"""""""""""""""""
 
 Analysis in DOLfYN is primarily handled through the `VelBinner` class. Below is a list of functions that can be called from `VelBinner`.
 
 .. autosummary::
 	:nosignatures:
 	
-	~dolfyn.data.velocity.VelBinner
-	~dolfyn.data.binned.TimeBinner.do_avg
-	~dolfyn.data.binned.TimeBinner.do_var
-	~dolfyn.data.binned.TimeBinner.reshape
-	~dolfyn.data.binned.TimeBinner.calc_coh
-	~dolfyn.data.binned.TimeBinner.calc_phase_angle
-	~dolfyn.data.binned.TimeBinner.calc_acov
-	~dolfyn.data.binned.TimeBinner.calc_xcov
-	~dolfyn.data.velocity.VelBinner.do_tke
-	~dolfyn.data.velocity.VelBinner.calc_tke
-	~dolfyn.data.velocity.VelBinner.calc_stress
-	~dolfyn.data.velocity.VelBinner.calc_vel_psd
-	~dolfyn.data.velocity.VelBinner.calc_vel_csd
-	~dolfyn.data.binned.TimeBinner.calc_freq
+	~dolfyn.velocity.VelBinner
+	~dolfyn.binned.TimeBinner.do_avg
+	~dolfyn.binned.TimeBinner.do_var
+	~dolfyn.binned.TimeBinner.reshape
+	~dolfyn.binned.TimeBinner.calc_coh
+	~dolfyn.binned.TimeBinner.calc_phase_angle
+	~dolfyn.binned.TimeBinner.calc_acov
+	~dolfyn.binned.TimeBinner.calc_xcov
+	~dolfyn.velocity.VelBinner.do_tke
+	~dolfyn.velocity.VelBinner.calc_tke
+	~dolfyn.velocity.VelBinner.calc_stress
+	~dolfyn.velocity.VelBinner.calc_vel_psd
+	~dolfyn.velocity.VelBinner.calc_vel_csd
+	~dolfyn.binned.TimeBinner.calc_freq
 
 
 Turbulence Analysis
@@ -43,12 +43,12 @@ Functions for analyzing ADV data via the `TurbBinner` class, beyond those descri
 	~dolfyn.adv.turbulence.TurbBinner.calc_L_int
 
 
-.. automodule:: dolfyn.data.binned
+.. automodule:: dolfyn.binned
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: dolfyn.data.velocity
+.. automodule:: dolfyn.velocity
     :members:
     :undoc-members:
     :show-inheritance:

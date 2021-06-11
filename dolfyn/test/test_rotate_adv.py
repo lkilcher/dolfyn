@@ -1,13 +1,29 @@
-from dolfyn.test import test_adv as tr
+from dolfyn.test import test_read_adv as tr
 import dolfyn.adv.api as avm
 from dolfyn import rotate2, calc_principal_heading, set_declination
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from dolfyn.rotate.base import euler2orient
+from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
 import unittest
-from xarray.testing import assert_allclose
+from xarray.testing import assert_allclose, assert_equal
 from numpy.testing import assert_allclose as assert_ac
 
+
+def test_heading(make_data=False):
+    td = tr.dat_imu.copy(deep=True)
+
+    head, pitch, roll = orient2euler(td)
+    td['pitch'].values = pitch
+    td['roll'].values = roll
+    td['heading'].values = head
+
+    if make_data:
+        save(td, 'vector_data_imu01_head_pitch_roll.nc')
+        return
+    cd = load('vector_data_imu01_head_pitch_roll.nc')
+    
+    assert_equal(td, cd)
+    
 
 def test_inst2head_rotmat():
     # Validated test
@@ -43,6 +59,8 @@ def test_rotate_inst2earth(make_data=False):
     td = rotate2(td, 'earth', inplace=True)
     tdm = tr.dat_imu.copy(deep=True)
     tdm = rotate2(tdm, 'earth', inplace=True)
+    tdo = tr.dat.copy(deep=True)
+    tdo = rotate2(tdo.drop_vars('orientmat'), 'earth', inplace=True)
 
     if make_data:
         save(td, 'vector_data01_rotate_inst2earth.nc')
@@ -52,14 +70,9 @@ def test_rotate_inst2earth(make_data=False):
     cd = load('vector_data01_rotate_inst2earth.nc')
     cdm = load('vector_data_imu01_rotate_inst2earth.nc')
 
-    # msg = "adv.rotate.inst2earth gives unexpected results for {}"
-    # for t, c, msg in (
-    #         (td, cd, msg.format('vector_data01')),
-    #         (tdm, cdm, msg.format('vector_data_imu01')),
-    # ):
-    #     yield data_equiv, t, c, msg
-    assert_allclose(td, cd)
-    assert_allclose(tdm, cdm)
+    assert_equal(td, cd)
+    assert_equal(tdm, cdm)
+    assert_equal(td, cd)
 
 
 def test_rotate_earth2inst():
@@ -75,12 +88,6 @@ def test_rotate_earth2inst():
     cdm = cdm.drop_vars(['heading','pitch','roll'])
     tdm = tdm.drop_vars(['heading','pitch','roll'])
 
-    # msg = "adv.rotate.inst2earth gives unexpected REVERSE results for {}"
-    # for t, c, msg in (
-    #         (td, cd, msg.format('vector_data01')),
-    #         (tdm, cdm, msg.format('vector_data_imu01')),
-    # ):
-    #     yield data_equiv, t, c, msg
     assert_allclose(td, cd, atol=1e-6)
     assert_allclose(tdm, cdm, atol=1e-6)
 
@@ -99,12 +106,6 @@ def test_rotate_inst2beam(make_data=False):
     cd = load('vector_data01_rotate_inst2beam.nc')
     cdm = load('vector_data_imu01_rotate_inst2beam.nc')
 
-    # msg = "adv.rotate.beam2inst gives unexpected REVERSE results for {}"
-    # for t, c, msg in (
-    #         (td, cd, msg.format('vector_data01')),
-    #         (tdm, cdm, msg.format('vector_data_imu01')),
-    # ):
-    #     yield data_equiv, t, c, msg
     assert_allclose(td, cd, atol=1e-6)
     assert_allclose(tdm, cdm, atol=1e-6)
 
@@ -118,12 +119,6 @@ def test_rotate_beam2inst():
     cd = tr.dat.copy(deep=True)
     cdm = tr.dat_imu.copy(deep=True)
 
-    # msg = "adv.rotate.beam2inst gives unexpected results for {}"
-    # for t, c, msg in (
-    #         (td, cd, msg.format('vector_data01')),
-    #         (tdm, cdm, msg.format('vector_data_imu01')),
-    # ):
-    #     yield data_equiv, t, c, msg
     assert_allclose(td, cd, atol=1e-6)
     assert_allclose(tdm, cdm, atol=1e-6)
 
@@ -144,12 +139,6 @@ def test_rotate_earth2principal(make_data=False):
     cd = load('vector_data01_rotate_earth2principal.nc')
     cdm = load('vector_data_imu01_rotate_earth2principal.nc')
 
-    # msg = "adv.rotate.earth2principal gives unexpected results for {}"
-    # for t, c, msg in (
-    #         (td, cd, msg.format('vector_data01')),
-    #         (tdm, cdm, msg.format('vector_data_imu01')),
-    # ):
-    #     yield data_equiv, t, c, msg
     assert_allclose(td, cd, atol=1e-6)
     assert_allclose(tdm, cdm, atol=1e-6)
 
@@ -169,9 +158,6 @@ def test_rotate_earth2principal_set_declination():
     td0.attrs['principal_heading'] = calc_principal_heading(td0['vel'])
     td0 = rotate2(td0, 'earth')
 
-    # data_equiv(td0, td,
-    #            "Something is wrong with declination "
-    #            "handling w/r/t principal_heading.")
     assert_allclose(td0, td, atol=1e-6)
     
 
@@ -189,13 +175,11 @@ class warnings_testcase(unittest.TestCase):
             rotate2(warn2, 'earth')
         with self.assertRaises(Exception):
             avm.set_inst2head_rotmat(warn3, np.eye(3))
-        with self.assertRaises(Exception):
-            avm.set_inst2head_rotmat(warn3, np.eye(3))
             avm.set_inst2head_rotmat(warn3, np.eye(3))
         
 
-
 if __name__=='__main__':
+    test_heading()
     test_inst2head_rotmat()
     test_rotate_inst2earth()
     test_rotate_earth2inst()

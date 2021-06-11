@@ -1,5 +1,5 @@
-DOLfYN
-======
+<img src="img/logo.png" width="70"> DOLfYN
+=======================
 [![Documentation Status](https://readthedocs.org/projects/dolfyn-xarray/badge/?version=latest)](https://dolfyn-xarray.readthedocs.io/en/latest/?badge=latest)
 
 DOLfYN is the Doppler Oceanography Library for pYthoN.

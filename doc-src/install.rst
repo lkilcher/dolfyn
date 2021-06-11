@@ -17,7 +17,7 @@ And then use pip to install it as an 'editable' package::
      $ cd dolfyn
      $ pip install -e ./
 
-To create documentation::
+Once installed, to create documentation::
 
 	 $ cd dolfyn\doc-src
 	 $ make html
@@ -65,9 +65,9 @@ before creating a :repo:`new one <issues/>`.
 Dependencies
 ------------
 
-|dlfn| was developed in `Python 2.7 <https://docs.python.org/2/>`_.
-All of the existing unit tests work in `Python 3.8 <https://docs.python.org/3/>`_, but this testing is limited to a subset of the code and so there may still be lingering `2 to 3 <https://docs.python.org/2/howto/pyporting.html>`_ conversion issues.
-If you encounter problems with Python 3 have a look at the :repo:`issues <issues/>` page and potentially submit a new one.
+|dlfn| was originally built upon the h5py package and has since been refactored
+to build off xarray to make use of the netCDF data format. Support is upheld for 
+python 3.6 onward.
 
  - `NumPy <http://www.numpy.org>`_ >=1.17.0
  - `SciPy <http://www.scipy.org>`_. >=1.5.0

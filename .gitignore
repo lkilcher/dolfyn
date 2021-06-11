@@ -28,6 +28,8 @@ docs/.buildinfo
 
 example_data/*.index
 
+examples/.ipynb_checkpoints/
+
 tmp/
 tmp*.py
 

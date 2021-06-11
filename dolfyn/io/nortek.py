@@ -256,8 +256,7 @@ class NortekReader(object):
         props['fs'] = self.config['fs']
         props['coord_sys'] = {'XYZ': 'inst',
                               'ENU': 'earth',
-                              #'BEAM': 'beam'}[self.config.user.coord_sys_axes]
-                              'BEAM': 'beam'}[self.config['coord_sys_axes']]
+                              'beam': 'beam'}[self.config['coord_sys_axes']]
         # This just initializes it; this gets overwritten in read_microstrain
         props['has_imu'] = 0
         if self.debug:
@@ -390,7 +389,7 @@ class NortekReader(object):
         cfg_u['B0'] = tmp[11]
         cfg_u['B1'] = tmp[12]
         cfg_u['CompassUpdRate'] = tmp[13]
-        cfg_u['coord_sys_axes'] = ['ENU', 'XYZ', 'BEAM'][tmp[14]]
+        cfg_u['coord_sys_axes'] = ['ENU', 'XYZ', 'beam'][tmp[14]]
         cfg_u['NBins'] = tmp[15]
         cfg_u['BinLength'] = tmp[16]
         cfg_u['MeasInterval'] = tmp[17]
@@ -505,10 +504,6 @@ class NortekReader(object):
             dat['data_vars']['PressureMSB'].astype('float32') * 65536 +
             dat['data_vars']['PressureLSW'].astype('float32')) / 1000.
         dat['units']['pressure'] = 'dbar'
-        # dat.env.pressure = ma.marray(
-        #     dat.env.pressure,
-        #     ma.varMeta('P', ma.unitsDict({'dbar': 1}), ['time'])
-        #)
 
         dat['data_vars'].pop('PressureMSB')
         dat['data_vars'].pop('PressureLSW')
@@ -613,7 +608,6 @@ class NortekReader(object):
         tbx.interpgaps(dat['data_vars']['pitch'], t)
         tbx.interpgaps(dat['data_vars']['roll'], t)
         tbx.interpgaps(dat['data_vars']['temp'], t)
-        #t = t.view(time.time_array)
         
     def read_vec_sysdata(self,):
         """
@@ -676,10 +670,6 @@ class NortekReader(object):
         if 'accel' in dat_o:
             # This value comes from the MS 3DM-GX3 MIP manual.
             dat_o['accel'] *= 9.80665
-            # dat_o.accel = ma.marray(dat_o.accel, ma.varMeta(
-            #     'accel', units={'m': 1, 's': -2}, dim_names=['xyz', 'time'],))
-            # dat_o.angrt = ma.marray(dat_o.angrt, ma.varMeta(
-            #     'angRt', units={'s': -1}, dim_names=['xyz', 'time'],))
         if self._ahrsid in [195, 211]:
             # These are DAng and DVel, so we convert them to angrt, accel here
             dat_o['angrt'] *= self.config['fs']

@@ -102,7 +102,7 @@ def create_dataset(data):
     ds = xr.Dataset()
     beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
     tag = ['_b5', '_echo', '_bt', '_gps']
-    # orient coordinates get reset in _set_coords()
+    # dir coordinates get reset in _set_coords()
     for key in data['data_vars']:
         # orientation matrices
         if 'mat' in key:
@@ -171,9 +171,9 @@ def create_dataset(data):
                         tg = '_bt'
                     else:
                         tg = ''
-                    ds[key] = ds[key].rename({'dim_0':'orient',
+                    ds[key] = ds[key].rename({'dim_0':'dir',
                                               'dim_1':'time'+tg})
-                    ds[key] = ds[key].assign_coords({'orient':beam,
+                    ds[key] = ds[key].assign_coords({'dir':beam,
                                                      'time'+tg:data['coords']['time'+tg]})
                 # 4-beam instrument IMU data
                 elif shp[0]==vshp[0]-1:
@@ -183,9 +183,9 @@ def create_dataset(data):
                         tg = [val for val in tag if val in key]
                         tg = tg[0]
                         
-                    ds[key] = ds[key].rename({'dim_0':'orientIMU',
+                    ds[key] = ds[key].rename({'dim_0':'dirIMU',
                                               'dim_1':'time'+tg})
-                    ds[key] = ds[key].assign_coords({'orientIMU':[1,2,3],
+                    ds[key] = ds[key].assign_coords({'dirIMU':[1,2,3],
                                                      'time'+tg:data['coords']['time'+tg]})                            
                 
                 # b5 and echo tagged variables
@@ -203,10 +203,10 @@ def create_dataset(data):
 
             elif l==3: # 3D variables
                 if not any(val in key for val in tag):
-                    ds[key] = ds[key].rename({'dim_0':'orient',
+                    ds[key] = ds[key].rename({'dim_0':'dir',
                                               'dim_1':'range',
                                               'dim_2':'time'})
-                    ds[key] = ds[key].assign_coords({'orient':beam,
+                    ds[key] = ds[key].assign_coords({'dir':beam,
                                                      'range':data['coords']['range'],
                                                      'time':data['coords']['time']})
                 elif 'b5' in key:

@@ -55,7 +55,7 @@ dat.attrs['inst2head_vec'] = inst2head_vec
 
 # Then clean the file using the Goring+Nikora method:
 mask = avm.clean.GN2002(dat.vel)
-dat = avm.clean.cleanFill(dat, mask, method='cubic')
+dat = avm.clean.cleanFill(dat, mask, method='pchip')
 
 ####
 # Create a figure for comparing screened data to the original.
@@ -120,6 +120,8 @@ dat = avm.correct_motion(dat, accel_filter)
 dat_cln = avm.rotate2(dat_cln, 'earth')
 
 # Then rotate it into a 'principal axes frame':
+dat.attrs['principal_heading'] = avm.calc_principal_heading(dat.vel)
+dat_cln.attrs['principal_heading'] = avm.calc_principal_heading(dat_cln.vel)
 dat = avm.rotate2(dat, 'principal')
 dat_cln = avm.rotate2(dat_cln, 'principal')
 
@@ -133,9 +135,9 @@ fig2 = plt.figure(2, figsize=[6, 6])
 fig2.clf()
 ax = fig2.add_axes([.14, .14, .8, .74])
 
-ax.loglog(dat_bin.psd.omega, dat_bin.psd.sel(spectra='Suu').mean(axis=0),
+ax.loglog(dat_bin.S.omega, dat_bin.S.sel(spec='Suu').mean(axis=0),
           'b-', label='motion corrected')
-ax.loglog(dat_cln_bin.psd.omega, dat_cln_bin.psd.sel(spectra='Suu').mean(axis=0),
+ax.loglog(dat_cln_bin.S.omega, dat_cln_bin.S.sel(spec='Suu').mean(axis=0),
           'r-', label='no motion correction')
 
 # Add some annotations

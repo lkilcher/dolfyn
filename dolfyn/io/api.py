@@ -165,7 +165,7 @@ def load_mat(filename):
     Parameters
     ----------
     filename : str
-        Filename and/or path with the '.nc' extension
+        Filename and/or path with the '.mat' extension
     
     """
     if filename[-4:] != '.mat':

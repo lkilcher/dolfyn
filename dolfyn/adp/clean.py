@@ -2,11 +2,12 @@ import numpy as np
 from scipy.signal import medfilt
 import xarray as xr
 from ..tools import misc as tbx
+from ..rotate.api import rotate2
 
 
 def find_surface(adcpo, thresh=10, nfilt=None):
     """
-    Find the surface, from the amplitude data of the *adp* adcp object.
+    Find the surface, from the amplitude data of the ADCP dataset.
 
     Parameters
     ----------
@@ -48,10 +49,9 @@ def find_surface(adcpo, thresh=10, nfilt=None):
         dfilt[dfilt==0] = np.NaN
         d = dfilt
         
-    adcpo['d_range'] = xr.DataArray(
-        d, 
-        dims=['time'], 
-        attrs={'units':'m'})
+    adcpo['d_range'] = xr.DataArray(d, 
+                                    dims=['time'], 
+                                    attrs={'units':'m'})
     return adcpo
 
 
@@ -80,10 +80,9 @@ def surface_from_P(adcpo, salinity=35):
     # pressure conversion from dbar to MPa / water weight
     d = (adcpo.pressure*10000)/(9.81*rho)
     
-    adcpo['d_range'] = xr.DataArray(
-        d, 
-        dims=['time'], 
-        attrs={'units':'m'})
+    adcpo['d_range'] = xr.DataArray(d, 
+                                    dims=['time'], 
+                                    attrs={'units':'m'})
     return adcpo
 
 
@@ -108,9 +107,12 @@ def nan_beyond_surface(adcpo, val=np.nan):
     if 'nortek' in adcpo.Veldata._make_model.lower():
         beam_angle = 25 *(np.pi/180)
     else: #TRDI
-        beam_angle = adcpo.beam_angle #20 *(np.pi/180)
+        try:
+            beam_angle = adcpo.beam_angle 
+        except:
+            beam_angle = 20 *(np.pi/180)
         
-    bds = adcpo.range > adcpo.d_range * np.cos(beam_angle)
+    bds = adcpo.range > (adcpo.d_range * np.cos(beam_angle) - adcpo.cell_size)
     
     for nm in var:
         # workaround for xarray since it can't handle 2D boolean arrays
@@ -123,6 +125,44 @@ def nan_beyond_surface(adcpo, val=np.nan):
     
     return adcpo
 
+
+def set_deploy_altitude(adcpo, h_deploy):
+    """
+    Add instrument's height above seafloor to depth bins' range
+    
+    Parameters
+    ----------
+    adcpo : xarray.Dataset
+      The adcp dataset to ajust 'range'
+    h_deploy : numeric
+      Deployment location in the water column, in [m]
+      
+    Returns
+    -------
+    adcpo : xarray.Dataset
+      The adcp dataset with 'range' adjusted
+    
+    Notes
+    -----
+    Center of bin 1 = `h_deploy + blank_dist + cell_size`
+    
+    Nortek doesn't take `h_deploy` into account, so the range that DOLfYN 
+    calculates distance is from the ADCP transducers. TRDI asks for `h_deploy` 
+    input in their deployment software and is thereby known by DOLfYN.
+    
+    If the ADCP is mounted on a tripod on the seafloor, `h_deploy` will be
+    the height of the tripod +/- any extra distance to the transducer faces.
+    If the instrument is vessel-mounted, `h_deploy` is the distance between 
+    the surface and downward-facing ADCP's transducers.
+    
+    """
+    r = [s for s in adcpo.dims if 'range' in s]
+    for val in r:
+        adcpo = adcpo.assign_coords({val: adcpo[val].values + h_deploy})
+        adcpo[val].attrs['units'] = 'm'
+        
+    return adcpo
+    
 
 def vel_exceeds_thresh(adcpo, thresh=5, val=np.nan):
     """
@@ -148,17 +188,24 @@ def vel_exceeds_thresh(adcpo, thresh=5, val=np.nan):
     return adcpo
 
 
-def correlation_filter(adcpo, thresh=70, val=np.nan):
+def correlation_filter(adcpo, thresh=50, val=np.nan):
     '''
     Filters out velocity data where correlation is below a 
     threshold in the beam correlation data.
     
     Parameters
     ----------
-    adcpo : xr.Dataset
+    adcpo : xarray.Dataset
       The adcp dataset to clean.
     thresh : numeric
-      The maximum value of correlation to screen.
+      The maximum value of correlation to screen, in counts or %
+    val : numeric
+      Value to set masked correlation data to, default is NaN
+      
+    Returns
+    -------
+    adcpo : xarray.Dataset
+     The adcp dataset with low correlation values set to `val`
     
     '''
     # copy original ref frame
@@ -170,9 +217,9 @@ def correlation_filter(adcpo, thresh=70, val=np.nan):
         mask_b5 = (adcpo.corr_b5.values<=thresh)
         adcpo.vel_b5.values[mask_b5] = val
     
-    adcpo = adcpo.Veldata.rotate2('beam')
+    adcpo = rotate2(adcpo, 'beam')
     adcpo.vel.values[mask] = val
-    adcpo = adcpo.Veldata.rotate2(coord_sys_orig)
+    adcpo = rotate2(adcpo, coord_sys_orig)
 
     return adcpo
 

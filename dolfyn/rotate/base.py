@@ -73,11 +73,11 @@ def _set_coords(ds, ref_frame, forced=False):
         ref_frame += '-forced'
     
     # update 'orient' and 'orientIMU' dimensions
-    ds = ds.assign_coords({'orient': orient[ref_frame]})
+    ds = ds.assign_coords({'dir': orient[ref_frame]})
     if hasattr(ds, 'accel'):
-        ds = ds.assign_coords({'orientIMU': orientIMU[ref_frame]})
-    ds.orient.attrs['ref_frame'] = ref_frame
-    ds.attrs['coord_sys'] = ref_frame    
+        ds = ds.assign_coords({'dirIMU': orientIMU[ref_frame]})
+    ds['dir'].attrs['ref_frame'] = ref_frame
+    ds.attrs['coord_sys'] = ref_frame
     
     # This is essentially one extra line to scroll through
     # Going to drop at some point

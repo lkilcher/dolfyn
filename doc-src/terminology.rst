@@ -11,7 +11,7 @@ Units
 
 .. csv-table:: : The units of common variables found in |dlfn| data objects.
                :header-rows: 1
-               :widths: 15, 20, 15, 50
+               :widths: 15, 20, 50
                :file: ./units.csv
 
 |dlfn| Attributes
@@ -38,25 +38,3 @@ to be modified directly by the user.
 useful measurement meta-data and are listed here to assist in
 standardizing the location and format of this information.
 
-Specify metadata in a JSON file
---------------------------------
-
-The values in ``dat.attrs`` can also be set in a json file,
-``<data_filename>.userdata.json``, containing a single `json-object
-<https://json.org/>`_. For example, the contents of these files should
-look something like::
-
-    {"inst2head_rotmat": "identity",
-     "inst2head_vec": [-1.0, 0.5, 0.2],
-     "motion accel_filtfreq Hz": 0.03,
-     "declination": 8.28,
-     "latlon": [39.9402, -105.2283]
-    }
-
-Prior to reading a binary data file ``my_data.VEC``, you can
-create a ``my_data.userdata.json`` file. Then when you do
-``dolfyn.read('my_data.VEC')``, |dlfn| will read the contents of
-``my_data.userdata.json`` and include that information in the
-``dat.attrs`` attribute of the returned data object. This
-feature is provided so that meta-data can live alongside your
-binary data files.

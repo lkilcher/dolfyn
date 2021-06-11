@@ -4,13 +4,14 @@ import dolfyn.io.rdi as wh
 import dolfyn.io.nortek as awac
 import dolfyn.io.nortek2 as sig
 import warnings
-import os
+import os, sys
 import unittest
+import pytest
 from xarray.testing import assert_equal, assert_identical
 warnings.simplefilter('ignore', UserWarning)
+sys.stdout = open(os.devnull, 'w') # block printing output
 load = tb.load_ncdata
 save = tb.save_ncdata
-
 
 dat_rdi = load('RDI_test01.nc')
 dat_rdi_bt = load('RDI_withBT.nc')
@@ -35,15 +36,17 @@ def test_badtime():
     
     assert dat.time[199].isnull(), \
     "A good timestamp was found where a bad value is expected."
-    
 
+
+@pytest.mark.filterwarnings('ignore::UserWarning')
 def test_io_rdi(make_data=False):
     td_rdi = tb.drop_config(read('RDI_test01.000'))
-    td_rdi_bt = tb.drop_config(read('RDI_withBT.000'))
-    td_vm = tb.drop_config(read('vmdas01.ENX', nens=1000))
+    td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=500))
+    td_vm = tb.drop_config(read('vmdas01.ENX', nens=500))
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
-    td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11))
+    td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
+                                          nens=500))
     
     if make_data:
         save(td_rdi, 'RDI_test01.nc')
@@ -62,11 +65,11 @@ def test_io_rdi(make_data=False):
 
 
 def test_io_nortek(make_data=False):
-    td_awac = tb.drop_config(read('AWAC_test01.wpr', userdata=False))
-    td_awac_ud = tb.drop_config(read('AWAC_test01.wpr'))
+    td_awac = tb.drop_config(read('AWAC_test01.wpr', userdata=False, nens=500))
+    td_awac_ud = tb.drop_config(read('AWAC_test01.wpr', nens=500))
     td_hwac = tb.drop_config(read('H-AWAC_test01.wpr'))
     td_debug = tb.drop_config(awac.read_nortek(tb.exdt('AWAC_test01.wpr'), 
-                              debug=True, do_checksum=True))
+                              debug=True, do_checksum=True, nens=500))
 
     if make_data:
         save(td_awac, 'AWAC_test01.nc')
@@ -81,11 +84,11 @@ def test_io_nortek(make_data=False):
     
 
 def test_io_nortek2(make_data=False):
-    td_sig = tb.drop_config(read('BenchFile01.ad2cp'))
-    td_sig_i = tb.drop_config(read('Sig1000_IMU.ad2cp', userdata=False))
-    td_sig_i_ud = tb.drop_config(read('Sig1000_IMU.ad2cp'))
-    td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp'))
-    td_sig_ie = tb.drop_config(read('Sig500_Echo.ad2cp', nens=1000))
+    td_sig = tb.drop_config(read('BenchFile01.ad2cp', nens=500))
+    td_sig_i = tb.drop_config(read('Sig1000_IMU.ad2cp', userdata=False, nens=500))
+    td_sig_i_ud = tb.drop_config(read('Sig1000_IMU.ad2cp', nens=500))
+    td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp', nens=500))
+    td_sig_ie = tb.drop_config(read('Sig500_Echo.ad2cp', nens=500))
     
     os.remove(tb.exdt('BenchFile01.ad2cp.index'))
     os.remove(tb.exdt('Sig1000_IMU.ad2cp.index'))
@@ -114,6 +117,7 @@ def test_matlab_io(make_data=False):
     if make_data:
         tb.save_matlab(dat_rdi_bt, 'dat_rdi_bt')
         tb.save_matlab(dat_sig_ieb, 'dat_sig_ieb')
+        return
         
     assert_identical(mat_rdi_bt, dat_rdi_bt)
     assert_identical(mat_sig_ieb, dat_sig_ieb)
@@ -127,7 +131,7 @@ class warnings_testcase(unittest.TestCase):
             awac.read_nortek(tb.exdt('BenchFile01.ad2cp'))
         with self.assertRaises(Exception):
             sig.read_signature(tb.exdt('AWAC_test01.wpr'))
-            
+
 
 if __name__ == '__main__':
     test_io_rdi()
@@ -135,3 +139,5 @@ if __name__ == '__main__':
     test_io_nortek2()
     test_matlab_io()
     unittest.main()
+    
+sys.stdout = sys.__stdout__ # restart printing output

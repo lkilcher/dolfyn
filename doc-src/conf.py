@@ -43,6 +43,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.extlinks',
               'sphinx.ext.intersphinx',
+              'sphinx_rtd_theme',
               ]
 # extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
 # 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',

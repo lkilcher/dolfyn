@@ -9,8 +9,8 @@ combined into a single `Dataset <http://xarray.pydata.org/en/stable/generated/xa
 Xarray can be thought of as a multidimensional extension of pandas, though it is not built on top of pandas. Datasets and DataArrays support all of the same basic functionality of dictionaries (e.g., indexing, iterating, etc.), with additional functionality that is designed to streamline the process of analyzing and working with data.
  
 
-Reading source data files
--------------------------
+Reading Source Datafiles
+------------------------
 
 To begin, we load the |dlfn| module and read a data file::
 
@@ -26,9 +26,9 @@ In an interactive shell, typing the variable name followed by enter/return will 
     >> dat = dlfn.read_example('AWAC_test01.wpr')
     >> dat
 	<xarray.Dataset>
-	Dimensions:              (earth: 3, inst: 3, orient: 3, range: 20, time: 9997, x: 3, x*: 3)
+	Dimensions:              (earth: 3, inst: 3, dir: 3, range: 20, time: 9997, x: 3, x*: 3)
 	Coordinates:
-	  * orient               (orient) <U1 'E' 'N' 'U'
+	  * dir                  (dir) <U1 'E' 'N' 'U'
 	  * range                (range) float32 1.41 2.41 3.4 4.4 ... 18.36 19.35 20.35
 	  * time                 (time) float64 1.34e+09 1.34e+09 ... 1.34e+09 1.34e+09
 	  * x                    (x) int32 1 2 3
@@ -61,14 +61,14 @@ In an interactive shell, typing the variable name followed by enter/return will 
 		coord_sys:                 earth
 		has_imu:                   0
 		cell_size:                 1.0
-		blank_dist:                0.41
+		blank_dist:                0.4
 
 This view reveals all the data stored within the xarray Dataset. There are four types of data displyed here: data variables, coordinates, dimensions and attributes.
 
  - Data variables contain the main information stored as xarray DataArrays::
  
     >> dat.amp
-	<xarray.DataArray 'amp' (orient: 3, range: 20, time: 9997)>
+	<xarray.DataArray 'amp' (dir: 3, range: 20, time: 9997)>
 	array([[[146, 147, 144, ...,  38,  38,  38],
 			[136, 135, 136, ...,  25,  25,  25],
 			[130, 129, 132, ...,  25,  24,  25],
@@ -93,7 +93,7 @@ This view reveals all the data stored within the xarray Dataset. There are four 
 			[ 68,  66,  58, ...,  25,  26,  26],
 			[ 49,  50,  52, ...,  25,  25,  25]]], dtype=uint8)
 	Coordinates:
-	  * orient   (orient) <U1 'E' 'N' 'U'
+	  * dir      (dir) <U1 'E' 'N' 'U'
 	  * range    (range) float32 1.41 2.41 3.4 4.4 5.4 ... 17.36 18.36 19.35 20.35
 	  * time     (time) float64 1.34e+09 1.34e+09 1.34e+09 ... 1.34e+09 1.34e+09
 	Attributes:
@@ -142,7 +142,7 @@ Data variables and coordinates can be accessed using dict-style syntax, *or* att
 		   [-0.90169828, -0.68338529, -0.57451738, ..., -2.77793829,
 			 2.43313374, -0.98629605]])
 	Coordinates:
-		orient   <U1 'E'
+		dir      <U1 'E'
 	  * range    (range) float32 1.41 2.41 3.4 4.4 5.4 ... 17.36 18.36 19.35 20.35
 	  * time     (time) float64 1.34e+09 1.34e+09 1.34e+09 ... 1.34e+09 1.34e+09
 	Attributes:
@@ -151,15 +151,15 @@ Data variables and coordinates can be accessed using dict-style syntax, *or* att
 Dataset/DataArray attributes can be accessed as follows::
 
   >> dat.blank_dist
-  0.41
+  0.4
   
   >> dat.attrs['fs']
   1.0
 
-Note here that the display information includes the size of each array, it's coordinates and attributes. Active DataArray coordinates are signified with a '*'. The units of most variables are in the *MKS* system (e.g., velocity is in meters/second), and angles are in degrees. Units are saved in relevant DataArrays as attributes; see the :ref:`units` section for a complete list of the units of |dlfn| variables.
+Note here that the display information includes the size of each array, it's coordinates and attributes. Active DataArray coordinates are signified with a '*'. The units of most variables are in the *MKS* system (e.g., velocity is in m/s), and angles are in degrees. Units are saved in relevant DataArrays as attributes; see the :ref:`units` section for a complete list of the units of |dlfn| variables.
 
 
-Subsetting data
+Subsetting Data
 ---------------
 
 Xarray has its own built-in methods for `selecting data  <http://xarray.pydata.org/en/stable/user-guide/indexing.html>`_.
@@ -176,8 +176,23 @@ A section of data can be extracted to a new Dataset or DataArray using ``.isel``
   >> datsub = dat.vel.isel(time=slice(0,1000))
   
   
-Data analysis tools
+Data Analysis Tools
 -------------------
 
 Analysis in |dlfn| is primarily set up to work through two API's (Advanced Programming Interfaces): the :ref:`adp` and the :ref:`adv`, each of which contain functions that pertain to ADCP and ADV instruments, respectively. Functions and classes that pertain to both can be accessed from the main package import. See the :ref:`package` for further detail.
+
+
+Example Scripts
+---------------
+
+Jupyter notebooks are included in the examples folder as well.
+
+ADCP Example
+............
+
+.. literalinclude:: ../examples/adcp_example.py
+
+ADV Example
+...........
+.. literalinclude:: ../examples/adv_example.py
   

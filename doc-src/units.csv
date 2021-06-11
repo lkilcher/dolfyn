@@ -1,34 +1,34 @@
-﻿Name,Units,Group,Description/Notes
-time,sec since 1/1/1970,---,Time data
-vel,m/s,---,Velocity vector data
-range,m,---,Distance from the instrument's transducer head(s)
-depth_m,m,---,Instrument depth
-c_sound,m/s,env,Speed of sound used in velocity calculations
-press / pressure,dbar,env,Pressure measured by the instrument
-temp,degrees Celsius,env,Temperature measured by the instrument
-accel,m/s\ :sup:`2`,orient,Vector acceleraton of the instrument
-angrt,rad/s,orient,Angular rotation rate of the instrument
-mag,milligauss or gauss,orient,Magnetometer data
-velraw,m/s,---,Velocity without motion-correction
-velrot,m/s,orient,Rotational motion velocity (computed from angrt)
-velacc,m/s,orient,Translational motion velocity (computed from accel)
-acclow,m/s\ :sup:`2`,orient,Low-pass filtered acceleration signal
-heading,degrees,orient,Instrument heading* (clockwise from North)
-pitch,degrees,orient,Instrument pitch*
-roll,degrees,orient,Instrument roll*
-orientmat,---,orient,Instrument's orientation matrix in the Earth reference frame
-amp,dB or counts,signal,Measured sound level amplitude
-corr,percent or counts,signal,Correlation between the sent and received pings.
-ambig_vel,m/s,sys,Ambiguity velocity*
-batt_V / batt,voltage,sys,Battery voltage
-ensemble,---,sys,Ensemble counter
-error,---,sys,Instrument error code*
-status,---,sys,Instrument status code*
-tke_vec,m\ :sup:`2`/s\ :sup:`2`,---,"Variance of velocity components (0: u'u', 1: v'v', 2: w'w')"
-stress_vec,m\ :sup:`2`/s\ :sup:`2`,---,"Reynolds stress array (0: u'v', 1: u'w', 2: v'w')"
-U_mag,m/s,---,Horizontal velocity magnitude
-U_std,m/s,---,Standard deviation of horizontal velocity magnitude
-epsilon,m\ :sup:`2`/s\ :sup:`3`,---,Turbulence dissipation rate
-psd,<var units>\ :sup:`2`/<freq units>,---,"Spectra, calculated as power spectral densities"
-f,Hz,psd,Frequency
-omega,rad/s,psd,Radial frequency
+﻿Name,Units,Description/Notes
+time,sec since 1/1/1970,Time data
+vel,m/s,Velocity vector data
+range,m,Distance from the instrument's transducer head(s)
+depth_m,m,Instrument depth
+c_sound,m/s,Speed of sound used in velocity calculations
+press / pressure,dbar,Pressure measured by the instrument
+temp,deg C,Temperature measured by the instrument
+accel,m/s\ :sup:`2`,Vector acceleraton of the instrument
+angrt,rad/s,Angular rotation rate of the instrument
+mag,mG or nT,Magnetometer data
+velraw,m/s,Velocity without motion-correction
+velrot,m/s,Rotational motion velocity (computed from angrt)
+velacc,m/s,Translational motion velocity (computed from accel)
+acclow,m/s\ :sup:`2`,Low-pass filtered acceleration signal
+heading,deg,Instrument heading* (clockwise from North)
+pitch,deg,Instrument pitch*
+roll,deg,Instrument roll*
+orientmat,---,earth to instrument orientation matrix
+amp,dB or counts,Measured sound level amplitude
+corr,% or counts,Correlation between the sent and received pings.
+ambig_vel,m/s,Ambiguity velocity*
+batt_V / batt,voltage,Battery voltage
+ensemble,---,Ensemble counter
+error,---,Instrument error code*
+status,---,Instrument status code*
+tke_vec,m\ :sup:`2`/s\ :sup:`2`,"Variance of velocity components (0: u'u', 1: v'v', 2: w'w')"
+stress_vec,m\ :sup:`2`/s\ :sup:`2`,"Reynolds stress array (0: u'v', 1: u'w', 2: v'w')"
+U_mag,m/s,Horizontal velocity magnitude
+U_std,m/s,Standard deviation of horizontal velocity magnitude
+epsilon,m\ :sup:`2`/s\ :sup:`3`,Turbulence dissipation rate
+psd,<var units>\ :sup:`2`/<freq units>,"Spectra, calculated as power spectral densities"
+f,Hz,Spectral frequency
+omega,rad/s,Spectral radial frequency

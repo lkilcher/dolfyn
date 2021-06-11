@@ -1,8 +1,8 @@
 from __future__ import division
 import numpy as np
 from .binned import TimeBinner
-import warnings
-from .rotate import base as rotb
+#import warnings
+#from .rotate import base as rotb
 import xarray as xr
 
 
@@ -143,14 +143,14 @@ class Velocity():
                             attrs={'units':self.ds['stress_vec'].units},
                             name='stress tensor')
 
-    def _rotate_tau(self, rmat, cs_from, cs_to):
-        # Transpose second index of rmat for rotation
-        t = rotb.rotate_tensor(self.ds.tau_ij, rmat)
-        self.ds['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
-        self.ds['stress_vec'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
+    # def _rotate_tau(self, rmat, cs_from, cs_to):
+    #     # Transpose second index of rmat for rotation
+    #     t = rotb.rotate_tensor(self.ds.tau_ij, rmat)
+    #     self.ds['tke_vec'] = np.stack((t[0, 0], t[1, 1], t[2, 2]), axis=0)
+    #     self.ds['stress_vec'] = np.stack((t[0, 1], t[0, 2], t[1, 2]), axis=0)
 
-    def _tau_is_pd(self, ):
-        rotb.is_positive_definite(self.tau_ij)
+    # def _tau_is_pd(self, ):
+    #     rotb.is_positive_definite(self.tau_ij)
 
     @property
     def E_coh(self,):
@@ -297,7 +297,7 @@ class VelBinner(TimeBinner):
     # This defines how cross-spectra and stresses are computed.
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
 
-    def do_tke(self, dat, out=None):
+    def do_tke(self, dat, out_ds=None):
         """
         Calculate the tke (variances of u,v,w) and stresses (cross-variances 
         of u,v,w)
@@ -307,7 +307,7 @@ class VelBinner(TimeBinner):
         dat : xr.Dataset
             Xarray dataset containing raw velocity data
         
-        out : xr.Dataset
+        out_ds : xr.Dataset
             Binned dataset to save tke and stress data to (calculated from 
             'do_avg')
         
@@ -317,17 +317,17 @@ class VelBinner(TimeBinner):
         
         """
         props = {}
-        if out is None:
-            out = type(dat)()
+        if out_ds is None:
+            out_ds = type(dat)()
             props['fs'] = self.fs
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
-            out.attrs = props
+            out_ds.attrs = props
             
-        out['tke_vec'] = self.calc_tke(dat['vel'])
-        out['stress_vec'] = self.calc_stress(dat['vel'])
+        out_ds['tke_vec'] = self.calc_tke(dat['vel'])
+        out_ds['stress_vec'] = self.calc_stress(dat['vel'])
         
-        return out
+        return out_ds
     
 
     def calc_tke(self, veldat, noise=[0, 0, 0]):
@@ -349,7 +349,7 @@ class VelBinner(TimeBinner):
         An xr.DataArray of tke values
         
         """
-        if 'orient' in veldat.dims:
+        if 'dir' in veldat.dims:
             vel = veldat[:3].values
         else: # for single beam input
             vel = veldat.values
@@ -360,8 +360,8 @@ class VelBinner(TimeBinner):
             time = self._mean(veldat.time.values)
         
         # originally self.detrend
-        out = np.mean(self._demean(vel)**2, -1, 
-                      dtype=np.float64).astype('float32')
+        out = np.nanmean(self._demean(vel)**2, -1, 
+                         dtype=np.float64).astype('float32')
         
         out[0] -= noise[0] ** 2
         out[1] -= noise[1] ** 2
@@ -371,8 +371,8 @@ class VelBinner(TimeBinner):
                           dims=veldat.dims,
                           attrs={'units':'m^2/^2'})
 
-        if 'orient' in veldat.dims:
-            da = da.rename({'orient':'tke'})
+        if 'dir' in veldat.dims:
+            da = da.rename({'dir':'tke'})
             da = da.assign_coords({'tke':["u'u'_", "v'v'_", "w'w'_"],
                                    'time':time})
         else:
@@ -415,7 +415,7 @@ class VelBinner(TimeBinner):
         da = xr.DataArray(out, name='stress_vec',
                           dims=veldat.dims,
                           attrs={'units':'m^2/^2'})
-        da = da.rename({'orient':'stress'})
+        da = da.rename({'dir':'stress'})
         da = da.assign_coords({'stress':["u'v'_", "u'w'_", "v'w'_"],
                                'time':time})    
         return da
@@ -435,7 +435,7 @@ class VelBinner(TimeBinner):
         Parameters
         ----------
         veldat : xr.DataArray
-          The raw velocity data (of dims 'orient' and 'time').
+          The raw velocity data (of dims 'dir' and 'time').
         freq_units : string
           Frequency units in either Hz or rad/s (`f` or :math:`\omega`)
         fs : float (optional)
@@ -452,10 +452,6 @@ class VelBinner(TimeBinner):
           The fft size (default: from the binner).
         n_pad : int (optional)
           The number of values to pad with zero (default: 0)
-        rotate_u : bool (optional)
-          If True, each 'bin' of horizontal velocity is rotated into
-          its principal axis prior to calculating the psd.  (default:
-          False).
         step : int (optional)
           Controls amount of overlap in fft (default: the step size is
           chosen to maximize data use, minimize nens, and have a
@@ -467,25 +463,14 @@ class VelBinner(TimeBinner):
           The spectra in the 'u', 'v', and 'w' directions.
           
         """
+        try:
+            time = self._mean(veldat.time.values)
+        except:
+            time = self._mean(veldat.time_b5.values)
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft(n_fft)
-        time = self._mean(veldat.time.values)
         veldat = veldat.values
-        
-        if rotate_u:
-            tmpdat = self._reshape(veldat[0] + 1j * veldat[1])
-            tmpdat *= np.exp(-1j * np.angle(np.nanmean(tmpdat,-1)))
-            veldat[0] = tmpdat.real
-            veldat[1] = tmpdat.imag
-            if noise[0] != noise[1]:
-                warnings.warn(
-                    'Noise levels different for u,v. This means '
-                    'noise-correction cannot be done here when '
-                    'rotating velocity.')
-                noise[0] = noise[1] = 0
-        out = np.empty(self._outshape_fft(veldat[:3].shape, ),
-                       dtype=np.float32)
-        
+                
         # Create frequency vector, also checks whether using f or omega
         freq = self.calc_freq(units=freq_units)
         if 'rad' in freq_units:
@@ -498,16 +483,25 @@ class VelBinner(TimeBinner):
             units = 'm^2/s^2/Hz'
             f_key = 'f'
         
-        for idx in range(3):
-            out[idx] = self._psd(veldat[idx], fs=fs, noise=noise[idx],
-                                window=window, n_bin=n_bin,
-                                n_pad=n_pad, n_fft=n_fft, step=step)
+        # Spectra, if input is full velocity or a single array
+        if len(veldat.shape)==2:
+            out = np.empty(self._outshape_fft(veldat[:3].shape),
+                           dtype=np.float32)
+            for idx in range(3):
+                out[idx] = self._psd(veldat[idx], fs=fs, noise=noise[idx],
+                                     window=window, n_bin=n_bin,
+                                     n_pad=n_pad, n_fft=n_fft, step=step)
+            coords={'spec':['Suu','Svv','Sww'], 'time':time, f_key:freq}
+            dims=['spec','time',f_key]
+        else:
+            out = self._psd(veldat, fs=fs, noise=noise[0], window=window, 
+                            n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
+            coords={'time':time, f_key:freq}
+            dims=['time',f_key]
         
         da =  xr.DataArray(out, name='S',
-                            coords={'spectra':['Suu','Svv','Sww'],
-                                    'time':time,
-                                    f_key:freq},                              
-                            dims=['spectra','time',f_key],
+                            coords=coords,                              
+                            dims=dims,
                             attrs={'units':units,
                                    'n_fft':n_fft})
         da[f_key].attrs['units'] = freq_units
@@ -541,10 +535,6 @@ class VelBinner(TimeBinner):
           The fft size (default: n_fft_coh from the binner).
         n_pad : int (optional)
           The number of values to pad with zero (default: 0)
-        rotate_u : bool (optional)
-          If True, each 'bin' of horizontal velocity is rotated into
-          its principal axis prior to calculating the psd.  (default:
-          False).
         step : int (optional)
           Controls amount of overlap in fft (default: the step size is
           chosen to maximize data use, minimize nens, and have a
@@ -562,11 +552,6 @@ class VelBinner(TimeBinner):
         time = self._mean(veldat.time.values)
         veldat = veldat.values
         
-        if rotate_u:
-            tmpdat = self._reshape(veldat[0] + 1j * veldat[1])
-            tmpdat *= np.exp(-1j * np.angle(tmpdat.mean(-1)))
-            veldat[0] = tmpdat.real
-            veldat[1] = tmpdat.imag
         out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft), 
                        dtype='complex')
         
@@ -588,10 +573,10 @@ class VelBinner(TimeBinner):
                                  n_fft=n_fft)
 
         da = xr.DataArray(out, name='csd',
-                          coords={'cross-spectra':['Suv','Suw','Svw'],
+                          coords={'x-spec':['Suv','Suw','Svw'],
                                   'time':time,
                                   f_key:coh_freq},
-                          dims=['cross-spectra','time',f_key],
+                          dims=['x-spec','time',f_key],
                           attrs={'units':units,
                                  'n_fft':n_fft})
         da[f_key].attrs['units'] = freq_units

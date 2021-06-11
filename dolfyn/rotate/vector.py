@@ -93,7 +93,7 @@ def inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     for nm in rotate_vars:
         n = advo[nm].shape[0]
         if n != 3:
-            raise Exception("The entry {} is not a vector, it cannot"
+            raise Exception("The entry {} is not a vector, it cannot "
                             "be rotated.".format(nm))
         advo[nm].values = np.einsum(sumstr, rmat, advo[nm])
     

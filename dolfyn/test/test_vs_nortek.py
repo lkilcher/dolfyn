@@ -77,24 +77,24 @@ def rotate(axis):
     # opposed to [3,3,:]
     if axis=='inst':
         assert_allclose(td_sig_i.orientmat[0][0].values, 
-                        td_sig_i_vel['omat'][0,:], atol=1e-7)
+                        td_sig_i_vel['omat'][0,:500], atol=1e-7)
         assert_allclose(td_sig_ieb.orientmat[0][0].values, 
                         td_sig_ieb_vel['omat'][0,:][...,:-1], atol=1e-7)
     
     # 4-beam velocity
     #plt.figure(); plt.pcolormesh(td_sig.vel[0].values-td_sig_vel[axis][0]); plt.colorbar()
-    assert_allclose(td_sig.vel.values, td_sig_vel[axis], atol=1e-5)
+    assert_allclose(td_sig.vel.values, td_sig_vel[axis][...,:500], atol=1e-5)
     #plt.figure(); plt.pcolormesh(td_sig_i.vel[0].values-td_sig_i_vel[axis][0]); plt.colorbar()
-    assert_allclose(td_sig_i.vel.values, td_sig_i_vel[axis], atol=5e-3)
+    assert_allclose(td_sig_i.vel.values, td_sig_i_vel[axis][...,:500], atol=5e-3)
     #plt.figure(); plt.pcolormesh(td_sig_ieb.vel[0].values-td_sig_ieb_vel[axis][0][...,:-1]); plt.colorbar()
     assert_allclose(td_sig_ieb.vel.values, td_sig_ieb_vel[axis][...,:-1], atol=5e-3)
-    assert_allclose(td_sig_ie.vel.values, td_sig_ie_vel[axis][...,:1000], atol=1e-5)
+    assert_allclose(td_sig_ie.vel.values, td_sig_ie_vel[axis][...,:500], atol=1e-5)
     
     # 5th-beam velocity
     if axis=='beam':
-        assert_allclose(td_sig_i.vel_b5.values, td_sig_i_vel['b5'][...,:-1], atol=1e-5)
+        assert_allclose(td_sig_i.vel_b5.values, td_sig_i_vel['b5'][...,:500], atol=1e-5)
         assert_allclose(td_sig_ieb.vel_b5.values, td_sig_ieb_vel['b5'][...,:-1], atol=1e-5)
-        assert_allclose(td_sig_ie.vel_b5.values, td_sig_ie_vel['b5'][...,:1000], atol=1e-5)
+        assert_allclose(td_sig_ie.vel_b5.values, td_sig_ie_vel['b5'][...,:500], atol=1e-5)
     
     # bottom-track
     assert_allclose(td_sig_ieb.vel_bt.values, vel_bt[axis], atol=5e-3)

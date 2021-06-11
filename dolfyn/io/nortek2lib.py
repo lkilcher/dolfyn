@@ -77,7 +77,7 @@ hdr = struct.Struct('<BBBBhhh')
 
 
 def calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
-    dt = np.empty(year.shape, dtype='O')
+    dt = np.empty(year.shape, dtype='float')
     for idx, (y, mo, d, h, mi, s, u) in enumerate(
             zip(year, month, day,
                 hour, minute, second, usec)):
@@ -328,7 +328,7 @@ def beams_cy_int2dict(val, id):
     
     return dict(
         ncells=val & (2 ** 10 - 1),
-        cy=['ENU', 'XYZ', 'BEAM', None][val >> 10 & 3],
+        cy=['ENU', 'XYZ', 'beam', None][val >> 10 & 3],
         nbeams=val >> 12)
 
 

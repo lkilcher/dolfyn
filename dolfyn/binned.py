@@ -3,11 +3,11 @@ import numpy as np
 from .tools.psd import psd_freq, cohere, psd, cpsd_quasisync, \
     cpsd, phase_angle
 from .tools.misc import slice1d_along_axis, detrend
-#from .base import ma, TimeData
 #import copy
-#import warnings
 #import six
+import warnings
 import xarray as xr
+warnings.simplefilter('ignore', RuntimeWarning)
 
 class TimeBinner:
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None, noise=[0, 0, 0]):
@@ -225,8 +225,8 @@ class TimeBinner:
         dims = array.dims
         dims_list = []
         coords_dict = {}
-        if len(array.shape)==1 & ('orient' in array.coords):
-            array = array.drop('orient')
+        if len(array.shape)==1 & ('dir' in array.coords):
+            array = array.drop('dir')
         for ky in dims:
             dims_list.append(ky)
             if 'time' in ky:
@@ -375,26 +375,39 @@ class TimeBinner:
     
 
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
-               noise=(0, 0), n_fft=None, n_bin1=None, n_bin2=None,):
+               noise=(0, 0), n_fft=None, n_bin=None):
         """
         Calculate coherence between `veldat1` and `veldat2`.
         
         Parameters
         ----------
         veldat1 : xarray.DataArray
-          The first raw-data array of which to calculate coherence
+          The first (the longer, if applicable) raw-data array of which to 
+          calculate coherence
         veldat2 : xarray.DataArray
-          The second raw-data array of which to calculate coherence
+          The second (the shorter, if applicable) raw-data array of which to 
+          calculate coherence.
         window : string
           String indicating the window function to use (default: 'hanning')
         noise : float
           The white-noise level of the measurement (in the same units
           as `veldat`).
+        n_fft : integer
+          n_fft of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
+        n_bin : integer
+          n_bin of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
           
         Returns
         -------
         out : xarray.DataArray
           The coherence between signal veldat1 and veldat2.
+          
+        Notes
+        -----
+        The two velocity inputs do not have to be perfectly synchronized, but 
+        they should have the same start and end timestamps.
 
         """
         dat1 = veldat1.values
@@ -402,21 +415,25 @@ class TimeBinner:
         
         if n_fft is None:
             n_fft = self.n_fft_coh
-        n_bin1 = self._parse_nbin(n_bin1)
-        n_bin2 = self._parse_nbin(n_bin2)
+        # want each slice to carry the same timespan
+        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
+        
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         out = np.empty(oshp, dtype=dat1.dtype)
+        
         # The data is detrended in psd, so we don't need to do it here.
         dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
+        
         for slc in slice1d_along_axis(out.shape, -1):
             out[slc] = cohere(dat1[slc], dat2[slc],
                               n_fft, debias=debias, noise=noise)
             
         freq = self.calc_freq(self.fs, coh=True)
 
-        dims_list, coords_dict = self._new_coords(veldat1)
+        dims_list, coords_dict = self._new_coords(veldat2)
         # tack on new coordinate
         dims_list.append('f')
         coords_dict['f'] = freq
@@ -430,7 +447,7 @@ class TimeBinner:
     
     
     def calc_phase_angle(self, veldat1, veldat2, window='hann',
-                    n_fft=None, n_bin1=None, n_bin2=None,):
+                    n_fft=None, n_bin=None):
         """
         Calculate the phase difference between two signals as a
         function of frequency (complimentary to coherence).
@@ -438,31 +455,48 @@ class TimeBinner:
         Parameters
         ----------
         veldat1 : xarray.DataArray
-          The first 1D raw-data array of which to calculate phase angle
+          The first (the longer, if applicable) raw-data array of which to 
+          calculate phase angle
         veldat2 : xarray.DataArray
-          The second 1D raw-data array of which to calculate phase angle
+          The second (the shorter, if applicable) raw-data array of which 
+          to calculate phase angle
         window : string
           String indicating the window function to use (default: 'hanning').
+        n_fft : integer
+          Number of elements per bin if 'None' is taken 
+          from VelBinner
+        n_bin : integer
+          Number of elements per bin if 'None' is taken 
+          from VelBinner
 
         Returns
         -------
         out : xarray.DataArray
           The phase difference between signal veldat1 and veldat2.
           
+        Notes
+        -----
+        The two velocity inputs do not have to be perfectly synchronized, but 
+        they should have the same start and end timestamps.
+        
         """
         dat1 = veldat1.values
         dat2 = veldat2.values
         
         if n_fft is None:
             n_fft = self.n_fft_coh
-        n_bin1 = self._parse_nbin(n_bin1)
-        n_bin2 = self._parse_nbin(n_bin2)
+        # want each slice to carry the same timespan
+        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
+        
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
+        
         # The data is detrended in psd, so we don't need to do it here:
-        dat1 = self.reshape(dat1, n_pad=n_fft)
-        dat2 = self.reshape(dat2, n_pad=n_fft)
-        out = np.empty(oshp, dtype='c{}'.format(dat1.dtype.itemsize * 2))
+        dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
+        dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
+        out = np.empty(oshp, dtype='c{}'.format(dat2.dtype.itemsize * 2))
+        
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
             out[slc] = phase_angle(dat1[slc], dat2[slc], n_fft,
@@ -470,7 +504,7 @@ class TimeBinner:
         
         freq = self.calc_freq(self.fs, coh=True)
         
-        dims_list, coords_dict = self._new_coords(veldat1)
+        dims_list, coords_dict = self._new_coords(veldat2)
         # tack on new coordinate
         dims_list.append('f')
         coords_dict['f'] = freq
@@ -518,8 +552,7 @@ class TimeBinner:
         # Here we de-mean only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(n_bin // 4):
                                 int(-n_bin // 4)].mean(-1)[..., None]
-        dt2 = self._demean(indat)  # Don't pad the second variable.
-        dt2 = dt2 - dt2.mean(-1)[..., None]
+        dt2 = self._demean(indat)
         se = slice(int(n_bin // 4) - 1, None, 1)
         sb = slice(int(n_bin // 4) - 1, None, -1)
         for slc in slice1d_along_axis(dt1.shape, -1):
@@ -548,48 +581,60 @@ class TimeBinner:
 
 
     def calc_xcov(self, veldat1, veldat2, npt=1,
-                  n_bin1=None, n_bin2=None, normed=False):
+                  n_bin=None, normed=False):
         """
         Calculate the cross-covariance between arrays veldat1 and veldat2
         
         Parameters
         ----------
-        veldat1 : xr.DataArray
-          The first raw-data array of which to calculate x-covariance
-        veldat2 : xr.DataArray
-          The second raw-data array of which to calculate x-covariance
-        npt : number of timesteps (lag) to calculate covariance
+        veldat1 : xarray.DataArray
+          The first raw-data array of which to calculate cross-covariance
+        veldat2 : xarray.DataArray
+          The second raw-data array of which to calculate cross-covariance
+        npt : integer
+          Number of timesteps (lag) to calculate covariance
+        n_fft : integer
+          n_fft of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
+        n_bin : integer
+          n_bin of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
         
         Returns
         -------
         out : xarray.DataArray
           The cross-covariance between signal veldat1 and veldat2.
+          
+        Notes
+        -----
+        The two velocity inputs must be the same length
         
         """
-        indt1 = veldat1.values
-        indt2 = veldat2.values
+        dat1 = veldat1.values
+        dat2 = veldat2.values
         
-        n_bin1 = self._parse_nbin(n_bin1)
-        n_bin2 = self._parse_nbin(n_bin2)
-        shp = self._outshape(indt1.shape, n_bin=n_bin1)
-        shp[-2] = min(shp[-2], self._outshape(indt2.shape, n_bin=n_bin2)[-2])
+        # want each slice to carry the same timespan
+        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
         
-        # reshape indt1 to be the same size as indt2
-        out = np.empty(shp[:-1] + [npt], dtype=indt1.dtype)
+        shp = self._outshape(dat1.shape, n_bin=n_bin1)
+        shp[-2] = min(shp[-2], self._outshape(dat2.shape, n_bin=n_bin2)[-2])
+        
+        # reshape dat1 to be the same size as dat2
+        out = np.empty(shp[:-1] + [npt], dtype=dat1.dtype)
         tmp = int(n_bin2) - int(n_bin1) + npt
-        dt1 = self.reshape(indt1, n_pad=tmp-1, n_bin=n_bin1)
+        dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
         
         # Note here I am demeaning only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
-        dt2 = self._demean(indt2, n_bin=n_bin2)
-        dt2 = dt2 - dt2.mean(-1)[..., None]
+        dt2 = self._demean(dat2, n_bin=n_bin2)
         
         for slc in slice1d_along_axis(shp, -1):
             out[slc] = np.correlate(dt1[slc], dt2[slc], 'valid')
         if normed:
-            out /= (self._std(indt1, n_bin=n_bin1)[..., :shp[-2]] *
-                    self._std(indt2, n_bin=n_bin2)[..., :shp[-2]] *
+            out /= (self._std(dat1, n_bin=n_bin1)[..., :shp[-2]] *
+                    self._std(dat2, n_bin=n_bin2)[..., :shp[-2]] *
                     n_bin2)[..., None]
         
         dims_list, coords_dict = self._new_coords(veldat1)
@@ -617,6 +662,12 @@ class TimeBinner:
         noise  : float
           The white-noise level of the measurement (in the same units
           as `dat`).
+        n_fft : integer
+          n_fft of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
+        n_bin : integer
+          n_bin of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
 
         """
         fs = self._parse_fs(fs)
@@ -642,30 +693,44 @@ class TimeBinner:
     
 
     def _cpsd(self, dat1, dat2, fs=None, window='hann',
-             n_fft=None, n_bin1=None, n_bin2=None,):
+             n_fft=None, n_bin=None):
         """
         Calculate the 'cross power spectral density' of `dat`.
 
         Parameters
         ----------
         dat1    : np.ndarray
-          The first raw-data array of which to calculate the cpsd.
+          The first (shorter, if applicable) raw-data array of which to 
+          calculate the cpsd.
         dat2    : np.ndarray
-          The second raw-data array of which to calculate the cpsd.
+          The second (the shorter, if applicable) raw-data array of which to 
+          calculate the cpsd.
         window : string
           String indicating the window function to use (default: 'hanning').
+        n_fft : integer
+          n_fft of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
+        n_bin : integer
+          n_bin of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
 
         Returns
         -------
         out : np.ndarray
           The cross-spectral density of `dat1` and `dat2`
+          
+        Notes
+        -----
+        The two velocity inputs do not have to be perfectly synchronized, but 
+        they should have the same start and end timestamps
 
         """
         fs = self._parse_fs(fs)
         if n_fft is None:
             n_fft = self.n_fft_coh
-        n_bin1 = self._parse_nbin(n_bin1)
-        n_bin2 = self._parse_nbin(n_bin2)
+        # want each slice to carry the same timespan
+        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
         
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
@@ -700,6 +765,9 @@ class TimeBinner:
           Calculate the frequency vector for coherence/cross-spectra
           (default: False) i.e. use self.n_fft_coh instead of
           self.n_fft.
+        n_fft : integer
+          n_fft of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
           
         """
         if n_fft is None:

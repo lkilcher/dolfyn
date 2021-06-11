@@ -23,7 +23,6 @@ Table of Contents
    terminology
    rotations
    motion-correction
-   examples
    API Documentation <apidoc/dolfyn>
    
 

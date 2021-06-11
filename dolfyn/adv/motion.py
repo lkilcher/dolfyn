@@ -4,6 +4,7 @@ import scipy.signal as ss
 from scipy.integrate import cumtrapz
 import xarray as xr
 from ..rotate import vector as rot
+from ..rotate import signature as sig
 from ..rotate.api import rotate2
 import warnings
 
@@ -190,7 +191,7 @@ class CalcMotion(object):
 
         dimflag = False
         if vec.ndim == 1:
-            vec = vec.copy().reshape((3, 1))
+            vec = vec[:3].copy().reshape((3, 1))
             dimflag = True
 
         # Correct for the body->imu distance.
@@ -382,10 +383,10 @@ def correct_motion(advo,
     ##########
     # Calculate the translational velocity (from the accel):
     advo['velacc'] = xr.DataArray(calcobj.calc_velacc(), 
-                                  dims=['orientIMU','time'])
+                                  dims=['dirIMU','time'])
     # Copy acclow to the adv-object.
     advo['acclow'] = xr.DataArray(calcobj.acclow, 
-                                  dims=['orientIMU','time'])
+                                  dims=['dirIMU','time'])
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -411,9 +412,9 @@ def correct_motion(advo,
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
     try:
-        advo['velrot'] = xr.DataArray(velrot, dims=['orientIMU','time'])
+        advo['velrot'] = xr.DataArray(velrot, dims=['dirIMU','time'])
     except:
-        advo['velrot'] = xr.DataArray(velrot, dims=['orientIMU','range','time'])
+        advo['velrot'] = xr.DataArray(velrot, dims=['dirIMU','range','time'])
 
     ##########
     # Rotate the data into the correct coordinate system.
@@ -428,18 +429,21 @@ def correct_motion(advo,
 
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
-    # !!! Signatures will fail here since it's Vector code
+    if advo.Veldata._make_model.startswith('nortek signature'):
+        inst2earth = sig.inst2earth
+    else:
+        inst2earth = rot.inst2earth
     if to_earth:
         advo['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']
-        advo = rot.inst2earth(advo, rotate_vars=[e for e in 
-                                                 advo.attrs['rotate_vars']
-                                                 if e not in to_remove])
+        advo = inst2earth(advo, rotate_vars=[e for e in 
+                                             advo.attrs['rotate_vars']
+                                             if e not in to_remove])
     else:
         # rotate these variables back to the instrument frame.
-        advo = rot.inst2earth(advo, reverse=True,
-                              rotate_vars=['accel', 'acclow', 'velacc'],
-                              force=True)
+        advo = inst2earth(advo, reverse=True,
+                          rotate_vars=['accel', 'acclow', 'velacc'],
+                          force=True)
 
     ##########
     # Copy vel -> velraw prior to motion correction:
@@ -456,16 +460,16 @@ def correct_motion(advo,
     
     # use xarray to keep dimensions consistent
     velmot = advo['velrot'] + advo['velacc'] 
-    # drop xarray to not break code between ADV and AD2CP
     velmot = velmot.values
-    advo['vel'][:3] += velmot
-    
-    if advo.Veldata._make_model.startswith('nortek signature') and \
-        advo['vel'].shape[0] > 3:
+
+    if advo.Veldata._make_model.startswith('nortek signature'):
+        # drop xarray to not break code between ADV and AD2CP
+        advo['vel'][:3] += velmot[:,None,:]
         # This assumes these are w.
         advo['vel'][3:] += velmot[2:]
-        advo.attrs.pop('inst2head_vec')
-    
+    else:
+        advo['vel'][:3] += velmot
+        
     advo.attrs['motion corrected'] = True
     advo.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
     

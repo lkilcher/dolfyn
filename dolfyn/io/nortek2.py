@@ -460,7 +460,7 @@ def reorg(dat):
     
     outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
                                     'ENU': 'earth',
-                                    'BEAM': 'beam'}[cfg['coord_sys_axes']]
+                                    'beam': 'beam'}[cfg['coord_sys_axes']]
     tmp = lib.status2data(outdat['sys']['status'])  # returns a dict
     
     # Instrument direction

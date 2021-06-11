@@ -26,8 +26,8 @@ dt = dlfn.time.epoch2date(data.time)
 
 # Clean the file using the Goring+Nikora method:
 bad = avm.clean.GN2002(data.vel)
-data = avm.clean.cleanFill(data, bad, method='cubic')
-# data.coords['mask'] = (('orient','time'), ~bad)
+data = avm.clean.cleanFill(data, bad, method='pchip')
+# data.coords['mask'] = (('dir','time'), ~bad)
 # data.vel.values = data.vel.where(data.mask)
 
 # plotting raw vs qc'd data

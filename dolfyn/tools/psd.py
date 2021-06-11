@@ -2,22 +2,6 @@ import numpy as np
 from .misc import detrend
 fft = np.fft.fft
 
-## class FFTobj(np.ndarray):
-
-##     @property
-##     def Spec(self,):
-##         return np.abs(self) ** 2
-
-##     def __new__(cls, input_array, info=None):
-##         obj = np.asarray(input_array).view(cls)
-##         obj.info = info
-##         return obj
-
-##     def __array_finalize__(self, obj):
-##         if obj is None:
-##             return
-##         self.info = getattr(obj, 'info', None)
-
 
 def psd_freq(nfft, fs, full=False):
     """
@@ -94,7 +78,7 @@ def _stepsize(l, nfft, nens=None, step=None):
 
 
 def cohere(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
-    r"""
+    """
     Computes the magnitude-squared coherence of `a` and `b`.
 
     Parameters
@@ -227,7 +211,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
 
     """
     if np.iscomplexobj(a) or np.iscomplexobj(b):
-        raise Exception
+        raise Exception ("Velocity cannot be complex")
     l = [len(a), len(b)]
     if l[0] == l[1]:
         return cpsd(a, b, nfft, fs, window=window)
@@ -243,7 +227,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     wght = 2. / (window ** 2).sum()
     pwr = fft(detrend(a[0:nfft]) * window)[fft_inds] * \
         np.conj(fft(detrend(b[0:nfft]) * window)[fft_inds])
-    print(pwr.dtype)
+    #print(pwr.dtype)
     if nens - 1:
         for i1, i2 in zip(range(step[0], l[0] - nfft + 1, step[0]),
                           range(step[1], l[1] - nfft + 1, step[1])):
@@ -320,7 +304,7 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
     `b`, divided by the units of fs.
     """
     if np.iscomplexobj(a) or np.iscomplexobj(b):
-        raise Exception
+        raise Exception ("Velocity cannot be complex")
     auto_psd = False
     if a is b:
         auto_psd = True

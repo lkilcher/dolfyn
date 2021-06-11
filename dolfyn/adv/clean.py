@@ -1,14 +1,12 @@
 import numpy as np
 import warnings
 from ..tools.misc import fillgaps, group, slice1d_along_axis
-# import tools.timer as tmr
-
 warnings.filterwarnings('ignore', category=np.RankWarning)
 
 sin = np.sin
 cos = np.cos
 
-def cleanFill(advo, mask, method='linear', max_gap=None):
+def cleanFill(advo, mask, method='pchip', max_gap=None):
     """
     Interpolate over nan values in velocity data using the specific method
 
@@ -20,7 +18,7 @@ def cleanFill(advo, mask, method='linear', max_gap=None):
       Logical vector of values to 'NaN' out (from `spikeThresh`, `rangeLimit`,
       or `GN2002`)
     method : string
-      Interpolation scheme to use (linear, nearest, cubic, polynomial, etc)
+      Interpolation scheme to use (linear, cubic, pchip, etc)
     max_gap : numeric
       Max number of consective NaN's to interpolate across
       
