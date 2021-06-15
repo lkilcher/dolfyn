@@ -50,10 +50,8 @@ Average multiple GPGGA strings in a single ensemble (`io.rdi.read_rdi`)
 Data Processing
 ===============
 
-ADCP's:
-  - Support for calculating principal heading by ensemble?
-  - Support for motion-correcting ADCP data
-  - 5-beam turbulence analysis
+- Bad AWAC IMU data reads as 6551.x?
+- No pressure data from Vectors or AWACs? Registering as 0 in binary?
 
 Coordinate systems:
 - Support for rotating directly from 'inst' to 'principal'
@@ -61,8 +59,7 @@ Coordinate systems:
 ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts".
 
 Add check for correct sample-rate in data.binned (e.g., data.binned.TimeBinner.check_indata)? Does this check need to be in all methods of TimeBinner that do binning (averaging)? Is there a way to use decorators to do this?
-
-Support for 3-beam solutions in rotations for adp's (i.e. in adp.rotate.beam2inst)
+- Occasional TRDI sampling frequency calculation error - calculation depends on a variable that appears haphazardly written by TRDI software (VMDAS)
 
 I've done a first attempt at implementing stress-rotations, but isn't as straightforward as originally anticipated.  This is in the `reorg-add_omat` branch. The big issue is: `orientmat` is bad (`det != 1`) after averaging data from a moving instrument.
     - Do quaternions average better?
@@ -75,7 +72,11 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
 
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
 
-					 
+ADCP's:
+  - Support for calculating principal heading by ensemble?
+  - Support for motion-correcting ADCP data
+  - 5-beam turbulence analysis
+
 Ideas
 =====
 
