@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unversioned
+## Version 0.13.0
 	- Xarray refactoring:
 	- Rotation code:
 		- `rotate2`, `set_inst2head_rotmat`, `calc_principal_heading`, and `set_declination` now located in 'rotate.api'
@@ -40,8 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 			- Updated so that one can calculate coherence, auto-/cross-covariance with 1D or 3D velocity arrays
 		- Updated turbulence dissipation functions return correctly for xarray
 			- LT83 or TE01 methods can take either the 3D velocity or a single velocity array
-			- SF method only can handle single beam at a time
-				- sanity note: dissipation rates within isotropic cascade for each velocity direction should theoretically be equal (def of isotropic)
+			- SF method only can handle single array at a time
 				- leaving to user to average 'LT83' returns together if they'd like
 				- 'TE01' natively returns the averaged dissipation rate
 			- Changed '.mean()' to 'np.nanmean' so functions can handle nans
@@ -81,8 +80,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Verified xarray output against h5py-based source code
 		- Testing and h5 folders not included in setup.py
 
-	- Fix Nortek Signature binary file to load burst data - rough hack completed
-	- Fix loading of VMDAS reprocessed .enx files
+	- Fix error loading VMDAS-processed files
 	- Update documentation to build off 'make html'
 	- Set up Travis CI
 	- Fix calc_turbulence '__call__' error

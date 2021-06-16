@@ -73,7 +73,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = ver.__prog_name__
-copyright = u'2014, Levi Kilcher'
+copyright = u'2021, Levi Kilcher'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

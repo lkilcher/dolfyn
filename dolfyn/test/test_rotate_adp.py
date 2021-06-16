@@ -1,7 +1,6 @@
 from dolfyn.test import test_read_adp as tr
-from dolfyn import rotate2
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from dolfyn import calc_principal_heading
+from dolfyn.rotate.api import rotate2, calc_principal_heading
 import numpy as np
 from xarray.testing import assert_allclose, assert_equal
 from numpy.testing import assert_allclose as assert_ac

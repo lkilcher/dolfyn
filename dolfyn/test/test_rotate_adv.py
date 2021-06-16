@@ -1,6 +1,5 @@
 from dolfyn.test import test_read_adv as tr
-import dolfyn.adv.api as avm
-from dolfyn import rotate2, calc_principal_heading, set_declination
+from dolfyn.rotate.api import rotate2, calc_principal_heading, set_declination, set_inst2head_rotmat
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
@@ -30,9 +29,9 @@ def test_inst2head_rotmat():
     td = tr.dat.copy(deep=True)
 
     #Swap x,y, reverse z
-    td = avm.set_inst2head_rotmat(td, [[0, 1, 0],
-                                       [1, 0, 0],
-                                       [0, 0,-1]])
+    td = set_inst2head_rotmat(td, [[0, 1, 0],
+                                   [1, 0, 0],
+                                   [0, 0,-1]])
 
     # assert ((td.Veldata.u == tr.dat.Veldata.v).all() and
     #         (td.Veldata.v == tr.dat.Veldata.u).all() and
@@ -46,7 +45,7 @@ def test_inst2head_rotmat():
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
     R = euler2orient(20, 30, 60, units='degrees') # arbitrary angles
-    td = avm.set_inst2head_rotmat(td, R)
+    td = set_inst2head_rotmat(td, R)
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R, tr.dat.vel)
@@ -174,8 +173,8 @@ class warnings_testcase(unittest.TestCase):
         with self.assertRaises(Exception):
             rotate2(warn2, 'earth')
         with self.assertRaises(Exception):
-            avm.set_inst2head_rotmat(warn3, np.eye(3))
-            avm.set_inst2head_rotmat(warn3, np.eye(3))
+            set_inst2head_rotmat(warn3, np.eye(3))
+            set_inst2head_rotmat(warn3, np.eye(3))
         
 
 if __name__=='__main__':

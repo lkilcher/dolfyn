@@ -1,8 +1,8 @@
 import numpy as np
 import os
-import dolfyn.adv.api as avm
+from dolfyn.rotate.api import set_inst2head_rotmat
 import dolfyn.io.nortek as vector
-from dolfyn import read_example as read
+from dolfyn.io.api import read_example as read
 import dolfyn.test.base as tb
 from xarray.testing import assert_equal
 load = tb.load_ncdata
@@ -37,7 +37,7 @@ def test_read(make_data=False):
     
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
-    tdm = avm.set_inst2head_rotmat(tdm, np.eye(3))
+    tdm = set_inst2head_rotmat(tdm, np.eye(3))
     tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
 
     if make_data:

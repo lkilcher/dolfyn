@@ -1,6 +1,6 @@
 from dolfyn.test import test_read_adp as tr
 from dolfyn.test import base
-from dolfyn import rotate2
+from dolfyn.rotate.api import rotate2
 from numpy.testing import assert_allclose
 import numpy as np
 import scipy.io as sio

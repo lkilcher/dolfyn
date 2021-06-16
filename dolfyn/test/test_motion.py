@@ -1,7 +1,7 @@
 from dolfyn.test import test_read_adv as tv
 from dolfyn.test import test_read_adp as tp
 import dolfyn.adv.api as avm
-from dolfyn import rotate2, set_declination
+from dolfyn.rotate.api import rotate2, set_declination
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 import numpy as np
 from xarray.testing import assert_equal, assert_allclose

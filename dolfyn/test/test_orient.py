@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from dolfyn.rotate.base import euler2orient, orient2euler, q2orient
-from dolfyn import set_declination
+from dolfyn.rotate.api import set_declination
 from dolfyn.test.base import load_ncdata as load
 
 
