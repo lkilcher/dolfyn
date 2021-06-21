@@ -44,11 +44,7 @@ config = dict(
     install_requires=['numpy', 'scipy', 'xarray'],
     extras_require={'save':['h5netcdf']},
     provides=['dolfyn', ],
-    scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],    
-    dependency_links=['https://pypi.python.org/pypi/',]
-                      #'https://github.com/lkilcher/pyDictH5/tarball/master#egg=pyDictH5'],
-    # cmdclass =
-    # {'install_data':chmod_install_data,'install':chmod_install,},
+    scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'], 
 )
 
 

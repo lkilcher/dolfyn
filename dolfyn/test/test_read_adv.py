@@ -1,10 +1,11 @@
 import numpy as np
-import os
+import os, sys
 from dolfyn.rotate.api import set_inst2head_rotmat
 import dolfyn.io.nortek as vector
 from dolfyn.io.api import read_example as read
 import dolfyn.test.base as tb
 from xarray.testing import assert_equal
+sys.stdout = open(os.devnull, 'w') # block printing output
 load = tb.load_ncdata
 save = tb.save_ncdata
 
@@ -57,3 +58,5 @@ def test_read(make_data=False):
 if __name__ == '__main__':
     test_save()
     test_read()
+    
+sys.stdout = sys.__stdout__ # restart printing output

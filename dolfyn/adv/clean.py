@@ -1,26 +1,34 @@
 import numpy as np
 import warnings
-from ..tools.misc import fillgaps, group, slice1d_along_axis
+from ..tools.misc import group, slice1d_along_axis #fillgaps
 warnings.filterwarnings('ignore', category=np.RankWarning)
 
 sin = np.sin
 cos = np.cos
 
-def cleanFill(advo, mask, method='pchip', max_gap=None):
+def clean_fill(advo, mask, method='pchip', max_gap=None):
     """
     Interpolate over nan values in velocity data using the specific method
 
     Parameters
     ----------
-    advo : xr.Dataset
+    advo : xarray.Dataset
       The adv dataset to clean.
+      
     mask : bool
       Logical vector of values to 'NaN' out (from `spikeThresh`, `rangeLimit`,
       or `GN2002`)
+      
     method : string
       Interpolation scheme to use (linear, cubic, pchip, etc)
+      
     max_gap : numeric
       Max number of consective NaN's to interpolate across
+      
+    Returns
+    -------
+    advo: xarray.Dataset
+      The adv dataset with nan's interpolated
       
     See Also
     --------
@@ -36,13 +44,23 @@ def cleanFill(advo, mask, method='pchip', max_gap=None):
     return advo
 
 
-def spikeThresh(u, thresh=10):
+def spike_thresh(u, thresh=10):
     """
     Returns a logical vector where a spike in `u` of magnitude greater than
-    `thresh` occurs.  'Negative' and 'positive' spikes are both
-    caught.
+    `thresh` occurs.  'Negative' and 'positive' spikes are both caught.
 
-    `thresh` must be positive.
+    Parameters
+    ----------
+    u : xarray.DataArray
+      The adv velocity data to clean.
+      
+    thresh : int
+       Magnitude of velocity spike, must be positive.
+       
+    Returns
+    -------
+    mask : |np.ndarray|
+      Logical vector with spikes labeled as 'True'
     
     """
     du = np.diff(u.values, prepend=0)
@@ -53,10 +71,23 @@ def spikeThresh(u, thresh=10):
     #return np.concatenate(([False], bds1 | bds2, [False]))
 
 
-def rangeLimit(u, range=[-5, 5]):
+def range_limit(u, range=[-5, 5]):
     """
-    Returns a logical vector that is True where the
-    values of `u` are outside of `range`.
+    Returns a logical vector that is True where the     values of `u` are 
+    outside of `range`.
+    
+    Parameters
+    ----------
+    u : xarray.DataArray
+      The adv velocity data to clean.
+      
+    range : list
+       Min and max velocity magnitudes beyond which are masked
+       
+    Returns
+    -------
+    mask : |np.ndarray|
+      Logical vector with spikes labeled as 'True'
     
     """
     return ~((range[0] < u) & (u < range[1]))
@@ -192,22 +223,19 @@ def GN2002(u, npt=5000):
 
     Parameters
     ----------
-
-    u : xr.DataArray
-      The velocity array to clean.
+    u : xarray.DataArray
+      The velocity array (1D or 3D) to clean.
 
     npt : int
       The number of points over which to perform the method.
 
     Returns
     -------
-
     mask : |np.ndarray|
       Logical vector with spikes labeled as 'True'
 
     Notes
     -----
-
     Implements the Goring+Nikora2002 despiking method, with Wahl2003
     correction.
 

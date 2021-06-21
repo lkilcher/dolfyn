@@ -7,23 +7,27 @@ import numpy as np
 from xarray.testing import assert_equal, assert_allclose
 
 def test_motion_adv(make_data=False):
-    #mc = avm.motion.CorrectMotion()
+    #mc = avm.correct_motion()
     tdm = tv.dat_imu.copy(deep=True)
     tdm = avm.correct_motion(tdm)
     
+    # user added metadata
+    tdmj = tv.dat_imu_json.copy(deep=True)
+    tdmj = avm.correct_motion(tdmj)
+    
+    # set declination and then correct
     tdm10 = tv.dat_imu.copy(deep=True)
-    # Include the declination.
     tdm10 = set_declination(tdm10, 10.0)
     tdm10 = avm.correct_motion(tdm10)
     
+    # test setting declination to 0 doesn't affect correction
     tdm0 = tv.dat_imu.copy(deep=True)
-    # Include the declination.
     tdm0 = set_declination(tdm0, 0.0)
     tdm0 = avm.correct_motion(tdm0)
+    tdm0.attrs.pop('declination')
+    tdm0.attrs.pop('declination_in_orientmat')
     
-    tdmj = tv.dat_imu_json.copy(deep=True)
-    tdmj = avm.correct_motion(tdmj)
-
+    # test motion-corrected data rotation
     tdmE = tv.dat_imu.copy(deep=True)
     tdmE = set_declination(tdmE, 10.0)
     tdmE = rotate2(tdmE, 'earth', inplace=True)
@@ -38,21 +42,24 @@ def test_motion_adv(make_data=False):
     cdm10 = load('vector_data_imu01_mcDeclin10.nc')
     
     assert_equal(tdm, load('vector_data_imu01_mc.nc'))
+    assert_equal(tdm10, tdmj)
     # apparently reloading this still fails assert_equal
+    assert_allclose(tdm0, tdm, atol=1e-7)
     assert_allclose(tdm10, cdm10, atol=1e-7)
     assert_allclose(tdmE, cdm10, atol=1e-7)
-    assert_allclose(tdmj, load('vector_data_imu01-json_mc.nc'), atol=1e-7)
-        
-    # yield data_equiv, tdm10, tdmj, \
-    #     ".userdata.json motion correction does not match explicit expectations."
-    assert_equal(tdm10, tdmj)
-
-    tdm0.attrs.pop('declination')
-    tdm0.attrs.pop('declination_in_orientmat')
-    # yield data_equiv, tdm0, tdm, \
-    #     "The data changes when declination is specified as 0!"
-    assert_allclose(tdm0, tdm, atol=1e-7)
+    assert_allclose(tdmj, load('vector_data_imu01-json_mc.nc'), atol=1e-7)    
     
+
+def test_sep_probes(make_data=False):
+    tdm = tv.dat_imu.copy(deep=True)
+    tdm = avm.correct_motion(tdm, separate_probes=True)
+    
+    if make_data:
+        save(tdm, 'vector_data_imu01_mcsp.nc')
+        return
+    
+    assert_allclose(tdm, load('vector_data_imu01_mcsp.nc'), atol=1e-7)
+        
 
 def test_motion_adcp():
     # Correction for ADCPs not completed yet
@@ -63,8 +70,10 @@ def test_motion_adcp():
     
     assert type(tdm)==type(tdmc) # simple way of making sure tdmc exists
     
+    
 if __name__=='__main__':
     test_motion_adv()
+    test_sep_probes()
     test_motion_adcp()
     
     

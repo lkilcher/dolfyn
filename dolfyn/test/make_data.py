@@ -6,16 +6,16 @@ set.
 """
 print(__doc__)
 ## Have to run a couple times for the rotate codes
-# import test_read_adv as advt
+# import test_read_adv as advr
 # import test_rotate_adv as advro
 # import test_read_adp as adpr
 # import test_rotate_adp as adpro
+# import test_motion as tm
 # import test_clean as cl
 # import test_analysis as ta
 # import test_shortcuts as ts
 
-# advt.test_read(make_data=True)
-# advt.test_motion(make_data=True)
+# advr.test_read(make_data=True)
 # advro.test_heading(make_data=True)
 # advro.test_rotate_inst2beam(make_data=True)
 # advro.test_rotate_inst2earth(make_data=True)
@@ -30,7 +30,15 @@ print(__doc__)
 # adpro.test_rotate_inst2beam(make_data=True)
 # adpro.test_rotate_earth2principal(make_data=True)
 
-# cl.test_clean(make_data=True)
+# tm.test_motion_adv(make_data=True)
+# tm.test_sep_probes(make_data=True)
+
+# cl.test_GN2002(make_data=True)
+# cl.test_spike_thresh(make_data=True)
+# cl.test_range_limit(make_data=True)
+# cl.test_clean_upADCP(make_data=True)
+# cl.test_clean_downADCP(make_data=True)
+# cl.test_orient_filter(make_data=True)
 
 # ta.test_do_avg(make_data=True)
 # ta.test_do_var(make_data=True)

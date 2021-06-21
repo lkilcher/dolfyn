@@ -7,7 +7,7 @@ dat = dlfn.read_example('vector_data01.VEC')
 
 # Clean the file using the Goring+Nikora method:
 mask = avm.clean.GN2002(dat.vel)
-dat_cln = avm.clean.cleanFill(dat, mask, method='pchip')
+dat_cln = avm.clean.clean_fill(dat, mask, method='pchip')
 
 # Rotate that data from the instrument to earth frame:
 # First set the magnetic declination

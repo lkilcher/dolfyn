@@ -55,7 +55,7 @@ dat.attrs['inst2head_vec'] = inst2head_vec
 
 # Then clean the file using the Goring+Nikora method:
 mask = avm.clean.GN2002(dat.vel)
-dat = avm.clean.cleanFill(dat, mask, method='pchip')
+dat = avm.clean.clean_fill(dat, mask, method='pchip')
 
 ####
 # Create a figure for comparing screened data to the original.

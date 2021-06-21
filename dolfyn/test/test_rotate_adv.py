@@ -1,5 +1,6 @@
 from dolfyn.test import test_read_adv as tr
-from dolfyn.rotate.api import rotate2, calc_principal_heading, set_declination, set_inst2head_rotmat
+from dolfyn.rotate.api import rotate2, calc_principal_heading, \
+    set_declination, set_inst2head_rotmat
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np

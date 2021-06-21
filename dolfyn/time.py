@@ -9,7 +9,7 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
     
     Parameters
     ----------
-    ds_time : xr.DataArray
+    ds_time : xarray.DataArray
         Time coordinate data-array or single time element
     
     utc : logical, default=False
@@ -25,15 +25,20 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
         
     Returns
     -------
-    time : The converted datetime object or list(strings) 
+    time : datetime
+        The converted datetime object or list(strings) 
         
     '''
     ds_time = ds_time.values
+    
+    if ds_time.size==1:
+        ds_time = [ds_time.item()]
     
     if utc:
         time = [datetime.utcfromtimestamp(t) for t in ds_time]
     else:
         time = [datetime.fromtimestamp(t) for t in ds_time]
+        
     if offset_hr != 0:
         time = [t + timedelta(hours=offset_hr) for t in time]
     if to_str:
@@ -45,6 +50,23 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
 def date2str(dt, format_str=None):
     '''
     Convert list of datetime objects to legible strings
+    
+    Parameters
+    ----------
+    dt : datetime.datetime
+        Single or list of datetime object(s)
+        
+    format_str : string
+        Timestamp string formatting, default: '%Y-%m-%d %H:%M:%S.%f'
+    
+    Returns
+    -------
+    time : string
+        Converted timestamps
+    
+    See Also
+    --------
+    `datetime.strftime()` documentation for formatting
     
     '''
     if format_str is None:
@@ -60,6 +82,16 @@ def date2epoch(dt):
     '''
     Convert list of datetime objects to epoch time
     
+    Parameters
+    ----------
+    dt : datetime.datetime
+        Single or list of datetime object(s)
+    
+    Returns
+    -------
+    time : float
+        Datetime converted to epoch time (seconds since 1/1/1970)
+    
     '''
     if not isinstance(dt, list):
         dt = [dt]
@@ -69,7 +101,17 @@ def date2epoch(dt):
 
 def date2matlab(dt):
     '''
-    Convert list of datetime objects to matlab datenum
+    Convert list of datetime objects to MATLAB datenum
+    
+    Parameters
+    ----------
+    dt : datetime.datetime
+        List of datetime objects
+        
+    Returns
+    -------
+    time : float
+        List of timestamps in MATLAB datnum format
     
     '''
     time = list()
@@ -84,8 +126,18 @@ def date2matlab(dt):
     
 def matlab2date(matlab_dn):
     '''
-    Convert matlab datenum to list of datetime objects
+    Convert MATLAB datenum to list of datetime objects
     
+    Parameters
+    ----------
+    matlab_dn : float
+        List of timestamps in MATLAB datnum format
+        
+    Returns
+    -------
+    dt : datetime.datetime
+        List of datetime objects
+
     '''
     time = list()
     for i in range(len(matlab_dn)):
