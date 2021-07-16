@@ -1,7 +1,7 @@
 .. _adp:
 
-ADP Module
-=====================
+ADCP Module
+===========
 
 .. automodule:: dolfyn.adp.api
     :members:

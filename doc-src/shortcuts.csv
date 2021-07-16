@@ -16,4 +16,4 @@ wpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'].sel(tke="w'w'_")``
 upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'].sel(stress="u'v'_")``
 upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'].sel(stress="u'w'_")``
 vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'].sel(stress="v'w'_")``
-k, 1/m, "wavenumber, calculated from ``dat['psd']['f']``"
+k, 1/m, "wavenumber, calculated from ``dat['S']['f']``"

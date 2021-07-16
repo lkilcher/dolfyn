@@ -39,8 +39,8 @@ data. It contains:
 +-----------------------------------+-----------------------------------------+
 
 
-Examples
---------
+Example
+-------
 
 .. literalinclude:: ../../examples/adv_example.py
 

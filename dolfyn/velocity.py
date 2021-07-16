@@ -437,7 +437,7 @@ class VelBinner(TimeBinner):
         veldat : xr.DataArray
           The raw velocity data (of dims 'dir' and 'time').
         freq_units : string
-          Frequency units in either Hz or rad/s (`f` or :math:`\omega`)
+          Frequency units of the returned spectra in either Hz or rad/s (`f` or :math:`\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array
@@ -524,7 +524,7 @@ class VelBinner(TimeBinner):
         veldat   : np.ndarray
           The raw velocity data.
         freq_units : string
-          Frequency units in either Hz or rad/s (`f` or :math:`\omega`)
+          Frequency units of the returned spectra in either Hz or rad/s (`f` or :math:`\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array

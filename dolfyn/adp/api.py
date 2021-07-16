@@ -23,8 +23,8 @@ data. It contains:
 |                                   | analysis functions                      |
 +-----------------------------------+-----------------------------------------+
 
-Examples
---------
+Example
+-------
 
 .. literalinclude:: ../../examples/adcp_example.py
 

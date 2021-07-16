@@ -33,7 +33,7 @@ systems.  The first dimension of these vectors are their coordinate
 directions, which are defined by the following coordinate systems:
 
 - **Beam**: this is the coordinate system of the 'along-beam'
-  velocities.  When the data object is in BEAM coordinates, the first
+  velocities.  When the data object is in 'beam' coordinates, the first
   dimension of the velocity vectors are: [beam1, beam2,
   ... beamN]. This coordinate system is *not* ortho-normal, which
   means that the inverse rotation (inst to beam) cannot be computed
@@ -42,10 +42,10 @@ directions, which are defined by the following coordinate systems:
   internally in |dlfn| (in :func:`~dolfyn.rotate.base.beam2inst`).
 
   When a data object is in this coordinate system, only the velocity
-  data (i.e., the variables in ``dat.props['rotate_vars']`` starting
+  data (i.e., the variables in ``dat.attrs['rotate_vars']`` starting
   with ``'vel'``) is in beam coordinates. Other vector variables
-  listed in ``'rotate_vars'`` are in the INST frame (e.g.,
-  `dat.orient.AngRt`). This is true for data read from binary files
+  listed in ``'rotate_vars'`` are in the 'inst' frame (e.g.,
+  ``dat.angrt``). This is true for data read from binary files
   that is in beam coordinates, and also when rotating from other
   coordinate systems to beam coordinates.
 
@@ -53,10 +53,10 @@ directions, which are defined by the following coordinate systems:
   manufacturer. This coordinate system is ortho-normal, but is not
   necessarily fixed. That is, if the instrument is rotating, then this
   coordinate system changes relative to the earth. When the data
-  object is in INST coordinates, the first dimension of the vectors
+  object is in 'inst' coordinates, the first dimension of the vectors
   are: [X, Y, Z, ...].
 
-- **Earth**: When the data object is in EARTH coordinates, the first
+- **Earth**: When the data object is in 'earth' coordinates, the first
   dimension of vectors are: [East, North, Up, ...]. This coordinate
   system is also sometimes denoted as "ENU". If the declination is set
   the earth coordinate system is "True-East, True-North, Up"
@@ -237,14 +237,14 @@ to set a data-object's declination:
    file (i.e., using ``dat = dolfyn.read(<data_filename>)``).
 
 Both of these approaches produce modify the ``dat`` as described in
-the documentation for :meth:`~dolfyn.Velocity.set_declination` .
+the documentation for :meth:`~dolfyn.set_declination` .
    
 Principal Heading
 -----------------
 
 As described above, the principal coordinate system is meant to be the
 flow-aligned coordinate system (Streamwise, Cross-stream, Up). |dlfn|
-includes the :func:`<dolfyn.calc_principal_heading>` function to aide in
+includes the :func:`~dolfyn.calc_principal_heading` function to aide in
 identifying/calculating the principal heading. Using this function to
 identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
