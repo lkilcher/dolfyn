@@ -163,7 +163,7 @@ def set_deploy_altitude(adcpo, h_deploy):
     
     Notes
     -----
-    Center of bin 1 = `h_deploy + blank_dist + cell_size`
+    `Center of bin 1` = `h_deploy + blank_dist + cell_size`
     
     Nortek doesn't take `h_deploy` into account, so the range that DOLfYN 
     calculates distance is from the ADCP transducers. TRDI asks for `h_deploy` 

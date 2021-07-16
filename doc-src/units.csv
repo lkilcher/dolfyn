@@ -29,6 +29,6 @@ stress_vec,m\ :sup:`2`/s\ :sup:`2`,"Reynolds stress array (0: u'v', 1: u'w', 2: 
 U_mag,m/s,Horizontal velocity magnitude
 U_std,m/s,Standard deviation of horizontal velocity magnitude
 epsilon,m\ :sup:`2`/s\ :sup:`3`,Turbulence dissipation rate
-psd,<var units>\ :sup:`2`/<freq units>,"Spectra, calculated as power spectral densities"
+S,<var units>\ :sup:`2`/<freq units>,"Spectra, calculated as power spectral densities"
 f,Hz,Spectral frequency
 omega,rad/s,Spectral radial frequency
