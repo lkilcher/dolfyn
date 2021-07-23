@@ -1,13 +1,13 @@
 0) Build a dolfyn development environment.
 
-   - In anaconda ou can install dependencies using the `environment-dev.yml` file:
+   - In anaconda you can install dependencies using the `environment.yml` file:
 
-        conda env create -n dolfyn-dev -f environment-dev.yml
+        conda env create -n dolfyn-dev -f environment.yml
       
    - Also be sure to install the repo to this environment in *editable* mode:
      
-        source activate dolfyn-dev  # activate the env
-        pip install -e ./  # install dolfyn in editable mode
+        conda activate dolfyn-dev  # activate the env
+        pip install -e .  # install dolfyn in editable mode
 
 1) Get set up
     - Open an issue (optional)

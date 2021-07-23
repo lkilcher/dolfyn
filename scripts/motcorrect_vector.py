@@ -3,9 +3,9 @@
 import argparse
 import os
 import numpy as np
+import dolfyn
 from dolfyn.adv.rotate import orient2euler
 import dolfyn.adv.api as avm
-from dolfyn.adv.motion import correct_motion
 
 # TODO: add option to rotate into earth or principal frame (include
 # principal_angle_True in output).
@@ -38,20 +38,20 @@ parser.add_argument(
 ##     """
 ## )
 
-parser.add_argument(
-    '-O',
-    default=None,
-    help="""NOTE: this option is deprecated and will be removed in
-    future releases. Use the '<filename>.userdata.json' method
-    instead.  Specify the 'orientation' configuration file (default:
-    '<filename>.orient', or 'vector.orient', in that
-    order). Cable-Head Vector probes the orientation of, and distance
-    between, the head to the body is arbitrary. This option specifies
-    the file which defines these variables. For more information on
-    how to measure these variables, take a look at the
-    'dolfyn-src-dir/examples/motion_correct_example.orient'
-    """
-)
+#parser.add_argument(
+#    '-O',
+#    default=None,
+#    help="""NOTE: this option is deprecated and will be removed in
+#    future releases. Use the '<filename>.userdata.json' method
+#    instead.  Specify the 'orientation' configuration file (default:
+#    '<filename>.orient', or 'vector.orient', in that
+#    order). Cable-Head Vector probes the orientation of, and distance
+#    between, the head to the body is arbitrary. This option specifies
+#    the file which defines these variables. For more information on
+#    how to measure these variables, take a look at the
+#    'dolfyn-src-dir/examples/motion_correct_example.orient'
+#    """
+#)
 parser.add_argument(
     '--fixed-head',
     action='store_true',
@@ -75,10 +75,10 @@ parser.add_argument(
 ##     """
 ## )
 parser.add_argument(
-    '--hdf5',
+    '--nc',
     action='store_true',
     help="""
-    Save the earth-frame motion-corrected data in the dolfyn-structured hdf5 format.
+    Save the earth-frame motion-corrected data in the dolfyn-structured netCDF format.
     """
 )
 
@@ -93,7 +93,7 @@ parser.add_argument(
 
 ###########
 # I removed this option because the data in a raw file is often
-# noisey, which will lead to inaccurate estimates of the principal
+# noisy, which will lead to inaccurate estimates of the principal
 # angle. Data should be cleaned prior to rotating into the principal
 # frame.
 ## parser.add_argument(
@@ -118,56 +118,51 @@ args = parser.parse_args()
 # raise Exception('--out-principal and --out-earth can not both be
 # selected. You must choose one output frame.')
 declin = None
-if args.fixed_head != bool(args.O):
+if args.fixed_head:# != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
-    if bool(args.O):
-        exec(open(args.O).read())  # ROTMAT and VEC should be in this file.
-        rmat = np.array(ROTMAT)
-        vec = np.array(VEC)
-        if 'DECLINATION' in vars():
-            declin = DECLINATION
-        del VEC, ROTMAT
-    else:
-        rmat = np.array([[1, 0, 0],
-                         [0, 1, 0],
-                         [0, 0, 1]], dtype=np.float32)
-        vec = np.array([0, 0, -0.21])  # in meters
+#    if bool(args.O):
+#        exec(open(args.O).read())  # ROTMAT and VEC should be in this file.
+#        rmat = np.array(ROTMAT)
+#        vec = np.array(VEC)
+#        if 'DECLINATION' in vars():
+#            declin = DECLINATION
+#        del VEC, ROTMAT
+#    else:
+    rmat = np.array([[1, 0, 0],
+                     [0, 1, 0],
+                     [0, 0, 1]], dtype=np.float32)
+    vec = np.array([0, 0, -0.21])  # in meters
 else:
     rmat = None
     vec = None
 
-if not (args.mat or args.hdf5):
+if not (args.mat or args.nc):
     args.mat = True
 
 # Now loop over the specified file names:
 for fnm in args.filename:
 
-    dat = avm.read_nortek(fnm)
+    dat = avm.read(fnm)
 
     if rmat is not None:
-        dat.props['body2head_rotmat'] = rmat
+        dat.attrs['inst2head_rotmat'] = rmat
     if vec is not None:
-        dat.props['body2head_vec'] = vec
+        dat.attrs['inst2head_vec'] = vec
     if declin is not None:
-        dat.props['declination'] = declin
-    if ('body2head_rotmat' not in dat.props or
-            'body2head_vec' not in dat.props):
-        raise Exception("body2head_rotmat or body2head_vec not found "
-                        "in dat.props. These must be specified by either:\n"
+        dat.attrs['declination'] = declin
+    if ('inst2head_rotmat' not in dat.attrs or
+            'inst2head_vec' not in dat.attrs):
+        raise Exception("inst2head_rotmat or inst2head_vec not found "
+                        "in dat.attrs. These must be specified by either:\n"
                         "  1) defining them in a '.userdata.json' file\n"
-                        "  2) using the --fixed-head command-line argument\n"
-                        "  3) specifying them in a '.orient' file "
-                        "(will be deprecated).")
-
-        # Set matlab 'datenum' time.
-        dat.add_data('datenum', dat.mpltime.matlab_datenum, 'main')
+                        "  2) using the --fixed-head command-line argument\n")
 
     # Perform motion correction.
     if hasattr(dat, 'orientmat'):
         print('Performing motion correction...')
-        correct_motion(dat, accel_filtfreq=args.f)  # Perform the motion correction.
+        dat = avm.correct_motion(dat, accel_filtfreq=args.f)  # Perform the motion correction.
         # Compute pitch,roll,heading from orientmat.
-        dat.pitch[:], dat.roll[:], dat.heading[:] = orient2euler(dat.orientmat)
+        dat['pitch'], dat['roll'], dat['heading'] = orient2euler(dat.orientmat)
     else:
         print("""
         !!!--Warning--!!!: Orientation matrix('orientmat')
@@ -175,15 +170,19 @@ for fnm in args.filename:
         """)
 
     if args.mat:
+        # Set matlab 'datenum' time.
+        dt = dolfyn.time.epoch2date(dat['time'])
+        dat['datenum'] = dolfyn.time.date2matlab(dt)
+        
         outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
         print('Saving to %s.' % outnm)
         # Save the data.
-        dat.save_mat(outnm, groups=['main', 'orient'])
+        dolfyn.io.api.save_mat(dat, outnm)
 
-    if args.hdf5:
-        outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.hdf5'
+    if args.nc:
+        outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.nc'
         print('Saving to %s.' % outnm)
         # Save the data.
-        dat.save(outnm,)
+        dolfyn.save(dat, outnm)
 
     del dat

@@ -7,20 +7,22 @@ Installation
 
     $ pip install dolfyn
 
-If you want to download the source code locally so that you can modify
+Or, if you would like download the source code locally so that you can modify
 it, you can clone the repository::
     
    $ git clone https://github.com/jmcvey3/dolfyn/
 
 And then use pip to install it as an 'editable' package::
 
-     $ cd dolfyn
-     $ pip install -e ./
-
-Once installed, to create documentation::
+	 $ cd dolfyn
+     $ pip install -e .
+	 
+Once installed, to create documentation (you may have to pip install sphinx_rtd_theme)::
 
 	 $ cd dolfyn\doc-src
 	 $ make html
+
+If you would like to contribute, please follow the guidelines in the `contributing.md` file.
 
 .. _datafiles:
 

@@ -540,7 +540,7 @@ class TimeBinner:
         Returns
         -------
         out : xarray.DataArray
-          The auto-covariance between signal veldat1 and veldat2.
+          The auto-covariance of veldat
         
         """
         indat = veldat.values
