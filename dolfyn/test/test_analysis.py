@@ -1,6 +1,6 @@
 from dolfyn.test import test_read_adp as tr, test_read_adv as tv
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from xarray.testing import assert_equal
+from xarray.testing import assert_equal, assert_allclose
 import numpy as np
 from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
@@ -95,7 +95,7 @@ def test_calc_acov(make_data=False):
         return
     saved_acov = load('auto-cov.nc')
     
-    assert_equal(acov, saved_acov['auto-covariance'])
+    assert_allclose(acov, saved_acov['auto-covariance'], atol=1e-7)
     
     
 def test_calc_xcov(make_data=False):

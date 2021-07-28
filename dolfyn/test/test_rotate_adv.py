@@ -5,8 +5,8 @@ from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
 import unittest
-from xarray.testing import assert_allclose, assert_equal
-from numpy.testing import assert_allclose as assert_ac
+from xarray.testing import assert_allclose
+import numpy.testing as npt
 
 
 def test_heading(make_data=False):
@@ -22,7 +22,7 @@ def test_heading(make_data=False):
         return
     cd = load('vector_data_imu01_head_pitch_roll.nc')
     
-    assert_equal(td, cd)
+    assert_allclose(td, cd, atol=1e-6)
     
 
 def test_inst2head_rotmat():
@@ -39,9 +39,9 @@ def test_inst2head_rotmat():
     #         (td.Veldata.w == -tr.dat.Veldata.w).all()
     #         ), "head->inst rotations give unexpeced results."
     #Coords don't get altered here
-    assert_ac(td.Veldata.u.values, tr.dat.Veldata.v.values)
-    assert_ac(td.Veldata.v.values, tr.dat.Veldata.u.values)
-    assert_ac(td.Veldata.w.values, -tr.dat.Veldata.w.values)
+    npt.assert_allclose(td.Veldata.u.values, tr.dat.Veldata.v.values, atol=1e-6)
+    npt.assert_allclose(td.Veldata.v.values, tr.dat.Veldata.u.values, atol=1e-6)
+    npt.assert_allclose(td.Veldata.w.values, -tr.dat.Veldata.w.values, atol=1e-6)
 
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
@@ -51,7 +51,7 @@ def test_inst2head_rotmat():
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R, tr.dat.vel)
     #assert (vel1 == vel2).all(), "head->inst rotations give unexpeced results."
-    assert_ac(vel1.values, vel2)
+    npt.assert_allclose(vel1.values, vel2, atol=1e-6)
     
 
 def test_rotate_inst2earth(make_data=False):
@@ -70,9 +70,9 @@ def test_rotate_inst2earth(make_data=False):
     cd = load('vector_data01_rotate_inst2earth.nc')
     cdm = load('vector_data_imu01_rotate_inst2earth.nc')
 
-    assert_equal(td, cd)
-    assert_equal(tdm, cdm)
-    assert_equal(td, cd)
+    assert_allclose(td, cd, atol=1e-6)
+    assert_allclose(tdm, cdm, atol=1e-6)
+    assert_allclose(td, cd, atol=1e-6)
 
 
 def test_rotate_earth2inst():
