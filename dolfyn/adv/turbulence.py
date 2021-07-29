@@ -55,7 +55,7 @@ class TurbBinner(VelBinner):
           chunks. This object also computes the following items over
           those chunks:
 
-          - tke\_vec : The energy in each component (components are also
+          - tke_vec : The energy in each component (components are also
             accessible as
             :attr:`upup_ <dolfyn.data.velocity.TKE.upup_>`,
             :attr:`vpvp_ <dolfyn.data.velocity.TKE.vpvp_>`,
@@ -76,24 +76,13 @@ class TurbBinner(VelBinner):
             - omega : the radial frequency (rad/s)
 
         """
-        # warnings.warn("The instance.__call__ syntax of turbulence averaging"
-        #               " is being deprecated. Use the functional form, e.g. '"
-        #               "adv.turbulence.calc_turbulence(advr, n_bin={})', instead."
-        #               .format(self.n_bin))
-        # if out_type is None:
-        #     try:
-        #         out_type = advr._avg_class
-        #     except AttributeError:
-        #         out_type = type(advr)
         out = type(advr)()
-        #self._check_indata(advr)
         out = self.do_avg(advr, out)
         
         noise = advr.get('doppler_noise', [0, 0, 0])
         out['tke_vec'] = self.calc_tke(advr['vel'], noise=noise)
         out['stress_vec'] = self.calc_stress(advr['vel'])
 
-        #out.attrs['Itke_thresh'] = Itke_thresh
         out['S'] = self.calc_vel_psd(advr['vel'],
                                      window=window,
                                      freq_units='rad/s',
@@ -102,10 +91,6 @@ class TurbBinner(VelBinner):
         out.attrs['n_fft'] = self.n_fft
         out.attrs['n_fft_coh'] = self.n_fft_coh
 
-        # out.add_data('epsilon',self.calc_epsilon_LT83(out.Spec,out.omega,
-        # out.U_mag,omega_range=omega_range_epsilon),'main')
-        # out.add_data('Acov',self.calc_acov(advr['vel']),'corr')
-        # out.add_data('Lint',self.calc_Lint(out.Acov,out.U_mag),'main')
         return out
 
 
@@ -136,16 +121,16 @@ class TurbBinner(VelBinner):
         
         This uses the `standard` formula for dissipation:
             
-        .. math:: S(k) = \\alpha \epsilon^{2/3} k^{-5/3}
+        .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3}
         
         where :math:`\\alpha = 0.5` (1.5 for all three velocity
         components), `k` is wavenumber and `S(k)` is the turbulent
         kinetic energy spectrum.
         
-        With :math:`k \\rightarrow \omega / U`, then -- to preserve variance -- 
-        :math:`S(k) = U S(\omega)`, and so this becomes:
+        With :math:`k \\rightarrow \\omega / U`, then -- to preserve variance -- 
+        :math:`S(k) = U S(\\omega)`, and so this becomes:
             
-        .. math:: S(\omega) = \\alpha \epsilon^{2/3} \omega^{-5/3} U^{2/3}
+        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3}
 
         LT83 : Lumley and Terray "Kinematics of turbulence convected
         by a random wave field" JPO, 1983, 13, 2000-2007.
@@ -253,7 +238,7 @@ class TurbBinner(VelBinner):
 
         I_tke : |np.ndarray|
           (beta in TE01) is the turbulence intensity ratio:
-          \sigma_u / V
+          \\sigma_u / V
 
 
         theta : |np.ndarray|
@@ -298,7 +283,7 @@ class TurbBinner(VelBinner):
         # Assign local names
         U_mag = dat_avg.Veldata.U_mag.values
         I_tke = dat_avg.Veldata.I_tke.values
-        theta = dat_avg.Veldata.U_dir.values - \
+        theta = dat_avg.Veldata.U_dir.values*(np.pi/180) - \
                 self._up_angle(dat_raw.Veldata.U.values)
         omega = dat_avg.S.omega.values
 
@@ -354,7 +339,7 @@ class TurbBinner(VelBinner):
         Returns
         -------
         L_int : |np.ndarray| (..., n_time)
-          The integral length scale (Tint*U_mag).
+          The integral length scale (T_int*U_mag).
 
         Notes
         ----
@@ -485,7 +470,7 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
       chunks. This object also computes the following items over
       those chunks:
 
-      - tke\_vec : The energy in each component, each components is
+      - tke_vec : The energy in each component, each components is
         alternatively accessible as:
         :attr:`upup_ <dolfyn.data.velocity.TKE.upup_>`,
         :attr:`vpvp_ <dolfyn.data.velocity.TKE.vpvp_>`,

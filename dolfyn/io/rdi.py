@@ -1,4 +1,3 @@
-from __future__ import print_function
 import numpy as np
 import xarray as xr
 import datetime
@@ -84,11 +83,8 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
 
 
 def _set_rdi_declination(dat, fname='????'):
-    # NEED TO CONFIRM: If magnetic_var_deg is set, this means
-    # that the declination is already included in the heading,
-    # and in the velocity data.
-    # I'm assuming this is the case for now...
-    ## Can confirm - jrm
+    # If magnetic_var_deg is set, this means that the declination is already 
+    # included in the heading and in the velocity data.
 
     declin = dat.attrs.pop('declination', None) # userdata declination
 
@@ -113,14 +109,8 @@ def _set_rdi_declination(dat, fname='????'):
     return dat
 
 
-# Four pound symbols ("####"), indicate a duplication of a comment from
-# Rich Pawlawicz' rdadcp routines.
-
-#century=1900
 century = 2000
 
-# changed group to xarray info type (data_var, coord, dim, attr)
-# added units to end
 data_defs = {'number': ([], 'sys', 'uint32', ''),
              'rtc': ([7], 'sys', 'uint16', ''),
              'bit': ([], 'sys', 'bool', ''),
@@ -170,14 +160,12 @@ def get(dat, nm):
     else:
         return dat[grp][nm]
 
-
 def in_group(dat, nm):
     grp = data_defs[nm][1]
     if grp is None:
         return nm in dat
     else:
         return nm in dat[grp]
-
 
 def pop(dat, nm):
     grp = data_defs[nm][1]
@@ -186,7 +174,6 @@ def pop(dat, nm):
     else:
         dat[grp].pop(nm)
 
-
 def setd(dat, nm, val):
     grp = data_defs[nm][1]
     if grp is None:
@@ -194,20 +181,13 @@ def setd(dat, nm, val):
     else:
         dat[grp][nm] = val
 
-
 def idata(dat, nm, sz):
-    # Complete
     group = data_defs[nm][1]
     dtype = data_defs[nm][2]
     units = data_defs[nm][3]
     arr = np.empty(sz, dtype=dtype)
     if dtype.startswith('float'):
         arr[:] = np.NaN
-    #if group is None:
-    #    dat[nm] = arr
-    #else:
-        # if group not in dat:
-        #     dat[group] = data()
     dat[group][nm] = arr
     dat['units'][nm] = units
     return dat
@@ -358,13 +338,6 @@ class adcp_loader(object):
                         524: (self.skip_Nbyte, [4]),
                         12288: (self.skip_Nbyte, [32]),
                         # 3000 Fixed attitude data format for OS-ADCPs
-                        # #### This is pretty idiotic - for OS-ADCPs
-                        # (phase 2) they suddenly decided to code the
-                        # number of bytes into the header ID word. And
-                        # then they don't really document what they
-                        # did! So, this is cruft of a high order, and
-                        # although it works on the one example I have
-                        # - caveat emptor....
                         }
         # Call the correct function:
         if id in function_map:
@@ -379,11 +352,7 @@ class adcp_loader(object):
             self.read_nocode(id)
 
     def read_nocode(self, id):
-        # #### There appear to be codes 0340-03FC to deal with. I am not
-        # #### going to decode them, but I am going to try to figure out
-        # #### how many bytes to skip.
-        # # Does he mean "3040-30FC", or is the code wrong?  Hopefully the
-        # # former.
+        # Skipping bytes from codes 0340-30FC, commented if needed
         # hxid = hex(id)
         # if hxid[2:4] == '30':
         #     raise Exception("")
@@ -503,10 +472,6 @@ class adcp_loader(object):
 
     def read_vel(self,):
         ens = self.ensemble
-        # if self.cfg['coord_sys'] == 'beam':
-        #     var_nms = ['beam1vel', 'beam2vel', 'beam3vel', 'beam4vel']
-        # else:
-        #     var_nms = ['u', 'v', 'w', 'err_vel']
         self.vars_read += ['vel']
         k = ens.k
         ens['vel'][:, :, k] = np.array(
@@ -832,30 +797,6 @@ class adcp_loader(object):
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
 
-        #!!! Legacy (no test data for this?)
-        # if prog_ver0 in [8, 16]:
-        #     if cfg['prog_ver'] >= 8.14:
-        #         cfg['serialnum'] = fd.read_ui8(8)
-        #         self._nbyte += 8
-        #     if cfg['prog_ver'] >= 8.24:
-        #         cfg['sysbandwidth'] = fd.read_ui8(2)
-        #         self._nbyte += 2
-        #     if cfg['prog_ver'] >= 16.05:
-        #         cfg['syspower'] = fd.read_ui8(1)
-        #         self._nbyte += 1
-        #     if cfg['prog_ver'] >= 16.27:
-        #         cfg['navigator_basefreqindex'] = fd.read_ui8(1)
-        #         cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
-        #         cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
-        #         self._nbyte += 6
-        # elif prog_ver0 == 9:
-        #     if cfg['prog_ver'] >= 9.10:
-        #         cfg['serialnum'] = fd.read_ui8(8)
-        #         cfg['sysbandwidth'] = fd.read_ui8(2)
-        #         self._nbyte += 10
-        # elif prog_ver0 in [14, 23]:
-        #     cfg['serialnum'] = fd.read_ui8(8)
-        #     self._nbyte += 8
         self.configsize = self.f.tell() - cfgstart
 
     def read_hdrseg(self,):
@@ -1072,7 +1013,6 @@ class adcp_loader(object):
             cfgid = fd.read_ui8(2)
             #print(self.f.pos)
             #print('cfgid: [{:x}, {:x}]'.format(*cfgid))
-            #### sloppy code:
             if len(cfgid) == 2:
                 fd.seek(-numbytes - 2, 1)
                 #print(self.f.pos)

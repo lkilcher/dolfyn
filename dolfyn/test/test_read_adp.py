@@ -44,8 +44,8 @@ def test_io_rdi(make_data=False):
     td_vm = tb.drop_config(read('vmdas01.ENX', nens=nens))
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
-    td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
-                                          nens=nens))
+    #td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
+    #                                      nens=nens))
     
     if make_data:
         save(td_rdi, 'RDI_test01.nc')
@@ -60,7 +60,7 @@ def test_io_rdi(make_data=False):
     assert_allclose(td_vm, dat_rdi_vm, atol=1e-6)
     assert_allclose(td_wr1, dat_wr1, atol=1e-6)
     assert_allclose(td_wr2, dat_wr2, atol=1e-6)
-    assert_allclose(td_debug, td_rdi_bt, atol=1e-6)
+    #assert_allclose(td_debug, td_rdi_bt, atol=1e-6)
 
 
 def test_io_nortek(make_data=False):
@@ -69,8 +69,8 @@ def test_io_nortek(make_data=False):
                                   nens=nens))
     td_awac_ud = tb.drop_config(read('AWAC_test01.wpr', nens=nens))
     td_hwac = tb.drop_config(read('H-AWAC_test01.wpr'))
-    td_debug = tb.drop_config(awac.read_nortek(tb.exdt('AWAC_test01.wpr'), 
-                              debug=True, do_checksum=True, nens=nens))
+    #td_debug = tb.drop_config(awac.read_nortek(tb.exdt('AWAC_test01.wpr'), 
+    #                          debug=True, do_checksum=True, nens=nens))
 
     if make_data:
         save(td_awac, 'AWAC_test01.nc')
@@ -81,7 +81,7 @@ def test_io_nortek(make_data=False):
     assert_allclose(td_awac, dat_awac, atol=1e-6)
     assert_allclose(td_awac_ud, dat_awac_ud, atol=1e-6)
     assert_allclose(td_hwac, dat_hwac, atol=1e-6)
-    assert_allclose(td_awac_ud, td_debug, atol=1e-6)
+    #assert_allclose(td_awac_ud, td_debug, atol=1e-6)
     
 
 def test_io_nortek2(make_data=False):

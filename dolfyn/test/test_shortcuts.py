@@ -1,6 +1,6 @@
 from dolfyn.test import test_read_adv as tv
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from xarray.testing import assert_equal
+from xarray.testing import assert_allclose
 import xarray as xr
 import dolfyn.adv.api as avm
 
@@ -38,7 +38,7 @@ def test_shortcuts(make_data=False):
         return
     #saved_short = load('shortcuts.nc')
     
-    assert_equal(test_dat.short, load('shortcuts.nc'))
+    assert_allclose(test_dat.short, load('shortcuts.nc'), atol=1e-6)
  
 if __name__=='__main__':
     test_shortcuts()

@@ -107,8 +107,8 @@ def save(dataset, filename):
             dataset.attrs['complex_vars'].append(var)
         
     dataset.to_netcdf(filename, 
-                      #format='NETCDF4', 
-                      #engine='h5netcdf', 
+                      format='NETCDF4', 
+                      engine='netcdf4', #'h5netcdf', 
                       #invalid_netcdf=True,
                       )
     
@@ -128,7 +128,7 @@ def load(filename):
         
     # this engine reorders attributes into alphabetical order
     ds = xr.load_dataset(filename, 
-                         #engine='h5netcdf',
+                         engine='netcdf4', #'h5netcdf',
                          )
 
     # xarray converts single list items to ints or strings

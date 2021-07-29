@@ -36,13 +36,13 @@ class VarAtts(object):
         scientific units.
 
     title_name : (string, optional)
-        The name of the variable\*\*.
+        The name of the variable.
 
-    units : (:class:`<ma.unitsDict>`, optional)
-        The units of this variable\*\*.
+    units : (string, optional)
+        The units of this variable.
 
     dim_names : (list, optional)
-        A list of names for each dimension of the array\*\*.
+        A list of names for each dimension of the array.
 
     """
     def __init__(self, dims=[], dtype=None, group='main',

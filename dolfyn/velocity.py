@@ -116,12 +116,14 @@ class Velocity():
     @property
     def U_dir(self,):
         """
-        Angle of horizontal velocity vector (radians clockwise from
-        X/East/streamwise).
+        Angle of horizontal velocity vector, deg clockwise from
+        X/East/streamwise. Direction is "to", as opposed to "from".
         """
         return xr.DataArray(
-                    np.angle(self.U),
-                    attrs={'units':'rad',
+                    np.angle(self.U)*(180/np.pi),
+                    dims=self.U.dims,
+                    coords=self.U.coords,
+                    attrs={'units':'deg',
                            'description':'''horizontal velocity flow direction, 
                            CW from X/east/streamwise'''})
 
@@ -437,7 +439,7 @@ class VelBinner(TimeBinner):
         veldat : xr.DataArray
           The raw velocity data (of dims 'dir' and 'time').
         freq_units : string
-          Frequency units of the returned spectra in either Hz or rad/s (`f` or :math:`\omega`)
+          Frequency units of the returned spectra in either Hz or rad/s (`f` or :math:`\\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array
@@ -524,7 +526,7 @@ class VelBinner(TimeBinner):
         veldat   : np.ndarray
           The raw velocity data.
         freq_units : string
-          Frequency units of the returned spectra in either Hz or rad/s (`f` or :math:`\omega`)
+          Frequency units of the returned spectra in either Hz or rad/s (`f` or :math:`\\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array

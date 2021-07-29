@@ -470,7 +470,7 @@ def correct_motion(advo,
     else:
         advo['vel'][:3] += velmot
         
-    advo.attrs['motion corrected'] = True
+    advo.attrs['motion corrected'] = 1
     advo.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
     
     return advo

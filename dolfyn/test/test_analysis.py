@@ -1,6 +1,6 @@
 from dolfyn.test import test_read_adp as tr, test_read_adv as tv
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from xarray.testing import assert_equal, assert_allclose
+from xarray.testing import assert_allclose
 import numpy as np
 from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
@@ -31,8 +31,8 @@ def test_do_avg(make_data=False):
         save(adat_sig, 'ADCP_average.nc')
         return
     
-    assert_equal(adat_vec, load('ADV_average.nc'))
-    assert_equal(adat_sig, load('ADCP_average.nc'))
+    assert_allclose(adat_vec, load('ADV_average.nc'), atol=1e-6)
+    assert_allclose(adat_sig, load('ADCP_average.nc'), atol=1e-6)
     
     
 def test_do_var(make_data=False):
@@ -47,8 +47,8 @@ def test_do_var(make_data=False):
         save(vdat_sig, 'ADCP_variance.nc')
         return 
     
-    assert_equal(vdat_vec, load('ADV_variance.nc'))
-    assert_equal(vdat_sig, load('ADCP_variance.nc'))
+    assert_allclose(vdat_vec, load('ADV_variance.nc'), atol=1e-6)
+    assert_allclose(vdat_sig, load('ADCP_variance.nc'), atol=1e-6)
     
     
 def test_do_tke(make_data=False):
@@ -60,7 +60,7 @@ def test_do_tke(make_data=False):
         save(tkedat, 'ADV_avg+tke.nc')
         return
     
-    assert_equal(tkedat, load('ADV_avg+tke.nc'))
+    assert_allclose(tkedat, load('ADV_avg+tke.nc'), atol=1e-6)
     
 
 def test_calc_func(make_data=False):
@@ -110,7 +110,7 @@ def test_calc_turbulence(make_data=False):
         save(tdat, 'turb_data.nc')
         return
     
-    assert_equal(tdat, load('turb_data.nc'))
+    assert_allclose(tdat, load('turb_data.nc'), atol=1e-6)
     
     
 def test_turb_bin(make_data=False):
@@ -128,16 +128,8 @@ def test_turb_bin(make_data=False):
         save(tdat, 'vector_data01_bin.nc')
         return
     
-    assert_equal(tdat, load('vector_data01_bin.nc'))
+    assert_allclose(tdat, load('vector_data01_bin.nc'), atol=1e-6)
 
-# class warnings_testcase(unittest.TestCase):
-#     def test_read_warnings(self):
-#         with self.assertRaises(Exception):
-#             wh.read_rdi(tb.exdt('H-AWAC_test01.wpr'))
-#         with self.assertRaises(Exception):
-#             awac.read_nortek(tb.exdt('BenchFile01.ad2cp'))
-#         with self.assertRaises(Exception):
-#             sig.read_signature(tb.exdt('AWAC_test01.wpr'))
     
 if __name__ == '__main__':
     test_do_avg()
