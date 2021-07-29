@@ -41,7 +41,7 @@ config = dict(
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.rotate', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
-    install_requires=['numpy', 'scipy', 'xarray', 'h5netcdf'],
+    install_requires=['numpy', 'scipy', 'xarray', 'netcdf4'],
     provides=['dolfyn', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'], 
 )
