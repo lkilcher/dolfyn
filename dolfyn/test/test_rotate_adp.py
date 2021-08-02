@@ -2,8 +2,8 @@ from dolfyn.test import test_read_adp as tr
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.api import rotate2, calc_principal_heading
 import numpy as np
-from xarray.testing import assert_allclose, assert_equal
-from numpy.testing import assert_allclose as assert_ac
+from xarray.testing import assert_allclose
+import numpy.testing as npt
 
 
 def test_rotate_beam2inst(make_data=False):
@@ -101,11 +101,11 @@ def test_rotate_inst2earth(make_data=False):
     assert_allclose(td, cd, atol=1e-5)
     assert_allclose(tdwr2, cdwr2, atol=1e-5)
     assert_allclose(td_awac, tr.dat_awac, atol=1e-5)
-    #assert_ac(td_awac.vel.values, tr.dat_awac.vel.values, rtol=1e-7, atol=1e-3)
+    #npt.assert_allclose(td_awac.vel.values, tr.dat_awac.vel.values, rtol=1e-7, atol=1e-3)
     assert_allclose(td_sig, cd_sig, atol=1e-5)
     assert_allclose(td_sig_i, cd_sig_i, atol=1e-5)
     assert_allclose(td_sig_ie, tr.dat_sig_ie, atol=1e-5)
-    assert_ac(td_sig_o.vel, tr.dat_sig_ie.vel, atol=1e-5)
+    npt.assert_allclose(td_sig_o.vel, tr.dat_sig_ie.vel, atol=1e-5)
 
 
 def test_rotate_earth2inst():
@@ -141,7 +141,7 @@ def test_rotate_earth2inst():
     assert_allclose(td_sig, cd_sig, atol=1e-5)
     #known failure due to orientmat, see test_vs_nortek
     #assert_allclose(td_sig_i, cd_sig_i, atol=1e-3)
-    assert_ac(td_sig_i.accel.values, cd_sig_i.accel.values, atol=1e-3)
+    npt.assert_allclose(td_sig_i.accel.values, cd_sig_i.accel.values, atol=1e-3)
 
 
 def test_rotate_earth2principal(make_data=False):

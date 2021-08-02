@@ -3,6 +3,8 @@ from scipy.signal import medfilt
 import xarray as xr
 from ..tools import misc as tbx
 from ..rotate.api import rotate2
+from ..rotate.base import q2orient
+import warnings
 
 
 def find_surface(adcpo, thresh=10, nfilt=None):
@@ -273,11 +275,23 @@ def medfilt_orient(adcpo, nfilt=7):
     scipy.signal.medfilt
 
     """
-    do_these = ['pitch', 'roll', 'heading']
-    for nm in do_these:
-        adcpo[nm].values = medfilt(adcpo[nm].values, nfilt)
+    if getattr(adcpo, 'has_imu'):
+        #warnings.warn("Not recommended for instruments with an AHRS")
+        q_filt = np.zeros(adcpo.quaternion.shape)
+        for i in range(adcpo.quaternion.q.size):
+            q_filt[i] = medfilt(adcpo.quaternion[i].values, nfilt)
+        adcpo.quaternion.values = q_filt
         
-    return adcpo.drop_vars('orientmat')
+        adcpo['orientmat'] = q2orient(adcpo.quaternion)
+        return adcpo
+    
+    else:
+        # non Nortek AHRS-equipped instruments
+        do_these = ['pitch', 'roll', 'heading']
+        for nm in do_these:
+            adcpo[nm].values = medfilt(adcpo[nm].values, nfilt)
+            
+        return adcpo.drop_vars('orientmat')
 
 
 def fillgaps_time(adcpo, method='pchip', max_gap=None):

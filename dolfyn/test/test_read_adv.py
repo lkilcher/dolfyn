@@ -4,8 +4,8 @@ from dolfyn.rotate.api import set_inst2head_rotmat
 import dolfyn.io.nortek as vector
 from dolfyn.io.api import read_example as read
 import dolfyn.test.base as tb
-from xarray.testing import assert_equal
-sys.stdout = open(os.devnull, 'w') # block printing output
+from xarray.testing import assert_allclose
+
 load = tb.load_ncdata
 save = tb.save_ncdata
 
@@ -33,8 +33,8 @@ def test_read(make_data=False):
     tdm2 = read('vector_data_imu01.VEC',
                 userdata=tb.exdt('vector_data_imu01.userdata.json'),
                 nens=100)
-    td_debug = tb.drop_config(vector.read_nortek(tb.exdt('vector_data_imu01.VEC'), 
-                              debug=True, do_checksum=True, nens=100))
+    #td_debug = tb.drop_config(vector.read_nortek(tb.exdt('vector_data_imu01.VEC'), 
+    #                          debug=True, do_checksum=True, nens=100))
     
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
@@ -48,15 +48,15 @@ def test_read(make_data=False):
         save(tdm2, 'vector_data_imu01-json.nc')
         return
     
-    assert_equal(td, dat)
-    assert_equal(tdm, dat_imu)
-    assert_equal(tdb, dat_burst)
-    assert_equal(tdm2, dat_imu_json)
-    assert_equal(td_debug, tdm2)
+    assert_allclose(td, dat, atol=1e-6)
+    assert_allclose(tdm, dat_imu, atol=1e-6)
+    assert_allclose(tdb, dat_burst, atol=1e-6)
+    assert_allclose(tdm2, dat_imu_json, atol=1e-6)
+    #assert_allclose(td_debug, tdm2, atol=1e-6)
     
 
 if __name__ == '__main__':
+    sys.stdout = open(os.devnull, 'w') # block printing output
     test_save()
     test_read()
-    
-sys.stdout = sys.__stdout__ # restart printing output
+    sys.stdout = sys.__stdout__ # restart printing output

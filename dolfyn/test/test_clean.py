@@ -3,7 +3,7 @@ from dolfyn.test import test_read_adp as tp
 import dolfyn.adv.api as avm
 import dolfyn.adp.api as apm
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
-from xarray.testing import assert_equal, assert_allclose
+from xarray.testing import assert_allclose
 
 
 def test_GN2002(make_data=False):
@@ -16,7 +16,7 @@ def test_GN2002(make_data=False):
         save(td, 'vector_data01_uclean.nc')
         return
 
-    assert_equal(td, load('vector_data01_uclean.nc'))
+    assert_allclose(td, load('vector_data01_uclean.nc'), atol=1e-6)
     
     
 def test_spike_thresh(make_data=False):
@@ -29,7 +29,7 @@ def test_spike_thresh(make_data=False):
         save(td, 'vector_data01_sclean.nc')
         return
 
-    assert_equal(td, load('vector_data01_sclean.nc'))
+    assert_allclose(td, load('vector_data01_sclean.nc'), atol=1e-6)
     
     
 def test_range_limit(make_data=False):
@@ -42,7 +42,7 @@ def test_range_limit(make_data=False):
         save(td, 'vector_data01_rclean.nc')
         return
 
-    assert_equal(td, load('vector_data01_rclean.nc'))
+    assert_allclose(td, load('vector_data01_rclean.nc'), atol=1e-6)
     
 
 def test_clean_upADCP(make_data=False):
@@ -75,7 +75,7 @@ def test_clean_downADCP(make_data=False):
         save(td, 'Sig500_Echo_clean.nc')
         return
     
-    assert_equal(td, load('Sig500_Echo_clean.nc'))
+    assert_allclose(td, load('Sig500_Echo_clean.nc'), atol=1e-6)
     
 def test_orient_filter(make_data=False):
     td_sig = tp.dat_sig_i.copy(deep=True)

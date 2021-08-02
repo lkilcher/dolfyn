@@ -4,7 +4,7 @@ import dolfyn.adv.api as avm
 from dolfyn.rotate.api import rotate2, set_declination
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
 import numpy as np
-from xarray.testing import assert_equal, assert_allclose
+from xarray.testing import assert_allclose
 
 def test_motion_adv(make_data=False):
     #mc = avm.correct_motion()
@@ -41,9 +41,8 @@ def test_motion_adv(make_data=False):
 
     cdm10 = load('vector_data_imu01_mcDeclin10.nc')
     
-    assert_equal(tdm, load('vector_data_imu01_mc.nc'))
-    assert_equal(tdm10, tdmj)
-    # apparently reloading this still fails assert_equal
+    assert_allclose(tdm, load('vector_data_imu01_mc.nc'), atol=1e-7)
+    assert_allclose(tdm10, tdmj, atol=1e-7)
     assert_allclose(tdm0, tdm, atol=1e-7)
     assert_allclose(tdm10, cdm10, atol=1e-7)
     assert_allclose(tdmE, cdm10, atol=1e-7)

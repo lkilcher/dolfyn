@@ -1,5 +1,11 @@
-from __future__ import division
 from datetime import datetime, timedelta
+
+
+def _fullyear(year):
+    if year > 100:
+        return year
+    year += 1900 + 100 * (year < 90)
+    return year
 
 
 def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
@@ -146,11 +152,3 @@ def matlab2date(matlab_dn):
         time.append(day + dayfrac)
         
     return time
-
-
-def _fullyear(year):
-    if year > 100:
-        return year
-    year += 1900 + 100 * (year < 90)
-    return year
-

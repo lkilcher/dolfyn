@@ -7,7 +7,7 @@ from struct import unpack
 import warnings
 from . import nortek2_defs as defs
 from . import nortek2lib as lib
-from .base import WrongFileType, read_userdata, create_dataset, handle_nan
+from .base import WrongFileType, read_userdata, create_dataset
 from ..rotate.vector import _euler2orient
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -287,9 +287,7 @@ class Ad2cpReader(object):
                 else:
                     self.unknown_ID_count[id] += 1
                 self.f.seek(hdr['sz'], 1)
-            # It's unfortunate that all of this count checking is so
-            # complex, but this is the best I could come up with right
-            # now.
+            # Count checking
             if c + ens_start + 1 >= nens_total:
                 # Make sure we're not at the end of the count list.
                 continue
@@ -424,20 +422,6 @@ def reorg(dat):
             if ky in dnow:
                 outdat['sys'][ky + tag] = dnow[ky]  
 
-        # for grp, keys in defs._burst_group_org.items():
-        #     if grp not in outdat and \
-        #         len(set(defs._burst_group_org[grp])
-        #             .intersection(outdat.keys())):
-        #             outdat[grp] = {} #db.TimeData()
-        #     for ky in keys:
-        #         if ky == grp and ky in outdat:
-        #             tmp = outdat.pop(grp)
-        #             outdat[grp] = {} #db.TimeData()
-        #             outdat[grp][ky] = tmp
-        #             #print(ky, tmp)
-        #         if ky + tag in outdat:
-        #             outdat[grp][ky + tag] = outdat.pop(ky + tag)
-
     # Move 'altimeter raw' data to it's own down-sampled structure
     if 26 in dat:
         ard = outdat['altraw']
@@ -465,7 +449,7 @@ def reorg(dat):
     
     # Instrument direction
     # 0: XUP, 1: XDOWN, 2: YUP, 3: YDOWN, 4: ZUP, 5: ZDOWN, 
-    # 7: AHRS, handle as ZUP?
+    # 7: AHRS, handle as ZUP
     nortek_orient = {0:'horizontal', 1:'horizontal', 2:'horizontal',
                      3:'horizontal', 4:'up', 5:'down', 7:'AHRS'}
     outdat['attrs']['orientation'] = nortek_orient[tmp['orient_up'][0]]
@@ -475,7 +459,6 @@ def reorg(dat):
     for ky in ['accel', 'angrt', 'mag']:
         for dky in outdat['data_vars'].keys():
             if dky == ky or dky.startswith(ky + '_'):
-                # outdat.props['rotate_vars'].update({'orient.' + dky})
                 outdat['attrs']['rotate_vars'].append(dky)
     if 'vel_bt' in outdat['data_vars']:
         outdat['attrs']['rotate_vars'].append('vel_bt')

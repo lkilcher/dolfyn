@@ -2,7 +2,6 @@
 This module provides the routines for reading data from Nortek AWAC and Vector
 data files.
 """
-
 import numpy as np
 import xarray as xr
 from struct import unpack
@@ -15,27 +14,6 @@ from ..tools import misc as tbx
 from ..rotate.vector import calc_omat as _calc_omat
 from ..rotate.base import _set_coords
 from ..rotate import api as rot
-
-
-# def recatenate(obj):
-#     out = obj[0].__class__(_type=obj[0]['_type'])
-#     for ky in list(obj[0].keys()):
-#         if ky in ['__data_groups__', '_type']:
-#             continue
-#         val0 = obj[0][ky]
-#         if isinstance(val0, np.ndarray) and val0.size > 1:
-#             out[ky] = np.concatenate([val[ky][..., None] for val in obj],
-#                                      axis=-1)
-#         else:
-#             out[ky] = np.array([val[ky] for val in obj])
-#     return out
-
-
-def int2binarray(val, n):
-    out = np.zeros(n, dtype='bool')
-    for idx, n in enumerate(range(n)):
-        out[idx] = val & (2 ** n)
-    return out
 
 
 def read_nortek(filename,
@@ -122,9 +100,14 @@ def _bcd2char(cBCD):
     c += 10 * (cBCD >> 4)
     return c
 
-
 def _bitshift8(val):
     return val >> 8
+
+def int2binarray(val, n):
+    out = np.zeros(n, dtype='bool')
+    for idx, n in enumerate(range(n)):
+        out[idx] = val & (2 ** n)
+    return out
 
 
 class NortekReader(object):
@@ -222,10 +205,8 @@ class NortekReader(object):
             self.read_user_cfg()
         else:
             raise Exception(err_msg)
-        # if self.config.hardware.serialNum[0:3].upper() == 'WPR'
         if self.config['serialNum'][0:3].upper() == 'WPR':
             self.config['config_type'] = 'AWAC'
-        # if self.config.hardware.serialNum[0:3].upper() == 'VEC'
         elif self.config['serialNum'][0:3].upper() == 'VEC':
             self.config['config_type'] = 'ADV'
         # Initialize the instrument type:
@@ -233,7 +214,7 @@ class NortekReader(object):
         # This is the position after reading the 'hardware',
         # 'head', and 'user' configuration.
         pnow = self.pos
-        # Step 1.2
+
         # Run the appropriate initialization routine (e.g. init_ADV).
         getattr(self, 'init_' + self._inst)()
         self.f.close()  # This has a small buffer, so close it.
@@ -244,10 +225,6 @@ class NortekReader(object):
         self.f.seek(pnow, 0)  # Seek to the previous position.
         
         props = self.data['attrs']
-        #if self.config.user.NBurst > 0:
-        #    props['DutyCycle_NBurst'] = self.config.user.NBurst
-        #    props['DutyCycle_NCycle'] = (self.config.user.MeasInterval *
-        #                                 self.config.fs)
         if self.config['NBurst'] > 0:
             props['DutyCycle_NBurst'] = self.config['NBurst']
             props['DutyCycle_NCycle'] = (self.config['MeasInterval'] *
@@ -508,11 +485,7 @@ class NortekReader(object):
         dat['data_vars'].pop('PressureMSB')
         dat['data_vars'].pop('PressureLSW')
 
-        # # I must be able to calculate this here, right?
-        # # Answer: NO. Nortek can't tell me how to do that. :(
-        # dat.props['doppler_noise'] = [0, 0, 0]
         # Apply velocity scaling (1 or 0.1)
-        #dat['vel'] *= self.config['user']['mode']['vel_scale']
         dat['data_vars']['vel'] *= self.config['mode']['vel_scale']
         
     def read_vec_data(self,):
@@ -567,8 +540,6 @@ class NortekReader(object):
         dat['sys']['_sysi'] = ~np.isnan(t)
         # These are the indices in the sysdata variables
         # that are not interpolated.
-        #pdb.set_trace()
-        #nburst = self.config.user.NBurst
         nburst = self.config['NBurst']
         dat['data_vars']['orientation_down'] = tbx.nans(len(t), dtype='bool')
         if nburst == 0:
@@ -615,7 +586,6 @@ class NortekReader(object):
         """
         # ID: 0x11 = 17
         c = self.c
-        # Need to make this a vector...
         if self.debug:
             print('Reading vector system data (0x11) ping #{} @ {}...'
                   .format(self.c, self.pos))
@@ -840,8 +810,8 @@ class NortekReader(object):
                                                   (idx + n+1) * nbins]
         self.checksum(byts)
         self.c += 1
-        if self.debug:
-            print('Done reading')
+        #if self.debug:
+        #    print('Done reading')
         
     def sci_awac_profile(self,):
         self._sci_data(nortek_defs.awac_profile)
@@ -853,15 +823,11 @@ class NortekReader(object):
                     600: 0.0797,
                     400: 0.1195}
         h_ang = 25 * (np.pi / 180)  # The head angle is 25 degrees for all awacs.
-        # cs = float(self.config.user.BinLength) / 256. * \
-        #     cs_coefs[self.config.head.freq] * np.cos(h_ang)
-        # bd = self.config.user.Transmit['blank_distance'] * \
         cs = round(float(self.config['BinLength']) / 256. * \
                    cs_coefs[self.config['freq']] * np.cos(h_ang), ndigits=1)
         bd = round(self.config['Transmit']['blank_distance'] * \
                    0.0229 * np.cos(h_ang) - cs, ndigits=1)
         
-        # Range should be blank + [1:n_cells]*cell_size - jrm
         r = (np.float32(np.arange(self.config['NBins']))+1)*cs + bd
         self.data['coords']['range'] = r
         self.data['attrs']['cell_size'] = cs
@@ -888,9 +854,6 @@ class NortekReader(object):
         dat = self.data = {'data_vars':{},'coords':{},'attrs':{},
                            'units':{},'sys':{}}
         dat['attrs']['config'] = self.config
-        # for nm in self.config:
-        #     dat['attrs'][nm] = self.config[nm]
-        #dat.props = {}
         dat['attrs']['inst_make'] = 'Nortek'
         dat['attrs']['inst_model'] = 'Vector'
         dat['attrs']['inst_type'] = 'ADV'
@@ -910,8 +873,6 @@ class NortekReader(object):
         dat = self.data = {'data_vars':{},'coords':{},'attrs':{},
                            'units':{},'sys':{}}
         dat['attrs']['config'] = self.config
-        # for nm in self.config:
-        #     dat['attrs'][nm] = self.config[nm]
         dat['attrs']['inst_make'] = 'Nortek'
         dat['attrs']['inst_model'] = 'AWAC'
         dat['attrs']['inst_type'] = 'ADCP'
@@ -953,17 +914,6 @@ class NortekReader(object):
                         _bcd2char(hour), 
                         _bcd2char(min), 
                         _bcd2char(sec)).timestamp()
-        # try:
-        #     return time.date2num(time.datetime(
-        #         time._fullyear(_bcd2char(year)),
-        #         _bcd2char(month),
-        #         _bcd2char(day),
-        #         _bcd2char(hour),
-        #         _bcd2char(min),
-        #         _bcd2char(sec)
-        #     ))
-        # except ValueError:
-        #     return np.NaN
         
     def findnext(self, do_cs=True):
         """
@@ -1062,7 +1012,21 @@ class NortekReader(object):
     def __enter__(self,):
         return self
 
+
 def crop_data(obj, range, n_lastdim):
     for nm, dat in obj.items():
         if isinstance(dat, np.ndarray) and (dat.shape[-1]==n_lastdim):
             obj[nm] = dat[..., range]
+            
+# def recatenate(obj):
+#     out = obj[0].__class__(_type=obj[0]['_type'])
+#     for ky in list(obj[0].keys()):
+#         if ky in ['__data_groups__', '_type']:
+#             continue
+#         val0 = obj[0][ky]
+#         if isinstance(val0, np.ndarray) and val0.size > 1:
+#             out[ky] = np.concatenate([val[ky][..., None] for val in obj],
+#                                      axis=-1)
+#         else:
+#             out[ky] = np.array([val[ky] for val in obj])
+#     return out

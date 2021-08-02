@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import dolfyn
 import dolfyn.adv.api as avm
 
 parser = argparse.ArgumentParser(
@@ -14,20 +15,13 @@ parser.add_argument('files',
 args = parser.parse_args()
 
 for fnm in args.files:
-    dat = avm.read.read_nortek(fnm)
+    dat = avm.read(fnm)
 
     # Set matlab 'datenum' time.
-    dat.add_data('datenum', dat.mpltime + 366., 'main')
+    dt = dolfyn.time.epoch2date(dat['time'])
+    dat['datenum'] = dolfyn.time.date2matlab(dt)
 
     outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
     print('Saving to %s.' % outnm)
     # Save the data.
-    dat.save_mat(outnm,
-                 groups=['main',
-                         'orient',
-                         'signal',
-                         '#error',
-                         '#env',
-                         '#sys',
-                         '#extra']
-                 )
+    dolfyn.io.api.save_mat(dat, outnm)
