@@ -1,6 +1,6 @@
 <img src="img/logo.png" width="70"> DOLfYN
 =======================
-[![Build](https://github.com/jmcvey3/dolfyn/actions/workflows/CI.yml/badge.svg)](https://github.com/jmcvey3/dolfyn/actions/workflows/CI.yml)
+![Build](https://github.com/jmcvey3/dolfyn/actions/workflows/build.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/jmcvey3/dolfyn/badge.svg?branch=master)](https://coveralls.io/github/jmcvey3/dolfyn?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/dolfyn-xarray/badge/?version=latest)](https://dolfyn-xarray.readthedocs.io/en/latest/?badge=latest)
 
