@@ -885,7 +885,14 @@ class NortekReader(object):
         dat['attrs']['avg_interval'] = self.config['AvgInterval']
         dat['attrs']['rotate_vars'] = ['vel']
         
-        self.n_samp_guess = int(self.filesize / self.code_spacing('0x20') + 1)
+        space = self.code_spacing('0x20')
+        if space==0:
+            # code spacing is zero if there's only 1 profile
+            self.n_samp_guess = 1
+        else: 
+            #!!! skips last profile
+            self.n_samp_guess = int(self.filesize / space + 1)          
+            
         self.config['fs'] = 1. / self.config['AvgInterval']
 
     @property
@@ -893,8 +900,7 @@ class NortekReader(object):
         if not hasattr(self, '_filesz'):
             pos = self.pos
             self.f.seek(0, 2)
-            # Seek to the end of the file to determine the
-            # filesize.
+            # Seek to the end of the file to determine the filesize.
             self._filesz = self.pos
             self.f.seek(pos, 0)  # Return to the initial position.
         return self._filesz
