@@ -18,13 +18,6 @@ jobs:
       with:
         lfs: true
         
-    - name: Set timezone
-      uses: szenius/set-timezone@v1.0
-      with:
-        timezoneLinux: "America/Los_Angeles"
-        #timezoneMacos: "America/Los_Angeles"
-        #timezoneWindows: "America/Los_Angeles"
-        
     - name: Checkout LFS datafiles
       run: git lfs checkout
 
