@@ -11,7 +11,6 @@ try:
 except NameError:
     file_types = io.IOBase
     
-    
 class WrongFileType(Exception):
     pass
 
@@ -63,11 +62,11 @@ def _read_userdata(fname):
 
 
 def handle_nan(data):
-    '''
+    """
     Finds nan's that cause issues in running the rotation algorithms
     and deletes them. 
     
-    '''
+    """
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
     l = data['coords']['time'].size
     
@@ -94,11 +93,11 @@ def handle_nan(data):
 
 
 def create_dataset(data):
-    '''
+    """
     Creates an xarray dataset from dictionary created from binary
     readers
     
-    '''
+    """
     ds = xr.Dataset()
     beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
     tag = ['_b5', '_echo', '_bt', '_gps']
@@ -225,8 +224,8 @@ def create_dataset(data):
     
     t_list = [t for t in ds.coords if 'time' in t]
     for ky in t_list:
-        ds[ky].attrs['description'] = 'seconds since 1/1/1970'
+        ds[ky].attrs['description'] = 'seconds since 1970-01-01T00:00:00'
         
     ds.attrs = data['attrs']
-    
+
     return ds

@@ -8,7 +8,7 @@ def _fullyear(year):
     return year
 
 
-def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
+def epoch2date(ds_time, offset_hr=0, to_str=False):
     '''
     Convert from epoch time (seconds since 1/1/1970) to a list 
     of datetime objects
@@ -17,11 +17,6 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
     ----------
     ds_time : xarray.DataArray
         Time coordinate data-array or single time element
-    
-    utc : logical, default=False
-        If True, converts to UTC. If False, data remains in instrument's 
-        timezone (unknown to dolfyn: is set at instrument deployment, 
-        usually sync'd to the user's computer)
     
     offset_hr : int
         Number of hours to offset time by (e.g. UTC -7 hours = PDT)
@@ -34,16 +29,19 @@ def epoch2date(ds_time, utc=False, offset_hr=0, to_str=False):
     time : datetime
         The converted datetime object or list(strings) 
         
+    Notes
+    -----
+    The specific time instance is set during deployment, usually sync'd to the
+    deployment computer. The time seen by |dlfn| is in the timezone of the 
+    deployment computer, which is unknown to |dlfn|.
+    
     '''
     ds_time = ds_time.values
     
     if ds_time.size==1:
         ds_time = [ds_time.item()]
     
-    if utc:
-        time = [datetime.utcfromtimestamp(t) for t in ds_time]
-    else:
-        time = [datetime.fromtimestamp(t) for t in ds_time]
+    time = [datetime.fromtimestamp(t) for t in ds_time]
         
     if offset_hr != 0:
         time = [t + timedelta(hours=offset_hr) for t in time]
@@ -99,9 +97,9 @@ def date2epoch(dt):
         Datetime converted to epoch time (seconds since 1/1/1970)
     
     '''
-    if not isinstance(dt, list):
+    if len(dt)==1 and not isinstance(dt, list):
         dt = [dt]
-    
+
     return [t.timestamp() for t in dt]
 
 
@@ -131,8 +129,7 @@ def date2matlab(dt):
     
     
 def matlab2date(matlab_dn):
-    '''
-    Convert MATLAB datenum to list of datetime objects
+    """Convert MATLAB datenum to list of datetime objects
     
     Parameters
     ----------
@@ -144,7 +141,7 @@ def matlab2date(matlab_dn):
     dt : datetime.datetime
         List of datetime objects
 
-    '''
+    """
     time = list()
     for i in range(len(matlab_dn)):
         day = datetime.fromordinal(int(matlab_dn[i]))

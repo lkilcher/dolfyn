@@ -5,7 +5,7 @@ you know you have fixed a bug, and wish to fix an existing test data
 set.
 """
 print(__doc__)
-## Have to run a couple times for the rotate codes
+## Have to run twice to reset the rotate test files
 # import test_read_adv as advr
 # import test_rotate_adv as advro
 # import test_read_adp as adpr

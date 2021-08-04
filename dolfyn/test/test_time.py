@@ -10,16 +10,14 @@ def test_epoch2date():
     
     dt = time.epoch2date(td.time)
     dt1 = time.epoch2date(td.time[0])
-    dt_utc = time.epoch2date(td.time, utc=True)
-    dt_pdt = time.epoch2date(td.time, utc=True, offset_hr=-7)
+    dt_off = time.epoch2date(td.time, offset_hr=-7)
     t_str = time.epoch2date(td.time, to_str=True)
     
     assert_equal(dt[0], datetime(2012, 6, 12, 12, 0, 2, 687283))
     assert_equal(dt1, [datetime(2012, 6, 12, 12, 0, 2, 687283)])
-    assert_equal(dt_utc[0], datetime(2012, 6, 12, 19, 0, 2, 687283))
-    assert_equal(dt_pdt[0], datetime(2012, 6, 12, 12, 0, 2, 687283))
+    assert_equal(dt_off[0], datetime(2012, 6, 12, 5, 0, 2, 687283))
     assert_equal(t_str[0], '2012-06-12 12:00:02.687283')
-    
+
 
 def test_datetime():
     td = tr.dat_imu.copy(deep=True)
