@@ -24,17 +24,15 @@ def test_save():
 
 
 def test_read(make_data=False):
-    td = read('vector_data01.VEC', nens=100)
-    tdm = read('vector_data_imu01.VEC',
-               userdata=False,
-               nens=100)
-    tdb = read('burst_mode01.VEC',
-               nens=100)
-    tdm2 = read('vector_data_imu01.VEC',
-                userdata=tb.exdt('vector_data_imu01.userdata.json'),
-                nens=100)
-    #td_debug = tb.drop_config(vector.read_nortek(tb.exdt('vector_data_imu01.VEC'), 
-    #                          debug=True, do_checksum=True, nens=100))
+    td = tb.drop_config(read('vector_data01.VEC', nens=100))
+    tdm = tb.drop_config(read('vector_data_imu01.VEC', 
+                              userdata=False, nens=100))
+    tdb = tb.drop_config(read('burst_mode01.VEC', nens=100))
+    tdm2 = tb.drop_config(read('vector_data_imu01.VEC',
+                               userdata=tb.exdt('vector_data_imu01.userdata.json'),  
+                               nens=100))
+    td_debug = tb.drop_config(vector.read_nortek(tb.exdt('vector_data_imu01.VEC'), 
+                              debug=True, do_checksum=True, nens=100))
     
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
@@ -52,7 +50,7 @@ def test_read(make_data=False):
     assert_allclose(tdm, dat_imu, atol=1e-6)
     assert_allclose(tdb, dat_burst, atol=1e-6)
     assert_allclose(tdm2, dat_imu_json, atol=1e-6)
-    #assert_allclose(td_debug, tdm2, atol=1e-6)
+    assert_allclose(td_debug, tdm2, atol=1e-6)
     
 
 if __name__ == '__main__':

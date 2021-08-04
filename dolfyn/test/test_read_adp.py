@@ -6,14 +6,13 @@ import dolfyn.io.nortek2 as sig
 import warnings
 import os, sys
 import unittest
-from xarray.testing import assert_allclose, assert_identical
+from xarray.testing import assert_allclose
 
 load = tb.load_ncdata
 save = tb.save_ncdata
 
 dat_rdi = load('RDI_test01.nc')
 dat_rdi_bt = load('RDI_withBT.nc')
-dat_rdi_i = load('RDI_test01_rotate_beam2inst.nc')
 dat_rdi_vm = load('vmdas01.nc')
 dat_wr1 = load('winriver01.nc')
 dat_wr2 = load('winriver02.nc')
@@ -38,14 +37,15 @@ def test_badtime():
 
 
 def test_io_rdi(make_data=False):
+    warnings.simplefilter('ignore', UserWarning)
     nens = 500
     td_rdi = tb.drop_config(read('RDI_test01.000'))
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=nens))
     td_vm = tb.drop_config(read('vmdas01.ENX', nens=nens))
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
-    #td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
-    #                                      nens=nens))
+    td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
+                                          nens=nens))
     
     if make_data:
         save(td_rdi, 'RDI_test01.nc')
@@ -60,7 +60,7 @@ def test_io_rdi(make_data=False):
     assert_allclose(td_vm, dat_rdi_vm, atol=1e-6)
     assert_allclose(td_wr1, dat_wr1, atol=1e-6)
     assert_allclose(td_wr2, dat_wr2, atol=1e-6)
-    #assert_allclose(td_debug, td_rdi_bt, atol=1e-6)
+    assert_allclose(td_debug, td_rdi_bt, atol=1e-6)
 
 
 def test_io_nortek(make_data=False):
@@ -69,8 +69,8 @@ def test_io_nortek(make_data=False):
                                   nens=nens))
     td_awac_ud = tb.drop_config(read('AWAC_test01.wpr', nens=nens))
     td_hwac = tb.drop_config(read('H-AWAC_test01.wpr'))
-    #td_debug = tb.drop_config(awac.read_nortek(tb.exdt('AWAC_test01.wpr'), 
-    #                          debug=True, do_checksum=True, nens=nens))
+    td_debug = tb.drop_config(awac.read_nortek(tb.exdt('AWAC_test01.wpr'), 
+                              debug=True, do_checksum=True, nens=nens))
 
     if make_data:
         save(td_awac, 'AWAC_test01.nc')
@@ -81,7 +81,7 @@ def test_io_nortek(make_data=False):
     assert_allclose(td_awac, dat_awac, atol=1e-6)
     assert_allclose(td_awac_ud, dat_awac_ud, atol=1e-6)
     assert_allclose(td_hwac, dat_hwac, atol=1e-6)
-    #assert_allclose(td_awac_ud, td_debug, atol=1e-6)
+    assert_allclose(td_awac_ud, td_debug, atol=1e-6)
     
 
 def test_io_nortek2(make_data=False):
@@ -118,16 +118,16 @@ def test_io_nortek2(make_data=False):
     
     
 def test_matlab_io(make_data=False):
-    mat_rdi_bt = tb.load_matlab('dat_rdi_bt')
-    mat_sig_ieb = tb.load_matlab('dat_sig_ieb')
-    
     if make_data:
-        tb.save_matlab(dat_rdi_bt, 'dat_rdi_bt')
-        tb.save_matlab(dat_sig_ieb, 'dat_sig_ieb')
+        tb.save_matlab(dat_rdi_bt, 'dat_rdi_bt.mat')
+        tb.save_matlab(dat_sig_ieb, 'dat_sig_ieb.mat')
         return
+    
+    mat_rdi_bt = tb.load_matlab('dat_rdi_bt.mat')
+    mat_sig_ieb = tb.load_matlab('dat_sig_ieb.mat')
         
-    assert_identical(mat_rdi_bt, dat_rdi_bt)
-    assert_identical(mat_sig_ieb, dat_sig_ieb)
+    assert_allclose(mat_rdi_bt, dat_rdi_bt, atol=1e-6)
+    assert_allclose(mat_sig_ieb, dat_sig_ieb, atol=1e-6)
     
     
 class warnings_testcase(unittest.TestCase):

@@ -2,12 +2,12 @@ import numpy as np
 import scipy.io as sio
 import xarray as xr
 import pkg_resources
-
 from .nortek import read_nortek
 from .nortek2 import read_signature
 from .rdi import read_rdi
 from .base import create_dataset, WrongFileType as _WTF
 from ..rotate.base import _set_coords
+from ..time import epoch2date, date2epoch, date2matlab, matlab2date
 
 
 def read(fname, userdata=True, nens=None):
@@ -74,8 +74,7 @@ def read_example(name, **kwargs):
 
 
 def save(dataset, filename):
-    """
-    Save xarray dataset as netCDF (.nc).
+    """Save xarray dataset as netCDF (.nc).
     
     Parameters
     ----------
@@ -92,11 +91,12 @@ def save(dataset, filename):
     if filename[-3:] != '.nc':
         filename += '.nc'
     
+    # Dropping the detailed configuration stats because netcdf can't save it
     for key in list(dataset.attrs.keys()):
         if 'config' in key:
             dataset.attrs.pop(key)
     
-    # handling complex values
+    # Handling complex values for netCDF4
     dataset.attrs['complex_vars'] = []
     for var in dataset.data_vars:
         if np.iscomplexobj(dataset[var]):
@@ -105,17 +105,18 @@ def save(dataset, filename):
             
             dataset = dataset.drop(var)
             dataset.attrs['complex_vars'].append(var)
+            
+    # Keeping time in raw file's time instance, unaware of timezone
+    t_list = [t for t in dataset.coords if 'time' in t]
+    for ky in t_list:
+        dt = epoch2date(dataset[ky])
+        dataset = dataset.assign_coords({ky: dt})
         
-    dataset.to_netcdf(filename, 
-                      format='NETCDF4', 
-                      engine='netcdf4', #'h5netcdf', 
-                      #invalid_netcdf=True,
-                      )
+    dataset.to_netcdf(filename, format='NETCDF4', engine='netcdf4')
     
 
 def load(filename):
-    """
-    Load xarray dataset from netCDF (.nc)
+    """Load xarray dataset from netCDF (.nc)
     
     Parameters
     ----------
@@ -126,31 +127,35 @@ def load(filename):
     if filename[-3:] != '.nc':
         filename += '.nc'
         
-    # this engine reorders attributes into alphabetical order
-    ds = xr.load_dataset(filename, 
-                         engine='netcdf4', #'h5netcdf',
-                         )
+    ds = xr.load_dataset(filename, engine='netcdf4')
 
-    # xarray converts single list items to ints or strings
+    # Single item lists were saved as 'int' or 'str'
     if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars[0])==1:
         ds.attrs['rotate_vars'] = [ds.rotate_vars]
         
-    # reloads lists as numpy arrays??? oi vey netcdf
+    # Python lists were saved as numpy arrays
     if hasattr(ds, 'rotate_vars') and type(ds.rotate_vars) is not list:
         ds.attrs['rotate_vars'] = list(ds.rotate_vars)
-        
-    if hasattr(ds, 'complex_vars'):
+    
+    # Rejoin complex numbers
+    if hasattr(ds, 'complex_vars') and len(ds.complex_vars):
         for var in ds.complex_vars:
             ds[var] = ds[var+'_real'] + ds[var+'_imag'] * 1j
             ds = ds.drop_vars([var+'_real', var+'_imag'])
-        ds.attrs.pop('complex_vars')
+    ds.attrs.pop('complex_vars')
     
+    # Reload raw file's time instance since the timezone is unknown
+    t_list = [t for t in ds.coords if 'time' in t]
+    for ky in t_list:
+        dt = ds[ky].values.astype('datetime64[us]').tolist()
+        ds = ds.assign_coords({ky: date2epoch(dt)})
+        ds[ky].attrs['description'] = 'seconds since 1970-01-01T00:00:00'
+
     return ds
 
 
-def save_mat(dataset, filename):
-    """
-    Save xarray dataset as a MATLAB (.mat) file
+def save_mat(dataset, filename, datenum=True):
+    """Save xarray dataset as a MATLAB (.mat) file
     
     Parameters
     ----------
@@ -159,6 +164,9 @@ def save_mat(dataset, filename):
     
     filename : str
         Filename and/or path with the '.mat' extension
+
+    datenum : bool
+        Converts epoch time into MATLAB datenum
         
     Notes
     -----
@@ -171,22 +179,33 @@ def save_mat(dataset, filename):
     """
     if filename[-4:] != '.mat':
         filename += '.mat'
+        
+    # Convert from epoch time to datenum
+    if datenum:
+        t_list = [t for t in dataset.coords if 'time' in t]
+        for ky in t_list:
+            dt = date2matlab(epoch2date(dataset[ky]))
+            dataset = dataset.assign_coords({ky: dt})
     
+    # Save xarray structure with more descriptive structure names
     matfile = {'vars':{},'coords':{},'config':{},'units':{}}
     for key in dataset.data_vars:
         matfile['vars'][key] = dataset[key].values
+        
         if hasattr(dataset[key], 'units'):
             matfile['units'][key] = dataset[key].units
+            
     for key in dataset.coords:
         matfile['coords'][key] = dataset[key].values
+        
     matfile['config'] = dataset.attrs
     
     sio.savemat(filename, matfile)
     
     
-def load_mat(filename):
-    """
-    Load xarray dataset from MATLAB (.mat) file (complimentary to `save_mat()`)
+def load_mat(filename, datenum=True):
+    """Load xarray dataset from MATLAB (.mat) file (complimentary to 
+    `save_mat()`)
     
     .mat file must contain the fields: {vars, coords, config, units},
     where 'coords' contain the dimensions of all variables in 'vars'.
@@ -195,6 +214,9 @@ def load_mat(filename):
     ----------
     filename : str
         Filename and/or path with the '.mat' extension
+        
+    datenum : bool
+        Converts MATLAB datenum back into epoch time
         
     See Also
     --------
@@ -207,7 +229,6 @@ def load_mat(filename):
     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
     
     ds_dict = {'vars':{},'coords':{},'config':{},'units':{}}
-    
     for nm in ds_dict:
         key_list = data[nm]._fieldnames
         for ky in key_list:
@@ -216,8 +237,19 @@ def load_mat(filename):
     ds_dict['data_vars'] = ds_dict.pop('vars')
     ds_dict['attrs'] = ds_dict.pop('config')
     
+    # Recreate dataset
     ds = create_dataset(ds_dict)
     ds = _set_coords(ds, ds.coord_sys)
+    
+    # Convert datenum time back into epoch time
+    if datenum:
+        t_list = [t for t in ds.coords if 'time' in t]
+        for ky in t_list:
+            dt = date2epoch(matlab2date(ds[ky].values))
+            ds = ds.assign_coords({ky: dt})
+            ds[ky].attrs['description'] = 'seconds since 1970-01-01T00:00:00'
+    
+    # Restore 'rotate vars" to a proper list
     ds.attrs['rotate_vars'] = [x.strip(' ') for x in list(ds.rotate_vars)]
     
     return ds
