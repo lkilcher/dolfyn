@@ -283,7 +283,7 @@ class TurbBinner(VelBinner):
         # Assign local names
         U_mag = dat_avg.Veldata.U_mag.values
         I_tke = dat_avg.Veldata.I_tke.values
-        theta = dat_avg.Veldata.U_dir.values*(np.pi/180) - \
+        theta = np.angle(dat_avg.Veldata.U.values) - \
                 self._up_angle(dat_raw.Veldata.U.values)
         omega = dat_avg.S.omega.values
 

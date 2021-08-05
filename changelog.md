@@ -7,86 +7,90 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Version 0.13.0
 	- Xarray refactoring:
 	- Rotation code:
-		- `rotate2`, `set_inst2head_rotmat`, `calc_principal_heading`, and `set_declination` now located in 'rotate.api'
+		- `rotate2()`, `set_inst2head_rotmat()`, `calc_principal_heading()`, and `set_declination()` now located in `rotate.api`
 		- Orientation wasn't taken into account for Nortek Signatures
-			- Solved Nortek Signature rotation issues for fixed up vs down 
-			- AHRS orientmat is the transpose of dolfyn's HPR-calculated
-		- Verified TRDI, AWAC, and Vector match h5py dolfyn output
+			- Fixed Nortek Signature rotation issues for fixed up vs down
+			- Fixed AHRS-equipped Nortek Signature rotation issues
+			- AHRS orientmat is the transpose of dolfyn's HPR-calculated orientation matrix
 			
 	- Motion correction code:
-		- motion correction object has been removed
+		- `CorrectMotion` object has been removed
 		
-	- TimeData, Velocity, TKEdata class refactoring:
-		- TimeData is now void
-		- Combined Velocity and TKEdata in Velocity
-		- Velocity has xarray accessor 'Veldata'
+	- `TimeData`, `Velocity`, `TKEdata` class refactoring:
+		- `TimeData` class is removed
+		- Combined `Velocity` and `TKEdata` classes into `Velocity`
+		- Velocity set up with xarray accessor `Veldata`
 		- Moved methods (`set_declination`, `set_inst2head_rotmat`) into the 'rotate' module
-		- All properties now return xr.DataArrays
+		- All properties now return xarray.DataArrays
 		
 	- TimeBinner, VelBinner, TurbBinner class refactoring:
-		- Ensured calc_vel_csd ran off the standard coherence length n_fft (bin size / 6)
+		- Ensured `calc_vel_csd()` ran off the standard coherence length n_fft (bin size / 6)
 		- fft frequency is now a xarray coordinate rather than its own variable
-		- Added "freq_units" option to 'calc_vel_psd' and 'calc_vel_csd' using either frequency in Hz (f) or rad/s (omega)
-				- Renamed 'calc_omega' to 'calc_freq' and added the Hz or rad/s option
-				- Calling TurbBinner/'calc_turbulence' will automatically still use 'rad/s'
+		- Added "freq_units" option to `calc_vel_psd()` and `calc_vel_csd()` using either frequency in Hz (f) or rad/s (omega)
+				- Renamed `calc_omega()` to `calc_freq()` and added the Hz or rad/s option
+				- Calling `TurbBinner`/`calc_turbulence()` will automatically still use 'rad/s'
 		- Set all non-user functions to internal functions
 		- "do" functions take dataset as input, "calc" funtions take velocity dataarray input
-		- Added a property to calculate wavenumber k from the psd frequency vector
-		- Renamed the "sigma_Uh" variable to "U_std" and added it as a function in 'do_avg'
-		- Renamed properties "Ecoh" to 'E_coh' and "Itke" to 'I_tke'
-		- Removed 'Itke_thresh' from TurbBinner as it is only used with the I_tke property
+		- Added a property to calculate wavenumber `k` from the psd frequency vector
+		- Updated `U_dir` property to return horizontal flow from north if in ENU coord sys
+		- Renamed the `sigma_Uh` variable to `U_std` and added it as a function in `do_avg()`
+		- Renamed properties `Ecoh` to `E_coh` and `Itke` to `I_tke`
+		- Removed `Itke_thresh` from `TurbBinner` as it is only used with the `I_tke` property
 		- Coherence and covariance functions
-			- Renamed 'cohere' and 'phase_angle' to 'calc_coh' and 'calc_phase_angle'
+			- Renamed `cohere()` and `phase_angle()` to `calc_coh()` and `calc_phase_angle()`
 			- Updated so that one can calculate coherence, auto-/cross-covariance with 1D or 3D velocity arrays
+			- Will run with different length (timedeltas) timeseries
 		- Updated turbulence dissipation functions return correctly for xarray
 			- LT83 or TE01 methods can take either the 3D velocity or a single velocity array
 			- SF method only can handle single array at a time
 				- leaving to user to average 'LT83' returns together if they'd like
 				- 'TE01' natively returns the averaged dissipation rate
-			- Changed '.mean()' to 'np.nanmean' so functions can handle nans
+		- Changed `.mean()` to `np.nanmean()` so functions can handle nans
 
 	- Cleaning code:
 		- Updated with xarray's native nan interpolation
 		- ADV functions now return a logical mask to mark bad data
-		- ADCP function automatically apply the mask
+		- ADCP function automatically applies the mask
 		
 	- Time:
-		- Removed mpltime support
-		- Added epoch - datetime - datestring conversion functions		
-		- Changed mpl time to epoch time
+		- Removed mpltime support and changed to epoch time (since 1/1/1970)
+		- Added epoch <-> datetime <-> datestring, MATLAB datenum conversion functions
+		
+	- Input/Output
+		- Added ability to save/load datasets into/from netCDF and MATLAB file formats
 
 	- Refactor binary readers
-			1. Binary files read into a dictionary of dictionaries using netcdf naming conventions
+			1. Binary files read into a dictionary of dictionaries using netCDF naming conventions
 			2. Wrote an xarray dataset constructor that'll build off that dictionary
-			3. Created the `_set_coords` subroutine located in `rotate.base` to set orientation coordinates
+			3. Created the `_set_coords()` function located in `rotate.base` to set orientation coordinates
 		- Step 1 completed
 			- Fixed AWAC temp scaling - Added 0.01 factor
-			- adjusted scaling on ambig_vel vars
+			- adjusted scaling on `ambig_vel` vars
 			- Added 0.1 scale factor for Signature magnetometer to return in units of uT
-			- changed dataset 'keys' so that they're more consistent (including adding underscores)
+			- changed dataset keys so that they're more consistent (including adding underscores)
 			- Fixed GPS timestamps for TRDI WinRiver and VMDAS data
 		- Step 2 & 3 - done
 			- Moved Vector rotation matrices from attributes to variables
 			- Removed user-nonsensical configuration data
 			- Added matlab I/O capabilities
-			- Added code to search for nan's in Nortek classic instrument's orientation data - bad determinant warning in 'orientmat' at indices {} error
+			- Added code to search for nan's in Nortek classic instrument's orientation data - bad determinant warning in `orientmat` at indices {} error
 			- Added code to trim GPS data to its native length - TRDI doesn't save lat/lon interpolated to velocity data timestamps
 
 	- Update testing:
 		- Added check signature velocity rotations against nortek matfiles - done
 		- Changed true/false attributes to 1/0 - Logical values are auto-dropped when saving netCDF
 		- Dropped testing for python 2.x because xarray doesn't support it
-		- Updated test data to handle `np.nanmean` changes in source code
+		- Updated test data to handle `np.nanmean()` changes in source code
 		- Verified xarray output against h5py-based source code
 		- Testing and h5 folders not included in setup.py
+		- Increased testing coverage to cover entire code
 
 	- Fix error loading VMDAS-processed files
 	- Update documentation to build off 'make html'
-	- Set up Travis CI
 	- Fix calc_turbulence '__call__' error
 	- Fixed mathmatical error in 'range' calculation (bin 1 dist = blank dist + cell size)
 	- Fixed Nortek echosounder 'dB' scaling
-    - Switch from `'lonlat'` to `'latlon'` as the designated entry-name in `dat.props`
+    - Switch from `'lonlat` to `latlon` as the designated entry-name in `dat.attrs`
 
 ## Version 0.12.1
     - Handle `inst2head_rotmat`, this includes an API change:

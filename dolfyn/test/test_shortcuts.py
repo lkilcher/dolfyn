@@ -1,12 +1,14 @@
 from dolfyn.test import test_read_adv as tv
 from dolfyn.test.base import load_ncdata as load, save_ncdata as save
+from dolfyn import rotate2
 from xarray.testing import assert_allclose
 import xarray as xr
 import dolfyn.adv.api as avm
 
 class adv_setup():
     def __init__(self, tv):
-        self.dat = tv.dat.copy(deep=True)
+        dat = tv.dat.copy(deep=True)
+        self.dat = rotate2(dat, 'earth')
         self.tdat = avm.calc_turbulence(self.dat, n_bin=20.0, fs=self.dat.fs)
         
         short = xr.Dataset()
@@ -16,6 +18,7 @@ class adv_setup():
         short['U'] = self.tdat.Veldata.U
         short['U_mag'] = self.tdat.Veldata.U_mag
         short['U_dir'] = self.tdat.Veldata.U_dir
+        short['U_dir_N'] = self.dat.Veldata.U_dir
         short["upup_"] = self.tdat.Veldata.upup_
         short["vpvp_"] = self.tdat.Veldata.vpvp_
         short["wpwp_"] = self.tdat.Veldata.wpwp_

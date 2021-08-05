@@ -1,8 +1,6 @@
 from __future__ import division
 import numpy as np
 from .binned import TimeBinner
-#import warnings
-#from .rotate import base as rotb
 import xarray as xr
 
 
@@ -32,11 +30,6 @@ class Velocity():
         """The number of timesteps in the data object."""
         
         return self.ds.time.shape[0]
-
-    # @property
-    # def shape(self,):
-    #     """The shape of 'scalar' data in this data object."""
-    #     return self.u.shape
     
     @property
     def _make_model(self, ):
@@ -117,16 +110,26 @@ class Velocity():
     def U_dir(self,):
         """
         Angle of horizontal velocity vector, deg clockwise from
-        X/East/streamwise. Direction is "to", as opposed to "from".
+        X/North/streamwise. Direction is "to", as opposed to "from".
         """
-        return xr.DataArray(
-                    np.angle(self.U)*(180/np.pi),
-                    dims=self.U.dims,
-                    coords=self.U.coords,
-                    attrs={'units':'deg',
-                           'description':'''horizontal velocity flow direction, 
-                           CW from X/east/streamwise'''})
-
+        # Convert from radians to degrees
+        angle = np.angle(self.U)*(180/np.pi)
+        
+        if hasattr(self.ds, 'coord_sys') and self.ds.coord_sys=='earth':
+            # Convert heading from East to North
+            angle += 90 # -90 degrees East == 0 degrees North
+            idx = np.where(angle<-179)
+            angle[idx] += 360
+            dr = 'North'
+        else:
+            dr = 'East'
+        
+        return xr.DataArray(angle,
+                            dims=self.U.dims,
+                            coords=self.U.coords,
+                            attrs={'units':'deg',
+                           'description':'horizontal velocity flow direction, CW from X/' 
+                                          +dr+'/streamwise'})
     @property
     def tau_ij(self,):
         """Total stress tensor
