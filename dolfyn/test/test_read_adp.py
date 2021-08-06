@@ -45,7 +45,7 @@ def test_io_rdi(make_data=False):
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
     td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
-                                          nens=nens))
+                                           nens=nens))
     
     if make_data:
         save(td_rdi, 'RDI_test01.nc')

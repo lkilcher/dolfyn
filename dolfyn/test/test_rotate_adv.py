@@ -168,6 +168,8 @@ class warnings_testcase(unittest.TestCase):
         warn2.attrs['coord_sys'] = 'flow'
         warn3 = tr.dat.copy(deep=True)
         warn3.attrs['inst_model'] = 'ADV'
+        warn4 = tr.dat.copy(deep=True)
+        warn4.attrs['inst_model'] = 'adv'
         
         with self.assertRaises(Exception):
             rotate2(warn1, 'ship')
@@ -176,6 +178,8 @@ class warnings_testcase(unittest.TestCase):
         with self.assertRaises(Exception):
             set_inst2head_rotmat(warn3, np.eye(3))
             set_inst2head_rotmat(warn3, np.eye(3))
+        with self.assertRaises(Exception):
+            set_inst2head_rotmat(warn4, np.eye(3))
         
 
 if __name__=='__main__':

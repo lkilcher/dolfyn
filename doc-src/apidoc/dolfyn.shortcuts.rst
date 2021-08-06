@@ -17,6 +17,7 @@ return the horizontal velocity::
 
 	>> import dolfyn as dlfn
 	>> dat = dlfn.read_example('AWAC_test01.wpr')
+	
 	>> dat.Veldata.U_mag
 	<xarray.DataArray 'vel' (range: 20, time: 9997)>
 	array([[1.12594587, 0.82454599, 0.96503734, ..., 3.40359042, 3.34527587,

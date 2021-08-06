@@ -80,9 +80,9 @@ def test_calc_func(make_data=False):
     test_ds['acov'] = c.calc_acov(dat_vec.dat1.vel)
     test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel, dat_vec.dat2.vel)
     test_ds['tke_vec'] = c.calc_tke(dat_vec.dat1.vel)
-    test_ds['stress_vec'] = c.calc_stress(dat_vec.dat1.vel)
-    test_ds['S'] = c.calc_vel_psd(dat_vec.dat1.vel)
-    test_ds['cspec'] = c.calc_vel_csd(dat_vec.dat1.vel)
+    test_ds['stress'] = c.calc_stress(dat_vec.dat1.vel)
+    test_ds['spec'] = c.calc_vel_psd(dat_vec.dat1.vel)
+    test_ds['csd'] = c.calc_vel_csd(dat_vec.dat1.vel)
     
     if make_data:
         save(test_ds, 'test_analysis.nc')
@@ -119,7 +119,7 @@ def test_turb_bin(make_data=False):
     tdat = bnr(dat)
     acov = bnr.calc_acov(dat.vel)
     
-    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.S, tdat.Veldata.U_mag)
+    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.spec, tdat.Veldata.U_mag)
     tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.Veldata.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
     tdat['L'] = bnr.calc_L_int(acov, tdat.vel)

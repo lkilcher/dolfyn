@@ -18,18 +18,14 @@ dat_cln = apm.clean.correlation_filter(dat, thresh=50)
 dat_cln = dlfn.set_declination(dat_cln, 10) # 10 degrees East
 dat_earth = dlfn.rotate2(dat_cln, 'earth')
 
-# Define an averaging object, and create an 'ensembled' data set:
-binner = apm.VelBinner(n_bin=300, fs=dat.fs)
-dat_bin = binner.do_avg(dat_earth)
-
 # At any point you can save the data:
-dlfn.save(dat_bin, 'adcp_data.nc')
+dlfn.save(dat_earth, 'adcp_data.nc')
 
 # And reload the data:
-dat_bin_copy = dlfn.load('adcp_data.nc')
+dat_copy = dlfn.load('adcp_data.nc')
 
 plt.figure()
-plt.pcolormesh(dat_bin.time, dat_bin.range, dat_bin.Veldata.U_mag)
+plt.pcolormesh(dat_earch.time, dat_earch.range, dat_earth.Veldata.U_mag)
 plt.colorbar()
 plt.ylabel('Range [m]')
 plt.xlabel('Time')

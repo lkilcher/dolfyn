@@ -1,4 +1,3 @@
-from __future__ import division
 import numpy as np
 import scipy.signal as ss
 from scipy.integrate import cumtrapz
@@ -9,7 +8,7 @@ from ..rotate.api import rotate2
 import warnings
 
 
-def get_body2imu(make_model):
+def _get_body2imu(make_model):
     if make_model == 'nortek vector':
         # In inches it is: (0.25, 0.25, 5.9)
         return np.array([0.00635, 0.00635, 0.14986])
@@ -19,7 +18,7 @@ def get_body2imu(make_model):
         raise Exception("The imu->body vector is unknown for this instrument.")
 
 
-class CalcMotion(object):
+class _CalcMotion():
     """
     A 'calculator' for computing the velocity of points that are
     rigidly connected to an ADV-body with an IMU.
@@ -200,7 +199,7 @@ class CalcMotion(object):
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - get_body2imu(self.advo.Veldata._make_model)[:, None]
+        vec = vec - _get_body2imu(self.advo.Veldata._make_model)[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -233,10 +232,9 @@ def _calc_probe_pos(advo, separate_probes=False):
     """
     # According to the ADV_DataSheet, the probe-length radius is
     # 8.6cm @ 120deg from probe-stem axis.  If I subtract 1cm
-    # (!!!checkthis) to get acoustic receiver center, this is
-    # 7.6cm.  In the coordinate sys of the center of the probe
+    # to get acoustic receiver center, this is 7.6cm.  
+    # In the coordinate sys of the center of the probe
     # then, the positions of the centers of the receivers is:
-    # p = advo.props
     # if separate_probes and p['inst_make'].lower() == 'nortek' and\
     #    p['inst_model'].lower == 'vector':
     if separate_probes and advo.Veldata._make_model=='nortek vector':
@@ -375,10 +373,10 @@ def correct_motion(advo,
     rot._check_inst2head_rotmat(advo)
         
     # Create the motion 'calculator':
-    calcobj = CalcMotion(advo,
-                         accel_filtfreq=accel_filtfreq,
-                         vel_filtfreq=vel_filtfreq,
-                         to_earth=to_earth)
+    calcobj = _CalcMotion(advo,
+                          accel_filtfreq=accel_filtfreq,
+                          vel_filtfreq=vel_filtfreq,
+                          to_earth=to_earth)
 
     ##########
     # Calculate the translational velocity (from the accel):
@@ -430,9 +428,9 @@ def correct_motion(advo,
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
     if advo.Veldata._make_model.startswith('nortek signature'):
-        inst2earth = sig.inst2earth
+        inst2earth = sig._inst2earth
     else:
-        inst2earth = rot.inst2earth
+        inst2earth = rot._inst2earth
     if to_earth:
         advo['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']

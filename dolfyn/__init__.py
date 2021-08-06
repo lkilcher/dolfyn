@@ -3,9 +3,9 @@ This is the Doppler Oceanography Library for pYthoN (DOLfYN). It is
 designed to read and work with oceanographyic velocity measurements
 from Acoustic Doppler Current Profilers (ADPs/ADCPs) and Acoustic Doppler
 Velocimeters (ADVs). It is a high-level object-oriented library
-composed of a set of **data-object** classes (types) that contain data
+composed of a set of data-object classes (types) that contain data
 from a particular measurement instrument, and a collection of
-**functions** that manipulate those data objects to accomplish data
+functions that manipulate those data objects to accomplish data
 processing and data analysis tasks.
 
 """
@@ -20,7 +20,4 @@ from dolfyn import adp
 from dolfyn import time
 from dolfyn import io
 from dolfyn import rotate
-
-# Uncomment h5 for dev/testing
-#from dolfyn import h5
 

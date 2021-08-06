@@ -1,5 +1,5 @@
 ﻿Name,Units,Description/Notes
-time,sec since 1/1/1970,Time data
+time,sec since 1970/01/01 00:00:00,Time data (unaware of timezone)
 vel,m/s,Velocity vector data
 range,m,Distance from the instrument's transducer head(s)
 depth_m,m,Instrument depth
@@ -19,16 +19,15 @@ roll,deg,Instrument roll*
 orientmat,---,earth to instrument orientation matrix
 amp,dB or counts,Measured sound level amplitude
 corr,% or counts,Correlation between the sent and received pings.
-ambig_vel,m/s,Ambiguity velocity*
-batt_V / batt,voltage,Battery voltage
+ambig_vel,m/s,Ambiguity velocity
 ensemble,---,Ensemble counter
-error,---,Instrument error code*
-status,---,Instrument status code*
+error,---,Instrument error code
+status,---,Instrument status code
 tke_vec,m\ :sup:`2`/s\ :sup:`2`,"Variance of velocity components (0: u'u', 1: v'v', 2: w'w')"
 stress_vec,m\ :sup:`2`/s\ :sup:`2`,"Reynolds stress array (0: u'v', 1: u'w', 2: v'w')"
 U_mag,m/s,Horizontal velocity magnitude
 U_std,m/s,Standard deviation of horizontal velocity magnitude
 epsilon,m\ :sup:`2`/s\ :sup:`3`,Turbulence dissipation rate
-S,<var units>\ :sup:`2`/<freq units>,"Spectra, calculated as power spectral densities"
+spec,<var units>\ :sup:`2`/<freq units>,"Spectra, calculated as power spectral densities"
 f,Hz,Spectral frequency
 omega,rad/s,Spectral radial frequency

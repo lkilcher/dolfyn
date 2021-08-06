@@ -25,8 +25,8 @@ def test_save():
 
 def test_read(make_data=False):
     td = tb.drop_config(read('vector_data01.VEC', nens=100))
-    tdm = tb.drop_config(read('vector_data_imu01.VEC', 
-                              userdata=False, nens=100))
+    tdm = tb.drop_config(read('vector_data_imu01.VEC', userdata=False, 
+                              nens=100))
     tdb = tb.drop_config(read('burst_mode01.VEC', nens=100))
     tdm2 = tb.drop_config(read('vector_data_imu01.VEC',
                                userdata=tb.exdt('vector_data_imu01.userdata.json'),  

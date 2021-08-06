@@ -16,6 +16,7 @@ print(__doc__)
 # import test_shortcuts as ts
 
 # advr.test_read(make_data=True)
+
 # advro.test_heading(make_data=True)
 # advro.test_rotate_inst2beam(make_data=True)
 # advro.test_rotate_inst2earth(make_data=True)
@@ -25,9 +26,10 @@ print(__doc__)
 # adpr.test_io_nortek(make_data=True)
 # adpr.test_io_nortek2(make_data=True)
 # adpr.test_matlab_io(make_data=True)
+
 # adpro.test_rotate_beam2inst(make_data=True)
-# adpro.test_rotate_inst2earth(make_data=True)
 # adpro.test_rotate_inst2beam(make_data=True)
+# adpro.test_rotate_inst2earth(make_data=True)
 # adpro.test_rotate_earth2principal(make_data=True)
 
 # tm.test_motion_adv(make_data=True)

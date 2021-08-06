@@ -10,7 +10,7 @@ def test_GN2002(make_data=False):
     td = tv.dat_imu.copy(deep=True)
     
     mask = avm.clean.GN2002(td.vel, 20)
-    td = avm.clean.clean_fill(td, mask, method='cubic')
+    td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
 
     if make_data:
         save(td, 'vector_data01_uclean.nc')
@@ -23,7 +23,7 @@ def test_spike_thresh(make_data=False):
     td = tv.dat_imu.copy(deep=True)
     
     mask = avm.clean.spike_thresh(td.vel, 10)
-    td = avm.clean.clean_fill(td, mask, method='cubic')
+    td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
 
     if make_data:
         save(td, 'vector_data01_sclean.nc')
@@ -36,7 +36,7 @@ def test_range_limit(make_data=False):
     td = tv.dat_imu.copy(deep=True)
     
     mask = avm.clean.range_limit(td.vel)
-    td = avm.clean.clean_fill(td, mask, method='cubic')
+    td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
 
     if make_data:
         save(td, 'vector_data01_rclean.nc')
@@ -63,14 +63,14 @@ def test_clean_upADCP(make_data=False):
 def test_clean_downADCP(make_data=False):
     td = tp.dat_sig_ie.copy(deep=True)
     
-    td = apm.clean.set_deploy_altitude(td, 0.5)
-    td = apm.clean.find_surface(td)
-    td = apm.clean.nan_beyond_surface(td)
     td = apm.clean.vel_exceeds_thresh(td, thresh=4)
-    
     td = apm.clean.fillgaps_time(td)
     td = apm.clean.fillgaps_depth(td)
     
+    td = apm.clean.set_deploy_altitude(td, 0.5)
+    td = apm.clean.find_surface(td, thresh=10, nfilt=3)
+    td = apm.clean.nan_beyond_surface(td)
+
     if make_data:
         save(td, 'Sig500_Echo_clean.nc')
         return

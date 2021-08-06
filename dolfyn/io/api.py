@@ -5,7 +5,7 @@ import pkg_resources
 from .nortek import read_nortek
 from .nortek2 import read_signature
 from .rdi import read_rdi
-from .base import create_dataset, WrongFileType as _WTF
+from .base import _create_dataset
 from ..rotate.base import _set_coords
 from ..time import epoch2date, date2epoch, date2matlab, matlab2date
 
@@ -17,41 +17,36 @@ def read(fname, userdata=True, nens=None):
     Parameters
     ----------
     filename : string
-               Filename of instrument file to read.
-
-    userdata : True, False, or string of userdata.json filename
-               (default ``True``) Whether to read the
-               '<base-filename>.userdata.json' file.
-
-    nens : None (default: read entire file), int, or
-           2-element tuple (start, stop)
-           Number of pings or ensembles to read from the file
+        Filename of instrument file to read.
+    userdata : True, False, or string of userdata.json filename (default ``True``) 
+        Whether to read the '<base-filename>.userdata.json' file.
+    nens : None (default: read entire file), int, or 2-element tuple (start, stop)
+        Number of pings or ensembles to read from the file
 
     Returns
     -------
-    ds : xr.Dataset
-         An xarray dataset from the binary instrument data.
+    ds : xarray.Dataset
+        An xarray dataset from the binary instrument data.
 
     """
     # Loop over binary readers until we find one that works.
     for func in [read_nortek, read_signature, read_rdi]:
         try:
             ds = func(fname, userdata=userdata, nens=nens)
-        except _WTF:
+        except:
             continue
         else:
             return ds
-    raise _WTF("Unable to find a suitable reader for "
-               "file {}.".format(fname))
+    raise Exception("Unable to find a suitable reader for file {}.".format(fname))
 
 
 def read_example(name, **kwargs):
-    """Read an example data file.
+    """Read an ADCP or ADV datafile from the examples directory.
 
     Parameters
     ----------
     name : string
-        Available files:
+        A few available files:
 
             AWAC_test01.wpr
             BenchFile01.ad2cp
@@ -64,7 +59,8 @@ def read_example(name, **kwargs):
 
     Returns
     -------
-    dat : xr.Dataset
+    ds : xarray.Dataset
+        An xarray dataset from the binary instrument data.
 
     """
     filename = pkg_resources.resource_filename(
@@ -78,8 +74,7 @@ def save(dataset, filename):
     
     Parameters
     ----------
-    dataset : xr.Dataset
-    
+    dataset : xarray.Dataset
     filename : str
         Filename and/or path with the '.nc' extension
     
@@ -88,7 +83,9 @@ def save(dataset, filename):
     Drops 'config' lines.
     
     """
-    if filename[-3:] != '.nc':
+    if '.' in filename:
+        assert filename.endswith('nc'), 'File extension must be of the type nc'
+    else:
         filename += '.nc'
     
     # Dropping the detailed configuration stats because netcdf can't save it
@@ -123,8 +120,15 @@ def load(filename):
     filename : str
         Filename and/or path with the '.nc' extension
     
+    Returns
+    -------
+    ds : xarray.Dataset
+        An xarray dataset from the binary instrument data.
+    
     """
-    if filename[-3:] != '.nc':
+    if '.' in filename:
+        assert filename.endswith('nc'), 'File extension must be of the type nc'
+    else:
         filename += '.nc'
         
     ds = xr.load_dataset(filename, engine='netcdf4')
@@ -161,23 +165,24 @@ def save_mat(dataset, filename, datenum=True):
     ----------
     dataset : xarray.Dataset
         Data to save
-    
     filename : str
         Filename and/or path with the '.mat' extension
-
     datenum : bool
         Converts epoch time into MATLAB datenum
         
     Notes
     -----
-    The xarray data format is saved as a MATLAB structure with the fields 'vars, coords, config, units'
+    The xarray data format is saved as a MATLAB structure with the fields 
+    'vars, coords, config, units'
     
     See Also
     --------
     ~scipy.io.savemat
     
     """
-    if filename[-4:] != '.mat':
+    if '.' in filename:
+        assert filename.endswith('mat'), 'File extension must be of the type mat'
+    else:
         filename += '.mat'
         
     # Convert from epoch time to datenum
@@ -191,7 +196,6 @@ def save_mat(dataset, filename, datenum=True):
     matfile = {'vars':{},'coords':{},'config':{},'units':{}}
     for key in dataset.data_vars:
         matfile['vars'][key] = dataset[key].values
-        
         if hasattr(dataset[key], 'units'):
             matfile['units'][key] = dataset[key].units
             
@@ -204,26 +208,31 @@ def save_mat(dataset, filename, datenum=True):
     
     
 def load_mat(filename, datenum=True):
-    """Load xarray dataset from MATLAB (.mat) file (complimentary to 
-    `save_mat()`)
+    """Load xarray dataset from MATLAB (.mat) file, complimentary to `save_mat()`
     
-    .mat file must contain the fields: {vars, coords, config, units},
+    A .mat file must contain the fields: {vars, coords, config, units},
     where 'coords' contain the dimensions of all variables in 'vars'.
     
     Parameters
     ----------
     filename : str
         Filename and/or path with the '.mat' extension
-        
     datenum : bool
-        Converts MATLAB datenum back into epoch time
+        Converts MATLAB datenum into epoch time
+        
+    Returns
+    -------
+    ds : xarray.Dataset
+        An xarray dataset from the binary instrument data.
         
     See Also
     --------
     ~scipy.io.loadmat
     
     """
-    if filename[-4:] != '.mat':
+    if '.' in filename:
+        assert filename.endswith('mat'), 'File extension must be of the type mat'
+    else:
         filename += '.mat'
     
     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
@@ -238,7 +247,7 @@ def load_mat(filename, datenum=True):
     ds_dict['attrs'] = ds_dict.pop('config')
     
     # Recreate dataset
-    ds = create_dataset(ds_dict)
+    ds = _create_dataset(ds_dict)
     ds = _set_coords(ds, ds.coord_sys)
     
     # Convert datenum time back into epoch time

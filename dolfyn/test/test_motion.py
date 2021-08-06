@@ -60,19 +60,19 @@ def test_sep_probes(make_data=False):
     assert_allclose(tdm, load('vector_data_imu01_mcsp.nc'), atol=1e-7)
         
 
-def test_motion_adcp():
-    # Correction for ADCPs not completed yet
-    tdm = tp.dat_sig_i.copy(deep=True)
-    tdm = avm.set_inst2head_rotmat(tdm, rotmat=np.eye(4)) # 4th doesn't matter
-    tdm.attrs['inst2head_vec'] = np.array([0,0,0,0])
-    tdmc = avm.correct_motion(tdm)
+# def test_motion_adcp():
+#     # Correction for ADCPs not completed yet
+#     tdm = tp.dat_sig_i.copy(deep=True)
+#     tdm = avm.set_inst2head_rotmat(tdm, rotmat=np.eye(4)) # 4th doesn't matter
+#     tdm.attrs['inst2head_vec'] = np.array([0,0,0,0])
+#     tdmc = avm.correct_motion(tdm)
     
-    assert type(tdm)==type(tdmc) # simple way of making sure tdmc exists
+#    assert type(tdm)==type(tdmc) # simple way of making sure tdmc exists
     
     
 if __name__=='__main__':
     test_motion_adv()
     test_sep_probes()
-    test_motion_adcp()
+    #test_motion_adcp()
     
     

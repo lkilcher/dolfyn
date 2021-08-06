@@ -1,13 +1,10 @@
-from __future__ import division
 import numpy as np
 from ..velocity import VelBinner
-#from ..data import base as db
 import warnings
-from ..tools.misc import slice1d_along_axis, nans_like
+from ..tools.misc import _slice1d_along_axis, _nans_like
 from scipy.special import cbrt
 import xarray as xr
 
-#kappa = 0.41
 
 class TurbBinner(VelBinner):
     """
@@ -19,36 +16,31 @@ class TurbBinner(VelBinner):
     n_bin : int
       The length of `bin` s, in number of points, for this averaging
       operator.
-
     n_fft : int (optional, default: n_fft = n_bin)
       The length of the FFT for computing spectra (must be < n_bin)
 
     """
 
-    def __call__(self, advr, out_type=None,
+    def __call__(self, ds, out_type=None,
                  omega_range_epsilon=[6.28, 12.57],
                  window='hann'):
         """
         Compute a suite of turbulence statistics for the input data
-        advr, and return a `binned` data object.
+        ds, and return a `binned` data object.
 
         Parameters
         ----------
-
-        advr : xarray.Dataset
+        ds : xarray.Dataset
           The raw adv dataset to `bin`, average and compute
           turbulence statistics of.
-
         omega_range_epsilon : iterable(2)
           The frequency range (low, high) over which to estimate the
           dissipation rate `epsilon` [rad/s].
-
         window : 1, None, 'hann'
           The window to use for psds.
 
         Returns
         -------
-
         advb : xarray.Dataset
           Returns an 'binned' (i.e. 'averaged') dataset. All
           fields (variables) of the input dataset are averaged in n_bin
@@ -57,33 +49,33 @@ class TurbBinner(VelBinner):
 
           - tke_vec : The energy in each component (components are also
             accessible as
-            :attr:`upup_ <dolfyn.data.velocity.TKE.upup_>`,
-            :attr:`vpvp_ <dolfyn.data.velocity.TKE.vpvp_>`,
-            :attr:`wpwp_ <dolfyn.data.velocity.TKE.wpwp_>`)
+            :attr:`upup_ <dolfyn.velocity.Velocity.upup_>`,
+            :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
+            :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
 
           - stress : The Reynolds stresses (each component is
             accessible as
-            :attr:`upvp_ <dolfyn.data.velocity.TKE.upvp_>`,
-            :attr:`upwp_ <dolfyn.data.velocity.TKE.upwp_>`,
-            :attr:`vpwp_ <dolfyn.data.velocity.TKE.vpwp_>`)
+            :attr:`upvp_ <dolfyn.velocity.Velocity.upvp_>`,
+            :attr:`upwp_ <dolfyn.velocity.Velocity.upwp_>`,
+            :attr:`vpwp_ <dolfyn.velocity.Velocity.vpwp_>`)
 
           - U_std : The standard deviation of the horizontal
             velocity `U_mag`.
 
-          - S: A DataArray containing the spectra of the velocity
+          - spec: A DataArray containing the spectra of the velocity
             in radial frequency units. This DataArray contains:
             - spectra : the velocity spectra array (m^2/s/rad))
             - omega : the radial frequency (rad/s)
 
         """
-        out = type(advr)()
-        out = self.do_avg(advr, out)
+        out = type(ds)()
+        out = self.do_avg(ds, out)
         
-        noise = advr.get('doppler_noise', [0, 0, 0])
-        out['tke_vec'] = self.calc_tke(advr['vel'], noise=noise)
-        out['stress_vec'] = self.calc_stress(advr['vel'])
+        noise = ds.get('doppler_noise', [0, 0, 0])
+        out['tke_vec'] = self.calc_tke(ds['vel'], noise=noise)
+        out['stress'] = self.calc_stress(ds['vel'])
 
-        out['S'] = self.calc_vel_psd(advr['vel'],
+        out['spec'] = self.calc_vel_psd(ds['vel'],
                                      window=window,
                                      freq_units='rad/s',
                                      noise=noise)
@@ -94,31 +86,26 @@ class TurbBinner(VelBinner):
         return out
 
 
-    def calc_epsilon_LT83(self, S, U_mag, omega_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, spec, U_mag, omega_range=[6.28, 12.57]):
         """
-        Calculate the dissipation rate from the PSD.
+        Calculate the dissipation rate from the PSD
 
         Parameters
         ----------
-
-        S : xarray.DataArray (...,n_time,n_f)
-          The spectrum array [m^2/s/rad] with frequency vector 
-          'omega' (rad/s)
-
+        spec : xarray.DataArray (...,n_time,n_f)
+          The psd 'spec' [m^2/s/rad] with frequency vector 'omega' [rad/s]
         U_mag : |np.ndarray| (...,n_time)
           The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
-
         omega_range : iterable(2)
           The range over which to integrate/average the spectrum.
 
         Returns
         -------
-        epsilon : xr.DataArray (...,n_time)
-          The dissipation rate.
+        epsilon : xarray.DataArray (...,n_time)
+          dataArray of the dissipation rate
 
         Notes
         -----
-        
         This uses the `standard` formula for dissipation:
             
         .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3}
@@ -136,13 +123,13 @@ class TurbBinner(VelBinner):
         by a random wave field" JPO, 1983, 13, 2000-2007.
 
         """
-        omega = S.omega
+        omega = spec.omega
 
         idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
         idx = idx[0]
         
         a = 0.5
-        out = (S.isel(omega=idx) *
+        out = (spec.isel(omega=idx) *
                omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
         
         out = xr.DataArray(out, name='dissipation_rate',
@@ -157,17 +144,13 @@ class TurbBinner(VelBinner):
 
         Parameters
         ----------
-
         vel_raw : xarray.DataArray
           The raw velocity data (with dimension time) upon 
           which to perform the SF technique. 
-
         U_mag : xarray.DataArray
           The bin-averaged horizontal velocity (from dataset shortcut)
-
         fs : float
           The sample rate of `vel_raw` [Hz]
-
         freq_rng : iterable(2)
           The frequency range over which to compute the SF [Hz]
           (i.e. the frequency range within which the isotropic 
@@ -175,9 +158,8 @@ class TurbBinner(VelBinner):
 
         Returns
         -------
-
         epsilon : xarray.DataArray
-          The dissipation rate
+          dataArray of the dissipation rate
 
         """
         veldat = vel_raw.values
@@ -188,10 +170,10 @@ class TurbBinner(VelBinner):
         
         dt = self.reshape(veldat)
         out = np.empty(dt.shape[:-1], dtype=dt.dtype)
-        for slc in slice1d_along_axis(dt.shape, -1):
+        for slc in _slice1d_along_axis(dt.shape, -1):
             up = dt[slc]
             lag = U_mag.values[slc[:-1]] / fs * np.arange(up.shape[0])
-            DAA = nans_like(lag)
+            DAA = _nans_like(lag)
             for L in range(int(fs / freq_rng[1]), int(fs / freq_rng[0])):
                 DAA[L] = np.nanmean((up[L:] - up[:-L]) ** 2, dtype=np.float64)
             cv2 = DAA / (lag ** (2 / 3))
@@ -211,13 +193,11 @@ class TurbBinner(VelBinner):
 
         Parameters
         ----------
-        
         U_complex  : |np.ndarray| (..., n_time * n_bin)
           The complex, raw horizontal velocity (non-binned)
 
         Returns
         -------
-
         theta : |np.ndarray| (..., n_time)
           The angle of the turbulence [rad]
           
@@ -235,12 +215,9 @@ class TurbBinner(VelBinner):
 
         Parameters
         ----------
-
         I_tke : |np.ndarray|
           (beta in TE01) is the turbulence intensity ratio:
           \\sigma_u / V
-
-
         theta : |np.ndarray|
           is the angle between the mean flow and the primary axis of
           velocity fluctuations
@@ -269,12 +246,11 @@ class TurbBinner(VelBinner):
           
         dat_avg : xarray.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
-          'do_avg'). The spectra (S) and basic turbulence statistics 
-          ('tke_vec' and 'stress_vec') must already be computed.
+          'do_avg'). The spectra (psd) and basic turbulence statistics 
+          ('tke_vec' and 'stress') must already be computed.
 
         Notes
         -----
-
         TE01 : Trowbridge, J and Elgar, S, "Turbulence measurements in
         the Surf Zone" JPO, 2001, 31, 2403-2417.
                
@@ -285,7 +261,7 @@ class TurbBinner(VelBinner):
         I_tke = dat_avg.Veldata.I_tke.values
         theta = np.angle(dat_avg.Veldata.U.values) - \
                 self._up_angle(dat_raw.Veldata.U.values)
-        omega = dat_avg.S.omega.values
+        omega = dat_avg.spec.omega.values
 
         # Calculate constants
         alpha = 1.5
@@ -293,18 +269,13 @@ class TurbBinner(VelBinner):
 
         # Index data to be used
         inds = (omega_range[0] < omega) & (omega < omega_range[1])
-        spec = dat_avg.S[..., inds].values
-        omega = omega[inds].reshape([1] * (dat_avg.S.ndim - 2) + [sum(inds)])
+        spec = dat_avg.spec[..., inds].values
+        omega = omega[inds].reshape([1] * (dat_avg.spec.ndim - 2) + [sum(inds)])
 
-        # Estimate values (u and v component calculations are added together)
-        # u component (equation 6)
+        # Estimate values
+        # u & v components (equation 6)
         out = (np.nanmean((spec[0] + spec[1]) * omega**(5/3), -1) /
                (21/55 * alpha * intgrl))**(3/2) / U_mag
-
-        # # v component
-        # out = (np.mean((spec[0] + spec[1]) * (omega) ** (5 / 3), -1) /
-        #        (21 / 55 * alpha * intgrl)
-        #        ) ** (3 / 2) / U_mag
         
         # Add w component
         out += (np.nanmean(spec[2] * omega**(5/3), -1) /
@@ -314,7 +285,7 @@ class TurbBinner(VelBinner):
         out *= 0.5
         
         return xr.DataArray(out, name='dissipation_rate',
-                            coords={'time':dat_avg.S.time}, 
+                            coords={'time':dat_avg.spec.time}, 
                             dims='time',
                             attrs={'units':'m^2/s^3',
                                    'method':'TE01'})
@@ -326,13 +297,10 @@ class TurbBinner(VelBinner):
 
         Parameters
         ----------
-
         a_cov : xarray.DataArray
           The auto-covariance array (i.e. computed using `calc_acov`).
-
         vel_avg : xarray.DataArray
           The bin-averaged velocity (from dataset shortcut)
-
         fs : float
           The raw sample rate
 
@@ -368,19 +336,17 @@ class TurbBinner(VelBinner):
     #     vel_raw : |xr.DataArray|
     #       The raw beam velocity data (last dimension time) upon 
     #       which to perform the SF technique. 
-
     #     vel_avg : |xr.DataArray|
     #       The bin-averaged beam velocity (calc'd from 'do_avg')
-                                          
+                                         
     #     r_range: numeric
     #         Range of r in [m] to calc dissipation across
-        
     #     noise: numeric
     #         Dopper noise level [m/s]
         
     #     Returns
     #     -------
-    #     epsilon : |xr.DataArray|
+    #     epsilon : xarray.DataArray
     #       The dissipation rate
         
     #     Notes
@@ -449,22 +415,18 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
 
     Parameters
     ----------
-
     ds_raw : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
-
     omega_range_epsilon : iterable(2)
       The frequency range (low, high) over which to estimate the
       dissipation rate `epsilon`, in units of [rad/s].
-
     window : 1, None, 'hann'
       The window to use for calculating power spectral densities
 
     Returns
     -------
-
-    advb : xarray.Dataset
+    ds : xarray.Dataset
       Returns an 'binned' (i.e. 'averaged') data object. All
       fields (variables) of the input data object are averaged in n_bin
       chunks. This object also computes the following items over
@@ -472,20 +434,20 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
 
       - tke_vec : The energy in each component, each components is
         alternatively accessible as:
-        :attr:`upup_ <dolfyn.data.velocity.TKE.upup_>`,
-        :attr:`vpvp_ <dolfyn.data.velocity.TKE.vpvp_>`,
-        :attr:`wpwp_ <dolfyn.data.velocity.TKE.wpwp_>`)
+        :attr:`upup_ <dolfyn.velocity.Velocity.upup_>`,
+        :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
+        :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
 
       - stress : The Reynolds stresses, each component is
         alternatively accessible as:
-        :attr:`upwp_ <dolfyn.data.velocity.TKE.upwp_>`,
-        :attr:`vpwp_ <dolfyn.data.velocity.TKE.vpwp_>`,
-        :attr:`upvp_ <dolfyn.data.velocity.TKE.upvp_>`)
+        :attr:`upwp_ <dolfyn.data.velocity.Velocity.upwp_>`,
+        :attr:`vpwp_ <dolfyn.data.velocity.Velocity.vpwp_>`,
+        :attr:`upvp_ <dolfyn.data.velocity.Velocity.upvp_>`)
 
       - U_std : The standard deviation of the horizontal
         velocity `U_mag`.
 
-      - S : DataArray containing the spectra of the velocity
+      - spec : DataArray containing the spectra of the velocity
         in radial frequency units. The data-array contains:
         - vel : the velocity spectra array (m^2/s/rad))
         - omega : the radial frequncy (rad/s)

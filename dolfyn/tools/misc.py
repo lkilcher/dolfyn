@@ -1,24 +1,28 @@
 import numpy as np
-#from scipy.signal import medfilt2d, convolve2d
+from scipy.signal import medfilt2d, convolve2d
 
 
-def nans(*args, **kwargs):
+def _nans(*args, **kwargs):
     out = np.empty(*args, **kwargs)
-    out[:] = np.NaN
-    return out
+    if np.issubdtype(out.flatten()[0], np.integer):
+        out[:] = 0
+        return out
+    else:
+        out[:] = np.nan
+        return out
 
 
-def nans_like(*args, **kwargs):
+def _nans_like(*args, **kwargs):
     out = np.empty_like(*args, **kwargs)
-    out[:] = np.NaN
+    out[:] = np.nan
     return out
 
 
-def find(arr):
+def _find(arr):
     return np.nonzero(np.ravel(arr))[0]
 
 
-def detrend(arr, axis=-1, in_place=False):
+def _detrend(arr, axis=-1, in_place=False):
     """Remove a linear trend from arr.
 
     Parameters
@@ -44,15 +48,15 @@ def detrend(arr, axis=-1, in_place=False):
     sz = np.ones(arr.ndim, dtype=int)
     sz[axis] = arr.shape[axis]
     x = np.arange(sz[axis], dtype=np.float_).reshape(sz)
-    x -= x.mean(axis=axis, keepdims=True)
-    arr -= arr.mean(axis=axis, keepdims=True)
-    b = (x * arr).mean(axis=axis, keepdims=True) / (x ** 2).mean(axis=axis,
-                                                                 keepdims=True)
+    x -= np.nanmean(x, axis=axis, keepdims=True)
+    arr -= np.nanmean(arr, axis=axis, keepdims=True)
+    b = np.nanmean((x * arr), axis=axis, keepdims=True)/ \
+        np.nanmean((x ** 2), axis=axis, keepdims=True)
     arr -= b * x
     return arr
 
 
-def group(bl, min_length=0):
+def _group(bl, min_length=0):
     """Find continuous segments in a boolean array.
 
     Parameters
@@ -78,77 +82,30 @@ def group(bl, min_length=0):
     """
     if not any(bl):
         return np.empty(0)
-    vl = np.diff(bl.astype('int'))
-    ups = np.nonzero(vl == 1)[0] + 1
-    dns = np.nonzero(vl == -1)[0] + 1
-    if bl[0]:
-        if len(ups) == 0:
-            ups = np.array([0])
-        else:
-            ups = np.concatenate((np.arange([0]), [len(ups)]))
-    if bl[-1]:
-        if len(dns) == 0:
-            dns = np.array([len(bl)])
-        else:
-            dns = np.concatenate((dns, [len(bl)]))
-    out = np.empty(len(dns), dtype='O')
-    idx = 0
-    for u, d in zip(ups, dns):
-        if d - u < min_length:
-            continue
-        out[idx] = slice(u, d)
-        idx += 1
-    return out[:idx]
+#    vl = np.diff(bl.astype('int'))
+#    ups = np.nonzero(vl == 1)[0] + 1
+#    dns = np.nonzero(vl == -1)[0] + 1
+#    if bl[0]:
+#        if len(ups) == 0:
+#            ups = np.array([0])
+#        else:
+#            ups = np.concatenate((np.arange([0]), [len(ups)]))
+#    if bl[-1]:
+#        if len(dns) == 0:
+#            dns = np.array([len(bl)])
+#        else:
+#            dns = np.concatenate((dns, [len(bl)]))
+#    out = np.empty(len(dns), dtype='O')
+#    idx = 0
+#    for u, d in zip(ups, dns):
+#        if d - u < min_length:
+#            continue
+#        out[idx] = slice(u, d)
+#        idx += 1
+#    return out[:idx]
 
 
-class delta(object):
-
-    """
-    delta objects find indices in an input array of `data` that fall
-    within a distance `delta` from a `value`
-
-    Parameters
-    ----------
-
-    data : np.ndarray
-      The data that should be indexed.
-
-    delta : float
-      The distance from `val` that the data will be indexed as True.
-
-    """
-
-    @property
-    def shape(self,):
-        return self.data.shape
-
-    def __init__(self, data, delta):
-        """
-        Create a delta object for *data* with delta *delta*.
-        """
-        self.data = data
-        self.delta = delta
-
-    def __call__(self, val):
-        """
-        Return the indices of `data` that fall within `val`- `delta` to
-        `val` + `delta`.
-
-        Parameters
-        ----------
-
-        val : float
-          The value at the center of the range.
-
-        """
-        return (val - self.delta < self.data) & (self.data < val + self.delta)
-
-    def abs(self, val):
-        return ((val - self.delta < np.abs(self.data)) &
-                (np.abs(self.data) < val + self.delta))
-
-
-def slice1d_along_axis(arr_shape, axis=0):
+def _slice1d_along_axis(arr_shape, axis=0):
     """
     Return an iterator object for looping over 1-D slices, along *axis*, of
     an array of shape arr_shape.
@@ -204,7 +161,7 @@ def slice1d_along_axis(arr_shape, axis=0):
         k += 1
 
 
-def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
+def _fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
     """
     Linearly fill NaN value in an array.
 
@@ -279,7 +236,7 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
                       (ii.__len__() + 1) + a[gd[inds[i2]]]).astype(a.dtype)
 
 
-def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
+def _interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
     """
     Fill gaps (NaN values) in ``a`` by linear interpolation along
     dimension DIM with the point spacing specified in ``t``.
@@ -312,10 +269,10 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
     # # If this is a multi-dimensional array, operate along dim dim.
     # if a.ndim > 1:
     #     for inds in slice1d_along_axis(a.shape, dim):
-    #         interpgaps(a[inds], t, maxgap, 0, extrapFlg)
+    #         _interpgaps(a[inds], t, maxgap, 0, extrapFlg)
     #     return
     #
-    gd = find(~np.isnan(a))
+    gd = _find(~np.isnan(a))
 
     # # Here we extrapolate the ends, if necessary:
     # if extrapFlg and gd.__len__() > 0:
@@ -326,7 +283,7 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
 
     # Here is the main loop
     if gd.__len__() > 1:
-        inds = find((1 < np.diff(gd)) &
+        inds = _find((1 < np.diff(gd)) &
                     (np.diff(gd) <= maxgap + 1))
         for i2 in range(0, inds.__len__()):
             ii = np.arange(gd[inds[i2]] + 1, gd[inds[i2] + 1])
@@ -336,38 +293,27 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
                      a[gd[inds[i2]]]).astype(a.dtype)
 
 
-# def medfiltnan(a, kernel, thresh=0):
-#     """
-#     Do a running median filter of the data.
+def _medfiltnan(a, kernel, thresh=0):
+    """
+    Do a running median filter of the data.
 
-#     Regions where more than *thresh* fraction of the points are NaN
-#     are set to NaN.
-
-#     Currently only work for vectors.
-#     """
-#     flag_1D = False
-#     if a.ndim == 1:
-#         a = a[None, :]
-#         flag_1D = True
-#     try:
-#         len(kernel)
-#     except:
-#         kernel = [1, kernel]
-#     out = medfilt2d(a, kernel)
-#     if thresh > 0:
-#         out[convolve2d(np.isnan(a),
-#                        np.ones(kernel) / np.prod(kernel),
-#                        'same') > thresh] = np.NaN
-#     if flag_1D:
-#         return out[0]
-#     return out
-
-
-# def degN2cartDeg(angN,):
-#     """
-#     Convert degrees True North to 'cartesian Degrees'
-#     (counter-clockwise from the East).
-#     """
-#     out = 90 - angN
-#     out[out < -180] += 360
-#     return out
+    Regions where more than *thresh* fraction of the points are NaN
+    are set to NaN.
+    
+    """
+    flag_1D = False
+    if a.ndim == 1:
+        a = a[None, :]
+        flag_1D = True
+    try:
+        len(kernel)
+    except:
+        kernel = [1, kernel]
+    out = medfilt2d(a, kernel)
+    if thresh > 0:
+        out[convolve2d(np.isnan(a),
+                        np.ones(kernel) / np.prod(kernel),
+                        'same') > thresh] = np.NaN
+    if flag_1D:
+        return out[0]
+    return out

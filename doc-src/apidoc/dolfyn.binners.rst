@@ -12,19 +12,19 @@ Analysis in DOLfYN is primarily handled through the `VelBinner` class. Below is 
 	:nosignatures:
 	
 	~dolfyn.velocity.VelBinner
-	~dolfyn.binned.TimeBinner.do_avg
-	~dolfyn.binned.TimeBinner.do_var
-	~dolfyn.binned.TimeBinner.reshape
-	~dolfyn.binned.TimeBinner.calc_coh
-	~dolfyn.binned.TimeBinner.calc_phase_angle
-	~dolfyn.binned.TimeBinner.calc_acov
-	~dolfyn.binned.TimeBinner.calc_xcov
+	~dolfyn.binned._TimeBinner.do_avg
+	~dolfyn.binned._TimeBinner.do_var
+	~dolfyn.binned._TimeBinner.reshape
+	~dolfyn.binned._TimeBinner.calc_coh
+	~dolfyn.binned._TimeBinner.calc_phase_angle
+	~dolfyn.binned._TimeBinner.calc_acov
+	~dolfyn.binned._TimeBinner.calc_xcov
 	~dolfyn.velocity.VelBinner.do_tke
 	~dolfyn.velocity.VelBinner.calc_tke
 	~dolfyn.velocity.VelBinner.calc_stress
 	~dolfyn.velocity.VelBinner.calc_vel_psd
 	~dolfyn.velocity.VelBinner.calc_vel_csd
-	~dolfyn.binned.TimeBinner.calc_freq
+	~dolfyn.binned._TimeBinner.calc_freq
 
 
 Turbulence Analysis
