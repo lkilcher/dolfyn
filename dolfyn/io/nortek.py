@@ -129,8 +129,6 @@ class _NortekReader():
                '0x12': 'read_vec_hdr',
                '0x71': 'read_microstrain',
                '0x20': 'read_awac_profile',
-               #'0x30': 'read_awac_waves',
-               #'0x31': 'read_awac_waves_hdr',
                }
 
     def __init__(self, fname, endian=None, debug=False,
@@ -171,10 +169,10 @@ class _NortekReader():
         self.f.seek(0, 0)
 
         # This is the configuration data:
-        self.config = {} #config(_type='NORTEK Header Data')
-        # Now read the header:
+        self.config = {}
         err_msg = ("I/O error: The file does not "
                    "appear to be a Nortek data file.")
+        # Read the header:
         if self.read_id() == 5:
             self.read_hw_cfg()
         else:
@@ -249,7 +247,7 @@ class _NortekReader():
         da['SerialNum'] = self.config.pop('serialNum')
         dv['beam2inst_orientmat'] = self.config.pop('beam2inst_orientmat')
         da['Comments'] = self.config.pop('Comments')
-        #!!! How to properly determine how many samples are in a file?
+        # No apparent way to determine how many samples are in a file
         dlta = self.code_spacing('0x11')
         self.config['fs'] = 512 / self.config['AvgInterval']
         self.n_samp_guess = int(self.filesize / dlta + 1)
@@ -277,92 +275,17 @@ class _NortekReader():
             # code spacing is zero if there's only 1 profile
             self.n_samp_guess = 1
         else: 
-            #!!! skips last profile
             self.n_samp_guess = int(self.filesize / space + 1)          
         self.config['fs'] = 1. / self.config['AvgInterval']
-        
-
-    def _init_data(self, vardict):
-        """Initialize the data object according to vardict.
-
-        Parameters
-        ----------
-        vardict : (dict of :class:`<VarAttrs>`)
-          The variable definitions in the :class:`<VarAttrs>` specify
-          how to initialize each data variable.
-
-        """
-        shape_args = {'n': self.n_samp_guess}
-        try:
-            shape_args['nbins'] = self.config['NBins']
-        except KeyError:
-            pass
-        for nm, va in list(vardict.items()):
-            if va.group is None:
-                # These have to stay separated.
-                if nm not in self.data:
-                    self.data[nm] = va._empty_array(**shape_args)
-            else:
-                if nm not in self.data[va.group]:
-                    self.data[va.group][nm] = va._empty_array(**shape_args)
-                    self.data['units'][nm] = va.units
-
-    def rd_time(self, strng):
-        """Read the time from the first 6bytes of the input string.
-        """
-        min, sec, day, hour, year, month = unpack('BBBBBB', strng[:6])
-        return datetime(time._fullyear(_bcd2char(year)), 
-                        _bcd2char(month), 
-                        _bcd2char(day), 
-                        _bcd2char(hour), 
-                        _bcd2char(min), 
-                        _bcd2char(sec)).timestamp()
 
 
     def read(self, nbyte):
         byts = self.f.read(nbyte)
         if not (len(byts) == nbyte):
             raise EOFError('Reached the end of the file')
-        return byts    
-        
+        return byts
 
-    def read_id(self,):
-        """Read the next 'ID' from the file.
-        """
-        self._thisid_bytes = bts = self.read(2)
-        tmp = unpack(self.endian + 'BB', bts)
-        if self.debug:
-            print('Position: {}, codes: {}'.format(self.f.tell(), tmp))
-        if tmp[0] != 165:  # This catches a corrupted data block.
-            if self.debug:
-                print("Corrupted data block sync code (%d, %d) found "
-                      "in ping %d. Searching for next valid code..." %
-                      (tmp[0], tmp[1], self.c))
-            val = int(self.findnext(do_cs=False), 0)
-            self.f.seek(2, 1)
-            if self.debug:
-                print(' ...FOUND {} at position: {}.'.format(val, self.pos))
-            return val
-        if self.debug:
-            print( tmp[1] )
-        return tmp[1]
-    
-    
-    def findnextid(self, id):
-        if id.__class__ is str:
-            id = int(id, 0)
-        nowid = None
-        while nowid != id:
-            nowid = self.read_id()
-            if nowid == 16:
-                shift = 22
-            else:
-                sz = 2 * unpack(self.endian + 'H', self.read(2))[0]
-                shift = sz - 4
-            self.f.seek(shift, 1)
-        return self.pos
-    
-    
+
     def findnext(self, do_cs=True):
         """Find the next data block by checking the checksum and the 
         sync byte(0xa5)
@@ -381,7 +304,27 @@ class _NortekReader():
                 return hex(func2(val))
             sum += cs
             cs = val
-            
+
+
+    def read_id(self,):
+        """Read the next 'ID' from the file.
+        """
+        self._thisid_bytes = bts = self.read(2)
+        tmp = unpack(self.endian + 'BB', bts)
+        if self.debug:
+            print('Position: {}, codes: {}'.format(self.f.tell(), tmp))
+        if tmp[0] != 165:  # This catches a corrupted data block.
+            if self.debug:
+                print("Corrupted data block sync code (%d, %d) found "
+                      "in ping %d. Searching for next valid code..." %
+                      (tmp[0], tmp[1], self.c))
+            val = int(self.findnext(do_cs=False), 0)
+            self.f.seek(2, 1)
+            if self.debug:
+                print(' ...FOUND {} at position: {}.'.format(val, self.pos))
+            return val
+        return tmp[1]
+
     
     def readnext(self,):
         id = '0x%02x' % self.read_id()
@@ -422,6 +365,21 @@ class _NortekReader():
         _crop_data(self.data, slice(0, self.c), self.n_samp_guess)
         
         
+    def findnextid(self, id):
+        if id.__class__ is str:
+            id = int(id, 0)
+        nowid = None
+        while nowid != id:
+            nowid = self.read_id()
+            if nowid == 16:
+                shift = 22
+            else:
+                sz = 2 * unpack(self.endian + 'H', self.read(2))[0]
+                shift = sz - 4
+            self.f.seek(shift, 1)
+        return self.pos
+        
+        
     def code_spacing(self, searchcode, iternum=50):
         """
         Find the spacing, in bytes, between a specific hardware code.
@@ -448,33 +406,10 @@ class _NortekReader():
                                  self._thisid_bytes + byts)) + \
                     46476 - unpack(self.endian + 'H', self.read(2)):
 
-                # !!!FIXTHIS error message.
-                raise Exception("CheckSum Failed at ...")
+                raise Exception("CheckSum Failed at {}".format(self.pos))
         else:
             self.f.seek(2, 1)
-            
-    
-    def _sci_data(self, vardict):
-        """Convert the data to scientific units accordint to vardict.
-
-        Parameters
-        ----------
-        vardict : (dict of :class:`<VarAttrs>`)
-          The variable definitions in the :class:`<VarAttrs>` specify
-          how to scale each data variable.
-
-        """
-        for nm, vd in list(vardict.items()):
-            if vd.group is None:
-                dat = self.data
-            else:
-                dat = self.data[vd.group]
-            retval = vd.sci_func(dat[nm])
-            # This checks whether a new data object was created:
-            # sci_func returns None if it modifies the existing data.
-            if retval is not None:
-                dat[nm] = retval
-                
+  
     
     def read_user_cfg(self,):
         # ID: '0x00 = 00
@@ -594,6 +529,18 @@ class _NortekReader():
         cfg_hw['FWversion'] = tmp[7]
         self.checksum(byts)
         
+        
+    def rd_time(self, strng):
+        """Read the time from the first 6bytes of the input string.
+        """
+        min, sec, day, hour, year, month = unpack('BBBBBB', strng[:6])
+        return datetime(time._fullyear(_bcd2char(year)), 
+                        _bcd2char(month), 
+                        _bcd2char(day), 
+                        _bcd2char(hour), 
+                        _bcd2char(min), 
+                        _bcd2char(sec)).timestamp()
+        
 
     def read_vec_hdr(self,):
         # ID: '0x12 = 18
@@ -621,8 +568,34 @@ class _NortekReader():
             if not isinstance(self.config['data_header'], list):
                 self.config['data_header'] = [self.config['data_header']]
             self.config['data_header'] += [hdrnow]
-        
-        
+
+
+    def _init_data(self, vardict):
+        """Initialize the data object according to vardict.
+
+        Parameters
+        ----------
+        vardict : (dict of :class:`<VarAttrs>`)
+          The variable definitions in the :class:`<VarAttrs>` specify
+          how to initialize each data variable.
+
+        """
+        shape_args = {'n': self.n_samp_guess}
+        try:
+            shape_args['nbins'] = self.config['NBins']
+        except KeyError:
+            pass
+        for nm, va in list(vardict.items()):
+            if va.group is None:
+                # These have to stay separated.
+                if nm not in self.data:
+                    self.data[nm] = va._empty_array(**shape_args)
+            else:
+                if nm not in self.data[va.group]:
+                    self.data[va.group][nm] = va._empty_array(**shape_args)
+                    self.data['units'][nm] = va.units
+
+
     def read_vec_data(self,):
         # ID: 0x10 = 16
         c = self.c
@@ -664,7 +637,7 @@ class _NortekReader():
             print('Reading vector check data (0x07) ping #{} @ {}...'
                   .format(self.c, self.pos))
         byts0 = self.read(6)
-        checknow = {}#config(_type='CHECKDATA')
+        checknow = {}
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
         checknow['Samples'] = tmp[0]
         n = checknow['Samples']
@@ -683,8 +656,30 @@ class _NortekReader():
             if not isinstance(self.config['checkdata'], list):
                 self.config['checkdata'] = [self.config['checkdata']]
             self.config['checkdata'] += [checknow]
-                
-            
+
+
+    def _sci_data(self, vardict):
+        """Convert the data to scientific units accordint to vardict.
+
+        Parameters
+        ----------
+        vardict : (dict of :class:`<VarAttrs>`)
+          The variable definitions in the :class:`<VarAttrs>` specify
+          how to scale each data variable.
+
+        """
+        for nm, vd in list(vardict.items()):
+            if vd.group is None:
+                dat = self.data
+            else:
+                dat = self.data[vd.group]
+            retval = vd.sci_func(dat[nm])
+            # This checks whether a new data object was created:
+            # sci_func returns None if it modifies the existing data.
+            if retval is not None:
+                dat[nm] = retval
+
+
     def sci_vec_data(self,):
         self._sci_data(nortek_defs.vec_data)
         dat = self.data
@@ -926,9 +921,10 @@ class _NortekReader():
             self._init_data(nortek_defs.awac_profile)
             self._dtypes += ['awac_profile']
 
-        # There is a 'fill' byte at the end, if nbins is odd.
+        # Note: docs state there is 'fill' byte at the end, if nbins is odd,
+        # but doesn't appear to be the case
         n = self.config['NBeams']
-        byts = self.read(116 + n*3 * nbins + np.mod(nbins, 2))
+        byts = self.read(116 + n*3 * nbins)
         c = self.c
         dat['coords']['time'][c] = self.rd_time(byts[2:8])
         ds = dat['sys']
