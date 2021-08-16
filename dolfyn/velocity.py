@@ -107,7 +107,7 @@ class Velocity():
         
         if hasattr(self.ds, 'coord_sys') and self.ds.coord_sys=='earth':
             # Convert heading from East to North
-            angle += 90 # -90 degrees East == 0 degrees North
+            angle -= 90 # -90 degrees East == 0 degrees North
             idn = np.where(angle<-179)
             idp = np.where(angle>180)
             angle[idn] += 360
