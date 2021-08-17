@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- All properties now return xarray.DataArrays
 		
 	- TimeBinner, VelBinner, TurbBinner class refactoring:
+		- `TurbBinner` renamed to `ADVBinner`
 		- Ensured `calc_vel_csd()` ran off the standard coherence length n_fft (bin size / 6)
 		- fft frequency is now a xarray coordinate rather than its own variable
 		- Added "freq_units" option to `calc_vel_psd()` and `calc_vel_csd()` using either frequency in Hz (f) or rad/s (omega)

@@ -228,6 +228,10 @@ class TimeBinner:
             props['fs'] = self.fs
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
+            props['coord_sys'] = raw_ds.coord_sys
+        else:
+            props = out_ds.attrs
+            
         if names is None:
             names = raw_ds.data_vars
             
@@ -251,8 +255,9 @@ class TimeBinner:
                 pass # skips data variables that don't have a time dimension
             
             # Add standard deviation
-            std = (np.std(self.reshape(raw_ds.Veldata.U_mag.values), axis=-1,
-                          dtype=np.float64) - (noise[0] + noise[1])/2)
+            std = (np.nanstd(self.reshape(raw_ds.Veldata.U_mag.values), 
+                             axis=-1, 
+                             dtype=np.float64) - (noise[0] + noise[1])/2)
             out_ds['U_std'] = xr.DataArray(
                         std,
                         dims=raw_ds.vel.dims[1:],
@@ -270,7 +275,8 @@ class TimeBinner:
         raw_ds : xarray.Dataset
            The raw data structure to be binned.
         out_ds : xarray.Dataset
-           The binned (output) dataset to which variance data is added
+           The binned (output) dataset to which variance data is added,
+           nominally dataset output from `do_avg()`
         names : list of strings
            The names of variables of which to calculate variance.  If
            `names` is None, all data in `raw_ds` will be binned.
@@ -287,7 +293,11 @@ class TimeBinner:
             out_ds = type(raw_ds)()
             props['description'] = 'Variances calculated from ensembles '\
                                     'of size "n_bin"'
-            props['n_bin'] = self.n_bin          
+            props['n_bin'] = self.n_bin
+            props['coord_sys'] = raw_ds.coord_sys
+        else:
+            props = out_ds.attrs
+            
         if names is None:
             names = raw_ds.data_vars
             
@@ -303,10 +313,10 @@ class TimeBinner:
                     
             # create dataarray
             try:
-                out_ds[ky] = xr.DataArray(self._var(raw_ds[ky].values),
-                                          coords=coords_dict,
-                                          dims=dims_list,
-                                          attrs=raw_ds[ky].attrs)
+                out_ds[ky+suffix] = xr.DataArray(self._var(raw_ds[ky].values),
+                                                 coords=coords_dict,
+                                                 dims=dims_list,
+                                                 attrs=raw_ds[ky].attrs)
             except:
                 pass # skips data variables that don't have a time dimension
         

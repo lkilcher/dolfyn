@@ -283,7 +283,8 @@ class VelBinner(TimeBinner):
         dat : xarray.Dataset
             Xarray dataset containing raw velocity data
         out_ds : xarray.Dataset
-            Averaged dataset to save tke and stress dataArrays to, default=None
+            Averaged dataset to save tke and stress dataArrays to, 
+            nominally dataset output from `do_avg()`.
         
         Returns
         -------

@@ -1,3 +1,5 @@
+"""Module containing functions to clean data
+"""
 import numpy as np
 from scipy.signal import medfilt
 import xarray as xr
@@ -263,7 +265,7 @@ def medfilt_orient(ds, nfilt=7):
 
     See Also
     --------
-    ~scipy.signal.medfilt
+    scipy.signal.medfilt()
 
     """
     if getattr(ds, 'has_imu'):
@@ -304,7 +306,7 @@ def fillgaps_time(ds, method='pchip', max_gap=None):
       
     See Also
     --------
-    ~xarray.DataArray.interpolate_na
+    xarray.DataArray.interpolate_na()
         
     """
     ds['vel'] = ds.vel.interpolate_na(dim='time', method=method,
@@ -337,7 +339,7 @@ def fillgaps_depth(ds, method='pchip', max_gap=None):
 
     See Also
     --------
-    ~xarray.DataArray.interpolate_na
+    xarray.DataArray.interpolate_na()
         
     """
     ds['vel'] = ds.vel.interpolate_na(dim='range', method=method,

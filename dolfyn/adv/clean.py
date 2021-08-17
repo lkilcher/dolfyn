@@ -1,3 +1,5 @@
+"""Module containing functions to clean data
+"""
 import numpy as np
 import warnings
 from ..tools.misc import _group, _slice1d_along_axis
@@ -32,7 +34,7 @@ def clean_fill(u, mask, npt=12, method='pchip', max_gap=None):
       
     See Also
     --------
-    ~xarray.DataArray.interpolate_na
+    xarray.DataArray.interpolate_na()
 
     """
     if max_gap:
@@ -225,8 +227,8 @@ def GN2002(u, npt=5000):
 
     # Find large bad segments (>npt/10):
     # group returns a vector of slice objects.
-    bad_segs = _group(np.isnan(u), min_length=int(npt // 10))
-    if len(bad_segs):  # Are there any?
+    bad_segs = _group(np.isnan(u), min_length=int(npt//10))
+    if bad_segs.size > 0:
         # Break them up into separate regions:
         sp = 0
         ep = len(u)

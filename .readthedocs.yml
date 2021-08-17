@@ -1,9 +1,8 @@
-# .readthedocs.yml
 sphinx:
-    configuration: doc-src/conf.py
+    configuration: docs/conf.py
 
 conda:
-    file: doc-src/environment.yml
+    file: docs/environment.yml
 
 python:
     version: 3

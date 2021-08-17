@@ -177,7 +177,7 @@ def save_mat(dataset, filename, datenum=True):
     
     See Also
     --------
-    ~scipy.io.savemat
+    scipy.io.savemat()
     
     """
     if '.' in filename:
@@ -227,7 +227,7 @@ def load_mat(filename, datenum=True):
         
     See Also
     --------
-    ~scipy.io.loadmat
+    scipy.io.loadmat()
     
     """
     if '.' in filename:
