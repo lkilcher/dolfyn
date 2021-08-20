@@ -16,9 +16,9 @@
 2) Create a plan in `todo-branch.md`
 
 3) Make changes to documentation first!
-    - The documentation source lives in `doc-src/`
-    - Build the documentation by running `make` in the `doc-src/` folder.
-    - You can preview the built documentation by directing your browser to `file:///<dolfyn-repo-path>/doc-build/html/index.html`
+    - The documentation source lives in `docs/`
+    - Build the documentation by running `make html` in the `docs/` folder.
+    - You can preview the built documentation by directing your browser to `file://<dolfyn-repo-path>/docs/build/html/index.html`
     - Documenting your plans before making changes to the code accomplishes two things:
       i. It makes you think about what you're going to do, and how it will affect the API, before you put time into doing it
       ii. It gives you a big head-start on actually writing the documentation (which, if you're like me, is so easy to overlook/forget)

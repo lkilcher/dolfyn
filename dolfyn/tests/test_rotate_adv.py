@@ -34,14 +34,10 @@ def test_inst2head_rotmat():
                                    [1, 0, 0],
                                    [0, 0,-1]])
 
-    # assert ((td.Veldata.u == tr.dat.Veldata.v).all() and
-    #         (td.Veldata.v == tr.dat.Veldata.u).all() and
-    #         (td.Veldata.w == -tr.dat.Veldata.w).all()
-    #         ), "head->inst rotations give unexpeced results."
     #Coords don't get altered here
-    npt.assert_allclose(td.Veldata.u.values, tr.dat.Veldata.v.values, atol=1e-6)
-    npt.assert_allclose(td.Veldata.v.values, tr.dat.Veldata.u.values, atol=1e-6)
-    npt.assert_allclose(td.Veldata.w.values, -tr.dat.Veldata.w.values, atol=1e-6)
+    npt.assert_allclose(td.vel[0].values, tr.dat.vel[1].values, atol=1e-6)
+    npt.assert_allclose(td.vel[1].values, tr.dat.vel[0].values, atol=1e-6)
+    npt.assert_allclose(td.vel[2].values, -tr.dat.vel[2].values, atol=1e-6)
 
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)

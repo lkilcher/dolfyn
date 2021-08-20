@@ -10,7 +10,7 @@ def _fullyear(year):
 
 def epoch2date(ds_time, offset_hr=0, to_str=False):
     """
-    Convert from epoch time (seconds since 1/1/1970) to a list 
+    Convert from epoch time (seconds since 1/1/1970 00:00:00) to a list 
     of datetime objects
     
     Parameters
@@ -58,16 +58,13 @@ def date2str(dt, format_str=None):
     dt : datetime.datetime
         Single or list of datetime object(s)
     format_str : string
-        Timestamp string formatting, default: '%Y-%m-%d %H:%M:%S.%f'
+        Timestamp string formatting, default: '%Y-%m-%d %H:%M:%S.%f'. 
+        See datetime.strftime documentation for timestamp string formatting
     
     Returns
     -------
     time : string
         Converted timestamps
-    
-    See Also
-    --------
-    datetime.strftime() documentation for timestamp string formatting
     
     """
     if format_str is None:
@@ -91,7 +88,7 @@ def date2epoch(dt):
     Returns
     -------
     time : float
-        Datetime converted to epoch time (seconds since 1/1/1970)
+        Datetime converted to epoch time (seconds since 1/1/1970 00:00:00)
     
     """
     if not isinstance(dt, list):

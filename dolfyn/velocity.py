@@ -21,20 +21,6 @@ class Velocity():
     """
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
-        
-    @property
-    def _make_model(self, ):
-        """The make and model of the instrument that collected the data
-        in this data object.
-        """
-        return '{} {}'.format(self.ds.inst_make,
-                              self.ds.inst_model).lower()
-
-    @property
-    def n_time(self, ):
-        """The number of timesteps in the data object.
-        """
-        return self.ds.time.shape[0]
 
     @property
     def u(self,):

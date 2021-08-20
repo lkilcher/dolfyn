@@ -219,9 +219,9 @@ ADV-IMU data using |dlfn|.
 
 ADV Motion Correction Ex.1
 ..........................
-.. literalinclude:: ./examples/adv_example_mc1.py
+.. literalinclude:: ./examples/adv_motion_correction1.py
 
 ADV Motion Correction Ex.2
 ..........................
-.. literalinclude:: ./examples/adv_example_mc2.py
+.. literalinclude:: ./examples/adv_motion_correction2.py
 

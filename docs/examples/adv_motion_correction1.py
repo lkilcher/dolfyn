@@ -1,6 +1,6 @@
 # To get started first import the DOLfYN ADV advanced programming
 # interface (API):
-import dolfyn.adv.api as avm
+import dolfyn.adv.api as api
 from dolfyn import time
 
 # Import matplotlib tools for plotting the data:
@@ -37,7 +37,7 @@ accel_filter = 0.1
 ###############################
 
 # Read a file containing adv data:
-dat_raw = avm.read(fname, userdata=False)
+dat_raw = api.read(fname, userdata=False)
 
 # Crop the data for t_range
 t_range_inds = (t_range[0] < dat_raw.time) & (dat_raw.time < t_range[1])
@@ -47,12 +47,12 @@ dat = dat_raw.isel(time=t_range_inds)
 t = time.epoch2date(dat.time)
 
 # Set the inst2head rotation matrix and vector
-dat = avm.set_inst2head_rotmat(dat, inst2head_rotmat)
+dat = api.set_inst2head_rotmat(dat, inst2head_rotmat)
 dat.attrs['inst2head_vec'] = inst2head_vec
 
 # Then clean the file using the Goring+Nikora method:
-mask = avm.clean.GN2002(dat.vel)
-dat['vel'] = avm.clean.clean_fill(dat.vel, mask, method='pchip')
+mask = api.clean.GN2002(dat.vel)
+dat['vel'] = api.clean.clean_fill(dat.vel, mask, method='pchip')
 
 ####
 # Create a figure for comparing screened data to the original.
@@ -108,21 +108,21 @@ ax.set_xlim([dt.date2num(dt.datetime.datetime(2012, 6, 12, 12)),
 dat_cln = dat.copy(deep=True)
 
 # Perform motion correction (including rotation into earth frame):
-dat = avm.correct_motion(dat, accel_filter)
+dat = api.correct_motion(dat, accel_filter)
 
 # Rotate the uncorrected data into the earth frame,
 # for comparison to motion correction:
-dat_cln = avm.rotate2(dat_cln, 'earth')
+dat_cln = api.rotate2(dat_cln, 'earth')
 
 # Then rotate it into a 'principal axes frame':
-dat.attrs['principal_heading'] = avm.calc_principal_heading(dat.vel)
-dat_cln.attrs['principal_heading'] = avm.calc_principal_heading(dat_cln.vel)
-dat = avm.rotate2(dat, 'principal')
-dat_cln = avm.rotate2(dat_cln, 'principal')
+dat.attrs['principal_heading'] = api.calc_principal_heading(dat.vel)
+dat_cln.attrs['principal_heading'] = api.calc_principal_heading(dat_cln.vel)
+dat = api.rotate2(dat, 'principal')
+dat_cln = api.rotate2(dat_cln, 'principal')
 
 # Average the data and compute turbulence statistics
-dat_bin = avm.calc_turbulence(dat, n_bin=19200, fs=dat.fs, n_fft=4096)
-dat_cln_bin = avm.calc_turbulence(dat_cln, n_bin=19200, fs=dat_cln.fs, n_fft=4096)
+dat_bin = api.calc_turbulence(dat, n_bin=19200, fs=dat.fs, n_fft=4096)
+dat_cln_bin = api.calc_turbulence(dat_cln, n_bin=19200, fs=dat_cln.fs, n_fft=4096)
 
 ####
 # Figure to look at spectra

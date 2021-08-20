@@ -1,4 +1,4 @@
-Make,Model,Config,Confidence,Notes
+Make,Series,Config,Confidence,Notes
 Nortek,Vector,modern (~2019) firmware,Medium,"""Some direct ""instrument on the desk"" confirmation of orientation-matrix and p,r,h calcs."""
 Nortek,Vector,"with IMU, modern (2019) firmware",High,"""Lots of direct 'instrument on the desk' confirmation of orientation-matrix and p,r,h calcs."""
 Nortek,AWAC,modern (~2019) firmware,Low,"""This works, but there has been almost no testing to validate results"""

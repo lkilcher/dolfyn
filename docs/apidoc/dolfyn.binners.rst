@@ -31,6 +31,7 @@ Turbulence Analysis
 """""""""""""""""""
 
 Functions for analyzing ADV data via the `ADVBinner` class, beyond those described in `VelBinner`.
+Functions for analyzing turbulence statistics from ADCP data are in development.
 
 .. autosummary::
 	:nosignatures:

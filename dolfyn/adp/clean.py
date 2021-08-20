@@ -5,7 +5,7 @@ from scipy.signal import medfilt
 import xarray as xr
 from ..tools.misc import _medfiltnan
 from ..rotate.api import rotate2
-from ..rotate.base import q2orient
+from ..rotate.base import _make_model, q2orient
 
 
 def find_surface(ds, thresh=10, nfilt=None):
@@ -116,7 +116,7 @@ def nan_beyond_surface(ds, val=np.nan):
     """
     var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
     
-    if 'nortek' in ds.Veldata._make_model.lower():
+    if 'nortek' in _make_model(ds):
         beam_angle = 25 *(np.pi/180)
     else: #TRDI
         try:

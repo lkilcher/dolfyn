@@ -4,7 +4,7 @@ from scipy.integrate import cumtrapz
 import xarray as xr
 from ..rotate import vector as rot
 from ..rotate import signature as sig
-from ..rotate.api import rotate2
+from ..rotate.api import _make_model, rotate2
 import warnings
 
 
@@ -26,8 +26,8 @@ class _CalcMotion():
     Parameters
     ----------
 
-    ds : `adv_raw<dolfyn.adv.base.adv_raw>`
-           The IMU-adv object that will be used to compute motion.
+    ds : xarray.Dataset
+           The IMU-adv data that will be used to compute motion.
 
     accel_filtfreq : float
       the frequency at which to high-pass filter the acceleration
@@ -182,7 +182,7 @@ class _CalcMotion():
         # body2head = body2imu + imu2head
         # Thus:
         # imu2head = body2head - body2imu
-        vec = vec - _get_body2imu(self.ds.Veldata._make_model)[:, None]
+        vec = vec - _get_body2imu(_make_model(self.ds))[:, None]
 
         # This motion of the point *vec* due to rotations should be the
         # cross-product of omega (rotation vector) and the vector.
@@ -220,7 +220,7 @@ def _calc_probe_pos(ds, separate_probes=False):
     # then, the positions of the centers of the receivers is:
     # if separate_probes and p['inst_make'].lower() == 'nortek' and\
     #    p['inst_model'].lower == 'vector':
-    if separate_probes and ds.Veldata._make_model=='nortek vector':
+    if separate_probes and _make_model(ds)=='nortek vector':
         r = 0.076
         # The angle between the x-y plane and the probes
         phi = np.deg2rad(-30)
@@ -399,7 +399,7 @@ def correct_motion(ds,
 
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
-    if ds.Veldata._make_model.startswith('nortek signature'):
+    if _make_model(ds).startswith('nortek signature'):
         inst2earth = sig._inst2earth
     else:
         inst2earth = rot._inst2earth
@@ -432,7 +432,7 @@ def correct_motion(ds,
     velmot = ds['velrot'] + ds['velacc'] 
     velmot = velmot.values
 
-    if ds.Veldata._make_model.startswith('nortek signature'):
+    if _make_model(ds).startswith('nortek signature'):
         # drop xarray to not break code between ADV and AD2CP
         ds['vel'][:3] += velmot[:,None,:]
         # This assumes these are w.

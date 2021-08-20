@@ -1,5 +1,3 @@
-# The setup script for installing DOLfYN.
-# from distutils.core import setup
 from setuptools import setup, find_packages
 import os
 import shutil
@@ -28,13 +26,13 @@ config = dict(
     version=version['__version__'],
     description='Doppler Ocean Library for pYthoN.',
     author='DOLfYN Developers',
-    author_email='levi.kilcher@nrel.gov',
+    author_email='james.mcvey@pnnl.gov',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
-        #'Topic :: Scientific/Engineering :: Earth Science',
+        'Topic :: Scientific/Engineering',
     ],
     url='http://github.com/jmcvey3/dolfyn',
     packages=find_packages(exclude=['dolfyn.tests']),

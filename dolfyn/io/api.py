@@ -26,7 +26,7 @@ def read(fname, userdata=True, nens=None):
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from the binary instrument data.
+        An xarray dataset from instrument datafile.
 
     """
     # Loop over binary readers until we find one that works.
@@ -45,7 +45,7 @@ def read_example(name, **kwargs):
 
     Parameters
     ----------
-    name : string
+    name : str
         A few available files:
 
             AWAC_test01.wpr

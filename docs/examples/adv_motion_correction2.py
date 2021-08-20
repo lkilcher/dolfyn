@@ -1,7 +1,7 @@
 import numpy as np
 from datetime import datetime
 import dolfyn as dlfn
-import dolfyn.adv.api as avm
+import dolfyn.adv.api as api
 
 from matplotlib import pyplot as plt
 from matplotlib import dates as mpldt
@@ -24,8 +24,8 @@ data = data_raw.isel(time=t_range_inds)
 dt = dlfn.time.epoch2date(data.time)
 
 # Clean the file using the Goring+Nikora method:
-bad = avm.clean.GN2002(data.vel)
-data['vel'] = avm.clean.clean_fill(data.vel, bad, method='pchip')
+bad = api.clean.GN2002(data.vel)
+data['vel'] = api.clean.clean_fill(data.vel, bad, method='pchip')
 # data.coords['mask'] = (('dir','time'), ~bad)
 # data.vel.values = data.vel.where(data.mask)
 
@@ -43,7 +43,7 @@ plt.show()
 data_cleaned = data.copy(deep=True)
 
 ## Perform motion correction
-data = avm.correct_motion(data, accel_filter, to_earth=False)
+data = api.correct_motion(data, accel_filter, to_earth=False)
 # For reference, dolfyn defines ‘inst’ as the IMU frame of reference, not 
 # the ADV sensor head
 # After motion correction, the pre- and post-correction datasets coordinates
@@ -86,7 +86,7 @@ plt.show()
 ## Create velocity spectra
 # Initiate tool to bin data based on the ensemble length. If n_fft is none,
 # n_fft is equal to n_bin
-ensemble_tool = avm.ADVBinner(n_bin=ensemble_size, fs=data.fs, n_fft=None)
+ensemble_tool = api.ADVBinner(n_bin=ensemble_size, fs=data.fs, n_fft=None)
 
 # motion corrected data
 mc_spec = ensemble_tool.calc_vel_psd(data.vel, freq_units='Hz')

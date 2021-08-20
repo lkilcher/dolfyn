@@ -5,22 +5,9 @@ Rotations & Coordinate Systems
 
 One of |dlfn|\ 's primary advantages is that it contains tools
 for managing the coordinate system (a.k.a. the reference frame) of
-vector data. This has taken considerable effort
-because the coordinate system definitions used by instrument
-manufacturers are not consistent, and the math/concepts of coordinate
-rotations can be described as somewhere between *non-trivial* and
-*absolutely maddening*. We hope that this page, and |dlfn|\ 's tools
-for managing coordinate system help to reduce the burden of tracking
-this information so that you -- the researcher -- can focus on what's
-important.
-
-Having said that, the coordinate-system/rotation tools provided in
+tensor data. The coordinate-system/rotation tools provided in
 |dlfn| have been tested to varying degrees on different types of
-instruments and configurations. Instrument manufacturers use different
-conventions and can change conventions with firmware
-updates. Therefore, we make no promises that these tools will work for
-any instrument type, but we do have higher confidence in some
-instruments and configurations than others. See :ref:`the table
+instruments and configurations. See :ref:`the table
 <rotate-testing-table>` at the bottom of this page for details on the
 degree of testing of |dlfn|\ 's rotations and coordinate-system tools
 that has occurred for several instrument types. With your help, we
@@ -215,9 +202,8 @@ The raw *h,p,r* data as defined by the instrument manufacturer is
 available in ``dat.data_vars``. Note that this data does not
 obey the above definitions, and instead obeys the instrument
 manufacturer's definitions of these variables (i.e., it is exactly the
-data contained in the binary file). Also note that
-``dat['heading']`` is unaffected by setting
-declination as described in the next section.
+data contained in the binary file). Also note that ``dat['heading']`` 
+is unaffected by setting declination as described in the next section.
     
 Declination Handling
 --------------------

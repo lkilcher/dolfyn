@@ -1,16 +1,16 @@
 # Start by importing DOLfYN:
 import dolfyn as dlfn
-import dolfyn.adp.api as apm
+import dolfyn.adp.api as api
 
 # Then read a file containing adv data:
 dat = dlfn.read_example('BenchFile01.ad2cp')
 
 # Since this is a Nortek instrument the ADCP's deployment height in the water
 # column isn't taken into account
-dat = apm.clean.set_deploy_altitude(dat, h_deploy=0.5)
+dat = api.clean.set_deploy_altitude(dat, h_deploy=0.5)
 
 # Filter beam data with correlation < 50%
-dat_cln = apm.clean.correlation_filter(dat, thresh=50)
+dat_cln = api.clean.correlation_filter(dat, thresh=50)
 
 # Rotate data from the instrument to true ENU (vs magnetic) frame:
 # First set the magnetic declination
