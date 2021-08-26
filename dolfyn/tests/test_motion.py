@@ -1,9 +1,9 @@
 from dolfyn.tests import test_read_adv as tv
-from dolfyn.tests import test_read_adp as tp
+#from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests.base import load_ncdata as load, save_ncdata as save
 import dolfyn.adv.api as avm
 from dolfyn.rotate.api import rotate2, set_declination
-import numpy as np
+#import numpy as np
 from xarray.testing import assert_allclose
 
 def test_motion_adv(make_data=False):

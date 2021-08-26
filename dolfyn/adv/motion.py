@@ -3,7 +3,7 @@ import scipy.signal as ss
 from scipy.integrate import cumtrapz
 import xarray as xr
 from ..rotate import vector as rot
-from ..rotate import signature as sig
+#from ..rotate import signature as sig
 from ..rotate.api import _make_model, rotate2
 import warnings
 
@@ -12,8 +12,9 @@ def _get_body2imu(make_model):
     if make_model == 'nortek vector':
         # In inches it is: (0.25, 0.25, 5.9)
         return np.array([0.00635, 0.00635, 0.14986])
-    elif make_model.startswith('nortek signature'):
-        return np.array([0.0, 0.0, 0.0])
+    # Placeholder
+    # elif make_model.startswith('nortek signature'):
+    #     return np.array([0.0, 0.0, 0.0])
     else:
         raise Exception("The imu->body vector is unknown for this instrument.")
 
@@ -25,7 +26,6 @@ class _CalcMotion():
 
     Parameters
     ----------
-
     ds : xarray.Dataset
            The IMU-adv data that will be used to compute motion.
 
@@ -65,11 +65,10 @@ class _CalcMotion():
                 accel_filtfreq = datval
             else:
                 if datval != accel_filtfreq:
-                    # Neither are None!?!
                     warnings.warn(
-                        "The default accel_filtfreq "
-                        "is {} Hz. Overriding this with the user-specified "
-                        "value: {} Hz.".format(datval, accel_filtfreq))
+                        f"The default accel_filtfreq is {datval} Hz. "
+                        "Overriding this with the user-specified "
+                        "value: {accel_filtfreq} Hz.")
         if vel_filtfreq is None:
             vel_filtfreq = self.ds.attrs.get('motion vel_filtfreq Hz', None)
         if vel_filtfreq is None:
@@ -99,27 +98,6 @@ class _CalcMotion():
             flt = ss.butter(1, self.accel_filtfreq / (self.ds.fs / 2))
             for idx in range(3):
                 acc[idx] = ss.filtfilt(flt[0], flt[1], acc[idx])
-
-    def __call__(self, vec):
-        """
-        Calculate the motion of the point specified by vec (in meters,
-        in the adv-body coordinate system).
-
-        Parameters
-        ----------
-
-        vec : |np.ndarray| (len(3) or 3 x M)
-          The vector in meters (or set of vectors) from the
-          body-origin (center of head end-cap) to the point of
-          interest (in the body coord-sys).
-
-        Returns
-        -------
-        umot : |np.ndarray| (3 x M x N_time)
-          The motion (velocity) array (3, n_time).
-
-        """
-        return self.calc_velacc() + self.calc_velrot(np.array(vec), )
 
     def calc_velacc(self, ):
         """
@@ -207,7 +185,7 @@ class _CalcMotion():
 
 def _calc_probe_pos(ds, separate_probes=False):
     """
-    !!!Currently this only works for Nortek Vectors!
+    Currently this only works for Nortek Vectors!
 
     In the future, we could use the transformation matrix (and a
     probe-length lookup-table?)
@@ -381,28 +359,27 @@ def correct_motion(ds,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    try:
-        ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU','time'])
-    except:
-        ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU','range','time'])
+    #try:
+    ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU','time'])
+    #except:
+    #    ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU','range','time'])
 
     ##########
     # Rotate the data into the correct coordinate system.
     # inst2earth expects a 'rotate_vars' property.
     # Add velrot, velacc, acclow, to it.
     if 'rotate_vars' not in ds.attrs:
-        ds.attrs['rotate_vars'] = ['vel', 'velrot', 'velacc',
-                                     'accel', 'acclow',
-                                     'angrt', 'mag']
+        ds.attrs['rotate_vars'] = ['vel', 'velrot', 'velacc', 'accel', 
+                                   'acclow', 'angrt', 'mag']
     else:
         ds.attrs['rotate_vars'].extend(['velrot', 'velacc', 'acclow'])
 
     # NOTE: accel, acclow, and velacc are in the earth-frame after
     #       calc_velacc() call.
-    if _make_model(ds).startswith('nortek signature'):
-        inst2earth = sig._inst2earth
-    else:
-        inst2earth = rot._inst2earth
+    # if _make_model(ds).startswith('nortek signature'):
+    #     inst2earth = sig._inst2earth
+    # else: # nortek vector
+    inst2earth = rot._inst2earth
     if to_earth:
         ds['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']
@@ -432,13 +409,13 @@ def correct_motion(ds,
     velmot = ds['velrot'] + ds['velacc'] 
     velmot = velmot.values
 
-    if _make_model(ds).startswith('nortek signature'):
-        # drop xarray to not break code between ADV and AD2CP
-        ds['vel'][:3] += velmot[:,None,:]
-        # This assumes these are w.
-        ds['vel'][3:] += velmot[2:]
-    else:
-        ds['vel'][:3] += velmot
+    # if _make_model(ds).startswith('nortek signature'):
+    #     # drop xarray to not break code between ADV and AD2CP
+    #     ds['vel'][:3] += velmot[:,None,:]
+    #     # This assumes these are w.
+    #     ds['vel'][3:] += velmot[2:]
+    # else: # nortek vector
+    ds['vel'][:3] += velmot
         
     ds.attrs['motion corrected'] = 1
     ds.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq

@@ -17,7 +17,7 @@ I/O functions can be accessed directly::
 
 	>> import dolfyn as dlfn
 	>> dat = dlfn.read(<path/to/my_data_file>)
-	>> dlfn.save(<path/to/save_file.nc>)
+	>> dlfn.save(dat, <path/to/save_file.nc>)
 
 .. automodule:: dolfyn.io.api
     :members:

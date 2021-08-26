@@ -140,7 +140,6 @@ def range_limit(u, range=[-5, 5]):
     ----------
     u : xarray.DataArray
       The timeseries data to clean.
-      
     range : list
        Min and max magnitudes beyond which are masked
        
@@ -183,8 +182,8 @@ def _phaseSpaceThresh(u):
     b = np.empty_like(alpha)
     for idx, al in enumerate(alpha):
         a[idx], b[idx] = _calcab(al, Lu * std_u[idx], Lu * std_d2u[idx])
-    if np.any(np.isnan(a)) or np.any(np.isnan(a[idx])):
-        print('Coefficient calculation error')
+        if np.any(np.isnan(a)) or np.any(np.isnan(a[idx])):
+            print('Coefficient calculation error')
     theta = np.arctan2(du, u)
     phi = np.arctan2((du ** 2 + u ** 2) ** 0.5, d2u)
     pe = (((sin(phi) * cos(theta) * cos(alpha) +
@@ -259,9 +258,6 @@ def GN2002(u, npt=5000):
         mask[:nbins * npt] = _phaseSpaceThresh(
             np.array(np.reshape(u[:(nbins * npt)], (npt, nbins), order='F')))
         mask[-npt:] = _phaseSpaceThresh(u[-npt:])
-        #u[mask] = np.NaN
-        #_fillpoly(u, 3, 12)
-        # print( 'GN2002: found %d bad points on loop %d' % (mask.sum(),c) )
         c += 1
         if c >= 100:
             raise Exception('GN2002 loop-limit exceeded.')

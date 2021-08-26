@@ -4,25 +4,33 @@ import dolfyn.adv.api as avm
 import dolfyn.adp.api as apm
 from dolfyn.tests.base import load_ncdata as load, save_ncdata as save
 from xarray.testing import assert_allclose
+import numpy as np
 
 
 def test_GN2002(make_data=False):
-    td = tv.dat_imu.copy(deep=True)
+    td = tv.dat.copy(deep=True)
+    td_imu = tv.dat_imu.copy(deep=True)
     
-    mask = avm.clean.GN2002(td.vel, 20)
+    td.vel[0, 50:65] = np.nan # fudge up some data
+    mask = avm.clean.GN2002(td.vel, npt=20)
     td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
+    
+    mask = avm.clean.GN2002(td_imu.vel, npt=20)
+    td_imu['vel'] = avm.clean.clean_fill(td_imu.vel, mask, method='cubic')
 
     if make_data:
-        save(td, 'vector_data01_uclean.nc')
+        save(td, 'vector_data01_GN.nc')
+        save(td_imu, 'vector_data_imu01_GN.nc')
         return
 
-    assert_allclose(td, load('vector_data01_uclean.nc'), atol=1e-6)
+    assert_allclose(td, load('vector_data01_GN.nc'), atol=1e-6)
+    assert_allclose(td_imu, load('vector_data_imu01_GN.nc'), atol=1e-6)
     
     
 def test_spike_thresh(make_data=False):
     td = tv.dat_imu.copy(deep=True)
     
-    mask = avm.clean.spike_thresh(td.vel, 10)
+    mask = avm.clean.spike_thresh(td.vel, thresh=10)
     td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
 
     if make_data:
