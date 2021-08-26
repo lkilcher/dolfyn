@@ -118,16 +118,19 @@ def test_io_nortek2(make_data=False):
     
     
 def test_matlab_io(make_data=False):
+    td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=100))
+    td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp', nens=100))
+    
     if make_data:
-        tb.save_matlab(dat_rdi_bt, 'dat_rdi_bt.mat')
-        tb.save_matlab(dat_sig_ieb, 'dat_sig_ieb.mat')
+        tb.save_matlab(td_rdi_bt, 'dat_rdi_bt')
+        tb.save_matlab(td_sig_ieb, 'dat_sig_ieb')
         return
     
     mat_rdi_bt = tb.load_matlab('dat_rdi_bt.mat')
     mat_sig_ieb = tb.load_matlab('dat_sig_ieb.mat')
         
-    assert_allclose(mat_rdi_bt, dat_rdi_bt, atol=1e-6)
-    assert_allclose(mat_sig_ieb, dat_sig_ieb, atol=1e-6)
+    assert_allclose(td_rdi_bt, mat_rdi_bt,  atol=1e-6)
+    assert_allclose(td_sig_ieb, mat_sig_ieb, atol=1e-6)
     
     
 class warnings_testcase(unittest.TestCase):

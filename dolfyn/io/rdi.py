@@ -61,9 +61,9 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     ds['beam2inst_orientmat'] = xr.DataArray(_calc_beam_orientmat(
                             ds.beam_angle,
                             ds.beam_pattern=='convex'),
-                                             coords={'x':[1,2,3,4],
+                                             coords={'beam':[1,2,3,4],
                                                      'x*':[1,2,3,4]},
-                                             dims=['x','x*'])
+                                             dims=['beam','x*'])
                                  
     ds['orientmat'] = xr.DataArray(_calc_orientmat(ds),
                                    coords={'inst': ['X','Y','Z'],

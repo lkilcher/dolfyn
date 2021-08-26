@@ -5,7 +5,8 @@ you know you have fixed a bug, and wish to fix an existing test data
 set.
 """
 print(__doc__)
-## Have to run twice to reset the rotate test files
+#!!! Have to run twice in a row to reset the rotate test files
+
 # import test_read_adv as advr
 # import test_rotate_adv as advro
 # import test_read_adp as adpr
@@ -16,7 +17,6 @@ print(__doc__)
 # import test_shortcuts as ts
 
 # advr.test_read(make_data=True)
-
 # advro.test_heading(make_data=True)
 # advro.test_rotate_inst2beam(make_data=True)
 # advro.test_rotate_inst2earth(make_data=True)
@@ -26,7 +26,6 @@ print(__doc__)
 # adpr.test_io_nortek(make_data=True)
 # adpr.test_io_nortek2(make_data=True)
 # adpr.test_matlab_io(make_data=True)
-
 # adpro.test_rotate_beam2inst(make_data=True)
 # adpro.test_rotate_inst2beam(make_data=True)
 # adpro.test_rotate_inst2earth(make_data=True)

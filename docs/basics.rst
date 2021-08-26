@@ -61,43 +61,47 @@ In an interactive shell, typing the variable name followed by enter/return will 
 		coord_sys:                 earth
 		has_imu:                   0
 		cell_size:                 1.0
-		blank_dist:                0.4
+		blank_dist:                0.41
 
 This view reveals all the data stored within the xarray Dataset. There are four types of data displyed here: data variables, coordinates, dimensions and attributes.
 
  - Data variables contain the main information stored as xarray DataArrays::
  
-    >> dat.amp
-	<xarray.DataArray 'amp' (dir: 3, range: 20, time: 9997)>
-	array([[[146, 147, 144, ...,  38,  38,  38],
-			[136, 135, 136, ...,  25,  25,  25],
-			[130, 129, 132, ...,  25,  24,  25],
+    >> dat.vel
+	<xarray.DataArray 'vel' (dir: 3, range: 20, time: 9997)>
+	array([[[-0.66479734, -0.65496222, -0.69909159, ...,  1.90351055,
+			  1.94648366,  1.91131579],
+			[-0.53663862, -0.56178903, -0.76993938, ...,  0.67961291,
+			  6.46099706, -0.3679769 ],
+			[-0.63192198, -0.63142786, -0.52826604, ..., -0.0844491 ,
+			  2.69917045, -0.69253631],
 			...,
-			[ 89,  96,  88, ...,  23,  22,  23],
-			[ 77,  82,  84, ...,  23,  23,  23],
-			[ 61,  49,  58, ...,  23,  22,  23]],
-
-		   [[149, 146, 149, ...,  42,  42,  42],
-			[138, 135, 141, ...,  29,  30,  30],
-			[127, 127, 134, ...,  30,  29,  29],
+			[-0.90170625, -0.85587418, -0.48779671, ...,  3.71806074,
+			  0.63299628,  1.34105901],
+			[-0.73322984, -0.66709612, -0.46033165, ..., -1.68639582,
+			  0.31451557,  2.93691549],
+			[-0.90169828, -0.68338529, -0.57451738, ..., -2.77793829,
+			  2.43313374, -0.98629605]],
+	...
+		   [[-0.11800002, -0.06400001,  0.13500002, ...,  1.483     ,
+			  1.49100016,  1.50800014],
+			[-0.17100002, -0.18900001,  0.029     , ...,  0.86300005,
+			 -0.95699996,  0.14500003],
+			[-0.08900001, -0.21400001,  0.016     , ..., -1.54799992,
+			  1.6550002 , -0.82600006],
 			...,
-			[ 81,  84,  87, ...,  29,  29,  29],
-			[ 66,  67,  77, ...,  29,  29,  29],
-			[ 58,  63,  65, ...,  29,  29,  28]],
-
-		   [[145, 148, 148, ...,  54,  54,  54],
-			[140, 142, 139, ...,  27,  27,  27],
-			[136, 136, 129, ...,  26,  26,  26],
-			...,
-			[ 76,  74,  78, ...,  25,  25,  25],
-			[ 68,  66,  58, ...,  25,  26,  26],
-			[ 49,  50,  52, ...,  25,  25,  25]]], dtype=uint8)
+			[ 0.05099999, -0.12099999,  0.22100003, ..., -0.78300005,
+			  0.7650001 ,  0.164     ],
+			[-0.05500002, -0.17199998,  0.152     , ..., -0.93699997,
+			  1.22200003, -0.87500013],
+			[ 0.05099998, -0.146     ,  0.16600001, ..., -1.09600008,
+			  0.49300008,  0.64500009]]])
 	Coordinates:
-	  * dir      (dir) <U1 'E' 'N' 'U'
-	  * range    (range) float32 1.41 2.41 3.4 4.4 5.4 ... 17.36 18.36 19.35 20.35
+	  * range    (range) float32 1.41 2.41 3.41 4.41 ... 17.41 18.41 19.41 20.41
 	  * time     (time) float64 1.34e+09 1.34e+09 1.34e+09 ... 1.34e+09 1.34e+09
+	  * dir      (dir) <U1 'E' 'N' 'U'
 	Attributes:
-		units:    counts
+		units:    m/s
    
  - Coordinates are arrays that contain the indices/labels/values of the data variables' dimensions, e.g. time, latitude, or longitude::
  
@@ -126,32 +130,26 @@ Data variables and coordinates can be accessed using dict-style syntax, *or* att
 	Attributes:
 		units:    m
 
-    >> dat.vel[0]
-	<xarray.DataArray 'vel' (range: 20, time: 9997)>
-	array([[-0.66479734, -0.65496222, -0.69909159, ...,  1.90351055,
-			 1.94648366,  1.91131579],
-		   [-0.53663862, -0.56178903, -0.76993938, ...,  0.67961291,
-			 6.46099706, -0.3679769 ],
-		   [-0.63192198, -0.63142786, -0.52826604, ..., -0.0844491 ,
-			 2.69917045, -0.69253631],
+    >> dat.amp[0]
+	<xarray.DataArray 'amp' (range: 20, time: 9997)>
+	array([[146, 147, 144, ...,  38,  38,  38],
+		   [136, 135, 136, ...,  25,  25,  25],
+		   [130, 129, 132, ...,  25,  24,  25],
 		   ...,
-		   [-0.90170625, -0.85587418, -0.48779671, ...,  3.71806074,
-			 0.63299628,  1.34105901],
-		   [-0.73322984, -0.66709612, -0.46033165, ..., -1.68639582,
-			 0.31451557,  2.93691549],
-		   [-0.90169828, -0.68338529, -0.57451738, ..., -2.77793829,
-			 2.43313374, -0.98629605]])
+		   [ 89,  96,  88, ...,  23,  22,  23],
+		   [ 77,  82,  84, ...,  23,  23,  23],
+		   [ 61,  49,  58, ...,  23,  22,  23]], dtype=uint8)
 	Coordinates:
-		dir      <U1 'E'
-	  * range    (range) float32 1.41 2.41 3.4 4.4 5.4 ... 17.36 18.36 19.35 20.35
+	  * range    (range) float32 1.41 2.41 3.41 4.41 ... 17.41 18.41 19.41 20.41
 	  * time     (time) float64 1.34e+09 1.34e+09 1.34e+09 ... 1.34e+09 1.34e+09
+		beam     int32 1
 	Attributes:
-		units:    m/s
+		units:    counts
 
 Dataset/DataArray attributes can be accessed as follows::
 
   >> dat.blank_dist
-  0.4
+  0.41
   
   >> dat.attrs['fs']
   1.0
@@ -166,13 +164,13 @@ Xarray has its own built-in methods for `selecting data  <http://xarray.pydata.o
 
 A section of data can be extracted to a new Dataset or DataArray using ``.isel``, ``.sel`` and/or with python's built-in ``slice`` function, for example::
 
-  # Returns a new DataArray containing data from the 5th depth bin
-  >> datsub = dat.vel.isel(range=5)
+  # Returns a new DataArray containing data from 0 to 5 m.
+  >> datsub = dat.vel.sel(range=slize(0,5))
   
   # Returns velocity in 'streamwise' direction
   >> datsub = dat.vel.sel(orient='streamwise')
 
-  # Returns a new DataArray with the first 1000 timesteps from the original DataArray
+  # Returns a new DataArray with the first 1000 indices (timesteps) from the original DataArray
   >> datsub = dat.vel.isel(time=slice(0,1000))
   
   
