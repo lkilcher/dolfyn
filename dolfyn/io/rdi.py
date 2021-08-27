@@ -287,7 +287,7 @@ class _RdiReader():
     def init_data(self,):
         outd = {'data_vars':{},'coords':{},'attrs':{},'units':{},'sys':{}}
         outd['attrs']['inst_make'] = 'TRDI'
-        outd['attrs']['inst_model'] = '<WORKHORSE?>'
+        outd['attrs']['inst_model'] = 'Workhorse'
         outd['attrs']['inst_type'] = 'ADCP'
         outd['attrs']['rotate_vars'] = ['vel', ]
         # Currently RDI doesn't use IMUs
@@ -656,7 +656,7 @@ class _RdiReader():
         ens.adc[:, k] = fd.read_ui8(8)
         self._nbyte = 2 + 40
         
-        #!!! TRDI changed pressure to depth?
+        # Older instruments use pressure instead of depth
         #cfg = self.cfg
         # if cfg['name'] == 'bb-adcp':
         #     if cfg['prog_ver'] >= 5.55:

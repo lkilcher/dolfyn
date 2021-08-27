@@ -25,7 +25,7 @@ dt = dlfn.time.epoch2date(data.time)
 
 # Clean the file using the Goring+Nikora method:
 bad = api.clean.GN2002(data.vel)
-data['vel'] = api.clean.clean_fill(data.vel, bad, method='pchip')
+data['vel'] = api.clean.clean_fill(data.vel, bad, method='cubic')
 # data.coords['mask'] = (('dir','time'), ~bad)
 # data.vel.values = data.vel.where(data.mask)
 

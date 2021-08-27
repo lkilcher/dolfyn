@@ -1,4 +1,3 @@
-from __future__ import division
 import numpy as np
 import warnings
 from . import base as rotb
@@ -116,8 +115,6 @@ def _calc_omat(hh, pp, rr, orientation_down=None):
         # transform matlab script for more info.  
         rr[orientation_down.astype(bool)] += 180
 
-    # Take the transpose of the orientation to get the inst->earth rotation
-    # matrix.
     return _euler2orient(hh, pp, rr)
 
 

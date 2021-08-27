@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore', category=np.RankWarning)
 sin = np.sin
 cos = np.cos
 
-def clean_fill(u, mask, npt=12, method='pchip', max_gap=None):
+def clean_fill(u, mask, npt=12, method='cubic', max_gap=None):
     """
     Interpolate over mask values in timeseries data using the specified method
 

@@ -82,24 +82,29 @@ def _create_dataset(data):
     readers
     """
     ds = xr.Dataset()
+    inst = ['X','Y','Z']
+    earth = ['E','N','U']
     beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
     tag = ['_b5', '_echo', '_bt', '_gps']
     # 'dir' coordinates get reset in _set_coords()
     for key in data['data_vars']:
         # orientation matrices
         if 'mat' in key:
-            try: # orientmat (inst2earth)
+            try: # AHRS orientmat
                 if any(val in key for val in tag):
                     tg = [val for val in tag if val in key]
                     tg = tg[0]
                 else:
                     tg = ''
-                # note these coords should be switched for AHRS instruments
-                ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'inst':['X','Y','Z'],
-                                               'earth':['E','N','U'],
-                                               'time'+tg:data['coords']['time'+tg]},
-                                       dims=['inst','earth','time'+tg])
+                time = data['coords']['time'+tg]
+                if data['attrs']['inst_type']=='ADV':
+                    coords={'earth':earth, 'inst':inst, 'time'+tg:time}
+                    dims = ['earth','inst','time'+tg]
+                else:
+                    coords={'inst':inst, 'earth':earth, 'time'+tg:time}
+                    dims = ['inst','earth','time'+tg]
+                ds[key] = xr.DataArray(data['data_vars'][key], coords, dims)
+                
             except: # the other 2 (beam2inst & inst2head)
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'beam':beam,

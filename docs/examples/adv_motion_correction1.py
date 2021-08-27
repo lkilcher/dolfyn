@@ -12,7 +12,7 @@ import numpy as np
 # User input and customization
 
 # The file to load:
-fname = '../dolfyn/example_data/vector_data_imu01.vec'
+fname = '../../dolfyn/example_data/vector_data_imu01.vec'
 
 # This is the vector from the ADV head to the instrument frame, in meters,
 # in the ADV coordinate system.
@@ -52,7 +52,7 @@ dat.attrs['inst2head_vec'] = inst2head_vec
 
 # Then clean the file using the Goring+Nikora method:
 mask = api.clean.GN2002(dat.vel)
-dat['vel'] = api.clean.clean_fill(dat.vel, mask, method='pchip')
+dat['vel'] = api.clean.clean_fill(dat.vel, mask, method='cubic')
 
 ####
 # Create a figure for comparing screened data to the original.

@@ -8,141 +8,6 @@ from ..rotate.api import rotate2
 from ..rotate.base import _make_model, q2orient
 
 
-def find_surface(ds, thresh=10, nfilt=None):
-    """
-    Find the surface (water level or seafloor) from amplitude data
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-      The full adcp dataset
-    thresh : int
-      Specifies the threshold used in detecting the surface.
-      (The amount that amplitude must increase by near the surface for it to
-      be considered a surface hit)
-    nfilt : int
-      Specifies the width of the median filter applied, must be odd
-      
-    Returns
-    -------
-    ds : xarray.Dataset
-      The full adcp dataset with `d_range` added
-
-    """
-    # This finds the maximum of the echo profile:
-    inds = np.argmax(ds.amp.values, axis=1)
-    # This finds the first point that increases (away from the profiler) in
-    # the echo profile
-    edf = np.diff(ds.amp.values.astype(np.int16), axis=1)
-    inds2 = np.max((edf < 0) *
-                   np.arange(ds.vel.shape[1] - 1,
-                             dtype=np.uint8)[None,:,None], axis=1) + 1
-
-    # Calculate the depth of these quantities
-    d1 = ds.range.values[inds]
-    d2 = ds.range.values[inds2]
-    # Combine them:
-    D = np.vstack((d1, d2))
-    # Take the median value as the estimate of the surface:
-    d = np.median(D, axis=0)
-
-    # Throw out values that do not increase near the surface by *thresh*
-    for ip in range(ds.vel.shape[1]):
-        itmp = np.min(inds[:, ip])
-        if (edf[itmp:, :, ip] < thresh).all():
-            d[ip] = np.NaN
-    
-    if nfilt:
-        dfilt = _medfiltnan(d, nfilt, thresh=.4)
-        dfilt[dfilt==0] = np.NaN
-        d = dfilt
-        
-    ds['d_range'] = xr.DataArray(d, dims=['time'], attrs={'units':'m'})
-    return ds
-
-
-def surface_from_P(ds, salinity=35):
-    """
-    Approximates distance to water surface above ADCP from the pressure sensor.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-      The full adcp dataset
-    salinity: numeric
-      Water salinity in psu
-      
-    Returns
-    -------
-    ds : xarray.Dataset
-      The full adcp dataset with `d_range` added
-      
-    Notes
-    -----
-    Requires that the instrument's pressure sensor was calibrated/zeroed
-    before deployment to remove atmospheric pressure.
-      
-    """
-    # pressure conversion from dbar to MPa / water weight
-    rho = salinity + 1000
-    d = (ds.pressure*10000)/(9.81*rho)
-    
-    ds['d_range'] = xr.DataArray(d, dims=['time'], attrs={'units':'m'})
-    
-    return ds
-
-
-def nan_beyond_surface(ds, val=np.nan):
-    """
-    Mask the values of the data that are beyond the surface.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-      The adcp dataset to clean
-    val : nan or numeric
-      Specifies the value to set the bad values to (default np.nan).
-      
-    Returns 
-    -------
-    ds : xarray.Dataset
-      The adcp dataset where relevant arrays with values greater than 
-      `d_range` are set to NaN
-    
-    Notes
-    -----
-    Surface interference expected to happen at `r > d_range * cos(beam_angle)`
-
-    """
-    var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
-    
-    if 'nortek' in _make_model(ds):
-        beam_angle = 25 *(np.pi/180)
-    else: #TRDI
-        try:
-            beam_angle = ds.beam_angle 
-        except:
-            beam_angle = 20 *(np.pi/180)
-        
-    bds = ds.range > (ds.d_range * np.cos(beam_angle) - ds.cell_size)
-    
-    if 'echo' in var:
-        bds_echo = ds.range_echo > ds.d_range
-        ds['echo'].values[...,bds_echo] = val
-        var.remove('echo')
-
-    for nm in var:
-        # workaround for xarray since it can't handle 2D boolean arrays
-        a = ds[nm].values
-        try:
-            a[...,bds] = val
-        except: # correlation
-            a[...,bds] = 0 
-        ds[nm].values = a
-    
-    return ds
-
-
 def set_deploy_altitude(ds, h_deploy):
     """
     Add instrument's height above seafloor to range of depth bins
@@ -178,6 +43,145 @@ def set_deploy_altitude(ds, h_deploy):
         ds = ds.assign_coords({val: ds[val].values + h_deploy})
         ds[val].attrs['units'] = 'm'
         
+    ds.attrs['h_deploy'] = h_deploy
+    return ds
+
+
+def find_surface(ds, thresh=10, nfilt=None):
+    """
+    Find the surface (water level or seafloor) from amplitude data
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+      The full adcp dataset
+    thresh : int
+      Specifies the threshold used in detecting the surface.
+      (The amount that amplitude must increase by near the surface for it to
+      be considered a surface hit)
+    nfilt : int
+      Specifies the width of the median filter applied, must be odd
+      
+    Returns
+    -------
+    ds : xarray.Dataset
+      The full adcp dataset with `depth` added
+
+    """
+    # This finds the maximum of the echo profile:
+    inds = np.argmax(ds.amp.values, axis=1)
+    # This finds the first point that increases (away from the profiler) in
+    # the echo profile
+    edf = np.diff(ds.amp.values.astype(np.int16), axis=1)
+    inds2 = np.max((edf < 0) *
+                   np.arange(ds.vel.shape[1] - 1,
+                             dtype=np.uint8)[None,:,None], axis=1) + 1
+
+    # Calculate the depth of these quantities
+    d1 = ds.range.values[inds]
+    d2 = ds.range.values[inds2]
+    # Combine them:
+    D = np.vstack((d1, d2))
+    # Take the median value as the estimate of the surface:
+    d = np.median(D, axis=0)
+
+    # Throw out values that do not increase near the surface by *thresh*
+    for ip in range(ds.vel.shape[1]):
+        itmp = np.min(inds[:, ip])
+        if (edf[itmp:, :, ip] < thresh).all():
+            d[ip] = np.NaN
+    
+    if nfilt:
+        dfilt = _medfiltnan(d, nfilt, thresh=.4)
+        dfilt[dfilt==0] = np.NaN
+        d = dfilt
+        
+    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={'units':'m'})
+    return ds
+
+
+def surface_from_P(ds, salinity=35):
+    """
+    Approximates distance to water surface above ADCP from the pressure sensor.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+      The full adcp dataset
+    salinity: numeric
+      Water salinity in psu
+      
+    Returns
+    -------
+    ds : xarray.Dataset
+      The full adcp dataset with `depth` added
+      
+    Notes
+    -----
+    Requires that the instrument's pressure sensor was calibrated/zeroed
+    before deployment to remove atmospheric pressure.
+      
+    """
+    # pressure conversion from dbar to MPa / water weight
+    rho = salinity + 1000
+    d = (ds.pressure*10000)/(9.81*rho)
+    
+    if hasattr(ds, 'h_deploy'):
+        d += ds.h_deploy
+    
+    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={'units':'m'})
+    
+    return ds
+
+
+def nan_beyond_surface(ds, val=np.nan):
+    """
+    Mask the values of the data that are beyond the surface.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+      The adcp dataset to clean
+    val : nan or numeric
+      Specifies the value to set the bad values to (default np.nan).
+      
+    Returns 
+    -------
+    ds : xarray.Dataset
+      The adcp dataset where relevant arrays with values greater than 
+      `depth` are set to NaN
+    
+    Notes
+    -----
+    Surface interference expected to happen at `r > depth * cos(beam_angle)`
+
+    """
+    var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
+    
+    if 'nortek' in _make_model(ds):
+        beam_angle = 25 *(np.pi/180)
+    else: #TRDI
+        try:
+            beam_angle = ds.beam_angle 
+        except:
+            beam_angle = 20 *(np.pi/180)
+        
+    bds = ds.range > (ds.depth * np.cos(beam_angle) - ds.cell_size)
+    
+    if 'echo' in var:
+        bds_echo = ds.range_echo > ds.depth
+        ds['echo'].values[...,bds_echo] = val
+        var.remove('echo')
+
+    for nm in var:
+        # workaround for xarray since it can't handle 2D boolean arrays
+        a = ds[nm].values
+        try:
+            a[...,bds] = val
+        except: # correlation
+            a[...,bds] = 0 
+        ds[nm].values = a
+    
     return ds
     
 
@@ -286,7 +290,7 @@ def medfilt_orient(ds, nfilt=7):
         return ds.drop_vars('orientmat')
 
 
-def fillgaps_time(ds, method='pchip', max_gap=None):
+def fillgaps_time(ds, method='cubic', max_gap=None):
     """
     Fill gaps (nan values) across time using the specified method
     
@@ -319,7 +323,7 @@ def fillgaps_time(ds, method='pchip', max_gap=None):
     return ds
 
 
-def fillgaps_depth(ds, method='pchip', max_gap=None):
+def fillgaps_depth(ds, method='cubic', max_gap=None):
     """
     Fill gaps (nan values) along the depth profile using the specified method
 
