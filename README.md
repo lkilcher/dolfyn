@@ -33,5 +33,8 @@ for greater details.
 License
 -------
 
-This work is licensed under the Apache 2.0 license. See the
-LICENSE.txt file for details.
+DOLfYN is copyright through the National Renewable Energy Laboratory, 
+Pacific Northwest National Laboratory, and Sandia National Laboratories. 
+The software is distributed under the Revised BSD License.
+See the [license](LICENSE.txt) for more information.
+

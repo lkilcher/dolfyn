@@ -7,6 +7,7 @@ dolfyn.egg-info
 *.coverage
 *.pyc
 *~
+~/.pypirc
 
 example_data/*.index
 
