@@ -74,7 +74,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = ver.__prog_name__
-copyright = u'2021'
+copyright = '2021, National Renewable Energy Laboratory, Pacific Northwest National Laboratory, and Sandia National Laboratories'
+author = 'DOLfYN Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -88,6 +89,8 @@ release = ver.__version__
 rst_prolog = """
 .. |dlfn| replace:: DOLfYN
 .. |np.ndarray| replace:: :class:`numpy.ndarray`
+.. |xr.DataArray| replace:: :class:`xarray.DataArray`
+.. |xr.Dataset| replace:: :class:`xarray.Dataset`
 """
 
 extlinks = {'repo': ('http://github.com/jmcvey3/dolfyn/%s', None)}
@@ -233,7 +236,7 @@ latex_elements = {
 # [howto/manual]).
 latex_documents = [
     ('index', 'DOLfYN.tex', u'DOLfYN Documentation',
-     u'Levi Kilcher', 'manual'),
+     u'DOLfYN Developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -263,7 +266,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'DOLfYN', u'DOLfYN Documentation',
-     [u'Levi Kilcher'], 1)
+     [u'DOLfYN Developers'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -277,8 +280,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'DOLfYN', u'DOLfYN Documentation',
-     u'Levi Kilcher', 'DOLfYN', 'One line description of project.',
-     'Miscellaneous'),
+     u'DOLfYN Developers', 'DOLfYN', 'Data processing code for acoustic Doppler instruments',
+     'Earth Science'),
 ]
 
 # Documents to append as an appendix to all manuals.
