@@ -139,7 +139,7 @@ class Ad2cpReader(object):
                                     reload=rebuild_index)
         self.reopen(bufsize)
         self.filehead_config = self.read_filehead_config_string()
-        self._ens_pos = lib.index2ens_pos(self._index)
+        self._ens_pos = self._index['pos'][lib.boolarray_firstensemble_ping(self._index)]
         self._lastblock_iswhole = self._calc_lastblock_iswhole()
         self._config = lib.calc_config(self._index)
         self._init_burst_readers()
