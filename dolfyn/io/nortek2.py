@@ -80,7 +80,7 @@ class _Ad2cpReader():
                                     reload=rebuild_index)
         self._reopen(bufsize)
         self.filehead_config = self._read_filehead_config_string()
-        self._ens_pos = lib._index2ens_pos(self._index)
+        self._ens_pos = self._index['pos'][lib._boolarray_firstensemble_ping(self._index)]
         self._config = lib._calc_config(self._index)
         self._init_burst_readers()
         self.unknown_ID_count = {}

@@ -157,10 +157,8 @@ def _get_index(infile, reload=False):
     return out
 
 
-def _index2ens_pos(index):
-    """Condense the index to only be the first occurence of each
-    ensemble. Returns only the position (the ens number is the array
-    index).
+def _boolarray_firstensemble_ping(index):
+    """Return a boolean of the index that indicates only the first ping in each ensemble.
     """
     if (index['ens'] == 0).all() and (index['hw_ens'] == 1).all():
         #!!!TODO
@@ -168,11 +166,11 @@ def _index2ens_pos(index):
         # Is there a better way to detect this mode?
         n_IDs = {id:(index['ID'] == id).sum() for id in np.unique(index['ID'])}
         assert all(np.abs(np.diff(list(n_IDs.values())))) <= 1, "Unable to read this file"
-        return index['pos'][index['ID']==index['ID'][0]]
+        return index['ID']==index['ID'][0]
     else:
         dens = np.ones(index['ens'].shape, dtype='bool')
         dens[1:] = np.diff(index['ens']) != 0
-        return index['pos'][dens]
+        return dens
 
 
 def _getbit(val, n):
