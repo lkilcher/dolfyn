@@ -133,14 +133,23 @@ class Ad2cpReader(object):
 
         self.fname = fname
         self._check_nortek(endian)
+        self.f.seek(0, 2) # Seek to end
+        self._eof = self.f.tell()
         self._index = lib.get_index(fname,
                                     reload=rebuild_index)
         self.reopen(bufsize)
         self.filehead_config = self.read_filehead_config_string()
         self._ens_pos = lib.index2ens_pos(self._index)
+        self._lastblock_iswhole = self._calc_lastblock_iswhole()
         self._config = lib.calc_config(self._index)
         self._init_burst_readers()
         self.unknown_ID_count = {}
+
+    def _calc_lastblock_iswhole(self, ):
+        blocksize, blocksize_count = np.unique(np.diff(self._ens_pos),
+                                               return_counts=True)
+        standard_blocksize = blocksize[blocksize_count.argmax()]
+        return (self._eof - self._ens_pos[-1]) == standard_blocksize
 
     def _init_burst_readers(self, ):
         self._burst_readers = {}
@@ -240,7 +249,9 @@ class Ad2cpReader(object):
     def readfile(self, ens_start=0, ens_stop=None):
         nens_total = len(self._ens_pos)
         if ens_stop is None or ens_stop > nens_total:
-            ens_stop = nens_total - 1
+            # If the lastblock is not whole, we don't read it.
+            # If it is, we do (don't subtract 1)
+            ens_stop = nens_total - int(not self._lastblock_iswhole)
         ens_start = int(ens_start)
         ens_stop = int(ens_stop)
         nens = ens_stop - ens_start
