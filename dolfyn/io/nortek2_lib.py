@@ -123,7 +123,7 @@ def _create_index_slow(infile, outfile, N_ens):
                 N += 1
             fout.write(struct.pack('<QIQ4H6BHB', N, ens, pos, dat[2],
                                    config, beams_cy, 0,
-                                   yr, mo, dy, h, m, s, u, d_ver))
+                                   yr, mo + 1, dy, h, m, s, u, d_ver))
             fin.seek(dat[4] - (36 + seek_2ens[dat[2]]), 1)
             last_ens = ens
         else:
@@ -379,3 +379,4 @@ def _calc_config(index):
         config[id]['type'] = type
         config[id].pop('cy', None)
     return config
+
