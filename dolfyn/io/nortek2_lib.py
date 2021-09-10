@@ -92,6 +92,7 @@ def _calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
 
 
 def _create_index_slow(infile, outfile, N_ens):
+    print("Indexing {}...".format(infile), end='')
     fin = open(infile, 'rb')
     fout = open(outfile, 'wb')
     fout.write(b'Index Ver:')
@@ -136,14 +137,13 @@ def _create_index_slow(infile, outfile, N_ens):
         #     break
     fin.close()
     fout.close()
+    print(" Done.")
 
 
 def _get_index(infile, reload=False):
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
-        print("Indexing...", end='')
         _create_index_slow(infile, index_file, 2 ** 32)
-        print(" Done.")
     f = open(index_file, 'rb')
     file_head = f.read(12)
     if file_head[:10] == b'Index Ver:':
