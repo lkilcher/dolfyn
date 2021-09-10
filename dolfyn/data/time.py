@@ -83,7 +83,7 @@ def date2str(dt, format='ISO'):
             return dt.isoformat()
         else:
             return dt.strftime(format)
-    return np.array([date2str(d) for d in dt])
+    return np.array([date2str(d, format) for d in dt])
     
 
 
