@@ -176,7 +176,10 @@ def _index2ens_pos(index):
 
 
 def _getbit(val, n):
-    return bool((val >> n) & 1)
+    try:
+        return bool((val >> n) & 1)
+    except ValueError: # An array
+        return ((val >> n) & 1).astype('bool')
 
 
 # def _crop_ensembles(infile, outfile, range):
