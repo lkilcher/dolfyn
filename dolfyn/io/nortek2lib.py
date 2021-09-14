@@ -180,7 +180,11 @@ def boolarray_firstensemble_ping(index):
 
 
 def getbit(val, n):
-    return bool((val >> n) & 1)
+    try:
+        return bool((val >> n) & 1)
+    except ValueError: # An array
+        return ((val >> n) & 1).astype('bool')
+        
 
 
 def crop_ensembles(infile, outfile, range):
