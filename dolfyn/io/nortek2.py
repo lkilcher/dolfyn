@@ -247,11 +247,11 @@ class Ad2cpReader(object):
         return out2
 
     def readfile(self, ens_start=0, ens_stop=None):
-        nens_total = len(self._ens_pos)
+        # If the lastblock is not whole, we don't read it.
+        # If it is, we do (don't subtract 1)
+        nens_total = len(self._ens_pos) - int(not self._lastblock_iswhole)
         if ens_stop is None or ens_stop > nens_total:
-            # If the lastblock is not whole, we don't read it.
-            # If it is, we do (don't subtract 1)
-            ens_stop = nens_total - int(not self._lastblock_iswhole)
+            ens_stop = nens_total
         ens_start = int(ens_start)
         ens_stop = int(ens_stop)
         nens = ens_stop - ens_start
