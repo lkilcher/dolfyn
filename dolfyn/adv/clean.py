@@ -2,7 +2,7 @@
 """
 import numpy as np
 import warnings
-from ..tools.misc import _group, _slice1d_along_axis
+from ..tools.misc import group, slice1d_along_axis
 warnings.filterwarnings('ignore', category=np.RankWarning)
 
 sin = np.sin
@@ -218,7 +218,7 @@ def GN2002(u, npt=5000):
 
     if u.ndim > 1:
         mask = np.zeros(u.shape, dtype='bool')
-        for slc in _slice1d_along_axis(u.shape, -1):
+        for slc in slice1d_along_axis(u.shape, -1):
             mask[slc] = GN2002(u[slc], npt=npt)
         return mask
     
@@ -226,7 +226,7 @@ def GN2002(u, npt=5000):
 
     # Find large bad segments (>npt/10):
     # group returns a vector of slice objects.
-    bad_segs = _group(np.isnan(u), min_length=int(npt//10))
+    bad_segs = group(np.isnan(u), min_length=int(npt//10))
     if bad_segs.size > 0:
         # Break them up into separate regions:
         sp = 0

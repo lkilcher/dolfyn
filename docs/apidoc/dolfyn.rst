@@ -17,3 +17,4 @@ DOLfYN API
    dolfyn.binners
    dolfyn.shortcuts
    dolfyn.time
+   dolfyn.tools

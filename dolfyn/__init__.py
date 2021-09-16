@@ -20,3 +20,4 @@ from dolfyn import adp
 from dolfyn import time
 from dolfyn import io
 from dolfyn import rotate
+from dolfyn import tools

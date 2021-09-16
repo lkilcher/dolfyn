@@ -764,18 +764,18 @@ class _NortekReader():
             tmpd = tbx._nans_like(dat['data_vars']['heading'][iburst])
             # The first status bit should be the orientation.
             tmpd[sysi] = dat['sys']['status'][iburst][sysi] & 1
-            tbx._fillgaps(tmpd, extrapFlg=True)
+            tbx.fillgaps(tmpd, extrapFlg=True)
             tmpd = np.nan_to_num(tmpd, nan=0) # nans in pitch roll heading
             slope = np.diff(tmpd)
             tmpd[1:][slope < 0] = 1
             tmpd[:-1][slope > 0] = 0
             dv['orientation_down'][iburst] = tmpd.astype('bool')
-        tbx._interpgaps(dat['sys']['batt'], t)
-        tbx._interpgaps(dv['c_sound'], t)
-        tbx._interpgaps(dv['heading'], t)
-        tbx._interpgaps(dv['pitch'], t)
-        tbx._interpgaps(dv['roll'], t)
-        tbx._interpgaps(dv['temp'], t)
+        tbx.interpgaps(dat['sys']['batt'], t)
+        tbx.interpgaps(dv['c_sound'], t)
+        tbx.interpgaps(dv['heading'], t)
+        tbx.interpgaps(dv['pitch'], t)
+        tbx.interpgaps(dv['roll'], t)
+        tbx.interpgaps(dv['temp'], t)
         
             
     def read_microstrain(self,):

@@ -1,7 +1,7 @@
 import numpy as np
 from ..velocity import VelBinner
 import warnings
-from ..tools.misc import _slice1d_along_axis, _nans_like
+from ..tools.misc import slice1d_along_axis, _nans_like
 from scipy.special import cbrt
 import xarray as xr
 
@@ -174,7 +174,7 @@ class ADVBinner(VelBinner):
         
         dt = self.reshape(veldat)
         out = np.empty(dt.shape[:-1], dtype=dt.dtype)
-        for slc in _slice1d_along_axis(dt.shape, -1):
+        for slc in slice1d_along_axis(dt.shape, -1):
             up = dt[slc]
             lag = U_mag.values[slc[:-1]] / fs * np.arange(up.shape[0])
             DAA = _nans_like(lag)

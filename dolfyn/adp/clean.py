@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.signal import medfilt
 import xarray as xr
-from ..tools.misc import _medfiltnan
+from ..tools.misc import medfiltnan
 from ..rotate.api import rotate2
 from ..rotate.base import _make_model, q2orient
 
@@ -92,7 +92,7 @@ def find_surface(ds, thresh=10, nfilt=None):
             d[ip] = np.NaN
     
     if nfilt:
-        dfilt = _medfiltnan(d, nfilt, thresh=.4)
+        dfilt = medfiltnan(d, nfilt, thresh=.4)
         dfilt[dfilt==0] = np.NaN
         d = dfilt
         

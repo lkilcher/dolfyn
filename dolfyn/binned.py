@@ -3,7 +3,7 @@ import xarray as xr
 import warnings
 from .tools.psd import _psd_freq, _cohere, _run_psd, _cpsd_quasisync, \
     _cpsd, _phase_angle
-from .tools.misc import _slice1d_along_axis, _detrend
+from .tools.misc import slice1d_along_axis, detrend
 warnings.simplefilter('ignore', RuntimeWarning)
 
 
@@ -136,10 +136,10 @@ class TimeBinner:
         return out
     
 
-    def _detrend(self, dat, n_pad=0, n_bin=None):
+    def detrend(self, dat, n_pad=0, n_bin=None):
         """Reshape the array `dat` and remove the best-fit trend line.
         """
-        return _detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
+        return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
 
 
     def _demean(self, dat, n_pad=0, n_bin=None):
@@ -401,7 +401,7 @@ class TimeBinner:
         dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
         
-        for slc in _slice1d_along_axis(out.shape, -1):
+        for slc in slice1d_along_axis(out.shape, -1):
             out[slc] = _cohere(dat1[slc], dat2[slc],
                                n_fft, debias=debias, noise=noise)
             
@@ -470,7 +470,7 @@ class TimeBinner:
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
         out = np.empty(oshp, dtype='c{}'.format(dat2.dtype.itemsize * 2))
         
-        for slc in _slice1d_along_axis(out.shape, -1):
+        for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
             out[slc] = _phase_angle(dat1[slc], dat2[slc], n_fft,
                                    window=window)
@@ -528,7 +528,7 @@ class TimeBinner:
         dt2 = self._demean(indat)
         se = slice(int(n_bin // 4) - 1, None, 1)
         sb = slice(int(n_bin // 4) - 1, None, -1)
-        for slc in _slice1d_along_axis(dt1.shape, -1):
+        for slc in slice1d_along_axis(dt1.shape, -1):
             tmp = np.correlate(dt1[slc], dt2[slc], 'valid')
             # The zero-padding in reshape means we compute coherence
             # from one-sided time-series for first and last points.
@@ -602,7 +602,7 @@ class TimeBinner:
         # Don't need to pad the second variable:
         dt2 = self._demean(dat2, n_bin=n_bin2)
         
-        for slc in _slice1d_along_axis(shp, -1):
+        for slc in slice1d_along_axis(shp, -1):
             out[slc] = np.correlate(dt1[slc], dt2[slc], 'valid')
         if normed:
             out /= (self._std(dat1, n_bin=n_bin1)[..., :shp[-2]] *
@@ -650,7 +650,7 @@ class TimeBinner:
         # The data is detrended in psd, so we don't need to do it here.
         dat = self.reshape(dat, n_pad=n_pad)
         
-        for slc in _slice1d_along_axis(dat.shape, -1):
+        for slc in slice1d_along_axis(dat.shape, -1):
             # PSD's are computed in radian units: - set prior to function
             out[slc] = _run_psd(dat[slc], n_fft, fs,
                            window=window, step=step)
@@ -713,7 +713,7 @@ class TimeBinner:
             cross = _cpsd
         else:
             cross = _cpsd_quasisync
-        for slc in _slice1d_along_axis(out.shape, -1):
+        for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units: - set prior to function
             out[slc] = cross(dat1[slc], dat2[slc], n_fft,
                              #2 * np.pi * fs, window=window)

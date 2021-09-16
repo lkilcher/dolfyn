@@ -10,7 +10,7 @@ It is designed to read and work with Acoustic Doppler Velocimeter
 (ADV) and Acoustic Doppler Profiler (ADP/ADCP) data. DOLfYN includes
 libraries for reading binary Nortek(tm) and Teledyne RDI(tm) data
 files.
-* Read in binary data files from acoustic Doppler instruments:
+* Read in binary data files from acoustic Doppler instruments
 * Clean data
 * Rotate vector data through coordinate systems (i.e. beam - instrument - Earth frames of reference)
 * Motion correction for buoy-mounted ADV velocity measurements (via onboard IMU data)

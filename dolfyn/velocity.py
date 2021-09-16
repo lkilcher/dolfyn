@@ -85,29 +85,17 @@ class Velocity():
                            'description':'horizontal velocity magnitude'})                            
     @property
     def U_dir(self,):
-        """Angle of horizontal velocity vector, deg clockwise from
-        X/North/streamwise. Direction is 'to', as opposed to 'from'.
+        """Angle of horizontal velocity vector, degrees counterclockwise from
+        X/East/streamwise. Direction is 'to', as opposed to 'from'.
         """
         # Convert from radians to degrees
         angle = np.angle(self.U)*(180/np.pi)
-        
-        if hasattr(self.ds, 'coord_sys') and self.ds.coord_sys=='earth':
-            # Convert heading from East to North
-            angle -= 90 # -90 degrees East == 0 degrees North
-            idn = np.where(angle<-179)
-            idp = np.where(angle>180)
-            angle[idn] += 360
-            angle[idp] -= 360
-            dr = 'North'
-        else:
-            dr = 'East'
         
         return xr.DataArray(angle,
                             dims=self.U.dims,
                             coords=self.U.coords,
                             attrs={'units':'deg',
-                           'description':'horizontal velocity flow direction, CW from X/' 
-                                          +dr+'/streamwise'})
+                           'description':'horizontal velocity flow direction, CCW from X/East/streamwise'})
     @property
     def tau_ij(self,):
         """Total stress tensor

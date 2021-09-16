@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Set all non-user functions to internal functions
 		- "do" functions take dataset as input, "calc" funtions take velocity dataarray input
 		- Added a property to calculate wavenumber `k` from the psd frequency vector
-		- Updated `U_dir` property to return horizontal flow from north if in ENU coord sys
+		- Updated `U_dir` description to be CCW from East (consistent with imag vs real axes)
 		- Renamed the `sigma_Uh` variable to `U_std` and added it as a function in `do_avg()`
 		- Renamed properties `Ecoh` to `E_coh` and `Itke` to `I_tke`
 		- Removed `Itke_thresh` from `TurbBinner` as it is only used with the `I_tke` property
@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Dropped testing for python 2.x because xarray doesn't support it
 		- Updated test data to handle `np.nanmean()` changes in source code
 		- Verified xarray output against h5py-based source code
-		- Testing and h5 folders not included in setup.py
+		- Testing folders not included in setup.py
 		- Increased testing coverage to cover entire code
 
 	- Fix error loading VMDAS-processed files

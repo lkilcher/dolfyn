@@ -1,5 +1,5 @@
 import numpy as np
-from .misc import _detrend
+from .misc import detrend
 fft = np.fft.fft
 
 
@@ -225,14 +225,14 @@ def _cpsd_quasisync(a, b, nfft, fs, window='hann'):
     window = _getwindow(window, nfft)
     fft_inds = slice(1, int(nfft / 2. + 1))
     wght = 2. / (window ** 2).sum()
-    pwr = fft(_detrend(a[0:nfft]) * window)[fft_inds] * \
-        np.conj(fft(_detrend(b[0:nfft]) * window)[fft_inds])
+    pwr = fft(detrend(a[0:nfft]) * window)[fft_inds] * \
+        np.conj(fft(detrend(b[0:nfft]) * window)[fft_inds])
     #print(pwr.dtype)
     if nens - 1:
         for i1, i2 in zip(range(step[0], l[0] - nfft + 1, step[0]),
                           range(step[1], l[1] - nfft + 1, step[1])):
-            pwr += fft(_detrend(a[i1:(i1 + nfft)]) * window)[fft_inds] * \
-                np.conj(fft(_detrend(b[i2:(i2 + nfft)]) * window)[fft_inds])
+            pwr += fft(detrend(a[i1:(i1 + nfft)]) * window)[fft_inds] * \
+                np.conj(fft(detrend(b[i2:(i2 + nfft)]) * window)[fft_inds])
     pwr *= wght / nens / fs
     return pwr
 
@@ -314,19 +314,19 @@ def _cpsd(a, b, nfft, fs, window='hann', step=None):
     window = _getwindow(window, nfft)
     fft_inds = slice(1, int(nfft / 2. + 1))
     wght = 2. / (window ** 2).sum()
-    s1 = fft(_detrend(a[0:nfft]) * window)[fft_inds]
+    s1 = fft(detrend(a[0:nfft]) * window)[fft_inds]
     if auto_psd:
         pwr = np.abs(s1) ** 2
     else:
-        pwr = s1 * np.conj(fft(_detrend(b[0:nfft]) * window)[fft_inds])
+        pwr = s1 * np.conj(fft(detrend(b[0:nfft]) * window)[fft_inds])
     if nens - 1:
         for i in range(step, l - nfft + 1, step):
             # print( (i) )
-            s1 = fft(_detrend(a[i:(i + nfft)]) * window)[fft_inds]
+            s1 = fft(detrend(a[i:(i + nfft)]) * window)[fft_inds]
             if auto_psd:
                 pwr += np.abs(s1) ** 2
             else:
-                pwr += s1 * np.conj(fft(_detrend(b[i:(i + nfft)]) * window)[fft_inds])
+                pwr += s1 * np.conj(fft(detrend(b[i:(i + nfft)]) * window)[fft_inds])
     pwr *= wght / nens / fs
     # print( 1,step,nens,l,nfft,wght,fs )
     # error
@@ -419,8 +419,8 @@ def _phase_angle(a, b, nfft, window='hann', step=None):
 
     window = _getwindow(window, nfft)
     fft_inds = slice(1, int(nfft / 2. + 1))
-    s1 = fft(_detrend(a[0:nfft]) * window)[fft_inds]
-    s2 = fft(_detrend(b[0:nfft]) * window)[fft_inds]
+    s1 = fft(detrend(a[0:nfft]) * window)[fft_inds]
+    s2 = fft(detrend(b[0:nfft]) * window)[fft_inds]
     s1 /= np.abs(s1)
     s2 /= np.abs(s2)
     ang = s2 / s1
@@ -429,9 +429,9 @@ def _phase_angle(a, b, nfft, window='hann', step=None):
     if nens - 1:
         for i in range(step, l - nfft + 1, step):
             # print( (i) )
-            s1 = fft(_detrend(a[i:(i + nfft)]) * window)[fft_inds]
+            s1 = fft(detrend(a[i:(i + nfft)]) * window)[fft_inds]
             s1 /= np.abs(s1)
-            s2 = fft(_detrend(a[i:(i + nfft)]) * window)[fft_inds]
+            s2 = fft(detrend(a[i:(i + nfft)]) * window)[fft_inds]
             s2 /= np.abs(s2)
             ang += s2 / s1
     ang /= nens
