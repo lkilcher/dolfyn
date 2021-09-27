@@ -1,14 +1,14 @@
-import numpy as np
-from datetime import datetime
 import dolfyn as dlfn
 import dolfyn.adv.api as api
 
 from matplotlib import pyplot as plt
 from matplotlib import dates as mpldt
+from datetime import datetime
+import numpy as np
 
 
 ## User-input data
-fname = '../dolfyn/example_data/vector_data_imu01.VEC'
+fname = '../../dolfyn/example_data/vector_data_imu01.VEC'
 accel_filter = .03 # motion correction filter [Hz]
 ensemble_size = 32*300 # sampling frequency * 300 seconds
 

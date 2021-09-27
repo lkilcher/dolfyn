@@ -30,7 +30,7 @@ def _inst2earth(advo, reverse=False, rotate_vars=None, force=False):
 
     reverse : bool (default: False)
            If True, this function performs the inverse rotation
-           (principal->earth).
+           (earth->inst).
 
     rotate_vars : iterable
       The list of variables to rotate. By default this is taken from

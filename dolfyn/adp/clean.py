@@ -5,7 +5,7 @@ from scipy.signal import medfilt
 import xarray as xr
 from ..tools.misc import medfiltnan
 from ..rotate.api import rotate2
-from ..rotate.base import _make_model, q2orient
+from ..rotate.base import _make_model, quaternion2orient
 
 
 def set_deploy_altitude(ds, h_deploy):
@@ -278,7 +278,7 @@ def medfilt_orient(ds, nfilt=7):
             q_filt[i] = medfilt(ds.quaternion[i].values, nfilt)
         ds.quaternion.values = q_filt
         
-        ds['orientmat'] = q2orient(ds.quaternion)
+        ds['orientmat'] = quaternion2orient(ds.quaternion)
         return ds
     
     else:
