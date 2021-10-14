@@ -1,8 +1,8 @@
 import numpy as np
 import xarray as xr
 import warnings
-from .tools.psd import _psd_freq, _cohere, _run_psd, _cpsd_quasisync, \
-    _cpsd, _phase_angle
+from .tools.psd import psd_freq, coherence, psd, cpsd_quasisync, cpsd, \
+    phase_angle
 from .tools.misc import slice1d_along_axis, detrend
 warnings.simplefilter('ignore', RuntimeWarning)
 
@@ -40,7 +40,7 @@ class TimeBinner:
             print("n_fft must be smaller than n_bin, setting n_fft = n_bin")
         if n_fft_coh is None:
             self.n_fft_coh = int(self.n_bin // 6)
-        elif n_fft_coh >= n_bin:
+        elif n_fft_coh > n_bin:
             self.n_fft_coh = int(n_bin // 6)
             print("n_fft_coh must be smaller than n_bin, "
                   "setting n_fft_coh = n_bin/6")
@@ -402,8 +402,8 @@ class TimeBinner:
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
         
         for slc in slice1d_along_axis(out.shape, -1):
-            out[slc] = _cohere(dat1[slc], dat2[slc],
-                               n_fft, debias=debias, noise=noise)
+            out[slc] = coherence(dat1[slc], dat2[slc],
+                                 n_fft, debias=debias, noise=noise)
             
         freq = self.calc_freq(self.fs, coh=True)
 
@@ -472,7 +472,7 @@ class TimeBinner:
         
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
-            out[slc] = _phase_angle(dat1[slc], dat2[slc], n_fft,
+            out[slc] = phase_angle(dat1[slc], dat2[slc], n_fft,
                                    window=window)
         
         freq = self.calc_freq(self.fs, coh=True)
@@ -652,7 +652,7 @@ class TimeBinner:
         
         for slc in slice1d_along_axis(dat.shape, -1):
             # PSD's are computed in radian units: - set prior to function
-            out[slc] = _run_psd(dat[slc], n_fft, fs,
+            out[slc] = psd(dat[slc], n_fft, fs,
                            window=window, step=step)
         if noise != 0:
             # # the two in 2*np.pi cancels with the two in 'self.fs/2':
@@ -710,9 +710,9 @@ class TimeBinner:
         dat2 = self.reshape(dat2, n_pad=n_fft)
         out = np.empty(oshp, dtype='c{}'.format(dat1.dtype.itemsize * 2))
         if dat1.shape == dat2.shape:
-            cross = _cpsd
+            cross = cpsd
         else:
-            cross = _cpsd_quasisync
+            cross = cpsd_quasisync
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units: - set prior to function
             out[slc] = cross(dat1[slc], dat2[slc], n_fft,
@@ -755,7 +755,7 @@ class TimeBinner:
                             or rad/s')
         
         if 'rad' in units:
-            return _psd_freq(n_fft, 2*np.pi*fs)
+            return psd_freq(n_fft, 2*np.pi*fs)
         else:
-            return _psd_freq(n_fft, fs)
+            return psd_freq(n_fft, fs)
     

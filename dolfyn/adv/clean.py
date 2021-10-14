@@ -149,7 +149,7 @@ def range_limit(u, range=[-5, 5]):
       Logical vector with spikes labeled as 'True'
     
     """
-    return ~((range[0] < u) & (u < range[1]))
+    return ~((range[0] < u.values) & (u.values < range[1]))
 
 
 def _calcab(al, Lu_std_u, Lu_std_d2u):

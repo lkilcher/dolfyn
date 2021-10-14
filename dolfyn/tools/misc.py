@@ -169,7 +169,7 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
 
     See Also
     --------
-    `dolfyn.tools.misc.interpgaps` : Linearly interpolates in time.
+    dolfyn.tools.misc.interpgaps : Linearly interpolates in time.
 
     Notes
     -----
@@ -241,7 +241,7 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
 
     See Also
     --------
-    `dolfyn.tools.misc.fillgaps` : Linearly interpolates in array-index space.
+    dolfyn.tools.misc.fillgaps : Linearly interpolates in array-index space.
 
     """
 
@@ -298,7 +298,7 @@ def medfiltnan(a, kernel, thresh=0):
     
     See Also
     --------
-    `scipy.signal.medfilt2d`
+    scipy.signal.medfilt2d
     
     """
     flag_1D = False
@@ -319,22 +319,26 @@ def medfiltnan(a, kernel, thresh=0):
     return out
 
 
-def degN2cartDeg(angN):
+def convert_degrees(deg):
     """
-    Convert degrees clockwise from True North to 'cartesian Degrees'
-    (counter-clockwise from True East).
+    Converts between the 'cartesian angle' (counter-clockwise from East) and
+    the 'polar angle' in (degrees clockwise from North)
     
     Parameters
     ----------
-    angN : float or array-like
-      Number or array in degrees CW from true North
+    deg: float or array-like
+      Number or array in 'degrees CCW from East' or 'degrees CW from North'
       
     Returns
     -------
     out : float or array-like
-      Input data transformed to degrees CCW from true East
+      Input data transformed to 'degrees CW from North' or 
+      'degrees CCW from East', respectively (based on `deg`)
+      
+    Notes
+    -----
+    The same algorithm is used to convert back and forth between 'CCW from E' 
+    and 'CW from N'
     
     """
-    out = 90 - angN
-    out[out < -180] += 360
-    return out
+    return (630 - deg) % 360 - 180

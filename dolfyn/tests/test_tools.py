@@ -95,7 +95,7 @@ class tools_testcase(unittest.TestCase):
         
         
     def test_deg_conv(self):
-        d = tools.degN2cartDeg(self.array)
+        d = tools.convert_degrees(self.array)
         
         out = np.array([90., 89., 88., 87., 86., 85., 84., 83., 82., 81.])
         

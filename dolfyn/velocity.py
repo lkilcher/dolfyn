@@ -467,8 +467,8 @@ class VelBinner(TimeBinner):
 
         Parameters
         ----------
-        veldat   : np.ndarray
-          The raw velocity data.
+        veldat   : xarray.DataArray
+          The raw 3D velocity data.
         freq_units : string
           Frequency units of the returned spectra in either Hz or rad/s 
           (`f` or :math:`\\omega`)

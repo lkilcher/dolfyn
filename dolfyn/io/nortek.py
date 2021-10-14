@@ -540,34 +540,6 @@ class _NortekReader():
                         _bcd2char(hour), 
                         _bcd2char(min), 
                         _bcd2char(sec)).timestamp()
-        
-
-    def read_vec_hdr(self,):
-        # ID: '0x12 = 18
-        if self.debug:
-            print('Reading vector header data (0x12) ping #{} @ {}...'
-                  .format(self.c, self.pos))
-        byts = self.read(38)
-        # The first two are size, the next 6 are time.
-        tmp = unpack(self.endian + '8xH7B21x', byts)
-        hdrnow = {}
-        hdrnow['time'] = self.rd_time(byts[2:8])
-        hdrnow['NRecords'] = tmp[0]
-        hdrnow['Noise1'] = tmp[1]
-        hdrnow['Noise2'] = tmp[2]
-        hdrnow['Noise3'] = tmp[3]
-        hdrnow['Spare0'] = byts[13:14].decode('utf-8')
-        hdrnow['Corr1'] = tmp[5]
-        hdrnow['Corr2'] = tmp[6]
-        hdrnow['Corr3'] = tmp[7]
-        hdrnow['Spare1'] = byts[17:].decode('utf-8')
-        self.checksum(byts)
-        if 'data_header' not in self.config:
-            self.config['data_header'] = hdrnow
-        else:
-            if not isinstance(self.config['data_header'], list):
-                self.config['data_header'] = [self.config['data_header']]
-            self.config['data_header'] += [hdrnow]
 
 
     def _init_data(self, vardict):
@@ -694,7 +666,35 @@ class _NortekReader():
 
         # Apply velocity scaling (1 or 0.1)
         dat['data_vars']['vel'] *= self.config['mode']['vel_scale']
-        
+
+
+    def read_vec_hdr(self,):
+        # ID: '0x12 = 18
+        if self.debug:
+            print('Reading vector header data (0x12) ping #{} @ {}...'
+                  .format(self.c, self.pos))
+        byts = self.read(38)
+        # The first two are size, the next 6 are time.
+        tmp = unpack(self.endian + '8xH7B21x', byts)
+        hdrnow = {}
+        hdrnow['time'] = self.rd_time(byts[2:8])
+        hdrnow['NRecords'] = tmp[0]
+        hdrnow['Noise1'] = tmp[1]
+        hdrnow['Noise2'] = tmp[2]
+        hdrnow['Noise3'] = tmp[3]
+        hdrnow['Spare0'] = byts[13:14].decode('utf-8')
+        hdrnow['Corr1'] = tmp[5]
+        hdrnow['Corr2'] = tmp[6]
+        hdrnow['Corr3'] = tmp[7]
+        hdrnow['Spare1'] = byts[17:].decode('utf-8')
+        self.checksum(byts)
+        if 'data_header' not in self.config:
+            self.config['data_header'] = hdrnow
+        else:
+            if not isinstance(self.config['data_header'], list):
+                self.config['data_header'] = [self.config['data_header']]
+            self.config['data_header'] += [hdrnow]
+            
         
     def read_vec_sysdata(self,):
         # ID: 0x11 = 17
