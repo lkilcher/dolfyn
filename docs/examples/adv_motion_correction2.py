@@ -1,12 +1,15 @@
 import dolfyn as dlfn
 import dolfyn.adv.api as api
 
-from matplotlib import pyplot as plt
-from matplotlib import dates as mpldt
-from datetime import datetime
 import numpy as np
+import pandas as pd
+import pecos
+from datetime import datetime
+import matplotlib.pyplot as plt
+import matplotlib.dates as mpldt
 
 
+##############################################################################
 ## User-input data
 fname = '../../dolfyn/example_data/vector_data_imu01.VEC'
 accel_filter = .03 # motion correction filter [Hz]
@@ -16,22 +19,41 @@ ensemble_size = 32*300 # sampling frequency * 300 seconds
 data_raw = dlfn.read(fname, userdata=True)
 
 # Crop the data for the time range of interest:
-t_range = [dlfn.time.date2epoch(datetime(2012, 6, 12, 12, 8, 30)), np.inf]
-t_range_inds = (t_range[0] < data_raw.time) & (data_raw.time < t_range[1])
+t_start = dlfn.time.date2epoch(datetime(2012, 6, 12, 12, 8, 30))[0]
+t_end = data_raw.time[-1]
+data = data_raw.sel(time=slice(t_start, t_end))
 
-data = data_raw.isel(time=t_range_inds)
-# For plotting time on x-axis
-dt = dlfn.time.epoch2date(data.time)
 
-# Clean the file using the Goring+Nikora method:
+##############################################################################
+## Clean data of outliers using Pecos
+pm = pecos.monitoring.PerformanceMonitoring()
+df = pd.DataFrame({'u': data.vel[0], 'v': data.vel[1], 'w': data.vel[2]})
+df.index = pecos.utils.index_to_datetime(df.index, unit='s')
+pm.add_dataframe(df)
+pm.check_outlier([None, 3], window=None)
+# Replace them with cubic interpolation
+df_clean = df[pm.mask]
+df_clean = df_clean.interpolate(method='pchip')
+# plt.figure()
+# plt.plot(df_clean)
+# plt.title('u (blue), v(orange), w(green) filtered of outliers')
+# Update dataset velocity values
+data.vel[0] = df_clean.u.values
+data.vel[1] = df_clean.v.values
+data.vel[2] = df_clean.w.values
+
+# Clean the file using the Goring, Nikora 2002 method:
 bad = api.clean.GN2002(data.vel)
 data['vel'] = api.clean.clean_fill(data.vel, bad, method='cubic')
+## To not replace data:
 # data.coords['mask'] = (('dir','time'), ~bad)
 # data.vel.values = data.vel.where(data.mask)
 
 # plotting raw vs qc'd data
+dt_raw = dlfn.time.epoch2date(data_raw.time)
+dt = dlfn.time.epoch2date(data.time)
 ax = plt.figure(figsize=(20,10)).add_axes([.14, .14, .8, .74])
-ax.plot(dlfn.time.epoch2date(data_raw.time), data_raw.Veldata.u, label='raw data')
+ax.plot(dt_raw, data_raw.Veldata.u, label='raw data')
 ax.plot(dt, data.Veldata.u, label='despiked')
 ax.set_xlabel('Time')
 ax.xaxis.set_major_formatter(mpldt.DateFormatter('%D %H:%M'))
@@ -42,6 +64,8 @@ plt.show()
 
 data_cleaned = data.copy(deep=True)
 
+
+##############################################################################
 ## Perform motion correction
 data = api.correct_motion(data, accel_filter, to_earth=False)
 # For reference, dolfyn defines ‘inst’ as the IMU frame of reference, not 
@@ -62,11 +86,13 @@ plt.legend(loc='upper right')
 plt.show()
 
 
-## Rotate the uncorrected data into the earth frame for comparison to motion correction:
+## Rotate the uncorrected data into the earth frame for comparison to motion 
+# correction:
 data = dlfn.rotate2(data, 'earth')
 data_uncorrected = dlfn.rotate2(data_cleaned, 'earth')
 
-# Calc principal heading (from earth coordinates) and rotate into 'principal axes frame'
+# Calc principal heading (from earth coordinates) and rotate into the
+# principal axes 
 data.attrs['principal_heading'] = dlfn.calc_principal_heading(data.vel)
 data_uncorrected.attrs['principal_heading'] = dlfn.calc_principal_heading(
     data_uncorrected.vel)
@@ -83,6 +109,7 @@ plt.legend(loc='upper right')
 plt.show()
 
 
+##############################################################################
 ## Create velocity spectra
 # Initiate tool to bin data based on the ensemble length. If n_fft is none,
 # n_fft is equal to n_bin
