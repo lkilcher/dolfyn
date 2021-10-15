@@ -319,7 +319,7 @@ def medfiltnan(a, kernel, thresh=0):
     return out
 
 
-def convert_degrees(deg):
+def convert_degrees(deg, tidal_mode=True):
     """
     Converts between the 'cartesian angle' (counter-clockwise from East) and
     the 'polar angle' in (degrees clockwise from North)
@@ -328,6 +328,9 @@ def convert_degrees(deg):
     ----------
     deg: float or array-like
       Number or array in 'degrees CCW from East' or 'degrees CW from North'
+    tidal_mode : bool
+      If true, range is set from 0 to +/-180 degrees. If false, range is 0 to 
+      360 degrees
       
     Returns
     -------
@@ -341,4 +344,7 @@ def convert_degrees(deg):
     and 'CW from N'
     
     """
-    return (630 - deg) % 360 - 180
+    out = -(deg - 90) % 360
+    if tidal_mode:
+        out[out > 180] -= 360
+    return out
