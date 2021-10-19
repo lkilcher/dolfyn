@@ -17,3 +17,9 @@ tests/.coverage
 
 docs/build
 docs/.ipynb_checkpoints
+
+build/
+debug/
+src/
+.cache/
+tmp/
