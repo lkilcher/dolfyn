@@ -24,7 +24,7 @@ with open(base_dir + "/dolfyn/_version.py") as fp:
 
 
 config = dict(
-    name='dolfyn',
+    name='dolfyn0',
     version=version['__version__'],
     description='Doppler Ocean Library for pYthoN.',
     author='Levi Kilcher',
@@ -37,12 +37,12 @@ config = dict(
         #'Topic :: Scientific/Engineering :: Earth Science',
     ],
     url='http://github.com/lkilcher/dolfyn',
-    packages=find_packages(exclude=['*.test']),
+    packages=find_packages(exclude=['dolfyn', '*.test']),
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.meta', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
     install_requires=['numpy', 'scipy', 'h5py', 'pyDictH5'],
-    provides=['dolfyn', ],
+    provides=['dolfyn0', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],
     # entry_points = {
     #    'console_scripts':

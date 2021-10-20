@@ -34,3 +34,4 @@ tmp*.py
 .DS_Store
 
 .vscode/
+*.egg-info/
