@@ -5,12 +5,17 @@ from . import base as rotb
 
 def _beam2inst(dat, reverse=False, force=False):
     # Order of rotations matters
-    if not reverse: # beam->inst
+    # beam->inst(ADV battery case|imu)->head(ADV instrument head)
+    if not reverse:
+        # First rotate velocities from beam to ADV inst frame
         dat = rotb._beam2inst(dat, reverse=reverse, force=force)
-        dat = _rotate_head2inst(dat)
-    else: # inst->beam
-        # First rotate velocities back to head frame
-        dat = _rotate_head2inst(dat, reverse)
+        # Then rotate from ADV inst frame to ADV head frame (dolfyn's "inst")
+        dat = _rotate_inst2head(dat)
+    
+    # head(ADV instrument head)->inst(ADV battery case|imu)->beam
+    else: 
+        # First rotate velocities from ADV head frame back to inst frame
+        dat = _rotate_inst2head(dat, reverse)
         # Now rotate to beam
         dat = rotb._beam2inst(dat, reverse=reverse, force=force)
 
@@ -118,15 +123,13 @@ def _calc_omat(hh, pp, rr, orientation_down=None):
     return _euler2orient(hh, pp, rr)
 
 
-def _rotate_head2inst(advo, reverse=False):
+def _rotate_inst2head(advo, reverse=False):
     if not _check_inst2head_rotmat(advo):
         # This object doesn't have a head2inst_rotmat, so we do nothing.
         return advo
-    if reverse: 
-        # transpose of inst2head gives head->inst
+    if reverse: # head->inst
         advo['vel'].values = np.dot(advo['inst2head_rotmat'].T, advo['vel'])
-    else: # head->inst
-        # velocity is recorded by Nortek in inst coordinates
+    else: # inst->head
         advo['vel'].values = np.dot(advo['inst2head_rotmat'], advo['vel'])
 
     return advo
