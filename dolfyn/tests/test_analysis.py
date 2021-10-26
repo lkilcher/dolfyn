@@ -55,8 +55,8 @@ def test_calc_func(make_data=False):
     test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel, dat_vec.dat2.vel)
     test_ds['tke_vec'] = c.calc_tke(dat_vec.dat1.vel)
     test_ds['stress'] = c.calc_stress(dat_vec.dat1.vel)
-    test_ds['spec'] = c.calc_vel_psd(dat_vec.dat1.vel)
-    test_ds['csd'] = c.calc_vel_csd(dat_vec.dat1.vel)
+    test_ds['spec'] = c.calc_psd(dat_vec.dat1.vel)
+    test_ds['csd'] = c.calc_csd(dat_vec.dat1.vel)
     
     if make_data:
         save(test_ds, 'vector_data01_func.nc')

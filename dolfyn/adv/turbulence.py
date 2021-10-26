@@ -75,10 +75,10 @@ class ADVBinner(VelBinner):
         out['tke_vec'] = self.calc_tke(ds['vel'], noise=noise)
         out['stress'] = self.calc_stress(ds['vel'])
 
-        out['spec'] = self.calc_vel_psd(ds['vel'],
-                                     window=window,
-                                     freq_units='rad/s',
-                                     noise=noise)
+        out['spec'] = self.calc_psd(ds['vel'],
+                                    window=window,
+                                    freq_units='rad/s',
+                                    noise=noise)
         for key in list(ds.attrs.keys()):
             if 'config' in key:
                 ds.attrs.pop(key)

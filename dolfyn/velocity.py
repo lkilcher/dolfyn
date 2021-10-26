@@ -368,14 +368,14 @@ class VelBinner(TimeBinner):
         return da
     
 
-    def calc_vel_psd(self, veldat,
-                     freq_units='Hz',
-                     fs=None,
-                     window='hann', 
-                     noise=[0, 0, 0],
-                     n_bin=None, n_fft=None, n_pad=None,
-                     rotate_u=False,
-                     step=None):
+    def calc_psd(self, veldat,
+                 freq_units='Hz',
+                 fs=None,
+                 window='hann', 
+                 noise=[0, 0, 0],
+                 n_bin=None, n_fft=None, n_pad=None,
+                 rotate_u=False,
+                 step=None):
         """Calculate the power spectral density of velocity.
 
         Parameters
@@ -456,13 +456,13 @@ class VelBinner(TimeBinner):
         return da
     
 
-    def calc_vel_csd(self, veldat,
-                     freq_units='Hz',
-                     fs=None,
-                     window='hann',
-                     n_bin=None, n_fft=None, n_pad=None,
-                     rotate_u=False,
-                     step=None):
+    def calc_csd(self, veldat,
+                 freq_units='Hz',
+                 fs=None,
+                 window='hann',
+                 n_bin=None, n_fft=None, n_pad=None,
+                 rotate_u=False,
+                 step=None):
         """Calculate the cross-spectral density of velocity components.
 
         Parameters

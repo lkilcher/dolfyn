@@ -116,12 +116,12 @@ plt.show()
 ensemble_tool = api.ADVBinner(n_bin=ensemble_size, fs=data.fs, n_fft=None)
 
 # motion corrected data
-mc_spec = ensemble_tool.calc_vel_psd(data.vel, freq_units='Hz')
+mc_spec = ensemble_tool.calc_psd(data.vel, freq_units='Hz')
 # not-motion corrected data
-unm_spec = ensemble_tool.calc_vel_psd(data_uncorrected.vel, freq_units='Hz')
+unm_spec = ensemble_tool.calc_psd(data_uncorrected.vel, freq_units='Hz')
 # Find motion spectra from IMU velocity
-uh_spec = ensemble_tool.calc_vel_psd(data['velacc'] + data['velrot'], 
-                                     freq_units='Hz')
+uh_spec = ensemble_tool.calc_psd(data['velacc'] + data['velrot'], 
+                                 freq_units='Hz')
 
 # Plot U, V, W spectra
 U = ['u','v','w'] # u:0, v:1, w:2

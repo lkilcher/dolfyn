@@ -22,8 +22,8 @@ Analysis in DOLfYN is primarily handled through the `VelBinner` class. Below is 
 	~dolfyn.velocity.VelBinner.do_tke
 	~dolfyn.velocity.VelBinner.calc_tke
 	~dolfyn.velocity.VelBinner.calc_stress
-	~dolfyn.velocity.VelBinner.calc_vel_psd
-	~dolfyn.velocity.VelBinner.calc_vel_csd
+	~dolfyn.velocity.VelBinner.calc_psd
+	~dolfyn.velocity.VelBinner.calc_csd
 	~dolfyn.binned.TimeBinner.calc_freq
 
 
