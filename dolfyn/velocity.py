@@ -218,8 +218,8 @@ class Velocity():
         k3 = c*self.ds[ky] / abs(self.w)
         # transposes dimensions for some reason
         k = xr.DataArray([k1.T.values, k2.T.values, k3.T.values],
-                         coords = self.ds.spec.coords,
-                         dims = self.ds.spec.dims,
+                         coords = self.ds.psd.coords,
+                         dims = self.ds.psd.dims,
                          name = 'wavenumber',
                          attrs={'units':'1/m'})
         return k
@@ -374,7 +374,6 @@ class VelBinner(TimeBinner):
                  window='hann', 
                  noise=[0, 0, 0],
                  n_bin=None, n_fft=None, n_pad=None,
-                 rotate_u=False,
                  step=None):
         """Calculate the power spectral density of velocity.
 
@@ -389,7 +388,6 @@ class VelBinner(TimeBinner):
           The sample rate (default: from the binner).
         window : string or array
           Specify the window function.
-
         noise : list(3 floats) (optional)
           Noise level of each component's velocity measurement
           (default 0).
@@ -406,7 +404,7 @@ class VelBinner(TimeBinner):
 
         Returns
         -------
-        spec : xarray.DataArray (3, M, N_FFT)
+        psd : xarray.DataArray (3, M, N_FFT)
           The spectra in the 'u', 'v', and 'w' directions.
           
         """
@@ -438,19 +436,19 @@ class VelBinner(TimeBinner):
                 out[idx] = self._psd(veldat[idx], fs=fs, noise=noise[idx],
                                      window=window, n_bin=n_bin,
                                      n_pad=n_pad, n_fft=n_fft, step=step)
-            coords={'Sxx':['Suu','Svv','Sww'], 'time':time, f_key:freq}
-            dims=['Sxx','time',f_key]
+            coords={'S':['Sxx','Syy','Szz'], 'time':time, f_key:freq}
+            dims=['S','time',f_key]
         else:
             out = self._psd(veldat, fs=fs, noise=noise[0], window=window, 
                             n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
             coords={'time':time, f_key:freq}
             dims=['time',f_key]
         
-        da =  xr.DataArray(out, name='spec',
-                            coords=coords,                              
-                            dims=dims,
-                            attrs={'units':units,
-                                   'n_fft':n_fft})
+        da =  xr.DataArray(out, 
+                           name='psd',
+                           coords=coords,                              
+                           dims=dims,
+                           attrs={'units':units, 'n_fft':n_fft})
         da[f_key].attrs['units'] = freq_units
         
         return da
@@ -460,9 +458,8 @@ class VelBinner(TimeBinner):
                  freq_units='Hz',
                  fs=None,
                  window='hann',
-                 n_bin=None, n_fft=None, n_pad=None,
-                 rotate_u=False,
-                 step=None):
+                 n_bin=None,
+                 n_fft_coh=None):
         """Calculate the cross-spectral density of velocity components.
 
         Parameters
@@ -478,14 +475,8 @@ class VelBinner(TimeBinner):
           Specify the window function.
         n_bin : int (optional)
           The bin-size (default: from the binner).
-        n_fft : int (optional)
+        n_fft_coh : int (optional)
           The fft size (default: n_fft_coh from the binner).
-        n_pad : int (optional)
-          The number of values to pad with zero (default: 0)
-        step : int (optional)
-          Controls amount of overlap in fft (default: the step size is
-          chosen to maximize data use, minimize nens, and have a
-          minimum of 50% overlap.).
 
         Returns
         -------
@@ -495,7 +486,7 @@ class VelBinner(TimeBinner):
           
         """
         fs = self._parse_fs(fs)
-        n_fft = self._parse_nfft_coh(n_fft)
+        n_fft = self._parse_nfft_coh(n_fft_coh)
         time = self._mean(veldat.time.values)
         veldat = veldat.values
         
@@ -517,15 +508,17 @@ class VelBinner(TimeBinner):
         for ip, ipair in enumerate(self._cross_pairs):
             out[ip] = self._cpsd(veldat[ipair[0]],
                                  veldat[ipair[1]],
-                                 n_fft=n_fft)
+                                 n_bin=n_bin,
+                                 n_fft=n_fft,
+                                 window=window)
 
-        da = xr.DataArray(out, name='csd',
-                          coords={'Sxy':['Suv','Suw','Svw'],
+        da = xr.DataArray(out, 
+                          name='csd',
+                          coords={'C':['Cxy','Cxz','Cyz'],
                                   'time':time,
                                   f_key:coh_freq},
-                          dims=['Sxy','time',f_key],
-                          attrs={'units':units,
-                                 'n_fft':n_fft})
+                          dims=['C','time',f_key],
+                          attrs={'units':units, 'n_fft_coh':n_fft})
         da[f_key].attrs['units'] = freq_units
 
         return da

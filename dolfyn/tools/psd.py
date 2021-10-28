@@ -33,6 +33,8 @@ def psd_freq(nfft, fs, full=False):
 def _getwindow(window, nfft):
     if window == 'hann':
         window = np.hanning(nfft)
+    elif window == 'hamm':
+        window = np.hamming(nfft)
     elif window is None or window == 1:
         window = np.ones(nfft)
     return window

@@ -8,14 +8,15 @@ import dolfyn.adv.api as avm
 class adv_setup():
     def __init__(self, tv):
         self.dat1 = tv.dat.copy(deep=True)
-        self.dat2 = tv.dat_imu.copy(deep=True)
-        self.dat3 = read_example('burst_mode01.VEC', nens=200)
-        self.avg_tool = VelBinner(self.dat1.fs, self.dat1.fs)
+        self.dat2 = read_example('burst_mode01.VEC', nens=200)
+        fs = self.dat1.fs
+        self.avg_tool = VelBinner(n_bin=fs, fs=fs)
         
 class adp_setup():
     def __init__(self, tr):
         self.dat = tr.dat_sig.copy(deep=True)
-        self.avg_tool = VelBinner(self.dat.fs*20, self.dat.fs)
+        fs = self.dat.fs
+        self.avg_tool = VelBinner(n_bin=fs*20, fs=fs)
         
         
 def test_do_func(make_data=False):
@@ -40,29 +41,29 @@ def test_do_func(make_data=False):
 def test_calc_func(make_data=False):
     dat_vec = adv_setup(tv)
     test_ds = type(dat_vec.dat1)()
+    test_ds_dif = type(dat_vec.dat1)()
     c = dat_vec.avg_tool
-    
-    # about same size
-    test_ds['coh_same'] = c.calc_coh(dat_vec.dat1.vel, dat_vec.dat2.vel)
-    test_ds['pang_same'] = c.calc_phase_angle(dat_vec.dat1.vel, dat_vec.dat2.vel)
-    
-    # larger one should come first if dif lengths
-    test_ds['coh_dif'] = c.calc_coh(dat_vec.dat3.vel, dat_vec.dat1.vel)
-    test_ds['pang_dif'] = c.calc_phase_angle(dat_vec.dat3.vel, dat_vec.dat1.vel)
-    
-    # the rest
+
+    test_ds['coh'] = c.calc_coh(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
+    test_ds['pang'] = c.calc_phase_angle(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
+    test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
     test_ds['acov'] = c.calc_acov(dat_vec.dat1.vel)
-    test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel, dat_vec.dat2.vel)
     test_ds['tke_vec'] = c.calc_tke(dat_vec.dat1.vel)
     test_ds['stress'] = c.calc_stress(dat_vec.dat1.vel)
-    test_ds['spec'] = c.calc_psd(dat_vec.dat1.vel)
+    test_ds['psd'] = c.calc_psd(dat_vec.dat1.vel)
     test_ds['csd'] = c.calc_csd(dat_vec.dat1.vel)
+    
+    # Different lengths
+    test_ds_dif['coh_dif'] = c.calc_coh(dat_vec.dat1.vel, dat_vec.dat2.vel)
+    test_ds_dif['pang_dif'] = c.calc_phase_angle(dat_vec.dat1.vel, dat_vec.dat2.vel)
     
     if make_data:
         save(test_ds, 'vector_data01_func.nc')
+        save(test_ds_dif, 'vector_data01_funcdif.nc')
         return
     
     assert_allclose(test_ds, load('vector_data01_func.nc'), atol=1e-6)
+    assert_allclose(test_ds_dif, load('vector_data01_funcdif.nc'), atol=1e-6)
 
 
 def test_calc_freq():
@@ -83,7 +84,7 @@ def test_adv_turbulence(make_data=False):
     
     assert_identical(tdat, avm.calc_turbulence(dat, n_bin=20.0, fs=dat.fs))
     
-    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.spec, tdat.Veldata.U_mag)
+    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.Veldata.U_mag)
     tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.Veldata.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
     tdat['L'] = bnr.calc_L_int(acov, tdat.vel)

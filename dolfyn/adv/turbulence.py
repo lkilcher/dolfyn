@@ -21,9 +21,7 @@ class ADVBinner(VelBinner):
 
     """
 
-    def __call__(self, ds, out_type=None,
-                 omega_range_epsilon=[6.28, 12.57],
-                 window='hann'):
+    def __call__(self, ds, freq_units='rad/s', window='hann'):
         """
         Compute a suite of turbulence statistics for the input data
         ds, and return a `binned` data object.
@@ -62,7 +60,7 @@ class ADVBinner(VelBinner):
           - U_std : The standard deviation of the horizontal
             velocity `U_mag`.
 
-          - spec: A DataArray containing the spectra of the velocity
+          - psd: A DataArray containing the spectra of the velocity
             in radial frequency units. This DataArray contains:
             - spectra : the velocity spectra array (m^2/s/rad))
             - omega : the radial frequency (rad/s)
@@ -75,10 +73,10 @@ class ADVBinner(VelBinner):
         out['tke_vec'] = self.calc_tke(ds['vel'], noise=noise)
         out['stress'] = self.calc_stress(ds['vel'])
 
-        out['spec'] = self.calc_psd(ds['vel'],
-                                    window=window,
-                                    freq_units='rad/s',
-                                    noise=noise)
+        out['psd'] = self.calc_psd(ds['vel'],
+                                   window=window,
+                                   freq_units=freq_units,
+                                   noise=noise)
         for key in list(ds.attrs.keys()):
             if 'config' in key:
                 ds.attrs.pop(key)
@@ -90,14 +88,14 @@ class ADVBinner(VelBinner):
         return out
 
 
-    def calc_epsilon_LT83(self, spec, U_mag, omega_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, psd, U_mag, omega_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate from the PSD
 
         Parameters
         ----------
-        spec : xarray.DataArray (...,n_time,n_f)
-          The psd 'spec' [m^2/s/rad] with frequency vector 'omega' [rad/s]
+        psd : xarray.DataArray (...,n_time,n_f)
+          The psd [m^2/s/rad] with frequency vector 'omega' [rad/s]
         U_mag : |np.ndarray| (...,n_time)
           The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
         omega_range : iterable(2)
@@ -127,13 +125,13 @@ class ADVBinner(VelBinner):
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
 
         """
-        omega = spec.omega
+        omega = psd.omega
 
         idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
         idx = idx[0]
         
         a = 0.5
-        out = (spec.isel(omega=idx) *
+        out = (psd.isel(omega=idx) *
                omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
         
         out = xr.DataArray(out, name='dissipation_rate',
@@ -265,7 +263,7 @@ class ADVBinner(VelBinner):
         I_tke = dat_avg.Veldata.I_tke.values
         theta = np.angle(dat_avg.Veldata.U.values) - \
                 self._up_angle(dat_raw.Veldata.U.values)
-        omega = dat_avg.spec.omega.values
+        omega = dat_avg.psd.omega.values
 
         # Calculate constants
         alpha = 1.5
@@ -273,23 +271,23 @@ class ADVBinner(VelBinner):
 
         # Index data to be used
         inds = (omega_range[0] < omega) & (omega < omega_range[1])
-        spec = dat_avg.spec[..., inds].values
-        omega = omega[inds].reshape([1] * (dat_avg.spec.ndim - 2) + [sum(inds)])
+        psd = dat_avg.psd[..., inds].values
+        omega = omega[inds].reshape([1] * (dat_avg.psd.ndim - 2) + [sum(inds)])
 
         # Estimate values
         # u & v components (equation 6)
-        out = (np.nanmean((spec[0] + spec[1]) * omega**(5/3), -1) /
+        out = (np.nanmean((psd[0] + psd[1]) * omega**(5/3), -1) /
                (21/55 * alpha * intgrl))**(3/2) / U_mag
         
         # Add w component
-        out += (np.nanmean(spec[2] * omega**(5/3), -1) /
+        out += (np.nanmean(psd[2] * omega**(5/3), -1) /
                 (12/55 * alpha * intgrl))**(3/2) / U_mag
 
         # Average the two estimates
         out *= 0.5
         
         return xr.DataArray(out, name='dissipation_rate',
-                            coords={'time':dat_avg.spec.time}, 
+                            coords={'time':dat_avg.psd.time}, 
                             dims='time',
                             attrs={'units':'m^2/s^3',
                                    'method':'TE01'})
@@ -330,9 +328,7 @@ class ADVBinner(VelBinner):
         return xr.DataArray(L_int, name='L_int', attrs={'units':'m'})
 
 
-def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
-                    omega_range_epsilon=[6.28, 12.57],
-                    window='hann'):
+def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann'):
     """
     Functional version of `ADVBinner` that computes a suite of turbulence 
     statistics for the input dataset, and returns a `binned` data object.
@@ -371,7 +367,7 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
       - U_std : The standard deviation of the horizontal
         velocity `U_mag`.
 
-      - spec : DataArray containing the spectra of the velocity
+      - psd : DataArray containing the spectra of the velocity
         in radial frequency units. The data-array contains:
         - vel : the velocity spectra array (m^2/s/rad))
         - omega : the radial frequncy (rad/s)
@@ -379,6 +375,4 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, out_type=None,
     """
     calculator = ADVBinner(n_bin, fs, n_fft=n_fft)
     
-    return calculator(ds_raw, out_type=out_type,
-                      omega_range_epsilon=omega_range_epsilon,
-                      window=window)
+    return calculator(ds_raw, freq_units=freq_units, window=window)

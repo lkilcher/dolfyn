@@ -23,7 +23,7 @@ class TimeBinner:
           Default: `n_fft`=`n_bin`
         n_fft_coh : int
           Number of data points to use for coherence and cross-spectra ffts
-          (`n_fft_coh`<=`n_bin`). Default: `n_fft_coh`=`n_bin`/6
+          Default: `n_fft_coh`=`n_fft`
         noise : list or ndarray
           Instrument's doppler noise in same units as velocity
           
@@ -39,10 +39,10 @@ class TimeBinner:
             self.n_fft = n_bin
             print("n_fft must be smaller than n_bin, setting n_fft = n_bin")
         if n_fft_coh is None:
-            self.n_fft_coh = int(self.n_bin // 6)
+            self.n_fft_coh = int(self.n_fft)
         elif n_fft_coh > n_bin:
             self.n_fft_coh = int(n_bin // 6)
-            print("n_fft_coh must be smaller than n_bin, "
+            print("n_fft_coh must be smaller than or equal to n_bin, "
                   "setting n_fft_coh = n_bin/6")
 
     def _outshape(self, inshape, n_pad=0, n_bin=None):
@@ -196,8 +196,7 @@ class TimeBinner:
         return dims_list, coords_dict
 
 
-    def do_avg(self, raw_ds, out_ds=None, names=None, 
-               n_time=None, noise=[0,0,0]):
+    def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0,0,0]):
         """Average data into bins/ensembles
 
         Parameters
@@ -350,7 +349,7 @@ class TimeBinner:
     
 
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
-               noise=(0, 0), n_fft=None, n_bin=None):
+               noise=(0, 0), n_fft_coh=None, n_bin=None):
         """Calculate coherence between `veldat1` and `veldat2`.
         
         Parameters
@@ -366,7 +365,7 @@ class TimeBinner:
         noise : float
           The white-noise level of the measurement (in the same units
           as `veldat`).
-        n_fft : int
+        n_fft_coh : int
           n_fft of veldat2, number of elements per bin if 'None' is taken 
           from VelBinner
         n_bin : int
@@ -384,11 +383,17 @@ class TimeBinner:
         they should have the same start and end timestamps.
 
         """
+        if veldat1.size<veldat2.size:
+          raise Exception("veldat1 is shorter than veldat2. Please switch these inputs.")
+        
         dat1 = veldat1.values
         dat2 = veldat2.values
-        
-        if n_fft is None:
+
+        if n_fft_coh is None:
             n_fft = self.n_fft_coh
+        else:
+            n_fft = n_fft_coh
+
         # want each slice to carry the same timespan
         n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
@@ -402,11 +407,13 @@ class TimeBinner:
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
         
         for slc in slice1d_along_axis(out.shape, -1):
-            out[slc] = coherence(dat1[slc], dat2[slc],
-                                 n_fft, debias=debias, noise=noise)
+            out[slc] = coherence(dat1[slc], dat2[slc], n_fft, 
+                                 window=window, debias=debias, 
+                                 noise=noise)
             
         freq = self.calc_freq(self.fs, coh=True)
 
+        # Get time from shorter vector
         dims_list, coords_dict = self._new_coords(veldat2)
         # tack on new coordinate
         dims_list.append('f')
@@ -421,7 +428,7 @@ class TimeBinner:
     
     
     def calc_phase_angle(self, veldat1, veldat2, window='hann',
-                    n_fft=None, n_bin=None):
+                    n_fft_coh=None, n_bin=None):
         """Calculate the phase difference between two signals as a
         function of frequency (complimentary to coherence).
 
@@ -436,10 +443,9 @@ class TimeBinner:
         window : str
           String indicating the window function to use (default: 'hanning').
         n_fft : int
-          Number of elements per bin if 'None' is taken 
-          from VelBinner
+          Number of elements per bin if 'None' is taken from VelBinner
         n_bin : int
-          Number of elements per bin if 'None' is taken 
+          Number of elements per bin from veldat2 if 'None' is taken 
           from VelBinner
 
         Returns
@@ -453,11 +459,17 @@ class TimeBinner:
         they should have the same start and end timestamps.
         
         """
+        if veldat1.size<veldat2.size:
+          raise Exception("veldat1 is shorter than veldat2. Please switch these inputs.")
+        
         dat1 = veldat1.values
         dat2 = veldat2.values
         
-        if n_fft is None:
+        if n_fft_coh is None:
             n_fft = self.n_fft_coh
+        else:
+          n_fft = n_fft_coh
+
         # want each slice to carry the same timespan
         n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
@@ -477,6 +489,7 @@ class TimeBinner:
         
         freq = self.calc_freq(self.fs, coh=True)
         
+        # Get time from shorter vector
         dims_list, coords_dict = self._new_coords(veldat2)
         # tack on new coordinate
         dims_list.append('f')
@@ -586,7 +599,7 @@ class TimeBinner:
         dat2 = veldat2.values
         
         # want each slice to carry the same timespan
-        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin2 = self._parse_nbin(n_bin)
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
         
         shp = self._outshape(dat1.shape, n_bin=n_bin1)
@@ -621,7 +634,7 @@ class TimeBinner:
     
         
     def _psd(self, dat, fs=None, window='hann', noise=0,
-            n_bin=None, n_fft=None, step=None, n_pad=None):
+            n_bin=None, n_fft=None, n_pad=None, step=None):
         """Calculate power spectral density of `dat`
 
         Parameters
@@ -633,12 +646,18 @@ class TimeBinner:
         noise  : float
           The white-noise level of the measurement (in the same units
           as `dat`).
-        n_fft : int
-          n_fft of veldat2, number of elements per bin if 'None' is taken 
-          from VelBinner
         n_bin : int
           n_bin of veldat2, number of elements per bin if 'None' is taken 
           from VelBinner
+        n_fft : int
+          n_fft of veldat2, number of elements per bin if 'None' is taken 
+          from VelBinner
+        n_pad : int (optional)
+          The number of values to pad with zero (default: 0)
+        step : int (optional)
+          Controls amount of overlap in fft (default: the step size is
+          chosen to maximize data use, minimize nens, and have a
+          minimum of 50% overlap.).
 
         """
         fs = self._parse_fs(fs)
@@ -716,7 +735,6 @@ class TimeBinner:
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units: - set prior to function
             out[slc] = cross(dat1[slc], dat2[slc], n_fft,
-                             #2 * np.pi * fs, window=window)
                              fs, window=window)
         return out
     

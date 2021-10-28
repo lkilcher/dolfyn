@@ -143,6 +143,8 @@ def load(filename):
     
     # Rejoin complex numbers
     if hasattr(ds, 'complex_vars') and len(ds.complex_vars):
+        if len(ds.complex_vars[0])==1:
+            ds.attrs['complex_vars'] = [ds.complex_vars]
         for var in ds.complex_vars:
             ds[var] = ds[var+'_real'] + ds[var+'_imag'] * 1j
             ds = ds.drop_vars([var+'_real', var+'_imag'])
