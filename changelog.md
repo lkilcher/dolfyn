@@ -21,8 +21,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 			- Fixed Signature magnetometer to return in units of microTeslas
 			- Fixed Nortek echosounder 'dB' scaling
 			
-		- Fixed mathmatical error in Nortek 'range' calculation (bin 1 dist = blank dist + cell size)
+		- Fixed error in Nortek 'range' calculation (bin 1 dist = blank dist + cell size)
 		- Added function in the ADCP API to add the deployment depth to this range (`clean.set_deploy_altitude()`)
+		
+		- Rounded Nortek AWAC blanking distance and range to 2 decimal places
+		- Read support for 2-4 beam 
 
 		- Fix error reading VMDAS-processed files
 		- Fixed bug in loading TRDI GPS data - it is now saved to the correct length with the correct timestamps
@@ -43,7 +46,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 			
 	- Motion correction code:
 		- `CorrectMotion` object has been removed
-		- Fixed error where the `inst2head` rotation matrix was effectively implemented in the source code as "head2inst". Added example in documentation to alleviate confusion.
 		
 	- `TimeData`, `Velocity`, `TKEdata`:
 		- `TimeData` class has been removed

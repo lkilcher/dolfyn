@@ -115,9 +115,9 @@ The 'userdata.json' file corresponding to the ADV sounding weight in Figure 2 lo
 
 .. code-block:: text
 
-	{"inst2head_rotmat": [[ 0, 0,-1],
+	{"inst2head_rotmat": [[ 0, 0, 1],
 	                      [ 0, 1, 0],
-	                      [ 1, 0, 0]],
+	                      [-1, 0, 0]],
 	 "inst2head_vec": [0.20, 0, 0.04],
 	 "motion accel_filtfreq Hz": 0.03,
 	}

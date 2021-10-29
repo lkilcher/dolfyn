@@ -5,19 +5,19 @@ from . import base as rotb
 
 def _beam2inst(dat, reverse=False, force=False):
     # Order of rotations matters
-    # beam->inst(ADV battery case|imu)->head(ADV instrument head)
-    if not reverse:
-        # First rotate velocities from beam to ADV inst frame
+    # beam->head(ADV instrument head)->inst(ADV battery case|imu)
+    if reverse:
+        # First rotate velocities from ADV inst frame back to head frame
+        dat = _rotate_inst2head(dat, reverse=reverse)
+        # Now rotate from the head frame to the beam frame
         dat = rotb._beam2inst(dat, reverse=reverse, force=force)
-        # Then rotate from ADV inst frame to ADV head frame (dolfyn's "inst")
-        dat = _rotate_inst2head(dat)
     
-    # head(ADV instrument head)->inst(ADV battery case|imu)->beam
-    else: 
-        # First rotate velocities from ADV head frame back to inst frame
-        dat = _rotate_inst2head(dat, reverse)
-        # Now rotate to beam
-        dat = rotb._beam2inst(dat, reverse=reverse, force=force)
+    # inst(ADV battery case|imu)->head(ADV instrument head)->beam
+    else:
+        # First rotate velocities from beam to ADV head frame
+        dat = rotb._beam2inst(dat, force=force)
+        # Then rotate from ADV head frame to ADV inst frame
+        dat = _rotate_inst2head(dat)
 
     # Set the docstring to match the default rotation func
     _beam2inst.__doc_ = rotb._beam2inst.__doc__
