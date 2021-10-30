@@ -50,7 +50,7 @@ config = dict(
     #     ],
     #    },
     dependency_links=['https://pypi.python.org/pypi/',
-                      'https://github.com/lkilcher/pyDictH5/tarball/master#egg=pyDictH5'],
+                      'https://github.com/lkilcher/pyDictH5/tarball/dolfyn0-compare2-dolfyn1#egg=pyDictH5'],
     # cmdclass =
     # {'install_data':chmod_install_data,'install':chmod_install,},
 )
