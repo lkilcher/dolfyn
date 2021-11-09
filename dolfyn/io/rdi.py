@@ -105,21 +105,21 @@ def _set_rdi_declination(dat, fname='????'):
 
 
 century = 2000
-data_defs = {'number': ([], 'sys', 'uint32', ''),
+data_defs = {'number': ([], 'data_vars', 'uint32', ''),
              'rtc': ([7], 'sys', 'uint16', ''),
-             'bit': ([], 'sys', 'bool', ''),
-             'ssp': ([], 'sys', 'uint16', ''),
+             'builtin_test_fail': ([], 'data_vars', 'bool', ''),
+             'c_sound': ([], 'data_vars', 'float32', 'm/s'),
              'depth': ([], 'data_vars', 'float32', 'm'),
              'pitch': ([], 'data_vars', 'float32', 'deg'),
              'roll': ([], 'data_vars', 'float32', 'deg'),
              'heading': ([], 'data_vars', 'float32', 'deg'),
              'temp': ([], 'data_vars', 'float32', 'C'),
              'salinity': ([], 'data_vars', 'float32', 'psu'),
-             'mpt_sec': ([], 'sys', 'float32', 's'),
-             'heading_std': ([], 'sys', 'float32', 'deg'),
-             'pitch_std': ([], 'sys', 'float32', 'deg'),
-             'roll_std': ([], 'sys', 'float32', 'deg'),
-             'adc': ([8], 'sys', 'uint16', ''),
+             'min_preping_wait': ([], 'data_vars', 'float32', 's'),
+             'heading_std': ([], 'data_vars', 'float32', 'deg'),
+             'pitch_std': ([], 'data_vars', 'float32', 'deg'),
+             'roll_std': ([], 'data_vars', 'float32', 'deg'),
+             'adc': ([8], 'sys', 'uint8', ''),
              'error_status_wd': ([], 'attrs', 'float32', ''),
              'pressure': ([], 'data_vars', 'float32', 'dbar'),
              'pressure_std': ([], 'data_vars', 'float32', 'dbar'),
@@ -551,13 +551,7 @@ class _RdiReader():
             self.read_nocode(id)
 
     def read_fixed(self,):
-        if hasattr(self, 'configsize'):  # and False:
-            # Skipping the cfgseg was something I added,
-            # because it seemed unnecessary to read it every
-            # time, so I just skip it after the first read.
-            # If this causes problems I may need to remove this.
-            # The other option may be that if a problem is encountered, I could
-            # come back here and re-read the header.
+        if hasattr(self, 'configsize'):
             self.f.seek(self.configsize, 1)
             self._nbyte = self.configsize
         else:
@@ -625,15 +619,15 @@ class _RdiReader():
         self.vars_read += ['number',
                            'rtc',
                            'number',
-                           'bit',
-                           'ssp',
+                           'builtin_test_fail',
+                           'c_sound',
                            'depth',
                            'heading',
                            'pitch',
                            'roll',
                            'salinity',
                            'temp',
-                           'mpt_sec',
+                           'min_preping_wait',
                            'heading_std',
                            'pitch_std',
                            'roll_std',
@@ -641,65 +635,20 @@ class _RdiReader():
         ens.number[k] = fd.read_ui16(1)
         ens.rtc[:, k] = fd.read_ui8(7)
         ens.number[k] += 65535 * fd.read_ui8(1)
-        ens.bit[k] = fd.read_ui16(1)
-        ens.ssp[k] = fd.read_ui16(1)
+        ens.builtin_test_fail[k] = fd.read_ui16(1)
+        ens.c_sound[k] = fd.read_ui16(1)
         ens.depth[k] = fd.read_ui16(1) * 0.1
         ens.heading[k] = fd.read_ui16(1) * 0.01
         ens.pitch[k] = fd.read_i16(1) * 0.01
         ens.roll[k] = fd.read_i16(1) * 0.01
         ens.salinity[k] = fd.read_i16(1)
         ens.temp[k] = fd.read_i16(1) * 0.01
-        ens.mpt_sec[k] = (fd.read_ui8(3) * np.array([60, 1, .01])).sum()
+        ens.min_preping_wait[k] = (fd.read_ui8(3) * np.array([60, 1, .01])).sum()
         ens.heading_std[k] = fd.read_ui8(1)
-        ens.pitch_std[k] = fd.read_i8(1) * 0.1
-        ens.roll_std[k] = fd.read_i8(1) * 0.1
-        ens.adc[:, k] = fd.read_ui8(8)
+        ens.pitch_std[k] = fd.read_ui8(1) * 0.1
+        ens.roll_std[k] = fd.read_ui8(1) * 0.1
+        ens.adc[:, k] = fd.read_i8(8)
         self._nbyte = 2 + 40
-        
-        # Older instruments use pressure instead of depth
-        #cfg = self.cfg
-        # if cfg['name'] == 'bb-adcp':
-        #     if cfg['prog_ver'] >= 5.55:
-        #         fd.seek(15, 1)
-        #         cent = fd.read_ui8(1)
-        #         ens.rtc[:, k] = fd.read_ui8(7)
-        #         ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
-        #         self._nbyte += 23
-        # elif cfg['name'] == 'wh-adcp':
-        #     ens.error_status_wd[k] = fd.read_ui32(1)
-        #     self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
-        #     self._nbyte += 4
-        #     if (np.fix(cfg['prog_ver']) == [8, 16]).any():
-        #         if cfg['prog_ver'] >= 8.13:
-        #             # Added pressure sensor stuff in 8.13
-        #             fd.seek(2, 1)
-        #             ens.pressure[k] = fd.read_ui32(1)
-        #             ens.pressure_std[k] = fd.read_ui32(1)
-        #             self._nbyte += 10
-        #         if cfg['prog_ver'] >= 8.24:
-        #             # Spare byte added 8.24
-        #             fd.seek(1, 1)
-        #             self._nbyte += 1
-        #         if cfg['prog_ver'] >= 16.05:
-        #             # Added more fields with century in clock
-        #             cent = fd.read_ui8(1)
-        #             ens.rtc[:, k] = fd.read_ui8(7)
-        #             ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
-        #             self._nbyte += 8
-        #     elif np.fix(cfg['prog_ver']) == 9:
-        #         fd.seek(2, 1)
-        #         ens.pressure[k] = fd.read_ui32(1)
-        #         ens.pressure_std[k] = fd.read_ui32(1)
-        #         self._nbyte += 10
-        #         if cfg['prog_ver'] >= 9.10:  # Spare byte added...
-        #             fd.seek(1, 1)
-        #             self._nbyte += 1
-        # elif cfg['name'] == 'os-adcp':
-        #     fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
-        #     self._nbyte += 16
-        #     if cfg['prog_ver'] > 23:
-        #         fd.seek(2, 1)
-        #         self._nbyte += 2
 
     def read_vel(self,):
         ens = self.ensemble

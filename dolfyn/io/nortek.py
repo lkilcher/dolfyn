@@ -713,14 +713,14 @@ class _NortekReader():
         dat['coords']['time'][c] = self.rd_time(byts[2:8])
         ds = dat['sys']
         dv = dat['data_vars']
-        (ds['batt'][c],
+        (dv['batt'][c],
          dv['c_sound'][c],
          dv['heading'][c],
          dv['pitch'][c],
          dv['roll'][c],
          dv['temp'][c],
-         ds['error'][c],
-         ds['status'][c],
+         dv['error'][c],
+         dv['status'][c],
          ds['AnaIn'][c]) = unpack(self.endian + '2H3hH2BH', byts[8:])
         self.checksum(byts)
         
@@ -761,16 +761,16 @@ class _NortekReader():
             else:
                 t[iburst] = (t[iburst][0] + arng / (fs * 24 * 3600))
 
-            tmpd = tbx._nans_like(dat['data_vars']['heading'][iburst])
+            tmpd = tbx._nans_like(dv['heading'][iburst])
             # The first status bit should be the orientation.
-            tmpd[sysi] = dat['sys']['status'][iburst][sysi] & 1
+            tmpd[sysi] = dv['status'][iburst][sysi] & 1
             tbx.fillgaps(tmpd, extrapFlg=True)
             tmpd = np.nan_to_num(tmpd, nan=0) # nans in pitch roll heading
             slope = np.diff(tmpd)
             tmpd[1:][slope < 0] = 1
             tmpd[:-1][slope > 0] = 0
             dv['orientation_down'][iburst] = tmpd.astype('bool')
-        tbx.interpgaps(dat['sys']['batt'], t)
+        tbx.interpgaps(dv['batt'], t)
         tbx.interpgaps(dv['c_sound'], t)
         tbx.interpgaps(dv['heading'], t)
         tbx.interpgaps(dv['pitch'], t)
@@ -929,15 +929,15 @@ class _NortekReader():
         dat['coords']['time'][c] = self.rd_time(byts[2:8])
         ds = dat['sys']
         dv = dat['data_vars']
-        (ds['Error'][c],
+        (dv['error'][c],
          ds['AnaIn1'][c],
-         ds['batt'][c],
+         dv['batt'][c],
          dv['c_sound'][c],
          dv['heading'][c],
          dv['pitch'][c],
          dv['roll'][c],
          p_msb,
-         ds['status'][c],
+         dv['status'][c],
          p_lsw,
          dv['temp'][c],) = unpack(self.endian + '7HBB2H', byts[8:28])
         dv['pressure'][c] = (65536 * p_msb + p_lsw)

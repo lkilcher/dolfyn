@@ -90,13 +90,13 @@ def test_io_nortek2(make_data=False):
     td_sig_i = tb.drop_config(read('Sig1000_IMU.ad2cp', userdata=False, 
                                    nens=nens))
     td_sig_i_ud = tb.drop_config(read('Sig1000_IMU.ad2cp', nens=nens))
-    td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp', nens=nens))
+    #td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp', nens=nens))
     td_sig_ie = tb.drop_config(read('Sig500_Echo.ad2cp', nens=nens))
     td_sig_tide = tb.drop_config(read('Sig1000_tidal.ad2cp', nens=nens))
     
     os.remove(tb.exdt('BenchFile01.ad2cp.index'))
     os.remove(tb.exdt('Sig1000_IMU.ad2cp.index'))
-    os.remove(tb.exdt('VelEchoBT01.ad2cp.index'))
+    #os.remove(tb.exdt('VelEchoBT01.ad2cp.index'))
     os.remove(tb.exdt('Sig500_Echo.ad2cp.index'))
     os.remove(tb.exdt('Sig1000_tidal.ad2cp.index'))
     
@@ -104,7 +104,7 @@ def test_io_nortek2(make_data=False):
         save(td_sig, 'BenchFile01.nc')
         save(td_sig_i, 'Sig1000_IMU.nc')
         save(td_sig_i_ud, 'Sig1000_IMU_ud.nc')
-        save(td_sig_ieb, 'VelEchoBT01.nc')
+        #save(td_sig_ieb, 'VelEchoBT01.nc')
         save(td_sig_ie, 'Sig500_Echo.nc')
         save(td_sig_tide, 'Sig1000_tidal.nc')
         return
@@ -112,25 +112,20 @@ def test_io_nortek2(make_data=False):
     assert_allclose(td_sig, dat_sig, atol=1e-6)
     assert_allclose(td_sig_i, dat_sig_i, atol=1e-6)
     assert_allclose(td_sig_i_ud, dat_sig_i_ud, atol=1e-6)
-    assert_allclose(td_sig_ieb, dat_sig_ieb, atol=1e-6)
+    #assert_allclose(td_sig_ieb, dat_sig_ieb, atol=1e-6)
     assert_allclose(td_sig_ie, dat_sig_ie, atol=1e-6)
     assert_allclose(td_sig_tide, dat_sig_tide, atol=1e-6)
     
     
 def test_matlab_io(make_data=False):
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=100))
-    td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp', nens=100))
     
     if make_data:
         tb.save_matlab(td_rdi_bt, 'dat_rdi_bt')
-        tb.save_matlab(td_sig_ieb, 'dat_sig_ieb')
         return
     
     mat_rdi_bt = tb.load_matlab('dat_rdi_bt.mat')
-    mat_sig_ieb = tb.load_matlab('dat_sig_ieb.mat')
-        
     assert_allclose(td_rdi_bt, mat_rdi_bt,  atol=1e-6)
-    assert_allclose(td_sig_ieb, mat_sig_ieb, atol=1e-6)
     
     
 class warnings_testcase(unittest.TestCase):

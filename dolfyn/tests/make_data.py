@@ -24,7 +24,7 @@ print(__doc__)
 
 # adpr.test_io_rdi(make_data=True)
 # adpr.test_io_nortek(make_data=True)
-# adpr.test_io_nortek2(make_data=True)
+# # adpr.test_io_nortek2(make_data=True)
 # adpr.test_matlab_io(make_data=True)
 # adpro.test_rotate_beam2inst(make_data=True)
 # adpro.test_rotate_inst2beam(make_data=True)
