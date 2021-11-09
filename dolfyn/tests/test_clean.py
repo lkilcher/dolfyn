@@ -56,7 +56,7 @@ def test_range_limit(make_data=False):
 def test_clean_upADCP(make_data=False):
     td = tp.dat_sig_tide.copy(deep=True)
     
-    td = apm.clean.set_deploy_altitude(td, 0.6)
+    td = apm.clean.set_range_offset(td, 0.6)
     td = apm.clean.surface_from_P(td, salinity=31)
     td = apm.clean.nan_beyond_surface(td)
     td = apm.clean.correlation_filter(td, thresh=70)
@@ -75,7 +75,7 @@ def test_clean_downADCP(make_data=False):
     td = apm.clean.fillgaps_time(td)
     td = apm.clean.fillgaps_depth(td)
     
-    td = apm.clean.set_deploy_altitude(td, 0.5)
+    td = apm.clean.set_range_offset(td, 0.5)
     td = apm.clean.find_surface(td, thresh=10, nfilt=3)
     td = apm.clean.nan_beyond_surface(td)
 

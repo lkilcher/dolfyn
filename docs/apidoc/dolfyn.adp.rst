@@ -25,6 +25,7 @@ Cleaning Data
 .. autosummary::
 	:nosignatures:
 	
+	~dolfyn.adp.clean.set_range_offset
 	~dolfyn.adp.clean.find_surface
 	~dolfyn.adp.clean.surface_from_P
 	~dolfyn.adp.clean.nan_beyond_surface

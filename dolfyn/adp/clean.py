@@ -8,9 +8,11 @@ from ..rotate.api import rotate2
 from ..rotate.base import _make_model, quaternion2orient
 
 
-def set_deploy_altitude(ds, h_deploy):
+def set_range_offset(ds, h_deploy):
     """
-    Add instrument's height above seafloor to range of depth bins
+    Adds an instrument's height above seafloor (for an up-facing instrument) 
+    or depth below water surface (for a down-facing instrument) to the range
+    of depth bins
     
     Parameters
     ----------
