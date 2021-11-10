@@ -152,12 +152,12 @@ def test_rotate_earth2principal(make_data=False):
     td_sig.props['principal_heading'] = calc_principal_heading(
         td_sig.vel.mean(1))
     td_awac.props['principal_heading'] = calc_principal_heading(
-        td_sig.vel.mean(1),
+        td_awac.vel.mean(1),
         tidal_mode=False)
 
-    td_rdi.rotate2('principal')
-    td_sig.rotate2('principal')
-    td_awac.rotate2('principal')
+    td_rdi.rotate2('principal', inplace=True)
+    td_sig.rotate2('principal', inplace=True)
+    td_awac.rotate2('principal', inplace=True)
 
     if make_data:
         save(td_rdi, 'RDI_test01_rotate_earth2principal.h5')
