@@ -41,7 +41,7 @@ config = dict(
     package_data={},
     install_requires=['numpy', 'scipy', 'six', 'xarray', 'netcdf4'],
     provides=['dolfyn', ],
-    scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'], 
+    scripts=['scripts/motcorrect_vector.py', 'scripts/binary2mat.py'], 
 )
 
 
