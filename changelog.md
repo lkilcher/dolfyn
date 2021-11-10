@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unversioned
-    - Switch from `'lonlat'` to `'latlon'` as the designated entry-name in `dat.props`
+
+## Version 0.12.2
+	- Switch from `'lonlat'` to `'latlon'` as the designated entry-name in `dat.props`
+	- Bugfix for reading timestamps
+	- Bugfix for earth-2-principal rotations
 
 ## Version 0.12.1
     - Handle `inst2head_rotmat`, this includes an API change:
