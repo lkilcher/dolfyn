@@ -268,7 +268,7 @@ class Ad2cpReader(object):
             except IOError:
                 return outdat
             id = hdr['id']
-            if id in [21, 23, 24, 28]: # vel, vel_b5, echo
+            if id in [21, 23, 24, 28]: # vel, bottom-track, vel_b5, echo
                 self.read_burst(id, outdat[id], c)
             elif id in [26]:  # alt_raw
                 # warnings.warn(
@@ -403,8 +403,12 @@ def reorg(dat):
         if id not in dat:
             continue
         dnow = dat[id]
+
+        # dnow['config'] is sometimes non-uniform for the first or
+        # last item, so we skip those here.
         cfg['burst_config' + tag] = lib.headconfig_int2dict(
-            lib.collapse(dnow['config'], exclude=collapse_exclude,
+            lib.collapse(dnow['config'][1:-1],
+                         exclude=collapse_exclude,
                          name='config'))
         outdat['mpltime' + tag] = lib.calc_time(
             dnow['year'] + 1900,
@@ -415,7 +419,7 @@ def reorg(dat):
             dnow['second'],
             dnow['usec100'].astype('uint32') * 100)
         tmp = lib.beams_cy_int2dict(
-            lib.collapse(dnow['beam_config'], exclude=collapse_exclude,
+            lib.collapse(dnow['beam_config'][1:-1], exclude=collapse_exclude,
                          name='beam_config'), 21)
         cfg['ncells' + tag] = tmp['ncells']
         cfg['coord_sys' + tag] = tmp['cy']
@@ -426,7 +430,7 @@ def reorg(dat):
             # These ones should 'collapse'
             # (i.e., all values should be the same)
             # So we only need that one value.
-            cfg[ky + tag] = lib.collapse(dnow[ky], exclude=collapse_exclude,
+            cfg[ky + tag] = lib.collapse(dnow[ky][1:-1], exclude=collapse_exclude,
                                          name=ky)
         for ky in ['c_sound', 'temp', 'press',
                    'heading', 'pitch', 'roll',

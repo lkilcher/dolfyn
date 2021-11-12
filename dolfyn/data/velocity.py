@@ -324,8 +324,12 @@ class Velocity(TimeData):
             else:
                 delta *= 24 * 3600
                 units = 'seconds'
-            time_string = time_string.format(delta, units,
-                                             dt.strftime('%b %d, %Y %H:%M'))
+            try:
+                time_string = time_string.format(delta, units,
+                                                 dt.strftime('%b %d, %Y %H:%M'))
+            except AttributeError:
+                time_string = '-->Error in time info<--'
+    
         p = self['props']
         if len(self.shape) > 1:
             shape_string = '({} bins, {} pings @ {}Hz)'.format(
