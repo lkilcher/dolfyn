@@ -86,7 +86,7 @@ def _create_dataset(data):
     inst = ['X','Y','Z']
     earth = ['E','N','U']
     beam = list(range(1,data['data_vars']['vel'].shape[0]+1))
-    tag = ['_b5', '_echo', '_bt', '_gps']
+    tag = ['_b5', '_echo', '_bt', '_gps', '_ast']
     
     for key in data['data_vars']:
         # orientation matrices

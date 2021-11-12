@@ -328,7 +328,7 @@ def _reorg(dat):
     cfg['inst_type'] = 'ADCP'
     cfg['rotate_vars'] = ['vel',]
 
-    for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
+    for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ast'), (28, '_echo')]:
         if id in [24, 26]:
             collapse_exclude = [0]
         else:
@@ -388,11 +388,11 @@ def _reorg(dat):
     if 26 in dat:
         ard = outdat['altraw']
         for ky in list(outdat['data_vars']):
-            if ky.endswith('_ar'):
+            if ky.endswith('_ast'):
                 grp = ky.split('.')[0]
                 if '.' in ky and grp not in ard:
                     ard[grp] = {}
-                ard[ky.rstrip('_ar')] = outdat['data_vars'].pop(ky)
+                ard[ky.rstrip('_ast')] = outdat['data_vars'].pop(ky)
     
     outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
                                     'ENU': 'earth',
