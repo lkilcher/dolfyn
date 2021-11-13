@@ -340,14 +340,19 @@ class Ad2cpReader(object):
             # It's unfortunate that all of this count checking is so
             # complex, but this is the best I could come up with right
             # now.
-            if c + ens_start + 1 >= nens_total:
-                # Make sure we're not at the end of the count list.
-                continue
-            while (self.f.tell() >= self._ens_pos[c + ens_start + 1]):
+            try:
+                _posnow = self._ens_pos[c + ens_start + 1]
+            except IndexError:
+                return outdat
+            while (self.f.tell() >= _posnow):
                 c += 1
                 if c + ens_start + 1 >= nens_total:
                     # Again check end of count list
                     break
+                try:
+                    _posnow = self._ens_pos[c + ens_start + 1]
+                except IndexError:
+                    return outdat
             if c >= nens:
                 return outdat
 
