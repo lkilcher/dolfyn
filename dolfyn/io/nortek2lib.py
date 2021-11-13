@@ -8,6 +8,15 @@ import warnings
 from ..data import time
 
 
+class CollapseError(Exception):
+    """Exception for handling cases where collapsing a variable (from
+    an array to a single value) fails. Generally (always?) because it
+    is non-uniform.
+    """
+    def __init__(self, message):
+        self.message = message
+
+
 def reduce_by_average(data, ky0, ky1):
     # Average two arrays together, if they both exist.
     if ky1 in data:
@@ -339,7 +348,7 @@ def isuniform(vec, exclude=[]):
     return np.all(vec == vec[0])
 
 
-def collapse(vec, name=None, exclude=[]):
+def collapse(vec, exclude=[], name=None):
     """Check that the input vector is uniform, then collapse it to a
     single value, otherwise raise a warning.
     """
@@ -350,9 +359,21 @@ def collapse(vec, name=None, exclude=[]):
     elif isuniform(vec, exclude=exclude):
         return list(set(np.unique(vec)) - set(exclude))[0]
     else:
-        warnings.warn("The variable {} is expected to be uniform,"
-                      " but it is not.".format(name))
-        return vec
+        raise CollapseError("The variable {} is expected to be uniform,"
+                           " but it is not.".format(name))
+
+
+def _failsafe_collapse(arr, name):
+    try:
+        return collapse(arr, name=name)
+    except CollapseError:
+        try:
+            return collapse(arr, exclude=[0],
+                            name=name)
+        except CollapseError:
+            return collapse(arr[-16:16],
+                            exclude=[0],
+                            name=name)
 
 
 def calc_config(index):

@@ -396,20 +396,15 @@ def reorg(dat):
     outdat['props']['rotate_vars'] = {'vel', }
 
     for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ar'), (28, '_echo')]:
-        if id in [24, 26]:
-            collapse_exclude = [0]
-        else:
-            collapse_exclude = []
         if id not in dat:
             continue
         dnow = dat[id]
 
         # dnow['config'] is sometimes non-uniform for the first or
         # last item, so we skip those here.
-        cfg['burst_config' + tag] = lib.headconfig_int2dict(
-            lib.collapse(dnow['config'][1:-1],
-                         exclude=collapse_exclude,
-                         name='config'))
+        _tmp = lib._failsafe_collapse(dnow['config'], name='config')
+        cfg['burst_config' + tag] = lib.headconfig_int2dict(_tmp)
+
         outdat['mpltime' + tag] = lib.calc_time(
             dnow['year'] + 1900,
             dnow['month'],
@@ -418,20 +413,28 @@ def reorg(dat):
             dnow['minute'],
             dnow['second'],
             dnow['usec100'].astype('uint32') * 100)
-        tmp = lib.beams_cy_int2dict(
-            lib.collapse(dnow['beam_config'][1:-1], exclude=collapse_exclude,
-                         name='beam_config'), 21)
+
+        _tmp = lib._failsafe_collapse(dnow['beam_config'], name='beam_config')
+        tmp = lib.beams_cy_int2dict(_tmp, 21)
         cfg['ncells' + tag] = tmp['ncells']
         cfg['coord_sys' + tag] = tmp['cy']
         cfg['nbeams' + tag] = tmp['nbeams']
+
         for ky in ['SerialNum', 'cell_size', 'blanking',
-                   'nom_corr', 'data_desc',
-                   'vel_scale', 'power_level']:
+                   'nom_corr', 'data_desc', 'power_level']:
             # These ones should 'collapse'
             # (i.e., all values should be the same)
             # So we only need that one value.
-            cfg[ky + tag] = lib.collapse(dnow[ky][1:-1], exclude=collapse_exclude,
-                                         name=ky)
+            cfg[ky + tag] = lib._failsafe_collapse(dnow[ky], name=ky)
+
+        if tag != '_echo':
+            # Echo doesn't have uniform vel_scale, but other variables should.
+            for ky in ['vel_scale']:
+                # These ones should 'collapse'
+                # (i.e., all values should be the same)
+                # So we only need that one value.
+                cfg[ky + tag] = lib._failsafe_collapse(dnow[ky], name=ky)
+
         for ky in ['c_sound', 'temp', 'press',
                    'heading', 'pitch', 'roll',
                    'batt_V',
