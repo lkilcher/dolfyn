@@ -343,7 +343,6 @@ def medfiltnan(a, kernel, thresh=0):
     Regions where more than *thresh* fraction of the points are NaN
     are set to NaN.
 
-    Currently only work for vectors.
     """
     flag_1D = False
     if a.ndim == 1:
@@ -355,9 +354,11 @@ def medfiltnan(a, kernel, thresh=0):
         kernel = [1, kernel]
     out = medfilt2d(a, kernel)
     if thresh > 0:
-        out[convolve2d(np.isnan(a),
-                       np.ones(kernel) / np.prod(kernel),
-                       'same') > thresh] = np.NaN
+        mask = convolve2d(np.isnan(a),
+                          np.ones(kernel) /
+                          np.prod(kernel),
+                          'same')
+        out[mask > thresh] = np.NaN
     if flag_1D:
         return out[0]
     return out
