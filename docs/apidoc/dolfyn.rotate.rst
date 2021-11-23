@@ -7,7 +7,6 @@ Contains functions for rotating data through frames of reference (FoR):
 	3. **'earth'**: *East North UP* (*ENU*) FoR. Based on either magnetic or true North, depending on whether or not DOLfYN has a magnetic declination associated with the dataset. Instruments do not internally record magnetic declination, unless it has been supplied via external software like TRDI's VMDAS.
 	4. **'principal'**: Rotates velocity data into a *streamwise*, *cross-stream*, and *vertical* FoR based on the principal flow direction. One must calculate principal heading first.
 
-Primary functions of note for users, others are documented for reference:
 
 .. autosummary::
 	:nosignatures:
@@ -15,6 +14,10 @@ Primary functions of note for users, others are documented for reference:
 	~dolfyn.rotate.api.rotate2
 	~dolfyn.rotate.api.set_declination
 	~dolfyn.rotate.api.calc_principal_heading
+	~dolfyn.rotate.api.set_inst2head_rotmat
+	~dolfyn.rotate.base.euler2orient
+	~dolfyn.rotate.base.orient2euler
+	~dolfyn.rotate.base.quaternion2orient
 	
 These functions pertain to both ADCPs and ADVs::
 

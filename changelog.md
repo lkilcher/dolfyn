@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 			
 	- Motion correction code:
 		- `CorrectMotion` object has been removed
+		- replaced '.mean()' with `np.nanmean` in `motion_correction` and `calc_principal_heading`
 		
 	- `TimeData`, `Velocity`, `TKEdata`:
 		- `TimeData` class has been removed
