@@ -19,6 +19,7 @@ dat_sig = load('BenchFile01.h5')
 dat_sigi = load('Sig1000_IMU.h5')
 dat_sigi_ud = load('Sig1000_IMU_ud.h5')
 dat_sigi_echo_bt = load('VelEchoBT01.h5')
+dat_sig5_leiw = load('Sig500_last_ensemble_is_whole.h5')
 dat_wr1 = load('winriver01.h5')
 dat_wr2 = load('winriver02.h5')
 
@@ -41,6 +42,11 @@ def test_read(make_data=False):
     td_sigi = read('Sig1000_IMU.ad2cp', userdata=False)
     td_sigi_ud = read('Sig1000_IMU.ad2cp')
     td_sigi_echo_bt = read('VelEchoBT01.ad2cp')
+
+    # Make sure we read all the way to the end of the file.
+    # This file ends exactly at the end of an ensemble.
+    td_sig5_leiw = read('Sig500_last_ensemble_is_whole.ad2cp')
+    
     td_awac = read('AWAC_test01.wpr', userdata=False)
     td_awac_ud = read('AWAC_test01.wpr')
     td_wr1 = read('winriver01.PD0')
@@ -62,6 +68,7 @@ def test_read(make_data=False):
         save(td_sigi, 'Sig1000_IMU.h5')
         save(td_sigi_ud, 'Sig1000_IMU_ud.h5')
         save(td_sigi_echo_bt, 'VelEchoBT01.h5')
+        save(td_sig5_leiw, 'Sig500_last_ensemble_is_whole.h5')
         save(td_awac, 'AWAC_test01.h5')
         save(td_awac_ud, 'AWAC_test01_ud.h5')
         save(td_wr1, 'winriver01.h5')
@@ -97,6 +104,8 @@ def test_read(make_data=False):
              msg('Sig1000_IMU_ud.ad2cp')),
             (td_sigi_echo_bt, dat_sigi_echo_bt,
              msg('VelEchoBT01.ad2cp')),
+            (td_sig5_leiw, dat_sig5_leiw,
+             msg('Sig500_last_ensemble_is_whole.ad2cp')),
             (td_awac, dat_awac,
              msg('AWAC_test01.wpr')),
             (td_awac_ud, dat_awac_ud,

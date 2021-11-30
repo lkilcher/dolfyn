@@ -337,24 +337,39 @@ class Ad2cpReader(object):
                 else:
                     self.unknown_ID_count[id] += 1
                 self.f.seek(hdr['sz'], 1)
-            # It's unfortunate that all of this count checking is so
-            # complex, but this is the best I could come up with right
-            # now.
-            try:
-                _posnow = self._ens_pos[c + ens_start + 1]
-            except IndexError:
-                return outdat
-            while (self.f.tell() >= _posnow):
-                c += 1
-                if c + ens_start + 1 >= nens_total:
-                    # Again check end of count list
-                    break
-                try:
-                    _posnow = self._ens_pos[c + ens_start + 1]
-                except IndexError:
-                    return outdat
+            
+            c = self._advance_ens_count(c, ens_start, nens_total)
+                
             if c >= nens:
                 return outdat
+
+    def _advance_ens_count(self, c, ens_start, nens_total):
+        """This method advances the counter when appropriate to do so.
+        """
+        # It's unfortunate that all of this count checking is so
+        # complex, but this is the best I could come up with right
+        # now.
+        try:
+            # Checks to makes sure we're not already at the end of the
+            # self._ens_pos array
+            _posnow = self._ens_pos[c + ens_start + 1]
+        except IndexError:
+            # We are at the end of the array, set _posnow
+            # We use "+1" here because we want the >= in the while
+            # loop to fail for this case so that we go ahead and read
+            # the next ping without advancing the ens counter.
+            _posnow = self._eof + 1
+        while (self.f.tell() >= _posnow):
+            c += 1
+            if c + ens_start + 1 >= nens_total:
+                # Again check end of count list
+                break
+            try:
+                # Same check as above.
+                _posnow = self._ens_pos[c + ens_start + 1]
+            except IndexError:
+                _posnow = self._eof + 1
+        return c
 
     def read_burst(self, id, dat, c, echo=False):
         rdr = self._burst_readers[id]
