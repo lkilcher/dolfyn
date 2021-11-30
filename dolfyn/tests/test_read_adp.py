@@ -26,7 +26,7 @@ dat_sig_i_ud = load('Sig1000_IMU_ud.nc')
 dat_sig_ieb = load('VelEchoBT01.nc')
 dat_sig_ie = load('Sig500_Echo.nc')
 dat_sig_tide = load('Sig1000_tidal.nc')
-
+dat_sig5_leiw = load('Sig500_last_ensemble_is_whole.nc')
 
 def test_badtime():
     dat = sig.read_signature(tb.rfnm('Sig1000_BadTime01.ad2cp'))
@@ -93,6 +93,10 @@ def test_io_nortek2(make_data=False):
     td_sig_ieb = tb.drop_config(read('VelEchoBT01.ad2cp', nens=100))
     td_sig_ie = tb.drop_config(read('Sig500_Echo.ad2cp', nens=nens))
     td_sig_tide = tb.drop_config(read('Sig1000_tidal.ad2cp', nens=nens))
+
+    # Make sure we read all the way to the end of the file.
+    # This file ends exactly at the end of an ensemble.
+    td_sig5_leiw = read('Sig500_last_ensemble_is_whole.ad2cp')
     
     os.remove(tb.exdt('BenchFile01.ad2cp.index'))
     os.remove(tb.exdt('Sig1000_IMU.ad2cp.index'))
@@ -105,6 +109,7 @@ def test_io_nortek2(make_data=False):
         save(td_sig_i, 'Sig1000_IMU.nc')
         save(td_sig_i_ud, 'Sig1000_IMU_ud.nc')
         save(td_sig_ieb, 'VelEchoBT01.nc')
+        save(td_sig5_leiw, 'Sig500_last_ensemble_is_whole.nc')
         save(td_sig_ie, 'Sig500_Echo.nc')
         save(td_sig_tide, 'Sig1000_tidal.nc')
         return
@@ -115,6 +120,7 @@ def test_io_nortek2(make_data=False):
     assert_allclose(td_sig_ieb, dat_sig_ieb, atol=1e-6)
     assert_allclose(td_sig_ie, dat_sig_ie, atol=1e-6)
     assert_allclose(td_sig_tide, dat_sig_tide, atol=1e-6)
+    assert_allclose(td_sig5_leiw, dat_sig5_leiw, atol=1e-6)
     
     
 def test_matlab_io(make_data=False):
