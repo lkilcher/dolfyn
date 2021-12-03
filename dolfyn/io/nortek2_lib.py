@@ -180,25 +180,30 @@ def _getbit(val, n):
         return ((val >> n) & 1).astype('bool')
 
 
-# def _crop_ensembles(infile, outfile, range):
-#     """This function is for cropping certain pings out of an AD2CP
-#     file to create a new AD2CP file. It properly grabs the header from
-#     infile.
+def crop_ensembles(infile, outfile, range):
+    """This function is for cropping certain pings out of an AD2CP
+    file to create a new AD2CP file. It properly grabs the header from
+    infile.
 
-#     The range is the `ensemble/ping` counter as defined in the first column
-#     of the INDEX.
+    The range is the `ensemble/ping` counter as defined in the first column
+    of the INDEX.
 
-#     """
-#     idx = get_index(infile)
-#     with open(infile, 'rb') as fin:
-#         with open(outfile, 'wb') as fout:
-#             fout.write(fin.read(idx['pos'][0]))
-#             i0 = np.nonzero(idx['ens'] == range[0])[0][0]
-#             ie = np.nonzero(idx['ens'] == range[1])[0][0]
-#             pos = idx['pos'][i0]
-#             nbyte = idx['pos'][ie] - pos
-#             fin.seek(pos, 0)
-#             fout.write(fin.read(nbyte))
+    """
+    idx = _get_index(infile)
+    # If running in raw/continuous mode
+    if not sum(idx['ens']):
+        n_ID = len(np.unique(idx['ID']))
+        idx_act = np.arange(0, len(idx)//n_ID, 1)
+        idx['ens'] = np.sort(np.tile(idx_act, n_ID))
+    with open(infile, 'rb') as fin:
+        with open(outfile, 'wb') as fout:
+            fout.write(fin.read(idx['pos'][0]))
+            i0 = np.nonzero(idx['ens'] == range[0])[0][0]
+            ie = np.nonzero(idx['ens'] == range[1])[0][0]
+            pos = idx['pos'][i0]
+            nbyte = idx['pos'][ie] - pos
+            fin.seek(pos, 0)
+            fout.write(fin.read(nbyte))
 
 
 class _BitIndexer():
