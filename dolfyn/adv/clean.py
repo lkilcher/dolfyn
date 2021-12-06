@@ -197,8 +197,8 @@ def _phaseSpaceThresh(u):
 
 def GN2002(u, npt=5000):
     """
-    Clean a velocity data-array according to the Goring & Nikora 2002
-    'despiking' method, with Wahl2003 correction.
+    The Goring & Nikora 2002 'despiking' method, with Wahl2003 correction.
+    Returns a logical vector that is true where spikes are identified.
 
     Parameters
     ----------
