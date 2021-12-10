@@ -1,5 +1,6 @@
 from scipy import io as spio
 from .base import DataFactory
+from ..data.time import mpltime2matlab_datenum
 import copy
 try:
     # Python 2
@@ -7,6 +8,14 @@ try:
 except NameError:
     # No unicode builtin in Python 3
     ucode_type = None
+
+
+def savemat(filename, data, **kwargs):
+
+    outdata = data.copy()
+    outdata['datenum'] = mpltime2matlab_datenum(outdata.pop('mpltime'))
+    with Saver(filename, **kwargs) as svr:
+        svr.write(outdata)
 
 
 class Saver(DataFactory):
@@ -40,7 +49,7 @@ class Saver(DataFactory):
         save_mat.
         """
         out = {}
-        for nm, dat in obj.iter(groups):
+        for nm, dat in obj.items():
             out[nm] = dat
         out['props'] = dict(copy.deepcopy(obj.props))
         out['props'].pop('doppler_noise', None)
