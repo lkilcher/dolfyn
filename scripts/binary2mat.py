@@ -18,8 +18,7 @@ for fnm in args.files:
 
     if '.' in fnm:
         ext = fnm[fnm.index('.'):]
-        
     outnm = fnm.rstrip(ext) + '.mat'
+
     print('Saving to %s.' % outnm)
-    # Save the data.
     save_mat(dat, outnm, datenum=True)

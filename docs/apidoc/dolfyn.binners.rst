@@ -6,7 +6,8 @@ Binning Tools
 Velocity Analysis
 """""""""""""""""
 
-Analysis in DOLfYN is primarily handled through the `VelBinner` class. Below is a list of functions that can be called from `VelBinner`.
+Analysis in DOLfYN is primarily handled through the `VelBinner` class. 
+Below is a list of functions that can be called from `VelBinner`.
 
 .. autosummary::
 	:nosignatures:

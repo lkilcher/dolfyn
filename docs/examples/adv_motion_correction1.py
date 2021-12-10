@@ -18,7 +18,7 @@ fname = '../../dolfyn/example_data/vector_data_imu01.vec'
 # in the ADV coordinate system.
 inst2head_vec = np.array([0.48, -0.07, -0.27])
 
-# This is the orientation matrix of the ADV head relative to the body 
+# This is the orientation matrix of the ADV head relative to the body
 # (battery case).
 # In this case the head was aligned with the body, so it is the
 # identity matrix:
@@ -122,7 +122,8 @@ dat_cln = api.rotate2(dat_cln, 'principal')
 
 # Average the data and compute turbulence statistics
 dat_bin = api.calc_turbulence(dat, n_bin=19200, fs=dat.fs, n_fft=4096)
-dat_cln_bin = api.calc_turbulence(dat_cln, n_bin=19200, fs=dat_cln.fs, n_fft=4096)
+dat_cln_bin = api.calc_turbulence(
+    dat_cln, n_bin=19200, fs=dat_cln.fs, n_fft=4096)
 
 ####
 # Figure to look at spectra

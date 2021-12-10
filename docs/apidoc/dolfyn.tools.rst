@@ -1,7 +1,9 @@
 Tools
 =====
 
-Spectral analysis and miscellaneous |dlfn| functions are stored here. These functions are used throughout |dlfn|'s core code and may also be helpful to users in general.
+Spectral analysis and miscellaneous |dlfn| functions are stored here. 
+These functions are used throughout |dlfn|'s core code and may also be 
+helpful to users in general.
 
 FFT-based Functions:
 

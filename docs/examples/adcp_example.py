@@ -5,11 +5,11 @@ import dolfyn.adp.api as api
 # Then read a file containing adv data:
 dat = dlfn.read_example('BenchFile01.ad2cp')
 
-# Since this is a Nortek instrument the ADCP's deployment height in the water
-# column isn't taken into account
+# This ADCP was sitting 0.5 m up from the seabed
+# in a tripod
 dat = api.clean.set_range_offset(dat, h_deploy=0.5)
 
-# Filter beam data with correlation < 50%
+# Filter the data by low correlation values (< 50% here)
 dat_cln = api.clean.correlation_filter(dat, thresh=50)
 
 # Rotate data from the instrument to true ENU (vs magnetic) frame:

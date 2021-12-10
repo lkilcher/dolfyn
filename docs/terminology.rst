@@ -3,9 +3,6 @@
 Metadata
 ========
 
-Units
------
-
 |dlfn| generally uses the `*MKS* system
 <https://en.wikipedia.org/wiki/MKS_system_of_units>`_. Common variables and units are listed in Table 1:
 

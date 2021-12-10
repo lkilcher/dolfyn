@@ -17,10 +17,10 @@ contaminates motion estimates at those frequencies.
 This documentation is designed to document the methods for performing
 motion correction of ADV-IMU measurements. The accuracy and
 applicability of these measurements is beyond the scope of this
-documentation [Harding_etal_2017]_, [Kilcher_etal_2017]_.
+documentation (see [Harding_etal_2017]_, [Kilcher_etal_2017]_).
 
-Nortek's Signature ADCP's are now also available with an AHRS (altitude
-and heading reference system), but |dlfn| does not yet support motion 
+Nortek's Signature ADCP's are now also available with an Altitude
+and Heading Reference System (AHRS), but |dlfn| does not yet support motion 
 correction of ADCP data.
 
 Pre-Deployment Requirements
@@ -49,7 +49,7 @@ and configured correctly:
    inst2head_rotmat
      The rotation matrix (a 3-by-3 array) that rotates vectors in the
      'inst' coordinate system, to the ADV
-     'head' coordinate system. For fixed-head ADVs this is the identify
+     'head' coordinate system. For fixed-head ADVs this is the identity
      matrix, but for cable-head ADVs it is an arbitrary unimodular
      (determinant of 1) matrix. This property must be in
      ``dat.data_vars`` in order to do motion correction.
@@ -59,7 +59,8 @@ and configured correctly:
      the inst coordinate system (Figure 1). This property must be in
      ``dat.attrs`` in order to do motion correction.
 
-   These variables are set in either the userdata.json file (prior to calling ``dolfyn.read``), or by setting them explicitly after the data file has been read::
+   These variables are set in either the userdata.json file (prior to calling
+    ``dolfyn.read``), or by setting them explicitly after the data file has been read::
 
      dat.set_inst2head_rotmat(<3x3 rotation matrix>)
      dat.attrs['inst2head_vec'] = np.array([3-element vector])
@@ -145,10 +146,9 @@ correction is fairly simple. You can either:
         avm.correct_motion(dat, accel_filtfreq=0.1) # specify the filter frequency in Hz.
 
 2. For users who want to perform motion correction with minimal Python
-   scripting, the :repo:`motcorrect_vectory.py
-   <tree/master/scripts/motcorrect_vector.py>` script can be used. So long as
-   |dlfn| has been `installed properly <install>`_, you can use this
-   script from the command line in a directory which contains your
+   scripting, the :repo:`motcorrect_vector.py<tree/master/scripts/motcorrect_vector.py>` 
+   script can be used. So long as |dlfn| has been :ref:`installed properly<install>`, 
+   you can use this script from the command line in a directory which contains your
    data files::
 
         $ python motcorrect_vector.py vector_data_imu01.vec

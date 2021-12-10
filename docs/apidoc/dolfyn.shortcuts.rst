@@ -2,7 +2,8 @@ Data Shortcuts (Properties)
 ===========================
 
 |dlfn| datasets also contain shortcuts to other variables that can be obtained
-from simple operations of its data items.
+from simple operations of its data items. Certain shortcuts require variables
+calculated using the :ref:`DOLfYN API <package>`.
 
 .. csv-table:: Notes on common properties found in |dlfn| data objects.
                :header-rows: 1
@@ -11,13 +12,16 @@ from simple operations of its data items.
 
 **Important Note:** The items listed in Table 4 are not stored in the dataset
 but are provided as attributes (shortcuts) to the dataset itself.
-They are accessed through the xarray accessor `Veldata`, e.g. to
-return the horizontal velocity::
+They are accessed through the `xarray accessor 
+<http://xarray.pydata.org/en/stable/internals/extending-xarray.html>`_ `Veldata`.
+
+For example, to return the magnitude of the horizontal velocity::
 
 	>> import dolfyn as dlfn
 	>> dat = dlfn.read_example('AWAC_test01.wpr')
 	
 	>> dat.Veldata.U_mag
+
 	<xarray.DataArray 'vel' (range: 20, time: 9997)>
 	array([[1.12594587, 0.82454599, 0.96503734, ..., 3.40359042, 3.34527587,
 			3.44412805],

@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-#
-# PyTurbSim documentation build configuration file, created by
-# sphinx-quickstart on Tue Apr  1 12:34:10 2014.
-#
 # This file is execfile()d with the current directory set to its containing
 # dir.
 #
@@ -14,6 +9,7 @@
 
 import sys
 import os
+import sphinx_rtd_theme
 import dolfyn._version as ver
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -29,9 +25,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # Add any Sphinx extension module names here, as strings. They can
 # beextensions coming with Sphinx (named 'sphinx.ext.*') or your
-# custom ones.  extensions = ['sphinx.ext.autodoc',
-# 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
-# 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',]
+# custom ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.napoleon',
@@ -45,18 +39,18 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx_rtd_theme',
               'nbsphinx',
+              'sphinx.ext.viewcode',
               ]
-# extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-# 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.mathjax',
-# 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode','sphinx.ext.napoleon']
+
 napoleon_use_rtype = False
 viewcode_import = True
 numpydoc_show_class_members = True
 numpydoc_class_members_toctree = False
 autodoc_member_order = 'bysource'
 autoclass_content = 'both'
-numfig=True
-numfig_format = {'figure':  'Figure %s', 'table': 'Table %s', 'code-block': 'Listing %s'}
+numfig = True
+numfig_format = {'figure':  'Figure %s',
+                 'table': 'Table %s', 'code-block': 'Listing %s'}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -125,7 +119,7 @@ exclude_patterns = []
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -140,10 +134,9 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]   
-  
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -222,13 +215,13 @@ htmlhelp_basename = 'DOLfYNdoc'
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+    # 'papersize': 'letterpaper',
 
     # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+    # 'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

@@ -16,7 +16,7 @@ it, you can clone the repository and then use pip to install it as an 'editable'
 	 
 Once installed, to create documentation (you may have to pip install sphinx_rtd_theme)::
 
-	$ cd dolfyn\doc-src
+	$ cd dolfyn/docs
 	$ make html
 
 If you would like to contribute, please follow the guidelines in the `contributing.md` file.
@@ -38,6 +38,20 @@ files, or run the tests, you will need to `install git-lfs
 <https://help.github.com/articles/installing-git-large-file-storage/>`_. If
 you cloned the repository prior to installing git-lfs, run the command
 ``git lfs fetch`` after installing git-lfs to pull the files.
+
+MATLAB Users
+------------
+
+For users who want to use |dlfn|'s file reading capabilities with minimal 
+Python scripting, the :repo:`binary2mat.py<tree/master/scripts/binary2mat.py>` 
+script can be used. So long as |dlfn| has been :ref:`installed properly<install>`, 
+you can use this script from the command line in a directory which contains your
+data files::
+
+  $ python binary2mat.py vector_data_imu01.vec
+
+And |dlfn| will save the converted .mat file to your working directory,
+where :ref:`raw data<units>` is stored into a 2-layer MATLAB structure.
 
 .. _testing:
 

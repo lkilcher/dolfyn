@@ -9,11 +9,11 @@ acoustic Doppler velocimeters (ADVs) and acoustic Doppler current profilers
 (ADCPs). It includes tools to
 
  * Read in raw ADCP/ADV datafiles
- * Clean velocity data 
- * Rotate vector data through coordinate systems (i.e. beam to instrument to Earth frames of reference)
+ * QC velocity data 
+ * Rotate vector data through coordinate systems (i.e. beam to instrument to Earth to principal frames of reference)
  * Motion correction for ADV velocity measurements (via onboard IMU data)
  * Bin/ensemble averaging
- * Calculate turbulence statistics
+ * Turbulence statistics for ADV data
 
 .. _about.history:
 
@@ -22,19 +22,20 @@ Instrument Support
 ^^^^^^^^^^^^^^^^^^
 
  * Nortek:
-    * AWAC ADCP (current data only)
+    * AWAC ADCP (current data only, waves in development)
     * Signature AD2CP (current and waves)
     * Vector ADV
 	
  * TRDI:
     * Workhorse ADCPs (Monitor and Sentinel)
-    * WinRiver software output
-    * VMDAS software output
+    * WinRiver output files
+    * VMDAS output files
 
 History
 ^^^^^^^
 
-DOLfYN was originally created to provide open-source software for motion correction and turbulence analysis of velocity data collected from ADVs mounted on compliant moorings.
+DOLfYN was originally created to provide open-source software for motion correction 
+and turbulence analysis of velocity data collected from ADVs mounted on compliant moorings.
 It has since been expanded to include reading and analyzing ADCP data.
 
 License

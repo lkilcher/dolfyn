@@ -2,10 +2,10 @@
 u, m/s, ``dat['vel'][0]``
 v, m/s, ``dat['vel'][1]``
 w, m/s, ``dat['vel'][2]``
-U, m/s, Horizontal velocity as a complex quantity (dat.u + 1j * dat.v)
+U, m/s, Horizontal velocity as a complex quantity (u + 1j * v)
 U_mag, m/s, Magnitude of the horizontal velocity
-U_dir, deg, "Direction of the horizontal velocity (CW from X, North, or streamwise direction depending on coordinate system)"
-I, ---, Turbulence Intensity: ratio of U_std to horizontal velocity magnitude
+U_dir, deg, "Direction of the horizontal velocity (CCW from X, East, or streamwise direction, depending on coordinate system)"
+I, ---, Turbulence Intensity: ratio of horizontal velocity standard deviation (`U_std`) to mean ('U_mag')
 I_tke, ---, TKE Intensity: Ratio of sqrt(2*tke) to horizontal velocity magnitude
 tau_ij, m\ :sup:`2`/s\ :sup:`2`, Reynold's stress tensor
 tke, m\ :sup:`2`/s\ :sup:`2`, Turbulent kinetic energy (half the sum of the data in `'tke_vec'`)
@@ -16,4 +16,4 @@ wpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'].sel(tke="wpwp_")``
 upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'].sel(tau="upvp_")``
 upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'].sel(tau="upwp_")``
 vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'].sel(tau="vpwp_")``
-k, 1/m, "Wavenumber, calculated from ``dat['psd']['f']``"
+k, 1/m, "PSD wavenumber vector, calculated from ``dat['psd']['f']``"
