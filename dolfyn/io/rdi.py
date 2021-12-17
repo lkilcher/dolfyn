@@ -38,20 +38,10 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     for nm in userdata:
         dat['attrs'][nm] = userdata[nm]
 
-    # If GPS data is sampling at a different rate for WinRiver or VMDAS
+    # If GPS data is sampling at a different rate than WinRiver or VMDAS
+    # Reset 'time_gps' to be based off the ADCP clock, not the GPS clock
     if 'time_gps' in dat['coords']:
-        dat['coords']['time_gps'], idx = np.unique(dat['coords']['time_gps'],
-                                                   return_index=True)
-        nan = np.zeros(dat['coords']['time'].shape, dtype=bool)
-        if any(np.isnan(dat['coords']['time_gps'])):
-            nan = np.isnan(dat['coords']['time_gps'])
-            dat['coords']['time_gps'] = dat['coords']['time_gps'][~nan]
-            
-        for key in dat['data_vars']:
-            if 'gps' in key:
-                dat['data_vars'][key] = dat['data_vars'][key][idx]
-                if sum(nan) > 0:
-                    dat['data_vars'][key] = dat['data_vars'][key][~nan]
+        dat['coords']['time_gps'] = dat['coords']['time']
     
     # Create xarray dataset from upper level dictionary
     ds = _create_dataset(dat)

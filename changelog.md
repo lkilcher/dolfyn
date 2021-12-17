@@ -28,7 +28,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Read support for 2-4 beam 
 
 		- Fix error reading VMDAS-processed files
-		- Fixed bug in loading TRDI GPS data - it is now saved to the correct length with the correct timestamps
 		- Switch from `'lonlat` to `latlon` as the designated entry-name in `dat.attrs`
 		
 		- Created function to handle nans in ADV orientation matrix data so that rotation code won't fail
