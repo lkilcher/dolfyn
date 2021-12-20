@@ -10,6 +10,9 @@ from ..rotate.base import _set_coords
 from ..time import epoch2date, date2epoch, date2matlab, matlab2date
 
 
+# time variables stored as data variables (as opposed to coordinates)
+t_additional = ['hdwtime_gps',]
+
 def read(fname, userdata=True, nens=None):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, .ENX, etc.) data file.
@@ -109,6 +112,12 @@ def save(dataset, filename):
         dt = epoch2date(dataset[ky])
         dataset = dataset.assign_coords({ky: dt})
         
+    t_data = [t for t in dataset.data_vars if t in t_additional]
+    for ky in t_data:
+        dt = epoch2date(dataset[ky])
+        dataset = dataset.drop_vars(ky) # must do b/c of netcdf encoding error
+        dataset[ky] = xr.DataArray(dt, coords={'time_gps':dataset.time_gps})
+        
     dataset.to_netcdf(filename, format='NETCDF4', engine='netcdf4')
     
 
@@ -155,7 +164,14 @@ def load(filename):
     for ky in t_list:
         dt = ds[ky].values.astype('datetime64[us]').tolist()
         ds = ds.assign_coords({ky: date2epoch(dt)})
-        ds[ky].attrs['description'] = 'seconds since 1970-01-01T00:00:00'
+        ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
+        
+    # Time data variables
+    t_data = [t for t in ds.data_vars if t in t_additional]
+    for ky in t_data:
+        dt = ds[ky].values.astype('datetime64[us]').tolist()
+        ds[ky].data = date2epoch(dt)
+        ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
 
     return ds
 
@@ -193,6 +209,11 @@ def save_mat(dataset, filename, datenum=True):
         for ky in t_list:
             dt = date2matlab(epoch2date(dataset[ky]))
             dataset = dataset.assign_coords({ky: dt})
+            
+        t_data = [t for t in dataset.data_vars if t in t_additional]
+        for ky in t_data:
+            dt = date2matlab(epoch2date(dataset[ky]))
+            dataset[ky].data = dt
     
     # Save xarray structure with more descriptive structure names
     matfile = {'vars':{},'coords':{},'config':{},'units':{}}
@@ -258,9 +279,18 @@ def load_mat(filename, datenum=True):
         for ky in t_list:
             dt = date2epoch(matlab2date(ds[ky].values))
             ds = ds.assign_coords({ky: dt})
-            ds[ky].attrs['description'] = 'seconds since 1970-01-01T00:00:00'
+            ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
+            
+        t_data = [t for t in ds.data_vars if t in t_additional]
+        for ky in t_data:
+            dt = date2epoch(matlab2date(ds[ky].values))
+            ds[ky].data = dt
+            ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
     
     # Restore 'rotate vars" to a proper list
-    ds.attrs['rotate_vars'] = [x.strip(' ') for x in list(ds.rotate_vars)]
+    if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars[0])==1:
+        ds.attrs['rotate_vars'] = [ds.rotate_vars]
+    else:
+        ds.attrs['rotate_vars'] = [x.strip(' ') for x in list(ds.rotate_vars)]
     
     return ds

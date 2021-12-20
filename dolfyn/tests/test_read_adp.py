@@ -45,7 +45,7 @@ def test_io_rdi(make_data=False):
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
     td_debug = tb.drop_config(wh.read_rdi(tb.exdt('RDI_withBT.000'), debug=11,
-                                           nens=nens))
+                                          nens=nens))
     
     if make_data:
         save(td_rdi, 'RDI_test01.nc')
@@ -125,13 +125,18 @@ def test_io_nortek2(make_data=False):
     
 def test_matlab_io(make_data=False):
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=100))
+    td_vm = tb.drop_config(read('vmdas01.ENX', nens=100))
     
     if make_data:
         tb.save_matlab(td_rdi_bt, 'dat_rdi_bt')
+        tb.save_matlab(td_vm, 'dat_vm')
         return
     
     mat_rdi_bt = tb.load_matlab('dat_rdi_bt.mat')
+    mat_vm = tb.load_matlab('dat_vm.mat')
+    
     assert_allclose(td_rdi_bt, mat_rdi_bt,  atol=1e-6)
+    assert_allclose(td_vm, mat_vm,  atol=1e-6)
     
     
 class warnings_testcase(unittest.TestCase):

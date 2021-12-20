@@ -83,11 +83,12 @@ def test_rotate_inst2earth(make_data=False):
 
     if make_data:
         save(td_awac, 'AWAC_test01_earth2inst.nc')
-        save(td_sig_ie, 'Sig500_Echo_earth2inst.nc')
         save(td, 'RDI_test01_rotate_inst2earth.nc')
+        save(tdwr2, 'winriver02_rotate_ship2earth.nc')
         save(td_sig, 'BenchFile01_rotate_inst2earth.nc')
         save(td_sig_i, 'Sig1000_IMU_rotate_inst2earth.nc')
-        save(tdwr2, 'winriver02_rotate_ship2earth.nc')
+        save(td_sig_ie, 'Sig500_Echo_earth2inst.nc')
+
         return
     td_awac = rotate2(td_awac, 'earth', inplace=True)
     td_sig_ie = rotate2(td_sig_ie, 'earth')
@@ -126,14 +127,6 @@ def test_rotate_earth2inst():
     cd_awac = load('AWAC_test01_earth2inst.nc')
     cd_sig = load('BenchFile01_rotate_beam2inst.nc')
     cd_sig_i = load('Sig1000_IMU_rotate_beam2inst.nc')
-
-    # assert (np.abs(cd_sig_i['accel'] - td_sig_i['accel']) < 1e-3).all(),\
-    #               "adp.rotate.inst2earth gives unexpected ACCEL results" \
-    #                   "for 'Sig1000_IMU_rotate_beam2inst.nc'"
-
-    # assert (np.abs(cd_sig_i['accel_b5'] - td_sig_i['accel_b5']) < 1e-3).all(),\
-    #                "adp.rotate.inst2earth gives unexpected ACCEL results for" \
-    #                    "'Sig1000_IMU_rotate_beam2inst.nc'"
     
     assert_allclose(td_rdi, cd_rdi, atol=1e-5)
     assert_allclose(tdwr2, tr.dat_wr2, atol=1e-5)
