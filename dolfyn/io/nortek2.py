@@ -194,7 +194,6 @@ class _Ad2cpReader():
     def _read_str(self, size):
         string = self.f.read(size)
         id = string[0]
-        #end = string[-1]
         string = string[1:-1]
         return id, string
     
@@ -215,11 +214,10 @@ class _Ad2cpReader():
         outdat = self.init_data(ens_start, ens_stop)
         outdat['filehead_config'] = self.filehead_config
         print('Reading file %s ...' % self.fname)
-        retval = None
         c = 0
         c26 = 0
         self.f.seek(self._ens_pos[ens_start], 0)
-        while not retval:
+        while True:
             try:
                 hdr = self._read_hdr()
             except IOError:
@@ -338,8 +336,7 @@ class _Ad2cpReader():
 
 def _reorg(dat):
     """This function grabs the data from the dictionary of data types
-    (organized by ID), and combines them into the
-    :class:`dolfyn.ADPdata` object.
+    (organized by ID), and combines them into a single dictionary.
     """
     outdat = {'data_vars':{},'coords':{},'attrs':{},
               'units':{},'sys':{},'altraw':{}}
@@ -381,19 +378,17 @@ def _reorg(dat):
         
         for ky in ['SerialNum', 'cell_size', 'blank_dist', 'nom_corr', 
                    'data_desc','vel_scale', 'power_level']:
-            # These ones should 'collapse'
-            # (i.e., all values should be the same)
-            # So we only need that one value.
             cfg[ky + tag] = lib._collapse(dnow[ky], 
                                           exclude=collapse_exclude,
                                           name=ky)
             
         for ky in ['c_sound', 'temp', 'pressure', 'heading', 'pitch', 'roll',
                    'mag', 'accel', 'batt', 'temp_mag', 'temp_clock', 'error',
-                   'status', 'ensemble_count',
+                   'status', 'ensemble',
                    ]:
-            # No if statement here
             outdat['data_vars'][ky + tag] = dnow[ky]
+            if 'ensemble' in ky:
+                outdat['units'][ky + tag] = '#'
             
         for ky in ['vel', 'amp', 'corr', 'prcnt_gd', 'echo', 'dist', 
                    'orientmat', 'angrt', 'quaternion', 'ast_pressure',
@@ -406,7 +401,7 @@ def _reorg(dat):
             if ky in dnow:
                 outdat['data_vars'][ky + tag] = dnow[ky]
 
-    # Move 'altimeter raw' data to it's own down-sampled structure
+    # Move 'altimeter raw' data to its own down-sampled structure
     if 26 in dat:
         ard = outdat['altraw']
         for ky in list(outdat['data_vars']):

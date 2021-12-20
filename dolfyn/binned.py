@@ -245,14 +245,14 @@ class TimeBinner:
                     coords_dict[nm] = raw_ds[ky][nm].values
                     
             # create Dataset
-            try:
-                out_ds[ky] = xr.DataArray(self._mean(raw_ds[ky].values),
-                                          coords=coords_dict,
-                                          dims=dims_list,
-                                          attrs=raw_ds[ky].attrs)
-            except:
-                pass # skips data variables that don't have a time dimension
-            
+            if 'ensemble' not in ky:
+                try: # variables with time coordinate
+                    out_ds[ky] = xr.DataArray(self._mean(raw_ds[ky].values),
+                                              coords=coords_dict,
+                                              dims=dims_list,
+                                              attrs=raw_ds[ky].attrs)
+                except: # variables not needing averaging
+                    pass
             # Add standard deviation
             std = (np.nanstd(self.reshape(raw_ds.Veldata.U_mag.values), 
                              axis=-1, 
@@ -310,14 +310,15 @@ class TimeBinner:
                 else:
                     coords_dict[nm] = raw_ds[ky][nm].values
                     
-            # create dataarray
-            try:
-                out_ds[ky+suffix] = xr.DataArray(self._var(raw_ds[ky].values),
-                                                 coords=coords_dict,
-                                                 dims=dims_list,
-                                                 attrs=raw_ds[ky].attrs)
-            except:
-                pass # skips data variables that don't have a time dimension
+            # create Dataset
+            if 'ensemble' not in ky:
+                try: # variables with time coordinate
+                    out_ds[ky+suffix] = xr.DataArray(self._var(raw_ds[ky].values),
+                                                     coords=coords_dict,
+                                                     dims=dims_list,
+                                                     attrs=raw_ds[ky].attrs)
+                except: # variables not needing averaging
+                    pass
         
         out_ds.attrs = props
         return out_ds

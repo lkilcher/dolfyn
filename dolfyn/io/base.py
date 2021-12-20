@@ -93,8 +93,7 @@ def _create_dataset(data):
         if 'mat' in key:
             try: # AHRS orientmat
                 if any(val in key for val in tag):
-                    tg = [val for val in tag if val in key]
-                    tg = tg[0]
+                    tg = '_' + key.rsplit('_')[-1]
                 else:
                     tg = ''
                 time = data['coords']['time'+tg]
@@ -114,8 +113,7 @@ def _create_dataset(data):
         # quaternion units never change
         elif 'quat' in key: 
             if any(val in key for val in tag):
-                tg = [val for val in tag if val in key]
-                tg = tg[0]
+                tg = '_' + key.rsplit('_')[-1]
             else:
                 tg = ''
             ds[key] = xr.DataArray(data['data_vars'][key],
@@ -127,11 +125,9 @@ def _create_dataset(data):
             try: # not all variables have units
                 ds[key].attrs['units'] = data['units'][key]
             except: # make sure ones with tags get units
+                tg = '_' + key.rsplit('_')[-1]
                 if any(val in key for val in tag):
-                    if 'echo' not in key:
-                        ds[key].attrs['units'] = data['units'][key[:-3]]
-                    else:
-                        ds[key].attrs['units'] = data['units'][key[:-5]]
+                    ds[key].attrs['units'] = data['units'][key[:-len(tg)]]
                 else:
                     pass
             
@@ -140,8 +136,7 @@ def _create_dataset(data):
             l = len(shp)
             if l==1: # 1D variables
                 if any(val in key for val in tag):
-                    tg = [val for val in tag if val in key]
-                    tg = tg[0]
+                    tg = '_' + key.rsplit('_')[-1]
                 else:
                     tg = ''
                 ds[key] = ds[key].rename({'dim_0':'time'+tg})

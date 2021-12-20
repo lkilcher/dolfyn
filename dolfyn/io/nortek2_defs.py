@@ -189,7 +189,7 @@ _burst_hdr = [
     ('error', 'H', [], None),
     ('status0', 'H', [], None, 'binary'),
     ('status', 'I', [], None, 'binary'),
-    ('ensemble_count', 'I', [], None)
+    ('_ensemble', 'I', [], None),
 ]
 
 _bt_hdr = [
@@ -227,7 +227,7 @@ _bt_hdr = [
     ('temp_clock', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg C'),
     ('error', 'I', [], None),
     ('status', 'I', [], None, 'binary'),
-    ('ensemble_count', 'I', [], None)
+    ('_ensemble', 'I', [], None),
 ]
 
 _ahrs_def = [
