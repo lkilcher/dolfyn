@@ -68,7 +68,7 @@ class ADVBinner(VelBinner):
         """
         out = type(ds)()
         out = self.do_avg(ds, out)
-        
+
         noise = ds.get('doppler_noise', [0, 0, 0])
         out['tke_vec'] = self.calc_tke(ds['vel'], noise=noise)
         out['stress'] = self.calc_stress(ds['vel'])

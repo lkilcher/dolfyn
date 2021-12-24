@@ -280,7 +280,7 @@ class VelBinner(TimeBinner):
         return out_ds
     
 
-    def calc_tke(self, veldat, noise=[0, 0, 0]):
+    def calc_tke(self, veldat, noise=[0, 0, 0], detrend=True):
         """Calculate the tke (variances of u,v,w).
 
         Parameters
@@ -291,6 +291,11 @@ class VelBinner(TimeBinner):
         noise : float
             a three-element vector of the noise levels of the
             velocity data for ach component of velocity.
+        detrend : bool (default: False)
+            detrend the velocity data (True), or simply de-mean it
+            (False), prior to computing tke. Note: the psd routines
+            use detrend, so if you want to have the same amount of
+            variance here as there use ``detrend=True``.
 
         Returns
         -------
@@ -302,14 +307,20 @@ class VelBinner(TimeBinner):
             vel = veldat[:3].values
         else: # for single beam input
             vel = veldat.values
-        
+
+        if detrend:
+            vel = self._detrend(vel)
+        else:
+            vel = self._demean(vel)
+
         if 'b5' in veldat.name:
             time = self._mean(veldat.time_b5.values)
         else:
             time = self._mean(veldat.time.values)
         
-        out = np.nanmean(self._demean(vel)**2, -1, 
-                         dtype=np.float64).astype('float32')
+        out = np.nanmean(vel**2, -1, 
+                         dtype=np.float64,
+                         ).astype('float32')
         
         out[0] -= noise[0] ** 2
         out[1] -= noise[1] ** 2
@@ -332,7 +343,7 @@ class VelBinner(TimeBinner):
         return da
 
 
-    def calc_stress(self, veldat):
+    def calc_stress(self, veldat, detrend=True):
         """Calculate the stresses (cross-covariances of u,v,w)
 
         Parameters
@@ -340,6 +351,11 @@ class VelBinner(TimeBinner):
         veldat : xr.DataArray
             A velocity data array. The last dimension is assumed
             to be time.
+        detrend : bool (default: True)
+            detrend the velocity data (True), or simply de-mean it
+            (False), prior to computing stress. Note: the psd routines
+            use detrend, so if you want to have the same amount of
+            variance here as there use ``detrend=True``.
 
         Returns
         -------
@@ -348,23 +364,26 @@ class VelBinner(TimeBinner):
         """
         time = self._mean(veldat.time.values)
         vel = veldat.values
-        
+
         out = np.empty(self._outshape(vel[:3].shape)[:-1],
                        dtype=np.float32)
-        
+
+        if detrend:
+            vel = self._detrend(vel)
+        else:
+            vel = self._demean(vel)
+
         for idx, p in enumerate(self._cross_pairs):
-            out[idx] = np.nanmean(
-                self._demean(vel[p[0]]) *
-                self._demean(vel[p[1]]),
-                -1, dtype=np.float64
-            ).astype(np.float32)
-        
+            out[idx] = np.nanmean(vel[p[0]] * vel[p[1]],
+                                  -1, dtype=np.float64
+                                  ).astype(np.float32)
+
         da = xr.DataArray(out, name='stress',
                           dims=veldat.dims,
                           attrs={'units':'m^2/^2'})
         da = da.rename({'dir':'tau'})
         da = da.assign_coords({'tau':["upvp_", "upwp_", "vpwp_"],
-                               'time':time}) 
+                               'time':time})
         return da
     
 

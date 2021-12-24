@@ -8,7 +8,8 @@ warnings.simplefilter('ignore', RuntimeWarning)
 
 
 class TimeBinner:
-    def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None, noise=[0, 0, 0]):
+    def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
+                 noise=[0, 0, 0]):
         """Initialize an averaging object
 
         Parameters
@@ -136,7 +137,7 @@ class TimeBinner:
         return out
     
 
-    def detrend(self, dat, n_pad=0, n_bin=None):
+    def _detrend(self, dat, n_pad=0, n_bin=None):
         """Reshape the array `dat` and remove the best-fit trend line.
         """
         return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
@@ -777,4 +778,3 @@ class TimeBinner:
             return psd_freq(n_fft, 2*np.pi*fs)
         else:
             return psd_freq(n_fft, fs)
-    

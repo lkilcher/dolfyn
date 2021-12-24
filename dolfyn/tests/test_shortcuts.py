@@ -44,4 +44,3 @@ def test_shortcuts(make_data=False):
  
 if __name__=='__main__':
     test_shortcuts()
-    

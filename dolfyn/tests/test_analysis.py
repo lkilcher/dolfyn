@@ -41,6 +41,7 @@ def test_do_func(make_data=False):
 def test_calc_func(make_data=False):
     dat_vec = adv_setup(tv)
     test_ds = type(dat_vec.dat1)()
+    test_ds_demean = type(dat_vec.dat1)()
     test_ds_dif = type(dat_vec.dat1)()
     c = dat_vec.avg_tool
 
@@ -52,7 +53,10 @@ def test_calc_func(make_data=False):
     test_ds['stress'] = c.calc_stress(dat_vec.dat1.vel)
     test_ds['psd'] = c.calc_psd(dat_vec.dat1.vel)
     test_ds['csd'] = c.calc_csd(dat_vec.dat1.vel)
-    
+
+    test_ds_demean['tke_vec'] = c.calc_tke(dat_vec.dat1.vel, detrend=False)
+    test_ds_demean['stress'] = c.calc_stress(dat_vec.dat1.vel, detrend=False)
+
     # Different lengths
     test_ds_dif['coh_dif'] = c.calc_coh(dat_vec.dat1.vel, dat_vec.dat2.vel)
     test_ds_dif['pang_dif'] = c.calc_phase_angle(dat_vec.dat1.vel, dat_vec.dat2.vel)
@@ -60,10 +64,12 @@ def test_calc_func(make_data=False):
     if make_data:
         save(test_ds, 'vector_data01_func.nc')
         save(test_ds_dif, 'vector_data01_funcdif.nc')
+        save(test_ds_demean, 'vector_data01_func_demean.nc')
         return
     
     assert_allclose(test_ds, load('vector_data01_func.nc'), atol=1e-6)
     assert_allclose(test_ds_dif, load('vector_data01_funcdif.nc'), atol=1e-6)
+    assert_allclose(test_ds_demean, load('vector_data01_func_demean.nc'), atol=1e-6)
 
 
 def test_calc_freq():
