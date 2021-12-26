@@ -175,7 +175,8 @@ class _CalcMotion():
                            ])
 
         if to_earth:
-            velrot = np.einsum('ji...,j...->i...', self.ds['orientmat'].values, velrot)
+            velrot = np.einsum('ji...,j...->i...',
+                               self.ds['orientmat'].values, velrot)
 
         if dimflag:
             return velrot[:, 0, :]
@@ -189,16 +190,16 @@ def _calc_probe_pos(ds, separate_probes=False):
 
     In the future, we could use the transformation matrix (and a
     probe-length lookup-table?)
-    
+
     """
     # According to the ADV_DataSheet, the probe-length radius is
     # 8.6cm @ 120deg from probe-stem axis.  If I subtract 1cm
-    # to get acoustic receiver center, this is 7.6cm.  
+    # to get acoustic receiver center, this is 7.6cm.
     # In the coordinate sys of the center of the probe
     # then, the positions of the centers of the receivers is:
     # if separate_probes and p['inst_make'].lower() == 'nortek' and\
     #    p['inst_model'].lower == 'vector':
-    if separate_probes and _make_model(ds)=='nortek vector':
+    if separate_probes and _make_model(ds) == 'nortek vector':
         r = 0.076
         # The angle between the x-y plane and the probes
         phi = np.deg2rad(-30)
@@ -311,9 +312,9 @@ def correct_motion(ds,
     if hasattr(ds, 'velrot') or ds.attrs.get('motion corrected', False):
         raise Exception('The data appears to already have been '
                         'motion corrected.')
-    
+
     if not hasattr(ds, 'has_imu') or ('accel' not in ds):
-        raise Exception('The instrument does not appear to have an IMU.')        
+        raise Exception('The instrument does not appear to have an IMU.')
 
     if ds.coord_sys != 'inst':
         ds = rotate2(ds, 'inst', inplace=True)
@@ -321,7 +322,7 @@ def correct_motion(ds,
     # Returns True/False if head2inst_rotmat has been set/not-set.
     # Bad configs raises errors (this is to check for those)
     rot._check_inst2head_rotmat(ds)
-        
+
     # Create the motion 'calculator':
     calcobj = _CalcMotion(ds,
                           accel_filtfreq=accel_filtfreq,
@@ -330,11 +331,11 @@ def correct_motion(ds,
 
     ##########
     # Calculate the translational velocity (from the accel):
-    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(), 
-                                  dims=['dirIMU','time'])
+    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(),
+                                dims=['dirIMU', 'time'])
     # Copy acclow to the adv-object.
-    ds['acclow'] = xr.DataArray(calcobj.acclow, 
-                                  dims=['dirIMU','time'])
+    ds['acclow'] = xr.DataArray(calcobj.acclow,
+                                dims=['dirIMU', 'time'])
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -359,9 +360,9 @@ def correct_motion(ds,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    #try:
-    ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU','time'])
-    #except:
+    # try:
+    ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU', 'time'])
+    # except:
     #    ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU','range','time'])
 
     ##########
@@ -369,7 +370,7 @@ def correct_motion(ds,
     # inst2earth expects a 'rotate_vars' property.
     # Add velrot, velacc, acclow, to it.
     if 'rotate_vars' not in ds.attrs:
-        ds.attrs['rotate_vars'] = ['vel', 'velrot', 'velacc', 'accel', 
+        ds.attrs['rotate_vars'] = ['vel', 'velrot', 'velacc', 'accel',
                                    'acclow', 'angrt', 'mag']
     else:
         ds.attrs['rotate_vars'].extend(['velrot', 'velacc', 'acclow'])
@@ -383,14 +384,14 @@ def correct_motion(ds,
     if to_earth:
         ds['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']
-        ds = inst2earth(ds, rotate_vars=[e for e in 
-                                             ds.attrs['rotate_vars']
-                                             if e not in to_remove])
+        ds = inst2earth(ds, rotate_vars=[e for e in
+                                         ds.attrs['rotate_vars']
+                                         if e not in to_remove])
     else:
         # rotate these variables back to the instrument frame.
         ds = inst2earth(ds, reverse=True,
-                          rotate_vars=['accel', 'acclow', 'velacc'],
-                          force=True)
+                        rotate_vars=['accel', 'acclow', 'velacc'],
+                        force=True)
 
     ##########
     # Copy vel -> velraw prior to motion correction:
@@ -404,9 +405,9 @@ def correct_motion(ds,
     #       are in the opposite direction of the head motion.
     #       i.e. when the head moves one way in stationary flow, it
     #       measures a velocity in the opposite direction.
-    
+
     # use xarray to keep dimensions consistent
-    velmot = ds['velrot'] + ds['velacc'] 
+    velmot = ds['velrot'] + ds['velacc']
     velmot = velmot.values
 
     # if _make_model(ds).startswith('nortek signature'):
@@ -416,8 +417,8 @@ def correct_motion(ds,
     #     ds['vel'][3:] += velmot[2:]
     # else: # nortek vector
     ds['vel'][:3] += velmot
-        
+
     ds.attrs['motion corrected'] = 1
     ds.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
-    
+
     return ds

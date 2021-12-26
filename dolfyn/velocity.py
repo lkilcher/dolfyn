@@ -6,7 +6,7 @@ from .binned import TimeBinner
 @xr.register_dataset_accessor('Veldata')
 class Velocity():
     """All ADCP and ADV xarray datasets wrap this base class.
-    
+
     The turbulence-related attributes defined within this class 
     assume that the  ``'tke_vec'`` and ``'stress'`` data entries are 
     included in the dataset. These are typically calculated using a
@@ -19,6 +19,7 @@ class Velocity():
     :class:`VelBinner`
 
     """
+
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
 
@@ -72,17 +73,19 @@ class Velocity():
         """Horizontal velocity as a complex quantity
         """
         return xr.DataArray(
-                    (self.u + self.v * 1j),
-                    attrs={'units':'m/s',
-                           'description':'horizontal velocity (complex)'})
+            (self.u + self.v * 1j),
+            attrs={'units': 'm/s',
+                   'description': 'horizontal velocity (complex)'})
+
     @property
     def U_mag(self,):
         """Horizontal velocity magnitude
         """
         return xr.DataArray(
-                    np.abs(self.U),
-                    attrs={'units':'m/s',
-                           'description':'horizontal velocity magnitude'})                            
+            np.abs(self.U),
+            attrs={'units': 'm/s',
+                   'description': 'horizontal velocity magnitude'})
+
     @property
     def U_dir(self,):
         """Angle of horizontal velocity vector, degrees counterclockwise from
@@ -90,12 +93,13 @@ class Velocity():
         """
         # Convert from radians to degrees
         angle = np.angle(self.U)*(180/np.pi)
-        
+
         return xr.DataArray(angle,
                             dims=self.U.dims,
                             coords=self.U.coords,
-                            attrs={'units':'deg',
-                           'description':'horizontal velocity flow direction, CCW from X/East/streamwise'})
+                            attrs={'units': 'deg',
+                                   'description': 'horizontal velocity flow direction, CCW from X/East/streamwise'})
+
     @property
     def tau_ij(self,):
         """Total stress tensor
@@ -105,13 +109,13 @@ class Velocity():
         out = np.array([[n[0], s[0], s[1]],
                         [s[0], n[1], s[2]],
                         [s[1], s[2], n[2]]])
-        
+
         return xr.DataArray(out,
-                            dims=["Up","Up*",'time'],
-                            coords={"Up":["up","vp","wp"],
-                                    "Up*":["up","vp","wp"],
-                                    'time':self.ds['stress'].time},
-                            attrs={'units':self.ds['stress'].units},
+                            dims=["Up", "Up*", 'time'],
+                            coords={"Up": ["up", "vp", "wp"],
+                                    "Up*": ["up", "vp", "wp"],
+                                    'time': self.ds['stress'].time},
+                            attrs={'units': self.ds['stress'].units},
                             name='stress tensor')
 
     @property
@@ -124,12 +128,13 @@ class Velocity():
         See: NREL Technical Report TP-500-52353
         """
         E_coh = (self.upwp_**2 + self.upvp_**2 + self.vpwp_**2) ** (0.5)
-        
-        return xr.DataArray(E_coh, 
-                            coords={'time':self.ds['stress'].time}, 
+
+        return xr.DataArray(E_coh,
+                            coords={'time': self.ds['stress'].time},
                             dims=['time'],
-                            attrs={'units':self.ds['stress'].units},
+                            attrs={'units': self.ds['stress'].units},
                             name='E_coh')
+
     @property
     def I_tke(self, thresh=0):
         """Turbulent kinetic energy intensity.
@@ -138,11 +143,12 @@ class Velocity():
         """
         I_tke = np.ma.masked_where(self.U_mag < thresh,
                                    np.sqrt(2 * self.tke) / self.U_mag)
-        return xr.DataArray(I_tke.data, 
-                            coords=self.U_mag.coords, 
+        return xr.DataArray(I_tke.data,
+                            coords=self.U_mag.coords,
                             dims=self.U_mag.dims,
-                            attrs={'units':'% [0,1]'},
+                            attrs={'units': '% [0,1]'},
                             name='TKE intensity')
+
     @property
     def I(self, thresh=0):
         """Turbulence intensity.
@@ -151,12 +157,13 @@ class Velocity():
         to horizontal velocity magnitude.
         """
         I = np.ma.masked_where(self.U_mag < thresh,
-                                  self.ds['U_std'] / self.U_mag)
-        return xr.DataArray(I.data, 
-                            coords=self.U_mag.coords, 
+                               self.ds['U_std'] / self.U_mag)
+        return xr.DataArray(I.data,
+                            coords=self.U_mag.coords,
                             dims=self.U_mag.dims,
-                            attrs={'units':'% [0,1]'},
+                            attrs={'units': '% [0,1]'},
                             name='turbulence intensity')
+
     @property
     def tke(self,):
         """Turbulent kinetic energy (sum of the three components)
@@ -201,7 +208,7 @@ class Velocity():
         """w'w'bar component of the tke
         """
         return self.ds['tke_vec'].sel(tke="wpwp_")
-    
+
     @property
     def k(self):
         """Wavenumber vector, calculated from psd-frequency vector
@@ -212,16 +219,16 @@ class Velocity():
         else:
             ky = 'f'
             c = 2*np.pi
-        
+
         k1 = c*self.ds[ky] / abs(self.u)
         k2 = c*self.ds[ky] / abs(self.v)
         k3 = c*self.ds[ky] / abs(self.w)
         # transposes dimensions for some reason
         k = xr.DataArray([k1.T.values, k2.T.values, k3.T.values],
-                         coords = self.ds.psd.coords,
-                         dims = self.ds.psd.dims,
-                         name = 'wavenumber',
-                         attrs={'units':'1/m'})
+                         coords=self.ds.psd.coords,
+                         dims=self.ds.psd.dims,
+                         name='wavenumber',
+                         attrs={'units': '1/m'})
         return k
 
 
@@ -251,7 +258,7 @@ class VelBinner(TimeBinner):
     def do_tke(self, dat, out_ds=None):
         """Calculate the tke (variances of u,v,w) and stresses 
         (cross-covariances of u,v,w)
-        
+
         Parameters
         ----------
         dat : xarray.Dataset
@@ -259,12 +266,12 @@ class VelBinner(TimeBinner):
         out_ds : xarray.Dataset
             Averaged dataset to save tke and stress dataArrays to, 
             nominally dataset output from `do_avg()`.
-        
+
         Returns
         -------
         ds : xarray.Dataset
             Dataset containing tke and stress dataArrays
-        
+
         """
         props = {}
         if out_ds is None:
@@ -273,12 +280,11 @@ class VelBinner(TimeBinner):
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
             out_ds.attrs = props
-            
+
         out_ds['tke_vec'] = self.calc_tke(dat['vel'])
         out_ds['stress'] = self.calc_stress(dat['vel'])
-        
+
         return out_ds
-    
 
     def calc_tke(self, veldat, noise=[0, 0, 0], detrend=True):
         """Calculate the tke (variances of u,v,w).
@@ -301,11 +307,11 @@ class VelBinner(TimeBinner):
         -------
         ds : xarray.DataArray
             dataArray containing u'u'_, v'v'_ and w'w'_
-        
+
         """
         if 'dir' in veldat.dims:
             vel = veldat[:3].values
-        else: # for single beam input
+        else:  # for single beam input
             vel = veldat.values
 
         if detrend:
@@ -317,31 +323,30 @@ class VelBinner(TimeBinner):
             time = self._mean(veldat.time_b5.values)
         else:
             time = self._mean(veldat.time.values)
-        
-        out = np.nanmean(vel**2, -1, 
+
+        out = np.nanmean(vel**2, -1,
                          dtype=np.float64,
                          ).astype('float32')
-        
+
         out[0] -= noise[0] ** 2
         out[1] -= noise[1] ** 2
         out[2] -= noise[2] ** 2
 
         da = xr.DataArray(out, name='tke_vec',
                           dims=veldat.dims,
-                          attrs={'units':'m^2/^2'})
+                          attrs={'units': 'm^2/^2'})
 
         if 'dir' in veldat.dims:
-            da = da.rename({'dir':'tke'})
-            da = da.assign_coords({'tke':["upup_", "vpvp_", "wpwp_"],
-                                   'time':time})
+            da = da.rename({'dir': 'tke'})
+            da = da.assign_coords({'tke': ["upup_", "vpvp_", "wpwp_"],
+                                   'time': time})
         else:
             if 'b5' in veldat.name:
-                da = da.assign_coords({'time_b5':time})
+                da = da.assign_coords({'time_b5': time})
             else:
-                da = da.assign_coords({'time':time})
-            
-        return da
+                da = da.assign_coords({'time': time})
 
+        return da
 
     def calc_stress(self, veldat, detrend=True):
         """Calculate the stresses (cross-covariances of u,v,w)
@@ -360,7 +365,7 @@ class VelBinner(TimeBinner):
         Returns
         -------
         ds : xarray.DataArray
-        
+
         """
         time = self._mean(veldat.time.values)
         vel = veldat.values
@@ -380,17 +385,16 @@ class VelBinner(TimeBinner):
 
         da = xr.DataArray(out, name='stress',
                           dims=veldat.dims,
-                          attrs={'units':'m^2/^2'})
-        da = da.rename({'dir':'tau'})
-        da = da.assign_coords({'tau':["upvp_", "upwp_", "vpwp_"],
-                               'time':time})
+                          attrs={'units': 'm^2/^2'})
+        da = da.rename({'dir': 'tau'})
+        da = da.assign_coords({'tau': ["upvp_", "upwp_", "vpwp_"],
+                               'time': time})
         return da
-    
 
     def calc_psd(self, veldat,
                  freq_units='Hz',
                  fs=None,
-                 window='hann', 
+                 window='hann',
                  noise=[0, 0, 0],
                  n_bin=None, n_fft=None, n_pad=None,
                  step=None):
@@ -425,7 +429,7 @@ class VelBinner(TimeBinner):
         -------
         psd : xarray.DataArray (3, M, N_FFT)
           The spectra in the 'u', 'v', and 'w' directions.
-          
+
         """
         try:
             time = self._mean(veldat.time.values)
@@ -434,7 +438,7 @@ class VelBinner(TimeBinner):
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft(n_fft)
         veldat = veldat.values
-                
+
         # Create frequency vector, also checks whether using f or omega
         freq = self.calc_freq(units=freq_units)
         if 'rad' in freq_units:
@@ -446,32 +450,31 @@ class VelBinner(TimeBinner):
             freq_units = 'Hz'
             units = 'm^2/s^2/Hz'
             f_key = 'f'
-        
+
         # Spectra, if input is full velocity or a single array
-        if len(veldat.shape)==2:
+        if len(veldat.shape) == 2:
             out = np.empty(self._outshape_fft(veldat[:3].shape),
                            dtype=np.float32)
             for idx in range(3):
                 out[idx] = self._psd(veldat[idx], fs=fs, noise=noise[idx],
                                      window=window, n_bin=n_bin,
                                      n_pad=n_pad, n_fft=n_fft, step=step)
-            coords={'S':['Sxx','Syy','Szz'], 'time':time, f_key:freq}
-            dims=['S','time',f_key]
+            coords = {'S': ['Sxx', 'Syy', 'Szz'], 'time': time, f_key: freq}
+            dims = ['S', 'time', f_key]
         else:
-            out = self._psd(veldat, fs=fs, noise=noise[0], window=window, 
+            out = self._psd(veldat, fs=fs, noise=noise[0], window=window,
                             n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
-            coords={'time':time, f_key:freq}
-            dims=['time',f_key]
-        
-        da =  xr.DataArray(out, 
-                           name='psd',
-                           coords=coords,                              
-                           dims=dims,
-                           attrs={'units':units, 'n_fft':n_fft})
+            coords = {'time': time, f_key: freq}
+            dims = ['time', f_key]
+
+        da = xr.DataArray(out,
+                          name='psd',
+                          coords=coords,
+                          dims=dims,
+                          attrs={'units': units, 'n_fft': n_fft})
         da[f_key].attrs['units'] = freq_units
-        
+
         return da
-    
 
     def calc_csd(self, veldat,
                  freq_units='Hz',
@@ -502,16 +505,16 @@ class VelBinner(TimeBinner):
         csd : xarray.DataArray (3, M, N_FFT)
           The first-dimension of the cross-spectrum is the three
           different cross-spectra: 'uv', 'uw', 'vw'.
-          
+
         """
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft_coh(n_fft_coh)
         time = self._mean(veldat.time.values)
         veldat = veldat.values
-        
-        out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft), 
+
+        out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft),
                        dtype='complex')
-        
+
         # Create frequency vector, also checks whether using f or omega
         coh_freq = self.calc_freq(units=freq_units, coh=True)
         if 'rad' in freq_units:
@@ -531,13 +534,13 @@ class VelBinner(TimeBinner):
                                  n_fft=n_fft,
                                  window=window)
 
-        da = xr.DataArray(out, 
+        da = xr.DataArray(out,
                           name='csd',
-                          coords={'C':['Cxy','Cxz','Cyz'],
-                                  'time':time,
-                                  f_key:coh_freq},
-                          dims=['C','time',f_key],
-                          attrs={'units':units, 'n_fft_coh':n_fft})
+                          coords={'C': ['Cxy', 'Cxz', 'Cyz'],
+                                  'time': time,
+                                  f_key: coh_freq},
+                          dims=['C', 'time', f_key],
+                          attrs={'units': units, 'n_fft_coh': n_fft})
         da[f_key].attrs['units'] = freq_units
 
         return da

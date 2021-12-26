@@ -4,7 +4,7 @@ import argparse
 import os
 import numpy as np
 import dolfyn
-from dolfyn.adv.rotate import orient2euler
+from dolfyn.rotate.base import orient2euler
 import dolfyn.adv.api as avm
 
 # TODO: add option to rotate into earth or principal frame (include
@@ -28,17 +28,17 @@ parser.add_argument(
     """
 )
 
-## parser.add_argument(
-##     '-F',
-##     default=0.01,
-##     help="""
-##     Specify the high-pass filter frequency that is applied to the integrated
-##     acceleration (uacc) to remove drift that remains after integration. Default
-##     '0.01' (Hz) = 100sec
-##     """
-## )
+# parser.add_argument(
+# '-F',
+# default=0.01,
+# help="""
+# Specify the high-pass filter frequency that is applied to the integrated
+# acceleration (uacc) to remove drift that remains after integration. Default
+# '0.01' (Hz) = 100sec
+# """
+# )
 
-#parser.add_argument(
+# parser.add_argument(
 #    '-O',
 #    default=None,
 #    help="""NOTE: this option is deprecated and will be removed in
@@ -51,7 +51,7 @@ parser.add_argument(
 #    how to measure these variables, take a look at the
 #    'dolfyn-src-dir/examples/motion_correct_example.orient'
 #    """
-#)
+# )
 parser.add_argument(
     '--fixed-head',
     action='store_true',
@@ -67,13 +67,13 @@ parser.add_argument(
     Save the earth-frame motion-corrected data in Matlab format (default).
     """
 )
-## parser.add_argument(
-##     '--csv',
-##     action='store_true',
-##     help="""
-##     Save the earth-frame motion-corrected data in csv (comma-separated value) format.
-##     """
-## )
+# parser.add_argument(
+# '--csv',
+# action='store_true',
+# help="""
+# Save the earth-frame motion-corrected data in csv (comma-separated value) format.
+# """
+# )
 parser.add_argument(
     '--nc',
     action='store_true',
@@ -82,29 +82,29 @@ parser.add_argument(
     """
 )
 
-## parser.add_argument(
-##     '--out-earth',
-##     action='store_true',
-##     help="""
-##     This specifies that the output data should be return in an earth
-##     (u:East, v:North, w:up) coordinate system (default: True).
-##     """
-## )
+# parser.add_argument(
+# '--out-earth',
+# action='store_true',
+# help="""
+# This specifies that the output data should be return in an earth
+# (u:East, v:North, w:up) coordinate system (default: True).
+# """
+# )
 
 ###########
 # I removed this option because the data in a raw file is often
 # noisy, which will lead to inaccurate estimates of the principal
 # angle. Data should be cleaned prior to rotating into the principal
 # frame.
-## parser.add_argument(
-##     '--out-principal',
-##     action='store_false',
-##     help="""
-##     This specifies that the output data should be returned in a
-##     'principal axes' frame (u:streamwise, v:cross-stream, w:up)
-##     coordinate system.
-##     """
-##     )
+# parser.add_argument(
+# '--out-principal',
+# action='store_false',
+# help="""
+# This specifies that the output data should be returned in a
+# 'principal axes' frame (u:streamwise, v:cross-stream, w:up)
+# coordinate system.
+# """
+# )
 parser.add_argument(
     'filename',
     help="""The filename(s) of the the Nortek Vector file(s) to be
@@ -114,20 +114,20 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-## if bool(args.out_principal) and bool(args.out_earth):
+# if bool(args.out_principal) and bool(args.out_earth):
 # raise Exception('--out-principal and --out-earth can not both be
 # selected. You must choose one output frame.')
 declin = None
-if args.fixed_head:# != bool(args.O):
+if args.fixed_head:  # != bool(args.O):
     # Either args.fixed_head is True or args.O should be a string.
-#    if bool(args.O):
-#        exec(open(args.O).read())  # ROTMAT and VEC should be in this file.
-#        rmat = np.array(ROTMAT)
-#        vec = np.array(VEC)
-#        if 'DECLINATION' in vars():
-#            declin = DECLINATION
-#        del VEC, ROTMAT
-#    else:
+    #    if bool(args.O):
+    #        exec(open(args.O).read())  # ROTMAT and VEC should be in this file.
+    #        rmat = np.array(ROTMAT)
+    #        vec = np.array(VEC)
+    #        if 'DECLINATION' in vars():
+    #            declin = DECLINATION
+    #        del VEC, ROTMAT
+    #    else:
     rmat = np.array([[1, 0, 0],
                      [0, 1, 0],
                      [0, 0, 1]], dtype=np.float32)
@@ -160,7 +160,8 @@ for fnm in args.filename:
     # Perform motion correction.
     if hasattr(dat, 'orientmat'):
         print('Performing motion correction...')
-        dat = avm.correct_motion(dat, accel_filtfreq=args.f)  # Perform the motion correction.
+        # Perform the motion correction.
+        dat = avm.correct_motion(dat, accel_filtfreq=args.f)
         # Compute pitch,roll,heading from orientmat.
         dat['pitch'], dat['roll'], dat['heading'] = orient2euler(dat.orientmat)
     else:
@@ -173,7 +174,7 @@ for fnm in args.filename:
         # Set matlab 'datenum' time.
         dt = dolfyn.time.epoch2date(dat['time'])
         dat['datenum'] = dolfyn.time.date2matlab(dt)
-        
+
         outnm = fnm.rstrip('.vec').rstrip('.VEC') + '.mat'
         print('Saving to %s.' % outnm)
         # Save the data.

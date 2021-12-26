@@ -27,13 +27,13 @@ class TimeBinner:
           Default: `n_fft_coh`=`n_fft`
         noise : list or ndarray
           Instrument's doppler noise in same units as velocity
-          
+
         """
         self.n_bin = n_bin
         self.fs = fs
         self.n_fft = n_fft
         self.n_fft_coh = n_fft_coh
-        self.noise =  noise
+        self.noise = noise
         if n_fft is None:
             self.n_fft = n_bin
         elif n_fft > n_bin:
@@ -73,7 +73,7 @@ class TimeBinner:
         if n_fft is None:
             return self.n_fft
         return n_fft
-    
+
     def _parse_nfft_coh(self, n_fft_coh=None):
         if n_fft_coh is None:
             return self.n_fft_coh
@@ -94,7 +94,7 @@ class TimeBinner:
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
         n_bin : float, int (optional)
           Override this binner's n_bin.
-          
+
         Returns
         -------
         out : |np.ndarray|
@@ -128,27 +128,24 @@ class TimeBinner:
                     ).astype(int)
             n_bin = int(n_bin)
             out[..., npd0:n_bin + npd0] = (arr[..., inds]
-                                                ).reshape(shp, order='C')
+                                           ).reshape(shp, order='C')
             n_bin = int(n_bin)
         if n_pad != 0:
             out[..., 1:, :npd0] = out[..., :-1, n_bin:n_bin + npd0]
             out[..., :-1, -npd1:] = out[..., 1:, npd0:npd0 + npd1]
 
         return out
-    
 
     def _detrend(self, dat, n_pad=0, n_bin=None):
         """Reshape the array `dat` and remove the best-fit trend line.
         """
         return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
 
-
     def _demean(self, dat, n_pad=0, n_bin=None):
         """Reshape the array `dat` and remove the mean from each ensemble.
         """
         dt = self.reshape(dat, n_pad=n_pad, n_bin=n_bin)
-        return dt - np.nanmean(dt,-1)[..., None]
-
+        return dt - np.nanmean(dt, -1)[..., None]
 
     def _mean(self, dat, axis=-1, n_bin=None):
         """Takes the average of binned data
@@ -163,21 +160,19 @@ class TimeBinner:
             dat = np.swapaxes(dat, axis, -1)
         n_bin = self._parse_nbin(n_bin)
         tmp = self.reshape(dat, n_bin=n_bin)
-        
-        return np.nanmean(tmp,-1)
 
+        return np.nanmean(tmp, -1)
 
     def _var(self, dat, n_bin=None):
         """Finds the variance of binned data
         """
         return self.reshape(dat, n_bin=n_bin).var(-1)
 
-
     def _std(self, dat, n_bin=None):
         """Finds the standard deviation of binned data
         """
         return self.reshape(dat, n_bin=n_bin).std(-1)
-    
+
     def _new_coords(self, array):
         """Function for setting up a new xarray.DataArray regardless of how 
         many dimensions the input data-array has
@@ -185,7 +180,7 @@ class TimeBinner:
         dims = array.dims
         dims_list = []
         coords_dict = {}
-        if len(array.shape)==1 & ('dir' in array.coords):
+        if len(array.shape) == 1 & ('dir' in array.coords):
             array = array.drop('dir')
         for ky in dims:
             dims_list.append(ky)
@@ -193,11 +188,10 @@ class TimeBinner:
                 coords_dict[ky] = self._mean(array.time.values)
             else:
                 coords_dict[ky] = array.coords[ky].values
-                
+
         return dims_list, coords_dict
 
-
-    def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0,0,0]):
+    def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0, 0, 0]):
         """Average data into bins/ensembles
 
         Parameters
@@ -211,30 +205,30 @@ class TimeBinner:
            all data in `raw_ds` will be binned.
         noise : list or |np.ndarray|
           instrument's doppler noise in same units as velocity
-          
+
         Returns
         -------
         ds : xarray.Dataset
           A new, averaged dataset if 'out_ds' is not specified, or averaged
           variables returned as dataArrays within 'out_ds' if specified.
-        
+
         """
         self._check_indata(raw_ds)
         props = {}
         if out_ds is None:
             out_ds = type(raw_ds)()
             props['description'] = 'Binned averages calculated from ' \
-                                    'ensembles of size "n_bin"'
+                'ensembles of size "n_bin"'
             props['fs'] = self.fs
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
             props['coord_sys'] = raw_ds.coord_sys
         else:
             props = out_ds.attrs
-            
+
         if names is None:
             names = raw_ds.data_vars
-            
+
         for ky in names:
             # set up dimensions and coordinates for Dataset
             dims_list = raw_ds[ky].dims
@@ -244,28 +238,27 @@ class TimeBinner:
                     coords_dict[nm] = self._mean(raw_ds[ky][nm].values)
                 else:
                     coords_dict[nm] = raw_ds[ky][nm].values
-                    
+
             # create Dataset
             if 'ensemble' not in ky:
-                try: # variables with time coordinate
+                try:  # variables with time coordinate
                     out_ds[ky] = xr.DataArray(self._mean(raw_ds[ky].values),
                                               coords=coords_dict,
                                               dims=dims_list,
                                               attrs=raw_ds[ky].attrs)
-                except: # variables not needing averaging
+                except:  # variables not needing averaging
                     pass
             # Add standard deviation
-            std = (np.nanstd(self.reshape(raw_ds.Veldata.U_mag.values), 
-                             axis=-1, 
+            std = (np.nanstd(self.reshape(raw_ds.Veldata.U_mag.values),
+                             axis=-1,
                              dtype=np.float64) - (noise[0] + noise[1])/2)
             out_ds['U_std'] = xr.DataArray(
-                        std,
-                        dims=raw_ds.vel.dims[1:],
-                        attrs={'units':'m/s',
-                               'description':'horizontal velocity std dev'})
+                std,
+                dims=raw_ds.vel.dims[1:],
+                attrs={'units': 'm/s',
+                       'description': 'horizontal velocity std dev'})
         out_ds.attrs = props
         return out_ds
-
 
     def do_var(self, raw_ds, out_ds=None, names=None, suffix='_var'):
         """Find the variances of binned data. Complementary to `do_avg()`.
@@ -280,7 +273,7 @@ class TimeBinner:
         names : list of strings
            The names of variables of which to calculate variance.  If
            `names` is None, all data in `raw_ds` will be binned.
-           
+
         Returns
         -------
         ds : xarray.Dataset
@@ -292,15 +285,15 @@ class TimeBinner:
         if out_ds is None:
             out_ds = type(raw_ds)()
             props['description'] = 'Variances calculated from ensembles '\
-                                    'of size "n_bin"'
+                'of size "n_bin"'
             props['n_bin'] = self.n_bin
             props['coord_sys'] = raw_ds.coord_sys
         else:
             props = out_ds.attrs
-            
+
         if names is None:
             names = raw_ds.data_vars
-            
+
         for ky in names:
             # set up dimensions and coordinates for dataarray
             dims_list = raw_ds[ky].dims
@@ -310,20 +303,19 @@ class TimeBinner:
                     coords_dict[nm] = self._mean(raw_ds[ky][nm].values)
                 else:
                     coords_dict[nm] = raw_ds[ky][nm].values
-                    
+
             # create Dataset
             if 'ensemble' not in ky:
-                try: # variables with time coordinate
+                try:  # variables with time coordinate
                     out_ds[ky+suffix] = xr.DataArray(self._var(raw_ds[ky].values),
                                                      coords=coords_dict,
                                                      dims=dims_list,
                                                      attrs=raw_ds[ky].attrs)
-                except: # variables not needing averaging
+                except:  # variables not needing averaging
                     pass
-        
+
         out_ds.attrs = props
         return out_ds
-
 
     def _check_indata(self, dat):
         for v in dat.data_vars:
@@ -331,7 +323,7 @@ class TimeBinner:
                 raise RuntimeError(f"{v} cannot be averaged "
                                    "because it is empty.")
         if 'DutyCycle_NBurst' in dat.attrs and \
-            dat.attrs['DutyCycle_NBurst'] < self.n_bin:
+                dat.attrs['DutyCycle_NBurst'] < self.n_bin:
             warnings.warn(f"The averaging interval (n_bin = {self.n_bin})"
                           "is larger than the burst interval "
                           "(NBurst = {dat.attrs['DutyCycle_NBurst']})")
@@ -339,8 +331,7 @@ class TimeBinner:
             raise Exception(f"The input data sample rate ({dat.fs}) does not "
                             "match the sample rate of this binning-object "
                             "({self.fs})")
-    
-    
+
     def _calc_lag(self, npt=None, one_sided=False):
         if npt is None:
             npt = self.n_bin
@@ -348,12 +339,11 @@ class TimeBinner:
             return np.arange(int(npt // 2), dtype=np.float32)
         else:
             return np.arange(npt, dtype=np.float32) - int(npt // 2)
-    
 
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
-               noise=(0, 0), n_fft_coh=None, n_bin=None):
+                 noise=(0, 0), n_fft_coh=None, n_bin=None):
         """Calculate coherence between `veldat1` and `veldat2`.
-        
+
         Parameters
         ----------
         veldat1 : xarray.DataArray
@@ -373,21 +363,22 @@ class TimeBinner:
         n_bin : int
           n_bin of veldat2, number of elements per bin if 'None' is taken 
           from VelBinner
-          
+
         Returns
         -------
         da : xarray.DataArray
           The coherence between signal veldat1 and veldat2.
-          
+
         Notes
         -----
         The two velocity inputs do not have to be perfectly synchronized, but 
         they should have the same start and end timestamps.
 
         """
-        if veldat1.size<veldat2.size:
-          raise Exception("veldat1 is shorter than veldat2. Please switch these inputs.")
-        
+        if veldat1.size < veldat2.size:
+            raise Exception(
+                "veldat1 is shorter than veldat2. Please switch these inputs.")
+
         dat1 = veldat1.values
         dat2 = veldat2.values
 
@@ -397,22 +388,22 @@ class TimeBinner:
             n_fft = n_fft_coh
 
         # want each slice to carry the same timespan
-        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin2 = self._parse_nbin(n_bin)  # bins for shorter array
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
-        
+
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
         out = np.empty(oshp, dtype=dat1.dtype)
-        
+
         # The data is detrended in psd, so we don't need to do it here.
         dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
-        
+
         for slc in slice1d_along_axis(out.shape, -1):
-            out[slc] = coherence(dat1[slc], dat2[slc], n_fft, 
-                                 window=window, debias=debias, 
+            out[slc] = coherence(dat1[slc], dat2[slc], n_fft,
+                                 window=window, debias=debias,
                                  noise=noise)
-            
+
         freq = self.calc_freq(self.fs, coh=True)
 
         # Get time from shorter vector
@@ -420,17 +411,16 @@ class TimeBinner:
         # tack on new coordinate
         dims_list.append('f')
         coords_dict['f'] = freq
-        
-        da =  xr.DataArray(out, name='coherence',
-                            coords=coords_dict,         
-                            dims=dims_list)
+
+        da = xr.DataArray(out, name='coherence',
+                          coords=coords_dict,
+                          dims=dims_list)
         da['f'].attrs['units'] = 'Hz'
-            
+
         return da
-    
-    
+
     def calc_phase_angle(self, veldat1, veldat2, window='hann',
-                    n_fft_coh=None, n_bin=None):
+                         n_fft_coh=None, n_bin=None):
         """Calculate the phase difference between two signals as a
         function of frequency (complimentary to coherence).
 
@@ -454,72 +444,72 @@ class TimeBinner:
         -------
         da : xarray.DataArray
           The phase difference between signal veldat1 and veldat2.
-          
+
         Notes
         -----
         The two velocity inputs do not have to be perfectly synchronized, but 
         they should have the same start and end timestamps.
-        
+
         """
-        if veldat1.size<veldat2.size:
-          raise Exception("veldat1 is shorter than veldat2. Please switch these inputs.")
-        
+        if veldat1.size < veldat2.size:
+            raise Exception(
+                "veldat1 is shorter than veldat2. Please switch these inputs.")
+
         dat1 = veldat1.values
         dat2 = veldat2.values
-        
+
         if n_fft_coh is None:
             n_fft = self.n_fft_coh
         else:
-          n_fft = n_fft_coh
+            n_fft = n_fft_coh
 
         # want each slice to carry the same timespan
-        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin2 = self._parse_nbin(n_bin)  # bins for shorter array
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
-        
+
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
-        
+
         # The data is detrended in psd, so we don't need to do it here:
         dat1 = self.reshape(dat1, n_pad=n_fft, n_bin=n_bin1)
         dat2 = self.reshape(dat2, n_pad=n_fft, n_bin=n_bin2)
         out = np.empty(oshp, dtype='c{}'.format(dat2.dtype.itemsize * 2))
-        
+
         for slc in slice1d_along_axis(out.shape, -1):
             # PSD's are computed in radian units:
             out[slc] = phase_angle(dat1[slc], dat2[slc], n_fft,
                                    window=window)
-        
+
         freq = self.calc_freq(self.fs, coh=True)
-        
+
         # Get time from shorter vector
         dims_list, coords_dict = self._new_coords(veldat2)
         # tack on new coordinate
         dims_list.append('f')
         coords_dict['f'] = freq
-        
-        da =  xr.DataArray(out, name='phase_angle',
-                           coords=coords_dict,         
-                           dims=dims_list)
+
+        da = xr.DataArray(out, name='phase_angle',
+                          coords=coords_dict,
+                          dims=dims_list)
         da['f'].attrs['units'] = 'Hz'
-            
+
         return da
-    
-    
+
     def calc_acov(self, veldat, n_bin=None):
         """Calculate the auto-covariance of the raw-signal `veldat`
-        
+
         Parameters
         ----------
         veldat : xarray.DataArray
           The raw dataArray of which to calculate auto-covariance
         n_bin : float
           Number of data elements to use
-          
+
         Returns
         -------
         da : xarray.DataArray
           The auto-covariance of veldat
-          
+
         Notes
         -----
         As opposed to calc_xcov, which returns the full
@@ -529,17 +519,17 @@ class TimeBinner:
         sides (to return a 'quartered' covariance).
 
         This has the advantage that the 0 index is actually zero-lag.
-        
+
         """
         indat = veldat.values
-        
+
         n_bin = self._parse_nbin(n_bin)
         out = np.empty(self._outshape(indat.shape, n_bin=n_bin)[:-1] +
-                        [int(n_bin // 4)], dtype=indat.dtype)
+                       [int(n_bin // 4)], dtype=indat.dtype)
         dt1 = self.reshape(indat, n_pad=n_bin / 2 - 2)
         # Here we de-mean only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(n_bin // 4):
-                                int(-n_bin // 4)].mean(-1)[..., None]
+                        int(-n_bin // 4)].mean(-1)[..., None]
         dt2 = self._demean(indat)
         se = slice(int(n_bin // 4) - 1, None, 1)
         sb = slice(int(n_bin // 4) - 1, None, -1)
@@ -559,19 +549,18 @@ class TimeBinner:
         # tack on new coordinate
         dims_list.append('dt')
         coords_dict['dt'] = np.arange(n_bin//4)
-    
+
         da = xr.DataArray(out, name='auto-covariance',
                           coords=coords_dict,
                           dims=dims_list,)
         da['dt'].attrs['units'] = 'timestep'
-        
-        return da
 
+        return da
 
     def calc_xcov(self, veldat1, veldat2, npt=1,
                   n_bin=None, normed=False):
         """Calculate the cross-covariance between arrays veldat1 and veldat2
-        
+
         Parameters
         ----------
         veldat1 : xarray.DataArray
@@ -586,57 +575,56 @@ class TimeBinner:
         n_bin : int
           n_bin of veldat2, number of elements per bin if 'None' is taken 
           from VelBinner
-        
+
         Returns
         -------
         da : xarray.DataArray
           The cross-covariance between signal veldat1 and veldat2.
-          
+
         Notes
         -----
         The two velocity inputs must be the same length
-        
+
         """
         dat1 = veldat1.values
         dat2 = veldat2.values
-        
+
         # want each slice to carry the same timespan
         n_bin2 = self._parse_nbin(n_bin)
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
-        
+
         shp = self._outshape(dat1.shape, n_bin=n_bin1)
         shp[-2] = min(shp[-2], self._outshape(dat2.shape, n_bin=n_bin2)[-2])
-        
+
         # reshape dat1 to be the same size as dat2
         out = np.empty(shp[:-1] + [npt], dtype=dat1.dtype)
         tmp = int(n_bin2) - int(n_bin1) + npt
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
-        
+
         # Note here I am demeaning only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self._demean(dat2, n_bin=n_bin2)
-        
+
         for slc in slice1d_along_axis(shp, -1):
             out[slc] = np.correlate(dt1[slc], dt2[slc], 'valid')
         if normed:
             out /= (self._std(dat1, n_bin=n_bin1)[..., :shp[-2]] *
                     self._std(dat2, n_bin=n_bin2)[..., :shp[-2]] *
                     n_bin2)[..., None]
-        
+
         dims_list, coords_dict = self._new_coords(veldat1)
         # tack on new coordinate
         dims_list.append('dt')
         coords_dict['dt'] = np.arange(npt)
-        
-        da =  xr.DataArray(out, name='cross-covariance',
-                           coords=coords_dict,            
-                           dims=dims_list)
+
+        da = xr.DataArray(out, name='cross-covariance',
+                          coords=coords_dict,
+                          dims=dims_list)
         return da
-    
-        
+
     def _psd(self, dat, fs=None, window='hann', noise=0,
-            n_bin=None, n_fft=None, n_pad=None, step=None):
+             n_bin=None, n_fft=None, n_pad=None, step=None):
         """Calculate power spectral density of `dat`
 
         Parameters
@@ -670,7 +658,7 @@ class TimeBinner:
         out = np.empty(self._outshape_fft(dat.shape, n_fft=n_fft, n_bin=n_bin))
         # The data is detrended in psd, so we don't need to do it here.
         dat = self.reshape(dat, n_pad=n_pad)
-        
+
         for slc in slice1d_along_axis(dat.shape, -1):
             # PSD's are computed in radian units: - set prior to function
             out[slc] = psd(dat[slc], n_fft, fs,
@@ -682,10 +670,9 @@ class TimeBinner:
             # Make sure all values of the PSD are >0 (but still small):
             out[out < 0] = np.min(np.abs(out)) / 100
         return out
-    
 
     def _cpsd(self, dat1, dat2, fs=None, window='hann',
-             n_fft=None, n_bin=None):
+              n_fft=None, n_bin=None):
         """Calculate the cross power spectral density of `dat`.
 
         Parameters
@@ -709,7 +696,7 @@ class TimeBinner:
         -------
         out : |np.ndarray|
           The cross-spectral density of `dat1` and `dat2`
-          
+
         Notes
         -----
         The two velocity inputs do not have to be perfectly synchronized, but 
@@ -720,12 +707,12 @@ class TimeBinner:
         if n_fft is None:
             n_fft = self.n_fft_coh
         # want each slice to carry the same timespan
-        n_bin2 = self._parse_nbin(n_bin) # bins for shorter array
+        n_bin2 = self._parse_nbin(n_bin)  # bins for shorter array
         n_bin1 = int(dat1.shape[-1]/(dat2.shape[-1]/n_bin2))
-        
+
         oshp = self._outshape_fft(dat1.shape, n_fft=n_fft, n_bin=n_bin1)
         oshp[-2] = np.min([oshp[-2], int(dat2.shape[-1] // n_bin2)])
-        
+
         # The data is detrended in psd, so we don't need to do it here:
         dat1 = self.reshape(dat1, n_pad=n_fft)
         dat2 = self.reshape(dat2, n_pad=n_fft)
@@ -739,9 +726,8 @@ class TimeBinner:
             out[slc] = cross(dat1[slc], dat2[slc], n_fft,
                              fs, window=window)
         return out
-    
-    
-    def calc_freq(self, fs=None, units='Hz', n_fft=None, coh=False):    
+
+    def calc_freq(self, fs=None, units='Hz', n_fft=None, coh=False):
         """Calculate the ordinary or radial frequency vector for the PSDs
 
         Parameters
@@ -757,7 +743,7 @@ class TimeBinner:
         n_fft : int
           n_fft of veldat2, number of elements per bin if 'None' is taken 
           from VelBinner
-          
+
         Returns
         -------
         out: |np.ndarray|
@@ -767,13 +753,13 @@ class TimeBinner:
             n_fft = self.n_fft
             if coh:
                 n_fft = self.n_fft_coh
-            
+
         fs = self._parse_fs(fs)
-        
+
         if ('Hz' not in units) and ('rad' not in units):
             raise Exception('Valid fft frequency vector units are Hz \
                             or rad/s')
-        
+
         if 'rad' in units:
             return psd_freq(n_fft, 2*np.pi*fs)
         else:

@@ -87,7 +87,6 @@ class ADVBinner(VelBinner):
 
         return out
 
-
     def calc_epsilon_LT83(self, psd, U_mag, omega_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate from the PSD
@@ -109,16 +108,16 @@ class ADVBinner(VelBinner):
         Notes
         -----
         This uses the `standard` formula for dissipation:
-            
+
         .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3}
-        
+
         where :math:`\\alpha = 0.5` (1.5 for all three velocity
         components), `k` is wavenumber and `S(k)` is the turbulent
         kinetic energy spectrum.
-        
+
         With :math:`k \\rightarrow \\omega / U`, then -- to preserve variance -- 
         :math:`S(k) = U S(\\omega)`, and so this becomes:
-            
+
         .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3}
 
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
@@ -129,16 +128,15 @@ class ADVBinner(VelBinner):
 
         idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
         idx = idx[0]
-        
+
         a = 0.5
         out = (psd.isel(omega=idx) *
                omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
-        
-        out = xr.DataArray(out, name='dissipation_rate',
-                           attrs={'units':'m^2/s^3',
-                                       'method':'LT83'})
-        return out
 
+        out = xr.DataArray(out, name='dissipation_rate',
+                           attrs={'units': 'm^2/s^3',
+                                  'method': 'LT83'})
+        return out
 
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_rng=[2., 4.]):
         """
@@ -169,7 +167,7 @@ class ADVBinner(VelBinner):
         fs = self._parse_fs(fs)
         if freq_rng[1] > fs:
             warnings.warn('Max freq_range cannot be greater than fs')
-        
+
         dt = self.reshape(veldat)
         out = np.empty(dt.shape[:-1], dtype=dt.dtype)
         for slc in slice1d_along_axis(dt.shape, -1):
@@ -181,13 +179,12 @@ class ADVBinner(VelBinner):
             cv2 = DAA / (lag ** (2 / 3))
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
             out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
-            
+
         return xr.DataArray(out, name='dissipation_rate',
                             coords=U_mag.coords,
                             dims=U_mag.dims,
-                            attrs={'units':'m^2/s^3',
-                                  'method':'structure function'})
-
+                            attrs={'units': 'm^2/s^3',
+                                   'method': 'structure function'})
 
     def _up_angle(self, U_complex):
         """
@@ -202,14 +199,13 @@ class ADVBinner(VelBinner):
         -------
         theta : |np.ndarray| (..., n_time)
           The angle of the turbulence [rad]
-          
+
         """
         dt = self._demean(U_complex)
         fx = dt.imag <= 0
         dt[fx] = dt[fx] * np.exp(1j * np.pi)
-        
-        return np.angle(np.mean(dt, -1, dtype=np.complex128))
 
+        return np.angle(np.mean(dt, -1, dtype=np.complex128))
 
     def _calc_epsTE01_int(self, I_tke, theta):
         """
@@ -231,10 +227,9 @@ class ADVBinner(VelBinner):
             out[i] = np.trapz(
                 cbrt(x**2 - 2/b*np.cos(t)*x + b**(-2)) *
                 np.exp(-0.5 * x ** 2), x)
-            
+
         return out.reshape(I_tke.shape) * \
             (2 * np.pi) ** (-0.5) * I_tke ** (2 / 3)
-            
 
     def calc_epsilon_TE01(self, dat_raw, dat_avg, omega_range=[6.28, 12.57]):
         """
@@ -245,7 +240,7 @@ class ADVBinner(VelBinner):
 
         dat_raw : xarray.Dataset
           The raw (off the instrument) adv dataset
-          
+
         dat_avg : xarray.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
           'do_avg'). The spectra (psd) and basic turbulence statistics 
@@ -255,14 +250,14 @@ class ADVBinner(VelBinner):
         -----
         TE01 : Trowbridge, J and Elgar, S, "Turbulence measurements in
         the Surf Zone". JPO, 2001, vol31, pp2403-2417.
-               
+
         """
 
         # Assign local names
         U_mag = dat_avg.Veldata.U_mag.values
         I_tke = dat_avg.Veldata.I_tke.values
         theta = np.angle(dat_avg.Veldata.U.values) - \
-                self._up_angle(dat_raw.Veldata.U.values)
+            self._up_angle(dat_raw.Veldata.U.values)
         omega = dat_avg.psd.omega.values
 
         # Calculate constants
@@ -278,20 +273,19 @@ class ADVBinner(VelBinner):
         # u & v components (equation 6)
         out = (np.nanmean((psd[0] + psd[1]) * omega**(5/3), -1) /
                (21/55 * alpha * intgrl))**(3/2) / U_mag
-        
+
         # Add w component
         out += (np.nanmean(psd[2] * omega**(5/3), -1) /
                 (12/55 * alpha * intgrl))**(3/2) / U_mag
 
         # Average the two estimates
         out *= 0.5
-        
-        return xr.DataArray(out, name='dissipation_rate',
-                            coords={'time':dat_avg.psd.time}, 
-                            dims='time',
-                            attrs={'units':'m^2/s^3',
-                                   'method':'TE01'})
 
+        return xr.DataArray(out, name='dissipation_rate',
+                            coords={'time': dat_avg.psd.time},
+                            dims='time',
+                            attrs={'units': 'm^2/s^3',
+                                   'method': 'TE01'})
 
     def calc_L_int(self, a_cov, vel_avg, fs=None):
         """
@@ -315,17 +309,17 @@ class ADVBinner(VelBinner):
         ----
         The integral time scale (T_int) is the lag-time at which the
         auto-covariance falls to 1/e.
-        
+
         If T_int is not reached, L_int will default to '0'.
 
         """
         acov = a_cov.values
         fs = self._parse_fs(fs)
-        
+
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
         L_int = (abs(vel_avg) / fs * scale)
-        
-        return xr.DataArray(L_int, name='L_int', attrs={'units':'m'})
+
+        return xr.DataArray(L_int, name='L_int', attrs={'units': 'm'})
 
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann'):
@@ -374,5 +368,5 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
 
     """
     calculator = ADVBinner(n_bin, fs, n_fft=n_fft)
-    
+
     return calculator(ds_raw, freq_units=freq_units, window=window)

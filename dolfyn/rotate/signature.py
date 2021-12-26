@@ -25,7 +25,7 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
 
     force : Do not check which frame the data is in prior to
       performing this rotation.
-      
+
     """
 
     if reverse:
@@ -38,15 +38,15 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         sumstr = 'ijk,j...k->i...k'
         cs_now = 'inst'
         cs_new = 'earth'
-    
+
     # if ADCP is upside down
-    if adcpo.orientation=='down':
+    if adcpo.orientation == 'down':
         down = True
-    else: # orientation = 'up' or 'AHRS'
+    else:  # orientation = 'up' or 'AHRS'
         down = False
-    
+
     # The AHRS orientmat is in inst2earth
-    if adcpo.orientation=='AHRS':
+    if adcpo.orientation == 'AHRS':
         ahrs = True
     else:
         ahrs = False
@@ -72,7 +72,7 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     else:
         rmat = euler2orient(adcpo['heading'].values, adcpo['pitch'].values,
                             adcpo['roll'].values)
-    
+
     # Take the transpose of the orientation to get the inst->earth rotation
     # matrix. AHRS already is in inst->earth
     if not ahrs:
@@ -109,8 +109,8 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         n = dat.shape[0]
         # Nortek documents sign change for upside-down instruments
         if down:
-            sign = np.array([1,-1,-1,-1], ndmin=dat.ndim).T
-            signIMU = np.array([1,-1,-1], ndmin=dat.ndim).T    
+            sign = np.array([1, -1, -1, -1], ndmin=dat.ndim).T
+            signIMU = np.array([1, -1, -1], ndmin=dat.ndim).T
             if not reverse:
                 if n == 3:
                     dat = np.einsum(sumstr, rmd[3], signIMU*dat)
@@ -119,7 +119,7 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                 else:
                     raise Exception("The entry {} is not a vector, it cannot"
                                     "be rotated.".format(nm))
-                    
+
             elif reverse:
                 if n == 3:
                     dat = signIMU*np.einsum(sumstr, rmd[3], dat)
@@ -128,8 +128,8 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                 else:
                     raise Exception("The entry {} is not a vector, it cannot"
                                     "be rotated.".format(nm))
-                
-        else: # 'up' and AHRS
+
+        else:  # 'up' and AHRS
             if n == 3:
                 dat = np.einsum(sumstr, rmd[3], dat)
             elif n == 4:

@@ -8,6 +8,7 @@ warnings.filterwarnings('ignore', category=np.RankWarning)
 sin = np.sin
 cos = np.cos
 
+
 def clean_fill(u, mask, npt=12, method='cubic', max_gap=None):
     """
     Interpolate over mask values in timeseries data using the specified method
@@ -26,30 +27,30 @@ def clean_fill(u, mask, npt=12, method='cubic', max_gap=None):
       Interpolation scheme to use (linear, cubic, pchip, etc)
     max_gap : int
       Max number of consective nan's to interpolate across, must be <= npt/2
-      
+
     Returns
     -------
     da : xarray.DataArray
       The dataArray with nan's filled in
-      
+
     See Also
     --------
     xarray.DataArray.interpolate_na()
 
     """
     if max_gap:
-        assert max_gap<=npt, 'Max_gap must be less than half of npt'
-    
+        assert max_gap <= npt, 'Max_gap must be less than half of npt'
+
     # Apply mask
-    u.values[...,mask] = np.nan
-    
+    u.values[..., mask] = np.nan
+
     # Remove bad data for 2D+ and 1D timeseries variables
     if 'dir' in u.dims:
         for i in range(u.shape[0]):
             u[i] = _interp_nan(u[i], npt, method, max_gap)
     else:
         u = _interp_nan(u, npt, method, max_gap)
-    
+
     return u
 
 
@@ -96,9 +97,9 @@ def _interp_nan(da, npt, method, max_gap):
             if (ntail == npt or pos == len(da)):
                 # This is the block we are interpolating over
                 i_int = i[start:pos]
-                da[i_int] = da[i_int].interpolate_na(dim='time', 
-                                                     method=method, 
-                                                     use_coordinate=True, 
+                da[i_int] = da[i_int].interpolate_na(dim='time',
+                                                     method=method,
+                                                     use_coordinate=True,
                                                      max_gap=max_gap)
                 # Reset
                 searching = True
@@ -117,17 +118,17 @@ def spike_thresh(u, thresh=10):
       The timeseries data to clean.
     thresh : int
        Magnitude of velocity spike, must be positive.
-       
+
     Returns
     -------
     mask : |np.ndarray|
       Logical vector with spikes labeled as 'True'
-    
+
     """
     du = np.diff(u.values, prepend=0)
     bds1 = ((du > thresh) & (du < -thresh))
     bds2 = ((du < -thresh) & (du > thresh))
-    
+
     return bds1 + bds2
 
 
@@ -135,19 +136,19 @@ def range_limit(u, range=[-5, 5]):
     """
     Returns a logical vector that is True where the values of `u` are 
     outside of `range`.
-    
+
     Parameters
     ----------
     u : xarray.DataArray
       The timeseries data to clean.
     range : list
        Min and max magnitudes beyond which are masked
-       
+
     Returns
     -------
     mask : |np.ndarray|
       Logical vector with spikes labeled as 'True'
-    
+
     """
     return ~((range[0] < u.values) & (u.values < range[1]))
 
@@ -164,7 +165,7 @@ def _calcab(al, Lu_std_u, Lu_std_d2u):
 def _phaseSpaceThresh(u):
     if u.ndim == 1:
         u = u[:, None]
-    u = np.array(u) 
+    u = np.array(u)
     Lu = (2 * np.log(u.shape[0])) ** 0.5
     u = u - u.mean(0)
     du = np.zeros_like(u)
@@ -221,7 +222,7 @@ def GN2002(u, npt=5000):
         for slc in slice1d_along_axis(u.shape, -1):
             mask[slc] = GN2002(u[slc], npt=npt)
         return mask
-    
+
     mask = np.zeros(len(u), dtype='bool')
 
     # Find large bad segments (>npt/10):

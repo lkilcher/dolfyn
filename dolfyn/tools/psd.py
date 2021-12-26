@@ -60,7 +60,7 @@ def stepsize(l, nfft, nens=None, step=None):
     step    : The step size.
     nens    : The number of ensemble ffts to average together.
     nfft    : The number of points in the fft (set to l if nfft>l).
-    
+
     """
     if l < nfft:
         nfft = l
@@ -99,7 +99,7 @@ def coherence(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
       element tuple or list, the first and second elements specify
       the noise levels of a and b, respectively.
       default: noise=(0,0)
-      
+
     Returns
     -------
     out : |np.ndarray|
@@ -184,7 +184,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     phases).
 
     This performs:
-        
+
     .. math::
 
         fft(a)*conj(fft(b))
@@ -202,7 +202,7 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
 
     """
     if np.iscomplexobj(a) or np.iscomplexobj(b):
-        raise Exception ("Velocity cannot be complex")
+        raise Exception("Velocity cannot be complex")
     l = [len(a), len(b)]
     if l[0] == l[1]:
         return cpsd(a, b, nfft, fs, window=window)
@@ -270,9 +270,9 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
     cpsd removes a linear trend from the signals.
 
     The two signals should be the same length, and should both be real.
-    
+
     This performs:
-        
+
     .. math::
 
         fft(a)*conj(fft(b))
@@ -283,10 +283,10 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
 
     The units of the spectra is the product of the units of `a` and
     `b`, divided by the units of fs.
-    
+
     """
     if np.iscomplexobj(a) or np.iscomplexobj(b):
-        raise Exception ("Velocity cannot be complex")
+        raise Exception("Velocity cannot be complex")
     auto_psd = False
     if a is b:
         auto_psd = True
@@ -307,7 +307,8 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
             if auto_psd:
                 pwr += np.abs(s1) ** 2
             else:
-                pwr += s1 * np.conj(fft(detrend(b[i:(i + nfft)]) * window)[fft_inds])
+                pwr += s1 * \
+                    np.conj(fft(detrend(b[i:(i + nfft)]) * window)[fft_inds])
     pwr *= wght / nens / fs
     return pwr
 

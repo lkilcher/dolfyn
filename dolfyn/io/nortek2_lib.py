@@ -50,7 +50,7 @@ _index_dtype = {
               ('minute', np.uint8),
               ('second', np.uint8),
               ('usec100', np.uint16),
-    ]),
+              ]),
     1:
     np.dtype([('ens', np.uint64),
               ('hw_ens', np.uint32),
@@ -67,7 +67,7 @@ _index_dtype = {
               ('second', np.uint8),
               ('usec100', np.uint16),
               ('d_ver', np.uint8),
-    ])
+              ])
 }
 
 
@@ -164,9 +164,11 @@ def _boolarray_firstensemble_ping(index):
         #!!!TODO
         # This is for when the system runs in 'raw/continuous mode'
         # Is there a better way to detect this mode?
-        n_IDs = {id:(index['ID'] == id).sum() for id in np.unique(index['ID'])}
-        assert all(np.abs(np.diff(list(n_IDs.values())))) <= 1, "Unable to read this file"
-        return index['ID']==index['ID'][0]
+        n_IDs = {id: (index['ID'] == id).sum()
+                 for id in np.unique(index['ID'])}
+        assert all(np.abs(np.diff(list(n_IDs.values())))
+                   ) <= 1, "Unable to read this file"
+        return index['ID'] == index['ID'][0]
     else:
         dens = np.ones(index['ens'].shape, dtype='bool')
         dens[1:] = np.diff(index['ens']) != 0
@@ -176,7 +178,7 @@ def _boolarray_firstensemble_ping(index):
 def _getbit(val, n):
     try:
         return bool((val >> n) & 1)
-    except ValueError: # An array
+    except ValueError:  # An array
         return ((val >> n) & 1).astype('bool')
 
 
@@ -297,6 +299,7 @@ def _headconfig_int2dict(val, mode='burst'):
             # bits 10-15 unused
         )
 
+
 def _status2data(val):
     # This is detailed in the 6.1.2 of the Nortek Signature
     # Integrators Guide (2017)
@@ -323,7 +326,7 @@ def _beams_cy_int2dict(val, id):
     """
     if id == 28:  # 0x1C (echosounder)
         return dict(n_cells=val)
-    
+
     return dict(
         n_cells=val & (2 ** 10 - 1),
         cy=['ENU', 'XYZ', 'beam', None][val >> 10 & 3],
@@ -385,4 +388,3 @@ def _calc_config(index):
         config[id]['type'] = type
         config[id].pop('cy', None)
     return config
-

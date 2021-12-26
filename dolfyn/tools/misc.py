@@ -48,7 +48,7 @@ def detrend(arr, axis=-1, in_place=False):
     x = np.arange(sz[axis], dtype=np.float_).reshape(sz)
     x -= np.nanmean(x, axis=axis, keepdims=True)
     arr -= np.nanmean(arr, axis=axis, keepdims=True)
-    b = np.nanmean((x * arr), axis=axis, keepdims=True)/ \
+    b = np.nanmean((x * arr), axis=axis, keepdims=True) / \
         np.nanmean((x ** 2), axis=axis, keepdims=True)
     arr -= b * x
     return arr
@@ -191,7 +191,7 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
         dim += nd
     if (dim >= nd):
         raise ValueError("dim must be less than a.ndim; dim=%d, rank=%d."
-                          % (dim, nd))
+                         % (dim, nd))
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
     indlist = list(range(nd))
@@ -214,9 +214,9 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
         for i2 in range(0, inds.__len__()):
             ii = list(range(gd[inds[i2]] + 1, gd[inds[i2] + 1]))
             a[ii] = (np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) *
-                      (np.arange(0, ii.__len__()) + 1) /
-                      (ii.__len__() + 1) + a[gd[inds[i2]]]).astype(a.dtype)
-            
+                     (np.arange(0, ii.__len__()) + 1) /
+                     (ii.__len__() + 1) + a[gd[inds[i2]]]).astype(a.dtype)
+
     return a
 
 
@@ -250,7 +250,7 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
         for inds in slice1d_along_axis(a.shape, dim):
             interpgaps(a[inds], t, maxgap, 0, extrapFlg)
         return
-    
+
     gd = _find(~np.isnan(a))
 
     # Here we extrapolate the ends, if necessary:
@@ -263,14 +263,14 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
     # Here is the main loop
     if gd.__len__() > 1:
         inds = _find((1 < np.diff(gd)) &
-                    (np.diff(gd) <= maxgap + 1))
+                     (np.diff(gd) <= maxgap + 1))
         for i2 in range(0, inds.__len__()):
             ii = np.arange(gd[inds[i2]] + 1, gd[inds[i2] + 1])
             ti = (t[ii] - t[gd[inds[i2]]]) / np.diff(t[[gd[inds[i2]],
                                                         gd[inds[i2] + 1]]])
             a[ii] = (np.diff(a[gd[[inds[i2], inds[i2] + 1]]]) * ti +
                      a[gd[inds[i2]]]).astype(a.dtype)
-            
+
     return a
 
 
@@ -278,7 +278,7 @@ def medfiltnan(a, kernel, thresh=0):
     """
     Do a running median filter of the data. Regions where more than 
     ``thresh`` fraction of the points are NaN are set to NaN.
-    
+
     Parameters
     ----------
     a : |np.ndarray|
@@ -290,16 +290,16 @@ def medfiltnan(a, kernel, thresh=0):
       the size in each dimension.
     thresh : int
       Maximum gap in *a* to filter over
-    
+
     Returns
     -------
     out : |np.ndarray|
       2D array of same size containing filtered data
-    
+
     See Also
     --------
     scipy.signal.medfilt2d
-    
+
     """
     flag_1D = False
     if a.ndim == 1:
@@ -312,8 +312,8 @@ def medfiltnan(a, kernel, thresh=0):
     out = medfilt2d(a, kernel)
     if thresh > 0:
         out[convolve2d(np.isnan(a),
-                        np.ones(kernel) / np.prod(kernel),
-                        'same') > thresh] = np.NaN
+                       np.ones(kernel) / np.prod(kernel),
+                       'same') > thresh] = np.NaN
     if flag_1D:
         return out[0]
     return out
@@ -323,7 +323,7 @@ def convert_degrees(deg, tidal_mode=True):
     """
     Converts between the 'cartesian angle' (counter-clockwise from East) and
     the 'polar angle' in (degrees clockwise from North)
-    
+
     Parameters
     ----------
     deg: float or array-like
@@ -331,18 +331,18 @@ def convert_degrees(deg, tidal_mode=True):
     tidal_mode : bool
       If true, range is set from 0 to +/-180 degrees. If false, range is 0 to 
       360 degrees
-      
+
     Returns
     -------
     out : float or array-like
       Input data transformed to 'degrees CW from North' or 
       'degrees CCW from East', respectively (based on `deg`)
-      
+
     Notes
     -----
     The same algorithm is used to convert back and forth between 'CCW from E' 
     and 'CW from N'
-    
+
     """
     out = -(deg - 90) % 360
     if tidal_mode:
