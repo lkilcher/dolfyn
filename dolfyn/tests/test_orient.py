@@ -7,14 +7,12 @@ from dolfyn.tests.base import load_ncdata as load
 
 def check_hpr(h, p, r, omatin):
     omat = euler2orient(h, p, r)
-    assert_allclose(omat, omatin, atol=1e-13, err_msg=
-        'Orientation matrix different than expected!\nExpected:\n{}\nGot:\n{}'
-        .format(np.array(omatin), omat))
+    assert_allclose(omat, omatin, atol=1e-13, err_msg='Orientation matrix different than expected!\nExpected:\n{}\nGot:\n{}'
+                    .format(np.array(omatin), omat))
     hpr = orient2euler(omat)
-    assert_allclose(hpr, [h, p, r], atol=1e-13, err_msg=
-        "Angles different than specified, orient2euler and euler2orient are "
-        "antisymmetric!\nExpected:\n{}\nGot:\n{}"
-        .format(hpr, np.array([h, p, r]), ))
+    assert_allclose(hpr, [h, p, r], atol=1e-13, err_msg="Angles different than specified, orient2euler and euler2orient are "
+                    "antisymmetric!\nExpected:\n{}\nGot:\n{}"
+                    .format(hpr, np.array([h, p, r]), ))
 
 
 def test_hpr_defs():
@@ -89,18 +87,22 @@ def test_pr_declination():
     dat = set_declination(dat, declin)
     h1, p1, r1 = orient2euler(dat['orientmat'].values)
 
-    assert_allclose(p0, p1, atol=1e-5, err_msg="Pitch changes when setting declination")
-    assert_allclose(r0, r1, atol=1e-5, err_msg="Roll changes when setting declination")
-    assert_allclose(h0 + declin, h1, atol=1e-5, err_msg="incorrect heading change when " \
-        "setting declination")
+    assert_allclose(p0, p1, atol=1e-5,
+                    err_msg="Pitch changes when setting declination")
+    assert_allclose(r0, r1, atol=1e-5,
+                    err_msg="Roll changes when setting declination")
+    assert_allclose(h0 + declin, h1, atol=1e-5, err_msg="incorrect heading change when "
+                    "setting declination")
+
 
 def test_q_hpr():
     dat = load('Sig1000_IMU.nc')
-    
+
     dcm = quaternion2orient(dat.quaternion)
-    
-    assert_allclose(dat.orientmat, dcm, atol=5e-4, 
+
+    assert_allclose(dat.orientmat, dcm, atol=5e-4,
                     err_msg="Disagreement b/t quaternion-calc'd & HPR-calc'd orientmat")
+
 
 if __name__ == '__main__':
     test_hpr_defs()

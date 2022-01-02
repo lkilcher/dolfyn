@@ -39,7 +39,6 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx_rtd_theme',
               'nbsphinx',
-              'sphinx.ext.viewcode',
               ]
 
 napoleon_use_rtype = False

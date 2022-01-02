@@ -21,34 +21,34 @@ def test_heading(make_data=False):
         save(td, 'vector_data_imu01_head_pitch_roll.nc')
         return
     cd = load('vector_data_imu01_head_pitch_roll.nc')
-    
+
     assert_allclose(td, cd, atol=1e-6)
-    
+
 
 def test_inst2head_rotmat():
     # Validated test
     td = tr.dat.copy(deep=True)
 
-    #Swap x,y, reverse z
+    # Swap x,y, reverse z
     td = set_inst2head_rotmat(td, [[0, 1, 0],
                                    [1, 0, 0],
-                                   [0, 0,-1]])
+                                   [0, 0, -1]])
 
-    #Coords don't get altered here
+    # Coords don't get altered here
     npt.assert_allclose(td.vel[0].values, tr.dat.vel[1].values, atol=1e-6)
     npt.assert_allclose(td.vel[1].values, tr.dat.vel[0].values, atol=1e-6)
     npt.assert_allclose(td.vel[2].values, -tr.dat.vel[2].values, atol=1e-6)
 
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
-    R = euler2orient(20, 30, 60, units='degrees') # arbitrary angles
+    R = euler2orient(20, 30, 60, units='degrees')  # arbitrary angles
     td = set_inst2head_rotmat(td, R)
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R, tr.dat.vel)
     #assert (vel1 == vel2).all(), "head->inst rotations give unexpeced results."
     npt.assert_allclose(vel1.values, vel2, atol=1e-6)
-    
+
 
 def test_rotate_inst2earth(make_data=False):
     td = tr.dat.copy(deep=True)
@@ -81,8 +81,8 @@ def test_rotate_earth2inst():
     cdm = tr.dat_imu.copy(deep=True)
     # The heading/pitch/roll data gets modified during rotation, so it
     # doesn't go back to what it was.
-    cdm = cdm.drop_vars(['heading','pitch','roll'])
-    tdm = tdm.drop_vars(['heading','pitch','roll'])
+    cdm = cdm.drop_vars(['heading', 'pitch', 'roll'])
+    tdm = tdm.drop_vars(['heading', 'pitch', 'roll'])
 
     assert_allclose(td, cd, atol=1e-6)
     assert_allclose(tdm, cdm, atol=1e-6)
@@ -143,19 +143,19 @@ def test_rotate_earth2principal_set_declination():
     declin = 3.875
     td = load('vector_data01_rotate_inst2earth.nc')
     td0 = td.copy(deep=True)
-    
+
     td.attrs['principal_heading'] = calc_principal_heading(td['vel'])
     td = rotate2(td, 'principal', inplace=True)
     td = set_declination(td, declin)
     td = rotate2(td, 'earth', inplace=True)
-    
+
     td0 = set_declination(td0, -1)
     td0 = set_declination(td0, declin)
     td0.attrs['principal_heading'] = calc_principal_heading(td0['vel'])
     td0 = rotate2(td0, 'earth')
 
     assert_allclose(td0, td, atol=1e-6)
-    
+
 
 class warnings_testcase(unittest.TestCase):
     def test_rotate_warnings(self):
@@ -166,7 +166,7 @@ class warnings_testcase(unittest.TestCase):
         warn3.attrs['inst_model'] = 'ADV'
         warn4 = tr.dat.copy(deep=True)
         warn4.attrs['inst_model'] = 'adv'
-        
+
         with self.assertRaises(Exception):
             rotate2(warn1, 'ship')
         with self.assertRaises(Exception):
@@ -176,9 +176,9 @@ class warnings_testcase(unittest.TestCase):
             set_inst2head_rotmat(warn3, np.eye(3))
         with self.assertRaises(Exception):
             set_inst2head_rotmat(warn4, np.eye(3))
-        
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     test_heading()
     test_inst2head_rotmat()
     test_rotate_inst2earth()
@@ -188,4 +188,3 @@ if __name__=='__main__':
     test_rotate_earth2principal()
     test_rotate_earth2principal_set_declination()
     unittest.main()
-    

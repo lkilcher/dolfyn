@@ -5,12 +5,13 @@ from xarray.testing import assert_allclose
 import xarray as xr
 import dolfyn.adv.api as avm
 
+
 class adv_setup():
     def __init__(self, tv):
         dat = tv.dat.copy(deep=True)
         self.dat = rotate2(dat, 'earth')
         self.tdat = avm.calc_turbulence(self.dat, n_bin=20.0, fs=self.dat.fs)
-        
+
         short = xr.Dataset()
         short['u'] = self.tdat.Veldata.u
         short['v'] = self.tdat.Veldata.v
@@ -33,14 +34,16 @@ class adv_setup():
         short['k'] = self.tdat.Veldata.k
         self.short = short
 
+
 def test_shortcuts(make_data=False):
     test_dat = adv_setup(tv)
-    
+
     if make_data:
         save(test_dat.short, 'vector_data01_u.nc')
         return
-    
+
     assert_allclose(test_dat.short, load('vector_data01_u.nc'), atol=1e-6)
- 
-if __name__=='__main__':
+
+
+if __name__ == '__main__':
     test_shortcuts()
