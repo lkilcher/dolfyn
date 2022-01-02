@@ -389,6 +389,7 @@ def _reorg(dat):
                    ]:
             outdat['data_vars'][ky + tag] = dnow[ky]
             if 'ensemble' in ky:
+                outdat['data_vars'][ky + tag] += 1
                 outdat['units'][ky + tag] = '#'
 
         for ky in ['vel', 'amp', 'corr', 'prcnt_gd', 'echo', 'dist',
