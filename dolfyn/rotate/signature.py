@@ -45,12 +45,6 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     else:  # orientation = 'up' or 'AHRS'
         down = False
 
-    # The AHRS orientmat is in inst2earth
-    if adcpo.orientation == 'AHRS':
-        ahrs = True
-    else:
-        ahrs = False
-
     if rotate_vars is None:
         if 'rotate_vars' in adcpo.attrs:
             rotate_vars = adcpo.rotate_vars
@@ -74,9 +68,8 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
                             adcpo['roll'].values)
 
     # Take the transpose of the orientation to get the inst->earth rotation
-    # matrix. AHRS already is in inst->earth
-    if not ahrs:
-        rmat = np.rollaxis(rmat, 1)
+    # matrix.
+    rmat = np.rollaxis(rmat, 1)
 
     _dcheck = rotb._check_rotmat_det(rmat)
     if not _dcheck.all():

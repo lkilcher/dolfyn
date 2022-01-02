@@ -282,7 +282,7 @@ def quaternion2orient(quaternions):
 
     """
     omat = type(quaternions)(np.empty((3, 3, quaternions.time.size)))
-    omat = omat.rename({'dim_0': 'inst', 'dim_1': 'earth', 'dim_2': 'time'})
+    omat = omat.rename({'dim_0': 'earth', 'dim_1': 'inst', 'dim_2': 'time'})
 
     for i in range(quaternions.time.size):
         r = R.from_quat([quaternions.isel(q=1, time=i),
@@ -290,6 +290,9 @@ def quaternion2orient(quaternions):
                          quaternions.isel(q=3, time=i),
                          quaternions.isel(q=0, time=i)])
         omat[..., i] = r.as_matrix()
+
+    # quaternions in inst2earth reference frame, need to rotate to earth2inst
+    omat.values = np.rollaxis(omat.values, 1)
 
     xyz = ['X', 'Y', 'Z']
     enu = ['E', 'N', 'U']

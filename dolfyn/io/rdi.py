@@ -47,18 +47,20 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
     # Create orientation matrices
-    ds['beam2inst_orientmat'] = xr.DataArray(_calc_beam_orientmat(
-        ds.beam_angle,
-        ds.beam_pattern == 'convex'),
-        coords={'beam': [1, 2, 3, 4],
-                'x*': [1, 2, 3, 4]},
-        dims=['beam', 'x*'])
+    if 'beam2inst_orientmat' not in ds:
+        ds['beam2inst_orientmat'] = xr.DataArray(_calc_beam_orientmat(
+            ds.beam_angle,
+            ds.beam_pattern == 'convex'),
+            coords={'beam': [1, 2, 3, 4],
+                    'x*': [1, 2, 3, 4]},
+            dims=['beam', 'x*'])
 
-    ds['orientmat'] = xr.DataArray(_calc_orientmat(ds),
-                                   coords={'inst': ['X', 'Y', 'Z'],
-                                           'earth': ['E', 'N', 'U'],
-                                           'time': ds['time']},
-                                   dims=['inst', 'earth', 'time'])
+    if 'orientmat' not in ds:
+        ds['orientmat'] = xr.DataArray(_calc_orientmat(ds),
+                                       coords={'earth': ['E', 'N', 'U'],
+                                               'inst': ['X', 'Y', 'Z'],
+                                               'time': ds['time']},
+                                       dims=['earth', 'inst', 'time'])
 
     # Check magnetic declination if provided via software and/or userdata
     ds = _set_rdi_declination(ds, fname)
@@ -100,7 +102,7 @@ def _remove_gps_duplicates(dat):
     return dat
 
 
-def _set_rdi_declination(dat, fname='????'):
+def _set_rdi_declination(dat, fname):
     # If magnetic_var_deg is set, this means that the declination is already
     # included in the heading and in the velocity data.
 

@@ -472,8 +472,12 @@ def _reduce(data):
 
     if 'orientmat' in data['data_vars']:
         da['has_imu'] = 1  # logical
+        # Signature AHRS rotation matrix returned in "inst->earth"
+        # Change to dolfyn's "earth->inst"
+        dv['orientmat'] = np.rollaxis(dv['orientmat'], 1)
     else:
         da['has_imu'] = 0
+
     da['fs'] = da['filehead_config']['BURST'].pop('SR')
     tmat = da['filehead_config'].pop('XFBURST')
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)

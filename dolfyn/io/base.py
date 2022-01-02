@@ -91,27 +91,23 @@ def _create_dataset(data):
     for key in data['data_vars']:
         # orientation matrices
         if 'mat' in key:
-            try:  # AHRS orientmat
+            if 'inst' in key:  # beam2inst & inst2head orientation matrices
+                ds[key] = xr.DataArray(data['data_vars'][key],
+                                       coords={'beam': beam,
+                                               'x*': beam},
+                                       dims=['beam', 'x*'])
+            else:  # earth2inst orientation matrx
                 if any(val in key for val in tag):
                     tg = '_' + key.rsplit('_')[-1]
                 else:
                     tg = ''
                 time = data['coords']['time'+tg]
-                if data['attrs']['inst_type'] == 'ADV':
-                    coords = {'earth': earth, 'inst': inst, 'time'+tg: time}
-                    dims = ['earth', 'inst', 'time'+tg]
-                else:
-                    coords = {'inst': inst, 'earth': earth, 'time'+tg: time}
-                    dims = ['inst', 'earth', 'time'+tg]
+                coords = {'earth': earth, 'inst': inst, 'time'+tg: time}
+                dims = ['earth', 'inst', 'time'+tg]
                 ds[key] = xr.DataArray(data['data_vars'][key], coords, dims)
 
-            except:  # the other 2 (beam2inst & inst2head)
-                ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'beam': beam,
-                                               'x*': beam},
-                                       dims=['beam', 'x*'])
         # quaternion units never change
-        elif 'quat' in key:
+        elif 'quaternion' in key:
             if any(val in key for val in tag):
                 tg = '_' + key.rsplit('_')[-1]
             else:
