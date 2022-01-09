@@ -1,6 +1,14 @@
 General
 =======
 
+Talk w/ @jmcvey3
+======
+- Move docs? ... and links to docs in `README.md`
+- Add notes for building docs to `distribution_notes.md`
+- coveralls links?
+- +Maintainer on PyPi
+- +Maintainer of docs?
+
 
 Testing
 =======

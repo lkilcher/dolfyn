@@ -34,7 +34,7 @@ config = dict(
         'Natural Language :: English',
         'Topic :: Scientific/Engineering',
     ],
-    url='http://github.com/jmcvey3/dolfyn',
+    url='http://github.com/lkilcher/dolfyn',
     packages=find_packages(exclude=['dolfyn.tests']),
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.rotate', 'dolfyn.tools', 'dolfyn.adp', ],
