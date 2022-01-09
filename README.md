@@ -12,8 +12,8 @@ released (available on PyPi), and it is a MAJOR REFACTOR of the code
 so that DOLfYN is now built on xarray, rather than the hokey
 `pyDictH5` package that I'd built.
 
-DOLfYN 0.13.0 is _not_ backwards compatible with earlier version. This
-means two things:
+This means that DOLfYN 0.13.0 is _not_ backwards compatible with
+earlier version. This, in turn, means two things:
 
 1. The data files (`.h5` files) you created with earlier versions
 of DOLfYN will no longer load with DOLfYN 0.13.0.
@@ -33,6 +33,12 @@ news is that I think in the long run this will make DOLfYN a much more
 robust, powerful, and compatible tool -- especially because we now
 write/load xarray-formatted netcdf4 files, which is becoming a
 standard.
+
+Also, we are treating the 0.13 version as a beta-testing release
+before we probably move to 1.0! According to the [sematic versioning
+rules](https://semver.org) that we try to follow, this means that the
+code can be considered much more stable than it has been so far, and
+these kinds of unannounced compatability changes shouldn't happen.
 
 A **HUGE THANK YOU** to @jmcvey3 who did the vast majority of the work
 to make this happen.
