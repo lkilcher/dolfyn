@@ -8,6 +8,7 @@ import os
 import sys
 import unittest
 from xarray.testing import assert_allclose
+import pytest
 
 load = tb.load_ncdata
 save = tb.save_ncdata
@@ -127,7 +128,13 @@ def test_io_nortek2(make_data=False):
 
 def test_matlab_io(make_data=False):
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=100))
-    td_vm = tb.drop_config(read('vmdas01.ENX', nens=100))
+
+    # This read should trigger a warning about the declination being
+    # defined in two places (in the binary .ENX files), and in the
+    # .userdata.json file. NOTE: DOLfYN defaults to using what is in
+    # the .userdata.json file.
+    with pytest.warns(UserWarning, match='magnetic_var_deg'):
+        td_vm = tb.drop_config(read('vmdas01.ENX', nens=100))
 
     if make_data:
         tb.save_matlab(td_rdi_bt, 'dat_rdi_bt')

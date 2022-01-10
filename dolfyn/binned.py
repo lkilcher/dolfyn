@@ -181,7 +181,7 @@ class TimeBinner:
         dims_list = []
         coords_dict = {}
         if len(array.shape) == 1 & ('dir' in array.coords):
-            array = array.drop('dir')
+            array = array.drop_vars('dir')
         for ky in dims:
             dims_list.append(ky)
             if 'time' in ky:
