@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 from .binned import TimeBinner
+from .time import epoch2date
 
 
 @xr.register_dataset_accessor('velds') # 'vel dataset'
@@ -23,6 +24,105 @@ class Velocity():
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
 
+    def __getitem__(self, key):
+        return self.ds[key]
+
+    def __contains__(self, val):
+        return val in self.ds
+    
+    def __repr__(self, ):
+        time_string = '{:.2f} {} (started: {})'
+        if ('time' not in self or self['time'][0] < 1):
+            time_string = '-->No Time Information!<--'
+        else:
+            tm = [self['time'][0], self['time'][-1]]
+            dt = epoch2date(tm[0])[0]
+            delta = float((tm[-1] - tm[0])) / (3600 * 24)  # days
+            if delta > 1:
+                units = 'days'
+            elif delta * 24 > 1:
+                units = 'hours'
+                delta *= 24
+            elif delta * 24 * 60 > 1:
+                delta *= 24 * 60
+                units = 'minutes'
+            else:
+                delta *= 24 * 3600
+                units = 'seconds'
+            try:
+                time_string = time_string.format(delta, units,
+                                                 dt.strftime('%b %d, %Y %H:%M'))
+            except AttributeError:
+                time_string = '-->Error in time info<--'
+    
+        p = self.ds.attrs
+        t_shape = self['time'].shape
+        if len(t_shape) > 1:
+            shape_string = '({} bins, {} pings @ {}Hz)'.format(
+                t_shape[0], t_shape, p.get('fs'))
+        else:
+            shape_string = '({} pings @ {}Hz)'.format(
+                t_shape[0], p.get('fs', '??'))
+        _header = ("<%s data object>: "
+                   " %s %s\n"
+                   "  . %s\n"
+                   "  . %s-frame\n"
+                   "  . %s\n" %
+                   (p.get('inst_type'),
+                    self.ds.attrs['inst_make'], self.ds.attrs['inst_model'], 
+                    time_string,
+                    p.get('coord_sys'),
+                    shape_string))
+        _vars = '  Variables:\n'
+
+        # Specify which variable show up in this view here.
+        # * indicates a wildcard
+        # This list also sets the display order.
+        # Only the first 12 matches are displayed.
+        show_vars = ['time*', 'vel*', 'range', 'range_echo',
+                     'orientmat', 'heading', 'pitch', 'roll',
+                     'temp', 'press*', 'amp*', 'corr*',
+                     'accel', 'angrt', 'mag',
+                     'echo', 
+                     ]
+        n = 0
+        for v in show_vars:
+            if n > 12:
+                break
+            if v.endswith('*'):
+                v = v[:-1] # Drop the '*'
+                for nm in self.variables:
+                    if n > 12:
+                        break
+                    if nm.startswith(v):
+                        n += 1
+                        _vars += '  - {} {}\n'.format(nm, self.ds[nm].dims)
+            elif v in self.ds:
+                _vars += '  - {} {}\n'.format(v, self.ds[v].dims)
+        if n < len(self.variables):
+            _vars += '  ... and others (see `<obj>.variables`)\n'
+        return _header + _vars
+
+    ######
+    # Duplicate valuable xarray properties here.
+    @property
+    def variables(self, ):
+        """A sorted list of the variable names in the dataset."""
+        return sorted(self.ds.variables)
+
+    @property
+    def attrs(self, ):
+        """The attributes in the dataset."""
+        return self.ds.attrs
+        
+    @property
+    def coords(self, ):
+        """The coordinates in the dataset."""
+        return self.ds.coords
+
+
+    ######
+    # A bunch of DOLfYN specific properties
     @property
     def u(self,):
         """The first velocity component.

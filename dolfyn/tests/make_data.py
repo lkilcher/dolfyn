@@ -15,6 +15,7 @@ print(__doc__)
 # import test_clean as cl
 # import test_analysis as ta
 # import test_shortcuts as ts
+# import test_api
 
 # advr.test_read(make_data=True)
 # advro.test_heading(make_data=True)
@@ -46,3 +47,5 @@ print(__doc__)
 # ta.test_adv_turbulence(make_data=True)
 
 # ts.test_shortcuts(make_data=True)
+
+# test_api.test_repr(make_data=True)
