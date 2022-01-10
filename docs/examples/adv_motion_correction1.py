@@ -61,11 +61,11 @@ fig.clf()
 ax = fig.add_axes([.14, .14, .8, .74])
 
 # Plot the raw (unscreened) data:
-ax.plot(t, dat_raw.Veldata.u, 'r-', rasterized=True)
+ax.plot(t, dat_raw.velds.u, 'r-', rasterized=True)
 
 # Plot the screened data:
-ax.plot(t, dat.Veldata.u, 'g-', rasterized=True)
-bads = np.abs(dat.Veldata.u - dat_raw.Veldata.u.isel(time=t_range_inds))
+ax.plot(t, dat.velds.u, 'g-', rasterized=True)
+bads = np.abs(dat.velds.u - dat_raw.velds.u.isel(time=t_range_inds))
 ax.text(0.55, 0.95,
         "%0.2f%% of the data were 'cleaned'\nby the Goring and Nikora method."
         % (float(sum(bads > 0)) / len(bads) * 100),

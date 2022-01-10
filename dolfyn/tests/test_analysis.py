@@ -96,8 +96,8 @@ def test_adv_turbulence(make_data=False):
 
     assert_identical(tdat, avm.calc_turbulence(dat, n_bin=20.0, fs=dat.fs))
 
-    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.Veldata.U_mag)
-    tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.Veldata.U_mag)
+    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.velds.U_mag)
+    tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.velds.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
     tdat['L'] = bnr.calc_L_int(acov, tdat.vel)
 

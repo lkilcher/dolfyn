@@ -13,25 +13,23 @@ class adv_setup():
         self.tdat = avm.calc_turbulence(self.dat, n_bin=20.0, fs=self.dat.fs)
 
         short = xr.Dataset()
-        short['u'] = self.tdat.Veldata.u
-        short['v'] = self.tdat.Veldata.v
-        short['w'] = self.tdat.Veldata.w
-        short['U'] = self.tdat.Veldata.U
-        short['U_mag'] = self.tdat.Veldata.U_mag
-        short['U_dir'] = self.tdat.Veldata.U_dir
-        short['U_dir_N'] = self.dat.Veldata.U_dir
-        short["upup_"] = self.tdat.Veldata.upup_
-        short["vpvp_"] = self.tdat.Veldata.vpvp_
-        short["wpwp_"] = self.tdat.Veldata.wpwp_
-        short["upvp_"] = self.tdat.Veldata.upvp_
-        short["upwp_"] = self.tdat.Veldata.upwp_
-        short["vpwp_"] = self.tdat.Veldata.vpwp_
-        short['tke'] = self.tdat.Veldata.tke
-        short['I'] = self.tdat.Veldata.I
-        short['tau_ij'] = self.tdat.Veldata.tau_ij
-        short['E_coh'] = self.tdat.Veldata.E_coh
-        short['I_tke'] = self.tdat.Veldata.I_tke
-        short['k'] = self.tdat.Veldata.k
+        short['u'] = self.tdat.velds.u
+        short['v'] = self.tdat.velds.v
+        short['w'] = self.tdat.velds.w
+        short['U'] = self.tdat.velds.U
+        short['U_mag'] = self.tdat.velds.U_mag
+        short['U_dir'] = self.tdat.velds.U_dir
+        short['U_dir_N'] = self.dat.velds.U_dir
+        short["upup_"] = self.tdat.velds.upup_
+        short["vpvp_"] = self.tdat.velds.vpvp_
+        short["wpwp_"] = self.tdat.velds.wpwp_
+        short["upvp_"] = self.tdat.velds.upvp_
+        short["upwp_"] = self.tdat.velds.upwp_
+        short["vpwp_"] = self.tdat.velds.vpwp_
+        short['tke'] = self.tdat.velds.tke
+        short['I'] = self.tdat.velds.I
+        short['E_coh'] = self.tdat.velds.E_coh
+        short['I_tke'] = self.tdat.velds.I_tke
         self.short = short
 
 

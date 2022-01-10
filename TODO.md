@@ -8,6 +8,8 @@ Talk w/ @jmcvey3
 - coveralls links?
 - +Maintainer on PyPi
 - +Maintainer of docs?
+- Changed to `<xarray_object>.velds` (rather than `Veldata`) fix docs?
+- Invalid definition of wavenumber vector (k)
 
 
 Testing

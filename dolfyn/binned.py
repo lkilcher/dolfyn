@@ -249,7 +249,7 @@ class TimeBinner:
                 except:  # variables not needing averaging
                     pass
             # Add standard deviation
-            std = (np.nanstd(self.reshape(raw_ds.Veldata.U_mag.values),
+            std = (np.nanstd(self.reshape(raw_ds.velds.U_mag.values),
                              axis=-1,
                              dtype=np.float64) - (noise[0] + noise[1])/2)
             out_ds['U_std'] = xr.DataArray(

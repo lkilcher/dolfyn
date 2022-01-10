@@ -254,10 +254,10 @@ class ADVBinner(VelBinner):
         """
 
         # Assign local names
-        U_mag = dat_avg.Veldata.U_mag.values
-        I_tke = dat_avg.Veldata.I_tke.values
-        theta = np.angle(dat_avg.Veldata.U.values) - \
-            self._up_angle(dat_raw.Veldata.U.values)
+        U_mag = dat_avg.velds.U_mag.values
+        I_tke = dat_avg.velds.I_tke.values
+        theta = np.angle(dat_avg.velds.U.values) - \
+            self._up_angle(dat_raw.velds.U.values)
         omega = dat_avg.psd.omega.values
 
         # Calculate constants

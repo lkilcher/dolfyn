@@ -3,7 +3,7 @@ import xarray as xr
 from .binned import TimeBinner
 
 
-@xr.register_dataset_accessor('Veldata')
+@xr.register_dataset_accessor('velds') # 'vel dataset'
 class Velocity():
     """All ADCP and ADV xarray datasets wrap this base class.
 
@@ -101,24 +101,6 @@ class Velocity():
                                    'description': 'horizontal velocity flow direction, CCW from X/East/streamwise'})
 
     @property
-    def tau_ij(self,):
-        """Total stress tensor
-        """
-        n = self.ds.tke_vec
-        s = self.ds.stress
-        out = np.array([[n[0], s[0], s[1]],
-                        [s[0], n[1], s[2]],
-                        [s[1], s[2], n[2]]])
-
-        return xr.DataArray(out,
-                            dims=["Up", "Up*", 'time'],
-                            coords={"Up": ["up", "vp", "wp"],
-                                    "Up*": ["up", "vp", "wp"],
-                                    'time': self.ds['stress'].time},
-                            attrs={'units': self.ds['stress'].units},
-                            name='stress tensor')
-
-    @property
     def E_coh(self,):
         """Coherent turbulent energy
 
@@ -208,28 +190,6 @@ class Velocity():
         """w'w'bar component of the tke
         """
         return self.ds['tke_vec'].sel(tke="wpwp_")
-
-    @property
-    def k(self):
-        """Wavenumber vector, calculated from psd-frequency vector
-        """
-        if hasattr(self.ds, 'omega'):
-            ky = 'omega'
-            c = 1
-        else:
-            ky = 'f'
-            c = 2*np.pi
-
-        k1 = c*self.ds[ky] / abs(self.u)
-        k2 = c*self.ds[ky] / abs(self.v)
-        k3 = c*self.ds[ky] / abs(self.w)
-        # transposes dimensions for some reason
-        k = xr.DataArray([k1.T.values, k2.T.values, k3.T.values],
-                         coords=self.ds.psd.coords,
-                         dims=self.ds.psd.dims,
-                         name='wavenumber',
-                         attrs={'units': '1/m'})
-        return k
 
 
 class VelBinner(TimeBinner):
