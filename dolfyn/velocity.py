@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 from .binned import TimeBinner
 from .time import epoch2date
+from .rotate.api import rotate2
 
 
 @xr.register_dataset_accessor('velds') # 'vel dataset'
@@ -21,6 +22,36 @@ class Velocity():
 
     """
 
+    ########
+    # Major components of the dolfyn-API
+    
+    def rotate2(self, out_frame='earth', inplace=False):
+        """Rotate the dataset to a new coordinate system.
+
+        Parameters
+        ----------
+        out_frame : string {'beam', 'inst', 'earth', 'principal'}
+          The coordinate system to rotate the data into.
+        inplace : bool
+          Operate on the input data dataset (True), or return a copy that
+          has been rotated (False, default).
+
+        Returns
+        -------
+        ds : xarray.Dataset
+          The rotated dataset (this is always returned, including when
+          inplace=True)
+
+        Notes
+        -----
+        This function rotates all variables in ``ds.attrs['rotate_vars']``.
+
+        """
+        return rotate2(self, out_frame, inplace)
+    
+    ########
+    # Magic methods of the API
+    
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
 
