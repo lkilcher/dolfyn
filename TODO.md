@@ -9,6 +9,7 @@ Talk w/ @jmcvey3
 - +Maintainer on PyPi
 - +Maintainer of docs?
 - Changed to `<xarray_object>.velds` (rather than `Veldata`) fix docs?
+- How to document the dolfyn-view data-objects (`<obj>.velds`)? Is building this even a good idea?
 - Invalid definition of wavenumber vector (k)
 
 
