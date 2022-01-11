@@ -8,6 +8,24 @@ def _fullyear(year):
     return year
 
 
+def epoch2dt64(ep_time, ):
+    out = np.array(ep_time).astype('datetime64[s]')  # assumes t0=1970-01-01 in ep_time
+    out = out + ((ep_time % 1) * 1e9).astype('timedelta64[ns]')
+    return out
+
+
+def dt642epoch(dt64):
+    return (dt64 - np.datetime64('1970-01-01')) / np.timedelta64(1, 's')
+
+
+def date2dt64(dt):
+    return np.array(dt).astype('datetime64[ns]')
+
+
+def dt642date(dt64):
+    return epoch2date(dt642epoch(dt64))
+
+
 def epoch2date(ep_time, offset_hr=0, to_str=False):
     """
     Convert from epoch time (seconds since 1/1/1970 00:00:00) to a list 
