@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unversioned
 
+## Version 0.12.3
+	- Update dependencies so that `pip install dolfyn==0.12` works.
+	- Fix read for sig files to read to end of file
+	- Add savemat function
+
 ## Version 0.12.2
 	- Switch from `'lonlat'` to `'latlon'` as the designated entry-name in `dat.props`
 	- Bugfix for reading timestamps
