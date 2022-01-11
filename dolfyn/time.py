@@ -8,14 +8,14 @@ def _fullyear(year):
     return year
 
 
-def epoch2date(ds_time, offset_hr=0, to_str=False):
+def epoch2date(ep_time, offset_hr=0, to_str=False):
     """
     Convert from epoch time (seconds since 1/1/1970 00:00:00) to a list 
     of datetime objects
 
     Parameters
     ----------
-    ds_time : xarray.DataArray
+    ep_time : xarray.DataArray
         Time coordinate data-array or single time element
     offset_hr : int
         Number of hours to offset time by (e.g. UTC -7 hours = PDT)
@@ -34,15 +34,20 @@ def epoch2date(ds_time, offset_hr=0, to_str=False):
     deployment computer, which is unknown to |dlfn|.
 
     """
-    ds_time = ds_time.values
+    try:
+        ep_time = ep_time.values
+    except AttributeError:
+        pass
 
-    if ds_time.size == 1:
-        ds_time = [ds_time.item()]
-
-    time = [datetime.fromtimestamp(t) for t in ds_time]
+    if ep_time.size == 1:
+        ep_time = [ep_time.item()]
 
     if offset_hr != 0:
-        time = [t + timedelta(hours=offset_hr) for t in time]
+        delta = timedelta(hours=offset_hr)
+        time = [datetime.fromtimestamp(t) + delta for t in ep_time]
+    else:
+        time = [datetime.fromtimestamp(t) for t in ep_time]
+
     if to_str:
         time = date2str(time)
 
