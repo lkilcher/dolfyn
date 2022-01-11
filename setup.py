@@ -41,7 +41,7 @@ config = dict(
     # ['dolfyn', 'dolfyn.adv', 'dolfyn.io', 'dolfyn.data',
     #           'dolfyn.meta', 'dolfyn.tools', 'dolfyn.adp', ],
     package_data={},
-    install_requires=['numpy', 'scipy', 'h5py', 'pyDictH5'],
+    install_requires=['numpy', 'scipy', 'h5py', 'pyDictH5', 'six'],
     provides=['dolfyn', ],
     scripts=['scripts/motcorrect_vector.py', 'scripts/vec2mat.py'],
     # entry_points = {
@@ -49,8 +49,6 @@ config = dict(
     #    ['motcorrect_vector = dolfyn.adv.scripts:motcorrect_vector',
     #     ],
     #    },
-    dependency_links=['https://pypi.python.org/pypi/',
-                      'https://github.com/lkilcher/pyDictH5/tarball/master#egg=pyDictH5'],
     # cmdclass =
     # {'install_data':chmod_install_data,'install':chmod_install,},
 )
