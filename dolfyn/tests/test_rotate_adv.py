@@ -5,7 +5,7 @@ from dolfyn.rotate.api import rotate2, calc_principal_heading, \
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
 import unittest
-from xarray.testing import assert_allclose
+from .base import assert_allclose
 import numpy.testing as npt
 
 

@@ -1,8 +1,24 @@
 import pkg_resources
 import atexit
 import dolfyn.io.api as io
+import numpy as np
+from .. import time
+from xarray.testing import assert_allclose as _assert_allclose
 
 atexit.register(pkg_resources.cleanup_resources)
+
+
+def assert_allclose(dat0, dat1, *args, **kwargs):
+    names = []
+    for v in dat0.variables:
+        if np.issubdtype(dat0[v].dtype, np.datetime64):
+            dat0[v] = time.dt642epoch(dat0[v])
+            dat1[v] = time.dt642epoch(dat1[v])
+            names.append(v)
+    _assert_allclose(dat0, dat1, *args, **kwargs)
+    for v in names:
+        dat0[v] = time.epoch2dt64(dat0[v])
+        dat1[v] = time.epoch2dt64(dat1[v])
 
 
 def drop_config(dataset):
