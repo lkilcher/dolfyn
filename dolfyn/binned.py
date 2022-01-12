@@ -4,6 +4,7 @@ import warnings
 from .tools.psd import psd_freq, coherence, psd, cpsd_quasisync, cpsd, \
     phase_angle
 from .tools.misc import slice1d_along_axis, detrend
+from .time import epoch2dt64, dt642epoch
 warnings.simplefilter('ignore', RuntimeWarning)
 
 
@@ -156,6 +157,8 @@ class TimeBinner:
         n_bin : int (default is self.n_bin)
 
         """
+        if np.issubdtype(dat.dtype, np.datetime64):
+            return epoch2dt64(self._mean(dt642epoch(dat), axis=axis, n_bin=n_bin))
         if axis != -1:
             dat = np.swapaxes(dat, axis, -1)
         n_bin = self._parse_nbin(n_bin)

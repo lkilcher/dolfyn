@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 from .binned import TimeBinner
-from .time import epoch2date
+from .time import dt642epoch, dt642date
 from .rotate.api import rotate2
 
 
@@ -63,12 +63,12 @@ class Velocity():
     
     def __repr__(self, ):
         time_string = '{:.2f} {} (started: {})'
-        if ('time' not in self or self['time'][0] < 1):
+        if ('time' not in self or dt642epoch(self['time'][0]) < 1):
             time_string = '-->No Time Information!<--'
         else:
-            tm = [self['time'][0], self['time'][-1]]
-            dt = epoch2date(tm[0])[0]
-            delta = float((tm[-1] - tm[0])) / (3600 * 24)  # days
+            tm = self['time'][[0, -1]].values
+            dt = dt642date(tm[0])[0]
+            delta = (dt642epoch(tm[-1]) - dt642epoch(tm[0])) / (3600 * 24)  # days
             if delta > 1:
                 units = 'days'
             elif delta * 24 > 1:
@@ -85,7 +85,7 @@ class Velocity():
                                                  dt.strftime('%b %d, %Y %H:%M'))
             except AttributeError:
                 time_string = '-->Error in time info<--'
-    
+
         p = self.ds.attrs
         t_shape = self['time'].shape
         if len(t_shape) > 1:
@@ -100,7 +100,7 @@ class Velocity():
                    "  . %s-frame\n"
                    "  . %s\n" %
                    (p.get('inst_type'),
-                    self.ds.attrs['inst_make'], self.ds.attrs['inst_model'], 
+                    self.ds.attrs['inst_make'], self.ds.attrs['inst_model'],
                     time_string,
                     p.get('coord_sys'),
                     shape_string))
