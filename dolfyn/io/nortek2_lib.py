@@ -2,8 +2,7 @@ import struct
 import os.path as path
 import numpy as np
 #import warnings
-from datetime import datetime
-
+from .. import time
 
 def _reduce_by_average(data, ky0, ky1):
     # Average two arrays together, if they both exist.
@@ -82,7 +81,7 @@ def _calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
             continue
         try:
             # Note that month is zero-based, seconds since Jan 1 1970
-            dt[idx] = datetime(y, mo + 1, d, h, mi, s, u).timestamp()
+            dt[idx] = time.date2epoch(time.datetime(y, mo + 1, d, h, mi, s, u))[0]
         except ValueError:
             # One of the time values is out-of-range (e.g., mi > 60)
             # This probably indicates a corrupted byte, so we just insert None.
