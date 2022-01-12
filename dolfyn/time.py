@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import numpy as np
 
 
 def _fullyear(year):
@@ -9,13 +10,13 @@ def _fullyear(year):
 
 
 def epoch2dt64(ep_time, ):
-    out = np.array(ep_time).astype('datetime64[s]')  # assumes t0=1970-01-01 in ep_time
+    out = np.array(ep_time).astype('datetime64[s]')  # assumes t0=1970-01-01 00:00:00
     out = out + ((ep_time % 1) * 1e9).astype('timedelta64[ns]')
     return out
 
 
 def dt642epoch(dt64):
-    return (dt64 - np.datetime64('1970-01-01')) / np.timedelta64(1, 's')
+    return dt64.astype('datetime64[ns]').astype('int') / 1e9
 
 
 def date2dt64(dt):
@@ -57,14 +58,23 @@ def epoch2date(ep_time, offset_hr=0, to_str=False):
     except AttributeError:
         pass
 
-    if ep_time.size == 1:
+    if isinstance(ep_time, (np.ndarray)) and ep_time.ndim == 0:
         ep_time = [ep_time.item()]
+    elif not isinstance(ep_time, (np.ndarray, list)):
+        ep_time = [ep_time]
 
+    ######### IMPORTANT #########
+    # Note the use of `utcfromtimestamp` here, rather than `fromtimestamp`
+    # This is CRITICAL! See the difference between those functions here:
+    #    https://docs.python.org/3/library/datetime.html#datetime.datetime.fromtimestamp
+    # Long story short: `fromtimestamp` used system-specific timezone
+    # info to calculate the datetime object, but returns a
+    # timezone-agnostic object.
     if offset_hr != 0:
         delta = timedelta(hours=offset_hr)
-        time = [datetime.fromtimestamp(t) + delta for t in ep_time]
+        time = [datetime.utcfromtimestamp(t) + delta for t in ep_time]
     else:
-        time = [datetime.fromtimestamp(t) for t in ep_time]
+        time = [datetime.utcfromtimestamp(t) for t in ep_time]
 
     if to_str:
         time = date2str(time)
@@ -117,7 +127,7 @@ def date2epoch(dt):
     if not isinstance(dt, list):
         dt = [dt]
 
-    return [t.timestamp() for t in dt]
+    return [t.replace(tzinfo=timezone.utc).timestamp() for t in dt]
 
 
 def date2matlab(dt):
