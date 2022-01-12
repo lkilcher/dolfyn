@@ -5,10 +5,11 @@ from dolfyn.rotate.api import set_inst2head_rotmat
 import dolfyn.io.nortek as vector
 from dolfyn.io.api import read_example as read
 import dolfyn.tests.base as tb
-from xarray.testing import assert_allclose
+
 
 load = tb.load_ncdata
 save = tb.save_ncdata
+assert_allclose = tb.assert_allclose
 
 dat = load('vector_data01.nc')
 dat_imu = load('vector_data_imu01.nc')

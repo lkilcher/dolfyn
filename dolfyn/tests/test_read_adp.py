@@ -7,7 +7,7 @@ import warnings
 import os
 import sys
 import unittest
-from xarray.testing import assert_allclose
+from .base import assert_allclose
 import pytest
 
 load = tb.load_ncdata

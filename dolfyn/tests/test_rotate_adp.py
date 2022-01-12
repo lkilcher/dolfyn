@@ -2,7 +2,7 @@ from dolfyn.tests import test_read_adp as tr
 from dolfyn.tests.base import load_ncdata as load, save_ncdata as save
 from dolfyn.rotate.api import rotate2, calc_principal_heading
 import numpy as np
-from xarray.testing import assert_allclose
+from .base import assert_allclose
 import numpy.testing as npt
 
 
