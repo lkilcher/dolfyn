@@ -1,4 +1,4 @@
-__version__ = '0.13.0'
+__version__ = '0.13.1'
 __prog_name__ = 'DOLfYN'
 __version_date__ = 'Aug-26-2021'
 
