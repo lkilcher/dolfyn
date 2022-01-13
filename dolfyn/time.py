@@ -10,13 +10,14 @@ def _fullyear(year):
 
 
 def epoch2dt64(ep_time, ):
-    out = np.array(ep_time).astype('datetime64[s]')  # assumes t0=1970-01-01 00:00:00
+    # assumes t0=1970-01-01 00:00:00
+    out = np.array(ep_time.astype('int')).astype('datetime64[s]')
     out = out + ((ep_time % 1) * 1e9).astype('timedelta64[ns]')
     return out
 
 
 def dt642epoch(dt64):
-    return dt64.astype('datetime64[ns]').astype('int') / 1e9
+    return dt64.astype('datetime64[ns]').astype('float') / 1e9
 
 
 def date2dt64(dt):
