@@ -31,7 +31,7 @@ def test_motion_adv(make_data=False):
     # test motion-corrected data rotation
     tdmE = tv.dat_imu.copy(deep=True)
     tdmE = set_declination(tdmE, 10.0)
-    tdmE = rotate2(tdmE, 'earth', inplace=True)
+    tdmE = rotate2(tdmE, 'earth')
     tdmE = avm.correct_motion(tdmE)
 
     if make_data:

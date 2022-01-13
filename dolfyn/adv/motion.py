@@ -317,7 +317,7 @@ def correct_motion(ds,
         raise Exception('The instrument does not appear to have an IMU.')
 
     if ds.coord_sys != 'inst':
-        ds = rotate2(ds, 'inst', inplace=True)
+        ds = rotate2(ds, 'inst')
 
     # Returns True/False if head2inst_rotmat has been set/not-set.
     # Bad configs raises errors (this is to check for those)
