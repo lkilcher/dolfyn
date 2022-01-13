@@ -5,7 +5,7 @@ from .time import dt642epoch, dt642date
 from .rotate.api import rotate2
 
 
-@xr.register_dataset_accessor('velds') # 'vel dataset'
+@xr.register_dataset_accessor('velds')  # 'vel dataset'
 class Velocity():
     """All ADCP and ADV xarray datasets wrap this base class.
 
@@ -24,34 +24,30 @@ class Velocity():
 
     ########
     # Major components of the dolfyn-API
-    
-    def rotate2(self, out_frame='earth', inplace=False):
+
+    def rotate2(self, out_frame='earth'):
         """Rotate the dataset to a new coordinate system.
 
         Parameters
         ----------
         out_frame : string {'beam', 'inst', 'earth', 'principal'}
           The coordinate system to rotate the data into.
-        inplace : bool
-          Operate on the input data dataset (True), or return a copy that
-          has been rotated (False, default).
 
         Returns
         -------
         ds : xarray.Dataset
-          The rotated dataset (this is always returned, including when
-          inplace=True)
+          The rotated dataset
 
         Notes
         -----
         This function rotates all variables in ``ds.attrs['rotate_vars']``.
 
         """
-        return rotate2(self, out_frame, inplace)
-    
+        return rotate2(self, out_frame)
+
     ########
     # Magic methods of the API
-    
+
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
 
@@ -60,7 +56,7 @@ class Velocity():
 
     def __contains__(self, val):
         return val in self.ds
-    
+
     def __repr__(self, ):
         time_string = '{:.2f} {} (started: {})'
         if ('time' not in self or dt642epoch(self['time'][0]) < 1):
@@ -68,7 +64,8 @@ class Velocity():
         else:
             tm = self['time'][[0, -1]].values
             dt = dt642date(tm[0])[0]
-            delta = (dt642epoch(tm[-1]) - dt642epoch(tm[0])) / (3600 * 24)  # days
+            delta = (dt642epoch(tm[-1]) -
+                     dt642epoch(tm[0])) / (3600 * 24)  # days
             if delta > 1:
                 units = 'days'
             elif delta * 24 > 1:
@@ -114,14 +111,14 @@ class Velocity():
                      'orientmat', 'heading', 'pitch', 'roll',
                      'temp', 'press*', 'amp*', 'corr*',
                      'accel', 'angrt', 'mag',
-                     'echo', 
+                     'echo',
                      ]
         n = 0
         for v in show_vars:
             if n > 12:
                 break
             if v.endswith('*'):
-                v = v[:-1] # Drop the '*'
+                v = v[:-1]  # Drop the '*'
                 for nm in self.variables:
                     if n > 12:
                         break
@@ -145,15 +142,15 @@ class Velocity():
     def attrs(self, ):
         """The attributes in the dataset."""
         return self.ds.attrs
-        
+
     @property
     def coords(self, ):
         """The coordinates in the dataset."""
         return self.ds.coords
 
-
     ######
     # A bunch of DOLfYN specific properties
+
     @property
     def u(self,):
         """The first velocity component.
