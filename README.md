@@ -7,21 +7,21 @@
 BIG NEWS!!!
 ------
 
-Hello everyone! Just so that you know, dolfyn 0.13.0 has just been
-released (available on PyPi), and it is a MAJOR REFACTOR of the code
-so that DOLfYN is now built on xarray, rather than the hokey
-`pyDictH5` package that I'd built.
+Hello everyone! Just so that you know, we are preparing to release
+dolfyn 1.0! This is a MAJOR REFACTOR of the code so that DOLfYN is
+now built on xarray, rather than the somewhat contrived and
+purpose-built `pyDictH5` package.
 
-This means that DOLfYN 0.13.0 is _not_ backwards compatible with
+This means that DOLfYN 1.0 is _not_ backwards compatible with
 earlier version. This, in turn, means two things:
 
 1. The data files (`.h5` files) you created with earlier versions
-of DOLfYN will no longer load with DOLfYN 0.13.0.
-2. The syntax of DOLfYN 0.13.0 is completely different from earlier version.
+of DOLfYN will no longer load with DOLfYN 1.0.0.
+2. The syntax of DOLfYN 1.0 is completely different from earlier version.
 
 Because of this, it's probably easiest to continue using earlier
 versions of DOLfYN for your old data. If you want to bring some data
-into DOLfYN 0.13, you will need to
+into DOLfYN 1.0, you will need to
 `dolfyn.read(binary_source_file.VEC)`, and then refactor your code to
 work properly with DOLfYN's new syntax. I may be providing some
 updates to dolfyn 0.12 via the v0.12-backports branch (and associated
@@ -34,11 +34,11 @@ robust, powerful, and compatible tool -- especially because we now
 write/load xarray-formatted netcdf4 files, which is becoming a
 standard.
 
-Also, we are treating the 0.13 version as a beta-testing release
-before we probably move to 1.0! According to the [sematic versioning
-rules](https://semver.org) that we try to follow, this means that the
-code can be considered much more stable than it has been so far, and
-these kinds of unannounced compatability changes shouldn't happen.
+For the immediate future we will be doing pre-releases to DOLfYN 1.0
+using "release candidates", following the "1.0.0-rc#" naming
+convention. Many of these changes were also released under version
+0.13, but we are moving away from that version toward 1.0. If you are
+using 0.13, we recommend switching to 1.0 (pre-release for now).
 
 A **HUGE THANK YOU** to @jmcvey3 who did the vast majority of the work
 to make this happen.
