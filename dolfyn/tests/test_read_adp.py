@@ -14,6 +14,7 @@ load = tb.load_ncdata
 save = tb.save_ncdata
 
 dat_rdi = load('RDI_test01.nc')
+dat_rdi_7f79 = load('RDI_7f79.nc')
 dat_rdi_bt = load('RDI_withBT.nc')
 dat_rdi_vm = load('vmdas01.nc')
 dat_wr1 = load('winriver01.nc')
@@ -43,6 +44,7 @@ def test_io_rdi(make_data=False):
     warnings.simplefilter('ignore', UserWarning)
     nens = 500
     td_rdi = tb.drop_config(read('RDI_test01.000'))
+    td_7f79 = tb.drop_config(read('RDI_7f79.000'))
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=nens))
     td_vm = tb.drop_config(read('vmdas01.ENX', nens=nens))
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
@@ -52,6 +54,7 @@ def test_io_rdi(make_data=False):
 
     if make_data:
         save(td_rdi, 'RDI_test01.nc')
+        save(td_7f79, 'RDI_7f79.nc')
         save(td_rdi_bt, 'RDI_withBT.nc')
         save(td_vm, 'vmdas01.nc')
         save(td_wr1, 'winriver01.nc')
@@ -59,6 +62,7 @@ def test_io_rdi(make_data=False):
         return
 
     assert_allclose(td_rdi, dat_rdi, atol=1e-6)
+    assert_allclose(td_7f79, dat_rdi_7f79, atol=1e-6)
     assert_allclose(td_rdi_bt, dat_rdi_bt, atol=1e-6)
     assert_allclose(td_vm, dat_rdi_vm, atol=1e-6)
     assert_allclose(td_wr1, dat_wr1, atol=1e-6)
