@@ -486,14 +486,14 @@ class _RdiReader():
                 if cfgid[0] == 127 and cfgid[1] in [127, 121]:
                     if cfgid[1] == 121 and self._debug7f79 is None:
                         self._debug7f79 = True
-                        warnings.warn(
-                            "This ADCP file has an undocumented "
-                            "sync-code.  If possible, please notify the "
-                            "DOLfYN developers that you are recieving "
-                            "this warning by posting the hardware and "
-                            "software details on how you acquired this file "
-                            "to "
-                            "http://github.com/lkilcher/dolfyn/issues/7")
+                        # warnings.warn(
+                        #     "This ADCP file has an undocumented "
+                        #     "sync-code.  If possible, please notify the "
+                        #     "DOLfYN developers that you are recieving "
+                        #     "this warning by posting the hardware and "
+                        #     "software details on how you acquired this file "
+                        #     "to "
+                        #     "http://github.com/lkilcher/dolfyn/issues/7")
                     valid = 1
         else:
             fd.seek(-2, 1)
