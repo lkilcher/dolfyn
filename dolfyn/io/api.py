@@ -74,7 +74,9 @@ def read_example(name, **kwargs):
     return read(filename, **kwargs)
 
 
-def save(dataset, filename):
+def save(dataset, filename,
+         format='NETCDF4', engine='netcdf4',
+         **kwargs):
     """Save xarray dataset as netCDF (.nc).
 
     Parameters
@@ -108,7 +110,7 @@ def save(dataset, filename):
             dataset = dataset.drop(var)
             dataset.attrs['complex_vars'].append(var)
 
-    dataset.to_netcdf(filename, format='NETCDF4', engine='netcdf4')
+    dataset.to_netcdf(filename, format=format, engine=engine, **kwargs)
 
 
 def load(filename):
