@@ -1,5 +1,5 @@
 from dolfyn.io.api import read_example as read
-import dolfyn.tests.base as tb
+from . import base as tb
 import dolfyn.io.rdi as wh
 import dolfyn.io.nortek as awac
 import dolfyn.io.nortek2 as sig

@@ -4,7 +4,7 @@ import sys
 from dolfyn.rotate.api import set_inst2head_rotmat
 import dolfyn.io.nortek as vector
 from dolfyn.io.api import read_example as read
-import dolfyn.tests.base as tb
+from . import base as tb
 
 
 load = tb.load_ncdata

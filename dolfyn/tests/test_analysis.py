@@ -1,10 +1,9 @@
-from dolfyn.tests import test_read_adp as tr, test_read_adv as tv
-from dolfyn.tests.base import load_ncdata as load, save_ncdata as save
-from xarray.testing import assert_identical
-from .base import assert_allclose
-import numpy as np
+from . import test_read_adp as tr, test_read_adv as tv
+from .base import load_ncdata as load, save_ncdata as save, assert_allclose
 from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
+from xarray.testing import assert_identical
+import numpy as np
 
 
 class adv_setup():
