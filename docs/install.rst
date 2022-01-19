@@ -10,7 +10,7 @@ Installation
 Or, if you would like download the source code locally so that you can modify
 it, you can clone the repository and then use pip to install it as an 'editable' package::
     
-   $ git clone https://github.com/jmcvey3/dolfyn.git
+   $ git clone https://github.com/lkilcher/dolfyn.git
    $ cd dolfyn
    $ pip install -e .
 	 

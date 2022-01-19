@@ -6,6 +6,7 @@ from dolfyn import time
 # Import matplotlib tools for plotting the data:
 from matplotlib import pyplot as plt
 import matplotlib.dates as dt
+from datetime import datetime
 import numpy as np
 
 ##############################
@@ -26,9 +27,9 @@ inst2head_rotmat = np.eye(3)
 
 # The time range of interest.
 # The instrument was in place on the seafloor starting at 12:08:30 on June 12, 2012.
-t_range = [dt.date2num(dt.datetime.datetime(2012, 6, 12, 12, 8, 30)),
+t_range = [time.date2dt64(datetime(2012, 6, 12, 12, 8, 30)),
            # The data is good to the end of the file.
-           np.inf]
+           time.date2dt64(datetime(2012, 6, 13))]
 
 # This is the filter to use for motion correction:
 accel_filter = 0.1
@@ -42,9 +43,6 @@ dat_raw = api.read(fname, userdata=False)
 # Crop the data for t_range
 t_range_inds = (t_range[0] < dat_raw.time) & (dat_raw.time < t_range[1])
 dat = dat_raw.isel(time=t_range_inds)
-
-# Datetime for plotting
-t = time.epoch2date(dat.time)
 
 # Set the inst2head rotation matrix and vector
 dat = api.set_inst2head_rotmat(dat, inst2head_rotmat)
@@ -61,10 +59,10 @@ fig.clf()
 ax = fig.add_axes([.14, .14, .8, .74])
 
 # Plot the raw (unscreened) data:
-ax.plot(t, dat_raw.velds.u, 'r-', rasterized=True)
+ax.plot(dat_raw.time, dat_raw.velds.u, 'r-', rasterized=True)
 
 # Plot the screened data:
-ax.plot(t, dat.velds.u, 'g-', rasterized=True)
+ax.plot(dat.time, dat.velds.u, 'g-', rasterized=True)
 bads = np.abs(dat.velds.u - dat_raw.velds.u.isel(time=t_range_inds))
 ax.text(0.55, 0.95,
         "%0.2f%% of the data were 'cleaned'\nby the Goring and Nikora method."
@@ -74,17 +72,18 @@ ax.text(0.55, 0.95,
         ha='left')
 
 # Add some annotations:
-ax.axvspan(dt.date2num(dt.datetime.datetime(2012, 6, 12, 12)),
-           t_range[0], zorder=-10, facecolor='0.9',
+text0 = dt.date2num(datetime(2012, 6, 12, 12, 8, 30))
+ax.axvspan(dt.date2num(datetime(2012, 6, 12, 12)),
+           text0, zorder=-10, facecolor='0.9',
            edgecolor='none')
 ax.text(0.13, 0.9, 'Mooring falling\ntoward seafloor',
         ha='center', va='top', transform=ax.transAxes,
         size='small')
-ax.text(t_range[0] + 0.0001, 0.6, 'Mooring on seafloor',
+ax.text(text0 + 0.0001, 0.6, 'Mooring on seafloor',
         size='small',
         ha='left')
-ax.annotate('', (t_range[0] + 0.006, 0.3),
-            (t_range[0], 0.3),
+ax.annotate('', (text0 + 0.006, 0.3),
+            (text0, 0.3),
             arrowprops=dict(facecolor='black', shrink=0.0),
             ha='right')
 
@@ -101,8 +100,8 @@ ax.set_ylim([-3, 3])
 ax.set_ylabel('$u\,\mathrm{[m/s]}$', size='large')
 ax.set_xlabel('Time [June 12, 2012]')
 ax.set_title('Data cropping and cleaning')
-ax.set_xlim([dt.date2num(dt.datetime.datetime(2012, 6, 12, 12)),
-             dt.date2num(dt.datetime.datetime(2012, 6, 12, 12, 30))])
+ax.set_xlim([dt.date2num(datetime(2012, 6, 12, 12)),
+             dt.date2num(datetime(2012, 6, 12, 12, 30))])
 ####
 
 dat_cln = dat.copy(deep=True)
@@ -121,9 +120,9 @@ dat = api.rotate2(dat, 'principal')
 dat_cln = api.rotate2(dat_cln, 'principal')
 
 # Average the data and compute turbulence statistics
-dat_bin = api.calc_turbulence(dat, n_bin=19200, fs=dat.fs, n_fft=4096)
+dat_bin = api.calc_turbulence(dat, n_bin=9600, fs=dat.fs, n_fft=4096)
 dat_cln_bin = api.calc_turbulence(
-    dat_cln, n_bin=19200, fs=dat_cln.fs, n_fft=4096)
+    dat_cln, n_bin=9600, fs=dat_cln.fs, n_fft=4096)
 
 ####
 # Figure to look at spectra
@@ -131,9 +130,9 @@ fig2 = plt.figure(2, figsize=[6, 6])
 fig2.clf()
 ax = fig2.add_axes([.14, .14, .8, .74])
 
-ax.loglog(dat_bin.psd.omega, dat_bin.psd.sel(Sxx='Suu').mean(axis=0),
+ax.loglog(dat_bin.psd.omega, dat_bin.psd.sel(S='Sxx').mean(axis=0),
           'b-', label='motion corrected')
-ax.loglog(dat_cln_bin.psd.omega, dat_cln_bin.psd.sel(Sxx='Suu').mean(axis=0),
+ax.loglog(dat_cln_bin.psd.omega, dat_cln_bin.psd.sel(S='Sxx').mean(axis=0),
           'r-', label='no motion correction')
 
 # Add some annotations

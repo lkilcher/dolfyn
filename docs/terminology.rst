@@ -20,7 +20,7 @@ most common variables found here are described in Table 2.
 
 .. |dagger| unicode:: 0x02020 .. the dagger-symbol
 
-.. csv-table:: The entries in ``dat.props`` that are used in |dlfn|.
+.. csv-table:: The entries in ``dat.attrs`` that are used in |dlfn|.
                :header-rows: 1
                :widths: 15, 105
                :file: ./props_info.csv

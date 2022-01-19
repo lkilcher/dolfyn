@@ -42,11 +42,9 @@ if "%1" == "help" (
 )
 
 if "%1" == "clean" (
-	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
-	del /q /s %BUILDDIR%\*
-	goto end
+	del *.html *.js *.inv /s /q
+	rmdir doctrees /s /q
 )
-
 
 REM Check if sphinx-build is available and fallback to Python version if any
 %SPHINXBUILD% 2> nul

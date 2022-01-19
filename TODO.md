@@ -3,14 +3,7 @@ General
 
 Talk w/ @jmcvey3
 ======
-- Move docs? ... and links to docs in `README.md`
-- Add notes for building docs to `distribution_notes.md`
-- coveralls links?
-- +Maintainer on PyPi
-- +Maintainer of docs?
-- Changed to `<xarray_object>.velds` (rather than `Veldata`) fix docs?
 - How to document the dolfyn-view data-objects (`<obj>.velds`)? Is building this even a good idea?
-- Invalid definition of wavenumber vector (k)
 
 
 Testing
@@ -75,4 +68,3 @@ What about dropping data from averaging? Is this something we should support? Vi
 ADCPs:
   - Support for calculating principal heading by ensemble?
   - Support for motion-correcting ADCP data
-  - turbulence analysis - requires Reynolds stress rotations

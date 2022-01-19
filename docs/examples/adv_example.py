@@ -25,7 +25,7 @@ binner = api.ADVBinner(n_bin=9600, fs=dat_fin.fs, n_fft=4096)
 dat_binned = binner(dat_fin)
 
 # At any point you can save the data:
-dlfn.save(dat_binned, 'adv_data.nc')
+#dlfn.save(dat_binned, 'adv_data.nc')
 
 # And reload the data:
-dat_bin_copy = dlfn.load('adv_data.nc')
+#dat_bin_copy = dlfn.load('adv_data.nc')

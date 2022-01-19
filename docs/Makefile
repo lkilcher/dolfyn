@@ -153,6 +153,4 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 clean:
-	find $(BUILDDIR) -type f -not -path "*/.git*" -not -path "$(BUILDDIR)/html/.nojekyll" -delete
-	find $(BUILDDIR) -type d -not -path "$(BUILDDIR)/html*" -not -path "$(BUILDDIR)" -delete
-	rm source/_as_gen/*.rst
+	rm -rf $(BUILDDIR) *.html doctrees *.js *.inv
