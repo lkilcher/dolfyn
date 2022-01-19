@@ -1,7 +1,7 @@
 import struct
 import os.path as path
 import numpy as np
-#import warnings
+import warnings
 from .. import time
 
 def _reduce_by_average(data, ky0, ky1):
@@ -347,8 +347,12 @@ def _collapse(vec, name=None, exclude=[]):
     elif _isuniform(vec, exclude=exclude):
         return list(set(np.unique(vec)) - set(exclude))[0]
     else:
-        #warnings.warn(f"The variable {name} is expected to be uniform, but it is not.")
-        return vec[0]
+        uniq, idx, counts = np.unique(vec, return_index=True, return_counts=True)
+        val = vec[idx[np.argmax(counts)]]
+        if not set(uniq) == set([0, val]) and set(counts) == set([1, np.max(counts)]):
+            # warn when the 'wrong value' is not just a single zero.
+            warnings.warn("The variable {} is expected to be uniform, but it is not.\nValues found: {} (counts: {}).\nUsing the most common value: {}".format(name, list(uniq), list(counts), val))
+        return val
 
 
 def _calc_config(index):
