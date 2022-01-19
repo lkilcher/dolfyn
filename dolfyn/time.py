@@ -9,7 +9,22 @@ def _fullyear(year):
     return year
 
 
-def epoch2dt64(ep_time, ):
+def epoch2dt64(ep_time):
+    """
+    Convert from epoch time (seconds since 1/1/1970 00:00:00) to 
+    numpy.datetime64 array
+
+    Parameters
+    ----------
+    ep_time : xarray.DataArray
+        Time coordinate data-array or single time element
+
+    Returns
+    -------
+    time : numpy.datetime64
+        The converted datetime64 array
+
+    """
     # assumes t0=1970-01-01 00:00:00
     out = np.array(ep_time.astype('int')).astype('datetime64[s]')
     out = out + ((ep_time % 1) * 1e9).astype('timedelta64[ns]')
@@ -17,14 +32,57 @@ def epoch2dt64(ep_time, ):
 
 
 def dt642epoch(dt64):
+    """
+    Convert numpy.datetime64 array to epoch time 
+    (seconds since 1/1/1970 00:00:00)
+
+    Parameters
+    ----------
+    dt64 : numpy.datetime64
+        Single or array of datetime64 object(s)
+
+    Returns
+    -------
+    time : float
+        Epoch time (seconds since 1/1/1970 00:00:00)
+
+    """
     return dt64.astype('datetime64[ns]').astype('float') / 1e9
 
 
 def date2dt64(dt):
+    """
+    Convert numpy.datetime64 array to list of datetime objects
+
+    Parameters
+    ----------
+    time : datetime.datetime
+        The converted datetime object
+
+    Returns
+    -------
+    dt64 : numpy.datetime64
+        Single or array of datetime64 object(s)
+
+    """
     return np.array(dt).astype('datetime64[ns]')
 
 
 def dt642date(dt64):
+    """
+    Convert numpy.datetime64 array to list of datetime objects
+
+    Parameters
+    ----------
+    dt64 : numpy.datetime64
+        Single or array of datetime64 object(s)
+
+    Returns
+    -------
+    time : datetime.datetime
+        The converted datetime object
+
+    """
     return epoch2date(dt642epoch(dt64))
 
 
@@ -44,7 +102,7 @@ def epoch2date(ep_time, offset_hr=0, to_str=False):
 
     Returns
     -------
-    time : datetime
+    time : datetime.datetime
         The converted datetime object or list(strings) 
 
     Notes

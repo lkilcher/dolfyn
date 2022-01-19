@@ -287,7 +287,7 @@ class ADVBinner(VelBinner):
                             attrs={'units': 'm^2/s^3',
                                    'method': 'TE01'})
 
-    def calc_L_int(self, a_cov, vel_avg, fs=None):
+    def calc_L_int(self, a_cov, U_mag, fs=None):
         """
         Calculate integral length scales.
 
@@ -295,8 +295,8 @@ class ADVBinner(VelBinner):
         ----------
         a_cov : xarray.DataArray
           The auto-covariance array (i.e. computed using `calc_acov`).
-        vel_avg : xarray.DataArray
-          The bin-averaged velocity (from dataset shortcut)
+        U_mag : xarray.DataArray
+          The bin-averaged horizontal velocity (from dataset shortcut)
         fs : float
           The raw sample rate
 
@@ -317,7 +317,7 @@ class ADVBinner(VelBinner):
         fs = self._parse_fs(fs)
 
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
-        L_int = (abs(vel_avg) / fs * scale)
+        L_int = (abs(U_mag) / fs * scale)
 
         return xr.DataArray(L_int, name='L_int', attrs={'units': 'm'})
 

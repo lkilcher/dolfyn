@@ -110,7 +110,7 @@ def calc_principal_heading(vel, tidal_mode=True):
     Parameters
     ----------
     vel : np.ndarray (2,...,Nt), or (3,...,Nt)
-      The 2D or 3D Veldata array (3rd-dim is ignored in this calculation)
+      The 2D or 3D velocity array (3rd-dim is ignored in this calculation)
     tidal_mode : bool (default: True)
 
     Returns

@@ -13,14 +13,14 @@ calculated using the :ref:`DOLfYN API <package>`.
 **Important Note:** The items listed in Table 4 are not stored in the dataset
 but are provided as attributes (shortcuts) to the dataset itself.
 They are accessed through the `xarray accessor 
-<http://xarray.pydata.org/en/stable/internals/extending-xarray.html>`_ `Veldata`.
+<http://xarray.pydata.org/en/stable/internals/extending-xarray.html>`_ `velds`.
 
 For example, to return the magnitude of the horizontal velocity::
 
 	>> import dolfyn as dlfn
 	>> dat = dlfn.read_example('AWAC_test01.wpr')
 	
-	>> dat.Veldata.U_mag
+	>> dat.velds.U_mag
 
 	<xarray.DataArray 'vel' (range: 20, time: 9997)>
 	array([[1.12594587, 0.82454599, 0.96503734, ..., 3.40359042, 3.34527587,

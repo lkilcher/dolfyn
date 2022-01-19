@@ -17,7 +17,7 @@ ensemble_size = 32*300  # sampling frequency * 300 seconds
 data_raw = dlfn.read(fname, userdata=True)
 
 # Crop the data for the time range of interest:
-t_start = dlfn.time.date2epoch(datetime(2012, 6, 12, 12, 8, 30))[0]
+t_start = dlfn.time.date2dt64(datetime(2012, 6, 12, 12, 8, 30))
 t_end = data_raw.time[-1]
 data = data_raw.sel(time=slice(t_start, t_end))
 
@@ -31,11 +31,9 @@ data['vel'] = api.clean.clean_fill(data.vel, bad, method='cubic')
 # data.vel.values = data.vel.where(data.mask)
 
 # plotting raw vs qc'd data
-dt_raw = dlfn.time.epoch2date(data_raw.time)
-dt = dlfn.time.epoch2date(data.time)
 ax = plt.figure(figsize=(20, 10)).add_axes([.14, .14, .8, .74])
-ax.plot(dt_raw, data_raw.velds.u, label='raw data')
-ax.plot(dt, data.velds.u, label='despiked')
+ax.plot(data_raw.time, data_raw.velds.u, label='raw data')
+ax.plot(data.time, data.velds.u, label='despiked')
 ax.set_xlabel('Time')
 ax.xaxis.set_major_formatter(mpldt.DateFormatter('%D %H:%M'))
 ax.set_ylabel('u-dir velocity, (m/s)')
@@ -57,8 +55,8 @@ data = api.correct_motion(data, accel_filter, to_earth=False)
 
 # Plotting corrected vs uncorrect velocity in instrument coordinates
 ax = plt.figure(figsize=(20, 10)).add_axes([.14, .14, .8, .74])
-ax.plot(dt, data_cleaned.velds.u, 'g-', label='uncorrected')
-ax.plot(dt, data.velds.u, 'b-', label='motion-corrected')
+ax.plot(data_cleaned.time, data_cleaned.velds.u, 'g-', label='uncorrected')
+ax.plot(data.time, data.velds.u, 'b-', label='motion-corrected')
 ax.set_xlabel('Time')
 ax.xaxis.set_major_formatter(mpldt.DateFormatter('%D %H:%M'))
 ax.set_ylabel('u velocity, (m/s)')
@@ -80,8 +78,8 @@ data_uncorrected.attrs['principal_heading'] = dlfn.calc_principal_heading(
 
 # Plotting corrected vs uncorrected velocity in principal coordinates
 ax = plt.figure(figsize=(20, 10)).add_axes([.14, .14, .8, .74])
-ax.plot(dt, data_uncorrected.velds.u, 'g-', label='uncorrected')
-ax.plot(dt, data.velds.u, 'b-', label='motion-corrected')
+ax.plot(data_uncorrected.time, data_uncorrected.velds.u, 'g-', label='uncorrected')
+ax.plot(data.time, data.velds.u, 'b-', label='motion-corrected')
 ax.set_xlabel('Time')
 ax.xaxis.set_major_formatter(mpldt.DateFormatter('%D %H:%M'))
 ax.set_ylabel('streamwise velocity, (m/s)')
@@ -94,7 +92,7 @@ plt.show()
 # Create velocity spectra
 # Initiate tool to bin data based on the ensemble length. If n_fft is none,
 # n_fft is equal to n_bin
-ensemble_tool = api.ADVBinner(n_bin=ensemble_size, fs=data.fs, n_fft=None)
+ensemble_tool = api.ADVBinner(n_bin=9600, fs=data.fs, n_fft=4800)
 
 # motion corrected data
 mc_spec = ensemble_tool.calc_psd(data.vel, freq_units='Hz')

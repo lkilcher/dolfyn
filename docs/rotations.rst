@@ -70,48 +70,49 @@ directions, which are defined by the following coordinate systems:
   details.
 
 To rotate a data object into one of these coordinate systems, simply
-use the ``rotate2`` method::
+use the ``rotate2`` method:
 
-	>> dat_earth = dlfn.rotate2(dat, 'earth')
-	>> dat_earth
-	<xarray.Dataset>
-	Dimensions:              (earth: 3, inst: 3, orient: 3, time: 90, x: 3, x*: 3)
-	Coordinates:
-	  * time                 (time) float64 1.439e+09 1.439e+09 ... 1.439e+09
-	  * orient               (orient) <U1 'E' 'N' 'U'
-	  * x                    (x) int32 1 2 3
-	  * x*                   (x*) int32 1 2 3
-	  * inst                 (inst) <U1 'X' 'Y' 'Z'
-	  * earth                (earth) <U1 'E' 'N' 'U'
-	Data variables:
-		beam2inst_orientmat  (x, x*) float64 2.674 -1.335 -1.339 ... -0.3435 -0.3445
-		c_sound              (time) float32 1.487e+03 1.487e+03 ... nan nan
-		heading              (time) float32 215.6 215.6 215.6 215.6 ... nan nan nan
-		pitch                (time) float32 -1.5 -1.5 -1.5 -1.5 ... nan nan nan nan
-		roll                 (time) float32 -3.3 -3.3 -3.3 -3.3 ... nan nan nan nan
-		temp                 (time) float32 18.83 18.83 18.83 18.83 ... nan nan nan
-		vel                  (orient, time) float64 -2.632 0.2576 ... 0.4999 0.4007
-		amp                  (orient, time) uint8 52 52 50 47 52 ... 52 53 50 50 51
-		corr                 (orient, time) uint8 28 6 12 30 8 38 ... 22 10 19 30 38
-		orientation_down     (time) bool False False False ... False False False
-		pressure             (time) float64 0.0 0.0 0.0 0.0 0.0 ... 0.0 0.0 0.0 0.0
-		orientmat            (inst, earth, time) float64 -0.5819 -0.5819 ... 0.9984
-	Attributes:
-		config:                    {'ProLogID': 32, 'ProLogFWver': '    ', 'confi...
-		inst_make:                 Nortek
-		inst_model:                Vector
-		inst_type:                 ADV
-		rotate_vars:               ['vel']
-		freq:                      6000
-		SerialNum:                 VEC11089
-		Comments:                  
-		DutyCycle_NBurst:          10
-		DutyCycle_NCycle:          320.0
-		fs:                        32.0
-		coord_sys:                 earth
-		has_imu:                   0
-		declination:               10
-		declination_in_orientmat:  1
+.. code-block::
+
+  >> dat = dlfn.read_example('vector_data_imu01.VEC')
+  >> dat_earth = dlfn.rotate2(dat, 'earth')
+  >> dat_earth
+  <xarray.Dataset>
+  Dimensions:              (time: 27043, dir: 3, beam: 3, x*: 3, earth: 3, inst: 3, dirIMU: 3)
+  Coordinates:
+    * time                 (time) datetime64[ns] 2012-06-12T12:00:02.681046 ......
+    * dir                  (dir) <U1 'E' 'N' 'U'
+    * beam                 (beam) int32 1 2 3
+    * x*                   (x*) int32 1 2 3
+    * earth                (earth) <U1 'E' 'N' 'U'
+    * inst                 (inst) <U1 'X' 'Y' 'Z'
+    * dirIMU               (dirIMU) <U1 'E' 'N' 'U'
+  Data variables: (12/18)
+    beam2inst_orientmat  (beam, x*) float64 2.74 -1.384 -1.354 ... 0.3489 0.3413
+    batt                 (time) float32 11.3 11.3 11.3 11.3 ... 10.8 10.8 10.8
+    c_sound              (time) float32 1.491e+03 1.491e+03 ... 1.486e+03
+    heading              (time) float32 0.0 0.0 0.0 0.0 0.0 ... 0.0 0.0 0.0 0.0
+    pitch                (time) float32 0.0 0.0 0.0 0.0 0.0 ... 0.0 0.0 0.0 0.0
+    roll                 (time) float32 0.0 0.0 0.0 0.0 0.0 ... 0.0 0.0 0.0 0.0
+                  ...
+    accel                (dir, time) float32 -0.03771 0.01074 ... 9.796 9.788
+    angrt                (dir, time) float32 -0.006857 -0.004057 ... 0.1279
+    mag                  (dir, time) float32 0.001869 0.001455 ... -0.5543
+    orientmat            (earth, inst, time) float32 0.7867 0.7819 ... -0.9979
+    orientation_down     (time) bool False False False ... False False False
+    pressure             (time) float64 198.6 198.6 198.6 ... 623.2 623.2 623.2
+  Attributes:
+    config:       {'ProLogID': 187, 'ProLogFWver': '4.12', 'config': 15412, '...
+    inst_make:    Nortek
+    inst_model:   Vector
+    inst_type:    ADV
+    rotate_vars:  ['vel', 'accel', 'angrt', 'mag']
+    freq:         6000
+    SerialNum:    VEC 9625
+    Comments:     NREL Vector with INS on APL-UW Tidal Turbulence Mooring in ...
+    fs:           32.0
+    coord_sys:    earth
+    has_imu:      1
 
 
 Orientation Data
@@ -154,14 +155,14 @@ instrument makes/models, and because |dlfn|\ -developers have chosen
 to utilize consistent definitions of orientation data (``orientmat``,
 and *h,p,r*), the following things are true:
 
-  - |dlfn| uses instrument-specific functions to calculate a
-    consistent ``orientmat`` from the inconsistent
-    definitions of *h,p,r*
+- |dlfn| uses instrument-specific functions to calculate a
+  consistent ``orientmat`` from the inconsistent
+  definitions of *h,p,r*
 
-  - |dlfn|\ 's consistent definitions *h,p,r* are generally different
-    from the definitions provided by an instrument manufacturer (i.e.,
-    there is no consensus on these definitions, so |dlfn| developers
-    have chosen one)
+- |dlfn|\ 's consistent definitions *h,p,r* are generally different
+  from the definitions provided by an instrument manufacturer (i.e.,
+  there is no consensus on these definitions, so |dlfn| developers
+  have chosen one)
 
 Varying degrees of validation have been performed to confirm that the
 ``orientmat`` is being calculated correctly for each instrument's
@@ -180,20 +181,20 @@ The |dlfn|-defined *h,p,r* variables can be calculated using the
 provides the reverse functionality). This function computes these
 variables according to the following conventions:
 
-  - a "ZYX" rotation order. That is, these variables are computed
-    assuming that rotation from the earth -> instrument frame happens
-    by rotating around the z-axis first (heading), then rotating
-    around the y-axis (pitch), then rotating around the x-axis (roll).
+- a "ZYX" rotation order. That is, these variables are computed
+  assuming that rotation from the earth -> instrument frame happens
+  by rotating around the z-axis first (heading), then rotating
+  around the y-axis (pitch), then rotating around the x-axis (roll).
 
-  - heading is defined as the direction the x-axis points, positive
-    clockwise from North (this is *opposite* the right-hand-rule
-    around the Z-axis)
+- heading is defined as the direction the x-axis points, positive
+  clockwise from North (this is *opposite* the right-hand-rule
+  around the Z-axis)
 
-  - pitch is positive when the x-axis pitches up (this is *opposite* the
-    right-hand-rule around the Y-axis)
+- pitch is positive when the x-axis pitches up (this is *opposite* the
+  right-hand-rule around the Y-axis)
 
-  - roll is positive according to the right-hand-rule around the
-    instrument's x-axis
+- roll is positive according to the right-hand-rule around the
+  instrument's x-axis
 
 Instrument heading, pitch, roll
 ...............................
@@ -213,12 +214,12 @@ Declination Handling
 of the declination must be specified by the user. There are two ways
 to set a data-object's declination:
 
-1. Set declination explicitly using the ``set_declination``
+#. Set declination explicitly using the ``set_declination``
    method, for example::
 
      dat = dlfn.set_declination(dat, 16.53)
 
-2. Set declination in the ``<data_filename>.userdata.json`` file
+#. Set declination in the ``<data_filename>.userdata.json`` file
    (`more details <json-userdata>`_ ), then read the binary data
    file (i.e., using ``dat = dolfyn.read(<data_filename>)``).
 
@@ -234,7 +235,9 @@ includes the :func:`~dolfyn.calc_principal_heading` function to aide in
 identifying/calculating the principal heading. Using this function to
 identify the principal heading, an ADV data object that is in the
 earth-frame can be rotated into the principal coordinate system like
-this::
+this:
+
+.. code-block::
 
   dat.attrs['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
   dat = dat.rotate2('principal')

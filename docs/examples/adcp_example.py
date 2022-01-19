@@ -18,7 +18,7 @@ dat_cln = dlfn.set_declination(dat_cln, 10)  # 10 degrees East
 dat_earth = dlfn.rotate2(dat_cln, 'earth')
 
 # At any point you can save the data:
-dlfn.save(dat_earth, 'adcp_data.nc')
+#dlfn.save(dat_earth, 'adcp_data.nc')
 
 # And reload the data:
-dat_copy = dlfn.load('adcp_data.nc')
+#dat_copy = dlfn.load('adcp_data.nc')

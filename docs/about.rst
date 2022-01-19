@@ -8,12 +8,12 @@ data from oceanographic velocity measurement instruments such as
 acoustic Doppler velocimeters (ADVs) and acoustic Doppler current profilers
 (ADCPs). It includes tools to
 
- * Read in raw ADCP/ADV datafiles
- * QC velocity data 
- * Rotate vector data through coordinate systems (i.e. beam to instrument to Earth to principal frames of reference)
- * Motion correction for ADV velocity measurements (via onboard IMU data)
- * Bin/ensemble averaging
- * Turbulence statistics for ADV data
+* Read in raw ADCP/ADV datafiles
+* QC velocity data 
+* Rotate vector data through coordinate systems (i.e. beam to instrument to Earth to principal frames of reference)
+* Motion correction for ADV velocity measurements (via onboard IMU data)
+* Bin/ensemble averaging
+* Turbulence statistics for ADV data
 
 .. _about.history:
 
@@ -21,15 +21,17 @@ acoustic Doppler velocimeters (ADVs) and acoustic Doppler current profilers
 Instrument Support
 ^^^^^^^^^^^^^^^^^^
 
- * Nortek:
-    * AWAC ADCP (current data only, waves in development)
-    * Signature AD2CP (current and waves)
-    * Vector ADV
-	
- * TRDI:
-    * Workhorse ADCPs (Monitor and Sentinel)
-    * WinRiver output files
-    * VMDAS output files
+* Nortek:
+
+  * AWAC ADCP (current data only, waves in development)
+  * Signature AD2CP (current and waves)
+  * Vector ADV
+
+* TRDI:
+
+  * Workhorse ADCPs (Monitor and Sentinel)
+  * WinRiver output files
+  * VMDAS output files
 
 History
 ^^^^^^^

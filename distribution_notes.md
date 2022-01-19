@@ -36,4 +36,14 @@ Before uploading to the distribution version of PyPi, it is a best practice to:
 
 # Building docs
 
-@jmcvey3 can you add some info here?
+Change directories in a command window:
+
+    cd dolfyn/docs
+    
+To build documentation in html:
+
+    make html
+    
+To remove all built documentation:
+
+    make clean
