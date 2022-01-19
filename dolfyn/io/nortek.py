@@ -3,7 +3,7 @@ import xarray as xr
 from struct import unpack
 import warnings
 from . import nortek_defs
-from .base import _find_userdata, _create_dataset, _handle_nan
+from .base import WrongFileType, _find_userdata, _create_dataset, _handle_nan
 from .. import time
 from datetime import datetime
 from ..tools import misc as tbx
@@ -166,9 +166,9 @@ class _NortekReader():
             elif unpack('>HH', self.read(4)) == (1445, 24):
                 endian = '>'
             else:
-                raise Exception("I/O error: could not determine the "
-                                "'endianness' of the file.  Are you sure this is a Nortek "
-                                "file?")
+                raise WrongFileType("I/O error: could not determine the "
+                                    "'endianness' of the file.  Are you sure this is a Nortek "
+                                    "'classic instrument' file?")
         self.endian = endian
         self.f.seek(0, 0)
 

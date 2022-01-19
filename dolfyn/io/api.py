@@ -34,13 +34,18 @@ def read(fname, userdata=True, nens=None):
 
     """
     # Loop over binary readers until we find one that works.
+    error_message = ["Error message:"]
     for func in [read_nortek, read_signature, read_rdi]:
         try:
             ds = func(fname, userdata=userdata, nens=nens)
-        except:
+        except Exception as e:
+            error_message.append(func.__name__ + ": " + e.args[0])
             continue
         else:
             return ds
+    # If no binary reader works print why they failed
+    for e in error_message:
+        print(e)
     raise Exception(
         "Unable to find a suitable reader for file {}.".format(fname))
 

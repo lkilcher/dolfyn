@@ -4,7 +4,7 @@ from struct import unpack, calcsize
 import warnings
 from . import nortek2_defs as defs
 from . import nortek2_lib as lib
-from .base import _find_userdata, _create_dataset
+from .base import WrongFileType, _find_userdata, _create_dataset
 from ..rotate.vector import _euler2orient
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -111,10 +111,10 @@ class _Ad2cpReader():
             elif unpack('>' + 'BB', byts) == (165, 10):
                 endian = '>'
             else:
-                raise Exception(
+                raise WrongFileType(
                     "I/O error: could not determine the 'endianness' "
                     "of the file.  Are you sure this is a Nortek "
-                    "AD2CP file?")
+                    "Signature (AD2CP) file?")
         self.endian = endian
 
     def _reopen(self, bufsize=None):

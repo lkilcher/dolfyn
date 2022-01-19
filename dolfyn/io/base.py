@@ -6,6 +6,13 @@ import os
 import warnings
 
 
+class WrongFileType(Exception):
+    """Specific 'Exception' error name for if a read function can't
+    read header data.
+    """
+    pass
+
+
 def _find_userdata(filename, userdata=True):
     # This function finds the file to read
     if userdata:

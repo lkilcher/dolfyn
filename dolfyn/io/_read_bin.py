@@ -81,7 +81,7 @@ class bin_reader():
     def read(self, n, frmt):
         val = self.f.read(n * self._size_factor[frmt])
         if not val:  # If val is empty we are at the end of the file.
-            raise Exception('End of file')
+            raise Exception('EOF error: Reached end of file')
         self.cs and self.cs.add(val)
         if n == 1:
             return unpack(self.endian + frmt * n, val)[0]
@@ -115,7 +115,7 @@ class bin_reader():
     def read_i32(self, n):
         return self.read(n, 'l')
 
-#ics = 0  # This is a holder for the checksum index
+# ics = 0  # This is a holder for the checksum index
 # class checksum():
 #     # Checksum for TRDI
 #     def __init__(self, file, val, size, error_behavior='exception'):

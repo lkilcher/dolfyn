@@ -4,7 +4,7 @@ from .. import time as tmlib
 import warnings
 from os.path import getsize
 from ._read_bin import bin_reader
-from .base import _find_userdata, _create_dataset
+from .base import WrongFileType, _find_userdata, _create_dataset
 from ..rotate.rdi import _calc_beam_orientmat, _calc_orientmat
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -86,7 +86,7 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
         dt = tmlib.epoch2dt64(ds[ky])
         ds = ds.drop_vars(ky)  # must do b/c of netcdf encoding error
         ds[ky] = xr.DataArray(dt, coords={'time_gps': ds.time_gps})
-        
+
     return ds
 
 
@@ -319,7 +319,7 @@ class _RdiReader():
             nread += 1
             cfgid[1] = cfgid[0]
             cfgid[0] = nextbyte
-            if not pos % 1000:
+            if not pos % 1000 and self._debug_level:
                 print('  Still looking for valid cfgid at file '
                       'position %d ...' % pos)
         self._pos = self.f.tell() - 2
@@ -393,7 +393,7 @@ class _RdiReader():
             try:
                 dats = tmlib.date2epoch(
                     tmlib.datetime(*clock[:6, 0],
-                                  microsecond=clock[6, 0] * 10000))[0]
+                                   microsecond=clock[6, 0] * 10000))[0]
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
@@ -462,8 +462,9 @@ class _RdiReader():
             id1[1] = id1[0]
             id1[0] = nextbyte
         if search_cnt == self._search_num:
-            raise Exception(
-                'Searched {} entries... Bad data encountered. -> {}'
+            raise WrongFileType(
+                'Searched {} entries... Not a workhorse/broadband'
+                ' file or bad data encountered. -> {}'
                 .format(search_cnt, id1))
         elif search_cnt > 0:
             if self._debug_level > 0:
@@ -860,9 +861,9 @@ class _RdiReader():
                 return 'FAIL'
             gga_time = str(self.f.reads(9))
             time = tmlib.timedelta(hours=int(gga_time[0:2]),
-                                  minutes=int(gga_time[2:4]),
-                                  seconds=int(gga_time[4:6]),
-                                  milliseconds=int(gga_time[7:])*100)
+                                   minutes=int(gga_time[2:4]),
+                                   seconds=int(gga_time[4:6]),
+                                   milliseconds=int(gga_time[7:])*100)
             clock = self.ensemble.rtc[:, :]
             if clock[0, 0] < 100:
                 clock[0, :] += century
