@@ -1,10 +1,10 @@
 from .base import load_ncdata as load, rfnm
 
 
-
 vec = load('vector_data01.nc')
 sig = load('BenchFile01.nc')
 rdi = load('RDI_test01.nc')
+
 
 def test_repr(make_data=False):
 
@@ -20,4 +20,3 @@ def test_repr(make_data=False):
             with open(fnm, 'r') as fl:
                 test_str = fl.read()
             assert test_str == _str
-            

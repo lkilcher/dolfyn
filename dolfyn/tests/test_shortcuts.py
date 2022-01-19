@@ -1,9 +1,9 @@
-from dolfyn.tests import test_read_adv as tv
-from dolfyn.tests.base import load_ncdata as load, save_ncdata as save
+from . import test_read_adv as tv
+from .base import load_ncdata as load, save_ncdata as save
 from dolfyn import rotate2
+import dolfyn.adv.api as avm
 from xarray.testing import assert_allclose
 import xarray as xr
-import dolfyn.adv.api as avm
 
 
 class adv_setup():

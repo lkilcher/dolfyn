@@ -1,5 +1,5 @@
-from dolfyn.tests import test_read_adp as tr
-from dolfyn.tests import base
+from . import test_read_adp as tr
+from . import base
 from dolfyn.rotate.api import rotate2
 from numpy.testing import assert_allclose
 import numpy as np

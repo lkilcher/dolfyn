@@ -1,11 +1,10 @@
-from dolfyn.tests import test_read_adv as tr
-from dolfyn.tests.base import load_ncdata as load, save_ncdata as save
+from . import test_read_adv as tr
+from .base import load_ncdata as load, save_ncdata as save, assert_allclose
 from dolfyn.rotate.api import rotate2, calc_principal_heading, \
     set_declination, set_inst2head_rotmat
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
 import unittest
-from .base import assert_allclose
 import numpy.testing as npt
 
 
