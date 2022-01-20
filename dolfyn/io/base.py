@@ -6,6 +6,36 @@ import os
 import warnings
 
 
+def _get_filetype(fname):
+    """Detects whether the file is a Nortek, Signature (Nortek), or RDI
+    file by reading the first few bytes of the file.
+
+    Returns
+    =======
+       None - Doesn't match any known pattern
+       'signature' - for Nortek signature files
+       'nortek' - for Nortek (Vec, AWAC) files
+       'RDI' - for RDI files
+       '<GIT-LFS pointer> - if the file looks like a GIT-LFS pointer.
+    """
+
+    with open(fname, 'rb') as rdr:
+        bytes = rdr.read(40)
+    code = bytes[:2].hex()
+    #print("{} - {}".format(fname.rsplit('/')[-1], bytes))
+    if code in ['7f79', '7f7f']:
+        return 'RDI'
+    elif code in ['a50a']:
+        return 'signature'
+    elif code in ['a505']:
+        # AWAC 
+        return 'nortek'
+    elif bytes == b'version https://git-lfs.github.com/spec/':
+        return '<GIT-LFS pointer>'
+    else:
+        return None
+
+
 def _find_userdata(filename, userdata=True):
     # This function finds the file to read
     if userdata:
