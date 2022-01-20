@@ -5,7 +5,7 @@ import pkg_resources
 from .nortek import read_nortek
 from .nortek2 import read_signature
 from .rdi import read_rdi
-from .base import _create_dataset
+from .base import _create_dataset, _get_filetype
 from ..rotate.base import _set_coords
 from ..time import date2matlab, matlab2date, date2dt64, dt642date
 
@@ -33,16 +33,22 @@ def read(fname, userdata=True, nens=None):
         An xarray dataset from instrument datafile.
 
     """
-    # Loop over binary readers until we find one that works.
-    for func in [read_nortek, read_signature, read_rdi]:
-        try:
-            ds = func(fname, userdata=userdata, nens=nens)
-        except:
-            continue
-        else:
-            return ds
-    raise Exception(
-        "Unable to find a suitable reader for file {}.".format(fname))
+    file_type = _get_filetype(fname)
+    if file_type == '<GIT-LFS pointer>':
+        raise IOError("File '{}' looks like a git-lfs pointer. You may need to "
+                      "install and initialize git-lfs. See https://git-lfs.github.com"
+                      " for details.".format(fname))
+    elif file_type is None:
+        raise IOError("File '{}' is not recognized as a file-type that is readable by "
+                      "DOLfYN. If you think it should be readable, try using the "
+                      "appropriate read function (`read_rdi`, `read_nortek`, or "
+                      "`read_signature`) found in dolfyn.io.api.".format(fname))
+    else:
+        func_map = dict(RDI=read_rdi,
+                        nortek=read_nortek,
+                        signature=read_signature)
+        func = func_map[file_type]
+    return func(fname, userdata=userdata, nens=nens)
 
 
 def read_example(name, **kwargs):
