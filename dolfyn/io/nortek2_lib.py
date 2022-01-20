@@ -3,6 +3,7 @@ import os.path as path
 import numpy as np
 import warnings
 from .. import time
+from .base import _abspath
 
 def _reduce_by_average(data, ky0, ky1):
     # Average two arrays together, if they both exist.
@@ -92,8 +93,8 @@ def _calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
 
 def _create_index_slow(infile, outfile, N_ens):
     print("Indexing {}...".format(infile), end='')
-    fin = open(infile, 'rb')
-    fout = open(outfile, 'wb')
+    fin = open(_abspath(infile), 'rb')
+    fout = open(_abspath(outfile), 'wb')
     fout.write(b'Index Ver:')
     fout.write(struct.pack('<H', _index_version))
     ens = 0
@@ -143,7 +144,7 @@ def _get_index(infile, reload=False):
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
         _create_index_slow(infile, index_file, 2 ** 32)
-    f = open(index_file, 'rb')
+    f = open(_abspath(index_file), 'rb')
     file_head = f.read(12)
     if file_head[:10] == b'Index Ver:':
         index_ver = struct.unpack('<H', file_head[10:])[0]
@@ -196,8 +197,8 @@ def crop_ensembles(infile, outfile, range):
         n_ID = len(np.unique(idx['ID']))
         idx_act = np.arange(0, len(idx)//n_ID, 1)
         idx['ens'] = np.sort(np.tile(idx_act, n_ID))
-    with open(infile, 'rb') as fin:
-        with open(outfile, 'wb') as fout:
+    with open(_abspath(infile), 'rb') as fin:
+        with open(_abspath(outfile), 'wb') as fout:
             fout.write(fin.read(idx['pos'][0]))
             i0 = np.nonzero(idx['ens'] == range[0])[0][0]
             ie = np.nonzero(idx['ens'] == range[1])[0][0]

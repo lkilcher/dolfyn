@@ -4,7 +4,7 @@ from .. import time as tmlib
 import warnings
 from os.path import getsize
 from ._read_bin import bin_reader
-from .base import _find_userdata, _create_dataset
+from .base import _find_userdata, _create_dataset, _abspath
 from ..rotate.rdi import _calc_beam_orientmat, _calc_orientmat
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -284,7 +284,7 @@ class _RdiReader():
     extrabytes = 0
 
     def __init__(self, fname, navg=1, debug_level=0):
-        self.fname = fname
+        self.fname = _abspath(fname)
         print('\nReading file {} ...'.format(fname))
         self._debug_level = debug_level
         self.cfg = {}
@@ -292,13 +292,13 @@ class _RdiReader():
         self.cfg['sourceprog'] = 'instrument'
         self.cfg['prog_ver'] = 0
         self.hdr = {}
-        self.f = bin_reader(fname)
+        self.f = bin_reader(self.fname)
         self.read_hdr()
         self.read_cfg()
         self.f.seek(self._pos, 0)
         self.n_avg = navg
         self.ensemble = _ensemble(self.n_avg, self.cfg['n_cells'])
-        self._filesize = getsize(fname)
+        self._filesize = getsize(self.fname)
         self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
                                              self.extrabytes))
         self.vars_read = _variable_setlist(['time'])
