@@ -4,7 +4,7 @@ from struct import unpack, calcsize
 import warnings
 from . import nortek2_defs as defs
 from . import nortek2_lib as lib
-from .base import _find_userdata, _create_dataset
+from .base import _find_userdata, _create_dataset, _abspath
 from ..rotate.vector import _euler2orient
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -124,7 +124,7 @@ class _Ad2cpReader():
             self.f.close()
         except AttributeError:
             pass
-        self.f = open(self.fname, 'rb', bufsize)
+        self.f = open(_abspath(self.fname), 'rb', bufsize)
 
     def _read_filehead_config_string(self, ):
         hdr = self._read_hdr()

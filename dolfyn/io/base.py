@@ -6,6 +6,10 @@ import os
 import warnings
 
 
+def _abspath(fname):
+    return os.path.abspath(os.path.expanduser(fname))
+
+
 def _get_filetype(fname):
     """Detects whether the file is a Nortek, Signature (Nortek), or RDI
     file by reading the first few bytes of the file.
