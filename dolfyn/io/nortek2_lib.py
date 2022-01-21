@@ -72,7 +72,7 @@ _index_dtype = {
 
 
 def _calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
-    dt = np.empty(year.shape, dtype='float')
+    dt = np.zeros(year.shape, dtype='float')
     for idx, (y, mo, d, h, mi, s, u) in enumerate(
             zip(year, month, day,
                 hour, minute, second, usec)):
@@ -140,7 +140,6 @@ def _create_index_slow(infile, outfile, N_ens):
     print(" Done.")
 
 
-
 def _check_index(idx, ):
     _hw_ens = idx['hw_ens'].copy().astype('int32')
     period = _hw_ens.max()
@@ -162,6 +161,44 @@ def _check_index(idx, ):
                   "at ensemble {}".format(idx['ens'][first_bad]))
 
 
+def _check_index2(idx, infile, fix_hw_ens=False):
+    uid = np.unique(idx['ID'])
+    if fix_hw_ens:
+        hwe = idx['hw_ens']
+    else:
+        hwe = idx['hw_ens'].copy()
+    period = hwe.max()
+    ens = idx['ens']
+    N_id = len(uid)
+    FLAG = False
+    # This loop fixes 'skips' inside the file
+    for id in uid:
+        # These are the indices for this ID
+        inds = np.nonzero(idx['ID'] == id)[0]
+
+        # These are bad steps in the indices for this ID
+        ibad = np.nonzero(np.diff(inds) > N_id)[0]
+        for ib in ibad:
+            FLAG = True
+            # The ping number reported here may not be quite right if
+            # the ensemble count is wrong.
+            warnings.warn("Skipped ping (ID: {}) in file {} at ensemble {}."
+                          .format(id, infile, idx['ens'][inds[ib + 1] - 1]))
+            hwe[inds[(ib + 1):]] += 1
+            ens[inds[(ib + 1):]] += 1
+
+    # This block fixes skips that originate from before this file.
+    delta = max(hwe[:N_id]) - hwe[:N_id]
+    for d, id in zip(delta, idx['ID'][:N_id]):
+        if d != 0:
+            FLAG = True
+            hwe[id == idx['ID']] += d
+            ens[id == idx['ID']] += d
+
+    if np.any(np.diff(ens) > 1) and FLAG:
+        idx['ens'] = np.unwrap(hwe.astype(np.int64), period=period) - hwe[0]
+        
+
 def _get_index(infile, reload=False):
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
@@ -176,7 +213,7 @@ def _get_index(infile, reload=False):
         f.seek(0, 0)
     out = np.fromfile(f, dtype=_index_dtype[index_ver])
     f.close()
-    _check_index(out)
+    _check_index2(out, infile)
     return out
 
 
