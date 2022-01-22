@@ -140,28 +140,7 @@ def _create_index_slow(infile, outfile, N_ens):
     print(" Done.")
 
 
-def _check_index(idx, ):
-    _hw_ens = idx['hw_ens'].copy().astype('int32')
-    period = _hw_ens.max()
-    ens = np.unwrap(_hw_ens, period=period)
-    ens -= ens[0]
-    dens = np.diff(ens)
-    bad = (dens < 0)
-    if bad.any():
-        dens[~bad] = 0
-        ens[1:] -= dens
-        while ens[1] - ens[0] > 1:
-            ens[1:] -= 1
-        idx['ens'] = ens
-        first_bad = np.nonzero(bad)[0][0]
-        if first_bad > 16:
-            # The files that fail this test probably follow files that
-            # already had this error.
-            print("There appears to be a skipped ping in the file "
-                  "at ensemble {}".format(idx['ens'][first_bad]))
-
-
-def _check_index2(idx, infile, fix_hw_ens=False):
+def _check_index(idx, infile, fix_hw_ens=False):
     uid = np.unique(idx['ID'])
     if fix_hw_ens:
         hwe = idx['hw_ens']
@@ -213,7 +192,7 @@ def _get_index(infile, reload=False):
         f.seek(0, 0)
     out = np.fromfile(f, dtype=_index_dtype[index_ver])
     f.close()
-    _check_index2(out, infile)
+    _check_index(out, infile)
     return out
 
 
