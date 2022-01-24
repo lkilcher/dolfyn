@@ -3,6 +3,7 @@ import xarray as xr
 from .binned import TimeBinner
 from .time import dt642epoch, dt642date
 from .rotate.api import rotate2, set_declination, set_inst2head_rotmat
+from .io.api import save
 
 
 @xr.register_dataset_accessor('velds')  # 'vel dataset'
@@ -117,6 +118,23 @@ class Velocity():
         """
         return set_inst2head_rotmat(self.ds, rotmat, inplace)
 
+    def save(self, filename, **kwargs):
+        """Save the data object (underlying xarray dataset) as netCDF (.nc).
+
+        Parameters
+        ----------
+        filename : str
+            Filename and/or path with the '.nc' extension
+        **kwargs : these are passed directly to :func:`save <dolfyn.io.api.save>`.
+
+        Notes
+        -----
+        See |dlfn|'s :func:`save <dolfyn.io.api.save>` function for
+        additional details.
+
+        """
+        save(self.ds, filename, **kwargs)
+    
     ########
     # Magic methods of the API
 
