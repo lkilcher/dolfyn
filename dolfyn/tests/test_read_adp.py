@@ -10,6 +10,7 @@ import unittest
 from .base import assert_allclose
 import pytest
 
+
 load = tb.load_ncdata
 save = tb.save_ncdata
 
@@ -30,15 +31,8 @@ dat_sig_ieb = load('VelEchoBT01.nc')
 dat_sig_ie = load('Sig500_Echo.nc')
 dat_sig_tide = load('Sig1000_tidal.nc')
 dat_sig_skip = load('Sig_SkippedPings01.nc')
+dat_sig_badt = load('Sig1000_BadTime01.nc')
 dat_sig5_leiw = load('Sig500_last_ensemble_is_whole.nc')
-
-
-def test_badtime():
-    dat = sig.read_signature(tb.rfnm('Sig1000_BadTime01.ad2cp'))
-    os.remove(tb.rfnm('Sig1000_BadTime01.ad2cp.index'))
-
-    assert dat.time[199].isnull(), \
-        "A good timestamp was found where a bad value is expected."
 
 
 def test_io_rdi(make_data=False):
@@ -105,7 +99,10 @@ def test_io_nortek2(make_data=False):
     with pytest.warns(UserWarning):
         # This issues a warning...
         td_sig_skip = tb.drop_config(read('Sig_SkippedPings01.ad2cp'))
-    
+
+    with pytest.warns(UserWarning):
+        td_sig_badt = tb.drop_config(sig.read_signature(tb.rfnm('Sig1000_BadTime01.ad2cp')))
+
     # Make sure we read all the way to the end of the file.
     # This file ends exactly at the end of an ensemble.
     td_sig5_leiw = read('Sig500_last_ensemble_is_whole.ad2cp')
@@ -117,6 +114,7 @@ def test_io_nortek2(make_data=False):
     os.remove(tb.exdt('Sig1000_tidal.ad2cp.index'))
     os.remove(tb.exdt('Sig_SkippedPings01.ad2cp.index'))
     os.remove(tb.exdt('Sig500_last_ensemble_is_whole.ad2cp.index'))
+    os.remove(tb.rfnm('Sig1000_BadTime01.ad2cp.index'))
 
     if make_data:
         save(td_sig, 'BenchFile01.nc')
@@ -126,6 +124,7 @@ def test_io_nortek2(make_data=False):
         save(td_sig_ie, 'Sig500_Echo.nc')
         save(td_sig_tide, 'Sig1000_tidal.nc')
         save(td_sig_skip, 'Sig_SkippedPings01.nc')
+        save(td_sig_badt, 'Sig1000_BadTime01.nc')
         save(td_sig5_leiw, 'Sig500_last_ensemble_is_whole.nc')
         return
 
@@ -137,6 +136,7 @@ def test_io_nortek2(make_data=False):
     assert_allclose(td_sig_tide, dat_sig_tide, atol=1e-6)
     assert_allclose(td_sig5_leiw, dat_sig5_leiw, atol=1e-6)
     assert_allclose(td_sig_skip, dat_sig_skip, atol=1e-6)
+    assert_allclose(td_sig_badt, dat_sig_badt, atol=1e-6)
 
 
 def test_matlab_io(make_data=False):

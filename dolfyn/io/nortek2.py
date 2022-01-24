@@ -8,7 +8,7 @@ from .base import _find_userdata, _create_dataset, _abspath
 from ..rotate.vector import _euler2orient
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
-from ..time import epoch2dt64
+from ..time import epoch2dt64, _fill_time_gaps
 
 
 def read_signature(filename, userdata=True, nens=None):
@@ -49,6 +49,17 @@ def read_signature(filename, userdata=True, nens=None):
     out = _reorg(d)
     _reduce(out)
 
+    # Convert time to dt64 and fill gaps
+    coords = out['coords']
+    t_list = [t for t in coords if 'time' in t]
+    for ky in t_list:
+        tdat = coords[ky]
+        tdat[tdat == 0] = np.NaN
+        if np.isnan(tdat).any():
+            warnings.warn('Zero/NaN values found in dataset. Interpolating and extrapolating them.')
+            tdat = _fill_time_gaps(tdat, sample_rate_hz=out['attrs']['fs'])
+        coords[ky] = epoch2dt64(tdat).astype('datetime64[us]')
+
     declin = None
     for nm in userdata:
         if 'dec' in nm:
@@ -69,12 +80,6 @@ def read_signature(filename, userdata=True, nens=None):
                                        dims=['earth', 'inst', 'time'])
     if declin is not None:
         ds = set_declination(ds, declin)
-
-    # Convert time to dt64
-    t_list = [t for t in ds.coords if 'time' in t]
-    for ky in t_list:
-        dt = epoch2dt64(ds[ky]).astype('datetime64[us]')
-        ds = ds.assign_coords({ky: dt})
 
     return ds
 
