@@ -64,10 +64,16 @@ def load_nortek_matfile(filename):
 
 
 def rotate(axis):
-    td_sig = rotate2(tr.dat_sig, axis)  # BenchFile01.ad2cp
-    td_sig_i = rotate2(tr.dat_sig_i, axis)  # Sig1000_IMU.ad2cp no userdata
-    td_sig_ieb = rotate2(tr.dat_sig_ieb, axis)  # VelEchoBT01.ad2cp
-    td_sig_ie = rotate2(tr.dat_sig_ie, axis)  # Sig500_Echo.ad2cp
+    # BenchFile01.ad2cp
+    td_sig = rotate2(tr.dat_sig, axis, inplace=False)
+    # Sig1000_IMU.ad2cp no userdata
+    td_sig_i = rotate2(tr.dat_sig_i, axis, inplace=False)
+    # VelEchoBT01.ad2cp
+    td_sig_ieb = rotate2(tr.dat_sig_ieb, axis,
+                         inplace=False)
+    # Sig500_Echo.ad2cp
+    td_sig_ie = rotate2(tr.dat_sig_ie, axis,
+                        inplace=False)
 
     td_sig_vel = load_nortek_matfile(base.rfnm('BenchFile01.mat'))
     td_sig_i_vel = load_nortek_matfile(base.rfnm('Sig1000_IMU.mat'))
@@ -84,12 +90,9 @@ def rotate(axis):
                         td_sig_ieb_vel['omat'][0, :][..., :100], atol=1e-7)
 
     # 4-beam velocity
-    #plt.figure(); plt.pcolormesh(td_sig.vel[0].values-td_sig_vel[axis][0,...,:500]); plt.colorbar()
     assert_allclose(td_sig.vel.values, td_sig_vel[axis][..., :500], atol=1e-5)
-    #plt.figure(); plt.pcolormesh(td_sig_i.vel[0].values-td_sig_i_vel[axis][0,...,:500]); plt.colorbar()
     assert_allclose(td_sig_i.vel.values,
                     td_sig_i_vel[axis][..., :500], atol=5e-3)
-    #plt.figure(); plt.pcolormesh(td_sig_ieb.vel[0].values-td_sig_ieb_vel[axis][0][...,:-1]); plt.colorbar()
     assert_allclose(td_sig_ieb.vel.values,
                     td_sig_ieb_vel[axis][..., :100], atol=5e-3)
     assert_allclose(td_sig_ie.vel.values,

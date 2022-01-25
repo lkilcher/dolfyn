@@ -22,7 +22,7 @@ rot_module_dict = {
     'rdi': r_rdi}
 
 
-def rotate2(ds, out_frame='earth'):
+def rotate2(ds, out_frame='earth', inplace=True):
     """Rotate a dataset to a new coordinate system.
 
     Parameters
@@ -42,6 +42,10 @@ def rotate2(ds, out_frame='earth'):
     This function rotates all variables in ``ds.attrs['rotate_vars']``.
 
     """
+    # Create and return deep copy if not writing "in place"
+    if not inplace:
+        ds = ds.copy(deep=True)
+
     csin = ds.coord_sys.lower()
     if csin == 'ship':
         csin = 'inst'
@@ -64,8 +68,6 @@ def rotate2(ds, out_frame='earth'):
     if rmod is None:
         raise ValueError("Rotations are not defined for "
                          "instrument '{}'.".format(_make_model(ds)))
-    # Ensure new data is rotated
-    ds = ds.copy(deep=True)
 
     # Get the 'indices' of the rotation chain
     try:
@@ -83,7 +85,6 @@ def rotate2(ds, out_frame='earth'):
 
     if iframe_out == iframe_in:
         print("Data is already in the {} coordinate system".format(out_frame))
-        return ds
 
     if iframe_out > iframe_in:
         reverse = False
@@ -101,7 +102,8 @@ def rotate2(ds, out_frame='earth'):
             func = getattr(rmod, '_' + rc[inow] + '2' + rc[inow + 1])
         ds = func(ds, reverse=reverse)
 
-    return ds
+    if not inplace:
+        return ds
 
 
 def calc_principal_heading(vel, tidal_mode=True):
@@ -150,7 +152,7 @@ def calc_principal_heading(vel, tidal_mode=True):
     return np.round((90 - np.rad2deg(pang)), decimals=4)
 
 
-def set_declination(ds, declin):
+def set_declination(ds, declin, inplace=True):
     """Set the magnetic declination
 
     Parameters
@@ -191,6 +193,10 @@ def set_declination(ds, declin):
       'True' earth coordinate system)
 
     """
+    # Create and return deep copy if not writing "in place"
+    if not inplace:
+        ds = ds.copy(deep=True)
+
     if 'declination' in ds.attrs:
         angle = declin - ds.attrs.pop('declination')
     else:
@@ -206,7 +212,7 @@ def set_declination(ds, declin):
 
     if ds.coord_sys == 'earth':
         rotate2earth = True
-        ds = rotate2(ds, 'inst')
+        rotate2(ds, 'inst', inplace=True)
     else:
         rotate2earth = False
 
@@ -216,17 +222,18 @@ def set_declination(ds, declin):
     if 'heading' in ds:
         ds['heading'] += angle
     if rotate2earth:
-        ds = rotate2(ds, 'earth')
+        rotate2(ds, 'earth', inplace=True)
     if 'principal_heading' in ds.attrs:
         ds.attrs['principal_heading'] += angle
 
     ds.attrs['declination'] = declin
     ds.attrs['declination_in_orientmat'] = 1  # logical
 
-    return ds
+    if not inplace:
+        return ds
 
 
-def set_inst2head_rotmat(ds, rotmat):
+def set_inst2head_rotmat(ds, rotmat, inplace=True):
     """
     Set the instrument to head rotation matrix for the Nortek ADV if it
     hasn't already been set through a '.userdata.json' file.
@@ -242,6 +249,10 @@ def set_inst2head_rotmat(ds, rotmat):
         Dataset with rotation matrix applied
 
     """
+    # Create and return deep copy if not writing "in place"
+    if not inplace:
+        ds = ds.copy(deep=True)
+
     if not ds.inst_model.lower() == 'vector':
         raise Exception("Setting 'inst2head_rotmat' is only supported "
                         "for Nortek Vector ADVs.")
@@ -252,7 +263,7 @@ def set_inst2head_rotmat(ds, rotmat):
 
     csin = ds.coord_sys
     if csin not in ['inst', 'beam']:
-        ds = rotate2(ds, 'inst')
+        rotate2(ds, 'inst', inplace=True)
 
     ds['inst2head_rotmat'] = xr.DataArray(np.array(rotmat),
                                           dims=['x', 'x*'])
@@ -265,6 +276,7 @@ def set_inst2head_rotmat(ds, rotmat):
     if not csin == 'beam':  # csin not 'beam', then we're in inst
         ds = r_vec._rotate_inst2head(ds)
     if csin not in ['inst', 'beam']:
-        ds = rotate2(ds, csin)
+        rotate2(ds, csin, inplace=True)
 
-    return ds
+    if not inplace:
+        return ds

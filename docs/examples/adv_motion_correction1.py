@@ -45,7 +45,7 @@ t_range_inds = (t_range[0] < dat_raw.time) & (dat_raw.time < t_range[1])
 dat = dat_raw.isel(time=t_range_inds)
 
 # Set the inst2head rotation matrix and vector
-dat = api.set_inst2head_rotmat(dat, inst2head_rotmat)
+api.set_inst2head_rotmat(dat, inst2head_rotmat)
 dat.attrs['inst2head_vec'] = inst2head_vec
 
 # Then clean the file using the Goring+Nikora method:
@@ -111,13 +111,13 @@ dat = api.correct_motion(dat, accel_filter)
 
 # Rotate the uncorrected data into the earth frame,
 # for comparison to motion correction:
-dat_cln = api.rotate2(dat_cln, 'earth')
+api.rotate2(dat_cln, 'earth')
 
 # Then rotate it into a 'principal axes frame':
 dat.attrs['principal_heading'] = api.calc_principal_heading(dat.vel)
 dat_cln.attrs['principal_heading'] = api.calc_principal_heading(dat_cln.vel)
-dat = api.rotate2(dat, 'principal')
-dat_cln = api.rotate2(dat_cln, 'principal')
+api.rotate2(dat, 'principal')
+api.rotate2(dat_cln, 'principal')
 
 # Average the data and compute turbulence statistics
 dat_bin = api.calc_turbulence(dat, n_bin=9600, fs=dat.fs, n_fft=4096)

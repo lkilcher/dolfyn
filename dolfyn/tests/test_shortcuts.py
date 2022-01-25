@@ -9,7 +9,7 @@ import xarray as xr
 class adv_setup():
     def __init__(self, tv):
         dat = tv.dat.copy(deep=True)
-        self.dat = rotate2(dat, 'earth')
+        self.dat = rotate2(dat, 'earth', inplace=False)
         self.tdat = avm.calc_turbulence(self.dat, n_bin=20.0, fs=self.dat.fs)
 
         short = xr.Dataset()

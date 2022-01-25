@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 from .binned import TimeBinner
 from .time import dt642epoch, dt642date
-from .rotate.api import rotate2
+from .rotate.api import rotate2, set_declination, set_inst2head_rotmat
 
 
 @xr.register_dataset_accessor('velds')  # 'vel dataset'
@@ -25,7 +25,7 @@ class Velocity():
     ########
     # Major components of the dolfyn-API
 
-    def rotate2(self, out_frame='earth'):
+    def rotate2(self, out_frame='earth', inplace=True):
         """Rotate the dataset to a new coordinate system.
 
         Parameters
@@ -43,7 +43,68 @@ class Velocity():
         This function rotates all variables in ``ds.attrs['rotate_vars']``.
 
         """
-        return rotate2(self, out_frame)
+        return rotate2(self.ds, out_frame, inplace)
+
+    def set_declination(self, declin, inplace=True):
+        """Set the magnetic declination
+
+        Parameters
+        ----------
+        declination : float
+        The value of the magnetic declination in degrees (positive
+        values specify that Magnetic North is clockwise from True North)
+
+        Returns
+        ----------
+        ds : xarray.Dataset
+            Dataset adjusted for the magnetic declination
+
+        Notes
+        -----
+        This method modifies the data object in the following ways:
+
+        - If the dataset is in the *earth* reference frame at the time of
+        setting declination, it will be rotated into the "*True-East*,
+        *True-North*, Up" (hereafter, ETU) coordinate system
+
+        - ``dat['orientmat']`` is modified to be an ETU to
+        instrument (XYZ) rotation matrix (rather than the magnetic-ENU to
+        XYZ rotation matrix). Therefore, all rotations to/from the 'earth'
+        frame will now be to/from this ETU coordinate system.
+
+        - The value of the specified declination will be stored in
+        ``dat.attrs['declination']``
+
+        - ``dat['heading']`` is adjusted for declination
+        (i.e., it is relative to True North).
+
+        - If ``dat.attrs['principal_heading']`` is set, it is
+        adjusted to account for the orientation of the new 'True'
+        earth coordinate system (i.e., calling set_declination on a
+        data object in the principal coordinate system, then calling
+        dat.rotate2('earth') will yield a data object in the new
+        'True' earth coordinate system)
+
+        """
+        return set_declination(self.ds, declin, inplace)
+
+    def set_inst2head_rotmat(self, rotmat, inplace=True):
+        """
+        Set the instrument to head rotation matrix for the Nortek ADV if it
+        hasn't already been set through a '.userdata.json' file.
+
+        Parameters
+        ----------
+        rotmat : float
+            3x3 rotation matrix
+
+        Returns
+        ----------
+        ds : xarray.Dataset
+            Dataset with rotation matrix applied
+
+        """
+        return set_inst2head_rotmat(self.ds, rotmat, inplace)
 
     ########
     # Magic methods of the API

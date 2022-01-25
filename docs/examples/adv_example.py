@@ -11,18 +11,17 @@ dat['vel'] = api.clean.clean_fill(dat.vel, mask, npt=12, method='cubic')
 
 # Rotate that data from the instrument to earth frame:
 # First set the magnetic declination
-dat_cln = dlfn.set_declination(dat, 10)  # 10 degrees East
-dat_earth = dlfn.rotate2(dat_cln, 'earth')
+dlfn.set_declination(dat, 10)  # 10 degrees East
+dlfn.rotate2(dat, 'earth')
 
 # Rotate it into a 'principal axes frame':
 # First calculate the principal heading
-dat_earth.attrs['principal_heading'] = dlfn.calc_principal_heading(
-    dat_earth.vel)
-dat_fin = dlfn.rotate2(dat_earth, 'principal')
+dat.attrs['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
+dlfn.rotate2(dat, 'principal')
 
 # Define an averaging object, and create an 'ensembled' data set:
-binner = api.ADVBinner(n_bin=9600, fs=dat_fin.fs, n_fft=4096)
-dat_binned = binner(dat_fin)
+binner = api.ADVBinner(n_bin=9600, fs=dat.fs, n_fft=4096)
+dat_binned = binner(dat)
 
 # At any point you can save the data:
 #dlfn.save(dat_binned, 'adv_data.nc')

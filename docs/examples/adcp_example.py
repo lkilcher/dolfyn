@@ -14,11 +14,11 @@ dat_cln = api.clean.correlation_filter(dat, thresh=50)
 
 # Rotate data from the instrument to true ENU (vs magnetic) frame:
 # First set the magnetic declination
-dat_cln = dlfn.set_declination(dat_cln, 10)  # 10 degrees East
-dat_earth = dlfn.rotate2(dat_cln, 'earth')
+dlfn.set_declination(dat_cln, 10)  # 10 degrees East
+dlfn.rotate2(dat_cln, 'earth')
 
 # At any point you can save the data:
-#dlfn.save(dat_earth, 'adcp_data.nc')
+#dlfn.save(dat_cln, 'adcp_data.nc')
 
 # And reload the data:
 #dat_copy = dlfn.load('adcp_data.nc')

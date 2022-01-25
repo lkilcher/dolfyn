@@ -27,7 +27,7 @@ Cleaning Data
 	
 	~dolfyn.adp.clean.set_range_offset
 	~dolfyn.adp.clean.find_surface
-	~dolfyn.adp.clean.surface_from_P
+	~dolfyn.adp.clean.find_surface_from_P
 	~dolfyn.adp.clean.nan_beyond_surface
 	~dolfyn.adp.clean.vel_exceeds_thresh
 	~dolfyn.adp.clean.correlation_filter

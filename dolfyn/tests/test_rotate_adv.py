@@ -29,9 +29,9 @@ def test_inst2head_rotmat():
     td = tr.dat.copy(deep=True)
 
     # Swap x,y, reverse z
-    td = set_inst2head_rotmat(td, [[0, 1, 0],
+    td.velds.set_inst2head_rotmat([[0, 1, 0],
                                    [1, 0, 0],
-                                   [0, 0, -1]])
+                                   [0, 0, -1]], inplace=True)
 
     # Coords don't get altered here
     npt.assert_allclose(td.vel[0].values, tr.dat.vel[1].values, atol=1e-6)
@@ -41,7 +41,7 @@ def test_inst2head_rotmat():
     # Validation for non-symmetric rotations
     td = tr.dat.copy(deep=True)
     R = euler2orient(20, 30, 60, units='degrees')  # arbitrary angles
-    td = set_inst2head_rotmat(td, R)
+    td = set_inst2head_rotmat(td, R, inplace=False)
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R, tr.dat.vel)
@@ -51,11 +51,11 @@ def test_inst2head_rotmat():
 
 def test_rotate_inst2earth(make_data=False):
     td = tr.dat.copy(deep=True)
-    td = rotate2(td, 'earth')
+    rotate2(td, 'earth', inplace=True)
     tdm = tr.dat_imu.copy(deep=True)
-    tdm = rotate2(tdm, 'earth')
+    rotate2(tdm, 'earth', inplace=True)
     tdo = tr.dat.copy(deep=True)
-    tdo = rotate2(tdo.drop_vars('orientmat'), 'earth')
+    tdo = rotate2(tdo.drop_vars('orientmat'), 'earth', inplace=False)
 
     if make_data:
         save(td, 'vector_data01_rotate_inst2earth.nc')
@@ -72,9 +72,9 @@ def test_rotate_inst2earth(make_data=False):
 
 def test_rotate_earth2inst():
     td = load('vector_data01_rotate_inst2earth.nc')
-    td = rotate2(td, 'inst')
+    rotate2(td, 'inst', inplace=True)
     tdm = load('vector_data_imu01_rotate_inst2earth.nc')
-    tdm = rotate2(tdm, 'inst')
+    rotate2(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy(deep=True)
     cdm = tr.dat_imu.copy(deep=True)
@@ -89,9 +89,9 @@ def test_rotate_earth2inst():
 
 def test_rotate_inst2beam(make_data=False):
     td = tr.dat.copy(deep=True)
-    td = rotate2(td, 'beam')
+    rotate2(td, 'beam', inplace=True)
     tdm = tr.dat_imu.copy(deep=True)
-    tdm = rotate2(tdm, 'beam')
+    rotate2(tdm, 'beam', inplace=True)
 
     if make_data:
         save(td, 'vector_data01_rotate_inst2beam.nc')
@@ -107,9 +107,9 @@ def test_rotate_inst2beam(make_data=False):
 
 def test_rotate_beam2inst():
     td = load('vector_data01_rotate_inst2beam.nc')
-    td = rotate2(td, 'inst')
+    rotate2(td, 'inst', inplace=True)
     tdm = load('vector_data_imu01_rotate_inst2beam.nc')
-    tdm = rotate2(tdm, 'inst')
+    rotate2(tdm, 'inst', inplace=True)
 
     cd = tr.dat.copy(deep=True)
     cdm = tr.dat_imu.copy(deep=True)
@@ -121,10 +121,10 @@ def test_rotate_beam2inst():
 def test_rotate_earth2principal(make_data=False):
     td = load('vector_data01_rotate_inst2earth.nc')
     td.attrs['principal_heading'] = calc_principal_heading(td['vel'])
-    td = rotate2(td, 'principal')
+    rotate2(td, 'principal', inplace=True)
     tdm = load('vector_data_imu01_rotate_inst2earth.nc')
     tdm.attrs['principal_heading'] = calc_principal_heading(tdm['vel'])
-    tdm = rotate2(tdm, 'principal')
+    rotate2(tdm, 'principal', inplace=True)
 
     if make_data:
         save(td, 'vector_data01_rotate_earth2principal.nc')
@@ -144,14 +144,14 @@ def test_rotate_earth2principal_set_declination():
     td0 = td.copy(deep=True)
 
     td.attrs['principal_heading'] = calc_principal_heading(td['vel'])
-    td = rotate2(td, 'principal')
-    td = set_declination(td, declin)
-    td = rotate2(td, 'earth')
+    rotate2(td, 'principal', inplace=True)
+    set_declination(td, declin, inplace=True)
+    rotate2(td, 'earth', inplace=True)
 
-    td0 = set_declination(td0, -1)
-    td0 = set_declination(td0, declin)
+    set_declination(td0, -1, inplace=True)
+    set_declination(td0, declin, inplace=True)
     td0.attrs['principal_heading'] = calc_principal_heading(td0['vel'])
-    td0 = rotate2(td0, 'earth')
+    rotate2(td0, 'earth', inplace=True)
 
     assert_allclose(td0, td, atol=1e-6)
 

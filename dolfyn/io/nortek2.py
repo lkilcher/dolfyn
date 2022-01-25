@@ -68,7 +68,7 @@ def read_signature(filename, userdata=True, nens=None):
                                                'time': ds['time']},
                                        dims=['earth', 'inst', 'time'])
     if declin is not None:
-        ds = set_declination(ds, declin)
+        set_declination(ds, declin, inplace=True)
 
     # Convert time to dt64
     t_list = [t for t in ds.coords if 'time' in t]
