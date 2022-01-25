@@ -67,8 +67,8 @@ plt.show()
 
 # Rotate the uncorrected data into the earth frame for comparison to motion
 # correction:
-data = dlfn.rotate2(data, 'earth')
-data_uncorrected = dlfn.rotate2(data_cleaned, 'earth')
+dlfn.rotate2(data, 'earth', inplace=True)
+data_uncorrected = dlfn.rotate2(data_cleaned, 'earth', inplace=False)
 
 # Calc principal heading (from earth coordinates) and rotate into the
 # principal axes
@@ -78,7 +78,8 @@ data_uncorrected.attrs['principal_heading'] = dlfn.calc_principal_heading(
 
 # Plotting corrected vs uncorrected velocity in principal coordinates
 ax = plt.figure(figsize=(20, 10)).add_axes([.14, .14, .8, .74])
-ax.plot(data_uncorrected.time, data_uncorrected.velds.u, 'g-', label='uncorrected')
+ax.plot(data_uncorrected.time, data_uncorrected.velds.u,
+        'g-', label='uncorrected')
 ax.plot(data.time, data.velds.u, 'b-', label='motion-corrected')
 ax.set_xlabel('Time')
 ax.xaxis.set_major_formatter(mpldt.DateFormatter('%D %H:%M'))

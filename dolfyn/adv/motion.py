@@ -218,7 +218,7 @@ def correct_motion(ds,
                    accel_filtfreq=None,
                    vel_filtfreq=None,
                    to_earth=True,
-                   separate_probes=False, ):
+                   separate_probes=False):
     """
     This function performs motion correction on an IMU-ADV data
     object. The IMU and ADV data should be tightly synchronized and
@@ -309,6 +309,9 @@ def correct_motion(ds,
     remove that sigal from the ADV sigal in post-processing.
 
     """
+    # Ensure acting on new dataset
+    ds = ds.copy(deep=True)
+
     if hasattr(ds, 'velrot') or ds.attrs.get('motion corrected', False):
         raise Exception('The data appears to already have been '
                         'motion corrected.')
@@ -317,7 +320,7 @@ def correct_motion(ds,
         raise Exception('The instrument does not appear to have an IMU.')
 
     if ds.coord_sys != 'inst':
-        ds = rotate2(ds, 'inst')
+        rotate2(ds, 'inst', inplace=True)
 
     # Returns True/False if head2inst_rotmat has been set/not-set.
     # Bad configs raises errors (this is to check for those)

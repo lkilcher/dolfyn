@@ -84,7 +84,7 @@ def test_pr_declination():
     dat = load('vector_data_imu01.nc')
     h0, p0, r0 = orient2euler(dat['orientmat'].values)
 
-    dat = set_declination(dat, declin)
+    set_declination(dat, declin, inplace=True)
     h1, p1, r1 = orient2euler(dat['orientmat'].values)
 
     assert_allclose(p0, p1, atol=1e-5,

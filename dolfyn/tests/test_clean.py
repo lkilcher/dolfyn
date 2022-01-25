@@ -56,8 +56,8 @@ def test_range_limit(make_data=False):
 def test_clean_upADCP(make_data=False):
     td = tp.dat_sig_tide.copy(deep=True)
 
-    td = apm.clean.set_range_offset(td, 0.6)
-    td = apm.clean.surface_from_P(td, salinity=31)
+    apm.clean.set_range_offset(td, 0.6)
+    apm.clean.find_surface_from_P(td, salinity=31)
     td = apm.clean.nan_beyond_surface(td)
     td = apm.clean.correlation_filter(td, thresh=70)
 
@@ -75,8 +75,8 @@ def test_clean_downADCP(make_data=False):
     td = apm.clean.fillgaps_time(td)
     td = apm.clean.fillgaps_depth(td)
 
-    td = apm.clean.set_range_offset(td, 0.5)
-    td = apm.clean.find_surface(td, thresh=10, nfilt=3)
+    apm.clean.set_range_offset(td, 0.5)
+    apm.clean.find_surface(td, thresh=10, nfilt=3)
     td = apm.clean.nan_beyond_surface(td)
 
     if make_data:
@@ -89,11 +89,11 @@ def test_clean_downADCP(make_data=False):
 def test_orient_filter(make_data=False):
     td_sig = tp.dat_sig_i.copy(deep=True)
     td_sig = apm.clean.medfilt_orient(td_sig)
-    td_sig = apm.rotate2(td_sig, 'earth')
+    apm.rotate2(td_sig, 'earth', inplace=True)
 
     td_rdi = tp.dat_rdi.copy(deep=True)
     td_rdi = apm.clean.medfilt_orient(td_rdi)
-    td_rdi = apm.rotate2(td_rdi, 'earth')
+    apm.rotate2(td_rdi, 'earth', inplace=True)
 
     if make_data:
         save(td_sig, 'Sig1000_IMU_ofilt.nc')

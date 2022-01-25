@@ -62,7 +62,7 @@ and configured correctly:
    These variables are set in either the userdata.json file (prior to calling
     ``dolfyn.read``), or by setting them explicitly after the data file has been read::
 
-     dat.set_inst2head_rotmat(<3x3 rotation matrix>)
+     dat.velds.set_inst2head_rotmat(<3x3 rotation matrix>)
      dat.attrs['inst2head_vec'] = np.array([3-element vector])
      
 .. figure:: pic/adv_coord_sys3_warr.png

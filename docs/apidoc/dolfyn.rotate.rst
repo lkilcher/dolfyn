@@ -25,11 +25,11 @@ These functions pertain to both ADCPs and ADVs::
 	>> import dolfyn as dlfn
 	>> dat = dlfn.read_example('burst_mode01.VEC')
 	
-	>> dat_mag = dlfn.set_declination(dat, 12)
-	>> dat_earth = dlfn.rotate2(dat_mag, 'earth')
+	>> dlfn.set_declination(dat, 12)
+	>> dlfn.rotate2(dat, 'earth')
 	
-	>> dat_earth.attrs['principal_heading'] = dlfn.calc_principal_heading(dat_earth['vel'])
-	>> dat_flow = dlfn.rotate2(dat_earth, 'principal')
+	>> dat.attrs['principal_heading'] = dlfn.calc_principal_heading(dat['vel'])
+	>> dlfn.rotate2(dat, 'principal')
 
 .. automodule:: dolfyn.rotate.api
     :members:

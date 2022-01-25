@@ -12,7 +12,8 @@ def set_range_offset(ds, h_deploy):
     """
     Adds an instrument's height above seafloor (for an up-facing instrument) 
     or depth below water surface (for a down-facing instrument) to the range
-    of depth bins
+    coordinate. Also adds an attribute to the Dataset with the current 
+    "h_deploy" distance.
 
     Parameters
     ----------
@@ -23,8 +24,7 @@ def set_range_offset(ds, h_deploy):
 
     Returns
     -------
-    ds : xarray.Dataset
-      The adcp dataset with 'range' adjusted
+    None, operates "in place"
 
     Notes
     -----
@@ -42,16 +42,19 @@ def set_range_offset(ds, h_deploy):
     """
     r = [s for s in ds.dims if 'range' in s]
     for val in r:
-        ds = ds.assign_coords({val: ds[val].values + h_deploy})
+        ds[val] = ds[val].values + h_deploy
         ds[val].attrs['units'] = 'm'
 
-    ds.attrs['h_deploy'] = h_deploy
-    return ds
+    if hasattr(ds, 'h_deploy'):
+        ds.attrs['h_deploy'] += h_deploy
+    else:
+        ds.attrs['h_deploy'] = h_deploy
 
 
 def find_surface(ds, thresh=10, nfilt=None):
     """
-    Find the surface (water level or seafloor) from amplitude data
+    Find the surface (water level or seafloor) from amplitude data and
+    adds the variable "depth" to the input Dataset.
 
     Parameters
     ----------
@@ -66,8 +69,7 @@ def find_surface(ds, thresh=10, nfilt=None):
 
     Returns
     -------
-    ds : xarray.Dataset
-      The full adcp dataset with `depth` added
+    None, operates "in place"
 
     """
     # This finds the maximum of the echo profile:
@@ -99,12 +101,12 @@ def find_surface(ds, thresh=10, nfilt=None):
         d = dfilt
 
     ds['depth'] = xr.DataArray(d, dims=['time'], attrs={'units': 'm'})
-    return ds
 
 
-def surface_from_P(ds, salinity=35):
+def find_surface_from_P(ds, salinity=35):
     """
-    Approximates distance to water surface above ADCP from the pressure sensor.
+    Approximates distance to water surface above ADCP from the pressure sensor
+    and adds the variable "depth" to the input Dataset.
 
     Parameters
     ----------
@@ -115,8 +117,7 @@ def surface_from_P(ds, salinity=35):
 
     Returns
     -------
-    ds : xarray.Dataset
-      The full adcp dataset with `depth` added
+    None, operates "in place"
 
     Notes
     -----
@@ -132,8 +133,6 @@ def surface_from_P(ds, salinity=35):
         d += ds.h_deploy
 
     ds['depth'] = xr.DataArray(d, dims=['time'], attrs={'units': 'm'})
-
-    return ds
 
 
 def nan_beyond_surface(ds, val=np.nan):
@@ -158,6 +157,8 @@ def nan_beyond_surface(ds, val=np.nan):
     Surface interference expected to happen at `r > depth * cos(beam_angle)`
 
     """
+    ds = ds.copy(deep=True)
+
     var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
 
     if 'nortek' in _make_model(ds):
@@ -190,7 +191,7 @@ def nan_beyond_surface(ds, val=np.nan):
 def vel_exceeds_thresh(ds, thresh=5, val=np.nan):
     """
     Find values of the velocity data that exceed a threshold value,
-    and assign NaN to the velocity data where the threshold is
+    and assign "val" to the velocity data where the threshold is
     exceeded.
 
     Parameters
@@ -208,6 +209,8 @@ def vel_exceeds_thresh(ds, thresh=5, val=np.nan):
       The adcp dataset with datapoints beyond thresh are set to `val`
 
     """
+    ds = ds.copy(deep=True)
+
     bd = np.zeros(ds.vel.shape, dtype='bool')
     bd |= (np.abs(ds.vel.values) > thresh)
 
@@ -235,7 +238,13 @@ def correlation_filter(ds, thresh=50, val=np.nan):
     ds : xarray.Dataset
      The adcp dataset with low correlation values set to `val`
 
+    Notes
+    -----
+    Does not edit correlation data.
+
     """
+    ds = ds.copy(deep=True)
+
     # copy original ref frame
     coord_sys_orig = ds.coord_sys
     # correlation is always in beam coordinates
@@ -245,9 +254,9 @@ def correlation_filter(ds, thresh=50, val=np.nan):
         mask_b5 = (ds.corr_b5.values <= thresh)
         ds.vel_b5.values[mask_b5] = val
 
-    ds = rotate2(ds, 'beam')
+    ds = rotate2(ds, 'beam', inplace=False)
     ds.vel.values[mask] = val
-    ds = rotate2(ds, coord_sys_orig)
+    ds = rotate2(ds, coord_sys_orig, inplace=False)
 
     return ds
 
@@ -274,6 +283,8 @@ def medfilt_orient(ds, nfilt=7):
     scipy.signal.medfilt()
 
     """
+    ds = ds.copy(deep=True)
+
     if getattr(ds, 'has_imu'):
         q_filt = np.zeros(ds.quaternion.shape)
         for i in range(ds.quaternion.q.size):

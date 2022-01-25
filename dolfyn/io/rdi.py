@@ -67,7 +67,7 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
                                        dims=['earth', 'inst', 'time'])
 
     # Check magnetic declination if provided via software and/or userdata
-    ds = _set_rdi_declination(ds, fname)
+    _set_rdi_declination(ds, fname, inplace=True)
 
     # VMDAS applies gps correction on velocity in .ENX files only
     if fname.rsplit('.')[-1] == 'ENX':
@@ -86,7 +86,7 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
         dt = tmlib.epoch2dt64(ds[ky])
         ds = ds.drop_vars(ky)  # must do b/c of netcdf encoding error
         ds[ky] = xr.DataArray(dt, coords={'time_gps': ds.time_gps})
-        
+
     return ds
 
 
@@ -118,7 +118,7 @@ def _remove_gps_duplicates(dat):
     return dat
 
 
-def _set_rdi_declination(dat, fname):
+def _set_rdi_declination(dat, fname, inplace):
     # If magnetic_var_deg is set, this means that the declination is already
     # included in the heading and in the velocity data.
 
@@ -140,9 +140,7 @@ def _set_rdi_declination(dat, fname):
         dat.attrs['declination'] = declin
 
     if declin is not None:
-        dat = set_declination(dat, declin)
-
-    return dat
+        set_declination(dat, declin, inplace)
 
 
 century = 2000
@@ -393,7 +391,7 @@ class _RdiReader():
             try:
                 dats = tmlib.date2epoch(
                     tmlib.datetime(*clock[:6, 0],
-                                  microsecond=clock[6, 0] * 10000))[0]
+                                   microsecond=clock[6, 0] * 10000))[0]
             except ValueError:
                 warnings.warn("Invalid time stamp in ping {}.".format(
                     int(self.ensemble.number[0])))
@@ -860,9 +858,9 @@ class _RdiReader():
                 return 'FAIL'
             gga_time = str(self.f.reads(9))
             time = tmlib.timedelta(hours=int(gga_time[0:2]),
-                                  minutes=int(gga_time[2:4]),
-                                  seconds=int(gga_time[4:6]),
-                                  milliseconds=int(gga_time[7:])*100)
+                                   minutes=int(gga_time[2:4]),
+                                   seconds=int(gga_time[4:6]),
+                                   milliseconds=int(gga_time[7:])*100)
             clock = self.ensemble.rtc[:, :]
             if clock[0, 0] < 100:
                 clock[0, :] += century
