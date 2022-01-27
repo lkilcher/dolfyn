@@ -64,13 +64,13 @@ Documentation
 -------------
 
 For details visit the 
-[DOLfYN homepage](https://dolfyn-xarray.readthedocs.io/en/latest/).  
+[DOLfYN homepage](https://dolfyn.readthedocs.io/en/latest/).  
 
 Installation
 ------------
 
 DOLfYN requires Python 3.6 or later and a number of dependencies. See the 
-[install page](https://dolfyn-xarray.readthedocs.io/en/latest/install.html)
+[install page](https://dolfyn.readthedocs.io/en/latest/install.html)
 for greater details.
 
 License
