@@ -7,8 +7,8 @@ def _make_model(ds):
     """The make and model of the instrument that collected the data
     in this data object.
     """
-    return '{} {}'.format(ds.inst_make,
-                          ds.inst_model).lower()
+    return '{} {}'.format(ds.attrs['inst_make'],
+                          ds.attrs['inst_model']).lower()
 
 
 def _check_rotmat_det(rotmat, thresh=1e-3):
@@ -34,7 +34,7 @@ def _set_coords(ds, ref_frame, forced=False):
 
     XYZ = ['X', 'Y', 'Z']
     ENU = ['E', 'N', 'U']
-    beam = list(range(1, ds.vel.shape[0]+1))
+    beam = list(range(1, ds['vel'].shape[0]+1))
     principal = ['streamwise', 'x-stream', 'vert']
 
     # check make/model
