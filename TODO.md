@@ -3,7 +3,8 @@ General
 
 Talk w/ @jmcvey3
 ======
-- How to document the dolfyn-view data-objects (`<obj>.velds`)? Is building this even a good idea?
+- How to document the dolfyn-view data-objects (`<obj>.velds`)? Is building this even a good idea? ... I started this. I need help from @jmcvey3.
+- Add simplify/standardize functions
 
 
 Testing

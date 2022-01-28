@@ -57,7 +57,8 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
         tdat = coords[ky]
         tdat[tdat == 0] = np.NaN
         if np.isnan(tdat).any():
-            warnings.warn('Zero/NaN values found in dataset. Interpolating and extrapolating them.')
+            tag = ky.lstrip('time')
+            warnings.warn("Zero/NaN values found in '{}'. Interpolating and extrapolating them. To identify which values were filled later, look for 0 values in 'status{}' or status0{}".format(ky, tag, tag))
             tdat = _fill_time_gaps(tdat, sample_rate_hz=out['attrs']['fs'])
         coords[ky] = epoch2dt64(tdat).astype('datetime64[us]')
 
