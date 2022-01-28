@@ -34,12 +34,23 @@ def rotate2(ds, out_frame='earth', inplace=True):
 
     Returns
     -------
-    ds : xarray.Dataset
-      The rotated dataset
+    ds : xarray.Dataset or None
+      Returns the rotated dataset only when inplace=False, otherwise
+      this function returns None.
 
     Notes
     -----
-    This function rotates all variables in ``ds.attrs['rotate_vars']``.
+    - This function rotates all variables in ``ds.attrs['rotate_vars']``.
+
+    - In order to rotate to the 'principal' frame, a value should exist for 
+      ``ds.attrs['principal_heading']``. The function 
+      :func:`calc_principal_heading <dolfyn.calc_principal_heading>`
+      is recommended for this purpose, e.g.:
+
+          ds.attrs['principal_heading'] = dolfyn.calc_principal_heading(ds['vel'].mean(range))
+
+      where here we are using the depth-averaged velocity to calculate
+      the principal direction.
 
     """
     # Create and return deep copy if not writing "in place"
@@ -57,7 +68,7 @@ def rotate2(ds, out_frame='earth', inplace=True):
         warnings.warn(
             "You are attempting to rotate into the 'principal' "
             "coordinate system, but the dataset is in the {} "
-            "coordinate system. Be sure that 'principal_angle' is "
+            "coordinate system. Be sure that 'principal_heading' is "
             "defined based on the earth coordinate system.".format(csin))
 
     rmod = None
@@ -122,10 +133,13 @@ def calc_principal_heading(vel, tidal_mode=True):
 
     Notes
     -----
-    The tidal mode follows these steps:
+    When tidal_mode=True, this tool calculates the heading that is
+    aligned with the bidirectional flow. It does so following these
+    steps:
       1. rotates vectors with negative velocity by 180 degrees
       2. then doubles those angles to make a complete circle again
-      3. computes a mean direction from this, and halves that angle again.
+      3. computes a mean direction from this, and halves that angle
+         (to undo the doubled-angles in step 2)
       4. The returned angle is forced to be between 0 and 180. So, you
          may need to add 180 to this if you want your positive
          direction to be in the western-half of the plane.

@@ -35,12 +35,23 @@ class Velocity():
 
         Returns
         -------
-        ds : xarray.Dataset
-          The rotated dataset
+        ds : xarray.Dataset or None
+          Returns the rotated dataset only when inplace=False, otherwise
+          this function returns None.
 
         Notes
         -----
-        This function rotates all variables in ``ds.attrs['rotate_vars']``.
+        - This function rotates all variables in ``ds.attrs['rotate_vars']``.
+
+        - To rotate to the 'principal' frame, a value of
+          ``ds.attrs['principal_heading']`` must exist. The function
+          :func:`calc_principal_heading <dolfyn.calc_principal_heading>`
+          is recommended for this purpose, e.g.::
+
+              ds.attrs['principal_heading'] = dolfyn.calc_principal_heading(ds['vel'].mean(range))
+
+          where here we are using the depth-averaged velocity to calculate
+          the principal direction.
 
         """
         return rotate2(self.ds, out_frame, inplace)
