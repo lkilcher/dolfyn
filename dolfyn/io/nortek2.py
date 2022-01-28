@@ -11,7 +11,8 @@ from ..rotate.api import set_declination
 from ..time import epoch2dt64
 
 
-def read_signature(filename, userdata=True, nens=None):
+def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
+                   debug=False):
     """Read a Nortek Signature (.ad2cp) datafile
 
     Parameters
@@ -43,7 +44,7 @@ def read_signature(filename, userdata=True, nens=None):
 
     userdata = _find_userdata(filename, userdata)
 
-    rdr = _Ad2cpReader(filename)
+    rdr = _Ad2cpReader(filename, rebuild_index=rebuild_index, debug=debug)
     d = rdr.readfile(nens[0], nens[1])
     rdr.sci_data(d)
     out = _reorg(d)
@@ -80,13 +81,15 @@ def read_signature(filename, userdata=True, nens=None):
 
 
 class _Ad2cpReader():
-    def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False):
+    def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False,
+                 debug=False):
         self.fname = fname
         self._check_nortek(endian)
         self.f.seek(0, 2)  # Seek to end
         self._eof = self.f.tell()
         self._index = lib._get_index(fname,
-                                     reload=rebuild_index)
+                                     reload=rebuild_index,
+                                     debug=debug)
         self._reopen(bufsize)
         self.filehead_config = self._read_filehead_config_string()
         self._ens_pos = self._index['pos'][lib._boolarray_firstensemble_ping(

@@ -1,5 +1,5 @@
 from dolfyn.io.api import read_example as read
-from . import base as tb
+from dolfyn.tests import base as tb
 import dolfyn.io.rdi as wh
 import dolfyn.io.nortek as awac
 import dolfyn.io.nortek2 as sig
@@ -7,7 +7,7 @@ import warnings
 import os
 import sys
 import unittest
-from .base import assert_allclose
+from dolfyn.tests.base import assert_allclose
 import pytest
 
 load = tb.load_ncdata
@@ -110,6 +110,7 @@ def test_io_nortek2(make_data=False):
     os.remove(tb.exdt('VelEchoBT01.ad2cp.index'))
     os.remove(tb.exdt('Sig500_Echo.ad2cp.index'))
     os.remove(tb.exdt('Sig1000_tidal.ad2cp.index'))
+    os.remove(tb.exdt('Sig500_last_ensemble_is_whole.ad2cp.index'))
 
     if make_data:
         save(td_sig, 'BenchFile01.nc')
