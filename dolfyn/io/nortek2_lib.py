@@ -5,6 +5,7 @@ import warnings
 from .. import time
 from .base import _abspath
 
+
 def _reduce_by_average(data, ky0, ky1):
     # Average two arrays together, if they both exist.
     if ky1 in data:
@@ -82,7 +83,8 @@ def _calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
             continue
         try:
             # Note that month is zero-based, seconds since Jan 1 1970
-            dt[idx] = time.date2epoch(time.datetime(y, mo + 1, d, h, mi, s, u))[0]
+            dt[idx] = time.date2epoch(
+                time.datetime(y, mo + 1, d, h, mi, s, u))[0]
         except ValueError:
             # One of the time values is out-of-range (e.g., mi > 60)
             # This probably indicates a corrupted byte, so we just insert None.
@@ -91,59 +93,63 @@ def _calc_time(year, month, day, hour, minute, second, usec, zero_is_bad=True):
     return dt
 
 
-def _create_index_slow(infile, outfile, N_ens):
+def _create_index(infile, outfile, N_ens, debug):
     print("Indexing {}...".format(infile), end='')
     fin = open(_abspath(infile), 'rb')
     fout = open(_abspath(outfile), 'wb')
     fout.write(b'Index Ver:')
     fout.write(struct.pack('<H', _index_version))
-    ens = 0
-    N = 0
+    ens = dict.fromkeys([21, 23, 24, 26, 28], 0)
+    N = dict.fromkeys([21, 23, 24, 26, 28], 0)
     config = 0
-    last_ens = -1
+    last_ens = dict.fromkeys([21, 23, 24, 26, 28], -1)
     seek_2ens = {21: 40, 24: 40, 26: 40,
-                 23: 42, 28: 40}
-    while N < N_ens:
+                 23: 42, 28: 40}  # 23 starts from "42"
+    while N[21] < N_ens:  # Will fail if velocity ping isn't saved first
         pos = fin.tell()
         try:
             dat = _hdr.unpack(fin.read(_hdr.size))
         except:
             break
-        if dat[2] in [21, 23, 24, 26, 28]:
+        if dat[2] in [21, 23, 24, 26, 28]:  # vel, bt, vel_b5, alt_raw, echo
+            idk = dat[2]
             d_ver, d_off, config = struct.unpack('<BBH', fin.read(4))
             fin.seek(4, 1)
             yr, mo, dy, h, m, s, u = struct.unpack('6BH', fin.read(8))
             fin.seek(14, 1)
             beams_cy = struct.unpack('<H', fin.read(2))[0]
             fin.seek(seek_2ens[dat[2]], 1)
-            ens = struct.unpack('<I', fin.read(4))[0]
-            if dat[2] in [23, 28]:
-                # ids are saved differently that others in datafile
-                ens = last_ens
-            if last_ens > 0 and last_ens != ens:
-                N += 1
-            fout.write(struct.pack('<QIQ4H6BHB', N, ens, pos, dat[2],
+            ens[idk] = struct.unpack('<I', fin.read(4))[0]
+
+            if ens[idk] == 1 and last_ens[idk] > 0:
+                # Covers all id keys saved in "burst mode"
+                ens[idk] = last_ens[idk]+1
+
+            if last_ens[idk] > 0 and last_ens[idk] != ens[idk]:
+                N[idk] += 1
+
+            fout.write(struct.pack('<QIQ4H6BHB', N[idk], ens[idk], pos, idk,
                                    config, beams_cy, 0,
                                    yr, mo + 1, dy, h, m, s, u, d_ver))
-            fin.seek(dat[4] - (36 + seek_2ens[dat[2]]), 1)
-            last_ens = ens
+            fin.seek(dat[4] - (36 + seek_2ens[idk]), 1)
+            last_ens[idk] = ens[idk]
+
+            if debug and N[idk] < 5:
+                # hex: [18, 15, 1C, 17] = [vel_b5, vel, echo, bt]
+                print('%10d: %02X, %d, %02X, %d, %d, %d, %d\n' %
+                      (pos, dat[0], dat[1], dat[2], dat[4],
+                       N[idk], ens[idk], last_ens[idk]))
         else:
             fin.seek(dat[4], 1)
-        # if N < 5:
-        #     print('%10d: %02X, %d, %02X, %d, %d, %d, %d\n' %
-        #           (pos, dat[0], dat[1], dat[2], dat[4],
-        #            N, ens, last_ens))
-        # else:
-        #     break
     fin.close()
     fout.close()
     print(" Done.")
 
 
-def _get_index(infile, reload=False):
+def _get_index(infile, reload=False, debug=False):
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
-        _create_index_slow(infile, index_file, 2 ** 32)
+        _create_index(infile, index_file, 2 ** 32, debug)
     f = open(_abspath(index_file), 'rb')
     file_head = f.read(12)
     if file_head[:10] == b'Index Ver:':
@@ -160,19 +166,9 @@ def _get_index(infile, reload=False):
 def _boolarray_firstensemble_ping(index):
     """Return a boolean of the index that indicates only the first ping in each ensemble.
     """
-    if (index['ens'] == 0).all() and (index['hw_ens'] == 1).all():
-        #!!!TODO
-        # This is for when the system runs in 'raw/continuous mode'
-        # Is there a better way to detect this mode?
-        n_IDs = {id: (index['ID'] == id).sum()
-                 for id in np.unique(index['ID'])}
-        assert all(np.abs(np.diff(list(n_IDs.values())))
-                   ) <= 1, "Unable to read this file"
-        return index['ID'] == index['ID'][0]
-    else:
-        dens = np.ones(index['ens'].shape, dtype='bool')
-        dens[1:] = np.diff(index['ens']) != 0
-        return dens
+    dens = np.ones(index['ens'].shape, dtype='bool')
+    dens[1:] = np.diff(index['ens']) != 0
+    return dens
 
 
 def _getbit(val, n):
@@ -216,13 +212,13 @@ class _BitIndexer():
     def _data_is_array(self, ):
         return isinstance(self.data, np.ndarray)
 
-    # @property
-    # def nbits(self, ):
-    #     if self._data_is_array:
-    #         return self.data.dtype.itemsize * 8
-    #     else:
-    #         raise ValueError("You must specify the end-range "
-    #                          "for non-ndarray input data.")
+    @property
+    def nbits(self, ):
+        if self._data_is_array:
+            return self.data.dtype.itemsize * 8
+        else:
+            raise ValueError("You must specify the end-range "
+                             "for non-ndarray input data.")
 
     def _get_out_type(self, mask):
         # The mask indicates how big this item is.
@@ -247,10 +243,10 @@ class _BitIndexer():
                              "not support steps")
         start = slc.start
         stop = slc.stop
-        # if start is None:
-        #     start = 0
-        # if stop is None:
-        #     stop = self.nbits
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = self.nbits
         mask = 2 ** (stop - start) - 1
         out = (self.data >> start) & mask
         ot = self._get_out_type(mask)
@@ -348,11 +344,18 @@ def _collapse(vec, name=None, exclude=[]):
     elif _isuniform(vec, exclude=exclude):
         return list(set(np.unique(vec)) - set(exclude))[0]
     else:
-        uniq, idx, counts = np.unique(vec, return_index=True, return_counts=True)
-        val = vec[idx[np.argmax(counts)]]
+        uniq, idx, counts = np.unique(
+            vec, return_index=True, return_counts=True)
+
+        if all(e==counts[0] for e in counts):
+            val = max(vec) # pings saved out of order, but equal # of pings
+        else:
+            val = vec[idx[np.argmax(counts)]]
+
         if not set(uniq) == set([0, val]) and set(counts) == set([1, np.max(counts)]):
             # warn when the 'wrong value' is not just a single zero.
-            warnings.warn("The variable {} is expected to be uniform, but it is not.\nValues found: {} (counts: {}).\nUsing the most common value: {}".format(name, list(uniq), list(counts), val))
+            warnings.warn("The variable {} is expected to be uniform, but it is not.\nValues found: {} (counts: {}).\nUsing the most common value: {}".format(
+                name, list(uniq), list(counts), val))
         return val
 
 
