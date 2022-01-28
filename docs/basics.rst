@@ -233,6 +233,6 @@ The variables in the dataset can be accessed using standard dictionary (key/item
 But trying to accessing variables using attribute syntax
 (``dat_dolfyn.time``) is not supported (returns
 ``AttributeError``). However, we do include several shortcuts that
-utilize attribute syntax. They are described here ``jmcvey3 link to shortcuts page``
-
-The full list of *dolfyn-view* convenience methods can be found... ``jmcvey3 I assume there is a way to link to an auto-built page of the dolfyn.velocity.Velocity`` class?
+utilize attribute syntax. The full list of *dolfyn-view* convenience
+methods and properties/shortcuts can be found in
+:class:`dolfyn.velocity.Velocity`.

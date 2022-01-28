@@ -3,7 +3,7 @@ General
 
 Talk w/ @jmcvey3
 ======
-- How to document the dolfyn-view data-objects (`<obj>.velds`)? Is building this even a good idea? ... I started this. I need help from @jmcvey3.
+- How to document the dolfyn-view data-objects (`<obj>.velds`)? Is building this even a good idea? ... I started this. I need help from @jmcvey3. Espcially I think we need a page that documents the `velocity.Velocity` class. Maybe this gets added to the 'shortcuts' page?
 - Add simplify/standardize functions
 
 
