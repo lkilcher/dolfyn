@@ -174,7 +174,7 @@ Xarray has its own built-in methods for `selecting data  <http://xarray.pydata.o
 A section of data can be extracted to a new Dataset or DataArray using ``.isel``, ``.sel`` and/or with python's built-in ``slice`` function, for example::
 
   # Returns a new DataArray containing data from 0 to 5 m.
-  >> datsub = dat.vel.sel(range=slize(0,5))
+  >> datsub = dat.vel.sel(range=slice(0,5))
   
   # Returns velocity in 'streamwise' direction
   >> datsub = dat.vel.sel(orient='streamwise')
@@ -187,3 +187,52 @@ Data Analysis Tools
 -------------------
 
 Analysis in |dlfn| is primarily set up to work through two API's (Advanced Programming Interfaces): the :ref:`adp` and the :ref:`adv`, each of which contain functions that pertain to ADCP and ADV instruments, respectively. Functions and classes that pertain to both can be accessed from the main package import. See the :ref:`package` for further detail.  
+
+
+The |dlfn| view
+---------------
+
+In addition to working with xarray datasets directly, as described above |dlfn| also provides an alternate *|dlfn| view* into the data. This is accessed by::
+
+  >> dat_dolfyn = dat.velds
+
+This view has several convenience methods, shortcuts, and functions
+built-in. It includes an alternate -- and somewhat more
+informative/compact -- description of the data object when in
+interactive mode::
+
+  >> dat_dolfyn
+  <ADCP data object>:  Nortek AWAC
+    . 2.78 hours (started: Jun 12, 2012 12:00)
+    . earth-frame
+    . (9997 pings @ 1.0Hz)
+    Variables:
+    - time ('time',)
+    - vel ('dir', 'range', 'time')
+    - range ('range',)
+    - orientmat ('earth', 'inst', 'time')
+    - heading ('time',)
+    - pitch ('time',)
+    - roll ('time',)
+    - temp ('time',)
+    - pressure ('time',)
+    - amp ('beam', 'range', 'time')
+    ... and others (see `<obj>.variables`)
+
+The variables in the dataset can be accessed using standard dictionary (key/item) syntax::
+
+  >> dat_dolfyn['time']
+  <xarray.DataArray 'time' (time: 9997)>
+  array(['2012-06-12T12:00:00.000000000', '2012-06-12T12:00:01.000000000',
+         '2012-06-12T12:00:02.000000000', ..., '2012-06-12T14:46:34.000000000',
+         '2012-06-12T14:46:35.000000000', '2012-06-12T14:46:36.000000000'],
+        dtype='datetime64[ns]')
+  Coordinates:
+    * time     (time) datetime64[ns] 2012-06-12T12:00:00 ... 2012-06-12T14:46:36
+
+But trying to accessing variables using attribute syntax
+(``dat_dolfyn.time``) is not supported (returns
+``AttributeError``). However, we do include several shortcuts that
+utilize attribute syntax. They are described here ``jmcvey3 link to shortcuts page``
+
+The full list of *dolfyn-view* convenience methods can be found... ``jmcvey3 I assume there is a way to link to an auto-built page of the dolfyn.velocity.Velocity`` class?

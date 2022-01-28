@@ -90,10 +90,21 @@ def save(dataset, filename,
     dataset : xarray.Dataset
     filename : str
         Filename and/or path with the '.nc' extension
+    **kwargs : these are passed directly to dataset.to_netcdf
 
     Notes
     -----
     Drops 'config' lines.
+
+    Compresses all variables using zlib and complevel=1. Override this
+    default behavior by including encoding=<dict-of-dicts> that specify
+    compression options for each variable. e.g.::
+
+       encoding=dict()
+       for ky in dataset:
+            encoding[ky] = dict(zlib=True, complevel=6)
+    
+    See the xarray.to_netcdf documentation for more details.
 
     """
     if '.' in filename:
@@ -115,6 +126,11 @@ def save(dataset, filename,
 
             dataset = dataset.drop(var)
             dataset.attrs['complex_vars'].append(var)
+
+    if 'encoding' not in kwargs:
+        enc = kwargs['encoding'] = dict()
+        for ky in dataset.variables:
+            enc[ky] = dict(zlib=True, complevel=1)
 
     dataset.to_netcdf(filename, format=format, engine=engine, **kwargs)
 
