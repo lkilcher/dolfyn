@@ -166,7 +166,7 @@ def set_declination(ds, declin):
 
     Notes
     -----
-    This method modifies the data object in the following ways:
+    This function modifies the data object in the following ways:
 
     - If the dataset is in the *earth* reference frame at the time of
       setting declination, it will be rotated into the "*True-East*,
