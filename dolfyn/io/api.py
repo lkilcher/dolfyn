@@ -90,7 +90,7 @@ def save(dataset, filename,
     dataset : xarray.Dataset
     filename : str
         Filename and/or path with the '.nc' extension
-    **kwargs : these are passed directly to dataset.to_netcdf
+    **kwargs : these are passed directly to :func:`xarray.Dataset.to_netcdf`.
 
     Notes
     -----

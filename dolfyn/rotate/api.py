@@ -31,12 +31,14 @@ def rotate2(ds, out_frame='earth', inplace=True):
       The dolfyn dataset (ADV or ADCP) to rotate.
     out_frame : string {'beam', 'inst', 'earth', 'principal'}
       The coordinate system to rotate the data into.
+    inplace : bool (default: True)
+        When True ``ds`` is modified. When False a copy is returned.
 
     Returns
     -------
     ds : xarray.Dataset or None
-      Returns the rotated dataset only when inplace=False, otherwise
-      this function returns None.
+      Returns a new rotated dataset **when ``inplace=False``**, otherwise
+      returns None.
 
     Notes
     -----
@@ -171,14 +173,19 @@ def set_declination(ds, declin, inplace=True):
 
     Parameters
     ----------
+    ds : xarray.Dataset or :class:`dolfyn.velocity.Velocity`
     declination : float
        The value of the magnetic declination in degrees (positive
        values specify that Magnetic North is clockwise from True North)
 
+    inplace : bool (default: True)
+        When True ``ds`` is modified. When False a copy is returned.
+
     Returns
-    ----------
-    ds : xarray.Dataset
-        Dataset adjusted for the magnetic declination
+    -------
+    ds : xarray.Dataset or None
+      Returns a new dataset with declination set **when
+      ``inplace=False``**, otherwise returns None.
 
     Notes
     -----
@@ -254,13 +261,26 @@ def set_inst2head_rotmat(ds, rotmat, inplace=True):
 
     Parameters
     ----------
+    ds : xarray.Dataset
+        The data set to assign inst2head_rotmat
     rotmat : float
         3x3 rotation matrix
+    inplace : bool (default: True)
+        When True ``ds`` is modified. When False a copy is returned.
 
     Returns
-    ----------
-    ds : xarray.Dataset
-        Dataset with rotation matrix applied
+    -------
+    ds : xarray.Dataset or None
+      Returns a new dataset with inst2head_rotmat set **when
+      ``inplace=False``**, otherwise returns None.
+
+    Notes
+    -----
+    If the data object is in earth or principal coords, it is first
+    rotated to 'inst' before assigning inst2head_rotmat, it is then
+    rotated back to the coordinate system in which it was input. This
+    way the inst2head_rotmat gets applied correctly (in inst
+    coordinate system).
 
     """
     # Create and return deep copy if not writing "in place"

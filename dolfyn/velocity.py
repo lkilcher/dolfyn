@@ -34,11 +34,15 @@ class Velocity():
         out_frame : string {'beam', 'inst', 'earth', 'principal'}
           The coordinate system to rotate the data into.
 
+        inplace : bool (default: True)
+          When True the existing data object is modified. When False
+          a copy is returned.
+
         Returns
         -------
         ds : xarray.Dataset or None
-          Returns the rotated dataset only when inplace=False, otherwise
-          this function returns None.
+          Returns the rotated dataset **when ``inplace=False``**, otherwise
+          returns None.
 
         Notes
         -----
@@ -63,13 +67,18 @@ class Velocity():
         Parameters
         ----------
         declination : float
-        The value of the magnetic declination in degrees (positive
-        values specify that Magnetic North is clockwise from True North)
+          The value of the magnetic declination in degrees (positive
+          values specify that Magnetic North is clockwise from True North)
+
+        inplace : bool (default: True)
+          When True the existing data object is modified. When False
+          a copy is returned.
 
         Returns
-        ----------
-        ds : xarray.Dataset
-            Dataset adjusted for the magnetic declination
+        -------
+        ds : xarray.Dataset or None
+          Returns the rotated dataset **when ``inplace=False``**, otherwise
+          returns None.
 
         Notes
         -----
@@ -109,11 +118,23 @@ class Velocity():
         ----------
         rotmat : float
             3x3 rotation matrix
+        inplace : bool (default: True)
+            When True the existing data object is rotated. When False
+            a copy is returned that is rotated.
 
         Returns
-        ----------
-        ds : xarray.Dataset
-            Dataset with rotation matrix applied
+        -------
+        ds : xarray.Dataset or None
+          Returns the rotated dataset **when ``inplace=False``**, otherwise
+          returns None.
+
+        Notes
+        -----
+        If the data object is in earth or principal coords, it is first
+        rotated to 'inst' before assigning inst2head_rotmat, it is then
+        rotated back to the coordinate system in which it was input. This
+        way the inst2head_rotmat gets applied correctly (in inst
+        coordinate system).
 
         """
         return set_inst2head_rotmat(self.ds, rotmat, inplace)
@@ -125,7 +146,7 @@ class Velocity():
         ----------
         filename : str
             Filename and/or path with the '.nc' extension
-        **kwargs : these are passed directly to :func:`save <dolfyn.io.api.save>`.
+        **kwargs : these are passed directly to :func:`xarray.Dataset.to_netcdf`.
 
         Notes
         -----
