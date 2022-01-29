@@ -214,6 +214,7 @@ def set_declination(ds, declin, inplace=True):
       'True' earth coordinate system)
 
     """
+    if ds
     # Create and return deep copy if not writing "in place"
     if not inplace:
         ds = ds.copy(deep=True)
