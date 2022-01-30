@@ -1,6 +1,5 @@
 import numpy as np
 import xarray as xr
-import six
 import json
 import os
 import warnings
@@ -49,7 +48,7 @@ def _find_userdata(filename, userdata=True):
             if os.path.isfile(jsonfile):
                 return _read_userdata(jsonfile)
 
-    elif isinstance(userdata, (six.string_types)) or hasattr(userdata, 'read'):
+    elif isinstance(userdata, (str, )) or hasattr(userdata, 'read'):
         return _read_userdata(userdata)
     return {}
 

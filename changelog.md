@@ -4,11 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 0.13.1
+## Version 1.0.0
 	- Change the xarray dataset-accessor from `Veldata` to `velds`.
 	- Begin reimplementing DOLfYN API in the velocity.Velocity class (accessed via velds above)
 	- Switch from epoch time to datetime64 in datasets
-	        - This also includes a bugfix where the epoch time was machine specific.
+	    - This also includes a bugfix where the epoch time was machine specific.
+	- No longer Python 2 compatible.
+	- Fix some Nortek Signature (ad2cp) read issues
+	- Re-implement the 'inplace' argument for several API functions.
 
 ## Version 0.13.0
 	- Refactored source code to use xarray instead of h5py-derived data objects
