@@ -8,6 +8,8 @@ from .rdi import read_rdi
 from .base import _create_dataset, _get_filetype
 from ..rotate.base import _set_coords
 from ..time import date2matlab, matlab2date, date2dt64, dt642date
+import dolfyn.tools.misc as misc
+vd_decorator = misc._velocity_dataset_decorator
 
 
 # time variables stored as data variables (as opposed to coordinates)
@@ -79,7 +81,7 @@ def read_example(name, **kwargs):
         'example_data/' + name)
     return read(filename, **kwargs)
 
-
+@vd_decorator
 def save(dataset, filename,
          format='NETCDF4', engine='netcdf4',
          **kwargs):
@@ -176,6 +178,7 @@ def load(filename):
     return ds
 
 
+@vd_decorator
 def save_mat(dataset, filename, datenum=True):
     """Save xarray dataset as a MATLAB (.mat) file
 
