@@ -212,23 +212,25 @@ class TimeBinner:
 
         Returns
         -------
-        ds : xarray.Dataset
-          A new, averaged dataset if 'out_ds' is not specified, or averaged
-          variables returned as dataArrays within 'out_ds' if specified.
+        out_ds : xarray.Dataset
+          The new (or updated when out_ds is not None) dataset
+          with the averages of all the variables in raw_ds.
+          
+        Raises
+        ------
+        AttributeError : when out_ds is supplied as input (not None)
+        and the values in out_ds.attrs are inconsistent with
+        raw_ds.attrs or the properties of this VelBinner (n_bin,
+        n_fft, fs, etc.)
+
+        Notes
+        -----
+        raw_ds.attrs are copied to out_ds.attrs. Inconsistencies
+        between the two (when out_ds is specified as input) raise an
+        AttributeError.
 
         """
-        self._check_indata(raw_ds)
-        props = {}
-        if out_ds is None:
-            out_ds = type(raw_ds)()
-            props['description'] = 'Binned averages calculated from ' \
-                'ensembles of size "n_bin"'
-            props['fs'] = self.fs
-            props['n_bin'] = self.n_bin
-            props['n_fft'] = self.n_fft
-            props['coord_sys'] = raw_ds.coord_sys
-        else:
-            props = out_ds.attrs
+        out_ds = self._check_ds(raw_ds, out_ds)
 
         if names is None:
             names = raw_ds.data_vars
@@ -261,7 +263,7 @@ class TimeBinner:
                 dims=raw_ds.vel.dims[1:],
                 attrs={'units': 'm/s',
                        'description': 'horizontal velocity std dev'})
-        out_ds.attrs = props
+
         return out_ds
 
     def do_var(self, raw_ds, out_ds=None, names=None, suffix='_var'):
@@ -280,20 +282,25 @@ class TimeBinner:
 
         Returns
         -------
-        ds : xarray.Dataset
-          A new, variance dataset if 'out_ds' is not specified, or variables 
-          variances returned as dataArrays within 'out_ds' if specified.
+        out_ds : xarray.Dataset
+          The new (or updated when out_ds is not None) dataset
+          with the variance of all the variables in raw_ds.
+          
+        Raises
+        ------
+        AttributeError : when out_ds is supplied as input (not None)
+        and the values in out_ds.attrs are inconsistent with
+        raw_ds.attrs or the properties of this VelBinner (n_bin,
+        n_fft, fs, etc.)
+
+        Notes
+        -----
+        raw_ds.attrs are copied to out_ds.attrs. Inconsistencies
+        between the two (when out_ds is specified as input) raise an
+        AttributeError.
+
         """
-        self._check_indata(raw_ds)
-        props = {}
-        if out_ds is None:
-            out_ds = type(raw_ds)()
-            props['description'] = 'Variances calculated from ensembles '\
-                'of size "n_bin"'
-            props['n_bin'] = self.n_bin
-            props['coord_sys'] = raw_ds.coord_sys
-        else:
-            props = out_ds.attrs
+        out_ds = self._check_ds(raw_ds, out_ds)
 
         if names is None:
             names = raw_ds.data_vars
@@ -318,23 +325,54 @@ class TimeBinner:
                 except:  # variables not needing averaging
                     pass
 
-        out_ds.attrs = props
         return out_ds
 
-    def _check_indata(self, dat):
-        for v in dat.data_vars:
-            if np.any(np.array(dat[v].shape) == 0):
+    def _check_ds(self, raw_ds, out_ds):
+        for v in raw_ds.data_vars:
+            if np.any(np.array(raw_ds[v].shape) == 0):
                 raise RuntimeError(f"{v} cannot be averaged "
                                    "because it is empty.")
-        if 'DutyCycle_NBurst' in dat.attrs and \
-                dat.attrs['DutyCycle_NBurst'] < self.n_bin:
+        if 'DutyCycle_NBurst' in raw_ds.attrs and \
+                raw_ds.attrs['DutyCycle_NBurst'] < self.n_bin:
             warnings.warn(f"The averaging interval (n_bin = {self.n_bin})"
                           "is larger than the burst interval "
                           "(NBurst = {dat.attrs['DutyCycle_NBurst']})")
-        if dat.fs != self.fs:
+        if raw_ds.fs != self.fs:
             raise Exception(f"The input data sample rate ({dat.fs}) does not "
                             "match the sample rate of this binning-object "
                             "({self.fs})")
+
+        if out_ds is None:
+            out_ds = type(raw_ds)()
+
+        o_attrs = out_ds.attrs
+
+        props = {}
+        props['fs'] = self.fs
+        props['n_bin'] = self.n_bin
+        props['n_fft'] = self.n_fft
+        props['description'] = 'Binned averages calculated from ' \
+            'ensembles of size "n_bin"'
+        props.update(raw_ds.attrs)
+
+        for ky in props:
+            if ky in o_attrs and o_attrs[ky] != props[ky]:
+                # The values in out_ds must match `props` (raw_ds.attrs,
+                # plus those defined above)
+                raise AttributeError(
+                    "The attribute '{}' of `out_ds` is inconsistent " \
+                    "with this `VelBinner` or the input data (`raw_ds`)".format(ky))
+            else:
+                o_attrs[ky] = props[ky]
+        return out_ds
+
+    def _calc_lag(self, npt=None, one_sided=False):
+        if npt is None:
+            npt = self.n_bin
+        if one_sided:
+            return np.arange(int(npt // 2), dtype=np.float32)
+        else:
+            return np.arange(npt, dtype=np.float32) - int(npt // 2)
 
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
                  noise=(0, 0), n_fft_coh=None, n_bin=None):
