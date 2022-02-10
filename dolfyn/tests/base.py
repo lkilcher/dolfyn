@@ -17,6 +17,7 @@ def assert_allclose(dat0, dat1, *args, **kwargs):
             dat1[v] = time.dt642epoch(dat1[v])
             names.append(v)
     _assert_allclose(dat0, dat1, *args, **kwargs)
+    assert dat0.attrs == dat1.attrs, "The attributes do not match."
     for v in names:
         dat0[v] = time.epoch2dt64(dat0[v])
         dat1[v] = time.epoch2dt64(dat1[v])

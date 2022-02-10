@@ -1,9 +1,8 @@
 from . import test_read_adv as tv
 from . import test_read_adp as tp
-from .base import load_ncdata as load, save_ncdata as save
+from .base import load_ncdata as load, save_ncdata as save, assert_allclose
 import dolfyn.adv.api as avm
 import dolfyn.adp.api as apm
-from xarray.testing import assert_allclose
 import numpy as np
 
 
