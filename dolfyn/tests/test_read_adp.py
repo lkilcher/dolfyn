@@ -156,7 +156,7 @@ def test_nortek2_crop(make_data=False):
     os.remove(tb.exdt('Sig500_Echo_crop.ad2cp.index'))
 
     cd_sig_ie_crop = load('Sig500_Echo_crop.nc')
-    assert_allclose(td_sig_ie_crop, cd_sig_ie_crop)
+    assert_allclose(td_sig_ie_crop, cd_sig_ie_crop, atol=1e-6)
 
 
 def test_matlab_io(make_data=False):
