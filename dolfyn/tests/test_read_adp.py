@@ -1,14 +1,14 @@
-from dolfyn.io.api import read_example as read
-from dolfyn.tests import base as tb
 import dolfyn.io.rdi as wh
 import dolfyn.io.nortek as awac
 import dolfyn.io.nortek2 as sig
-import warnings
-import os
-import sys
-import unittest
+from dolfyn.io.nortek2_lib import crop_ensembles
+from dolfyn.io.api import read_example as read
 from dolfyn.tests.base import assert_allclose
+from dolfyn.tests import base as tb
+import warnings
+import unittest
 import pytest
+import os
 
 
 load = tb.load_ncdata
@@ -67,8 +67,9 @@ def test_io_rdi(make_data=False):
 
 def test_io_nortek(make_data=False):
     nens = 500
-    td_awac = tb.drop_config(read('AWAC_test01.wpr', userdata=False,
-                                  nens=nens))
+    with pytest.warns(UserWarning):
+        td_awac = tb.drop_config(
+            read('AWAC_test01.wpr', userdata=False, nens=[0, nens]))
     td_awac_ud = tb.drop_config(read('AWAC_test01.wpr', nens=nens))
     td_hwac = tb.drop_config(read('H-AWAC_test01.wpr'))
     td_debug = tb.drop_config(awac.read_nortek(tb.exdt('AWAC_test01.wpr'),
@@ -101,7 +102,8 @@ def test_io_nortek2(make_data=False):
         td_sig_skip = tb.drop_config(read('Sig_SkippedPings01.ad2cp'))
 
     with pytest.warns(UserWarning):
-        td_sig_badt = tb.drop_config(sig.read_signature(tb.rfnm('Sig1000_BadTime01.ad2cp')))
+        td_sig_badt = tb.drop_config(sig.read_signature(
+            tb.rfnm('Sig1000_BadTime01.ad2cp')))
 
     # Make sure we read all the way to the end of the file.
     # This file ends exactly at the end of an ensemble.
@@ -139,6 +141,24 @@ def test_io_nortek2(make_data=False):
     assert_allclose(td_sig_badt, dat_sig_badt, atol=1e-6)
 
 
+def test_nortek2_crop(make_data=False):
+    # Test file cropping function
+    crop_ensembles(infile=tb.exdt('Sig500_Echo.ad2cp'),
+                   outfile=tb.exdt('Sig500_Echo_crop.ad2cp'),
+                   range=[50, 100])
+    td_sig_ie_crop = tb.drop_config(read('Sig500_Echo_crop.ad2cp'))
+
+    if make_data:
+        save(td_sig_ie_crop, 'Sig500_Echo_crop.nc')
+
+    os.remove(tb.exdt('Sig500_Echo.ad2cp.index'))
+    os.remove(tb.exdt('Sig500_Echo_crop.ad2cp'))
+    os.remove(tb.exdt('Sig500_Echo_crop.ad2cp.index'))
+
+    cd_sig_ie_crop = load('Sig500_Echo_crop.nc')
+    assert_allclose(td_sig_ie_crop, cd_sig_ie_crop)
+
+
 def test_matlab_io(make_data=False):
     td_rdi_bt = tb.drop_config(read('RDI_withBT.000', nens=100))
 
@@ -169,14 +189,7 @@ class warnings_testcase(unittest.TestCase):
             awac.read_nortek(tb.exdt('BenchFile01.ad2cp'))
         with self.assertRaises(Exception):
             sig.read_signature(tb.exdt('AWAC_test01.wpr'))
-
-
-if __name__ == '__main__':
-    warnings.simplefilter('ignore', UserWarning)
-    sys.stdout = open(os.devnull, 'w')  # block printing output
-    test_io_rdi()
-    test_io_nortek()
-    test_io_nortek2()
-    test_matlab_io()
-    unittest.main()
-    sys.stdout = sys.__stdout__  # restart printing output
+        with self.assertRaises(IOError):
+            read(tb.rfnm('AWAC_test01.nc'))
+        with self.assertRaises(Exception):
+            save(dat_rdi, 'test_save.fail')

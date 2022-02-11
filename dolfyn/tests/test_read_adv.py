@@ -1,20 +1,19 @@
+from dolfyn.rotate.api import set_inst2head_rotmat
+from dolfyn.io.api import read_example as read
+from dolfyn.tests import base as tb
+import dolfyn.io.nortek as vector
 import numpy as np
 import os
-import sys
-from dolfyn.rotate.api import set_inst2head_rotmat
-import dolfyn.io.nortek as vector
-from dolfyn.io.api import read_example as read
-from . import base as tb
 
 
 load = tb.load_ncdata
 save = tb.save_ncdata
 assert_allclose = tb.assert_allclose
 
-dat = load('vector_data01.nc')
-dat_imu = load('vector_data_imu01.nc')
-dat_imu_json = load('vector_data_imu01-json.nc')
-dat_burst = load('burst_mode01.nc')
+dat = load('vector_data01')
+dat_imu = load('vector_data_imu01')
+dat_imu_json = load('vector_data_imu01-json')
+dat_burst = load('burst_mode01')
 
 
 def test_save():
@@ -54,10 +53,3 @@ def test_read(make_data=False):
     assert_allclose(tdb, dat_burst, atol=1e-6)
     assert_allclose(tdm2, dat_imu_json, atol=1e-6)
     assert_allclose(td_debug, tdm2, atol=1e-6)
-
-
-if __name__ == '__main__':
-    sys.stdout = open(os.devnull, 'w')  # block printing output
-    test_save()
-    test_read()
-    sys.stdout = sys.__stdout__  # restart printing output

@@ -1,9 +1,10 @@
-from . import test_read_adp as tr, test_read_adv as tv
-from .base import load_ncdata as load, save_ncdata as save, assert_allclose
+from dolfyn.tests import test_read_adp as tr, test_read_adv as tv
+from dolfyn.tests.base import load_ncdata as load, save_ncdata as save, assert_allclose
 from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
 from xarray.testing import assert_identical
 import numpy as np
+import pytest
 
 
 class adv_setup():
@@ -18,7 +19,8 @@ class adp_setup():
     def __init__(self, tr):
         self.dat = tr.dat_sig.copy(deep=True)
         fs = self.dat.fs
-        self.avg_tool = VelBinner(n_bin=fs*20, fs=fs)
+        with pytest.warns(UserWarning):
+            self.avg_tool = VelBinner(n_bin=fs*20, fs=fs, n_fft=fs*40)
 
 
 def test_do_func(make_data=False):
@@ -47,9 +49,14 @@ def test_calc_func(make_data=False):
     test_ds_dif = type(dat_vec.dat1)()
     c = dat_vec.avg_tool
 
-    test_ds['coh'] = c.calc_coh(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
+    dat_adp = adp_setup(tr)
+    c2 = dat_adp.avg_tool
+    test_ds_adp = type(dat_adp.dat)()
+
+    test_ds['coh'] = c.calc_coh(
+        dat_vec.dat1.vel[0], dat_vec.dat1.vel[1], n_fft_coh=dat_vec.dat1.fs)
     test_ds['pang'] = c.calc_phase_angle(
-        dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
+        dat_vec.dat1.vel[0], dat_vec.dat1.vel[1], n_fft_coh=dat_vec.dat1.fs)
     test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
     test_ds['acov'] = c.calc_acov(dat_vec.dat1.vel)
     test_ds['tke_vec'] = c.calc_tke(dat_vec.dat1.vel)
@@ -65,16 +72,25 @@ def test_calc_func(make_data=False):
     test_ds_dif['pang_dif'] = c.calc_phase_angle(
         dat_vec.dat1.vel, dat_vec.dat2.vel)
 
+    # Test ADCP single vector spectra, cross-spectra to test radians code
+    test_ds_adp['psd_b5'] = c2.calc_psd(
+        dat_adp.dat.vel_b5.isel(range_b5=5), window='hamm')
+    test_ds_adp['tke_b5'] = c2.calc_tke(dat_adp.dat.vel_b5)
+    test_ds_adp['csd'] = c2.calc_csd(dat_adp.dat.vel.isel(dir=slice(0, 3), range=0),
+                                     freq_units='rad', window='hamm')
+
     if make_data:
         save(test_ds, 'vector_data01_func.nc')
         save(test_ds_dif, 'vector_data01_funcdif.nc')
         save(test_ds_demean, 'vector_data01_func_demean.nc')
+        save(test_ds_adp, 'BenchFile01_func.nc')
         return
 
     assert_allclose(test_ds, load('vector_data01_func.nc'), atol=1e-6)
     assert_allclose(test_ds_dif, load('vector_data01_funcdif.nc'), atol=1e-6)
     assert_allclose(test_ds_demean, load(
         'vector_data01_func_demean.nc'), atol=1e-6)
+    assert_allclose(test_ds_adp, load('BenchFile01_func.nc'), atol=1e-6)
 
 
 def test_calc_freq():
@@ -106,10 +122,3 @@ def test_adv_turbulence(make_data=False):
         return
 
     assert_allclose(tdat, load('vector_data01_bin.nc'), atol=1e-6)
-
-
-if __name__ == '__main__':
-    test_do_func()
-    test_calc_func()
-    test_calc_freq()
-    test_adv_turbulence()

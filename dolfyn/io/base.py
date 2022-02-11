@@ -72,11 +72,7 @@ def _read_userdata(fname):
     for nm in ['inst2head_rotmat', 'inst2head_vec']:
         if nm in data:
             data[nm] = np.array(data[nm])
-    if 'coord_sys' in data:
-        raise Exception("The instrument coordinate system "
-                        "('coord_sys') should not be specified in "
-                        "the .userdata.json file, remove this and "
-                        "read the file again.")
+
     return data
 
 
@@ -201,18 +197,6 @@ def _create_dataset(data):
                                               'dim_1': 'time'+tg})
                     ds[key] = ds[key].assign_coords({'dirIMU': [1, 2, 3],
                                                      'time'+tg: data['coords']['time'+tg]})
-
-                # b5 and echo tagged variables
-                elif any(val in key for val in tag[:2]):
-                    tg = [val for val in tag if val in key]
-                    tg = tg[0]
-
-                    ds[key] = ds[key].rename({'dim_0': 'range'+tg,
-                                              'dim_1': 'time'+tg})
-                    ds[key] = ds[key].assign_coords({'range'+tg: data['coords']['range'+tg],
-                                                     'time'+tg: data['coords']['time'+tg]})
-                else:
-                    warnings.warn(f'Variable not included in dataset: {key}')
 
             elif l == 3:  # 3D variables
                 if not any(val in key for val in tag):

@@ -122,7 +122,7 @@ def save(dataset, filename,
             dataset[var+'_real'] = dataset[var].real
             dataset[var+'_imag'] = dataset[var].imag
 
-            dataset = dataset.drop(var)
+            dataset = dataset.drop_vars(var)
             dataset.attrs['complex_vars'].append(var)
 
     if compression:

@@ -93,9 +93,9 @@ class _Ad2cpReader():
         self._check_nortek(endian)
         self.f.seek(0, 2)  # Seek to end
         self._eof = self.f.tell()
-        self._index = lib._get_index(fname,
-                                     reload=rebuild_index,
-                                     debug=debug)
+        self._index = lib.get_index(fname,
+                                    reload=rebuild_index,
+                                    debug=debug)
         self._reopen(bufsize)
         self.filehead_config = self._read_filehead_config_string()
         self._ens_pos = self._index['pos'][lib._boolarray_firstensemble_ping(

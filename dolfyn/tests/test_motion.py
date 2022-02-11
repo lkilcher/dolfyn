@@ -66,9 +66,3 @@ def test_sep_probes(make_data=False):
 #     tdmc = avm.correct_motion(tdm)
 
 #    assert type(tdm)==type(tdmc) # simple way of making sure tdmc exists
-
-
-if __name__ == '__main__':
-    test_motion_adv()
-    test_sep_probes()
-    # test_motion_adcp()

@@ -102,10 +102,7 @@ def _beam2inst(dat, reverse=False, force=False):
         if reverse and dat.coord_sys != 'inst':
             raise ValueError('The input must be in inst coordinates.')
 
-    try:
-        rotmat = dat['beam2inst_orientmat']
-    except:
-        raise Exception("Unrecognized device type.")
+    rotmat = dat['beam2inst_orientmat']
 
     if isinstance(force, (list, set, tuple)):
         # You can force a distinct set of variables to be rotated by
@@ -124,7 +121,7 @@ def _beam2inst(dat, reverse=False, force=False):
         dat[ky].values = np.einsum('ij,j...->i...', rotmat, dat[ky].values)
 
     if force:
-        dat = dat._set_coords(dat, cs, forced=True)
+        dat = _set_coords(dat, cs, forced=True)
     else:
         dat = _set_coords(dat, cs)
 

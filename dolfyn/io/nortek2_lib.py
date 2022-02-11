@@ -182,9 +182,35 @@ def _check_index(idx, infile, fix_hw_ens=False):
 
     if np.any(np.diff(ens) > 1) and FLAG:
         idx['ens'] = np.unwrap(hwe.astype(np.int64), period=period) - hwe[0]
-        
 
-def _get_index(infile, reload=False, debug=False):
+
+def _boolarray_firstensemble_ping(index):
+    """Return a boolean of the index that indicates only the first ping in 
+    each ensemble.
+    """
+    dens = np.ones(index['ens'].shape, dtype='bool')
+    dens[1:] = np.diff(index['ens']) != 0
+    return dens
+
+
+def get_index(infile, reload=False, debug=False):
+    """This function reads ad2cp.index files
+
+    Parameters
+    ----------
+    infile: str
+      Path and filename of ad2cp datafile, not including ".index"
+    reload: bool
+      If true, ignore existing .index file and create a new one
+    debug: bool
+      If true, run code in debug mode
+
+    Returns
+    -------
+    out: tuple
+      Tuple containing info held within index file
+
+    """
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
         _create_index(infile, index_file, 2 ** 32, debug)
@@ -202,21 +228,6 @@ def _get_index(infile, reload=False, debug=False):
     return out
 
 
-def _boolarray_firstensemble_ping(index):
-    """Return a boolean of the index that indicates only the first ping in each ensemble.
-    """
-    dens = np.ones(index['ens'].shape, dtype='bool')
-    dens[1:] = np.diff(index['ens']) != 0
-    return dens
-
-
-def _getbit(val, n):
-    try:
-        return bool((val >> n) & 1)
-    except ValueError:  # An array
-        return ((val >> n) & 1).astype('bool')
-
-
 def crop_ensembles(infile, outfile, range):
     """This function is for cropping certain pings out of an AD2CP
     file to create a new AD2CP file. It properly grabs the header from
@@ -225,13 +236,17 @@ def crop_ensembles(infile, outfile, range):
     The range is the `ensemble/ping` counter as defined in the first column
     of the INDEX.
 
+    Parameters
+    ----------
+    infile: str
+      Path of ad2cp filename (with .ad2cp file extension)
+    outfile: str
+      Path for new, cropped ad2cp file (with .ad2cp file extension)
+    range: list
+      2 element list of start and end ensemble (or time index)
+
     """
-    idx = _get_index(infile)
-    # If running in raw/continuous mode
-    if not sum(idx['ens']):
-        n_ID = len(np.unique(idx['ID']))
-        idx_act = np.arange(0, len(idx)//n_ID, 1)
-        idx['ens'] = np.sort(np.tile(idx_act, n_ID))
+    idx = get_index(infile)
     with open(_abspath(infile), 'rb') as fin:
         with open(_abspath(outfile), 'wb') as fout:
             fout.write(fin.read(idx['pos'][0]))
@@ -292,6 +307,10 @@ class _BitIndexer():
         if ot is not None:
             out = out.astype(ot)
         return out
+
+
+def _getbit(val, n):
+    return bool((val >> n) & 1)
 
 
 def _headconfig_int2dict(val, mode='burst'):

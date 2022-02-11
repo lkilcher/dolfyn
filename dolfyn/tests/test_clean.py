@@ -102,12 +102,3 @@ def test_orient_filter(make_data=False):
 
     assert_allclose(td_sig, load('Sig1000_IMU_ofilt.nc'), atol=1e-6)
     assert_allclose(td_rdi, load('RDI_test01_ofilt.nc'), atol=1e-6)
-
-
-if __name__ == '__main__':
-    test_GN2002()
-    test_spike_thresh()
-    test_range_limit()
-    test_clean_upADCP()
-    test_clean_downADCP()
-    test_orient_filter()

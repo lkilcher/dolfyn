@@ -70,7 +70,7 @@ def test_rotate_inst2earth(make_data=False):
     td_awac = tr.dat_awac.copy(deep=True)
     rotate2(td_awac, 'inst', inplace=True)
     td_sig_ie = tr.dat_sig_ie.copy(deep=True)
-    rotate2(rotate2(td_sig_ie, 'earth', False), 'inst', inplace=True)
+    rotate2(rotate2(td_sig_ie, 'earth', inplace=False), 'inst', inplace=True)
     td_sig_o = td_sig_ie.copy(deep=True)
 
     td = rotate2(tr.dat_rdi, 'earth', inplace=False)
@@ -89,8 +89,8 @@ def test_rotate_inst2earth(make_data=False):
         save(td_sig_ie, 'Sig500_Echo_earth2inst.nc')
         return
 
-    rotate2(td_awac, 'earth', inplace=True)
-    rotate2(td_sig_ie, 'earth', inplace=True)
+    td_awac = rotate2(load('AWAC_test01_earth2inst.nc'), 'earth', inplace=False)
+    td_sig_ie = rotate2(load('Sig500_Echo_earth2inst.nc'), 'earth', inplace=False)
     td_sig_o = rotate2(td_sig_o.drop_vars('orientmat'), 'earth', inplace=False)
 
     cd = load('RDI_test01_rotate_inst2earth.nc')
@@ -101,7 +101,6 @@ def test_rotate_inst2earth(make_data=False):
     assert_allclose(td, cd, atol=1e-5)
     assert_allclose(tdwr2, cdwr2, atol=1e-5)
     assert_allclose(td_awac, tr.dat_awac, atol=1e-5)
-    #npt.assert_allclose(td_awac.vel.values, tr.dat_awac.vel.values, rtol=1e-7, atol=1e-3)
     assert_allclose(td_sig, cd_sig, atol=1e-5)
     assert_allclose(td_sig_i, cd_sig_i, atol=1e-5)
     assert_allclose(td_sig_ie, tr.dat_sig_ie, atol=1e-5)
@@ -166,11 +165,3 @@ def test_rotate_earth2principal(make_data=False):
     assert_allclose(td_rdi, cd_rdi, atol=1e-5)
     assert_allclose(td_awac, cd_awac, atol=1e-5)
     assert_allclose(td_sig, cd_sig, atol=1e-5)
-
-
-if __name__ == '__main__':
-    test_rotate_beam2inst()
-    test_rotate_inst2beam()
-    test_rotate_inst2earth()
-    test_rotate_earth2inst()
-    test_rotate_earth2principal()
