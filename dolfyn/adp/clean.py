@@ -1,8 +1,8 @@
 """Module containing functions to clean data
 """
 import numpy as np
-from scipy.signal import medfilt
 import xarray as xr
+from scipy.signal import medfilt
 from ..tools.misc import medfiltnan
 from ..rotate.api import rotate2
 from ..rotate.base import _make_model, quaternion2orient
@@ -105,8 +105,9 @@ def find_surface(ds, thresh=10, nfilt=None):
 
 def find_surface_from_P(ds, salinity=35):
     """
-    Approximates distance to water surface above ADCP from the pressure sensor
-    and adds the variable "depth" to the input Dataset.
+    Calculates the distance to the water surface. Temperature and salinity
+    are used to calculate seawater density, which is in turn used with the
+    pressure data to calculate depth.
 
     Parameters
     ----------
@@ -117,27 +118,51 @@ def find_surface_from_P(ds, salinity=35):
 
     Returns
     -------
-    None, operates "in place"
+    None, operates "in place" and adds the variables "water_density" and 
+    "depth" to the input dataset.
 
     Notes
     -----
     Requires that the instrument's pressure sensor was calibrated/zeroed
     before deployment to remove atmospheric pressure.
 
+    Calculates seawater density at normal atmospheric pressure according 
+    to the UNESCO 1981 equation of state. Does not include hydrostatic pressure.
+
     """
-    # pressure conversion from dbar to MPa / water weight
-    rho = salinity + 1000
-    d = (ds.pressure*10000)/(9.81*rho)
+    # Density calcation
+    T = ds.temp.values
+    S = salinity
+    # standard mean ocean water
+    rho_smow = 999.842594 + 6.793953e-2*T - 9.095290e-3*T**2 + \
+        1.001685e-4*T**3 - 1.120083e-6*T**4 + 6.536332e-9*T**5
+    # at water surface
+    B1 = 8.2449e-1 - 4.0899e-3*T + 7.6438e-5*T**2 - 8.2467e-7*T**3 + 5.3875e-9*T**4
+    C1 = -5.7246e-3 + 1.0227e-4*T - 1.6546e-6*T**2
+    d0 = 4.8314e-4
+    rho_atm0 = rho_smow + B1*S + C1*S**1.5 + d0*S**2
+
+    # Depth = pressure (conversion from dbar to MPa) / water weight
+    d = (ds.pressure*10000)/(9.81*rho_atm0)
 
     if hasattr(ds, 'h_deploy'):
         d += ds.h_deploy
+        description = "Water depth to seafloor"
+    else:
+        description = "Water depth to ADCP"
 
-    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={'units': 'm'})
+    ds['water_density'] = xr.DataArray(
+        rho_atm0,
+        dims=['time'],
+        attrs={'units': 'kg/m^3',
+               'description': 'Water density according to UNESCO 1981 equation of state'})
+    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={
+                               'units': 'm', 'description': description})
 
 
 def nan_beyond_surface(ds, val=np.nan):
     """
-    Mask the values of the data that are beyond the surface.
+    Mask the values of 3D data (vel, amp, corr, echo) that are beyond the surface.
 
     Parameters
     ----------
@@ -159,6 +184,7 @@ def nan_beyond_surface(ds, val=np.nan):
     """
     ds = ds.copy(deep=True)
 
+    # Get all variables with 'range' coordinate
     var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
 
     if 'nortek' in _make_model(ds):
@@ -177,27 +203,26 @@ def nan_beyond_surface(ds, val=np.nan):
         var.remove('echo')
 
     for nm in var:
-        # workaround for xarray since it can't handle 2D boolean arrays
         a = ds[nm].values
-        try:
-            a[..., bds] = val
-        except:  # correlation
+        if 'corr' in nm:
             a[..., bds] = 0
+        else:
+            a[..., bds] = val
         ds[nm].values = a
 
     return ds
 
 
-def vel_exceeds_thresh(ds, thresh=5, val=np.nan):
+def val_exceeds_thresh(var, thresh=5, val=np.nan):
     """
-    Find values of the velocity data that exceed a threshold value,
+    Find values of a variable that exceed a threshold value,
     and assign "val" to the velocity data where the threshold is
     exceeded.
 
     Parameters
     ----------
-    ds : xr.Dataset
-      The adcp dataset to clean
+    var : xarray.DataArray
+      Variable to clean
     thresh : numeric
       The maximum value of velocity to screen
     val : nan or numeric
@@ -209,14 +234,14 @@ def vel_exceeds_thresh(ds, thresh=5, val=np.nan):
       The adcp dataset with datapoints beyond thresh are set to `val`
 
     """
-    ds = ds.copy(deep=True)
+    var = var.copy(deep=True)
 
-    bd = np.zeros(ds.vel.shape, dtype='bool')
-    bd |= (np.abs(ds.vel.values) > thresh)
+    bd = np.zeros(var.shape, dtype='bool')
+    bd |= (np.abs(var.values) > thresh)
 
-    ds.vel.values[bd] = val
+    var.values[bd] = val
 
-    return ds
+    return var
 
 
 def correlation_filter(ds, thresh=50, val=np.nan):
@@ -236,27 +261,33 @@ def correlation_filter(ds, thresh=50, val=np.nan):
     Returns
     -------
     ds : xarray.Dataset
-     The adcp dataset with low correlation values set to `val`
+     Velocity data with low correlation values set to `val`
 
     Notes
     -----
-    Does not edit correlation data.
+    Does not edit correlation or amplitude data.
 
     """
     ds = ds.copy(deep=True)
 
+    # 4 or 5 beam
+    if hasattr(ds, 'vel_b5'):
+        tag = ['', '_b5']
+    else:
+        tag = ['']
+
     # copy original ref frame
     coord_sys_orig = ds.coord_sys
+
     # correlation is always in beam coordinates
-    mask = (ds.corr.values <= thresh)
+    rotate2(ds, 'beam', inplace=True)
+    for tg in tag:
+        mask = (ds['corr'+tg].values <= thresh)
+        ds['vel'+tg].values[mask] = val
+        ds['vel'+tg].attrs['Comments'] = 'Filtered of data with a correlation value below ' + \
+            str(thresh) + ds.corr.units
 
-    if hasattr(ds, 'vel_b5'):
-        mask_b5 = (ds.corr_b5.values <= thresh)
-        ds.vel_b5.values[mask_b5] = val
-
-    ds = rotate2(ds, 'beam', inplace=False)
-    ds.vel.values[mask] = val
-    ds = rotate2(ds, coord_sys_orig, inplace=False)
+    rotate2(ds, coord_sys_orig, inplace=True)
 
     return ds
 
@@ -303,14 +334,14 @@ def medfilt_orient(ds, nfilt=7):
         return ds.drop_vars('orientmat')
 
 
-def fillgaps_time(ds, method='cubic', max_gap=None):
+def fillgaps_time(var, method='cubic', max_gap=None):
     """
-    Fill gaps (nan values) across time using the specified method
+    Fill gaps (nan values) in var across time using the specified method
 
     Parameters
     ----------
-    ds : xarray.Dataset
-      The adcp dataset to clean
+    var : xarray.DataArray
+      The variable to clean
     method : string
       Interpolation method to use
     max_gap : numeric
@@ -326,24 +357,22 @@ def fillgaps_time(ds, method='cubic', max_gap=None):
     xarray.DataArray.interpolate_na()
 
     """
-    ds['vel'] = ds.vel.interpolate_na(dim='time', method=method,
-                                      use_coordinate=True,
-                                      max_gap=max_gap)
-    if hasattr(ds, 'vel_b5'):
-        ds['vel_b5'] = ds.vel.interpolate_na(dim='time', method=method,
-                                             use_coordinate=True,
-                                             max_gap=max_gap)
-    return ds
+    var = var.copy(deep=True)
+    time_dim = [t for t in var.dims if 'time' in t][0]
+
+    return var.interpolate_na(dim=time_dim, method=method,
+                              use_coordinate=True,
+                              max_gap=max_gap)
 
 
-def fillgaps_depth(ds, method='cubic', max_gap=None):
+def fillgaps_depth(var, method='cubic', max_gap=None):
     """
-    Fill gaps (nan values) along the depth profile using the specified method
+    Fill gaps (nan values) in var along the depth profile using the specified method
 
     Parameters
     ----------
-    ds : xarray.Dataset
-      The adcp dataset to clean
+    var : xarray.DataArray
+      The variable to clean
     method : string
       Interpolation method to use
     max_gap : numeric
@@ -359,11 +388,9 @@ def fillgaps_depth(ds, method='cubic', max_gap=None):
     xarray.DataArray.interpolate_na()
 
     """
-    ds['vel'] = ds.vel.interpolate_na(dim='range', method=method,
-                                      use_coordinate=False,
-                                      max_gap=max_gap)
-    if hasattr(ds, 'vel_b5'):
-        ds['vel_b5'] = ds.vel.interpolate_na(dim='range', method=method,
-                                             use_coordinate=True,
-                                             max_gap=max_gap)
-    return ds
+    var = var.copy(deep=True)
+    range_dim = [t for t in var.dims if 'range' in t][0]
+
+    return var.interpolate_na(dim=range_dim, method=method,
+                              use_coordinate=False,
+                              max_gap=max_gap)
