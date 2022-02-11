@@ -3,19 +3,19 @@ import dolfyn as dlfn
 import dolfyn.adp.api as api
 
 # Then read a file containing adv data:
-dat = dlfn.read_example('BenchFile01.ad2cp')
+ds = dlfn.read_example('BenchFile01.ad2cp')
 
 # This ADCP was sitting 0.5 m up from the seabed
 # in a tripod
-dat = api.clean.set_range_offset(dat, h_deploy=0.5)
+api.clean.set_range_offset(ds, h_deploy=0.5)
 
 # Filter the data by low correlation values (< 50% here)
-dat_cln = api.clean.correlation_filter(dat, thresh=50)
+ds = api.clean.correlation_filter(ds, thresh=50)
 
 # Rotate data from the instrument to true ENU (vs magnetic) frame:
 # First set the magnetic declination
-dlfn.set_declination(dat_cln, 10)  # 10 degrees East
-dlfn.rotate2(dat_cln, 'earth')
+dlfn.set_declination(ds, 10)  # 10 degrees East
+dlfn.rotate2(ds, 'earth')
 
 # At any point you can save the data:
 #dlfn.save(dat_cln, 'adcp_data.nc')
