@@ -19,7 +19,7 @@ class TimeBinner:
           Number of data points to include in a 'bin' (ensemble), not the 
           number of bins
         fs : int
-          Instrument sampling frequency
+          Instrument sampling frequency in Hz
         n_fft : int
           Number of data points to use for fft (`n_fft`<=`n_bin`).
           Default: `n_fft`=`n_bin`
@@ -39,12 +39,13 @@ class TimeBinner:
             self.n_fft = n_bin
         elif n_fft > n_bin:
             self.n_fft = n_bin
-            print("n_fft must be smaller than n_bin, setting n_fft = n_bin")
+            warnings.warn(
+                "n_fft must be smaller than n_bin, setting n_fft = n_bin")
         if n_fft_coh is None:
             self.n_fft_coh = int(self.n_fft)
         elif n_fft_coh > n_bin:
             self.n_fft_coh = int(n_bin // 6)
-            print("n_fft_coh must be smaller than or equal to n_bin, "
+            warnings.warn("n_fft_coh must be smaller than or equal to n_bin, "
                   "setting n_fft_coh = n_bin/6")
 
     def _outshape(self, inshape, n_pad=0, n_bin=None):
@@ -335,14 +336,6 @@ class TimeBinner:
                             "match the sample rate of this binning-object "
                             "({self.fs})")
 
-    def _calc_lag(self, npt=None, one_sided=False):
-        if npt is None:
-            npt = self.n_bin
-        if one_sided:
-            return np.arange(int(npt // 2), dtype=np.float32)
-        else:
-            return np.arange(npt, dtype=np.float32) - int(npt // 2)
-
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
                  noise=(0, 0), n_fft_coh=None, n_bin=None):
         """Calculate coherence between `veldat1` and `veldat2`.
@@ -388,7 +381,7 @@ class TimeBinner:
         if n_fft_coh is None:
             n_fft = self.n_fft_coh
         else:
-            n_fft = n_fft_coh
+            n_fft = int(n_fft_coh)
 
         # want each slice to carry the same timespan
         n_bin2 = self._parse_nbin(n_bin)  # bins for shorter array
@@ -464,7 +457,7 @@ class TimeBinner:
         if n_fft_coh is None:
             n_fft = self.n_fft_coh
         else:
-            n_fft = n_fft_coh
+            n_fft = int(n_fft_coh)
 
         # want each slice to carry the same timespan
         n_bin2 = self._parse_nbin(n_bin)  # bins for shorter array
@@ -634,6 +627,8 @@ class TimeBinner:
         ----------
         dat : xarray.DataArray
           The raw dataArray of which to calculate the psd.
+        fs : float (optional)
+          The sample rate (Hz).
         window : str
           String indicating the window function to use (default: 'hanning').
         noise  : float
@@ -667,8 +662,6 @@ class TimeBinner:
             out[slc] = psd(dat[slc], n_fft, fs,
                            window=window, step=step)
         if noise != 0:
-            # # the two in 2*np.pi cancels with the two in 'self.fs/2':
-            # out -= noise**2 / (np.pi * fs)
             out -= noise**2 / (fs/2)
             # Make sure all values of the PSD are >0 (but still small):
             out[out < 0] = np.min(np.abs(out)) / 100
@@ -686,6 +679,8 @@ class TimeBinner:
         dat2 : |np.ndarray|
           The second (the shorter, if applicable) raw dataArray of which to 
           calculate the cpsd.
+        fs : float (optional)
+          The sample rate (Hz).
         window : str
           String indicating the window function to use (default: 'hanning').
         n_fft : int

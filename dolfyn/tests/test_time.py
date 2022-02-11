@@ -6,7 +6,7 @@ import dolfyn.time as time
 from datetime import datetime
 
 
-def test_epoch2date():
+def test_time_conversion():
     td = trv.dat_imu.copy(deep=True)
     dat_sig = trp.dat_sig_i.copy(deep=True)
 
@@ -47,9 +47,3 @@ def test_datenum():
 
     assert_allclose(time.dt642epoch(td.time.values), epoch, atol=1e-6)
     assert_equal(dn[0], 735032.5000311028)
-
-
-if __name__ == '__main__':
-    test_epoch2date()
-    test_datetime()
-    test_datenum()

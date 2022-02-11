@@ -169,7 +169,8 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
     -------
     cpsd : |np.ndarray|
       The cross-spectral density of `a` and `b`.
-    See also
+
+    See Also
     ---------
     :func:`psd`,
     :func:`coherence`,

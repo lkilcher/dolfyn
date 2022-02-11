@@ -102,9 +102,3 @@ def test_q_hpr():
 
     assert_allclose(dat.orientmat, dcm, atol=5e-4,
                     err_msg="Disagreement b/t quaternion-calc'd & HPR-calc'd orientmat")
-
-
-if __name__ == '__main__':
-    test_hpr_defs()
-    test_pr_declination()
-    test_q_hpr()

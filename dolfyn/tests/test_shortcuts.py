@@ -1,9 +1,10 @@
 from . import test_read_adv as tv
-from .base import load_ncdata as load, save_ncdata as save
+from .base import load_ncdata as load, save_ncdata as save, rfnm
 from dolfyn import rotate2
 import dolfyn.adv.api as avm
 from xarray.testing import assert_allclose
 import xarray as xr
+import os
 
 
 class adv_setup():
@@ -43,5 +44,8 @@ def test_shortcuts(make_data=False):
     assert_allclose(test_dat.short, load('vector_data01_u.nc'), atol=1e-6)
 
 
-if __name__ == '__main__':
-    test_shortcuts()
+def test_save_complex_data():
+    test_dat = adv_setup(tv)
+    save(test_dat.short, 'test_save.nc')
+
+    assert os.path.exists(rfnm('test_save.nc'))

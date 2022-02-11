@@ -484,14 +484,6 @@ class _RdiReader():
                 if cfgid[0] == 127 and cfgid[1] in [127, 121]:
                     if cfgid[1] == 121 and self._debug7f79 is None:
                         self._debug7f79 = True
-                        # warnings.warn(
-                        #     "This ADCP file has an undocumented "
-                        #     "sync-code.  If possible, please notify the "
-                        #     "DOLfYN developers that you are recieving "
-                        #     "this warning by posting the hardware and "
-                        #     "software details on how you acquired this file "
-                        #     "to "
-                        #     "http://github.com/lkilcher/dolfyn/issues/7")
                     valid = 1
         else:
             fd.seek(-2, 1)
@@ -744,14 +736,13 @@ class _RdiReader():
         k = ens.k
         cfg = self.cfg
         if self._source == 2:
-            warnings.warn('lat/lon bottom reading passed')
-            # self.vars_read += ['latitude_gps', 'longitude_gps']
-            # fd.seek(2, 1)
-            # long1 = fd.read_ui16(1)
-            # fd.seek(6, 1)
-            # ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
-            # if ens.latitude_gps[k] == 0:
-            #     ens.latitude_gps[k] = np.NaN
+            self.vars_read += ['latitude_gps', 'longitude_gps']
+            fd.seek(2, 1)
+            long1 = fd.read_ui16(1)
+            fd.seek(6, 1)
+            ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
+            if ens.latitude_gps[k] == 0:
+                ens.latitude_gps[k] = np.NaN
         else:
             fd.seek(14, 1)
         ens.dist_bt[:, k] = fd.read_ui16(4) * 0.01
@@ -760,23 +751,22 @@ class _RdiReader():
         ens.amp_bt[:, k] = fd.read_ui8(4)
         ens.prcnt_gd_bt[:, k] = fd.read_ui8(4)
         if self._source == 2:
-            warnings.warn('lat/lon bottom reading passed')
-            # fd.seek(2, 1)
-            # ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
-            # if ens.longitude_gps[k] > 180:
-            #     ens.longitude_gps[k] = ens.longitude_gps[k] - 360
-            # if ens.longitude_gps[k] == 0:
-            #     ens.longitude_gps[k] = np.NaN
-            # fd.seek(16, 1)
-            # qual = fd.read_ui8(1)
-            # if qual == 0:
-            #     print('  qual==%d,%f %f' % (qual,
-            #                                 ens.latitude_gps[k],
-            #                                 ens.longitude_gps[k]))
-            #     ens.latitude_gps[k] = np.NaN
-            #     ens.longitude_gps[k] = np.NaN
-            # fd.seek(71 - 45 - 16 - 17, 1)
-            # self._nbyte = 2 + 68
+            fd.seek(2, 1)
+            ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
+            if ens.longitude_gps[k] > 180:
+                ens.longitude_gps[k] = ens.longitude_gps[k] - 360
+            if ens.longitude_gps[k] == 0:
+                ens.longitude_gps[k] = np.NaN
+            fd.seek(16, 1)
+            qual = fd.read_ui8(1)
+            if qual == 0:
+                print('  qual==%d,%f %f' % (qual,
+                                            ens.latitude_gps[k],
+                                            ens.longitude_gps[k]))
+                ens.latitude_gps[k] = np.NaN
+                ens.longitude_gps[k] = np.NaN
+            fd.seek(71 - 45 - 16 - 17, 1)
+            self._nbyte = 2 + 68
         else:
             fd.seek(71 - 45, 1)
             self._nbyte = 2 + 68
@@ -784,14 +774,10 @@ class _RdiReader():
             fd.seek(78 - 71, 1)
             ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
-            #!!! Assumption: never running bottom-tracking without WinRiver or VMDAS
-            # if cfg['name'] == 'wh-adcp':
-            #     if cfg['prog_ver'] >= 16.20:
-            #         # RDI documentation claims these extra bytes were added in
-            #         # v8.17, but they don't appear in my 8.33 data -
-            #         # conversation with Egil suggests they were added in 16.20
-            #         fd.seek(4, 1)
-            #         self._nbyte += 4
+            if cfg['name'] == 'wh-adcp':
+                if cfg['prog_ver'] >= 16.20:
+                    fd.seek(4, 1)
+                    self._nbyte += 4
 
     def read_vmdas(self,):
         """ Read something from VMDAS """

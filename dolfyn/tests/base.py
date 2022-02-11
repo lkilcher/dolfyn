@@ -1,9 +1,10 @@
-import pkg_resources
-import atexit
 import dolfyn.io.api as io
-import numpy as np
 from dolfyn import time
 from xarray.testing import assert_allclose as _assert_allclose
+import numpy as np
+import pkg_resources
+import atexit
+
 
 atexit.register(pkg_resources.cleanup_resources)
 

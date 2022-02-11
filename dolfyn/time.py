@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import numpy as np
 from .tools.misc import fillgaps
-import warnings
 
 
 def _fullyear(year):

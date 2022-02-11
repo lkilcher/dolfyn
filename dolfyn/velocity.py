@@ -261,7 +261,6 @@ class Velocity():
 
     ######
     # A bunch of DOLfYN specific properties
-
     @property
     def u(self,):
         """The first velocity component.
@@ -454,13 +453,13 @@ class VelBinner(TimeBinner):
     # This defines how cross-spectra and stresses are computed.
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
 
-    def do_tke(self, dat, out_ds=None):
+    def do_tke(self, ds, out_ds=None):
         """Calculate the tke (variances of u,v,w) and stresses 
         (cross-covariances of u,v,w)
 
         Parameters
         ----------
-        dat : xarray.Dataset
+        ds : xarray.Dataset
             Xarray dataset containing raw velocity data
         out_ds : xarray.Dataset
             Averaged dataset to save tke and stress dataArrays to, 
@@ -474,14 +473,14 @@ class VelBinner(TimeBinner):
         """
         props = {}
         if out_ds is None:
-            out_ds = type(dat)()
+            out_ds = type(ds)()
             props['fs'] = self.fs
             props['n_bin'] = self.n_bin
             props['n_fft'] = self.n_fft
             out_ds.attrs = props
 
-        out_ds['tke_vec'] = self.calc_tke(dat['vel'])
-        out_ds['stress'] = self.calc_stress(dat['vel'])
+        out_ds['tke_vec'] = self.calc_tke(ds['vel'])
+        out_ds['stress'] = self.calc_stress(ds['vel'])
 
         return out_ds
 
@@ -632,8 +631,10 @@ class VelBinner(TimeBinner):
         """
         try:
             time = self._mean(veldat.time.values)
+            time_str = 'time'
         except:
             time = self._mean(veldat.time_b5.values)
+            time_str = 'time_b5'
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft(n_fft)
         veldat = veldat.values
@@ -652,19 +653,21 @@ class VelBinner(TimeBinner):
 
         # Spectra, if input is full velocity or a single array
         if len(veldat.shape) == 2:
+            assert veldat.shape[0]==3, "Function can only handle 1D or 3D arrays"
+
             out = np.empty(self._outshape_fft(veldat[:3].shape),
                            dtype=np.float32)
             for idx in range(3):
                 out[idx] = self._psd(veldat[idx], fs=fs, noise=noise[idx],
                                      window=window, n_bin=n_bin,
                                      n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {'S': ['Sxx', 'Syy', 'Szz'], 'time': time, f_key: freq}
-            dims = ['S', 'time', f_key]
+            coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, f_key: freq}
+            dims = ['S', time_str, f_key]
         else:
             out = self._psd(veldat, fs=fs, noise=noise[0], window=window,
                             n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {'time': time, f_key: freq}
-            dims = ['time', f_key]
+            coords = {time_str: time, f_key: freq}
+            dims = [time_str, f_key]
 
         da = xr.DataArray(out,
                           name='psd',

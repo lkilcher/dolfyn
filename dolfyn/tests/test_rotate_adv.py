@@ -45,7 +45,7 @@ def test_inst2head_rotmat():
     vel1 = td.vel
     # validate that a head->inst rotation occurs (transpose of inst2head_rotmat)
     vel2 = np.dot(R, tr.dat.vel)
-    #assert (vel1 == vel2).all(), "head->inst rotations give unexpeced results."
+
     npt.assert_allclose(vel1.values, vel2, atol=1e-6)
 
 
@@ -175,15 +175,3 @@ class warnings_testcase(unittest.TestCase):
             set_inst2head_rotmat(warn3, np.eye(3))
         with self.assertRaises(Exception):
             set_inst2head_rotmat(warn4, np.eye(3))
-
-
-if __name__ == '__main__':
-    test_heading()
-    test_inst2head_rotmat()
-    test_rotate_inst2earth()
-    test_rotate_earth2inst()
-    test_rotate_beam2inst()
-    test_rotate_inst2beam()
-    test_rotate_earth2principal()
-    test_rotate_earth2principal_set_declination()
-    unittest.main()
