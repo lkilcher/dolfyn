@@ -1,5 +1,42 @@
 import numpy as np
 from scipy.signal import medfilt2d, convolve2d
+from xarray import Dataset
+
+
+def _velocity_dataset_decorator(func):
+    """This decorator checks whether the first argument to the
+    decorated function is a dolfyn.Velocity object. If it is then it
+    passes the xarray.Dataset (ds.ds) to the decorated function, then catches
+    the output and returns Velocity objects wherever Dataset objects
+    are found.
+    """
+    # Import here to reduce circular-dependencies
+    from .. import velocity as _vel
+    def match_type(ds, *args, **kwargs):
+        if isinstance(ds, _vel.Velocity):
+            # ds.ds is the xarray.Dataset that all functions use.
+            out = func(ds.ds, *args, **kwargs)
+
+            # Now need to parse output carefully...
+            if isinstance(out, Dataset):
+                # If the only return value is a Dataset
+                # Convert it to Velocity
+                return out.velds
+            
+            # But maybe there are multiple return values...
+            if isinstance(out, tuple):
+                out_list = []
+                for val in out:
+                    if isinstance(val, Dataset):
+                        out_list.append(val.velds)
+                    else:
+                        out_list.append(val)
+                return tuple(out_list)
+            
+        else:
+            # Not a Velocity object, so this is just a pass-through
+            return func(ds, *args, **kwargs)
+    return match_type
 
 
 def _nans(*args, **kwargs):

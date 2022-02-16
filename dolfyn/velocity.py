@@ -2,8 +2,6 @@ import numpy as np
 import xarray as xr
 from .binned import TimeBinner
 from .time import dt642epoch, dt642date
-from .rotate.api import rotate2, set_declination, set_inst2head_rotmat
-from .io.api import save
 
 
 @xr.register_dataset_accessor('velds')  # 'vel dataset'
@@ -59,6 +57,9 @@ class Velocity():
           the principal direction.
 
         """
+        # This import statement needs to be here to avoid a
+        # circular-dependency
+        from .rotate.api import rotate2
         return rotate2(self.ds, out_frame, inplace)
 
     def set_declination(self, declin, inplace=True):
@@ -107,6 +108,9 @@ class Velocity():
         'True' earth coordinate system)
 
         """
+        # This import statement needs to be here to avoid a
+        # circular-dependency
+        from .rotate.api import set_declination
         return set_declination(self.ds, declin, inplace)
 
     def set_inst2head_rotmat(self, rotmat, inplace=True):
@@ -137,6 +141,9 @@ class Velocity():
         coordinate system).
 
         """
+        # This import statement needs to be here to avoid a
+        # circular-dependency
+        from .rotate.api import set_inst2head_rotmat
         return set_inst2head_rotmat(self.ds, rotmat, inplace)
 
     def save(self, filename, **kwargs):
@@ -154,6 +161,9 @@ class Velocity():
         additional details.
 
         """
+        # This import statement needs to be here to avoid a
+        # circular-dependency
+        from .io.api import save
         save(self.ds, filename, **kwargs)
     
     ########

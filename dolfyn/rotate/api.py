@@ -3,9 +3,11 @@ from . import awac as r_awac
 from . import signature as r_sig
 from . import rdi as r_rdi
 from .base import _make_model
+import dolfyn.tools.misc as misc
 import numpy as np
 import xarray as xr
 import warnings
+vd_decorator = misc._velocity_dataset_decorator
 
 
 # The 'rotation chain'
@@ -22,6 +24,7 @@ rot_module_dict = {
     'rdi': r_rdi}
 
 
+@vd_decorator
 def rotate2(ds, out_frame='earth', inplace=True):
     """Rotate a dataset to a new coordinate system.
 
@@ -119,6 +122,7 @@ def rotate2(ds, out_frame='earth', inplace=True):
         return ds
 
 
+@vd_decorator
 def calc_principal_heading(vel, tidal_mode=True):
     """Compute the principal angle of the horizontal velocity.
 
@@ -168,6 +172,7 @@ def calc_principal_heading(vel, tidal_mode=True):
     return np.round((90 - np.rad2deg(pang)), decimals=4)
 
 
+@vd_decorator
 def set_declination(ds, declin, inplace=True):
     """Set the magnetic declination
 
@@ -253,7 +258,7 @@ def set_declination(ds, declin, inplace=True):
     if not inplace:
         return ds
 
-
+@vd_decorator
 def set_inst2head_rotmat(ds, rotmat, inplace=True):
     """
     Set the instrument to head rotation matrix for the Nortek ADV if it
