@@ -1,12 +1,12 @@
-from . import test_read_adp as tr
-from . import base
+from dolfyn.tests import test_read_adp as tr
+from dolfyn.tests import base
 from dolfyn.rotate.api import rotate2
 from numpy.testing import assert_allclose
 import numpy as np
 import scipy.io as sio
-#import matplotlib.pyplot as plt
 
-'''
+
+"""
 Testing against velocity and bottom-track velocity data in Nortek mat files
 exported from SignatureDeployment.
 
@@ -15,8 +15,7 @@ I believe it's due to an RC filter (or some such) on Nortek's side after they
 load in the orientation matrix from the AHRS (Check out the difference 
 colorplots compared to non-AHRS instruments.) Using HPR- or quaterion-calc'd 
 orientation matrices doesn't close the gap.
-
-'''
+"""
 
 
 def load_nortek_matfile(filename):

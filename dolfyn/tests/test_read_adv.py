@@ -39,7 +39,7 @@ def test_read(make_data=False):
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     set_inst2head_rotmat(tdm, np.eye(3), inplace=True)
-    tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
+    tdm.attrs['inst2head_vec'] = [-1.0, 0.5, 0.2]
 
     if make_data:
         save(td, 'vector_data01.nc')

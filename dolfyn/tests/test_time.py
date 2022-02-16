@@ -1,5 +1,5 @@
-from . import test_read_adv as trv
-from . import test_read_adp as trp
+from dolfyn.tests import test_read_adv as trv
+from dolfyn.tests import test_read_adp as trp
 from numpy.testing import assert_equal, assert_allclose
 import numpy as np
 import dolfyn.time as time
@@ -15,7 +15,6 @@ def test_time_conversion():
     dt_off = time.epoch2date(time.dt642epoch(td.time), offset_hr=-7)
     t_str = time.epoch2date(time.dt642epoch(td.time), to_str=True)
 
-    
     assert_equal(dt[0], datetime(2012, 6, 12, 12, 0, 2, 687283))
     assert_equal(dt1, [datetime(2012, 6, 12, 12, 0, 2, 687283)])
     assert_equal(dt_off[0], datetime(2012, 6, 12, 5, 0, 2, 687283))

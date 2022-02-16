@@ -641,7 +641,7 @@ class _RdiReader():
         cfg['sensors_avail'] = np.binary_repr(fd.read_ui8(1), 8)
         cfg['bin1_dist_m'] = fd.read_ui16(1) * .01
         cfg['xmit_pulse'] = fd.read_ui16(1) * .01
-        cfg['water_ref_cells'] = fd.read_ui8(2)
+        cfg['water_ref_cells'] = list(fd.read_ui8(2))  # list for attrs
         cfg['fls_target_threshold'] = fd.read_ui8(1)
         fd.seek(1, 1)
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
@@ -752,7 +752,8 @@ class _RdiReader():
         ens.prcnt_gd_bt[:, k] = fd.read_ui8(4)
         if self._source == 2:
             fd.seek(2, 1)
-            ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
+            ens.longitude_gps[k] = (
+                long1 + 65536 * fd.read_ui16(1)) * self._cfac
             if ens.longitude_gps[k] > 180:
                 ens.longitude_gps[k] = ens.longitude_gps[k] - 360
             if ens.longitude_gps[k] == 0:

@@ -22,7 +22,7 @@ def read(fname, userdata=True, nens=None):
     ----------
     filename : string
         Filename of instrument file to read.
-    userdata : True, False, or string of userdata.json filename (default ``True``) 
+    userdata : True, False, or string of userdata.json filename (default ``True``)
         Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
         Number of pings or ensembles to read from the file
@@ -126,7 +126,7 @@ def save(dataset, filename,
             dataset.attrs['complex_vars'].append(var)
 
     if compression:
-        enc =  dict()
+        enc = dict()
         for ky in dataset.variables:
             enc[ky] = dict(zlib=True, complevel=1)
         if 'encoding' in kwargs:
@@ -160,12 +160,16 @@ def load(filename):
     ds = xr.load_dataset(filename, engine='netcdf4')
 
     # Single item lists were saved as 'int' or 'str'
-    if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars[0]) == 1:
-        ds.attrs['rotate_vars'] = [ds.rotate_vars]
+    if hasattr(ds, 'rotate_vars'):
+        if len(ds.rotate_vars[0]) == 1:
+            ds.attrs['rotate_vars'] = [ds.rotate_vars]
+        elif type(ds.rotate_vars) is not list:
+            ds.attrs['rotate_vars'] = list(ds.rotate_vars)
 
     # Python lists were saved as numpy arrays
-    if hasattr(ds, 'rotate_vars') and type(ds.rotate_vars) is not list:
-        ds.attrs['rotate_vars'] = list(ds.rotate_vars)
+    for nm in ds.attrs:
+        if type(ds.attrs[nm]) == np.ndarray and ds.attrs[nm].size > 1:
+            ds.attrs[nm] = list(ds.attrs[nm])
 
     # Rejoin complex numbers
     if hasattr(ds, 'complex_vars') and len(ds.complex_vars):
@@ -297,5 +301,10 @@ def load_mat(filename, datenum=True):
         ds.attrs['rotate_vars'] = [ds.rotate_vars]
     else:
         ds.attrs['rotate_vars'] = [x.strip(' ') for x in list(ds.rotate_vars)]
+
+    # Python lists were saved as numpy arrays
+    for nm in ds.attrs:
+        if type(ds.attrs[nm]) == np.ndarray and ds.attrs[nm].size > 1:
+            ds.attrs[nm] = list(ds.attrs[nm])
 
     return ds
