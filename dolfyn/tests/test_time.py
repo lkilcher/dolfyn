@@ -15,14 +15,14 @@ def test_time_conversion():
     dt_off = time.epoch2date(time.dt642epoch(td.time), offset_hr=-7)
     t_str = time.epoch2date(time.dt642epoch(td.time), to_str=True)
 
-    assert_equal(dt[0], datetime(2012, 6, 12, 12, 0, 2, 687283))
-    assert_equal(dt1, [datetime(2012, 6, 12, 12, 0, 2, 687283)])
-    assert_equal(dt_off[0], datetime(2012, 6, 12, 5, 0, 2, 687283))
-    assert_equal(t_str[0], '2012-06-12 12:00:02.687283')
+    assert_equal(dt[0], datetime(2012, 6, 12, 12, 0, 2, 687282))
+    assert_equal(dt1, [datetime(2012, 6, 12, 12, 0, 2, 687282)])
+    assert_equal(dt_off[0], datetime(2012, 6, 12, 5, 0, 2, 687282))
+    assert_equal(t_str[0], '2012-06-12 12:00:02.687282')
 
     # Validated based on data in ad2cp.index file
     assert_equal(time.dt642date(dat_sig.time[0])[0],
-                 datetime(2017, 7, 24, 17, 0, 0, 63500))
+                 datetime(2017, 7, 24, 17, 0, 0, 63499))
     # This should always be true
     assert_equal(time.epoch2date([0])[0], datetime(1970, 1, 1, 0, 0))
 

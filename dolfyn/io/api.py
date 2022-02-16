@@ -288,13 +288,11 @@ def load_mat(filename, datenum=True):
         for ky in t_list:
             dt = date2dt64(matlab2date(ds[ky].values))
             ds = ds.assign_coords({ky: dt})
-            ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
 
         t_data = [t for t in ds.data_vars if t in t_additional]
         for ky in t_data:
             dt = date2dt64(matlab2date(ds[ky].values))
             ds[ky].data = dt
-            ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
 
     # Restore 'rotate vars" to a proper list
     if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars[0]) == 1:

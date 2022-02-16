@@ -226,10 +226,6 @@ def _create_dataset(data):
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'
 
-    t_list = [t for t in ds.coords if 'time' in t]
-    for ky in t_list:
-        ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
-
     ds.attrs = data['attrs']
 
     return ds

@@ -107,7 +107,7 @@ def test_io_nortek2(make_data=False):
 
     # Make sure we read all the way to the end of the file.
     # This file ends exactly at the end of an ensemble.
-    td_sig5_leiw = read('Sig500_last_ensemble_is_whole.ad2cp')
+    td_sig5_leiw = tb.drop_config(read('Sig500_last_ensemble_is_whole.ad2cp'))
 
     os.remove(tb.exdt('BenchFile01.ad2cp.index'))
     os.remove(tb.exdt('Sig1000_IMU.ad2cp.index'))

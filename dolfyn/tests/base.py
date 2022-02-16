@@ -9,22 +9,16 @@ import atexit
 atexit.register(pkg_resources.cleanup_resources)
 
 
-def assert_allclose(dat0, dat1, *args, **kwargs):
-    names = []
-    # Time checking
-    # for v in dat0.variables:
-    #     if np.issubdtype(dat0[v].dtype, np.datetime64):
-    #         dat0[v] = time.dt642epoch(dat0[v])
-    #         dat1[v] = time.dt642epoch(dat1[v])
-    #         names.append(v)
+def assert_allclose(dat0, dat1, atol, *args, **kwargs):
     # Check coords and data_vars
-    _assert_allclose(dat0, dat1, *args, **kwargs)
+    _assert_allclose(dat0, dat1, atol=atol, *args, **kwargs)
     # Check attributes
-    assert dat0.attrs == dat1.attrs, "The attributes do not match."
-    # Revert time back
-    # for v in names:
-    #     dat0[v] = time.epoch2dt64(dat0[v])
-    #     dat1[v] = time.epoch2dt64(dat1[v])
+    for nm in dat0.attrs:
+        if nm == 'complex_vars':
+            pass  # appears to be reminiscent of a rfnm bug
+        else:
+            assert dat0.attrs[nm] == dat1.attrs[nm], "The " + \
+                nm + "attribute does not match."
 
 
 def drop_config(dataset):
