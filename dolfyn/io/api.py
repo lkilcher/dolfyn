@@ -286,6 +286,9 @@ def load_mat(filename, datenum=True):
         elif type(ds.attrs[nm]) == str and nm in ['time_coords', 'time_data_vars', 'rotate_vars']:
             ds.attrs[nm] = [ds.attrs[nm]]
 
+    if hasattr(ds, 'orientation_down'):
+        ds['orientation_down'] = ds['orientation_down'].astype(bool)
+
     # Restore datnum to np.dt64
     if hasattr(ds, 'time_coords'):
         if datenum:

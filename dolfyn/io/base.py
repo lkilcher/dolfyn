@@ -123,10 +123,10 @@ def _create_dataset(data):
         if 'mat' in key:
             if 'inst' in key:  # beam2inst & inst2head orientation matrices
                 ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'beam': beam,
+                                       coords={'x': beam,
                                                'x*': beam},
-                                       dims=['beam', 'x*'])
-            else:  # earth2inst orientation matrx
+                                       dims=['x', 'x*'])
+            else:  # earth2inst orientation matrix
                 if any(val in key for val in tag):
                     tg = '_' + key.rsplit('_')[-1]
                 else:

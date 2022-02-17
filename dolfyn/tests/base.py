@@ -55,11 +55,11 @@ rfnm = ResourceFilename('dolfyn.tests', prefix='data/')
 exdt = ResourceFilename('dolfyn', prefix='example_data/')
 
 
-def load_ncdata(name, *args, **kwargs):
+def load_netcdf(name, *args, **kwargs):
     return io.load(rfnm(name), *args, **kwargs)
 
 
-def save_ncdata(data, name, *args, **kwargs):
+def save_netcdf(data, name, *args, **kwargs):
     io.save(data, rfnm(name), *args, **kwargs)
 
 

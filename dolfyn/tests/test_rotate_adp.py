@@ -1,5 +1,5 @@
 from dolfyn.tests import test_read_adp as tr
-from dolfyn.tests.base import load_ncdata as load, save_ncdata as save, assert_allclose
+from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 from dolfyn.rotate.api import rotate2, calc_principal_heading
 import numpy as np
 import numpy.testing as npt

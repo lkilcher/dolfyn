@@ -1,5 +1,5 @@
 from dolfyn.tests import test_read_adv as tv
-from dolfyn.tests.base import load_ncdata as load, save_ncdata as save, rfnm
+from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, rfnm
 from dolfyn import rotate2
 import dolfyn.adv.api as avm
 from xarray.testing import assert_allclose

@@ -64,7 +64,7 @@ def _set_coords(ds, ref_frame, forced=False):
 
     # update 'orient' and 'orientIMU' dimensions
     ds['dir'] = orient[ref_frame]
-    if hasattr(ds, 'accel'):
+    if hasattr(ds, 'dirIMU'):
         ds['dirIMU'] = orientIMU[ref_frame]
     ds['dir'].attrs['ref_frame'] = ref_frame
     ds.attrs['coord_sys'] = ref_frame
