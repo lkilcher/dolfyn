@@ -9,17 +9,16 @@ import atexit
 atexit.register(pkg_resources.cleanup_resources)
 
 
-def assert_allclose(dat0, dat1, atol, time_conv=False, *args, **kwargs):
+def assert_allclose(dat0, dat1, *args, **kwargs):
     # For problematic time check
     names = []
-    if time_conv:
-        for v in dat0.variables:
-            if np.issubdtype(dat0[v].dtype, np.datetime64):
-                dat0[v] = time.dt642epoch(dat0[v])
-                dat1[v] = time.dt642epoch(dat1[v])
-                names.append(v)
+    for v in dat0.variables:
+        if np.issubdtype(dat0[v].dtype, np.datetime64):
+            dat0[v] = time.dt642epoch(dat0[v])
+            dat1[v] = time.dt642epoch(dat1[v])
+            names.append(v)
     # Check coords and data_vars
-    _assert_allclose(dat0, dat1, atol=atol, *args, **kwargs)
+    _assert_allclose(dat0, dat1, *args, **kwargs)
     # Check attributes
     for nm in dat0.attrs:
         if nm == 'complex_vars':

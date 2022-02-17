@@ -42,9 +42,9 @@ def test_matlab_io(make_data=False):
     mat_rdi_bt = tb.load_matlab('dat_rdi_bt.mat')
     mat_vm = tb.load_matlab('dat_vm.mat')
 
-    assert_allclose(td_vec, mat_vec, atol=1e-6, time_conv=True)
-    assert_allclose(td_rdi_bt, mat_rdi_bt, atol=1e-6, time_conv=True)
-    assert_allclose(td_vm, mat_vm, atol=1e-6, time_conv=True)
+    assert_allclose(td_vec, mat_vec, atol=1e-6)
+    assert_allclose(td_rdi_bt, mat_rdi_bt, atol=1e-6)
+    assert_allclose(td_vm, mat_vm, atol=1e-6)
 
 
 def test_debugging(make_data=False):
