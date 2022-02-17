@@ -70,7 +70,7 @@ def test_rotate_inst2earth(make_data=False):
     td_awac = tr.dat_awac.copy(deep=True)
     rotate2(td_awac, 'inst', inplace=True)
     td_sig_ie = tr.dat_sig_ie.copy(deep=True)
-    rotate2(rotate2(td_sig_ie, 'earth', inplace=False), 'inst', inplace=True)
+    rotate2(td_sig_ie, 'inst', inplace=True)
     td_sig_o = td_sig_ie.copy(deep=True)
 
     td = rotate2(tr.dat_rdi, 'earth', inplace=False)
