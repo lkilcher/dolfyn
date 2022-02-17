@@ -9,7 +9,15 @@ import atexit
 atexit.register(pkg_resources.cleanup_resources)
 
 
-def assert_allclose(dat0, dat1, atol, *args, **kwargs):
+def assert_allclose(dat0, dat1, atol, time_conv=False, *args, **kwargs):
+    # For problematic time check
+    names = []
+    if time_conv:
+        for v in dat0.variables:
+            if np.issubdtype(dat0[v].dtype, np.datetime64):
+                dat0[v] = time.dt642epoch(dat0[v])
+                dat1[v] = time.dt642epoch(dat1[v])
+                names.append(v)
     # Check coords and data_vars
     _assert_allclose(dat0, dat1, atol=atol, *args, **kwargs)
     # Check attributes
@@ -18,7 +26,11 @@ def assert_allclose(dat0, dat1, atol, *args, **kwargs):
             pass  # appears to be reminiscent of a rfnm bug
         else:
             assert dat0.attrs[nm] == dat1.attrs[nm], "The " + \
-                nm + "attribute does not match."
+                nm + " attribute does not match."
+    # If test debugging
+    for v in names:
+        dat0[v] = time.epoch2dt64(dat0[v])
+        dat1[v] = time.epoch2dt64(dat1[v])
 
 
 def drop_config(dataset):

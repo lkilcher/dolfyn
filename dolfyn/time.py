@@ -237,6 +237,11 @@ def matlab2date(matlab_dn):
         dayfrac = timedelta(days=matlab_dn[i] % 1) - timedelta(days=366)
         time.append(day + dayfrac)
 
+        # Datenum is precise down to 100 microseconds - add difference to round
+        us = int(round(time[i].microsecond/100, 0))*100
+        time[i] = time[i].replace(microsecond=time[i].microsecond) + \
+            timedelta(microseconds=us-time[i].microsecond)
+
     return time
 
 
@@ -257,5 +262,5 @@ def _fill_time_gaps(epoch, sample_rate_hz):
         ie = -np.nonzero(~np.isnan(epoch[::-1]))[0][0] - 1
         delta = np.arange(1, -ie, 1) * dt
         epoch[(ie + 1):] = epoch[ie] + delta
-        
+
     return epoch
