@@ -10,10 +10,6 @@ from ..rotate.base import _set_coords
 from ..time import date2matlab, matlab2date, date2dt64, dt642date
 
 
-# time variables stored as data variables (as opposed to coordinates)
-t_additional = ['hdwtime_gps', ]
-
-
 def read(fname, userdata=True, nens=None):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, .ENX, etc.) data file.
@@ -22,7 +18,7 @@ def read(fname, userdata=True, nens=None):
     ----------
     filename : string
         Filename of instrument file to read.
-    userdata : True, False, or string of userdata.json filename (default ``True``) 
+    userdata : True, False, or string of userdata.json filename (default ``True``)
         Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
         Number of pings or ensembles to read from the file
@@ -80,7 +76,7 @@ def read_example(name, **kwargs):
     return read(filename, **kwargs)
 
 
-def save(dataset, filename,
+def save(ds, filename,
          format='NETCDF4', engine='netcdf4',
          compression=False,
          **kwargs):
@@ -88,7 +84,7 @@ def save(dataset, filename,
 
     Parameters
     ----------
-    dataset : xarray.Dataset
+    ds : xarray.Dataset
     filename : str
         Filename and/or path with the '.nc' extension
     compression : bool (default: False)
@@ -111,23 +107,23 @@ def save(dataset, filename,
         filename += '.nc'
 
     # Dropping the detailed configuration stats because netcdf can't save it
-    for key in list(dataset.attrs.keys()):
+    for key in list(ds.attrs.keys()):
         if 'config' in key:
-            dataset.attrs.pop(key)
+            ds.attrs.pop(key)
 
     # Handling complex values for netCDF4
-    dataset.attrs['complex_vars'] = []
-    for var in dataset.data_vars:
-        if np.iscomplexobj(dataset[var]):
-            dataset[var+'_real'] = dataset[var].real
-            dataset[var+'_imag'] = dataset[var].imag
+    ds.attrs['complex_vars'] = []
+    for var in ds.data_vars:
+        if np.iscomplexobj(ds[var]):
+            ds[var+'_real'] = ds[var].real
+            ds[var+'_imag'] = ds[var].imag
 
-            dataset = dataset.drop_vars(var)
-            dataset.attrs['complex_vars'].append(var)
+            ds = ds.drop_vars(var)
+            ds.attrs['complex_vars'].append(var)
 
     if compression:
-        enc =  dict()
-        for ky in dataset.variables:
+        enc = dict()
+        for ky in ds.variables:
             enc[ky] = dict(zlib=True, complevel=1)
         if 'encoding' in kwargs:
             # Overwrite ('update') values in enc with whatever is in kwargs['encoding']
@@ -135,7 +131,7 @@ def save(dataset, filename,
         else:
             kwargs['encoding'] = enc
 
-    dataset.to_netcdf(filename, format=format, engine=engine, **kwargs)
+    ds.to_netcdf(filename, format=format, engine=engine, **kwargs)
 
 
 def load(filename):
@@ -159,13 +155,12 @@ def load(filename):
 
     ds = xr.load_dataset(filename, engine='netcdf4')
 
-    # Single item lists were saved as 'int' or 'str'
-    if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars[0]) == 1:
-        ds.attrs['rotate_vars'] = [ds.rotate_vars]
-
-    # Python lists were saved as numpy arrays
-    if hasattr(ds, 'rotate_vars') and type(ds.rotate_vars) is not list:
-        ds.attrs['rotate_vars'] = list(ds.rotate_vars)
+    # Convert numpy arrays and strings back to lists
+    for nm in ds.attrs:
+        if type(ds.attrs[nm]) == np.ndarray and ds.attrs[nm].size > 1:
+            ds.attrs[nm] = list(ds.attrs[nm])
+        elif type(ds.attrs[nm]) == str and nm in ['rotate_vars']:
+            ds.attrs[nm] = [ds.attrs[nm]]
 
     # Rejoin complex numbers
     if hasattr(ds, 'complex_vars') and len(ds.complex_vars):
@@ -179,12 +174,12 @@ def load(filename):
     return ds
 
 
-def save_mat(dataset, filename, datenum=True):
+def save_mat(ds, filename, datenum=True):
     """Save xarray dataset as a MATLAB (.mat) file
 
     Parameters
     ----------
-    dataset : xarray.Dataset
+    ds : xarray.Dataset
         Data to save
     filename : str
         Filename and/or path with the '.mat' extension
@@ -209,27 +204,30 @@ def save_mat(dataset, filename, datenum=True):
 
     # Convert from epoch time to datenum
     if datenum:
-        t_list = [t for t in dataset.coords if 'time' in t]
-        for ky in t_list:
-            dt = date2matlab(dt642date(dataset[ky]))
-            dataset = dataset.assign_coords({ky: dt})
+        t_coords = [t for t in ds.coords if np.issubdtype(
+            ds[t].dtype, np.datetime64)]
+        t_data = [t for t in ds.data_vars if np.issubdtype(
+            ds[t].dtype, np.datetime64)]
 
-        t_data = [t for t in dataset.data_vars if t in t_additional]
+        for ky in t_coords:
+            dt = date2matlab(dt642date(ds[ky]))
+            ds = ds.assign_coords({ky: dt})
         for ky in t_data:
-            dt = date2matlab(dt642date(dataset[ky]))
-            dataset[ky].data = dt
+            dt = date2matlab(dt642date(ds[ky]))
+            ds[ky].data = dt
+
+        ds.attrs['time_coords'] = t_coords
+        ds.attrs['time_data_vars'] = t_data
 
     # Save xarray structure with more descriptive structure names
     matfile = {'vars': {}, 'coords': {}, 'config': {}, 'units': {}}
-    for key in dataset.data_vars:
-        matfile['vars'][key] = dataset[key].values
-        if hasattr(dataset[key], 'units'):
-            matfile['units'][key] = dataset[key].units
-
-    for key in dataset.coords:
-        matfile['coords'][key] = dataset[key].values
-
-    matfile['config'] = dataset.attrs
+    for key in ds.data_vars:
+        matfile['vars'][key] = ds[key].values
+        if hasattr(ds[key], 'units'):
+            matfile['units'][key] = ds[key].units
+    for key in ds.coords:
+        matfile['coords'][key] = ds[key].values
+    matfile['config'] = ds.attrs
 
     sio.savemat(filename, matfile)
 
@@ -278,24 +276,34 @@ def load_mat(filename, datenum=True):
     ds = _create_dataset(ds_dict)
     ds = _set_coords(ds, ds.coord_sys)
 
-    # Convert datenum time back into epoch time
-    if datenum:
-        t_list = [t for t in ds.coords if 'time' in t]
-        for ky in t_list:
-            dt = date2dt64(matlab2date(ds[ky].values))
-            ds = ds.assign_coords({ky: dt})
-            ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
+    # Convert numpy arrays and strings back to lists
+    for nm in ds.attrs:
+        if type(ds.attrs[nm]) == np.ndarray and ds.attrs[nm].size > 1:
+            try:
+                ds.attrs[nm] = [x.strip(' ') for x in list(ds.attrs[nm])]
+            except:
+                ds.attrs[nm] = list(ds.attrs[nm])
+        elif type(ds.attrs[nm]) == str and nm in ['time_coords', 'time_data_vars', 'rotate_vars']:
+            ds.attrs[nm] = [ds.attrs[nm]]
 
-        t_data = [t for t in ds.data_vars if t in t_additional]
-        for ky in t_data:
-            dt = date2dt64(matlab2date(ds[ky].values))
-            ds[ky].data = dt
-            ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
+    if hasattr(ds, 'orientation_down'):
+        ds['orientation_down'] = ds['orientation_down'].astype(bool)
 
-    # Restore 'rotate vars" to a proper list
-    if hasattr(ds, 'rotate_vars') and len(ds.rotate_vars[0]) == 1:
-        ds.attrs['rotate_vars'] = [ds.rotate_vars]
-    else:
-        ds.attrs['rotate_vars'] = [x.strip(' ') for x in list(ds.rotate_vars)]
+    # Restore datnum to np.dt64
+    if hasattr(ds, 'time_coords'):
+        if datenum:
+            for ky in ds.attrs['time_coords']:
+                dt = date2dt64(matlab2date(ds[ky].values))
+                ds = ds.assign_coords({ky: dt})
+        else:
+            dt = date2dt64(matlab2date(ds['time'].values))
+            ds = ds.assign_coords({'time': dt})
+        ds.attrs.pop('time_coords')
+    if hasattr(ds, 'time_data_vars'):
+        if datenum:
+            for ky in ds.attrs['time_data_vars']:
+                dt = date2dt64(matlab2date(ds[ky].values))
+                ds[ky].data = dt
+        ds.attrs.pop('time_data_vars')
 
     return ds

@@ -31,7 +31,7 @@ def _get_filetype(fname):
     elif code in ['a50a']:
         return 'signature'
     elif code in ['a505']:
-        # AWAC 
+        # AWAC
         return 'nortek'
     elif bytes == b'version https://git-lfs.github.com/spec/':
         return '<GIT-LFS pointer>'
@@ -66,12 +66,13 @@ def _read_userdata(fname):
                 f'{nm} has been deprecated, please change this to {new_name} \
                     in {fname}.')
             data[new_name] = data.pop(nm)
-    if 'inst2head_rotmat' in data and \
-       data['inst2head_rotmat'] in ['identity', 'eye', 1, 1.]:
-        data['inst2head_rotmat'] = np.eye(3)
-    for nm in ['inst2head_rotmat', 'inst2head_vec']:
-        if nm in data:
-            data[nm] = np.array(data[nm])
+    if 'inst2head_rotmat' in data:
+        if data['inst2head_rotmat'] in ['identity', 'eye', 1, 1.]:
+            data['inst2head_rotmat'] = np.eye(3)
+        else:
+            data['inst2head_rotmat'] = np.array(data['inst2head_rotmat'])
+    if 'inst2head_vec' in data and type(data['inst2head_vec']) != list:
+        data['inst2head_vec'] = list(data['inst2head_vec'])
 
     return data
 
@@ -122,10 +123,10 @@ def _create_dataset(data):
         if 'mat' in key:
             if 'inst' in key:  # beam2inst & inst2head orientation matrices
                 ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'beam': beam,
+                                       coords={'x': beam,
                                                'x*': beam},
-                                       dims=['beam', 'x*'])
-            else:  # earth2inst orientation matrx
+                                       dims=['x', 'x*'])
+            else:  # earth2inst orientation matrix
                 if any(val in key for val in tag):
                     tg = '_' + key.rsplit('_')[-1]
                 else:
@@ -147,14 +148,14 @@ def _create_dataset(data):
                                    dims=['q', 'time'+tg])
         else:
             ds[key] = xr.DataArray(data['data_vars'][key])
-            try:  # not all variables have units
+            if key in data['units']:   # not all variables have units
                 ds[key].attrs['units'] = data['units'][key]
-            except:  # make sure ones with tags get units
+            try:  # make sure ones with tags get units
                 tg = '_' + key.rsplit('_')[-1]
                 if any(val in key for val in tag):
                     ds[key].attrs['units'] = data['units'][key[:-len(tg)]]
-                else:
-                    pass
+            except:
+                pass
 
             shp = data['data_vars'][key].shape
             vshp = data['data_vars']['vel'].shape
@@ -224,10 +225,6 @@ def _create_dataset(data):
     r_list = [r for r in ds.coords if 'range' in r]
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'
-
-    t_list = [t for t in ds.coords if 'time' in t]
-    for ky in t_list:
-        ds[ky].attrs['description'] = 'seconds since 1970-01-01 00:00:00'
 
     ds.attrs = data['attrs']
 

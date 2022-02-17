@@ -199,6 +199,10 @@ def _calc_probe_pos(ds, separate_probes=False):
     # then, the positions of the centers of the receivers is:
     # if separate_probes and p['inst_make'].lower() == 'nortek' and\
     #    p['inst_model'].lower == 'vector':
+    vec = ds.inst2head_vec
+    if type(vec) != np.ndarray:
+        vec = np.array(vec)
+
     if separate_probes and _make_model(ds) == 'nortek vector':
         r = 0.076
         # The angle between the x-y plane and the probes
@@ -209,9 +213,9 @@ def _calc_probe_pos(ds, separate_probes=False):
                        np.array([r * np.cos(theta),
                                  r * np.sin(theta),
                                  r * np.tan(phi) * np.ones(3)])) +
-                ds.inst2head_vec[:, None])
+                vec[:, None])
     else:
-        return ds.inst2head_vec
+        return vec
 
 
 def correct_motion(ds,

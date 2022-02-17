@@ -1,12 +1,12 @@
-from . import test_read_adp as tr
-from . import base
+from dolfyn.tests import test_read_adp as tr
+from dolfyn.tests import base
 from dolfyn.rotate.api import rotate2
 from numpy.testing import assert_allclose
 import numpy as np
 import scipy.io as sio
-#import matplotlib.pyplot as plt
 
-'''
+
+"""
 Testing against velocity and bottom-track velocity data in Nortek mat files
 exported from SignatureDeployment.
 
@@ -15,8 +15,7 @@ I believe it's due to an RC filter (or some such) on Nortek's side after they
 load in the orientation matrix from the AHRS (Check out the difference 
 colorplots compared to non-AHRS instruments.) Using HPR- or quaterion-calc'd 
 orientation matrices doesn't close the gap.
-
-'''
+"""
 
 
 def load_nortek_matfile(filename):
@@ -80,36 +79,37 @@ def rotate(axis):
     td_sig_ieb_vel, vel_bt = load_nortek_matfile(base.rfnm('VelEchoBT01.mat'))
     td_sig_ie_vel = load_nortek_matfile(base.rfnm('Sig500_Echo.mat'))
 
+    nens = 100
     # ARHS inst2earth orientation matrix check
     # Checks the 1,1 element because the nortek orientmat's shape is [9,:] as
     # opposed to [3,3,:]
     if axis == 'inst':
         assert_allclose(td_sig_i.orientmat[0][0].values,
-                        td_sig_i_vel['omat'][0, :500], atol=1e-7)
+                        td_sig_i_vel['omat'][0, :nens], atol=1e-7)
         assert_allclose(td_sig_ieb.orientmat[0][0].values,
-                        td_sig_ieb_vel['omat'][0, :][..., :100], atol=1e-7)
+                        td_sig_ieb_vel['omat'][0, :][..., :nens], atol=1e-7)
 
     # 4-beam velocity
-    assert_allclose(td_sig.vel.values, td_sig_vel[axis][..., :500], atol=1e-5)
+    assert_allclose(td_sig.vel.values, td_sig_vel[axis][..., :nens], atol=1e-5)
     assert_allclose(td_sig_i.vel.values,
-                    td_sig_i_vel[axis][..., :500], atol=5e-3)
+                    td_sig_i_vel[axis][..., :nens], atol=5e-3)
     assert_allclose(td_sig_ieb.vel.values,
-                    td_sig_ieb_vel[axis][..., :100], atol=5e-3)
+                    td_sig_ieb_vel[axis][..., :nens], atol=5e-3)
     assert_allclose(td_sig_ie.vel.values,
-                    td_sig_ie_vel[axis][..., :500], atol=1e-5)
+                    td_sig_ie_vel[axis][..., :nens], atol=1e-5)
 
     # 5th-beam velocity
     if axis == 'beam':
         assert_allclose(td_sig_i.vel_b5.values,
-                        td_sig_i_vel['b5'][..., :500], atol=1e-5)
+                        td_sig_i_vel['b5'][..., :nens], atol=1e-5)
         assert_allclose(td_sig_ieb.vel_b5.values,
-                        td_sig_ieb_vel['b5'][..., :100], atol=1e-5)
+                        td_sig_ieb_vel['b5'][..., :nens], atol=1e-5)
         assert_allclose(td_sig_ie.vel_b5.values,
-                        td_sig_ie_vel['b5'][..., :500], atol=1e-5)
+                        td_sig_ie_vel['b5'][..., :nens], atol=1e-5)
 
     # bottom-track
     assert_allclose(td_sig_ieb.vel_bt.values,
-                    vel_bt[axis][..., :100], atol=5e-3)
+                    vel_bt[axis][..., :nens], atol=5e-3)
 
 
 def test_rotate2_beam():
@@ -122,9 +122,3 @@ def test_rotate2_inst():
 
 def test_rotate2_earth():
     rotate('earth')
-
-
-if __name__ == '__main__':
-    test_rotate2_beam()
-    test_rotate2_inst()
-    test_rotate2_earth()
