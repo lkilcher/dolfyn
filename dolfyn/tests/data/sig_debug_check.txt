@@ -1,4 +1,4 @@
-Indexing c:\Users\mcve343\dolfyn\dolfyn\example_data\Sig500_Echo.ad2cp...      4464: A5, 10, 18, 188, 0, 1, 1
+Indexing /Users/lkilcher/Dropbox/pylab/dolfyn/dolfyn/example_data/Sig500_Echo.ad2cp...      4464: A5, 10, 18, 188, 0, 1, 1
 
       4662: A5, 10, 15, 524, 0, 1, 1
 
@@ -29,4 +29,4 @@ Indexing c:\Users\mcve343\dolfyn\dolfyn\example_data\Sig500_Echo.ad2cp...      4
       9020: A5, 10, 1C, 214, 4, 5, 5
 
  Done.
-Reading file c:\Users\mcve343\dolfyn\dolfyn\example_data\Sig500_Echo.ad2cp ...
+Reading file /Users/lkilcher/Dropbox/pylab/dolfyn/dolfyn/example_data/Sig500_Echo.ad2cp ...
