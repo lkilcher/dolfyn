@@ -55,9 +55,9 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
         ds['beam2inst_orientmat'] = xr.DataArray(_calc_beam_orientmat(
             ds.beam_angle,
             ds.beam_pattern == 'convex'),
-            coords={'beam': [1, 2, 3, 4],
+            coords={'x': [1, 2, 3, 4],
                     'x*': [1, 2, 3, 4]},
-            dims=['beam', 'x*'])
+            dims=['x', 'x*'])
 
     if 'orientmat' not in ds:
         ds['orientmat'] = xr.DataArray(_calc_orientmat(ds),
@@ -505,7 +505,7 @@ class _RdiReader():
     def print_progress(self,):
         self.progress = self.f.tell()
         if self._debug_level > 1:
-            print('  pos %0.0fmb/%0.0fmb\r' %
+            print('  pos %0.0fmb/%0.0fmb\n' %
                   (self.f.tell() / 1048576., self._filesize / 1048576.))
         if (self.f.tell() - self.progress) < 1048576:
             return
@@ -641,7 +641,7 @@ class _RdiReader():
         cfg['sensors_avail'] = np.binary_repr(fd.read_ui8(1), 8)
         cfg['bin1_dist_m'] = fd.read_ui16(1) * .01
         cfg['xmit_pulse'] = fd.read_ui16(1) * .01
-        cfg['water_ref_cells'] = fd.read_ui8(2)
+        cfg['water_ref_cells'] = list(fd.read_ui8(2))  # list for attrs
         cfg['fls_target_threshold'] = fd.read_ui8(1)
         fd.seek(1, 1)
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
@@ -752,7 +752,8 @@ class _RdiReader():
         ens.prcnt_gd_bt[:, k] = fd.read_ui8(4)
         if self._source == 2:
             fd.seek(2, 1)
-            ens.longitude_gps[k] = (long1 + 65536 * fd.read_ui16(1)) * self._cfac
+            ens.longitude_gps[k] = (
+                long1 + 65536 * fd.read_ui16(1)) * self._cfac
             if ens.longitude_gps[k] > 180:
                 ens.longitude_gps[k] = ens.longitude_gps[k] - 360
             if ens.longitude_gps[k] == 0:

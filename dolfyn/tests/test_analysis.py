@@ -1,5 +1,5 @@
 from dolfyn.tests import test_read_adp as tr, test_read_adv as tv
-from dolfyn.tests.base import load_ncdata as load, save_ncdata as save, assert_allclose
+from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
 from xarray.testing import assert_identical

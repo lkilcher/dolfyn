@@ -3,11 +3,10 @@ from dolfyn.io.api import read_example as read
 from dolfyn.tests import base as tb
 import dolfyn.io.nortek as vector
 import numpy as np
-import os
 
 
-load = tb.load_ncdata
-save = tb.save_ncdata
+load = tb.load_netcdf
+save = tb.save_netcdf
 assert_allclose = tb.assert_allclose
 
 dat = load('vector_data01')
@@ -16,30 +15,21 @@ dat_imu_json = load('vector_data_imu01-json')
 dat_burst = load('burst_mode01')
 
 
-def test_save():
-    save(dat, 'test_save')
-    tb.save_matlab(dat, 'test_save')
-
-    assert os.path.exists(tb.rfnm('test_save.nc'))
-    assert os.path.exists(tb.rfnm('test_save.mat'))
-
-
-def test_read(make_data=False):
-    td = tb.drop_config(read('vector_data01.VEC', nens=100))
+def test_io_adv(make_data=False):
+    nens = 100
+    td = tb.drop_config(read('vector_data01.VEC', nens=nens))
     tdm = tb.drop_config(read('vector_data_imu01.VEC', userdata=False,
-                              nens=100))
-    tdb = tb.drop_config(read('burst_mode01.VEC', nens=100))
+                              nens=nens))
+    tdb = tb.drop_config(read('burst_mode01.VEC', nens=nens))
     tdm2 = tb.drop_config(read('vector_data_imu01.VEC',
                                userdata=tb.exdt(
                                    'vector_data_imu01.userdata.json'),
-                               nens=100))
-    td_debug = tb.drop_config(vector.read_nortek(tb.exdt('vector_data_imu01.VEC'),
-                              debug=True, do_checksum=True, nens=100))
+                               nens=nens))
 
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
     set_inst2head_rotmat(tdm, np.eye(3), inplace=True)
-    tdm.attrs['inst2head_vec'] = np.array([-1.0, 0.5, 0.2])
+    tdm.attrs['inst2head_vec'] = [-1.0, 0.5, 0.2]
 
     if make_data:
         save(td, 'vector_data01.nc')
@@ -52,4 +42,3 @@ def test_read(make_data=False):
     assert_allclose(tdm, dat_imu, atol=1e-6)
     assert_allclose(tdb, dat_burst, atol=1e-6)
     assert_allclose(tdm2, dat_imu_json, atol=1e-6)
-    assert_allclose(td_debug, tdm2, atol=1e-6)

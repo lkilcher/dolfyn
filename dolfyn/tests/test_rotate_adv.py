@@ -1,11 +1,11 @@
-from . import test_read_adv as tr
-from .base import load_ncdata as load, save_ncdata as save, assert_allclose
+from dolfyn.tests import test_read_adv as tr
+from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 from dolfyn.rotate.api import rotate2, calc_principal_heading, \
     set_declination, set_inst2head_rotmat
 from dolfyn.rotate.base import euler2orient, orient2euler
 import numpy as np
-import unittest
 import numpy.testing as npt
+import unittest
 
 
 def test_heading(make_data=False):
@@ -55,7 +55,9 @@ def test_rotate_inst2earth(make_data=False):
     tdm = tr.dat_imu.copy(deep=True)
     rotate2(tdm, 'earth', inplace=True)
     tdo = tr.dat.copy(deep=True)
+    omat = tdo['orientmat']
     tdo = rotate2(tdo.drop_vars('orientmat'), 'earth', inplace=False)
+    tdo['orientmat'] = omat
 
     if make_data:
         save(td, 'vector_data01_rotate_inst2earth.nc')
@@ -67,7 +69,7 @@ def test_rotate_inst2earth(make_data=False):
 
     assert_allclose(td, cd, atol=1e-6)
     assert_allclose(tdm, cdm, atol=1e-6)
-    assert_allclose(td, cd, atol=1e-6)
+    assert_allclose(tdo, cd, atol=1e-6)
 
 
 def test_rotate_earth2inst():

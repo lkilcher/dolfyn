@@ -10,13 +10,23 @@ atexit.register(pkg_resources.cleanup_resources)
 
 
 def assert_allclose(dat0, dat1, *args, **kwargs):
+    # For problematic time check
     names = []
     for v in dat0.variables:
         if np.issubdtype(dat0[v].dtype, np.datetime64):
             dat0[v] = time.dt642epoch(dat0[v])
             dat1[v] = time.dt642epoch(dat1[v])
             names.append(v)
+    # Check coords and data_vars
     _assert_allclose(dat0, dat1, *args, **kwargs)
+    # Check attributes
+    for nm in dat0.attrs:
+        if nm == 'complex_vars':
+            pass  # appears to be reminiscent of a rfnm bug
+        else:
+            assert dat0.attrs[nm] == dat1.attrs[nm], "The " + \
+                nm + " attribute does not match."
+    # If test debugging
     for v in names:
         dat0[v] = time.epoch2dt64(dat0[v])
         dat1[v] = time.epoch2dt64(dat1[v])
@@ -44,11 +54,11 @@ rfnm = ResourceFilename('dolfyn.tests', prefix='data/')
 exdt = ResourceFilename('dolfyn', prefix='example_data/')
 
 
-def load_ncdata(name, *args, **kwargs):
+def load_netcdf(name, *args, **kwargs):
     return io.load(rfnm(name), *args, **kwargs)
 
 
-def save_ncdata(data, name, *args, **kwargs):
+def save_netcdf(data, name, *args, **kwargs):
     io.save(data, rfnm(name), *args, **kwargs)
 
 

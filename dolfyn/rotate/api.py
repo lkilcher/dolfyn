@@ -300,7 +300,9 @@ def set_inst2head_rotmat(ds, rotmat, inplace=True):
         rotate2(ds, 'inst', inplace=True)
 
     ds['inst2head_rotmat'] = xr.DataArray(np.array(rotmat),
-                                          dims=['x', 'x*'])
+                                          dims=['x', 'x*'],
+                                          coords={'x': [1, 2, 3],
+                                                  'x*': [1, 2, 3]})
 
     ds.attrs['inst2head_rotmat_was_set'] = 1  # logical
     # Note that there is no validation that the user doesn't
