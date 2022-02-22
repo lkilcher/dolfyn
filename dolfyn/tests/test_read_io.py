@@ -49,57 +49,67 @@ def test_matlab_io(make_data=False):
 
 
 def test_debugging(make_data=False):
-    def rdi_debug_output(filename, data, nens):
-        with open(rfnm(filename), 'w') as f:
-            with contextlib.redirect_stdout(f):
-                drop_config(wh.read_rdi(exdt(data),
-                                        debug=11,
-                                        nens=nens))
+    def debug_output(f, func, datafile, nens, *args, **kwargs):
+        with contextlib.redirect_stdout(f):
+            drop_config(func(exdt(datafile), nens=nens, *args, **kwargs))
 
-    def nortek_debug_output(filename, data, nens):
-        with open(rfnm(filename), 'w') as f:
-            with contextlib.redirect_stdout(f):
-                drop_config(awac.read_nortek(exdt(data),
-                                             debug=True,
-                                             do_checksum=True,
-                                             nens=nens))
+    def remove_local_path(stringIO):
+        string = stringIO.getvalue()
+        start = string.find("Indexing")
+        if start != -1:
+            start += 8
+            end = stringIO.getvalue().find("...")
+            string = string[0:start] + string[end+3:]
 
-    def nortek2_debug_output(filename, data, nens):
-        with open(rfnm(filename), 'w') as f:
-            with contextlib.redirect_stdout(f):
-                drop_config(sig.read_signature(exdt(data),
-                                               nens=nens,
-                                               rebuild_index=True,
-                                               debug=True))
-        os.remove(exdt('Sig500_Echo.ad2cp.index'))
+        start = string.find("Reading file") + 12
+        end = string.find("...")
+        return string[0:start] + string[end:]
+
+    def save_txt(fname, string):
+        with open(rfnm(fname), 'w') as f:
+            f.write(string)
+
+    def read_txt(fname):
+        with open(rfnm(fname), 'r') as f:
+            string = f.read()
+        return string
 
     nens = 100
-    rdi_debug_output('rdi_debug_test.txt', 'RDI_withBT.000', nens)
-    nortek_debug_output('awac_debug_test.txt', 'AWAC_test01.wpr', nens)
-    nortek_debug_output('vec_debug_test.txt', 'vector_data_imu01.VEC', nens)
-    nortek2_debug_output('sig_debug_test.txt', 'Sig500_Echo.ad2cp', nens)
+    db_rdi = io.StringIO()
+    db_awac = io.StringIO()
+    db_vec = io.StringIO()
+    db_sig = io.StringIO()
+
+    debug_output(db_rdi, wh.read_rdi, 'RDI_withBT.000', nens, debug=11)
+    debug_output(db_awac, awac.read_nortek, 'AWAC_test01.wpr',
+                 nens, debug=True, do_checksum=True)
+    debug_output(db_vec, awac.read_nortek, 'vector_data_imu01.VEC',
+                 nens, debug=True, do_checksum=True)
+    debug_output(db_sig, sig.read_signature, 'Sig500_Echo.ad2cp',
+                 nens, rebuild_index=True, debug=True)
+    os.remove(exdt('Sig500_Echo.ad2cp.index'))
+
+    str_rdi = remove_local_path(db_rdi)
+    str_awac = remove_local_path(db_awac)
+    str_vec = remove_local_path(db_vec)
+    str_sig = remove_local_path(db_sig)
 
     if make_data:
-        rdi_debug_output('rdi_debug_check.txt', 'RDI_withBT.000', nens)
-        nortek_debug_output('awac_debug_check.txt', 'AWAC_test01.wpr', nens)
-        nortek_debug_output('vec_debug_check.txt',
-                            'vector_data_imu01.VEC', nens)
-        nortek2_debug_output('sig_debug_check.txt', 'Sig500_Echo.ad2cp', nens)
+        save_txt('rdi_debug_out.txt', str_rdi)
+        save_txt('awac_debug_out.txt', str_awac)
+        save_txt('vec_debug_out.txt', str_vec)
+        save_txt('sig_debug_out.txt', str_sig)
         return
 
-    assert filecmp.cmp(rfnm('rdi_debug_test.txt'),
-                       rfnm('rdi_debug_check.txt'))
-    assert filecmp.cmp(rfnm('awac_debug_test.txt'),
-                       rfnm('awac_debug_check.txt'))
-    assert filecmp.cmp(rfnm('vec_debug_test.txt'),
-                       rfnm('vec_debug_check.txt'))
-    assert filecmp.cmp(rfnm('sig_debug_test.txt'),
-                       rfnm('sig_debug_check.txt'))
+    test_rdi = read_txt('rdi_debug_out.txt')
+    test_awac = read_txt('awac_debug_out.txt')
+    test_vec = read_txt('vec_debug_out.txt')
+    test_sig = read_txt('sig_debug_out.txt')
 
-    os.remove(rfnm('rdi_debug_test.txt'))
-    os.remove(rfnm('awac_debug_test.txt'))
-    os.remove(rfnm('vec_debug_test.txt'))
-    os.remove(rfnm('sig_debug_test.txt'))
+    assert test_rdi == str_rdi
+    assert test_awac == str_awac
+    assert test_vec == str_vec
+    assert test_sig == str_sig
 
 
 class warnings_testcase(unittest.TestCase):
