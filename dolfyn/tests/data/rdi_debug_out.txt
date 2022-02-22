@@ -1,5 +1,5 @@
 
-Reading file /Users/lkilcher/Dropbox/pylab/dolfyn/dolfyn/example_data/RDI_withBT.000 ...
+Reading file ...
 2
   cfgid0: [7f, 7f]
   ###In checkheader.
