@@ -6,7 +6,7 @@ from dolfyn.tests.base import assert_allclose, save_netcdf, save_matlab, load_ma
 from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests import test_read_adv as tv
 import contextlib
-import filecmp
+import difflib
 import unittest
 import pytest
 import os
@@ -19,6 +19,47 @@ def test_save():
 
     assert os.path.exists(rfnm('test_save.nc'))
     assert os.path.exists(rfnm('test_save.mat'))
+
+
+def capture_stdout_decorator(func):
+    # A decorator function for capturing stdout and redirecting it
+    # to either: a string (returned by fn) or outfile
+    def capture_stdout(*args, outfile=None, **kwargs):
+        if outfile is None:
+            output = io.StringIO
+        else:
+            output = lambda: open(rfnm(outfile), 'w')
+
+        out = None
+        with output() as f:
+            with contextlib.redirect_stdout(f):
+                func(*args, **kwargs)
+            if outfile is None:
+                out = f.getvalue()
+        return out
+    return capture_stdout
+
+def compare_debug_output(string1, fname2):
+    with open(fname2, 'r') as f2:
+        string2 = f2.read()
+    
+    diff = difflib.ndiff(string1.splitlines(), string2.splitlines())
+
+    # Note I tried using the linejunk= kwarg to difflib.ndiff, but for
+    # some reason it wasn't working, so I'm doing the filtering myself
+    
+    filtered_diff = []
+    for row in diff:
+        if not (row.startswith('- ') or row.startswith('+ ')):
+            continue
+        _row = row[2:] # Drop the "+ " or "- ".
+        if _row.startswith('Reading file '):
+            continue
+        if _row.startswith('Indexing '):
+            continue
+        filtered_diff.append(row)
+
+    return len(filtered_diff) == 0
 
 
 def test_matlab_io(make_data=False):
@@ -49,57 +90,48 @@ def test_matlab_io(make_data=False):
 
 
 def test_debugging(make_data=False):
-    def rdi_debug_output(filename, data, nens):
-        with open(rfnm(filename), 'w') as f:
-            with contextlib.redirect_stdout(f):
-                drop_config(wh.read_rdi(exdt(data),
-                                        debug=11,
-                                        nens=nens))
 
-    def nortek_debug_output(filename, data, nens):
-        with open(rfnm(filename), 'w') as f:
-            with contextlib.redirect_stdout(f):
-                drop_config(awac.read_nortek(exdt(data),
-                                             debug=True,
-                                             do_checksum=True,
-                                             nens=nens))
+    @capture_stdout_decorator
+    def rdi_debug_output(datafile, nens):
+        wh.read_rdi(exdt(datafile), debug=11, nens=nens)
 
-    def nortek2_debug_output(filename, data, nens):
-        with open(rfnm(filename), 'w') as f:
-            with contextlib.redirect_stdout(f):
-                drop_config(sig.read_signature(exdt(data),
-                                               nens=nens,
-                                               rebuild_index=True,
-                                               debug=True))
-        os.remove(exdt('Sig500_Echo.ad2cp.index'))
+    @capture_stdout_decorator
+    def nortek_debug_output(datafile, nens):
+        awac.read_nortek(exdt(datafile),
+                         debug=True,
+                         do_checksum=True,
+                         nens=nens)
+
+    @capture_stdout_decorator
+    def nortek2_debug_output(datafile, nens):
+        sig.read_signature(exdt(datafile),
+                           nens=nens,
+                           rebuild_index=True,
+                           debug=True)
+
+        os.remove(exdt(datafile + '.index'))
 
     nens = 100
-    rdi_debug_output('rdi_debug_test.txt', 'RDI_withBT.000', nens)
-    nortek_debug_output('awac_debug_test.txt', 'AWAC_test01.wpr', nens)
-    nortek_debug_output('vec_debug_test.txt', 'vector_data_imu01.VEC', nens)
-    nortek2_debug_output('sig_debug_test.txt', 'Sig500_Echo.ad2cp', nens)
 
     if make_data:
-        rdi_debug_output('rdi_debug_check.txt', 'RDI_withBT.000', nens)
-        nortek_debug_output('awac_debug_check.txt', 'AWAC_test01.wpr', nens)
-        nortek_debug_output('vec_debug_check.txt',
-                            'vector_data_imu01.VEC', nens)
-        nortek2_debug_output('sig_debug_check.txt', 'Sig500_Echo.ad2cp', nens)
+        rdi_debug_output('RDI_withBT.000', outfile='rdi_debug_check.txt', nens=nens)
+        nortek_debug_output('AWAC_test01.wpr', outfile='awac_debug_check.txt', nens=nens)
+        nortek_debug_output('vector_data_imu01.VEC', outfile='vec_debug_check.txt', nens=nens)
+        nortek2_debug_output('Sig500_Echo.ad2cp', outfile='sig_debug_check.txt', nens=nens)
         return
-
-    assert filecmp.cmp(rfnm('rdi_debug_test.txt'),
-                       rfnm('rdi_debug_check.txt'))
-    assert filecmp.cmp(rfnm('awac_debug_test.txt'),
-                       rfnm('awac_debug_check.txt'))
-    assert filecmp.cmp(rfnm('vec_debug_test.txt'),
-                       rfnm('vec_debug_check.txt'))
-    assert filecmp.cmp(rfnm('sig_debug_test.txt'),
-                       rfnm('sig_debug_check.txt'))
-
-    os.remove(rfnm('rdi_debug_test.txt'))
-    os.remove(rfnm('awac_debug_test.txt'))
-    os.remove(rfnm('vec_debug_test.txt'))
-    os.remove(rfnm('sig_debug_test.txt'))
+    
+    assert compare_debug_output(
+        rdi_debug_output('RDI_withBT.000', nens=nens),
+        rfnm('rdi_debug_check.txt'))
+    assert compare_debug_output(
+        nortek_debug_output('AWAC_test01.wpr', nens),
+        rfnm('awac_debug_check.txt'))
+    assert compare_debug_output(
+        nortek_debug_output('vector_data_imu01.VEC', nens),
+        rfnm('vec_debug_check.txt'))
+    assert compare_debug_output(
+        nortek2_debug_output('Sig500_Echo.ad2cp', nens),
+        rfnm('sig_debug_check.txt'))
 
 
 class warnings_testcase(unittest.TestCase):
@@ -114,3 +146,10 @@ class warnings_testcase(unittest.TestCase):
             read(rfnm('AWAC_test01.nc'))
         with self.assertRaises(Exception):
             save_netcdf(tp.dat_rdi, 'test_save.fail')
+
+
+if __name__ == '__main__':
+
+    #test_debugging()
+    tmp1 = compare_debug_output(rfnm('rdi_debug_test.txt'),
+                                rfnm('rdi_debug_check.txt'))
