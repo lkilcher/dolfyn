@@ -47,7 +47,7 @@ def test_matlab_io(make_data=False):
     assert_allclose(td_vm, mat_vm, atol=1e-6)
 
 
-def test_debugging(make_data=True):
+def test_debugging(make_data=False):
     def debug_output(f, func, datafile, nens, *args, **kwargs):
         with contextlib.redirect_stdout(f):
             drop_config(func(exdt(datafile), nens=nens, *args, **kwargs))

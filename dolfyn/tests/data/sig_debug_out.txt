@@ -29,8 +29,4 @@ Indexing      4464: A5, 10, 18, 188, 0, 1, 1
       9020: A5, 10, 1C, 214, 4, 5, 5
 
  Done.
-<<<<<<< HEAD:dolfyn/tests/data/sig_debug_check.txt
-Reading file /Users/lkilcher/Dropbox/pylab/dolfyn/dolfyn/example_data/Sig500_Echo.ad2cp ...
-=======
 Reading file ...
->>>>>>> fix_tests:dolfyn/tests/data/sig_debug_out.txt
