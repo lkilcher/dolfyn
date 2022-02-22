@@ -6,7 +6,6 @@ from dolfyn.tests.base import assert_allclose, save_netcdf, save_matlab, load_ma
 from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests import test_read_adv as tv
 import contextlib
-import filecmp
 import unittest
 import pytest
 import os
@@ -48,7 +47,7 @@ def test_matlab_io(make_data=False):
     assert_allclose(td_vm, mat_vm, atol=1e-6)
 
 
-def test_debugging(make_data=False):
+def test_debugging(make_data=True):
     def debug_output(f, func, datafile, nens, *args, **kwargs):
         with contextlib.redirect_stdout(f):
             drop_config(func(exdt(datafile), nens=nens, *args, **kwargs))
@@ -62,7 +61,7 @@ def test_debugging(make_data=False):
             string = string[0:start] + string[end+3:]
 
         start = string.find("Reading file") + 12
-        end = string.find("...")
+        end = string.find(" ...")
         return string[0:start] + string[end:]
 
     def save_txt(fname, string):
