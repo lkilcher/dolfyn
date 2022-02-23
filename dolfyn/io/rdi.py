@@ -10,10 +10,6 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-# time variables stored as data variables (as opposed to coordinates)
-t_additional = ['hdwtime_gps', ]
-
-
 def read_rdi(fname, userdata=None, nens=None, debug=0):
     """Read a TRDI binary data file.
 
@@ -75,17 +71,17 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     else:  # (not ENR or ENS) or WinRiver files
         ds.attrs['vel_gps_corrected'] = 0
 
-    # Convert time to dt64
-    t_list = [t for t in ds.coords if 'time' in t]
-    for ky in t_list:
+    # Convert time coords to dt64
+    t_coords = [t for t in ds.coords if 'time' in t]
+    for ky in t_coords:
         dt = tmlib.epoch2dt64(ds[ky])
         ds = ds.assign_coords({ky: dt})
 
-    t_data = [t for t in ds.data_vars if t in t_additional]
+    # Convert time vars to dt64
+    t_data = [t for t in ds.data_vars if 'time' in t]
     for ky in t_data:
         dt = tmlib.epoch2dt64(ds[ky])
-        ds = ds.drop_vars(ky)  # must do b/c of netcdf encoding error
-        ds[ky] = xr.DataArray(dt, coords={'time_gps': ds.time_gps})
+        ds[ky].data = dt
 
     return ds
 
