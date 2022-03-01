@@ -192,7 +192,7 @@ Analysis in |dlfn| is primarily set up to work through two API's (Advanced Progr
 The |dlfn| view
 ---------------
 
-In addition to working with xarray datasets directly, as described above |dlfn| also provides an alternate *|dlfn| view* into the data. This is accessed by::
+In addition to working with xarray datasets directly, as described above |dlfn| also provides an alternate *DOLfYN view* into the data. This is accessed by::
 
   >> dat_dolfyn = dat.velds
 
