@@ -10,6 +10,19 @@ from ..rotate.base import _set_coords
 from ..time import date2matlab, matlab2date, date2dt64, dt642date
 
 
+def _check_file_ext(path, ext):
+    filename = path.replace("\\", "/").rsplit("/")[-1]  # windows/linux
+    # for a filename like mcrl.water_velocity-1s.b1.20200813.150000.nc
+    file_ext = filename.rsplit(".")[-1]
+    if '.' in filename:
+        if file_ext != ext:
+            raise IOError("File extension must be of the type {}".format(ext))
+        if file_ext == ext:
+            return path
+
+    return path + '.' + ext
+
+
 def read(fname, userdata=True, nens=None):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, .ENX, etc.) data file.
@@ -101,10 +114,7 @@ def save(ds, filename,
     See the xarray.to_netcdf documentation for more details.
 
     """
-    if '.' in filename:
-        assert filename.endswith('nc'), 'File extension must be of the type nc'
-    else:
-        filename += '.nc'
+    filename = _check_file_ext(filename, 'nc')
 
     # Dropping the detailed configuration stats because netcdf can't save it
     for key in list(ds.attrs.keys()):
@@ -148,10 +158,7 @@ def load(filename):
         An xarray dataset from the binary instrument data.
 
     """
-    if '.' in filename:
-        assert filename.endswith('nc'), 'File extension must be of the type nc'
-    else:
-        filename += '.nc'
+    filename = _check_file_ext(filename, 'nc')
 
     ds = xr.load_dataset(filename, engine='netcdf4')
 
@@ -194,11 +201,7 @@ def save_mat(ds, filename):
     scipy.io.savemat()
 
     """
-    if '.' in filename:
-        assert filename.endswith(
-            'mat'), 'File extension must be of the type mat'
-    else:
-        filename += '.mat'
+    filename = _check_file_ext(filename, 'mat')
 
     # Convert time to datenum
     t_coords = [t for t in ds.coords if np.issubdtype(
@@ -250,11 +253,7 @@ def load_mat(filename):
     scipy.io.loadmat()
 
     """
-    if '.' in filename:
-        assert filename.endswith(
-            'mat'), 'File extension must be of the type mat'
-    else:
-        filename += '.mat'
+    filename = _check_file_ext(filename, 'mat')
 
     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
 
