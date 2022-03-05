@@ -5,9 +5,9 @@ from os.path import expanduser
 
 class bin_reader():
     """
-    Reads binary data files. It is mostly for development purposes, to 
-    simplify learning a data file's format. Reading binary data files should 
-    minimize the number of calls to struct.unpack and file.read because many 
+    Reads binary data files. It is mostly for development purposes, to
+    simplify learning a data file's format. Reading binary data files should
+    minimize the number of calls to struct.unpack and file.read because many
     calls to these functions (i.e. using the code in this module) are slow.
     """
     _size_factor = {'B': 1, 'b': 1, 'H': 2,
@@ -81,7 +81,7 @@ class bin_reader():
     def read(self, n, frmt):
         val = self.f.read(n * self._size_factor[frmt])
         if not val:  # If val is empty we are at the end of the file.
-            raise Exception('End of file')
+            return None
         self.cs and self.cs.add(val)
         if n == 1:
             return unpack(self.endian + frmt * n, val)[0]

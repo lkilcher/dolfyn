@@ -17,7 +17,7 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     ----------
     filename : string
         Filename of TRDI file to read.
-    userdata : True, False, or string of userdata.json filename (default ``True``) 
+    userdata : True, False, or string of userdata.json filename (default ``True``)
         Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
         Number of pings to read from the file
@@ -88,7 +88,7 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
 
 def _remove_gps_duplicates(dat):
     """
-    Removes duplicate and nan timestamp values in 'time_gps' coordinate, and    
+    Removes duplicate and nan timestamp values in 'time_gps' coordinate, and
     ads hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
     (in addition to the GPS unit's timestamp).
     """
@@ -172,6 +172,8 @@ data_defs = {'number': ([], 'data_vars', 'uint32', ''),
              'etime_gps': ([], 'coords', 'float64', ''),
              'elatitude_gps': ([], 'data_vars', 'float64', 'deg'),
              'elongitude_gps': ([], 'data_vars', 'float64', 'deg'),
+             'speed_made_good': ([], 'data_vars', 'float64', 'm/s'),
+             'direction_made_good': ([], 'data_vars', 'float64', 'm/s'),
              'time_gps': ([], 'coords', 'float64', ''),
              'latitude_gps': ([], 'data_vars', 'float64', 'deg'),
              'longitude_gps': ([], 'data_vars', 'float64', 'deg'),
@@ -371,9 +373,7 @@ class _RdiReader():
         for nm in self.cfg:
             dat['attrs'][nm] = self.cfg[nm]
         for iens in range(self._nens):
-            try:
-                self.read_buffer()
-            except:
+            if not self.read_buffer():
                 self.remove_end(iens)
                 break
             self.ensemble.clean_data()
@@ -404,13 +404,17 @@ class _RdiReader():
         self.ensemble.k = -1  # so that k+=1 gives 0 on the first loop.
         self.print_progress()
         hdr = self.hdr
+        print(hdr['dat_offsets'])
         while self.ensemble.k < self.ensemble.n_avg - 1:
-            self.search_buffer()
+            if not self.search_buffer():
+                return False
             startpos = fd.tell() - 2
             self.read_hdrseg()
             byte_offset = self._nbyte + 2
+            self._read_vmdas = False
             for n in range(len(hdr['dat_offsets'])):
                 id = fd.read_ui16(1)
+                # print('id', n, id, hex(id), hdr['dat_offsets'][n + 1])
                 self._winrivprob = False
                 self.print_pos()
                 retval = self.read_dat(id)
@@ -421,21 +425,33 @@ class _RdiReader():
                     oset = hdr['dat_offsets'][n + 1] - byte_offset
                     if oset != 0:
                         if self._debug_level > 0:
-                            print('  %s: Adjust location by %d\n' % (id, oset))
+                            print('  %s: Adjust location by %d\n' % (hex(id), oset))
                         fd.seek(oset, 1)
                     byte_offset = hdr['dat_offsets'][n + 1]
                 else:
                     if hdr['nbyte'] - 2 != byte_offset:
                         if not self._winrivprob:
                             if self._debug_level > 0:
-                                print('  {:d}: Adjust location by {:d}\n'
-                                      .format(id, hdr['nbyte'] - 2 - byte_offset))
+                                print('  {:s}: Adjust location by {:d}\n'
+                                      .format(hex(id), hdr['nbyte'] - 2 - byte_offset))
                             self.f.seek(hdr['nbyte'] - 2 - byte_offset, 1)
                     byte_offset = hdr['nbyte'] - 2
+            # check for vmdas again because VmDAS doesn't set the offsets
+            # correctly, and we need this info:
+            if not self._read_vmdas:
+                print('Searching for vmdas nav data. Going to next ensemble')
+                self.search_buffer()
+                # now go back to where vmdas would be:
+                fd.seek(-98, 1)
+                id = self.f.read_ui16(1)
+                print(f'Found {id:04x}', id)
+                if id == 8192:
+                    self.read_dat(id)
             readbytes = fd.tell() - startpos
             offset = hdr['nbyte'] + 2 - byte_offset
             self.check_offset(offset, readbytes)
             self.print_pos(byte_offset=byte_offset)
+        return True
 
     def search_buffer(self):
         """
@@ -453,6 +469,8 @@ class _RdiReader():
                 not self.checkheader())):
             search_cnt += 1
             nextbyte = fd.read_ui8(1)
+            if nextbyte == None:
+                return False
             id1[1] = id1[0]
             id1[0] = nextbyte
         if search_cnt == self._search_num:
@@ -464,23 +482,26 @@ class _RdiReader():
                 print('  WARNING: Searched {} bytes to find next '
                       'valid ensemble start [{:x}, {:x}]'.format(search_cnt,
                                                                  *id1))
+        return True
 
     def checkheader(self,):
         if self._debug_level > 1:
             print("  ###In checkheader.")
         fd = self.f
-        valid = 0
+        valid = False
         # print(self.f.pos)
         numbytes = fd.read_i16(1)
         if numbytes > 0:
             fd.seek(numbytes - 2, 1)
             cfgid = fd.read_ui8(2)
+            if cfgid is None:
+                return False
             if len(cfgid) == 2:
                 fd.seek(-numbytes - 2, 1)
                 if cfgid[0] == 127 and cfgid[1] in [127, 121]:
                     if cfgid[1] == 121 and self._debug7f79 is None:
                         self._debug7f79 = True
-                    valid = 1
+                    valid = True
         else:
             fd.seek(-2, 1)
         if self._debug_level > 1:
@@ -491,12 +512,16 @@ class _RdiReader():
         fd = self.f
         hdr = self.hdr
         hdr['nbyte'] = fd.read_i16(1)
+
         if self._debug_level > 2:
             print(fd.tell())
         fd.seek(1, 1)
         ndat = fd.read_i8(1)
+        print('ndat', ndat)
         hdr['dat_offsets'] = fd.read_i16(ndat)
+        print('Offsets', hdr['dat_offsets'])
         self._nbyte = 4 + ndat * 2
+        print(hdr)
 
     def print_progress(self,):
         self.progress = self.f.tell()
@@ -570,9 +595,10 @@ class _RdiReader():
                         # 020C Ambient sound profile
                         524: (self.skip_Nbyte, [4]),
                         12288: (self.skip_Nbyte, [32]),
-                        # 3000 Fixed attitude data format for OS-ADCPs
+                        3000: (self.skip_Nbyte, [32]) # Fixed attitude data format for OS-ADCPs
                         }
         # Call the correct function:
+        print(f'Trying to Reading {id}')
         if id in function_map:
             if self._debug_level >= 2:
                 print('  Reading code {}...'.format(hex(id)), end='')
@@ -593,6 +619,7 @@ class _RdiReader():
         if self._debug_level >= 1:
             print(self._pos)
         self._nbyte += 2
+        print('Read Fixed')
 
     def read_cfgseg(self,):
         cfgstart = self.f.tell()
@@ -643,6 +670,7 @@ class _RdiReader():
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
         self.configsize = self.f.tell() - cfgstart
+        print('Read Cfg')
 
     def read_var(self,):
         """ Read variable leader """
@@ -684,6 +712,8 @@ class _RdiReader():
         ens.roll_std[k] = fd.read_ui8(1) * 0.1
         ens.adc[:, k] = fd.read_i8(8)
         self._nbyte = 2 + 40
+        print('Read Var')
+
 
     def read_vel(self,):
         ens = self.ensemble
@@ -693,6 +723,8 @@ class _RdiReader():
             self.f.read_i16(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4)) * .001
         self._nbyte = 2 + 4 * self.cfg['n_cells'] * 2
+        print('Read Vel')
+
 
     def read_corr(self,):
         k = self.ensemble.k
@@ -701,6 +733,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
+        print('Read Corr')
+
 
     def read_amp(self,):
         k = self.ensemble.k
@@ -709,6 +743,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
+        print('Read Amp')
+
 
     def read_prcnt_gd(self,):
         self.vars_read += ['prcnt_gd']
@@ -716,6 +752,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
+        print('Read PG')
+
 
     def read_status(self,):
         self.vars_read += ['status']
@@ -723,6 +761,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
+        print('Read Status')
+
 
     def read_bottom(self,):
         self.vars_read += ['dist_bt', 'vel_bt', 'corr_bt', 'amp_bt',
@@ -775,6 +815,7 @@ class _RdiReader():
                 if cfg['prog_ver'] >= 16.20:
                     fd.seek(4, 1)
                     self._nbyte += 4
+        print('Read Bottom')
 
     def read_vmdas(self,):
         """ Read something from VMDAS """
@@ -793,6 +834,8 @@ class _RdiReader():
                            'etime_gps',
                            'elatitude_gps',
                            'elongitude_gps',
+                           'speed_made_good',
+                           'direction_made_good',
                            'flags',
                            'ntime', ]
         utim = fd.read_ui8(4)
@@ -807,7 +850,10 @@ class _RdiReader():
             milliseconds=int(fd.read_ui32(1) * 10)))[0]
         ens.elatitude_gps[k] = fd.read_i32(1) * self._cfac
         ens.elongitude_gps[k] = fd.read_i32(1) * self._cfac
-        fd.seek(12, 1)
+        fd.seek(6, 1)
+        ens.speed_made_good[k] = fd.read_i16(1) / 1000
+        ens.direction_made_good[k] = fd.read_ui16(1) * 180 / 2 ** 15
+        fd.seek(2, 1)
         ens.flags[k] = fd.read_ui16(1)
         fd.seek(6, 1)
         utim = fd.read_ui8(4)
@@ -816,6 +862,9 @@ class _RdiReader():
             milliseconds=int(fd.read_ui32(1) / 10)))[0]
         fd.seek(16, 1)
         self._nbyte = 2 + 76
+        print('Read VMDAS')
+        self._read_vmdas = True
+
 
     def read_winriver2(self, ):
         startpos = self.f.tell()
