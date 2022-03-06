@@ -404,7 +404,6 @@ class _RdiReader():
         self.ensemble.k = -1  # so that k+=1 gives 0 on the first loop.
         self.print_progress()
         hdr = self.hdr
-        print(hdr['dat_offsets'])
         while self.ensemble.k < self.ensemble.n_avg - 1:
             if not self.search_buffer():
                 return False
@@ -414,7 +413,6 @@ class _RdiReader():
             self._read_vmdas = False
             for n in range(len(hdr['dat_offsets'])):
                 id = fd.read_ui16(1)
-                # print('id', n, id, hex(id), hdr['dat_offsets'][n + 1])
                 self._winrivprob = False
                 self.print_pos()
                 retval = self.read_dat(id)
@@ -425,15 +423,15 @@ class _RdiReader():
                     oset = hdr['dat_offsets'][n + 1] - byte_offset
                     if oset != 0:
                         if self._debug_level > 0:
-                            print('  %s: Adjust location by %d\n' % (hex(id), oset))
+                            print('  %s: Adjust location by %d\n' % (id, oset))
                         fd.seek(oset, 1)
                     byte_offset = hdr['dat_offsets'][n + 1]
                 else:
                     if hdr['nbyte'] - 2 != byte_offset:
                         if not self._winrivprob:
                             if self._debug_level > 0:
-                                print('  {:s}: Adjust location by {:d}\n'
-                                      .format(hex(id), hdr['nbyte'] - 2 - byte_offset))
+                                print('  {:d}: Adjust location by {:d}\n'
+                                      .format(id, hdr['nbyte'] - 2 - byte_offset))
                             self.f.seek(hdr['nbyte'] - 2 - byte_offset, 1)
                     byte_offset = hdr['nbyte'] - 2
             # check for vmdas again because VmDAS doesn't set the offsets
@@ -517,11 +515,8 @@ class _RdiReader():
             print(fd.tell())
         fd.seek(1, 1)
         ndat = fd.read_i8(1)
-        print('ndat', ndat)
         hdr['dat_offsets'] = fd.read_i16(ndat)
-        print('Offsets', hdr['dat_offsets'])
         self._nbyte = 4 + ndat * 2
-        print(hdr)
 
     def print_progress(self,):
         self.progress = self.f.tell()
@@ -598,7 +593,8 @@ class _RdiReader():
                         3000: (self.skip_Nbyte, [32]) # Fixed attitude data format for OS-ADCPs
                         }
         # Call the correct function:
-        print(f'Trying to Reading {id}')
+        if self._debug_level >= 2:
+            print(f'Trying to Reading {id}')
         if id in function_map:
             if self._debug_level >= 2:
                 print('  Reading code {}...'.format(hex(id)), end='')
@@ -619,7 +615,8 @@ class _RdiReader():
         if self._debug_level >= 1:
             print(self._pos)
         self._nbyte += 2
-        print('Read Fixed')
+        if self._debug_level >= 2:
+            print('Read Fixed')
 
     def read_cfgseg(self,):
         cfgstart = self.f.tell()
@@ -670,7 +667,8 @@ class _RdiReader():
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
         self.configsize = self.f.tell() - cfgstart
-        print('Read Cfg')
+        if self._debug_level >= 2:
+            print('Read Cfg')
 
     def read_var(self,):
         """ Read variable leader """
@@ -712,7 +710,8 @@ class _RdiReader():
         ens.roll_std[k] = fd.read_ui8(1) * 0.1
         ens.adc[:, k] = fd.read_i8(8)
         self._nbyte = 2 + 40
-        print('Read Var')
+        if self._debug_level >= 2:
+            print('Read Var')
 
 
     def read_vel(self,):
@@ -723,7 +722,8 @@ class _RdiReader():
             self.f.read_i16(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4)) * .001
         self._nbyte = 2 + 4 * self.cfg['n_cells'] * 2
-        print('Read Vel')
+        if self._debug_level >= 2:
+            print('Read Vel')
 
 
     def read_corr(self,):
@@ -733,7 +733,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
-        print('Read Corr')
+        if self._debug_level >= 2:
+            print('Read Corr')
 
 
     def read_amp(self,):
@@ -743,7 +744,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
-        print('Read Amp')
+        if self._debug_level >= 2:
+            print('Read Amp')
 
 
     def read_prcnt_gd(self,):
@@ -752,7 +754,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
-        print('Read PG')
+        if self._debug_level >= 2:
+            print('Read PG')
 
 
     def read_status(self,):
@@ -761,7 +764,8 @@ class _RdiReader():
             self.f.read_ui8(4 * self.cfg['n_cells'])
         ).reshape((self.cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * self.cfg['n_cells']
-        print('Read Status')
+        if self._debug_level >= 2:
+            print('Read Status')
 
 
     def read_bottom(self,):
@@ -815,7 +819,8 @@ class _RdiReader():
                 if cfg['prog_ver'] >= 16.20:
                     fd.seek(4, 1)
                     self._nbyte += 4
-        print('Read Bottom')
+        if self._debug_level >= 2:
+            print('Read Bottom')
 
     def read_vmdas(self,):
         """ Read something from VMDAS """
@@ -862,9 +867,9 @@ class _RdiReader():
             milliseconds=int(fd.read_ui32(1) / 10)))[0]
         fd.seek(16, 1)
         self._nbyte = 2 + 76
-        print('Read VMDAS')
+        if self._debug_level >= 2:
+            print('Read VMDAS')
         self._read_vmdas = True
-
 
     def read_winriver2(self, ):
         startpos = self.f.tell()
