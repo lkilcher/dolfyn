@@ -10,7 +10,7 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-def read_rdi(fname, userdata=None, nens=None, debug=0):
+def read_rdi(fname, userdata=None, nens=None, debug=0, vmdas_search=False):
     """Read a TRDI binary data file.
 
     Parameters
@@ -21,6 +21,9 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
         Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
         Number of pings to read from the file
+    vmdas_search : boolean (False)
+        Search from the end of each ensemble for the VMDAS navigation
+        block.  The byte offsets are sometimes incorrect.
 
     Returns
     -------
@@ -30,7 +33,8 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     """
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
-    with _RdiReader(fname, debug_level=debug) as ldr:
+    with _RdiReader(fname, debug_level=debug,
+                    vmdas_search=vmdas_search) as ldr:
         dat = ldr.load_data(nens=nens)
 
     # Read in userdata
@@ -279,10 +283,11 @@ class _RdiReader():
     _debug7f79 = None
     extrabytes = 0
 
-    def __init__(self, fname, navg=1, debug_level=0):
+    def __init__(self, fname, navg=1, debug_level=0, vmdas_search=False):
         self.fname = _abspath(fname)
         print('\nReading file {} ...'.format(fname))
         self._debug_level = debug_level
+        self._vmdas_search = vmdas_search
         self.cfg = {}
         self.cfg['name'] = 'wh-adcp'
         self.cfg['sourceprog'] = 'instrument'
@@ -436,13 +441,15 @@ class _RdiReader():
                     byte_offset = hdr['nbyte'] - 2
             # check for vmdas again because VmDAS doesn't set the offsets
             # correctly, and we need this info:
-            if not self._read_vmdas:
-                print('Searching for vmdas nav data. Going to next ensemble')
+            if not self._read_vmdas and self._vmdas_search:
+                if self._debug_level >= 2:
+                    print('Searching for vmdas nav data. Going to next ensemble')
                 self.search_buffer()
                 # now go back to where vmdas would be:
                 fd.seek(-98, 1)
                 id = self.f.read_ui16(1)
-                print(f'Found {id:04x}', id)
+                if self._debug_level >= 2:
+                    print(f'Found {id:04d}')
                 if id == 8192:
                     self.read_dat(id)
             readbytes = fd.tell() - startpos
