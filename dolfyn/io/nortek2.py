@@ -12,7 +12,7 @@ from ..time import epoch2dt64, _fill_time_gaps
 
 
 def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
-                   debug=False):
+                   debug=False, **kwargs):
     """Read a Nortek Signature (.ad2cp) datafile
 
     Parameters
@@ -456,10 +456,10 @@ def _reorg(dat):
 
 
 def _reduce(data):
-    """This function takes the output from `reorg`, and further simplifies the 
-    data. Mostly this is combining system, environmental, and orientation data 
+    """This function takes the output from `reorg`, and further simplifies the
+    data. Mostly this is combining system, environmental, and orientation data
     --- from different data structures within the same ensemble --- by
-    averaging.  
+    averaging.
     """
     dv = data['data_vars']
     dc = data['coords']

@@ -23,7 +23,7 @@ def _check_file_ext(path, ext):
     return path + '.' + ext
 
 
-def read(fname, userdata=True, nens=None):
+def read(fname, userdata=True, nens=None, **kwargs):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, .ENX, etc.) data file.
 
@@ -34,7 +34,8 @@ def read(fname, userdata=True, nens=None):
     userdata : True, False, or string of userdata.json filename (default ``True``)
         Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
-        Number of pings or ensembles to read from the file
+        Number of pings or ensembles to read from the
+    **kwargs : passed to instrument-specific parser.
 
     Returns
     -------
@@ -57,7 +58,7 @@ def read(fname, userdata=True, nens=None):
                         nortek=read_nortek,
                         signature=read_signature)
         func = func_map[file_type]
-    return func(fname, userdata=userdata, nens=nens)
+    return func(fname, userdata=userdata, nens=nens, **kwargs)
 
 
 def read_example(name, **kwargs):
@@ -193,7 +194,7 @@ def save_mat(ds, filename):
 
     Notes
     -----
-    The xarray data format is saved as a MATLAB structure with the fields 
+    The xarray data format is saved as a MATLAB structure with the fields
     'vars, coords, config, units'. Converts time to datenum
 
     See Also

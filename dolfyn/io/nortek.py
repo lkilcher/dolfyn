@@ -13,7 +13,7 @@ from ..rotate import api as rot
 
 
 def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
-                nens=None):
+                nens=None, **kwargs):
     """Read a classic Nortek (AWAC and Vector) datafile
 
     Parameters
@@ -21,7 +21,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     filename : string
         Filename of Nortek file to read.
     userdata : True, False, or string of userdata.json filename
-        (default ``True``) Whether to read the '<base-filename>.userdata.json' 
+        (default ``True``) Whether to read the '<base-filename>.userdata.json'
         file.
     do_checksum : bool (default False)
         Whether to perform the checksum of each data block.
@@ -110,7 +110,7 @@ class _NortekReader():
     fname : string
         Nortek file filename to read.
     endian : {'<','>'} (optional)
-        Specifies if the file is in 'little' or 'big' endian format. By 
+        Specifies if the file is in 'little' or 'big' endian format. By
         default the reader will attempt to determine this.
     debug : {True, False*} (optional)
         Print debug/progress information?
@@ -119,7 +119,7 @@ class _NortekReader():
     bufsize : int (default 100000)
         The size of the read buffer to use.
     nens : None (default: None, read all files), int, or 2-element tuple (start, stop).
-        The number of pings to read from the file. By default, the entire file 
+        The number of pings to read from the file. By default, the entire file
         is read.
 
     """
@@ -289,7 +289,7 @@ class _NortekReader():
         return byts
 
     def findnext(self, do_cs=True):
-        """Find the next data block by checking the checksum and the 
+        """Find the next data block by checking the checksum and the
         sync byte(0xa5)
         """
         sum = np.uint16(int('0xb58c', 0))  # Initialize the sum
@@ -710,7 +710,7 @@ class _NortekReader():
         self.checksum(byts)
 
     def sci_vec_sysdata(self,):
-        """Translate the data in the vec_sysdata structure into 
+        """Translate the data in the vec_sysdata structure into
         scientific units.
         """
         dat = self.data

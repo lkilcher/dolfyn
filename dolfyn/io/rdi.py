@@ -10,7 +10,7 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-def read_rdi(fname, userdata=None, nens=None, debug=0, vmdas_search=False):
+def read_rdi(fname, userdata=None, nens=None, debug=0, vmdas_search=False, **kwargs):
     """Read a TRDI binary data file.
 
     Parameters
