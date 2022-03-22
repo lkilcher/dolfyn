@@ -137,7 +137,7 @@ def _create_dataset(data):
                 ds[key] = xr.DataArray(data['data_vars'][key], coords, dims)
 
         # quaternion units never change
-        elif 'quaternion' in key:
+        elif 'quaternions' in key:
             if any(val in key for val in tag):
                 tg = '_' + key.rsplit('_')[-1]
             else:
