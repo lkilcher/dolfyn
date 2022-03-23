@@ -10,8 +10,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- Switch from epoch time to datetime64 in datasets
 	    - This also includes a bugfix where the epoch time was machine specific.
 	- No longer Python 2 compatible.
-	- Fix some Nortek Signature (ad2cp) read issues
 	- Re-implement the 'inplace' argument for several API functions.
+
+	- Nortek Signature (.ad2cp):
+		- Fix some read issues
+		- Decoded binary 'status' variables
+		- Dropped 'temp_mag' (magnetometer temperature) - this thermistor isn't calibrated
+		- Added 'xmit_energy' (beam transmit energy in dB) into data variables
 
 ## Version 0.13.0
 	- Refactored source code to use xarray instead of h5py-derived data objects
@@ -54,7 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 	- Motion correction code:
 		- `CorrectMotion` object has been removed
-		- replaced '.mean()' with `np.nanmean` in `motion_correction` and `calc_principal_heading`
+		- replaced '.mean()' with `np.nanmean()` in `motion_correction()` and `calc_principal_heading()`
 
 	- `TimeData`, `Velocity`, `TKEdata`:
 		- `TimeData` class has been removed
@@ -68,7 +73,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 		- `TurbBinner` renamed to `ADVBinner` and set in the ADV API
 
-		- Renamed `calc_vel_psd()` and `calc_vel_csd()` to `calc_psd` and `calc_csd`
+		- Renamed `calc_vel_psd()` and `calc_vel_csd()` to `calc_psd()` and `calc_csd()`
 		- Fixed bug where `calc_vel_csd()` wasn't using "n_fft_coh" input
 		- Added "freq_units" option to `calc_psd()` and `calc_csd()` using either frequency in Hz (f) or rad/s (omega) ("freq_units" input)
 				- Renamed `calc_omega()` to `calc_freq()` and added "freq_units" as input
