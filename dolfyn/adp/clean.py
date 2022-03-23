@@ -317,12 +317,12 @@ def medfilt_orient(ds, nfilt=7):
     ds = ds.copy(deep=True)
 
     if getattr(ds, 'has_imu'):
-        q_filt = np.zeros(ds.quaternion.shape)
-        for i in range(ds.quaternion.q.size):
-            q_filt[i] = medfilt(ds.quaternion[i].values, nfilt)
-        ds.quaternion.values = q_filt
+        q_filt = np.zeros(ds.quaternions.shape)
+        for i in range(ds.quaternions.q.size):
+            q_filt[i] = medfilt(ds.quaternions[i].values, nfilt)
+        ds.quaternions.values = q_filt
 
-        ds['orientmat'] = quaternion2orient(ds.quaternion)
+        ds['orientmat'] = quaternion2orient(ds.quaternions)
         return ds
 
     else:

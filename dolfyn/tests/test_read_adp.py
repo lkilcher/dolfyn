@@ -93,6 +93,7 @@ def test_io_nortek2(make_data=False):
         td_sig_skip = tb.drop_config(read('Sig_SkippedPings01.ad2cp'))
 
     with pytest.warns(UserWarning):
+        # Note: this datafile has a missing time value only - data is whole
         td_sig_badt = tb.drop_config(sig.read_signature(
             tb.rfnm('Sig1000_BadTime01.ad2cp')))
 
