@@ -105,7 +105,7 @@ def test_calc_freq():
 
 
 def test_adv_turbulence(make_data=False):
-    dat = tv.dat
+    dat = tv.dat.copy(deep=True)
     bnr = avm.ADVBinner(n_bin=20.0, fs=dat.fs)
     tdat = bnr(dat)
     acov = bnr.calc_acov(dat.vel)
