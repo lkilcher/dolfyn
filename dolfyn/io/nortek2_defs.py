@@ -184,7 +184,7 @@ _burst_hdr = [
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None, 'dB'),
     ('vel_scale', 'b', [], None),
-    ('power_level', 'b', [], _LinFunc(dtype=dt32), 'dB'),
+    ('power_level_dB', 'b', [], _LinFunc(dtype=dt32)),
     ('temp_mag', 'h', [], None),  # uncalibrated
     ('temp_clock', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg C'),
     ('error', 'H', [], None),
@@ -223,7 +223,7 @@ _bt_hdr = [
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None, 'dB'),
     ('vel_scale', 'b', [], None),
-    ('power_level', 'b', [], _LinFunc(dtype=dt32), 'dB'),
+    ('power_level_dB', 'b', [], _LinFunc(dtype=dt32)),
     ('temp_mag', 'h', [], None),  # uncalibrated
     ('temp_clock', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg C'),
     ('error', 'I', [], None),

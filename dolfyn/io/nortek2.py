@@ -60,7 +60,7 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
             tag = ky.lstrip('time')
             warnings.warn("Zero/NaN values found in '{}'. Interpolating and "
                           "extrapolating them. To identify which values were filled later, "
-                          "look for 0 values in 'status{}' or status0{}".format(ky, tag, tag))
+                          "look for 0 values in 'status{}'".format(ky, tag))
             tdat = _fill_time_gaps(tdat, sample_rate_hz=out['attrs']['fs'])
         coords[ky] = epoch2dt64(tdat).astype('datetime64[us]')
 
@@ -396,7 +396,7 @@ def _reorg(dat):
             tag] = lib._collapse(dnow['ambig_vel'], name='ambig_vel')
 
         for ky in ['SerialNum', 'cell_size', 'blank_dist', 'nominal_corr',
-                   'vel_scale', 'power_level']:
+                   'power_level_dB']:
             cfg[ky + tag] = lib._collapse(dnow[ky],
                                           exclude=collapse_exclude,
                                           name=ky)
@@ -436,6 +436,7 @@ def _reorg(dat):
         for ky in alt_status:
             outdat['attrs'][ky] = lib._collapse(
                 alt_status[ky].astype('uint8'), name=ky)
+        outdat['data_vars'].pop('alt_status')
 
         # Power level index
         power = {0: 'high', 1: 'med-high', 2: 'med-low', 3: 'low'}
@@ -443,9 +444,9 @@ def _reorg(dat):
             'power_level_idx_alt')]
 
     # Read status data
-    status_vars = [x for x in outdat['data_vars'] if 'status0' in x]
+    status0_vars = [x for x in outdat['data_vars'] if 'status0' in x]
     # Status data is the same across all tags, and there is always a 'status' and 'status0'
-    status0_key = status_vars[0]
+    status0_key = status0_vars[0]
     status0_data = lib._status02data(outdat['data_vars'][status0_key])
     status_key = status0_key.replace('0', '')
     status_data = lib._status2data(outdat['data_vars'][status_key])
@@ -453,9 +454,8 @@ def _reorg(dat):
     # Individual status codes
     # Wake up state
     wake = {0: 'bad power', 1: 'power on', 2: 'break', 3: 'clock'}
-    for ky in ['wakeup_state', 'previous_wakeup_state']:
-        outdat['attrs'][ky] = wake[lib._collapse(
-            status_data.pop(ky), name=ky)]
+    outdat['attrs']['wakeup_state'] = wake[lib._collapse(
+        status_data.pop('wakeup_state'), name=ky)]
 
     # Instrument direction
     # 0: XUP, 1: XDOWN, 2: YUP, 3: YDOWN, 4: ZUP, 5: ZDOWN,
@@ -470,17 +470,17 @@ def _reorg(dat):
     outdat['attrs']['orient_status'] = orient_status[lib._collapse(
         status_data.pop('auto_orientation'), name='orient_status')]
 
-    # True/false status codes - need to save as 1/0 per netcdf attribute limitations
-    for ky in status_data:
-        outdat['attrs'][ky] = lib._collapse(
-            status_data[ky].astype('uint8'), name=ky)
+    # Status variables
+    for ky in ['low_volt_skip', 'active_config', 'telemetry_data', 'boost_running']:
+        outdat['data_vars'][ky] = status_data[ky].astype('uint8')
+
+    # Processor idle state - need to save as 1/0 per netcdf attribute limitations
     for ky in status0_data:
         outdat['attrs'][ky] = lib._collapse(
             status0_data[ky].astype('uint8'), name=ky)
 
-    # Remove original status variables
-    status_vars = [x for x in outdat['data_vars'] if 'status' in x]
-    [outdat['data_vars'].pop(var) for var in status_vars]
+    # Remove status0 variables - keep status variables as they useful for finding missing pings
+    [outdat['data_vars'].pop(var) for var in status0_vars]
 
     # Set coordinate system
     outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
