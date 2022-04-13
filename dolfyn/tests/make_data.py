@@ -8,7 +8,7 @@ Must run 2-3 times in a row to reset the rotate test files
 print(__doc__)
 
 # import test_read_adv as advr
-# import test_read_adp as adpr
+import test_read_adp as adpr
 # import test_read_io as io
 # import test_rotate_adv as advro
 # import test_rotate_adp as adpro
@@ -19,7 +19,7 @@ print(__doc__)
 # import test_api
 
 # advr.test_io_adv(make_data=True)
-# adpr.test_io_rdi(make_data=True)
+adpr.test_io_rdi(make_data=True)
 # adpr.test_io_nortek(make_data=True)
 # adpr.test_io_nortek2(make_data=True)
 # adpr.test_nortek2_crop(make_data=True)

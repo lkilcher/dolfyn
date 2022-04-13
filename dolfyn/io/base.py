@@ -175,18 +175,22 @@ def _create_dataset(data):
                                               'dim_1': 'time_echo'})
                     ds[key] = ds[key].assign_coords({'range_echo': data['coords']['range_echo'],
                                                      'time_echo': data['coords']['time_echo']})
-                # 3- & 4-beam instrument vector data, bottom tracking
+                # ADV/ADCP instrument vector data, bottom tracking
                 elif shp[0] == vshp[0] and not any(val in key for val in tag[:2]):
                     # b/c rdi time
                     if 'bt' in key and 'time_bt' in data['coords']:
                         tg = '_bt'
                     else:
                         tg = ''
-                    ds[key] = ds[key].rename({'dim_0': 'dir',
+                    if 'amp' in key or 'corr' in key:
+                        dim0 = 'beam'
+                    else:
+                        dim0 = 'dir'
+                    ds[key] = ds[key].rename({'dim_0': dim0,
                                               'dim_1': 'time'+tg})
-                    ds[key] = ds[key].assign_coords({'dir': beam,
+                    ds[key] = ds[key].assign_coords({dim0: beam,
                                                      'time'+tg: data['coords']['time'+tg]})
-                # 4-beam instrument IMU data
+                # ADCP IMU data
                 elif shp[0] == vshp[0]-1:
                     if not any(val in key for val in tag):
                         tg = ''
