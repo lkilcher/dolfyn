@@ -11,6 +11,6 @@
   - roll ('time',)
   - temp ('time',)
   - pressure ('time',)
-  - amp ('dir', 'time')
-  - corr ('dir', 'time')
+  - amp ('beam', 'time')
+  - corr ('beam', 'time')
   ... and others (see `<obj>.variables`)
