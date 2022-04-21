@@ -206,7 +206,7 @@ class _NortekReader():
         self.f = open(_abspath(fname), 'rb', bufsize)
         self.close = self.f.close
         if self._npings is not None:
-            self.n_samp_guess = self._npings + 1
+            self.n_samp_guess = self._npings
         self.f.seek(pnow, 0)  # Seek to the previous position.
 
         props = self.data['attrs']
