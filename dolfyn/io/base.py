@@ -79,25 +79,13 @@ def _read_userdata(fname):
 
 def _handle_nan(data):
     """Finds nan's that cause issues in running the rotation algorithms
-    and deletes them. 
+    and deletes them.
     """
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
     l = data['coords']['time'].size
 
     if any(np.isnan(data['coords']['time'])):
         nan += np.isnan(data['coords']['time'])
-
-    var = ['accel', 'angrt', 'mag']
-    for key in data['data_vars']:
-        if any(val in key for val in var):
-            shp = data['data_vars'][key].shape
-            if shp[-1] == l:
-                if len(shp) == 1:
-                    if any(np.isnan(data['data_vars'][key])):
-                        nan += np.isnan(data['data_vars'][key])
-                elif len(shp) == 2:
-                    if any(np.isnan(data['data_vars'][key][-1])):
-                        nan += np.isnan(data['data_vars'][key][-1])
 
     if nan.sum() > 0:
         data['coords']['time'] = data['coords']['time'][~nan]
