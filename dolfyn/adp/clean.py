@@ -213,10 +213,10 @@ def nan_beyond_surface(ds, val=np.nan):
     # Correct rest of "range" data for surface interference
     for nm in var:
         a = ds[nm].values
-        if 'corr' in nm:
-            a[..., bds] = 0
-        else:
+        try:  # float dtype
             a[..., bds] = val
+        except:  # int dtype
+            a[..., bds] = 0
         ds[nm].values = a
 
     return ds
