@@ -219,8 +219,7 @@ class _NortekReader():
         props['coord_sys'] = {'XYZ': 'inst',
                               'ENU': 'earth',
                               'beam': 'beam'}[self.config['coord_sys_axes']]
-        # This just initializes it; this gets overwritten in read_microstrain
-        props['has_imu'] = 0
+        props['has_imu'] = 0  # Initiate attribute
         if self.debug:
             print('Init completed')
 
