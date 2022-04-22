@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- Bugfixes:
 		- ADV and TRDI correlation and amplitude 'dir' dimension values now remain in
 		  "beam" coordinates (#96)
-		- Remove deployment height from `find_surface_from_P`
+		- Surface interference cleaning (`find_surface_from_P`) no longer takes
+		  deployment height into account.
 
 ## Version 1.0.0
 	- Change the xarray dataset-accessor from `Veldata` to `velds`.
