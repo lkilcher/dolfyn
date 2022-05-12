@@ -6,16 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unversioned
 	- Bugfixes:
-		- ADV and TRDI correlation and amplitude 'dir' dimension values now remain in
-		  "beam" coordinates (#96)
+		- ADV and TRDI correlation and amplitude 'dir' dimension values
+		  now remain in "beam" coordinates (#96)
 		- Removed deployment height from surface interference cleaning 
 		  (`find_surface_from_P`) calculation
 		- Remove extra entry added to ADV time dimension when `read` is 
 		  given "nens" argument
       
   - API/Useability
-    - Change functions in `TimeBinner` that use reshape (detrend, demean, mean, 
-      var, std) from private to public
+    - Change functions in `TimeBinner` that use reshape (detrend, 
+	  demean, mean, var, std) from private to public
 
 ## Version 1.0.0
 	- Change the xarray dataset-accessor from `Veldata` to `velds`.
