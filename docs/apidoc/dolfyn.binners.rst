@@ -13,6 +13,13 @@ Below is a list of functions that can be called from `VelBinner`.
 	:nosignatures:
 	
 	~dolfyn.velocity.VelBinner
+	~dolfyn.binned.TimeBinner.reshape
+	~dolfyn.binned.TimeBinner.demean
+	~dolfyn.binned.TimeBinner.detrend 
+	~dolfyn.binned.TimeBinner.demean
+	~dolfyn.binned.TimeBinner.mean 
+	~dolfyn.binned.TimeBinner.var 
+	~dolfyn.binned.TimeBinner.std 
 	~dolfyn.binned.TimeBinner.do_avg
 	~dolfyn.binned.TimeBinner.do_var
 	~dolfyn.binned.TimeBinner.reshape
