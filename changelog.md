@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		  (`find_surface_from_P`) calculation
 		- Remove extra entry added to ADV time dimension when `read` is 
 		  given "nens" argument
+		- Auto-convert "maxgap" argument in ADCP "fillgaps_time" to numpy.timedelta64
       
-  - API/Useability
-    - Change functions in `TimeBinner` that use reshape (detrend, 
-	  demean, mean, var, std) from private to public
+	- API/Useability
+		- Change functions in `TimeBinner` that use reshape (detrend, 
+		  demean, mean, var, std) from private to public
 
 ## Version 1.0.0
 	- Change the xarray dataset-accessor from `Veldata` to `velds`.
