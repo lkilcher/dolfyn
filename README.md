@@ -64,7 +64,7 @@ For details visit the
 Installation
 ------------
 
-DOLfYN requires Python 3.6 or later and a number of dependencies. See the 
+DOLfYN requires Python 3.7 or later and a number of dependencies. See the 
 [install page](https://dolfyn.readthedocs.io/en/latest/install.html)
 for greater details.
 
