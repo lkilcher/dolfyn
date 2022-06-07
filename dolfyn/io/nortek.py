@@ -10,6 +10,7 @@ from ..tools import misc as tbx
 from ..rotate.vector import _calc_omat
 from ..rotate.base import _set_coords
 from ..rotate import api as rot
+from ..time import epoch2dt64, _fill_time_gaps
 
 
 def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
@@ -41,6 +42,20 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
         rdr.readfile()
     rdr.dat2sci()
     dat = rdr.data
+
+    # Convert time to dt64 and fill gaps
+    coords = dat['coords']
+    t_list = [t for t in coords if 'time' in t]
+    for ky in t_list:
+        tdat = coords[ky]
+        tdat[tdat == 0] = np.NaN
+        if np.isnan(tdat).any():
+            tag = ky.lstrip('time')
+            warnings.warn("Zero/NaN values found in '{}'. Interpolating and "
+                          "extrapolating them. To identify which values were filled later, "
+                          "look for 0 values in 'status{}'".format(ky, tag))
+            tdat = _fill_time_gaps(tdat, sample_rate_hz=dat['attrs']['fs'])
+        coords[ky] = epoch2dt64(tdat).astype('datetime64[us]')
 
     rotmat = None
     declin = None
