@@ -78,14 +78,11 @@ def _read_userdata(fname):
 
 
 def _handle_nan(data):
-    """Finds nan's that cause issues in running the rotation algorithms
-    and deletes them.
+    """Finds trailing nan's that cause issues in running the rotation 
+    algorithms and deletes them.
     """
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
     l = data['coords']['time'].size
-
-    if any(np.isnan(data['coords']['time'])):
-        nan += np.isnan(data['coords']['time'])
 
     # Required for motion-correction algorithm
     var = ['accel', 'angrt', 'mag']
@@ -99,12 +96,13 @@ def _handle_nan(data):
                 elif len(shp) == 2:
                     if any(np.isnan(data['data_vars'][key][-1])):
                         nan += np.isnan(data['data_vars'][key][-1])
+    trail = np.cumsum(nan)[-1]
 
-    if nan.sum() > 0:
-        data['coords']['time'] = data['coords']['time'][~nan]
+    if trail > 0:
+        data['coords']['time'] = data['coords']['time'][:-trail]
         for key in data['data_vars']:
             if data['data_vars'][key].shape[-1] == l:
-                data['data_vars'][key] = data['data_vars'][key][..., ~nan]
+                data['data_vars'][key] = data['data_vars'][key][..., :-trail]
     return data
 
 

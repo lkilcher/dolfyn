@@ -55,7 +55,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
                           "extrapolating them. To identify which values were filled later, "
                           "look for 0 values in 'status{}'".format(ky, tag))
             tdat = _fill_time_gaps(tdat, sample_rate_hz=dat['attrs']['fs'])
-        coords[ky] = epoch2dt64(tdat).astype('datetime64[us]')
+        coords[ky] = tdat
 
     rotmat = None
     declin = None
@@ -67,7 +67,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
         else:
             dat['attrs'][nm] = userdata[nm]
 
-    # NaN in time and orientation data
+    # NaN in orientation data
     dat = _handle_nan(dat)
 
     # Create xarray dataset from upper level dictionary
