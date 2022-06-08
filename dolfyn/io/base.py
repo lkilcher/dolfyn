@@ -84,6 +84,9 @@ def _handle_nan(data):
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
     l = data['coords']['time'].size
 
+    if any(np.isnan(data['coords']['time'])):
+        nan += np.isnan(data['coords']['time'])
+
     # Required for motion-correction algorithm
     var = ['accel', 'angrt', 'mag']
     for key in data['data_vars']:
@@ -96,20 +99,21 @@ def _handle_nan(data):
                 elif len(shp) == 2:
                     if any(np.isnan(data['data_vars'][key][-1])):
                         nan += np.isnan(data['data_vars'][key][-1])
-    trail = np.cumsum(nan)[-1]
+    trailing = np.cumsum(nan)[-1]
 
-    if trail > 0:
-        data['coords']['time'] = data['coords']['time'][:-trail]
+    if trailing > 0:
+        data['coords']['time'] = data['coords']['time'][:-trailing]
         for key in data['data_vars']:
             if data['data_vars'][key].shape[-1] == l:
-                data['data_vars'][key] = data['data_vars'][key][..., :-trail]
+                data['data_vars'][key] = data['data_vars'][key][..., :-trailing]
+
     return data
 
 
 def _create_dataset(data):
     """Creates an xarray dataset from dictionary created from binary
     readers.
-    Direction 'dir' coordinates get reset in `set_coords`
+    Direction 'dir' coordinates are set in `set_coords`
     """
     ds = xr.Dataset()
     inst = ['X', 'Y', 'Z']
