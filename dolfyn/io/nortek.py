@@ -441,8 +441,8 @@ class _NortekReader():
         cfg_u['burst_mode'] = ['burst', 'continuous'][TimCtrlReg[2]]
         cfg_u['power_level'] = TimCtrlReg[5] + 2 * TimCtrlReg[6] + 1
         cfg_u['sync_out_pos'] = ['middle', 'end', ][TimCtrlReg[7]]
-        cfg_u['sample_on_sync'] = bool(TimCtrlReg[8])
-        cfg_u['start_on_sync'] = bool(TimCtrlReg[9])
+        cfg_u['sample_on_sync'] = str(bool(TimCtrlReg[8]))
+        cfg_u['start_on_sync'] = str(bool(TimCtrlReg[9]))
         PwrCtrlReg = _int2binarray(tmp[9], 16)
         cfg_u['A1'] = tmp[10]
         cfg_u['B0'] = tmp[11]
@@ -454,14 +454,14 @@ class _NortekReader():
         cfg_u['measurement_interval'] = tmp[17]
         cfg_u['deployment_name'] = tmp[18].partition(b'\x00')[
             0].decode('utf-8')
-        cfg_u['wrap_mode'] = tmp[19]
-        cfg_u['deployment_start_time'] = np.array(tmp[20:23])
+        cfg_u['wrap_mode'] = str(bool(tmp[19]))
+        #cfg_u['deployment_start_time'] = np.array(tmp[20:23])
         cfg_u['diagnotics_interval'] = tmp[23]
         Mode0 = _int2binarray(tmp[24], 16)
-        cfg_u['user_input_soundspeed_adj_factor'] = tmp[25]
+        cfg_u['user_soundspeed_adj_factor'] = tmp[25]
         cfg_u['n_samples_diag'] = tmp[26]
-        cfg_u['n_beams/cells_diag'] = tmp[27]
-        cfg_u['n_pings_diag/wave'] = tmp[28]
+        cfg_u['n_beams_cells_diag'] = tmp[27]
+        cfg_u['n_pings_diag_wave'] = tmp[28]
         ModeTest = _int2binarray(tmp[29], 16)
         cfg_u['analog_in_addr'] = tmp[30]
         cfg_u['software_version'] = tmp[31]
@@ -480,16 +480,16 @@ class _NortekReader():
         cfg_u['transmit_pulse_lag2'] = tmp[133]
         QualConst = np.array(tmp[134:142])
         self.checksum(byts)
-        cfg_u['user_specified_sound_speed'] = Mode0[0]
-        cfg_u['diagnostics_mode'] = Mode0[1]
-        cfg_u['analog_output_mode'] = Mode0[2]
+        cfg_u['user_specified_sound_speed'] = str(Mode0[0])
+        cfg_u['diagnostics_mode'] = str(Mode0[1])
+        cfg_u['analog_output_mode'] = str(Mode0[2])
         cfg_u['output_format'] = ['Vector', 'ADV'][int(Mode0[3])]  # noqa
         cfg_u['vel_scale_mm'] = [1, 0.1][int(Mode0[4])]
-        cfg_u['serial_output'] = Mode0[5]
-        cfg_u['reserved_EasyQ'] = Mode0[6]
-        cfg_u['stage'] = Mode0[7]
-        cfg_u['output_power_for_analog_in'] = Mode0[8]
-        cfg_u['mode_test_use_DSP'] = ModeTest[0]
+        cfg_u['serial_output'] = str(Mode0[5])
+        #cfg_u['reserved_EasyQ'] = str(Mode0[6])
+        cfg_u['stage'] = str(Mode0[7])
+        cfg_u['output_power_for_analog_in'] = str(Mode0[8])
+        cfg_u['mode_test_use_DSP'] = str(ModeTest[0])
         cfg_u['mode_test_filter_output'] = ['total', 'correction_only'][int(ModeTest[1])]  # noqa
         cfg_u['wave_fs'] = ['1 Hz', '2 Hz'][int(Mode1[0])]
         cfg_u['wave_cell_position'] = ['fixed', 'dynamic'][int(Mode1[1])]  # noqa
