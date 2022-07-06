@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - Bugfixes
 	    - Added ability to detect missing timestamps in ADV data
 
+	- API/Useability
+	    - Added classic Nortek instrument configuration details into dataset attributes
+
 ## Version 1.0.1
 	- Bugfixes:
 		- ADV and TRDI correlation and amplitude 'dir' dimension values
