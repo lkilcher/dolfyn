@@ -42,6 +42,25 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     rdr.dat2sci()
     dat = rdr.data
 
+    # Remove trailing nan's in time and orientation data
+    dat = _handle_nan(dat)
+
+    # Search for missing timestamps and interpolate them
+    coords = dat['coords']
+    t_list = [t for t in coords if 'time' in t]
+    for ky in t_list:
+        tdat = coords[ky]
+        tdat[tdat == 0] = np.NaN
+        if np.isnan(tdat).any():
+            tag = ky.lstrip('time')
+            warnings.warn("Zero/NaN values found in '{}'. Interpolating and "
+                          "extrapolating them. To identify which values were filled later, "
+                          "look for 0 values in 'status{}'".format(ky, tag))
+            tdat = time._fill_time_gaps(
+                tdat, sample_rate_hz=dat['attrs']['fs'])
+        coords[ky] = tdat
+
+    # Apply rotation matrix and declination
     rotmat = None
     declin = None
     for nm in userdata:
@@ -51,9 +70,6 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
             declin = userdata[nm]
         else:
             dat['attrs'][nm] = userdata[nm]
-
-    # NaN in time and orientation data
-    dat = _handle_nan(dat)
 
     # Create xarray dataset from upper level dictionary
     ds = _create_dataset(dat)

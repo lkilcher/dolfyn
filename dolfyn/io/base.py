@@ -78,8 +78,8 @@ def _read_userdata(fname):
 
 
 def _handle_nan(data):
-    """Finds nan's that cause issues in running the rotation algorithms
-    and deletes them.
+    """Finds trailing nan's that cause issues in running the rotation 
+    algorithms and deletes them.
     """
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
     l = data['coords']['time'].size
@@ -99,19 +99,21 @@ def _handle_nan(data):
                 elif len(shp) == 2:
                     if any(np.isnan(data['data_vars'][key][-1])):
                         nan += np.isnan(data['data_vars'][key][-1])
+    trailing = np.cumsum(nan)[-1]
 
-    if nan.sum() > 0:
-        data['coords']['time'] = data['coords']['time'][~nan]
+    if trailing > 0:
+        data['coords']['time'] = data['coords']['time'][:-trailing]
         for key in data['data_vars']:
             if data['data_vars'][key].shape[-1] == l:
-                data['data_vars'][key] = data['data_vars'][key][..., ~nan]
+                data['data_vars'][key] = data['data_vars'][key][..., :-trailing]
+
     return data
 
 
 def _create_dataset(data):
     """Creates an xarray dataset from dictionary created from binary
     readers.
-    Direction 'dir' coordinates get reset in `set_coords`
+    Direction 'dir' coordinates are set in `set_coords`
     """
     ds = xr.Dataset()
     inst = ['X', 'Y', 'Z']

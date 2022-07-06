@@ -10,7 +10,7 @@ import pytest
 class adv_setup():
     def __init__(self, tv):
         self.dat1 = tv.dat.copy(deep=True)
-        self.dat2 = read_example('burst_mode01.VEC', nens=200)
+        self.dat2 = read_example('burst_mode01.VEC', nens=90)
         fs = self.dat1.fs
         self.avg_tool = VelBinner(n_bin=fs, fs=fs)
 
@@ -68,7 +68,8 @@ def test_calc_func(make_data=False):
     test_ds_demean['stress'] = c.calc_stress(dat_vec.dat1.vel, detrend=False)
 
     # Different lengths
-    test_ds_dif['coh_dif'] = c.calc_coh(dat_vec.dat1.vel, dat_vec.dat2.vel)
+    test_ds_dif['coh_dif'] = c.calc_coh(
+        dat_vec.dat1.vel, dat_vec.dat2.vel)
     test_ds_dif['pang_dif'] = c.calc_phase_angle(
         dat_vec.dat1.vel, dat_vec.dat2.vel)
 

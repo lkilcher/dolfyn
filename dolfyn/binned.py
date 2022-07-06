@@ -86,7 +86,7 @@ class TimeBinner:
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         n_pad : int
           Is used to add `n_pad`/2 points from the end of the previous
           ensemble to the top of the current, and `n_pad`/2 points
@@ -99,7 +99,7 @@ class TimeBinner:
 
         Returns
         -------
-        out : |np.ndarray|
+        out : numpy.ndarray
 
         Notes
         -----
@@ -139,12 +139,12 @@ class TimeBinner:
         return out
 
     def detrend(self, arr, axis=-1, n_pad=0, n_bin=None):
-        """Reshape the array `arr` and remove the best-fit trend line
-        from each ensemble.
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and remove the best-fit trend line from each bin.
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         axis : int (default is -1)
           Axis along which to take mean
         n_pad : int (default is 0)
@@ -156,16 +156,21 @@ class TimeBinner:
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
         n_bin : int (default is self.n_bin)
           Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
         return detrend(self.reshape(arr, n_pad=n_pad, n_bin=n_bin), axis=axis)
 
     def demean(self, arr, axis=-1, n_pad=0, n_bin=None):
-        """Reshape the array `arr` and remove the mean from each ensemble.
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and remove the mean from each bin.
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         axis : int (default is -1)
           Axis along which to take mean
         n_pad : int (default is 0)
@@ -177,22 +182,30 @@ class TimeBinner:
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
         n_bin : int (default is self.n_bin)
           Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
         dt = self.reshape(arr, n_pad=n_pad, n_bin=n_bin)
         return dt - np.nanmean(dt, axis)[..., None]
 
     def mean(self, arr, axis=-1, n_bin=None):
-        """Reshape the array `arr` and take the mean of each ensemble
-        along the specified `axis`.
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and take the mean of each bin along the specified `axis`.
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         axis : int (default is -1)
           Axis along which to take mean
         n_bin : int (default is self.n_bin)
           Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
         if np.issubdtype(arr.dtype, np.datetime64):
@@ -205,31 +218,40 @@ class TimeBinner:
         return np.nanmean(tmp, -1)
 
     def var(self, arr, axis=-1, n_bin=None):
-        """Reshape the array `arr` and take the variance of each ensemble
-        along the specified `axis`.
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and take the variance of each bin along the specified `axis`.
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         axis : int (default is -1)
           Axis along which to take variance
         n_bin : int (default is self.n_bin)
           Override this binner's n_bin.
 
+        Returns
+        -------
+        out : numpy.ndarray
+
         """
         return self.reshape(arr, n_bin=n_bin).var(axis)
 
     def std(self, arr, axis=-1, n_bin=None):
-        """Reshape the array `arr` and take the standard deviation of each ensemble
-        along the specified `axis`.
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and take the standard deviation of each bin along the 
+        specified `axis`.
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         axis : int (default is -1)
           Axis along which to take std dev
         n_bin : int (default is self.n_bin)
           Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
         return self.reshape(arr, n_bin=n_bin).std(axis)
@@ -247,7 +269,7 @@ class TimeBinner:
         names : list of strings
            The names of variables to be averaged.  If `names` is None,
            all data in `raw_ds` will be binned.
-        noise : list or |np.ndarray|
+        noise : list or numpy.ndarray
           instrument's doppler noise in same units as velocity
 
         Returns
@@ -369,6 +391,21 @@ class TimeBinner:
         return out_ds
 
     def _check_ds(self, raw_ds, out_ds):
+        """Check that the attributes between two datasets match up.
+
+        Parameters
+        ----------
+        raw_ds : xarray.Dataset
+          Input dataset
+        out_ds : xarray.Dataset
+          Dataset to append `raw_ds` to. If None is supplied, this
+          dataset is created from `raw_ds`.
+
+        Returns
+        -------
+        out_ds : xarray.Dataset
+
+        """
         for v in raw_ds.data_vars:
             if np.any(np.array(raw_ds[v].shape) == 0):
                 raise RuntimeError(f"{v} cannot be averaged "
@@ -771,10 +808,10 @@ class TimeBinner:
 
         Parameters
         ----------
-        dat1 : |np.ndarray|
+        dat1 : numpy.ndarray
           The first (shorter, if applicable) raw dataArray of which to 
           calculate the cpsd.
-        dat2 : |np.ndarray|
+        dat2 : numpy.ndarray
           The second (the shorter, if applicable) raw dataArray of which to 
           calculate the cpsd.
         fs : float (optional)
@@ -790,7 +827,7 @@ class TimeBinner:
 
         Returns
         -------
-        out : |np.ndarray|
+        out : numpy.ndarray
           The cross-spectral density of `dat1` and `dat2`
 
         Notes
@@ -842,7 +879,7 @@ class TimeBinner:
 
         Returns
         -------
-        out: |np.ndarray|
+        out: numpy.ndarray
           Spectrum frequency array in units of 'Hz' or 'rad/s'
         """
         if n_fft is None:
