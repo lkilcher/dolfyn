@@ -228,8 +228,8 @@ class _NortekReader():
         da = self.data['attrs']
         if self.config['n_burst'] > 0:
             da['duty_cycle_n_burst'] = self.config['n_burst']
-            da['duty_cycle_n_cycle'] = (self.config['measurement_interval'] *
-                                        self.config['fs'])
+            da['duty_cycle_n_cycles'] = (self.config['measurement_interval'] *
+                                         self.config['fs'])
         self.burst_start = np.zeros(self.n_samp_guess, dtype='bool')
         da['fs'] = self.config['fs']
         da['coord_sys'] = {'XYZ': 'inst',
@@ -426,9 +426,9 @@ class _NortekReader():
                      '2x18H6s4HI9H90H180s6H4xH2x2H2xH30x8H',
                      byts)
         # the first two are the size.
-        cfg_u['transmit_pulse_length'] = tmp[0]
-        cfg_u['blank_distance'] = tmp[1]
-        cfg_u['receive_length'] = tmp[2]
+        cfg_u['transmit_pulse_length_count'] = tmp[0]
+        cfg_u['blank_dist'] = tmp[1]  # overridden below
+        cfg_u['receive_length_count'] = tmp[2]
         cfg_u['time_between_pings'] = tmp[3]
         cfg_u['time_between_bursts'] = tmp[4]
         cfg_u['n_pings_per_burst'] = tmp[5]
@@ -553,7 +553,7 @@ class _NortekReader():
         """
         shape_args = {'n': self.n_samp_guess}
         try:
-            shape_args['nbins'] = self.config['NBins']
+            shape_args['nbins'] = self.config['n_bins']
         except KeyError:
             pass
         for nm, va in list(vardict.items()):
@@ -905,14 +905,14 @@ class _NortekReader():
         if self.debug:
             print('Reading AWAC velocity data (0x20) ping #{} @ {}...'
                   .format(self.c, self.pos))
-        nbins = self.config['NBins']
+        nbins = self.config['n_bins']
         if 'temp' not in dat['data_vars']:
             self._init_data(nortek_defs.awac_profile)
             self._dtypes += ['awac_profile']
 
         # Note: docs state there is 'fill' byte at the end, if nbins is odd,
         # but doesn't appear to be the case
-        n = self.config['NBeams']
+        n = self.config['n_beams']
         byts = self.read(116 + n*3 * nbins)
         c = self.c
         dat['coords']['time'][c] = self.rd_time(byts[2:8])
@@ -949,13 +949,13 @@ class _NortekReader():
                     400: 0.1195}
         h_ang = 25 * (np.pi / 180)  # Head angle is 25 degrees for all awacs.
         # Cell size
-        cs = round(float(self.config['BinLength']) / 256. *
-                   cs_coefs[self.config['freq']] * np.cos(h_ang), ndigits=2)
+        cs = round(float(self.config['bin_length']) / 256. *
+                   cs_coefs[self.config['carrier_freq']] * np.cos(h_ang), ndigits=2)
         # Blanking distance
-        bd = round(self.config['Transmit']['blank_distance'] *
+        bd = round(self.config['blank_dist'] *
                    0.0229 * np.cos(h_ang) - cs, ndigits=2)
 
-        r = (np.float32(np.arange(self.config['NBins']))+1)*cs + bd
+        r = (np.float32(np.arange(self.config['n_bins']))+1)*cs + bd
         self.data['coords']['range'] = r
         self.data['attrs']['cell_size'] = cs
         self.data['attrs']['blank_dist'] = bd
