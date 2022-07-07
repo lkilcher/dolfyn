@@ -454,19 +454,19 @@ class _NortekReader():
         cfg_u['usr']['sync_out_pos'] = ['middle', 'end', ][TimCtrlReg[7]]
         cfg_u['usr']['sample_on_sync'] = str(bool(TimCtrlReg[8]))
         cfg_u['usr']['start_on_sync'] = str(bool(TimCtrlReg[9]))
-        PwrCtrlReg = _int2binarray(tmp[9], 16)
+        cfg_u['PwrCtrlReg'] = _int2binarray(tmp[9], 16)
         cfg_u['A1'] = tmp[10]
         cfg_u['B0'] = tmp[11]
         cfg_u['B1'] = tmp[12]
         cfg_u['usr']['compass_update_rate'] = tmp[13]
         cfg_u['coord_sys_axes'] = ['ENU', 'XYZ', 'beam'][tmp[14]]
-        cfg_u['n_bins'] = tmp[15]
+        cfg_u['usr']['n_bins'] = tmp[15]
         cfg_u['bin_length'] = tmp[16]
         cfg_u['usr']['profile_interval'] = tmp[17]
-        cfg_u['deployment_name'] = tmp[18].partition(b'\x00')[
+        cfg_u['usr']['deployment_name'] = tmp[18].partition(b'\x00')[
             0].decode('utf-8')
         cfg_u['usr']['wrap_mode'] = str(bool(tmp[19]))
-        cfg_u['usr']['deployment_time'] = np.array(tmp[20:23])
+        cfg_u['deployment_time'] = np.array(tmp[20:23])
         cfg_u['diagnotics_interval'] = tmp[23]
         Mode0 = _int2binarray(tmp[24], 16)
         cfg_u['user_soundspeed_adj_factor'] = tmp[25]
@@ -479,7 +479,7 @@ class _NortekReader():
         cfg_u['usr']['software_version'] = sfw_ver[0] + \
             '.'+sfw_ver[1:3]+'.'+sfw_ver[3:]
         cfg_u['usr']['salinity'] = tmp[32]/10
-        VelAdjTable = np.array(tmp[33:123])
+        cfg_u['VelAdjTable'] = np.array(tmp[33:123])
         cfg_u['usr']['comments'] = tmp[123].partition(b'\x00')[
             0].decode('utf-8')
         cfg_u['awac']['wave_processing_method'] = [
@@ -494,7 +494,7 @@ class _NortekReader():
         cfg_u['analog_out_scale'] = tmp[132]
         cfg_u['corr_thresh'] = tmp[133]
         cfg_u['transmit_pulse_lag2'] = tmp[134]  # counts
-        QualConst = np.array(tmp[135:143])
+        cfg_u['QualConst'] = np.array(tmp[135:143])
         self.checksum(byts)
         cfg_u['usr']['user_specified_sound_speed'] = str(Mode0[0])
         cfg_u['awac']['wave_mode'] = ['Disabled', 'Enabled'][Mode0[1]]
@@ -502,7 +502,7 @@ class _NortekReader():
         cfg_u['usr']['output_format'] = ['Vector', 'ADV'][int(Mode0[3])]  # noqa
         cfg_u['vel_scale_mm'] = [1, 0.1][int(Mode0[4])]
         cfg_u['usr']['serial_output'] = str(Mode0[5])
-        #cfg_u['reserved_EasyQ'] = str(Mode0[6])
+        cfg_u['reserved_EasyQ'] = str(Mode0[6])
         cfg_u['usr']['power_output_analog'] = str(Mode0[8])
         cfg_u['mode_test_use_DSP'] = str(ModeTest[0])
         cfg_u['mode_test_filter_output'] = ['total', 'correction_only'][int(ModeTest[1])]  # noqa
@@ -512,11 +512,11 @@ class _NortekReader():
 
     def read_head_cfg(self,):
         # ID: '0x04 = 04
-        cfg = self.config
-        cfg['head'] = {}
         if self.debug:
             print('Reading head configuration (0x04) ping #{} @ {}...'
                   .format(self.c, self.pos))
+        cfg = self.config
+        cfg['head'] = {}
         byts = self.read(220)
         tmp = unpack(self.endian + '2x3H12s176s22sH', byts)
         head_config = _int2binarray(tmp[0], 16).astype(int)
@@ -538,10 +538,10 @@ class _NortekReader():
         byts = self.read(44)
         tmp = unpack(self.endian + '2x14s6H12x4s', byts)
         cfg_hw['hdw']['serial_number'] = tmp[0][:8].decode('utf-8')
-        #cfg_hw['ProLogID'] = unpack('B', tmp[0][8:9])[0]
+        cfg_hw['ProLogID'] = unpack('B', tmp[0][8:9])[0]
         cfg_hw['hdw']['ProLogFWver'] = tmp[0][10:].decode('utf-8')
-        board_config = tmp[1]
-        board_freq = tmp[2]
+        cfg_hw['board_config'] = tmp[1]
+        cfg_hw['board_freq'] = tmp[2]
         cfg_hw['hdw']['PIC_version'] = tmp[3]
         cfg_hw['hdw']['hardware_rev'] = tmp[4]
         cfg_hw['hdw']['recorder_size_bytes'] = tmp[5] * 65536
@@ -573,7 +573,7 @@ class _NortekReader():
         """
         shape_args = {'n': self.n_samp_guess}
         try:
-            shape_args['nbins'] = self.config['n_bins']
+            shape_args['nbins'] = self.config['usr']['n_bins']
         except KeyError:
             pass
         for nm, va in list(vardict.items()):
@@ -925,7 +925,7 @@ class _NortekReader():
         if self.debug:
             print('Reading AWAC velocity data (0x20) ping #{} @ {}...'
                   .format(self.c, self.pos))
-        nbins = self.config['n_bins']
+        nbins = self.config['usr']['n_bins']
         if 'temp' not in dat['data_vars']:
             self._init_data(nortek_defs.awac_profile)
             self._dtypes += ['awac_profile']
@@ -975,7 +975,7 @@ class _NortekReader():
         bd = round(self.config['blank_dist'] *
                    0.0229 * np.cos(h_ang) - cs, ndigits=2)
 
-        r = (np.float32(np.arange(self.config['n_bins']))+1)*cs + bd
+        r = (np.float32(np.arange(self.config['usr']['n_bins']))+1)*cs + bd
         self.data['coords']['range'] = r
         self.data['attrs']['cell_size'] = cs
         self.data['attrs']['blank_dist'] = bd
