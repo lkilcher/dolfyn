@@ -205,9 +205,9 @@ class _NortekReader():
             self.read_user_cfg()
         else:
             raise Exception(err_msg)
-        if self.config['serial_number'][0:3].upper() == 'WPR':
+        if self.config['hdw']['serial_number'][0:3].upper() == 'WPR':
             self.config['config_type'] = 'AWAC'
-        elif self.config['serial_number'][0:3].upper() == 'VEC':
+        elif self.config['hdw']['serial_number'][0:3].upper() == 'VEC':
             self.config['config_type'] = 'ADV'
         # Initialize the instrument type:
         self._inst = self.config.pop('config_type')
@@ -228,7 +228,7 @@ class _NortekReader():
         da = self.data['attrs']
         if self.config['n_burst'] > 0:
             da['duty_cycle_n_burst'] = self.config['n_burst']
-            da['duty_cycle_n_cycles'] = (self.config['measurement_interval'] *
+            da['duty_cycle_n_cycles'] = (self.config['usr']['profile_interval'] *
                                          self.config['fs'])
         self.burst_start = np.zeros(self.n_samp_guess, dtype='bool')
         da['fs'] = self.config['fs']
@@ -263,8 +263,11 @@ class _NortekReader():
         da['inst_type'] = 'ADV'
         da['rotate_vars'] = ['vel']
         dv['beam2inst_orientmat'] = self.config.pop('beam2inst_orientmat')
-        self.config['fs'] = 512 / self.config['avg_interval']
-        da.update(self.config)
+        self.config['fs'] = 512 / self.config['awac']['avg_interval']
+        da.update(self.config['usr'])
+        da.update(self.config['adv'])
+        da.update(self.config['head'])
+        da.update(self.config['hdw'])
 
         # No apparent way to determine how many samples are in a file
         dlta = self.code_spacing('0x11')
@@ -281,8 +284,11 @@ class _NortekReader():
         da['inst_type'] = 'ADCP'
         dv['beam2inst_orientmat'] = self.config.pop('beam2inst_orientmat')
         da['rotate_vars'] = ['vel']
-        self.config['fs'] = 1. / self.config['avg_interval']
-        da.update(self.config)
+        self.config['fs'] = 1. / self.config['awac']['avg_interval']
+        da.update(self.config['usr'])
+        da.update(self.config['awac'])
+        da.update(self.config['head'])
+        da.update(self.config['hdw'])
 
         space = self.code_spacing('0x20')
         if space == 0:
@@ -422,40 +428,45 @@ class _NortekReader():
                   .format(self.c, self.pos))
         cfg_u = self.config
         byts = self.read(508)
+        # the first two bytes are the size.
         tmp = unpack(self.endian +
-                     '2x18H6s4HI9H90H180s6H4xH2x2H2xH30x8H',
+                     '2x18H6s4HI9H90H80s48xH50x6H4xH2x2H2xH30x8H',
                      byts)
-        # the first two are the size.
-        cfg_u['transmit_pulse_length_count'] = tmp[0]
+        cfg_u['usr'] = {}
+        cfg_u['adv'] = {}
+        cfg_u['awac'] = {}
+
+        cfg_u['transmit_pulse_length_m'] = tmp[0]  # counts
         cfg_u['blank_dist'] = tmp[1]  # overridden below
-        cfg_u['receive_length_count'] = tmp[2]
-        cfg_u['time_between_pings'] = tmp[3]
-        cfg_u['time_between_bursts'] = tmp[4]
-        cfg_u['n_pings_per_burst'] = tmp[5]
-        cfg_u['avg_interval'] = tmp[6]
-        cfg_u['n_beams'] = tmp[7]
+        cfg_u['receive_length_m'] = tmp[2]  # counts
+        cfg_u['time_between_pings'] = tmp[3]  # counts
+        cfg_u['time_between_bursts'] = tmp[4]  # counts
+        cfg_u['adv']['n_pings_per_burst'] = tmp[5]
+        cfg_u['awac']['avg_interval'] = tmp[6]
+        cfg_u['usr']['n_beams'] = tmp[7]
         TimCtrlReg = _int2binarray(tmp[8], 16).astype(int)
         # From the nortek system integrator manual
         # (note: bit numbering is zero-based)
-        cfg_u['profile_timing'] = ['single', 'continuous'][TimCtrlReg[1]]
-        cfg_u['burst_mode'] = ['burst', 'continuous'][TimCtrlReg[2]]
-        cfg_u['power_level'] = TimCtrlReg[5] + 2 * TimCtrlReg[6] + 1
-        cfg_u['sync_out_pos'] = ['middle', 'end', ][TimCtrlReg[7]]
-        cfg_u['sample_on_sync'] = str(bool(TimCtrlReg[8]))
-        cfg_u['start_on_sync'] = str(bool(TimCtrlReg[9]))
+        cfg_u['usr']['burst_interval'] = [
+            'single', 'continuous'][TimCtrlReg[1]]
+        cfg_u['usr']['burst_mode'] = str(bool(~TimCtrlReg[2]))
+        cfg_u['usr']['power_level'] = TimCtrlReg[5] + 2 * TimCtrlReg[6] + 1
+        cfg_u['usr']['sync_out_pos'] = ['middle', 'end', ][TimCtrlReg[7]]
+        cfg_u['usr']['sample_on_sync'] = str(bool(TimCtrlReg[8]))
+        cfg_u['usr']['start_on_sync'] = str(bool(TimCtrlReg[9]))
         PwrCtrlReg = _int2binarray(tmp[9], 16)
         cfg_u['A1'] = tmp[10]
         cfg_u['B0'] = tmp[11]
         cfg_u['B1'] = tmp[12]
-        cfg_u['compass_update_rate'] = tmp[13]
+        cfg_u['usr']['compass_update_rate'] = tmp[13]
         cfg_u['coord_sys_axes'] = ['ENU', 'XYZ', 'beam'][tmp[14]]
         cfg_u['n_bins'] = tmp[15]
         cfg_u['bin_length'] = tmp[16]
-        cfg_u['measurement_interval'] = tmp[17]
+        cfg_u['usr']['profile_interval'] = tmp[17]
         cfg_u['deployment_name'] = tmp[18].partition(b'\x00')[
             0].decode('utf-8')
-        cfg_u['wrap_mode'] = str(bool(tmp[19]))
-        #cfg_u['deployment_start_time'] = np.array(tmp[20:23])
+        cfg_u['usr']['wrap_mode'] = str(bool(tmp[19]))
+        cfg_u['usr']['deployment_time'] = np.array(tmp[20:23])
         cfg_u['diagnotics_interval'] = tmp[23]
         Mode0 = _int2binarray(tmp[24], 16)
         cfg_u['user_soundspeed_adj_factor'] = tmp[25]
@@ -463,48 +474,56 @@ class _NortekReader():
         cfg_u['n_beams_cells_diag'] = tmp[27]
         cfg_u['n_pings_diag_wave'] = tmp[28]
         ModeTest = _int2binarray(tmp[29], 16)
-        cfg_u['analog_in_addr'] = tmp[30]
-        cfg_u['software_version'] = tmp[31]
-        cfg_u['salinity'] = tmp[32]/10
+        cfg_u['usr']['analog_in'] = tmp[30]
+        sfw_ver = str(tmp[31])
+        cfg_u['usr']['software_version'] = sfw_ver[0] + \
+            '.'+sfw_ver[1:3]+'.'+sfw_ver[3:]
+        cfg_u['usr']['salinity'] = tmp[32]/10
         VelAdjTable = np.array(tmp[33:123])
-        cfg_u['comments'] = tmp[123].partition(b'\x00')[0].decode('utf-8')
-        Mode1 = _int2binarray(tmp[124], 16)
-        cfg_u['prc_dyn_wave_cell_pos'] = int(tmp[125]/32767 * 100)
-        cfg_u['wave_transmit_pulse'] = tmp[126]
-        cfg_u['wave_blank_dist'] = tmp[127]
-        cfg_u['wave_cell_size'] = tmp[128]
-        cfg_u['n_samples_wave'] = tmp[129]
-        cfg_u['n_burst'] = tmp[130]
-        cfg_u['analog_out_scale'] = tmp[131]
-        cfg_u['corr_thresh'] = tmp[132]
-        cfg_u['transmit_pulse_lag2'] = tmp[133]
-        QualConst = np.array(tmp[134:142])
+        cfg_u['usr']['comments'] = tmp[123].partition(b'\x00')[
+            0].decode('utf-8')
+        cfg_u['awac']['wave_processing_method'] = [
+            'PUV', 'SUV', 'MLM', 'MLMST'][tmp[124]]
+        Mode1 = _int2binarray(tmp[125], 16)
+        cfg_u['awac']['prc_dyn_wave_cell_pos'] = int(tmp[126]/32767 * 100)
+        cfg_u['wave_transmit_pulse'] = tmp[127]
+        cfg_u['wave_blank_dist'] = tmp[128]
+        cfg_u['awac']['wave_cell_size'] = tmp[129]
+        cfg_u['awac']['n_samples_wave'] = tmp[130]
+        cfg_u['n_burst'] = tmp[131]
+        cfg_u['analog_out_scale'] = tmp[132]
+        cfg_u['corr_thresh'] = tmp[133]
+        cfg_u['transmit_pulse_lag2'] = tmp[134]  # counts
+        QualConst = np.array(tmp[135:143])
         self.checksum(byts)
-        cfg_u['user_specified_sound_speed'] = str(Mode0[0])
-        cfg_u['diagnostics_mode'] = str(Mode0[1])
-        cfg_u['analog_output_mode'] = str(Mode0[2])
-        cfg_u['output_format'] = ['Vector', 'ADV'][int(Mode0[3])]  # noqa
+        cfg_u['usr']['user_specified_sound_speed'] = str(Mode0[0])
+        cfg_u['awac']['wave_mode'] = ['Disabled', 'Enabled'][Mode0[1]]
+        cfg_u['usr']['analog_output'] = str(Mode0[2])
+        cfg_u['usr']['output_format'] = ['Vector', 'ADV'][int(Mode0[3])]  # noqa
         cfg_u['vel_scale_mm'] = [1, 0.1][int(Mode0[4])]
-        cfg_u['serial_output'] = str(Mode0[5])
+        cfg_u['usr']['serial_output'] = str(Mode0[5])
         #cfg_u['reserved_EasyQ'] = str(Mode0[6])
-        cfg_u['stage'] = str(Mode0[7])
-        cfg_u['output_power_for_analog_in'] = str(Mode0[8])
+        cfg_u['usr']['power_output_analog'] = str(Mode0[8])
         cfg_u['mode_test_use_DSP'] = str(ModeTest[0])
         cfg_u['mode_test_filter_output'] = ['total', 'correction_only'][int(ModeTest[1])]  # noqa
-        cfg_u['wave_fs'] = ['1 Hz', '2 Hz'][int(Mode1[0])]
-        cfg_u['wave_cell_position'] = ['fixed', 'dynamic'][int(Mode1[1])]  # noqa
-        cfg_u['type_wave_cell_pos'] = ['pct_of_mean_pressure', 'pct_of_min_re'][int(Mode1[2])]  # noqa
+        cfg_u['awac']['wave_fs'] = ['1 Hz', '2 Hz'][int(Mode1[0])]
+        cfg_u['awac']['wave_cell_position'] = ['fixed', 'dynamic'][int(Mode1[1])]  # noqa
+        cfg_u['awac']['type_wave_cell_pos'] = ['pct_of_mean_pressure', 'pct_of_min_re'][int(Mode1[2])]  # noqa
 
     def read_head_cfg(self,):
         # ID: '0x04 = 04
         cfg = self.config
+        cfg['head'] = {}
         if self.debug:
             print('Reading head configuration (0x04) ping #{} @ {}...'
                   .format(self.c, self.pos))
         byts = self.read(220)
         tmp = unpack(self.endian + '2x3H12s176s22sH', byts)
         head_config = _int2binarray(tmp[0], 16).astype(int)
-        cfg['carrier_freq'] = tmp[1]
+        cfg['head']['pressure_sensor'] = ['no', 'yes'][head_config[0]]
+        cfg['head']['compass'] = ['no', 'yes'][head_config[1]]
+        cfg['head']['tilt_sensor'] = ['no', 'yes'][head_config[2]]
+        cfg['head']['carrier_freq_kHz'] = tmp[1]
         cfg['beam2inst_orientmat'] = np.array(
             unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.
         self.checksum(byts)
@@ -515,19 +534,20 @@ class _NortekReader():
             print('Reading hardware configuration (0x05) ping #{} @ {}...'
                   .format(self.c, self.pos))
         cfg_hw = self.config
+        cfg_hw['hdw'] = {}
         byts = self.read(44)
         tmp = unpack(self.endian + '2x14s6H12x4s', byts)
-        cfg_hw['serial_number'] = tmp[0][:8].decode('utf-8')
-        cfg_hw['ProLogID'] = unpack('B', tmp[0][8:9])[0]
-        cfg_hw['ProLogFWver'] = tmp[0][10:].decode('utf-8')
-        cfg_hw['board_config'] = tmp[1]
-        cfg_hw['board_freq'] = tmp[2]
-        cfg_hw['PIC_version'] = tmp[3]
-        cfg_hw['hardware_rev'] = tmp[4]
-        cfg_hw['recorder_size_bytes'] = tmp[5] * 65536
+        cfg_hw['hdw']['serial_number'] = tmp[0][:8].decode('utf-8')
+        #cfg_hw['ProLogID'] = unpack('B', tmp[0][8:9])[0]
+        cfg_hw['hdw']['ProLogFWver'] = tmp[0][10:].decode('utf-8')
+        board_config = tmp[1]
+        board_freq = tmp[2]
+        cfg_hw['hdw']['PIC_version'] = tmp[3]
+        cfg_hw['hdw']['hardware_rev'] = tmp[4]
+        cfg_hw['hdw']['recorder_size_bytes'] = tmp[5] * 65536
         status = _int2binarray(tmp[6], 16).astype(int)
-        cfg_hw['vel_range'] = ['normal', 'high'][status[0]]
-        cfg_hw['firmware_version'] = tmp[7].decode('utf-8')
+        cfg_hw['hdw']['vel_range'] = ['normal', 'high'][status[0]]
+        cfg_hw['hdw']['firmware_version'] = tmp[7].decode('utf-8')
         self.checksum(byts)
 
     def rd_time(self, strng):
@@ -912,7 +932,7 @@ class _NortekReader():
 
         # Note: docs state there is 'fill' byte at the end, if nbins is odd,
         # but doesn't appear to be the case
-        n = self.config['n_beams']
+        n = self.config['usr']['n_beams']
         byts = self.read(116 + n*3 * nbins)
         c = self.c
         dat['coords']['time'][c] = self.rd_time(byts[2:8])
@@ -950,7 +970,7 @@ class _NortekReader():
         h_ang = 25 * (np.pi / 180)  # Head angle is 25 degrees for all awacs.
         # Cell size
         cs = round(float(self.config['bin_length']) / 256. *
-                   cs_coefs[self.config['carrier_freq']] * np.cos(h_ang), ndigits=2)
+                   cs_coefs[self.config['head']['carrier_freq_kHz']] * np.cos(h_ang), ndigits=2)
         # Blanking distance
         bd = round(self.config['blank_dist'] *
                    0.0229 * np.cos(h_ang) - cs, ndigits=2)
