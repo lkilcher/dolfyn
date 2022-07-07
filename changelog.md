@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Added ability to detect missing timestamps in ADV data
 
 	- API/Useability
-	    - Added classic Nortek instrument configuration details into dataset attributes
+	    - Added classic Nortek instrument (ADV & AWAC) configuration details into dataset attributes
 
 ## Version 1.0.1
 	- Bugfixes:
