@@ -483,7 +483,7 @@ class _NortekReader():
         cfg_u['usr']['comments'] = tmp[123].partition(b'\x00')[
             0].decode('utf-8')
         cfg_u['awac']['wave_processing_method'] = [
-            'PUV', 'SUV', 'MLM', 'MLMST'][tmp[124]]
+            'PUV', 'SUV', 'MLM', 'MLMST', 'None'][tmp[124]]
         Mode1 = _int2binarray(tmp[125], 16)
         cfg_u['awac']['prc_dyn_wave_cell_pos'] = int(tmp[126]/32767 * 100)
         cfg_u['wave_transmit_pulse'] = tmp[127]
@@ -497,7 +497,7 @@ class _NortekReader():
         cfg_u['QualConst'] = np.array(tmp[135:143])
         self.checksum(byts)
         cfg_u['usr']['user_specified_sound_speed'] = str(Mode0[0])
-        cfg_u['awac']['wave_mode'] = ['Disabled', 'Enabled'][Mode0[1]]
+        cfg_u['awac']['wave_mode'] = ['Disabled', 'Enabled'][int(Mode0[1])]
         cfg_u['usr']['analog_output'] = str(Mode0[2])
         cfg_u['usr']['output_format'] = ['Vector', 'ADV'][int(Mode0[3])]  # noqa
         cfg_u['vel_scale_mm'] = [1, 0.1][int(Mode0[4])]
