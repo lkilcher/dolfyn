@@ -23,7 +23,6 @@ print(__doc__)
 # adpr.test_io_nortek(make_data=True)
 # adpr.test_io_nortek2(make_data=True)
 # adpr.test_nortek2_crop(make_data=True)
-# io.test_save(make_data=True)
 # io.test_matlab_io(make_data=True)
 # io.test_debugging(make_data=True)
 
