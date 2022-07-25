@@ -116,7 +116,7 @@ def test_adv_turbulence(make_data=False):
     tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.velds.U_mag)
     tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.velds.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
-    tdat['L'] = bnr.calc_L_int(acov, tdat.vel)
+    tdat['L'] = bnr.calc_L_int(acov, tdat.velds.U_mag)
 
     if make_data:
         save(tdat, 'vector_data01_bin.nc')
