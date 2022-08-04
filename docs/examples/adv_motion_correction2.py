@@ -75,6 +75,8 @@ data_uncorrected = dlfn.rotate2(data_cleaned, 'earth', inplace=False)
 data.attrs['principal_heading'] = dlfn.calc_principal_heading(data.vel)
 data_uncorrected.attrs['principal_heading'] = dlfn.calc_principal_heading(
     data_uncorrected.vel)
+data.velds.rotate2('principal')
+data_uncorrected.velds.rotate2('principal')
 
 # Plotting corrected vs uncorrected velocity in principal coordinates
 ax = plt.figure(figsize=(20, 10)).add_axes([.14, .14, .8, .74])
