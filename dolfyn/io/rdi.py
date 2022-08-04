@@ -316,6 +316,10 @@ class _RdiReader():
                 print('  Still looking for valid cfgid at file '
                       'position %d ...' % pos)
         self._pos = self.f.tell() - 2
+        if nread > 0:
+            print('  Junk found at BOF... skipping %d bytes until\n'
+                  '  cfgid: (%x,%x) at file pos %d.'
+                  % (self._pos, cfgid[0], cfgid[1], nread))
         if self._debug_level > 0:
             print(fd.tell())
         self.read_hdrseg()
@@ -479,6 +483,15 @@ class _RdiReader():
                 if cfgid[0] == 127 and cfgid[1] in [127, 121]:
                     if cfgid[1] == 121 and self._debug7f79 is None:
                         self._debug7f79 = True
+                        warnings.warn(
+                            "This ADCP file has an undocumented "
+                            "sync-code.  If possible, please notify the "
+                            "DOLfYN developers that you are recieving "
+                            "this warning by posting the hardware and "
+                            "software details on how you acquired this "
+                            "file to "
+                            "http://github.com/lkilcher/dolfyn/issues"
+                        )
                     valid = 1
         else:
             fd.seek(-2, 1)
@@ -641,6 +654,30 @@ class _RdiReader():
         fd.seek(1, 1)
         cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
+
+        if prog_ver0 in [8, 16]:
+            if cfg['prog_ver'] >= 8.14:
+                cfg['serialnum'] = fd.read_ui8(8)
+                self._nbyte += 8
+            if cfg['prog_ver'] >= 8.24:
+                cfg['sysbandwidth'] = fd.read_ui8(2)
+                self._nbyte += 2
+            if cfg['prog_ver'] >= 16.05:
+                cfg['syspower'] = fd.read_ui8(1)
+                self._nbyte += 1
+            if cfg['prog_ver'] >= 16.27:
+                cfg['navigator_basefreqindex'] = fd.read_ui8(1)
+                cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
+                cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
+                self._nbyte += 6
+        elif prog_ver0 == 9:
+            if cfg['prog_ver'] >= 9.10:
+                cfg['serialnum'] = fd.read_ui8(8)
+                cfg['sysbandwidth'] = fd.read_ui8(2)
+                self._nbyte += 10
+        elif prog_ver0 in [14, 23]:
+            cfg['serialnum'] = fd.read_ui8(8)
+            self._nbyte += 8
         self.configsize = self.f.tell() - cfgstart
 
     def read_var(self,):
@@ -683,6 +720,50 @@ class _RdiReader():
         ens.roll_std[k] = fd.read_ui8(1) * 0.1
         ens.adc[:, k] = fd.read_i8(8)
         self._nbyte = 2 + 40
+        cfg = self.cfg
+
+        if cfg['name'] == 'bb-adcp':
+            if cfg['prog_ver'] >= 5.55:
+                fd.seek(15, 1)
+                cent = fd.read_ui8(1)
+                ens.rtc[:, k] = fd.read_ui8(7)
+                ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
+                self._nbyte += 23
+        elif cfg['name'] == 'wh-adcp':
+            ens.error_status_wd[k] = fd.read_ui32(1)
+            self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
+            self._nbyte += 4
+            if (np.fix(cfg['prog_ver']) == [8, 16]).any():
+                if cfg['prog_ver'] >= 8.13:
+                    # Added pressure sensor stuff in 8.13
+                    fd.seek(2, 1)
+                    ens.pressure[k] = fd.read_ui32(1)
+                    ens.pressure_std[k] = fd.read_ui32(1)
+                    self._nbyte += 10
+                if cfg['prog_ver'] >= 8.24:
+                    # Spare byte added 8.24
+                    fd.seek(1, 1)
+                    self._nbyte += 1
+                if cfg['prog_ver'] >= 16.05:
+                    # Added more fields with century in clock
+                    cent = fd.read_ui8(1)
+                    ens.rtc[:, k] = fd.read_ui8(7)
+                    ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
+                    self._nbyte += 8
+            elif np.fix(cfg['prog_ver']) == 9:
+                fd.seek(2, 1)
+                ens.pressure[k] = fd.read_ui32(1)
+                ens.pressure_std[k] = fd.read_ui32(1)
+                self._nbyte += 10
+                if cfg['prog_ver'] >= 9.10:  # Spare byte added...
+                    fd.seek(1, 1)
+                    self._nbyte += 1
+        elif cfg['name'] == 'os-adcp':
+            fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
+            self._nbyte += 16
+            if cfg['prog_ver'] > 23:
+                fd.seek(2, 1)
+                self._nbyte += 2
 
     def read_vel(self,):
         ens = self.ensemble
@@ -915,21 +996,21 @@ class _RdiReader():
 
     def read_nocode(self, id):
         # Skipping bytes from codes 0340-30FC, commented if needed
-        # hxid = hex(id)
-        # if hxid[2:4] == '30':
-        #     raise Exception("")
-        #     # I want to count the number of 1s in the middle 4 bits
-        #     # of the 2nd two bytes.
-        #     # 60 is a 0b00111100 mask
-        #     nflds = (bin(int(hxid[3]) & 60).count('1') +
-        #              bin(int(hxid[4]) & 60).count('1'))
-        #     # I want to count the number of 1s in the highest
-        #     # 2 bits of byte 3
-        #     # 3 is a 0b00000011 mask:
-        #     dfac = bin(int(hxid[3], 0) & 3).count('1')
-        #     self.skip_Nbyte(12 * nflds * dfac)
-        # else:
-        print('  Unrecognized ID code: %0.4X\n' % id)
+        hxid = hex(id)
+        if hxid[2:4] == '30':
+            raise Exception("")
+            # I want to count the number of 1s in the middle 4 bits
+            # of the 2nd two bytes.
+            # 60 is a 0b00111100 mask
+            nflds = (bin(int(hxid[3]) & 60).count('1') +
+                     bin(int(hxid[4]) & 60).count('1'))
+            # I want to count the number of 1s in the highest
+            # 2 bits of byte 3
+            # 3 is a 0b00000011 mask:
+            dfac = bin(int(hxid[3], 0) & 3).count('1')
+            self.skip_Nbyte(12 * nflds * dfac)
+        else:
+            print('  Unrecognized ID code: %0.4X\n' % id)
 
     def remove_end(self, iens):
         dat = self.outd
