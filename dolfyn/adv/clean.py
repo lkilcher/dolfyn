@@ -182,11 +182,10 @@ def _phaseSpaceThresh(u):
     a = np.empty_like(alpha)
     b = np.empty_like(alpha)
     with warnings.catch_warnings() as w:
-        warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in ')
+        warnings.filterwarnings(
+            'ignore', category=RuntimeWarning, message='invalid value encountered in ')
         for idx, al in enumerate(alpha):
             a[idx], b[idx] = _calcab(al, Lu * std_u[idx], Lu * std_d2u[idx])
-            if np.any(np.isnan(a)) or np.any(np.isnan(a[idx])):
-                print('Coefficient calculation error')
         theta = np.arctan2(du, u)
         phi = np.arctan2((du ** 2 + u ** 2) ** 0.5, d2u)
         pe = (((sin(phi) * cos(theta) * cos(alpha) +
