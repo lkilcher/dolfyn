@@ -9,7 +9,7 @@ sin = np.sin
 cos = np.cos
 
 
-def clean_fill(u, mask, npt=12, method='cubic', max_gap=None):
+def clean_fill(u, mask, npt=12, method='cubic', max_gap=6):
     """
     Interpolate over mask values in timeseries data using the specified method
 
@@ -26,7 +26,7 @@ def clean_fill(u, mask, npt=12, method='cubic', max_gap=None):
     method : string
       Interpolation scheme to use (linear, cubic, pchip, etc)
     max_gap : int
-      Max number of consective nan's to interpolate across, must be <= npt/2
+      Max number of consective nan's to interpolate across
 
     Returns
     -------
@@ -39,7 +39,7 @@ def clean_fill(u, mask, npt=12, method='cubic', max_gap=None):
 
     """
     if max_gap:
-        assert max_gap <= npt, 'Max_gap must be less than half of npt'
+      max_gap = u.time.diff('time')[0].values * max_gap
 
     # Apply mask
     u.values[..., mask] = np.nan
