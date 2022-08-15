@@ -28,7 +28,7 @@ config = dict(
     author='DOLfYN Developers',
     author_email='james.mcvey@pnnl.gov',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
@@ -40,7 +40,8 @@ config = dict(
     install_requires=['numpy>=1.21',
                       'scipy>=1.7.0',
                       'xarray>=0.18.2',
-                      'netcdf4>=1.5.7'],
+                      'netcdf4>=1.5.7',
+                      'bottleneck'],
     provides=['dolfyn'],
     scripts=['scripts/motcorrect_vector.py', 'scripts/binary2mat.py'],
 )

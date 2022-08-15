@@ -10,7 +10,6 @@ def test_GN2002(make_data=False):
     td = tv.dat.copy(deep=True)
     td_imu = tv.dat_imu.copy(deep=True)
 
-    td.vel[0, 50:65] = np.nan  # fudge up some data
     mask = avm.clean.GN2002(td.vel, npt=20)
     td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
 
