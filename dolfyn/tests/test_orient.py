@@ -98,7 +98,7 @@ def test_pr_declination():
 def test_q_hpr():
     dat = load('Sig1000_IMU.nc')
 
-    dcm = quaternion2orient(dat.quaternion)
+    dcm = quaternion2orient(dat.quaternions)
 
     assert_allclose(dat.orientmat, dcm, atol=5e-4,
                     err_msg="Disagreement b/t quaternion-calc'd & HPR-calc'd orientmat")

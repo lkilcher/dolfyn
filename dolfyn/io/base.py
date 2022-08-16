@@ -78,8 +78,8 @@ def _read_userdata(fname):
 
 
 def _handle_nan(data):
-    """Finds nan's that cause issues in running the rotation algorithms
-    and deletes them. 
+    """Finds trailing nan's that cause issues in running the rotation 
+    algorithms and deletes them.
     """
     nan = np.zeros(data['coords']['time'].shape, dtype=bool)
     l = data['coords']['time'].size
@@ -87,6 +87,7 @@ def _handle_nan(data):
     if any(np.isnan(data['coords']['time'])):
         nan += np.isnan(data['coords']['time'])
 
+    # Required for motion-correction algorithm
     var = ['accel', 'angrt', 'mag']
     for key in data['data_vars']:
         if any(val in key for val in var):
@@ -98,19 +99,21 @@ def _handle_nan(data):
                 elif len(shp) == 2:
                     if any(np.isnan(data['data_vars'][key][-1])):
                         nan += np.isnan(data['data_vars'][key][-1])
+    trailing = np.cumsum(nan)[-1]
 
-    if nan.sum() > 0:
-        data['coords']['time'] = data['coords']['time'][~nan]
+    if trailing > 0:
+        data['coords']['time'] = data['coords']['time'][:-trailing]
         for key in data['data_vars']:
             if data['data_vars'][key].shape[-1] == l:
-                data['data_vars'][key] = data['data_vars'][key][..., ~nan]
+                data['data_vars'][key] = data['data_vars'][key][..., :-trailing]
+
     return data
 
 
 def _create_dataset(data):
     """Creates an xarray dataset from dictionary created from binary
     readers.
-    Direction 'dir' coordinates get reset in `set_coords`
+    Direction 'dir' coordinates are set in `set_coords`
     """
     ds = xr.Dataset()
     inst = ['X', 'Y', 'Z']
@@ -137,7 +140,7 @@ def _create_dataset(data):
                 ds[key] = xr.DataArray(data['data_vars'][key], coords, dims)
 
         # quaternion units never change
-        elif 'quaternion' in key:
+        elif 'quaternions' in key:
             if any(val in key for val in tag):
                 tg = '_' + key.rsplit('_')[-1]
             else:
@@ -175,18 +178,22 @@ def _create_dataset(data):
                                               'dim_1': 'time_echo'})
                     ds[key] = ds[key].assign_coords({'range_echo': data['coords']['range_echo'],
                                                      'time_echo': data['coords']['time_echo']})
-                # 3- & 4-beam instrument vector data, bottom tracking
+                # ADV/ADCP instrument vector data, bottom tracking
                 elif shp[0] == vshp[0] and not any(val in key for val in tag[:2]):
                     # b/c rdi time
                     if 'bt' in key and 'time_bt' in data['coords']:
                         tg = '_bt'
                     else:
                         tg = ''
-                    ds[key] = ds[key].rename({'dim_0': 'dir',
+                    if 'amp' in key or 'corr' in key:
+                        dim0 = 'beam'
+                    else:
+                        dim0 = 'dir'
+                    ds[key] = ds[key].rename({'dim_0': dim0,
                                               'dim_1': 'time'+tg})
-                    ds[key] = ds[key].assign_coords({'dir': beam,
+                    ds[key] = ds[key].assign_coords({dim0: beam,
                                                      'time'+tg: data['coords']['time'+tg]})
-                # 4-beam instrument IMU data
+                # ADCP IMU data
                 elif shp[0] == vshp[0]-1:
                     if not any(val in key for val in tag):
                         tg = ''

@@ -27,10 +27,6 @@ Create a 'contributing to DOLfYN' page.
 Packaging
 =========
 
-Version++ (1.0?!)
-
-New PyPi entry
-
 Build a conda install
 
 
@@ -39,9 +35,7 @@ File I/O
 
 Support for AWAC waves data (AST)
 
-Support for TRDI Sentinel V instruments
-
-Find faster solution to Nortek burst read hack
+Support for files containing data from 2 water-track profiling configurations
 
 Occasional TRDI sampling frequency calculation error - calculation depends on a variable that can be haphazardly written by TRDI software (VMDAS)
 

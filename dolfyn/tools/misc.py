@@ -62,7 +62,7 @@ def group(bl, min_length=0):
     bl : |np.ndarray| (dtype='bool')
       The input boolean array.
     min_length : int (optional)
-      Specifies the minimum number of continuos points to consider a
+      Specifies the minimum number of continuous points to consider a
       `group` (i.e. that will be returned).
 
     Returns
@@ -328,7 +328,7 @@ def convert_degrees(deg, tidal_mode=True):
     ----------
     deg: float or array-like
       Number or array in 'degrees CCW from East' or 'degrees CW from North'
-    tidal_mode : bool
+    tidal_mode : bool (default: True)
       If true, range is set from 0 to +/-180 degrees. If false, range is 0 to 
       360 degrees
 

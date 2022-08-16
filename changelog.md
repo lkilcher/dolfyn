@@ -4,14 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Version 1.0.2
+    - Bugfixes
+	    - Detect missing timestamps in ADV binary files
+
+	- API/Useability
+	    - Added classic Nortek instrument configuration details into dataset attributes
+
+## Version 1.0.1
+	- Bugfixes:
+		- ADV and TRDI correlation and amplitude 'dir' dimension values
+		  now remain in "beam" coordinates (#96)
+		- Removed deployment height from surface interference cleaning 
+		  (`find_surface_from_P`) calculation
+		- Remove extra entry added to ADV time dimension when `read` is 
+		  given "nens" argument
+		- Auto-convert "maxgap" argument in ADCP "fillgaps_time" to numpy.timedelta64
+      
+	- API/Useability
+		- Change functions in `TimeBinner` that use reshape (detrend, 
+		  demean, mean, var, std) from private to public
+
 ## Version 1.0.0
 	- Change the xarray dataset-accessor from `Veldata` to `velds`.
 	- Begin reimplementing DOLfYN API in the velocity.Velocity class (accessed via velds above)
 	- Switch from epoch time to datetime64 in datasets
 	    - This also includes a bugfix where the epoch time was machine specific.
 	- No longer Python 2 compatible.
-	- Fix some Nortek Signature (ad2cp) read issues
 	- Re-implement the 'inplace' argument for several API functions.
+
+	- Nortek Signature (.ad2cp):
+		- Fix some read issues
+		- Decoded binary 'status' variables
+		- Dropped 'temp_mag' (magnetometer temperature) - this thermistor isn't calibrated
+		- Added 'xmit_energy' (beam transmit energy in dB) into data variables
 
 ## Version 0.13.0
 	- Refactored source code to use xarray instead of h5py-derived data objects
@@ -22,7 +48,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Rotation and orientation matrices are all saved as xarray variables
 
 		- Created functions to handle saving/loading dolfyn datasets to/from netCDF and MATLAB file formats
-			- It is possible to open dolfyn datasets using `xarray.open_dataset()`, but not possible to save through` xarray.to_netcdf()`
+			- It is possible to open dolfyn datasets using `xarray.open_dataset()`, 
+			  but not possible to save through` xarray.to_netcdf()`
 
 		- Scaling bugs:
 			- Fixed AWAC temperature scaling
@@ -45,7 +72,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Changed true/false attributes to 1/0 - Logical values are auto-dropped when saving netCDF
 
 	- Rotations:
-		- `rotate2()`, `set_inst2head_rotmat()`, `calc_principal_heading()`, and `set_declination()` now located in `rotate.api` and can be accessed using `dolfyn.<function>`
+		- `rotate2()`, `set_inst2head_rotmat()`, `calc_principal_heading()`, and `set_declination()` now 
+		  located in `rotate.api` and can be accessed using `dolfyn.<function>`
 
 		- Solved errors where orientation wasn't taken into account for Nortek Signatures
 			- Fixed Nortek Signature rotation issues for fixed up vs down
@@ -54,7 +82,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 	- Motion correction code:
 		- `CorrectMotion` object has been removed
-		- replaced '.mean()' with `np.nanmean` in `motion_correction` and `calc_principal_heading`
+		- replaced '.mean()' with `np.nanmean()` in `motion_correction()` and `calc_principal_heading()`
 
 	- `TimeData`, `Velocity`, `TKEdata`:
 		- `TimeData` class has been removed
@@ -68,9 +96,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 		- `TurbBinner` renamed to `ADVBinner` and set in the ADV API
 
-		- Renamed `calc_vel_psd()` and `calc_vel_csd()` to `calc_psd` and `calc_csd`
+		- Renamed `calc_vel_psd()` and `calc_vel_csd()` to `calc_psd()` and `calc_csd()`
 		- Fixed bug where `calc_vel_csd()` wasn't using "n_fft_coh" input
-		- Added "freq_units" option to `calc_psd()` and `calc_csd()` using either frequency in Hz (f) or rad/s (omega) ("freq_units" input)
+		- Added "freq_units" option to `calc_psd()` and `calc_csd()` using either frequency in Hz (f) or 
+		  rad/s (omega) ("freq_units" input)
 				- Renamed `calc_omega()` to `calc_freq()` and added "freq_units" as input
 				- Calling `TurbBinner`/`calc_turbulence()` still automatically use 'rad/s'
 		- FFT frequency "omega"|"f" is now a xarray coordinate rather than its own variable
@@ -78,20 +107,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- "do" functions take Datasets as input, "calc" funtions take DataArrays as input
 
 		- Updated `U_dir` description to be CCW from East (consistent with imag vs real axes)
-		- Added `convert_degrees()` function in tools.misc to convert CCW from East to CW from North, and vice versa
+		- Added `convert_degrees()` function in tools.misc to convert CCW from East to CW from North, and 
+		  vice versa
 
-		- Renamed `sigma_Uh` variable to `U_std` and moved it from adv.turbulence to velocity.VelBinner as a function in `do_avg()`
+		- Renamed `sigma_Uh` variable to `U_std` and moved it from adv.turbulence to velocity.VelBinner as 
+		  a function in `do_avg()`
 		- Renamed properties `Ecoh` to `E_coh` and `Itke` to `I_tke`
-		- Removed `Itke_thresh` from `TurbBinner` and added to `Velocity` class as it is only used with the `I_tke` property
+		- Removed `Itke_thresh` from `TurbBinner` and added to `Velocity` class as it is only used with the 
+		  `I_tke` property
 
 		- Coherence, phase_angle, and auto-/cross-covariance now work as described in their docstrings
 			- Will take 1D or 3D velocity arrays as input
 			- Renamed `cohere()` and `phase_angle()` to `calc_coh()` and `calc_phase_angle()`
-			- Fixed bug where `tools.psd.coherence` wasn't correctly calling `tools.psd.cpsd` or `tools.psd.cpsd_quasisync`
+			- Fixed bug where `tools.psd.coherence` wasn't correctly calling `tools.psd.cpsd` or 
+			  `tools.psd.cpsd_quasisync`
 
 		- Updated turbulence dissipation functions return correctly for xarray
 			- Fixed `calc_turbulence()` '__call__' error
-			- Removed inputs not used by `calc_turbulence()` and `ADVBinner` function call ('omega_range' and 'out_type')
+			- Removed inputs not used by `calc_turbulence()` and `ADVBinner` function call ('omega_range' 
+			  and 'out_type')
 			- These are stored in `turbulence.py` in the ADV API
 			- LT83 or TE01 methods can take either the 1D or 3D velocity arrays as input
 				- if 3D velocity given as input
@@ -103,12 +137,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- ADV cleaning functions now return a logical mask to mark bad data
 			- `clean_fill()` function takes this mask as input, removes bad data, and interpolates it
 		- Added `surface_from_P()` and `correlation_filter()` functions to ADP cleaning functions
-		- ADP `fillgaps_time()` and `fillgaps_depth()` and ADV `clean_fill()` use xarray's `na_interpolate()` to fill in bad data.
+		- ADP `fillgaps_time()` and `fillgaps_depth()` and ADV `clean_fill()` use xarray's `na_interpolate()` 
+		  to fill in bad data.
 
 	- Time:
 		- Removed mpltime support and changed to epoch time (seconds since 1970/1/1 00:00:00)
 		- Solved bug where unaware timestamp would convert to different times depending on working computer timezone
-			- Instrument time remains in the timezone in which it was logged by the instrument, no matter the timezone of the user analyzing the data
+			- Instrument time remains in the timezone in which it was logged by the instrument, no matter the timezone 
+			  of the user analyzing the data
 		- Added code to convert between epoch time <-> datetime <-> datestring, MATLAB datenum conversion functions
 
 	- Testing updates:

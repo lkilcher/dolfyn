@@ -46,7 +46,7 @@ class TimeBinner:
         elif n_fft_coh > n_bin:
             self.n_fft_coh = int(n_bin // 6)
             warnings.warn("n_fft_coh must be smaller than or equal to n_bin, "
-                  "setting n_fft_coh = n_bin/6")
+                          "setting n_fft_coh = n_bin/6")
 
     def _outshape(self, inshape, n_pad=0, n_bin=None):
         """Returns `outshape` (the 'reshape'd shape) for an `inshape` array.
@@ -86,7 +86,7 @@ class TimeBinner:
 
         Parameters
         ----------
-        arr : |np.ndarray|
+        arr : numpy.ndarray
         n_pad : int
           Is used to add `n_pad`/2 points from the end of the previous
           ensemble to the top of the current, and `n_pad`/2 points
@@ -94,12 +94,12 @@ class TimeBinner:
           current.  Zeros are padded in the upper-left and lower-right
           corners of the matrix (beginning/end of timeseries).  In
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
-        n_bin : float, int (optional)
+        n_bin : int (default is self.n_bin)
           Override this binner's n_bin.
 
         Returns
         -------
-        out : |np.ndarray|
+        out : numpy.ndarray
 
         Notes
         -----
@@ -138,65 +138,127 @@ class TimeBinner:
 
         return out
 
-    def _detrend(self, dat, n_pad=0, n_bin=None):
-        """Reshape the array `dat` and remove the best-fit trend line.
-        """
-        return detrend(self.reshape(dat, n_pad=n_pad, n_bin=n_bin), axis=-1)
-
-    def _demean(self, dat, n_pad=0, n_bin=None):
-        """Reshape the array `dat` and remove the mean from each ensemble.
-        """
-        dt = self.reshape(dat, n_pad=n_pad, n_bin=n_bin)
-        return dt - np.nanmean(dt, -1)[..., None]
-
-    def _mean(self, dat, axis=-1, n_bin=None):
-        """Takes the average of binned data
+    def detrend(self, arr, axis=-1, n_pad=0, n_bin=None):
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and remove the best-fit trend line from each bin.
 
         Parameters
         ----------
-        dat : numpy.ndarray
+        arr : numpy.ndarray
+        axis : int (default is -1)
+          Axis along which to take mean
+        n_pad : int (default is 0)
+          Is used to add `n_pad`/2 points from the end of the previous
+          ensemble to the top of the current, and `n_pad`/2 points
+          from the top of the next ensemble to the bottom of the
+          current.  Zeros are padded in the upper-left and lower-right
+          corners of the matrix (beginning/end of timeseries).  In
+          this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
         n_bin : int (default is self.n_bin)
+          Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
-        if np.issubdtype(dat.dtype, np.datetime64):
-            return epoch2dt64(self._mean(dt642epoch(dat), axis=axis, n_bin=n_bin))
+        return detrend(self.reshape(arr, n_pad=n_pad, n_bin=n_bin), axis=axis)
+
+    def demean(self, arr, axis=-1, n_pad=0, n_bin=None):
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and remove the mean from each bin.
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+        axis : int (default is -1)
+          Axis along which to take mean
+        n_pad : int (default is 0)
+          Is used to add `n_pad`/2 points from the end of the previous
+          ensemble to the top of the current, and `n_pad`/2 points
+          from the top of the next ensemble to the bottom of the
+          current.  Zeros are padded in the upper-left and lower-right
+          corners of the matrix (beginning/end of timeseries).  In
+          this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
+        n_bin : int (default is self.n_bin)
+          Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
+
+        """
+        dt = self.reshape(arr, n_pad=n_pad, n_bin=n_bin)
+        return dt - np.nanmean(dt, axis)[..., None]
+
+    def mean(self, arr, axis=-1, n_bin=None):
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and take the mean of each bin along the specified `axis`.
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+        axis : int (default is -1)
+          Axis along which to take mean
+        n_bin : int (default is self.n_bin)
+          Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
+
+        """
+        if np.issubdtype(arr.dtype, np.datetime64):
+            return epoch2dt64(self.mean(dt642epoch(arr), axis=axis, n_bin=n_bin))
         if axis != -1:
-            dat = np.swapaxes(dat, axis, -1)
+            arr = np.swapaxes(arr, axis, -1)
         n_bin = self._parse_nbin(n_bin)
-        tmp = self.reshape(dat, n_bin=n_bin)
+        tmp = self.reshape(arr, n_bin=n_bin)
 
         return np.nanmean(tmp, -1)
 
-    def _var(self, dat, n_bin=None):
-        """Finds the variance of binned data
-        """
-        return self.reshape(dat, n_bin=n_bin).var(-1)
+    def var(self, arr, axis=-1, n_bin=None):
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and take the variance of each bin along the specified `axis`.
 
-    def _std(self, dat, n_bin=None):
-        """Finds the standard deviation of binned data
-        """
-        return self.reshape(dat, n_bin=n_bin).std(-1)
+        Parameters
+        ----------
+        arr : numpy.ndarray
+        axis : int (default is -1)
+          Axis along which to take variance
+        n_bin : int (default is self.n_bin)
+          Override this binner's n_bin.
 
-    def _new_coords(self, array):
-        """Function for setting up a new xarray.DataArray regardless of how 
-        many dimensions the input data-array has
-        """
-        dims = array.dims
-        dims_list = []
-        coords_dict = {}
-        if len(array.shape) == 1 & ('dir' in array.coords):
-            array = array.drop_vars('dir')
-        for ky in dims:
-            dims_list.append(ky)
-            if 'time' in ky:
-                coords_dict[ky] = self._mean(array.time.values)
-            else:
-                coords_dict[ky] = array.coords[ky].values
+        Returns
+        -------
+        out : numpy.ndarray
 
-        return dims_list, coords_dict
+        """
+        return self.reshape(arr, n_bin=n_bin).var(axis)
+
+    def std(self, arr, axis=-1, n_bin=None):
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        and take the standard deviation of each bin along the 
+        specified `axis`.
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+        axis : int (default is -1)
+          Axis along which to take std dev
+        n_bin : int (default is self.n_bin)
+          Override this binner's n_bin.
+
+        Returns
+        -------
+        out : numpy.ndarray
+
+        """
+        return self.reshape(arr, n_bin=n_bin).std(axis)
 
     def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0, 0, 0]):
-        """Average data into bins/ensembles
+        """Bin the dataset and calculate the ensemble averages of each 
+        variable.
 
         Parameters
         ----------
@@ -207,7 +269,7 @@ class TimeBinner:
         names : list of strings
            The names of variables to be averaged.  If `names` is None,
            all data in `raw_ds` will be binned.
-        noise : list or |np.ndarray|
+        noise : list or numpy.ndarray
           instrument's doppler noise in same units as velocity
 
         Returns
@@ -215,7 +277,7 @@ class TimeBinner:
         out_ds : xarray.Dataset
           The new (or updated when out_ds is not None) dataset
           with the averages of all the variables in raw_ds.
-          
+
         Raises
         ------
         AttributeError : when out_ds is supplied as input (not None)
@@ -241,14 +303,14 @@ class TimeBinner:
             coords_dict = {}
             for nm in dims_list:
                 if 'time' in nm:
-                    coords_dict[nm] = self._mean(raw_ds[ky][nm].values)
+                    coords_dict[nm] = self.mean(raw_ds[ky][nm].values)
                 else:
                     coords_dict[nm] = raw_ds[ky][nm].values
 
             # create Dataset
             if 'ensemble' not in ky:
                 try:  # variables with time coordinate
-                    out_ds[ky] = xr.DataArray(self._mean(raw_ds[ky].values),
+                    out_ds[ky] = xr.DataArray(self.mean(raw_ds[ky].values),
                                               coords=coords_dict,
                                               dims=dims_list,
                                               attrs=raw_ds[ky].attrs)
@@ -267,7 +329,8 @@ class TimeBinner:
         return out_ds
 
     def do_var(self, raw_ds, out_ds=None, names=None, suffix='_var'):
-        """Find the variances of binned data. Complementary to `do_avg()`.
+        """Bin the dataset and calculate the ensemble variances of each 
+        variable. Complementary to `do_avg()`.
 
         Parameters
         ----------
@@ -285,7 +348,7 @@ class TimeBinner:
         out_ds : xarray.Dataset
           The new (or updated when out_ds is not None) dataset
           with the variance of all the variables in raw_ds.
-          
+
         Raises
         ------
         AttributeError : when out_ds is supplied as input (not None)
@@ -311,14 +374,14 @@ class TimeBinner:
             coords_dict = {}
             for nm in dims_list:
                 if 'time' in nm:
-                    coords_dict[nm] = self._mean(raw_ds[ky][nm].values)
+                    coords_dict[nm] = self.mean(raw_ds[ky][nm].values)
                 else:
                     coords_dict[nm] = raw_ds[ky][nm].values
 
             # create Dataset
             if 'ensemble' not in ky:
                 try:  # variables with time coordinate
-                    out_ds[ky+suffix] = xr.DataArray(self._var(raw_ds[ky].values),
+                    out_ds[ky+suffix] = xr.DataArray(self.var(raw_ds[ky].values),
                                                      coords=coords_dict,
                                                      dims=dims_list,
                                                      attrs=raw_ds[ky].attrs)
@@ -328,6 +391,21 @@ class TimeBinner:
         return out_ds
 
     def _check_ds(self, raw_ds, out_ds):
+        """Check that the attributes between two datasets match up.
+
+        Parameters
+        ----------
+        raw_ds : xarray.Dataset
+          Input dataset
+        out_ds : xarray.Dataset
+          Dataset to append `raw_ds` to. If None is supplied, this
+          dataset is created from `raw_ds`.
+
+        Returns
+        -------
+        out_ds : xarray.Dataset
+
+        """
         for v in raw_ds.data_vars:
             if np.any(np.array(raw_ds[v].shape) == 0):
                 raise RuntimeError(f"{v} cannot be averaged "
@@ -338,7 +416,7 @@ class TimeBinner:
                           "is larger than the burst interval "
                           "(NBurst = {dat.attrs['DutyCycle_NBurst']})")
         if raw_ds.fs != self.fs:
-            raise Exception(f"The input data sample rate ({dat.fs}) does not "
+            raise Exception(f"The input data sample rate ({raw_ds.fs}) does not "
                             "match the sample rate of this binning-object "
                             "({self.fs})")
 
@@ -360,11 +438,29 @@ class TimeBinner:
                 # The values in out_ds must match `props` (raw_ds.attrs,
                 # plus those defined above)
                 raise AttributeError(
-                    "The attribute '{}' of `out_ds` is inconsistent " \
+                    "The attribute '{}' of `out_ds` is inconsistent "
                     "with this `VelBinner` or the input data (`raw_ds`)".format(ky))
             else:
                 o_attrs[ky] = props[ky]
         return out_ds
+
+    def _new_coords(self, array):
+        """Function for setting up a new xarray.DataArray regardless of how 
+        many dimensions the input data-array has
+        """
+        dims = array.dims
+        dims_list = []
+        coords_dict = {}
+        if len(array.shape) == 1 & ('dir' in array.coords):
+            array = array.drop_vars('dir')
+        for ky in dims:
+            dims_list.append(ky)
+            if 'time' in ky:
+                coords_dict[ky] = self.mean(array.time.values)
+            else:
+                coords_dict[ky] = array.coords[ky].values
+
+        return dims_list, coords_dict
 
     def _calc_lag(self, npt=None, one_sided=False):
         if npt is None:
@@ -564,7 +660,7 @@ class TimeBinner:
         # Here we de-mean only on the 'valid' range:
         dt1 = dt1 - dt1[..., :, int(n_bin // 4):
                         int(-n_bin // 4)].mean(-1)[..., None]
-        dt2 = self._demean(indat)
+        dt2 = self.demean(indat)
         se = slice(int(n_bin // 4) - 1, None, 1)
         sb = slice(int(n_bin // 4) - 1, None, -1)
         for slc in slice1d_along_axis(dt1.shape, -1):
@@ -636,15 +732,16 @@ class TimeBinner:
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
 
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2)
+                                    :int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
-        dt2 = self._demean(dat2, n_bin=n_bin2)
+        dt2 = self.demean(dat2, n_bin=n_bin2)
 
         for slc in slice1d_along_axis(shp, -1):
             out[slc] = np.correlate(dt1[slc], dt2[slc], 'valid')
         if normed:
-            out /= (self._std(dat1, n_bin=n_bin1)[..., :shp[-2]] *
-                    self._std(dat2, n_bin=n_bin2)[..., :shp[-2]] *
+            out /= (self.std(dat1, n_bin=n_bin1)[..., :shp[-2]] *
+                    self.std(dat2, n_bin=n_bin2)[..., :shp[-2]] *
                     n_bin2)[..., None]
 
         dims_list, coords_dict = self._new_coords(veldat1)
@@ -711,10 +808,10 @@ class TimeBinner:
 
         Parameters
         ----------
-        dat1 : |np.ndarray|
+        dat1 : numpy.ndarray
           The first (shorter, if applicable) raw dataArray of which to 
           calculate the cpsd.
-        dat2 : |np.ndarray|
+        dat2 : numpy.ndarray
           The second (the shorter, if applicable) raw dataArray of which to 
           calculate the cpsd.
         fs : float (optional)
@@ -730,7 +827,7 @@ class TimeBinner:
 
         Returns
         -------
-        out : |np.ndarray|
+        out : numpy.ndarray
           The cross-spectral density of `dat1` and `dat2`
 
         Notes
@@ -782,7 +879,7 @@ class TimeBinner:
 
         Returns
         -------
-        out: |np.ndarray|
+        out: numpy.ndarray
           Spectrum frequency array in units of 'Hz' or 'rad/s'
         """
         if n_fft is None:

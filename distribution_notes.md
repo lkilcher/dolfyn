@@ -1,12 +1,23 @@
+# Update Package Version
+
+1. Update version number and release date in dolfyn/_version.py
+2. Update version number in changelog.md
+3. Commit version number changes
+4. Create a new version tag (v#.#.#) and push to repository
+
 # Building Package
 
 Upgrade packaging tools:
 
-    python -m pip install --upgrade build pip twine
+    python3 -m pip install --upgrade build pip twine
+
+Remove legacy files from dist/ directory.
+
+    rm dist/dolfyn-*
 
 Build:
 
-    python -m build
+    python3 -m build
 
 ## Upload to Test-PyPi
 
@@ -21,13 +32,15 @@ Before uploading to the distribution version of PyPi, it is a best practice to:
 1. Build a test virtual environment
 2. Install dependencies
 
-        python3 -m pip install numpy>=1.20 scipy>=1.7.0 six>=1.16.0 xarray>=0.18.2 netcdf4>=1.5.7
+        python3 -m pip install -r requirements.txt
 
 3. Install from testpypi:
 
         python3 -m pip install --index-url https://test.pypi.org/simple/ dolfyn
 
-4. Confirm that you can import the package and do a version check(?)
+4. Confirm that you can import the package and do a version check
+
+        pip freeze | findstr dolfyn  # version check
     
 ## Upload to PyPi
 

@@ -29,7 +29,7 @@ Cleaning Data
 	~dolfyn.adp.clean.find_surface
 	~dolfyn.adp.clean.find_surface_from_P
 	~dolfyn.adp.clean.nan_beyond_surface
-	~dolfyn.adp.clean.vel_exceeds_thresh
+	~dolfyn.adp.clean.val_exceeds_thresh
 	~dolfyn.adp.clean.correlation_filter
 	~dolfyn.adp.clean.medfilt_orient
 	~dolfyn.adp.clean.fillgaps_time

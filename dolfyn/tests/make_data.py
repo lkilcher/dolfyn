@@ -3,9 +3,9 @@
 are benchmark tests. Uncomment lines to rebuild data files only if
 you know you have fixed a bug, and wish to fix an existing test data
 set.
+Must run 2-3 times in a row to reset the rotate test files
 """
 print(__doc__)
-#!!! Have to run twice in a row to reset the rotate test files
 
 # import test_read_adv as advr
 # import test_read_adp as adpr
@@ -23,7 +23,6 @@ print(__doc__)
 # adpr.test_io_nortek(make_data=True)
 # adpr.test_io_nortek2(make_data=True)
 # adpr.test_nortek2_crop(make_data=True)
-# io.test_save(make_data=True)
 # io.test_matlab_io(make_data=True)
 # io.test_debugging(make_data=True)
 

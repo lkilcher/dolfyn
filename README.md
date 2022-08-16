@@ -7,7 +7,7 @@
 BIG NEWS!!!
 ------
 
-Hello everyone! Just so that you know, we are preparing to release
+Hello everyone! Just so that you know, we have released
 dolfyn 1.0! This is a MAJOR REFACTOR of the code so that DOLfYN is
 now built on xarray, rather than the somewhat contrived and
 purpose-built `pyDictH5` package.
@@ -22,10 +22,11 @@ of DOLfYN will no longer load with DOLfYN 1.0.0.
 Because of this, it's probably easiest to continue using earlier
 versions of DOLfYN for your old data. If you want to bring some data
 into DOLfYN 1.0, you will need to
-`dolfyn.read(binary_source_file.VEC)`, and then refactor your code to
+`dolfyn.read(binary_source_file.ext)`, and then refactor your code to
 work properly with DOLfYN's new syntax. I may be providing some
 updates to dolfyn 0.12 via the v0.12-backports branch (and associated
-releases), but I doubt that will last long.
+releases), but I doubt that will last long. If you are
+using 0.13, we recommend switching to 1.0.
 
 Very sorry that we didn't communicate the plan for this change, but
 the truth is that we simply don't know who our users are. The good
@@ -33,12 +34,6 @@ news is that I think in the long run this will make DOLfYN a much more
 robust, powerful, and compatible tool -- especially because we now
 write/load xarray-formatted netcdf4 files, which is becoming a
 standard.
-
-For the immediate future we will be doing pre-releases to DOLfYN 1.0
-using "release candidates", following the "1.0.0-rc#" naming
-convention. Many of these changes were also released under version
-0.13, but we are moving away from that version toward 1.0. If you are
-using 0.13, we recommend switching to 1.0 (pre-release for now).
 
 A **HUGE THANK YOU** to @jmcvey3 who did the vast majority of the work
 to make this happen.
@@ -69,7 +64,7 @@ For details visit the
 Installation
 ------------
 
-DOLfYN requires Python 3.6 or later and a number of dependencies. See the 
+DOLfYN requires Python 3.7 or later and a number of dependencies. See the 
 [install page](https://dolfyn.readthedocs.io/en/latest/install.html)
 for greater details.
 
