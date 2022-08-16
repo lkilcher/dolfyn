@@ -439,10 +439,14 @@ class _RDIReader():
                         256: (self.read_vel, []),
                         # 0101 2nd profile velocity
                         257: (self.skip_Ncol, [8]),
+                        # 0103 Waves first leader
+                        259: (self.skip_Nbyte, [74]),
                         # 0200 1st profile correlation
                         512: (self.read_corr, []),
                         # 0201 2nd profile correlation
                         513: (self.skip_Ncol, [4]),
+                        # 0203 Waves data
+                        515: (self.skip_Nbyte, [186]),
                         # 020C Ambient sound profile
                         524: (self.skip_Nbyte, [4]),
                         # 0300 1st profile amplitude
@@ -451,12 +455,14 @@ class _RDIReader():
                         769: (self.skip_Ncol, [4]),
                         # 0302 Beam 5 Sum of squared velocities
                         770: (self.skip_Ncol, []),
-                        # 0303 Beam 5 Sum of velocities
-                        771: (self.skip_Ncol, []),
+                        # 0303 Waves last leader
+                        771: (self.skip_Ncol, [18]),
                         # 0400 1st profile % good
                         1024: (self.read_prcnt_gd, []),
                         # 0401 2nd profile pct good
                         1025: (self.skip_Ncol, [4]),
+                        # 0403 Waves HPR data
+                        1027: (self.skip_Nbyte, [6]),
                         # 0500 1st profile status
                         1280: (self.read_status, []),
                         1281: (self.skip_Ncol, [4]),  # 0501 2nd profile status
@@ -469,10 +475,10 @@ class _RDIReader():
                         3072: (self.skip_Ncol, []),  # 0C00 Beam 5 amplitude
                         3328: (self.skip_Ncol, []),  # 0D00 Beam 5 pct_good
                         # 3000 Fixed attitude data format for OS-ADCPs
-                        3841: (self.skip_Nbyte, [40]),  # 0F01 Beam 5 leader
+                        3841: (self.skip_Nbyte, [38]),  # 0F01 Beam 5 leader
                         8192: (self.read_vmdas, []),   # 2000
                         # 2013 Navigation parameter data
-                        8211: (self.skip_Ncol, [24]),
+                        8211: (self.skip_Nbyte, [83]),
                         8226: (self.read_winriver2, []),  # 2022
                         8448: (self.read_winriver, [38]),  # 2100
                         8449: (self.read_winriver, [97]),  # 2101
@@ -480,14 +486,21 @@ class _RDIReader():
                         8451: (self.read_winriver, [60]),  # 2103
                         8452: (self.read_winriver, [38]),  # 2104
                         # 3200 transformation matrix
-                        12800: (self.skip_Nbyte, [18]),
+                        12800: (self.skip_Nbyte, [32]),
                         # 3000 Fixed attitude data format for OS-ADCPs
                         12288: (self.skip_Nbyte, [32]),
-                        16640: (self.skip_Nbyte, [10]),  # 4100 beam 5 range
-                        # 5803 high res bottom track
-                        22531: (self.skip_Ncol, [16]),
+                        # 4100 beam 5 range
+                        16640: (self.skip_Nbyte, [7]),
+                        # 5803 high res bottom track velocity
+                        22531: (self.skip_Nbyte, [68]),
                         # 5804 bottom track range
-                        22532: (self.skip_Nbyte, [12]),
+                        22532: (self.skip_Nbyte, [21]),
+                        # 5901 ISM (IMU) data
+                        22785: (self.skip_Nbyte, [65]),
+                        # 5902 ping attitude
+                        22786: (self.skip_Nbyte, [105]),
+                        # 7001 ADC data
+                        28673: (self.skip_Nbyte, [14]),
                         }
         # Call the correct function:
         if id in function_map:
