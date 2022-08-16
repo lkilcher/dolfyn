@@ -3,7 +3,8 @@ import xarray as xr
 from .. import time as tmlib
 import warnings
 from os.path import getsize
-from ._read_bin import bin_reader
+from .rdi_lib import bin_reader
+from . import rdi_defs as defs
 from .base import _find_userdata, _create_dataset, _abspath
 from ..rotate.rdi import _calc_beam_orientmat, _calc_orientmat
 from ..rotate.base import _set_coords
@@ -30,7 +31,7 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     """
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
-    with _RdiReader(fname, debug_level=debug) as ldr:
+    with _RDIReader(fname, debug_level=debug) as ldr:
         dat = ldr.load_data(nens=nens)
 
     # Read in userdata
@@ -138,129 +139,7 @@ def _set_rdi_declination(dat, fname, inplace):
         set_declination(dat, declin, inplace)
 
 
-century = 2000
-data_defs = {'number': ([], 'data_vars', 'uint32', ''),
-             'rtc': ([7], 'sys', 'uint16', ''),
-             'builtin_test_fail': ([], 'data_vars', 'bool', ''),
-             'c_sound': ([], 'data_vars', 'float32', 'm/s'),
-             'depth': ([], 'data_vars', 'float32', 'm'),
-             'pitch': ([], 'data_vars', 'float32', 'deg'),
-             'roll': ([], 'data_vars', 'float32', 'deg'),
-             'heading': ([], 'data_vars', 'float32', 'deg'),
-             'temp': ([], 'data_vars', 'float32', 'C'),
-             'salinity': ([], 'data_vars', 'float32', 'psu'),
-             'min_preping_wait': ([], 'data_vars', 'float32', 's'),
-             'heading_std': ([], 'data_vars', 'float32', 'deg'),
-             'pitch_std': ([], 'data_vars', 'float32', 'deg'),
-             'roll_std': ([], 'data_vars', 'float32', 'deg'),
-             'adc': ([8], 'sys', 'uint8', ''),
-             'error_status_wd': ([], 'attrs', 'float32', ''),
-             'pressure': ([], 'data_vars', 'float32', 'dbar'),
-             'pressure_std': ([], 'data_vars', 'float32', 'dbar'),
-             'vel': (['nc', 4], 'data_vars', 'float32', 'm/s'),
-             'amp': (['nc', 4], 'data_vars', 'uint8', 'counts'),
-             'corr': (['nc', 4], 'data_vars', 'uint8', 'counts'),
-             'prcnt_gd': (['nc', 4], 'data_vars', 'uint8', '%'),
-             'status': (['nc', 4], 'data_vars', 'float32', ''),
-             'dist_bt': ([4], 'data_vars', 'float32', 'm'),
-             'vel_bt': ([4], 'data_vars', 'float32', 'm/s'),
-             'corr_bt': ([4], 'data_vars', 'uint8', 'counts'),
-             'amp_bt': ([4], 'data_vars', 'uint8', 'counts'),
-             'prcnt_gd_bt': ([4], 'data_vars', 'uint8', '%'),
-             'time': ([], 'coords', 'float64', ''),
-             'etime_gps': ([], 'coords', 'float64', ''),
-             'elatitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'elongitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'time_gps': ([], 'coords', 'float64', ''),
-             'latitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'longitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'ntime': ([], 'coords', 'float64', ''),
-             'flags': ([], 'data_vars', 'float32', ''),
-             }
-
-
-def _get(dat, nm):
-    grp = data_defs[nm][1]
-    if grp is None:
-        return dat[nm]
-    else:
-        return dat[grp][nm]
-
-
-def _in_group(dat, nm):
-    grp = data_defs[nm][1]
-    if grp is None:
-        return nm in dat
-    else:
-        return nm in dat[grp]
-
-
-def _pop(dat, nm):
-    grp = data_defs[nm][1]
-    if grp is None:
-        dat.pop(nm)
-    else:
-        dat[grp].pop(nm)
-
-
-def _setd(dat, nm, val):
-    grp = data_defs[nm][1]
-    if grp is None:
-        dat[nm] = val
-    else:
-        dat[grp][nm] = val
-
-
-def _idata(dat, nm, sz):
-    group = data_defs[nm][1]
-    dtype = data_defs[nm][2]
-    units = data_defs[nm][3]
-    arr = np.empty(sz, dtype=dtype)
-    if dtype.startswith('float'):
-        arr[:] = np.NaN
-    dat[group][nm] = arr
-    dat['units'][nm] = units
-    return dat
-
-
-def _get_size(name, n=None, ncell=0):
-    sz = list(data_defs[name][0])  # create a copy!
-    if 'nc' in sz:
-        sz.insert(sz.index('nc'), ncell)
-        sz.remove('nc')
-    if n is None:
-        return tuple(sz)
-    return tuple(sz + [n])
-
-
-class _variable_setlist(set):
-    def __iadd__(self, vals):
-        if vals[0] not in self:
-            self |= set(vals)
-        return self
-
-
-class _ensemble():
-    n_avg = 1
-    k = -1  # This is the counter for filling the ensemble object
-
-    def __getitem__(self, nm):
-        return getattr(self, nm)
-
-    def __init__(self, navg, n_cells):
-        if navg is None or navg == 0:
-            navg = 1
-        self.n_avg = navg
-        for nm in data_defs:
-            setattr(self, nm,
-                    np.zeros(_get_size(nm, n=navg, ncell=n_cells),
-                             dtype=data_defs[nm][2]))
-
-    def clean_data(self,):
-        self['vel'][self['vel'] == -32.768] = np.NaN
-
-
-class _RdiReader():
+class _RDIReader():
     _n_beams = 4  # Placeholder for 5-beam adcp, not currently used.
     _pos = 0
     progress = 0
@@ -276,6 +155,11 @@ class _RdiReader():
     _debug7f79 = None
     extrabytes = 0
 
+    def mean(self, dat):
+        if self.n_avg == 1:
+            return dat[..., 0]
+        return np.nanmean(dat, axis=-1)
+
     def __init__(self, fname, navg=1, debug_level=0):
         self.fname = _abspath(fname)
         print('\nReading file {} ...'.format(fname))
@@ -290,43 +174,14 @@ class _RdiReader():
         self.read_cfg()
         self.f.seek(self._pos, 0)
         self.n_avg = navg
-        self.ensemble = _ensemble(self.n_avg, self.cfg['n_cells'])
+        self.ensemble = defs._ensemble(self.n_avg, self.cfg['n_cells'])
         self._filesize = getsize(self.fname)
         self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
                                              self.extrabytes))
-        self.vars_read = _variable_setlist(['time'])
+        self.vars_read = defs._variable_setlist(['time'])
 
         if self._debug_level > 0:
             print('  %d pings estimated in this file' % self._npings)
-
-    def read_hdr(self,):
-        fd = self.f
-        cfgid = list(fd.read_ui8(2))
-        nread = 0
-        if self._debug_level > 2:
-            print(self.f.pos)
-            print('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
-        while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
-            nextbyte = fd.read_ui8(1)
-            pos = fd.tell()
-            nread += 1
-            cfgid[1] = cfgid[0]
-            cfgid[0] = nextbyte
-            if not pos % 1000:
-                print('  Still looking for valid cfgid at file '
-                      'position %d ...' % pos)
-        self._pos = self.f.tell() - 2
-        if nread > 0:
-            print('  Junk found at BOF... skipping %d bytes until\n'
-                  '  cfgid: (%x,%x) at file pos %d.'
-                  % (self._pos, cfgid[0], cfgid[1], nread))
-        if self._debug_level > 0:
-            print(fd.tell())
-        self.read_hdrseg()
-
-    def read_cfg(self,):
-        cfgid = self.f.read_ui16(1)
-        self.read_cfgseg()
 
     def init_data(self,):
         outd = {'data_vars': {}, 'coords': {},
@@ -337,15 +192,10 @@ class _RdiReader():
         outd['attrs']['rotate_vars'] = ['vel', ]
         # Currently RDI doesn't use IMUs
         outd['attrs']['has_imu'] = 0
-        for nm in data_defs:
-            outd = _idata(outd, nm,
-                          sz=_get_size(nm, self._nens, self.cfg['n_cells']))
+        for nm in defs.data_defs:
+            outd = defs._idata(outd, nm,
+                               sz=defs._get_size(nm, self._nens, self.cfg['n_cells']))
         self.outd = outd
-
-    def mean(self, dat):
-        if self.n_avg == 1:
-            return dat[..., 0]
-        return np.nanmean(dat, axis=-1)
 
     def load_data(self, nens=None):
         if nens is None:
@@ -383,10 +233,10 @@ class _RdiReader():
             # Fix the 'real-time-clock' century
             clock = self.ensemble.rtc[:, :]
             if clock[0, 0] < 100:
-                clock[0, :] += century
+                clock[0, :] += defs.century
             # Copy the ensemble to the dataset.
             for nm in self.vars_read:
-                _get(dat, nm)[..., iens] = self.mean(self.ensemble[nm])
+                defs._get(dat, nm)[..., iens] = self.mean(self.ensemble[nm])
             try:
                 dats = tmlib.date2epoch(
                     tmlib.datetime(*clock[:6, 0],
@@ -401,6 +251,48 @@ class _RdiReader():
         if 'vel_bt' in dat['data_vars']:
             dat['attrs']['rotate_vars'].append('vel_bt')
         return dat
+
+    def print_progress(self,):
+        self.progress = self.f.tell()
+        if self._debug_level > 1:
+            print('  pos %0.0fmb/%0.0fmb\n' %
+                  (self.f.tell() / 1048576., self._filesize / 1048576.))
+        if (self.f.tell() - self.progress) < 1048576:
+            return
+
+    def print_pos(self, byte_offset=-1):
+        """Print the position in the file, used for debugging.
+        """
+        if self._debug_level > 3:
+            if hasattr(self, 'ensemble'):
+                k = self.ensemble.k
+            else:
+                k = 0
+            print('  pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
+                  (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
+
+    def check_offset(self, offset, readbytes):
+        fd = self.f
+        if offset != 4 and self._fixoffset == 0:
+            if self._debug_level >= 1:
+                print('\n  ********************************************\n')
+                if fd.tell() == self._filesize:
+                    print(' EOF reached unexpectedly - discarding this last ensemble\n')
+                else:
+                    print("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
+                          .format(offset, readbytes, self.hdr['nbyte']))
+                    print("""
+                    NOTE - If this appears at the beginning of the file, it may be
+                           a dolfyn problem. Please report this message, with details here:
+                           https://github.com/lkilcher/dolfyn/issues/8
+
+                         - If this appears at the end of the file it means
+                           The file is corrupted and only a partial record
+                           has been read\n
+                    """)
+                print('\n  ********************************************\n')
+            self._fixoffset = offset - 4
+        fd.seek(4 + self._fixoffset, 1)
 
     def read_buffer(self,):
         fd = self.f
@@ -499,6 +391,31 @@ class _RdiReader():
             print("  ###Leaving checkheader.")
         return valid
 
+    def read_hdr(self,):
+        fd = self.f
+        cfgid = list(fd.read_ui8(2))
+        nread = 0
+        if self._debug_level > 2:
+            print(self.f.pos)
+            print('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
+        while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
+            nextbyte = fd.read_ui8(1)
+            pos = fd.tell()
+            nread += 1
+            cfgid[1] = cfgid[0]
+            cfgid[0] = nextbyte
+            if not pos % 1000:
+                print('  Still looking for valid cfgid at file '
+                      'position %d ...' % pos)
+        self._pos = self.f.tell() - 2
+        if nread > 0:
+            print('  Junk found at BOF... skipping %d bytes until\n'
+                  '  cfgid: (%x,%x) at file pos %d.'
+                  % (self._pos, cfgid[0], cfgid[1], nread))
+        if self._debug_level > 0:
+            print(fd.tell())
+        self.read_hdrseg()
+
     def read_hdrseg(self,):
         fd = self.f
         hdr = self.hdr
@@ -510,79 +427,67 @@ class _RdiReader():
         hdr['dat_offsets'] = fd.read_i16(ndat)
         self._nbyte = 4 + ndat * 2
 
-    def print_progress(self,):
-        self.progress = self.f.tell()
-        if self._debug_level > 1:
-            print('  pos %0.0fmb/%0.0fmb\n' %
-                  (self.f.tell() / 1048576., self._filesize / 1048576.))
-        if (self.f.tell() - self.progress) < 1048576:
-            return
-
-    def print_pos(self, byte_offset=-1):
-        """Print the position in the file, used for debugging.
-        """
-        if self._debug_level > 3:
-            if hasattr(self, 'ensemble'):
-                k = self.ensemble.k
-            else:
-                k = 0
-            print('  pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
-                  (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
-
-    def check_offset(self, offset, readbytes):
-        fd = self.f
-        if offset != 4 and self._fixoffset == 0:
-            if self._debug_level >= 1:
-                print('\n  ********************************************\n')
-                if fd.tell() == self._filesize:
-                    print(' EOF reached unexpectedly - discarding this last ensemble\n')
-                else:
-                    print("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
-                          .format(offset, readbytes, self.hdr['nbyte']))
-                    print("""
-                    NOTE - If this appears at the beginning of the file, it may be
-                           a dolfyn problem. Please report this message, with details here:
-                           https://github.com/lkilcher/dolfyn/issues/8
-
-                         - If this appears at the end of the file it means
-                           The file is corrupted and only a partial record
-                           has been read\n
-                    """)
-                print('\n  ********************************************\n')
-            self._fixoffset = offset - 4
-        fd.seek(4 + self._fixoffset, 1)
-
     def read_dat(self, id):
-        function_map = {0: (self.read_fixed, []),   # 0000
-                        128: (self.read_var, []),     # 0080
-                        256: (self.read_vel, []),     # 0100
-                        512: (self.read_corr, []),    # 0200
-                        768: (self.read_amp, []),    # 0300
-                        1024: (self.read_prcnt_gd, []),  # 0400
-                        1280: (self.read_status, []),  # 0500
-                        1536: (self.read_bottom, []),  # 0600
+        function_map = {0: (self.read_fixed, []),   # 0000 1st profile fixed leader
+                        # 0010 2nd profile fixed leader
+                        16: (self.skip_Nbyte, [63]),
+                        # 0080 1st profile variable leader
+                        128: (self.read_var, []),
+                        # 0081 2nd profile variable leader
+                        129: (self.skip_Nbyte, [77]),
+                        # 0100 1st profile velocity
+                        256: (self.read_vel, []),
+                        # 0101 2nd profile velocity
+                        257: (self.skip_Ncol, [8]),
+                        # 0200 1st profile correlation
+                        512: (self.read_corr, []),
+                        # 0201 2nd profile correlation
+                        513: (self.skip_Ncol, [4]),
+                        # 020C Ambient sound profile
+                        524: (self.skip_Nbyte, [4]),
+                        # 0300 1st profile amplitude
+                        768: (self.read_amp, []),
+                        # 0301 2nd profile amplitude
+                        769: (self.skip_Ncol, [4]),
+                        # 0302 Beam 5 Sum of squared velocities
+                        770: (self.skip_Ncol, []),
+                        # 0303 Beam 5 Sum of velocities
+                        771: (self.skip_Ncol, []),
+                        # 0400 1st profile % good
+                        1024: (self.read_prcnt_gd, []),
+                        # 0401 2nd profile pct good
+                        1025: (self.skip_Ncol, [4]),
+                        # 0500 1st profile status
+                        1280: (self.read_status, []),
+                        1281: (self.skip_Ncol, [4]),  # 0501 2nd profile status
+                        1536: (self.read_bottom, []),  # 0600 bottom tracking
+                        1793: (self.skip_Ncol, [4]),  # 0701 number of pings
+                        1794: (self.skip_Ncol, [4]),  # 0702 sum of squared vel
+                        1795: (self.skip_Ncol, [4]),  # 0703 sum of velocities
+                        2560: (self.skip_Ncol, []),  # 0A00 Beam 5 velocity
+                        2816: (self.skip_Ncol, []),  # 0B00 Beam 5 correlation
+                        3072: (self.skip_Ncol, []),  # 0C00 Beam 5 amplitude
+                        3328: (self.skip_Ncol, []),  # 0D00 Beam 5 pct_good
+                        # 3000 Fixed attitude data format for OS-ADCPs
+                        3841: (self.skip_Nbyte, [40]),  # 0F01 Beam 5 leader
                         8192: (self.read_vmdas, []),   # 2000
+                        # 2013 Navigation parameter data
+                        8211: (self.skip_Ncol, [24]),
                         8226: (self.read_winriver2, []),  # 2022
                         8448: (self.read_winriver, [38]),  # 2100
                         8449: (self.read_winriver, [97]),  # 2101
                         8450: (self.read_winriver, [45]),  # 2102
                         8451: (self.read_winriver, [60]),  # 2103
                         8452: (self.read_winriver, [38]),  # 2104
-                        # Loading of these data is currently not implemented:
-                        1793: (self.skip_Ncol, [4]),  # 0701 number of pings
-                        1794: (self.skip_Ncol, [4]),  # 0702 sum of squared vel
-                        1795: (self.skip_Ncol, [4]),  # 0703 sum of velocities
-                        2560: (self.skip_Ncol, []),  # 0A00 Beam 5 velocity
-                        # 0301 Beam 5 Number of good pings
-                        769: (self.skip_Ncol, []),
-                        # 0302 Beam 5 Sum of squared velocities
-                        770: (self.skip_Ncol, []),
-                        # 0303 Beam 5 Sum of velocities
-                        771: (self.skip_Ncol, []),
-                        # 020C Ambient sound profile
-                        524: (self.skip_Nbyte, [4]),
-                        12288: (self.skip_Nbyte, [32]),
+                        # 3200 transformation matrix
+                        12800: (self.skip_Nbyte, [18]),
                         # 3000 Fixed attitude data format for OS-ADCPs
+                        12288: (self.skip_Nbyte, [32]),
+                        16640: (self.skip_Nbyte, [10]),  # 4100 beam 5 range
+                        # 5803 high res bottom track
+                        22531: (self.skip_Ncol, [16]),
+                        # 5804 bottom track range
+                        22532: (self.skip_Nbyte, [12]),
                         }
         # Call the correct function:
         if id in function_map:
@@ -605,6 +510,10 @@ class _RdiReader():
         if self._debug_level >= 1:
             print(self._pos)
         self._nbyte += 2
+
+    def read_cfg(self,):
+        cfgid = self.f.read_ui16(1)
+        self.read_cfgseg()
 
     def read_cfgseg(self,):
         cfgstart = self.f.tell()
@@ -845,10 +754,10 @@ class _RdiReader():
             fd.seek(71 - 45 - 16 - 17, 1)
             self._nbyte = 2 + 68
         else:
-            fd.seek(71 - 45, 1)
+            fd.seek(26, 1)
             self._nbyte = 2 + 68
         if cfg['prog_ver'] >= 5.3:
-            fd.seek(78 - 71, 1)
+            fd.seek(7, 1)  # skip to rangeMsb bytes
             ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
             if cfg['name'] == 'wh-adcp':
@@ -926,7 +835,7 @@ class _RdiReader():
                                    milliseconds=int(gga_time[7:])*100)
             clock = self.ensemble.rtc[:, :]
             if clock[0, 0] < 100:
-                clock[0, :] += century
+                clock[0, :] += defs.century
             ens.time_gps[k] = tmlib.date2epoch(tmlib.datetime(
                 *clock[:3, 0]) + time)[0]
             self.f.seek(1, 1)
@@ -998,7 +907,7 @@ class _RdiReader():
         # Skipping bytes from codes 0340-30FC, commented if needed
         hxid = hex(id)
         if hxid[2:4] == '30':
-            raise Exception("")
+            warnings.warn("Skipping bytes from codes 0340-30FC")
             # I want to count the number of 1s in the middle 4 bits
             # of the 2nd two bytes.
             # 60 is a 0b00111100 mask
@@ -1016,22 +925,22 @@ class _RdiReader():
         dat = self.outd
         print('  Encountered end of file.  Cleaning up data.')
         for nm in self.vars_read:
-            _setd(dat, nm, _get(dat, nm)[..., :iens])
+            defs._setd(dat, nm, defs._get(dat, nm)[..., :iens])
 
     def finalize(self, ):
         """Remove the attributes from the data that were never loaded.
         """
         dat = self.outd
-        for nm in set(data_defs.keys()) - self.vars_read:
-            _pop(dat, nm)
+        for nm in set(defs.data_defs.keys()) - self.vars_read:
+            defs._pop(dat, nm)
         for nm in self.cfg:
             dat['attrs'][nm] = self.cfg[nm]
         dat['attrs']['fs'] = (dat['attrs']['sec_between_ping_groups'] *
                               dat['attrs']['pings_per_ensemble']) ** (-1)
-        for nm in data_defs:
-            shp = data_defs[nm][0]
-            if len(shp) and shp[0] == 'nc' and _in_group(dat, nm):
-                _setd(dat, nm, np.swapaxes(_get(dat, nm), 0, 1))
+        for nm in defs.data_defs:
+            shp = defs.data_defs[nm][0]
+            if len(shp) and shp[0] == 'nc' and defs._in_group(dat, nm):
+                defs._setd(dat, nm, np.swapaxes(defs._get(dat, nm), 0, 1))
 
     def __exit__(self, type, value, traceback):
         self.f.close()
