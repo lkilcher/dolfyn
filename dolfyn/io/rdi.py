@@ -430,7 +430,7 @@ class _RDIReader():
     def read_dat(self, id):
         function_map = {0: (self.read_fixed, []),   # 0000 1st profile fixed leader
                         # 0010 2nd profile fixed leader
-                        16: (self.skip_Nbyte, [63]),
+                        16: (self.read_fixed2, []),
                         # 0080 1st profile variable leader
                         128: (self.read_var, []),
                         # 0081 2nd profile variable leader
@@ -438,13 +438,13 @@ class _RDIReader():
                         # 0100 1st profile velocity
                         256: (self.read_vel, []),
                         # 0101 2nd profile velocity
-                        257: (self.skip_Ncol, [8]),
+                        257: (self.skip_Ncol2, []),
                         # 0103 Waves first leader
                         259: (self.skip_Nbyte, [74]),
                         # 0200 1st profile correlation
                         512: (self.read_corr, []),
                         # 0201 2nd profile correlation
-                        513: (self.skip_Ncol, [4]),
+                        513: (self.skip_Ncol2, []),
                         # 0203 Waves data
                         515: (self.skip_Nbyte, [186]),
                         # 020C Ambient sound profile
@@ -452,7 +452,7 @@ class _RDIReader():
                         # 0300 1st profile amplitude
                         768: (self.read_amp, []),
                         # 0301 2nd profile amplitude
-                        769: (self.skip_Ncol, [4]),
+                        769: (self.skip_Ncol2, []),
                         # 0302 Beam 5 Sum of squared velocities
                         770: (self.skip_Ncol, []),
                         # 0303 Waves last leader
@@ -460,7 +460,7 @@ class _RDIReader():
                         # 0400 1st profile % good
                         1024: (self.read_prcnt_gd, []),
                         # 0401 2nd profile pct good
-                        1025: (self.skip_Ncol, [4]),
+                        1025: (self.skip_Ncol2, []),
                         # 0403 Waves HPR data
                         1027: (self.skip_Nbyte, [6]),
                         # 0500 1st profile status
@@ -524,6 +524,19 @@ class _RDIReader():
             print(self._pos)
         self._nbyte += 2
 
+    def read_fixed2(self):
+        fd = self.f
+        if hasattr(self.cfg, 'n_cells2'):
+            fd.seek(63, 1)
+        else:
+            fd.seek(6, 1)
+            self.cfg['n_beams2'] = fd.read_ui8(1)
+            self.cfg['n_cells2'] = fd.read_ui8(1)
+            fd.seek(55, 1)
+        if self._debug_level >= 1:
+            print(self._pos)
+        self._nbyte = 2 + 63
+
     def read_cfg(self,):
         cfgid = self.f.read_ui16(1)
         self.read_cfgseg()
@@ -579,27 +592,34 @@ class _RDIReader():
 
         if prog_ver0 in [8, 16]:
             if cfg['prog_ver'] >= 8.14:
-                cfg['serialnum'] = fd.read_ui8(8)
+                cfg['cpu_serialnum'] = fd.read_ui8(8)
                 self._nbyte += 8
             if cfg['prog_ver'] >= 8.24:
-                cfg['sysbandwidth'] = fd.read_ui8(2)
+                cfg['bandwidth'] = fd.read_ui8(2)
                 self._nbyte += 2
             if cfg['prog_ver'] >= 16.05:
-                cfg['syspower'] = fd.read_ui8(1)
+                cfg['power_level'] = fd.read_ui8(1)
                 self._nbyte += 1
             if cfg['prog_ver'] >= 16.27:
                 cfg['navigator_basefreqindex'] = fd.read_ui8(1)
-                cfg['remus_serialnum'] = fd.reaadcpd('uint8', 4)
+                cfg['serialnum'] = fd.reaadcpd('uint8', 4)
                 cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
                 self._nbyte += 6
         elif prog_ver0 == 9:
             if cfg['prog_ver'] >= 9.10:
                 cfg['serialnum'] = fd.read_ui8(8)
-                cfg['sysbandwidth'] = fd.read_ui8(2)
+                cfg['bandwidth'] = fd.read_ui8(2)
                 self._nbyte += 10
         elif prog_ver0 in [14, 23]:
             cfg['serialnum'] = fd.read_ui8(8)
             self._nbyte += 8
+
+        if cfg['prog_ver'] >= 55:
+            fd.seek(1, 1)
+            cfg['ping_per_ensemble'] = fd.read_ui16(1)
+            cfg['carrier_freq'] = list(fd.read_ui8(3))
+            self._nbyte += 6
+
         self.configsize = self.f.tell() - cfgstart
 
     def read_var(self,):
@@ -651,41 +671,35 @@ class _RDIReader():
                 ens.rtc[:, k] = fd.read_ui8(7)
                 ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
                 self._nbyte += 23
-        elif cfg['name'] == 'wh-adcp':
-            ens.error_status_wd[k] = fd.read_ui32(1)
-            self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
-            self._nbyte += 4
-            if (np.fix(cfg['prog_ver']) == [8, 16]).any():
-                if cfg['prog_ver'] >= 8.13:
-                    # Added pressure sensor stuff in 8.13
-                    fd.seek(2, 1)
-                    ens.pressure[k] = fd.read_ui32(1)
-                    ens.pressure_std[k] = fd.read_ui32(1)
-                    self._nbyte += 10
-                if cfg['prog_ver'] >= 8.24:
-                    # Spare byte added 8.24
-                    fd.seek(1, 1)
-                    self._nbyte += 1
-                if cfg['prog_ver'] >= 16.05:
-                    # Added more fields with century in clock
-                    cent = fd.read_ui8(1)
-                    ens.rtc[:, k] = fd.read_ui8(7)
-                    ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
-                    self._nbyte += 8
-            elif np.fix(cfg['prog_ver']) == 9:
-                fd.seek(2, 1)
-                ens.pressure[k] = fd.read_ui32(1)
-                ens.pressure_std[k] = fd.read_ui32(1)
-                self._nbyte += 10
-                if cfg['prog_ver'] >= 9.10:  # Spare byte added...
-                    fd.seek(1, 1)
-                    self._nbyte += 1
         elif cfg['name'] == 'os-adcp':
             fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
             self._nbyte += 16
             if cfg['prog_ver'] > 23:
                 fd.seek(2, 1)
                 self._nbyte += 2
+        else:  # cfg['name'] == 'wh-adcp':
+            ens.error_status_wd[k] = fd.read_ui32(1)
+            self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
+            self._nbyte += 4
+            if cfg['prog_ver'] >= 8.13:
+                # Added pressure sensor stuff in 8.13
+                fd.seek(2, 1)
+                ens.pressure[k] = fd.read_ui32(1) / 10  # kPa to dbar
+                ens.pressure_std[k] = fd.read_ui32(1) / 10
+                self._nbyte += 10
+            if cfg['prog_ver'] >= 8.24:
+                # Spare byte added 8.24
+                fd.seek(1, 1)
+                self._nbyte += 1
+            if cfg['prog_ver'] >= 16.05:
+                # Added more fields with century in clock
+                cent = fd.read_ui8(1)
+                ens.rtc[:, k] = fd.read_ui8(7)
+                ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
+                self._nbyte += 8
+            if cfg['prog_ver'] >= 56:
+                fd.seek(1)  # lag near bottom flag
+                self._nbyte += 1
 
     def read_vel(self,):
         ens = self.ensemble
@@ -911,6 +925,10 @@ class _RDIReader():
     def skip_Ncol(self, n_skip=1):
         self.f.seek(n_skip * self.cfg['n_cells'], 1)
         self._nbyte = 2 + n_skip * self.cfg['n_cells']
+
+    def skip_Ncol2(self,):
+        self.f.seek(self.cfg['n_beams2'] * self.cfg['n_cells2'], 1)
+        self._nbyte = 2 + self.cfg['n_beams2'] * self.cfg['n_cells2']
 
     def skip_Nbyte(self, n_skip):
         self.f.seek(n_skip, 1)
