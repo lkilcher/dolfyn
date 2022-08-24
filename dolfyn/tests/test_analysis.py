@@ -27,7 +27,6 @@ def test_do_func(make_data=False):
     dat_vec = adv_setup(tv)
     adat_vec = dat_vec.avg_tool.do_avg(dat_vec.dat1)
     adat_vec = dat_vec.avg_tool.do_var(dat_vec.dat1, adat_vec)
-    adat_vec = dat_vec.avg_tool.do_tke(dat_vec.dat1, adat_vec)
 
     dat_sig = adp_setup(tr)
     adat_sig = dat_sig.avg_tool.do_avg(dat_sig.dat)
@@ -60,12 +59,8 @@ def test_calc_func(make_data=False):
     test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
     test_ds['acov'] = c.calc_acov(dat_vec.dat1.vel)
     test_ds['tke_vec'] = c.calc_tke(dat_vec.dat1.vel)
-    test_ds['stress'] = c.calc_stress(dat_vec.dat1.vel)
-    test_ds['psd'] = c.calc_psd(dat_vec.dat1.vel)
-    test_ds['csd'] = c.calc_csd(dat_vec.dat1.vel)
-
     test_ds_demean['tke_vec'] = c.calc_tke(dat_vec.dat1.vel, detrend=False)
-    test_ds_demean['stress'] = c.calc_stress(dat_vec.dat1.vel, detrend=False)
+    test_ds['psd'] = c.calc_psd(dat_vec.dat1.vel)
 
     # Different lengths
     test_ds_dif['coh_dif'] = c.calc_coh(
@@ -77,8 +72,6 @@ def test_calc_func(make_data=False):
     test_ds_adp['psd_b5'] = c2.calc_psd(
         dat_adp.dat.vel_b5.isel(range_b5=5), window='hamm')
     test_ds_adp['tke_b5'] = c2.calc_tke(dat_adp.dat.vel_b5)
-    test_ds_adp['csd'] = c2.calc_csd(dat_adp.dat.vel.isel(dir=slice(0, 3), range=0),
-                                     freq_units='rad', window='hamm')
 
     if make_data:
         save(test_ds, 'vector_data01_func.nc')
@@ -113,6 +106,9 @@ def test_adv_turbulence(make_data=False):
 
     assert_identical(tdat, avm.calc_turbulence(dat, n_bin=20.0, fs=dat.fs))
 
+    tdat['stress'] = bnr.calc_stress(dat.vel)
+    tdat['stress_detrend'] = bnr.calc_stress(dat.vel, detrend=False)
+    tdat['csd'] = bnr.calc_csd(dat.vel, freq_units='rad', window='hamm')
     tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.velds.U_mag)
     tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.velds.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
