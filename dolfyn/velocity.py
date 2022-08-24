@@ -11,7 +11,7 @@ class Velocity():
     """All ADCP and ADV xarray datasets wrap this base class.
 
     The turbulence-related attributes defined within this class 
-    assume that the  ``'tke_vec'`` and ``'stress'`` data entries are 
+    assume that the  ``'tke_vec'`` and ``'stress_vec'`` data entries are 
     included in the dataset. These are typically calculated using a
     :class:`VelBinner` tool, but the method for calculating these
     variables can depend on the details of the measurement
@@ -350,9 +350,9 @@ class Velocity():
         E_coh = (self.upwp_**2 + self.upvp_**2 + self.vpwp_**2) ** (0.5)
 
         return xr.DataArray(E_coh,
-                            coords={'time': self.ds['stress'].time},
+                            coords={'time': self.ds['stress_vec'].time},
                             dims=['time'],
-                            attrs={'units': self.ds['stress'].units},
+                            attrs={'units': self.ds['stress_vec'].units},
                             name='E_coh')
 
     @property
@@ -397,19 +397,19 @@ class Velocity():
     def upvp_(self,):
         """u'v'bar Reynolds stress
         """
-        return self.ds['stress'].sel(tau="upvp_")
+        return self.ds['stress_vec'].sel(tau="upvp_")
 
     @property
     def upwp_(self,):
         """u'w'bar Reynolds stress
         """
-        return self.ds['stress'].sel(tau="upwp_")
+        return self.ds['stress_vec'].sel(tau="upwp_")
 
     @property
     def vpwp_(self,):
         """v'w'bar Reynolds stress
         """
-        return self.ds['stress'].sel(tau="vpwp_")
+        return self.ds['stress_vec'].sel(tau="vpwp_")
 
     @property
     def upup_(self,):

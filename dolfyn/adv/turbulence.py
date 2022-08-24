@@ -51,7 +51,7 @@ class ADVBinner(VelBinner):
             :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
             :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
 
-          - stress : The Reynolds stresses (each component is
+          - stress_vec : The Reynolds stresses (each component is
             accessible as
             :attr:`upvp_ <dolfyn.velocity.Velocity.upvp_>`,
             :attr:`upwp_ <dolfyn.velocity.Velocity.upwp_>`,
@@ -71,7 +71,7 @@ class ADVBinner(VelBinner):
 
         noise = ds.get('doppler_noise', [0, 0, 0])
         out['tke_vec'] = self.calc_tke(ds['vel'], noise=noise)
-        out['stress'] = self.calc_stress(ds['vel'])
+        out['stress_vec'] = self.calc_stress(ds['vel'])
 
         out['psd'] = self.calc_psd(ds['vel'],
                                    window=window,
@@ -123,7 +123,7 @@ class ADVBinner(VelBinner):
                                   -1, dtype=np.float64
                                   ).astype(np.float32)
 
-        da = xr.DataArray(out, name='stress',
+        da = xr.DataArray(out, name='stress_vec',
                           dims=veldat.dims,
                           attrs={'units': 'm^2/^2'})
         da = da.rename({'dir': 'tau'})
@@ -359,7 +359,7 @@ class ADVBinner(VelBinner):
         dat_avg : xarray.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
           'do_avg'). The spectra (psd) and basic turbulence statistics 
-          ('tke_vec' and 'stress') must already be computed.
+          ('tke_vec' and 'stress_vec') must already be computed.
 
         Notes
         -----
