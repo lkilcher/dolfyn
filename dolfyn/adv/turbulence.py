@@ -132,7 +132,7 @@ class ADVBinner(VelBinner):
         return da
 
     def calc_csd(self, veldat,
-                 freq_units='Hz',
+                 freq_units='rad/s',
                  fs=None,
                  window='hann',
                  n_bin=None,
@@ -183,11 +183,11 @@ class ADVBinner(VelBinner):
             f_key = 'f'
 
         for ip, ipair in enumerate(self._cross_pairs):
-            out[ip] = self._cpsd(veldat[ipair[0]],
-                                 veldat[ipair[1]],
-                                 n_bin=n_bin,
-                                 n_fft=n_fft,
-                                 window=window)
+            out[ip] = self.calc_csd_base(veldat[ipair[0]],
+                                         veldat[ipair[1]],
+                                         n_bin=n_bin,
+                                         n_fft=n_fft,
+                                         window=window)
 
         da = xr.DataArray(out,
                           name='csd',

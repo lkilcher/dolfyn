@@ -346,8 +346,8 @@ def psd(a, nfft, fs, window='hann', step=None):
 
     Returns
     -------
-    cpsd : |np.ndarray|
-      The cross-spectral density of `a` and `b`.
+    psd : |np.ndarray|
+      The power spectral density of `a` and `b`.
 
     Notes
     -----

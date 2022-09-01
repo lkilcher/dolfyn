@@ -534,7 +534,7 @@ class TimeBinner:
                                  window=window, debias=debias,
                                  noise=noise)
 
-        freq = self.calc_freq(self.fs, coh=True)
+        freq = self.calc_freq(self.fs, units='Hz', coh=True)
 
         # Get time from shorter vector
         dims_list, coords_dict = self._new_coords(veldat2)
@@ -610,7 +610,7 @@ class TimeBinner:
             out[slc] = phase_angle(dat1[slc], dat2[slc], n_fft,
                                    window=window)
 
-        freq = self.calc_freq(self.fs, coh=True)
+        freq = self.calc_freq(self.fs, units='Hz', coh=True)
 
         # Get time from shorter vector
         dims_list, coords_dict = self._new_coords(veldat2)
@@ -732,8 +732,7 @@ class TimeBinner:
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
 
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(tmp // 2)
-                                    :int(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(dat2, n_bin=n_bin2)
 
@@ -754,8 +753,8 @@ class TimeBinner:
                           dims=dims_list)
         return da
 
-    def _psd(self, dat, fs=None, window='hann', noise=0,
-             n_bin=None, n_fft=None, n_pad=None, step=None):
+    def calc_psd_base(self, dat, fs=None, window='hann', noise=0,
+                      n_bin=None, n_fft=None, n_pad=None, step=None):
         """Calculate power spectral density of `dat`
 
         Parameters
@@ -782,6 +781,15 @@ class TimeBinner:
           chosen to maximize data use, minimize nens, and have a
           minimum of 50% overlap.).
 
+        Returns
+        -------
+        out : numpy.ndarray
+          The power spectral density of `dat`
+
+        Notes
+        -----
+        PSD's are calculated based on sample rate units
+
         """
         fs = self._parse_fs(fs)
         n_bin = self._parse_nbin(n_bin)
@@ -793,7 +801,6 @@ class TimeBinner:
         dat = self.reshape(dat, n_pad=n_pad)
 
         for slc in slice1d_along_axis(dat.shape, -1):
-            # PSD's are computed in radian units: - set prior to function
             out[slc] = psd(dat[slc], n_fft, fs,
                            window=window, step=step)
         if noise != 0:
@@ -802,8 +809,8 @@ class TimeBinner:
             out[out < 0] = np.min(np.abs(out)) / 100
         return out
 
-    def _cpsd(self, dat1, dat2, fs=None, window='hann',
-              n_fft=None, n_bin=None):
+    def calc_csd_base(self, dat1, dat2, fs=None, window='hann',
+                      n_fft=None, n_bin=None):
         """Calculate the cross power spectral density of `dat`.
 
         Parameters
@@ -815,7 +822,7 @@ class TimeBinner:
           The second (the shorter, if applicable) raw dataArray of which to 
           calculate the cpsd.
         fs : float (optional)
-          The sample rate (Hz).
+          The sample rate (rad/s or Hz).
         window : str
           String indicating the window function to use (default: 'hanning').
         n_fft : int
@@ -829,6 +836,10 @@ class TimeBinner:
         -------
         out : numpy.ndarray
           The cross-spectral density of `dat1` and `dat2`
+
+        Notes
+        -----
+        PSD's are calculated based on sample rate units
 
         Notes
         -----
@@ -855,12 +866,11 @@ class TimeBinner:
         else:
             cross = cpsd_quasisync
         for slc in slice1d_along_axis(out.shape, -1):
-            # PSD's are computed in radian units: - set prior to function
             out[slc] = cross(dat1[slc], dat2[slc], n_fft,
                              fs, window=window)
         return out
 
-    def calc_freq(self, fs=None, units='Hz', n_fft=None, coh=False):
+    def calc_freq(self, fs=None, units='rad/s', n_fft=None, coh=False):
         """Calculate the ordinary or radial frequency vector for the PSDs
 
         Parameters

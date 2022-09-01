@@ -517,7 +517,7 @@ class VelBinner(TimeBinner):
         return da
 
     def calc_psd(self, veldat,
-                 freq_units='Hz',
+                 freq_units='rad/s',
                  fs=None,
                  window='hann',
                  noise=[0, 0, 0],
@@ -585,14 +585,14 @@ class VelBinner(TimeBinner):
             out = np.empty(self._outshape_fft(veldat[:3].shape),
                            dtype=np.float32)
             for idx in range(3):
-                out[idx] = self._psd(veldat[idx], fs=fs, noise=noise[idx],
-                                     window=window, n_bin=n_bin,
-                                     n_pad=n_pad, n_fft=n_fft, step=step)
+                out[idx] = self.calc_psd_base(veldat[idx], fs=fs, noise=noise[idx],
+                                              window=window, n_bin=n_bin,
+                                              n_pad=n_pad, n_fft=n_fft, step=step)
             coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, f_key: freq}
             dims = ['S', time_str, f_key]
         else:
-            out = self._psd(veldat, fs=fs, noise=noise[0], window=window,
-                            n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
+            out = self.calc_psd_base(veldat, fs=fs, noise=noise[0], window=window,
+                                     n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
             coords = {time_str: time, f_key: freq}
             dims = [time_str, f_key]
 
