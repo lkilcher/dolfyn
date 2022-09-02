@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Removed "do_tke" function
 		- Frequency units for calculating power spectral densities are consistently set to rad/s
 		- Made base PSD and CPSD functions public
+		- Renamed variable "stress" to "stress_vec" to stay consistent
 
 ## Version 1.0.2
     - Bugfixes
