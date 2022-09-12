@@ -51,7 +51,7 @@ class ADVBinner(VelBinner):
             :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
             :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
 
-          - stress : The Reynolds stresses (each component is
+          - stress_vec : The Reynolds stresses (each component is
             accessible as
             :attr:`upvp_ <dolfyn.velocity.Velocity.upvp_>`,
             :attr:`upwp_ <dolfyn.velocity.Velocity.upwp_>`,
@@ -71,7 +71,7 @@ class ADVBinner(VelBinner):
 
         noise = ds.get('doppler_noise', [0, 0, 0])
         out['tke_vec'] = self.calc_tke(ds['vel'], noise=noise)
-        out['stress'] = self.calc_stress(ds['vel'])
+        out['stress_vec'] = self.calc_stress(ds['vel'])
 
         out['psd'] = self.calc_psd(ds['vel'],
                                    window=window,
@@ -86,6 +86,119 @@ class ADVBinner(VelBinner):
         out.attrs['n_fft_coh'] = self.n_fft_coh
 
         return out
+
+    def calc_stress(self, veldat, detrend=True):
+        """Calculate the stresses (cross-covariances of u,v,w)
+
+        Parameters
+        ----------
+        veldat : xr.DataArray
+            Velocity data array from ADV data. The last dimension is 
+            assumed to be time.
+        detrend : bool (default: True)
+            detrend the velocity data (True), or simply de-mean it
+            (False), prior to computing stress. Note: the psd routines
+            use detrend, so if you want to have the same amount of
+            variance here as there use ``detrend=True``.
+
+        Returns
+        -------
+        ds : xarray.DataArray
+
+        """
+        time = self.mean(veldat.time.values)
+        vel = veldat.values
+
+        # Will error for ADCP 4-beam
+        out = np.empty(self._outshape(vel.shape)[:-1],
+                       dtype=np.float32)
+
+        if detrend:
+            vel = self.detrend(vel)
+        else:
+            vel = self.demean(vel)
+
+        for idx, p in enumerate(self._cross_pairs):
+            out[idx] = np.nanmean(vel[p[0]] * vel[p[1]],
+                                  -1, dtype=np.float64
+                                  ).astype(np.float32)
+
+        da = xr.DataArray(out, name='stress_vec',
+                          dims=veldat.dims,
+                          attrs={'units': 'm^2/^2'})
+        da = da.rename({'dir': 'tau'})
+        da = da.assign_coords({'tau': ["upvp_", "upwp_", "vpwp_"],
+                               'time': time})
+        return da
+
+    def calc_csd(self, veldat,
+                 freq_units='rad/s',
+                 fs=None,
+                 window='hann',
+                 n_bin=None,
+                 n_fft_coh=None):
+        """Calculate the cross-spectral density of velocity components.
+
+        Parameters
+        ----------
+        veldat   : xarray.DataArray
+          The raw 3D velocity data.
+        freq_units : string
+          Frequency units of the returned spectra in either Hz or rad/s 
+          (`f` or :math:`\\omega`)
+        fs : float (optional)
+          The sample rate (default: from the binner).
+        window : string or array
+          Specify the window function.
+        n_bin : int (optional)
+          The bin-size (default: from the binner).
+        n_fft_coh : int (optional)
+          The fft size (default: n_fft_coh from the binner).
+
+        Returns
+        -------
+        csd : xarray.DataArray (3, M, N_FFT)
+          The first-dimension of the cross-spectrum is the three
+          different cross-spectra: 'uv', 'uw', 'vw'.
+
+        """
+        fs = self._parse_fs(fs)
+        n_fft = self._parse_nfft_coh(n_fft_coh)
+        time = self.mean(veldat.time.values)
+        veldat = veldat.values
+
+        out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft),
+                       dtype='complex')
+
+        # Create frequency vector, also checks whether using f or omega
+        coh_freq = self.calc_freq(units=freq_units, coh=True)
+        if 'rad' in freq_units:
+            fs = 2*np.pi*fs
+            freq_units = 'rad/s'
+            units = 'm^2/s/rad'
+            f_key = 'omega'
+        else:
+            freq_units = 'Hz'
+            units = 'm^2/s^2/Hz'
+            f_key = 'f'
+
+        for ip, ipair in enumerate(self._cross_pairs):
+            out[ip] = self.calc_csd_base(veldat[ipair[0]],
+                                         veldat[ipair[1]],
+                                         n_bin=n_bin,
+                                         n_fft=n_fft,
+                                         window=window)
+
+        da = xr.DataArray(out,
+                          name='csd',
+                          coords={'C': ['Cxy', 'Cxz', 'Cyz'],
+                                  'time': time,
+                                  f_key: coh_freq},
+                          dims=['C', 'time', f_key],
+                          attrs={'units': units, 'n_fft_coh': n_fft})
+        da[f_key].attrs['units'] = freq_units
+
+        return da
 
     def calc_epsilon_LT83(self, psd, U_mag, omega_range=[6.28, 12.57]):
         """
@@ -145,7 +258,7 @@ class ADVBinner(VelBinner):
         Parameters
         ----------
         vel_raw : xarray.DataArray
-          The raw velocity data (with dimension time) upon 
+          The raw velocity data (1D dimension time) upon 
           which to perform the SF technique. 
         U_mag : xarray.DataArray
           The bin-averaged horizontal velocity (from dataset shortcut)
@@ -163,6 +276,8 @@ class ADVBinner(VelBinner):
 
         """
         veldat = vel_raw.values
+        if len(veldat.shape) > 1:
+            raise Exception("Function input should be a 1D velocity vector")
 
         fs = self._parse_fs(fs)
         if freq_rng[1] > fs:
@@ -244,7 +359,7 @@ class ADVBinner(VelBinner):
         dat_avg : xarray.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
           'do_avg'). The spectra (psd) and basic turbulence statistics 
-          ('tke_vec' and 'stress') must already be computed.
+          ('tke_vec' and 'stress_vec') must already be computed.
 
         Notes
         -----
@@ -319,8 +434,8 @@ class ADVBinner(VelBinner):
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
         L_int = U_mag.values / fs * scale
 
-        return xr.DataArray(L_int, name='L_int', 
-                            coords={'dir':a_cov.dir, 'time':a_cov.time}, 
+        return xr.DataArray(L_int, name='L_int',
+                            coords={'dir': a_cov.dir, 'time': a_cov.time},
                             attrs={'units': 'm'})
 
 
