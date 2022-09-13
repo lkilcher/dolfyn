@@ -1,11 +1,14 @@
 import numpy as np
 import xarray as xr
-from .. import time as tmlib
 import warnings
 from os.path import getsize
+from pathlib import Path
+import logging
+
 from .rdi_lib import bin_reader
 from . import rdi_defs as defs
 from .base import _find_userdata, _create_dataset, _abspath
+from .. import time as tmlib
 from ..rotate.rdi import _calc_beam_orientmat, _calc_orientmat
 from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
@@ -32,6 +35,15 @@ def read_rdi(fname, userdata=None, nens=None, debug=0):
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
     with _RDIReader(fname, debug_level=debug) as ldr:
+        if debug > 0:
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
+            filepath = Path(fname)
+            logfile = filepath.with_suffix('.log')
+            logging.basicConfig(filename=str(logfile),
+                                filemode='w',
+                                level=logging.NOTSET,
+                                format='%(name)s - %(levelname)s - %(message)s')
         dat = ldr.load_data(nens=nens)
 
     # Read in userdata
@@ -181,7 +193,7 @@ class _RDIReader():
         self.vars_read = defs._variable_setlist(['time'])
 
         if self._debug_level > 0:
-            print('  %d pings estimated in this file' % self._npings)
+            logging.info('  %d pings estimated in this file' % self._npings)
 
     def init_data(self,):
         outd = {'data_vars': {}, 'coords': {},
@@ -214,8 +226,9 @@ class _RDIReader():
             self._nens = nens
             self._ens_range = (0, nens)
         if self._debug_level > 0:
-            print('  taking data from pings %d - %d' % tuple(self._ens_range))
-            print('  %d ensembles will be produced.' % self._nens)
+            logging.info('  taking data from pings %d - %d' %
+                         tuple(self._ens_range))
+            logging.info('  %d ensembles will be produced.' % self._nens)
         self.init_data()
         dat = self.outd
         dat['coords']['range'] = (self.cfg['bin1_dist_m'] +
@@ -255,33 +268,31 @@ class _RDIReader():
     def print_progress(self,):
         self.progress = self.f.tell()
         if self._debug_level > 1:
-            print('  pos %0.0fmb/%0.0fmb\n' %
-                  (self.f.tell() / 1048576., self._filesize / 1048576.))
-        if (self.f.tell() - self.progress) < 1048576:
-            return
+            logging.debug('  pos %0.0fmb/%0.0fmb\n' %
+                          (self.f.tell() / 1048576., self._filesize / 1048576.))
 
     def print_pos(self, byte_offset=-1):
         """Print the position in the file, used for debugging.
         """
-        if self._debug_level > 3:
+        if self._debug_level > 2:
             if hasattr(self, 'ensemble'):
                 k = self.ensemble.k
             else:
                 k = 0
-            print('  pos: %d, pos_: %d, nbyte: %d, k: %d, byte_offset: %d' %
-                  (self.f.tell(), self._pos, self._nbyte, k, byte_offset))
+            logging.debug(
+                f'  pos: {self.f.tell()}, pos_: {self._pos}, nbyte: {self._nbyte}, k: {k}, byte_offset: {byte_offset}')
 
     def check_offset(self, offset, readbytes):
         fd = self.f
         if offset != 4 and self._fixoffset == 0:
-            if self._debug_level >= 1:
-                print('\n  ********************************************\n')
+            if self._debug_level > 0:
                 if fd.tell() == self._filesize:
-                    print(' EOF reached unexpectedly - discarding this last ensemble\n')
+                    logging.error(
+                        ' EOF reached unexpectedly - discarding this last ensemble\n')
                 else:
-                    print("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
-                          .format(offset, readbytes, self.hdr['nbyte']))
-                    print("""
+                    logging.debug("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
+                                  .format(offset, readbytes, self.hdr['nbyte']))
+                    logging.warning("""
                     NOTE - If this appears at the beginning of the file, it may be
                            a dolfyn problem. Please report this message, with details here:
                            https://github.com/lkilcher/dolfyn/issues/8
@@ -290,7 +301,6 @@ class _RDIReader():
                            The file is corrupted and only a partial record
                            has been read\n
                     """)
-                print('\n  ********************************************\n')
             self._fixoffset = offset - 4
         fd.seek(4 + self._fixoffset, 1)
 
@@ -316,15 +326,16 @@ class _RDIReader():
                     oset = hdr['dat_offsets'][n + 1] - byte_offset
                     if oset != 0:
                         if self._debug_level > 0:
-                            print('  %s: Adjust location by %d\n' % (id, oset))
+                            logging.debug(
+                                '  %s: Adjust location by %d\n' % (id, oset))
                         fd.seek(oset, 1)
                     byte_offset = hdr['dat_offsets'][n + 1]
                 else:
                     if hdr['nbyte'] - 2 != byte_offset:
                         if not self._winrivprob:
                             if self._debug_level > 0:
-                                print('  {:d}: Adjust location by {:d}\n'
-                                      .format(id, hdr['nbyte'] - 2 - byte_offset))
+                                logging.debug('  {:d}: Adjust location by {:d}\n'
+                                              .format(id, hdr['nbyte'] - 2 - byte_offset))
                             self.f.seek(hdr['nbyte'] - 2 - byte_offset, 1)
                     byte_offset = hdr['nbyte'] - 2
             readbytes = fd.tell() - startpos
@@ -342,7 +353,7 @@ class _RDIReader():
         search_cnt = 0
         fd = self.f
         if self._debug_level > 3:
-            print('  -->In search_buffer...')
+            logging.info('  -->In search_buffer...')
         while (search_cnt < self._search_num and
                ((id1[0] != 127 or id1[1] != 127) or
                 not self.checkheader())):
@@ -356,13 +367,13 @@ class _RDIReader():
                 .format(search_cnt, id1))
         elif search_cnt > 0:
             if self._debug_level > 0:
-                print('  WARNING: Searched {} bytes to find next '
-                      'valid ensemble start [{:x}, {:x}]'.format(search_cnt,
-                                                                 *id1))
+                logging.info('  Searched {} bytes to find next '
+                             'valid ensemble start [{:x}, {:x}]'.format(search_cnt,
+                                                                        *id1))
 
     def checkheader(self,):
         if self._debug_level > 1:
-            print("  ###In checkheader.")
+            logging.info("  ###In checkheader.")
         fd = self.f
         valid = 0
         # print(self.f.pos)
@@ -388,7 +399,7 @@ class _RDIReader():
         else:
             fd.seek(-2, 1)
         if self._debug_level > 1:
-            print("  ###Leaving checkheader.")
+            logging.info("  ###Leaving checkheader.")
         return valid
 
     def read_hdr(self,):
@@ -396,8 +407,8 @@ class _RDIReader():
         cfgid = list(fd.read_ui8(2))
         nread = 0
         if self._debug_level > 2:
-            print(self.f.pos)
-            print('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
+            logging.debug(f"position: {self.f.pos}")
+            logging.debug('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
         while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
             nextbyte = fd.read_ui8(1)
             pos = fd.tell()
@@ -412,16 +423,12 @@ class _RDIReader():
             print('  Junk found at BOF... skipping %d bytes until\n'
                   '  cfgid: (%x,%x) at file pos %d.'
                   % (self._pos, cfgid[0], cfgid[1], nread))
-        if self._debug_level > 0:
-            print(fd.tell())
         self.read_hdrseg()
 
     def read_hdrseg(self,):
         fd = self.f
         hdr = self.hdr
         hdr['nbyte'] = fd.read_i16(1)
-        if self._debug_level > 2:
-            print(fd.tell())
         fd.seek(1, 1)
         ndat = fd.read_i8(1)
         hdr['dat_offsets'] = fd.read_i16(ndat)
@@ -504,13 +511,13 @@ class _RDIReader():
                         }
         # Call the correct function:
         if id in function_map:
-            if self._debug_level >= 2:
-                print('  Reading code {}...'.format(hex(id)), end='')
+            if self._debug_level > 1:
+                logging.info('  Reading code {}...'.format(hex(id)))
             retval = function_map.get(id)[0](*function_map[id][1])
             if retval:
                 return retval
-            if self._debug_level >= 2:
-                print('    success!')
+            if self._debug_level > 1:
+                logging.info('    success!')
         else:
             self.read_nocode(id)
 
@@ -520,8 +527,6 @@ class _RDIReader():
             self._nbyte = self.configsize
         else:
             self.read_cfgseg()
-        if self._debug_level >= 1:
-            print(self._pos)
         self._nbyte += 2
 
     def read_fixed2(self):
@@ -533,8 +538,6 @@ class _RDIReader():
             self.cfg['n_beams2'] = fd.read_ui8(1)
             self.cfg['n_cells2'] = fd.read_ui8(1)
             fd.seek(55, 1)
-        if self._debug_level >= 1:
-            print(self._pos)
         self._nbyte = 2 + 63
 
     def read_cfg(self,):
@@ -800,8 +803,8 @@ class _RDIReader():
         self.cfg['sourceprog'] = 'VMDAS'
         ens = self.ensemble
         k = ens.k
-        if self._source != 1 and self._debug_level >= 1:
-            print('  \n***** Apparently a VMDAS file \n\n')
+        if self._source != 1 and self._debug_level > 0:
+            logging.info('  \n***** Apparently a VMDAS file \n\n')
         self._source = 1
         self.vars_read += ['time_gps',
                            'latitude_gps',
@@ -839,10 +842,10 @@ class _RDIReader():
         self.cfg['sourceprog'] = 'WINRIVER'
         ens = self.ensemble
         k = ens.k
-        if self._source != 3 and self._debug_level >= 1:
-            warnings.warn('  \n***** Apparently a WINRIVER2 file\n'
-                          '*****    WARNING: Raw NMEA data '
-                          'handler not yet fully implemented\n\n')
+        if self._source != 3 and self._debug_level > 0:
+            logging.warning('  \n***** Apparently a WINRIVER2 file\n'
+                            '***** Raw NMEA data '
+                            'handler not yet fully implemented\n\n')
         self._source = 3
         spid = self.f.read_ui16(1)
         if spid == 104:
@@ -852,8 +855,8 @@ class _RDIReader():
             _ = self.f.reads(1)
             if start_string != '$GPGGA':
                 if self._debug_level > 1:
-                    warnings.warn(f'Invalid GPGGA string found in ensemble {k},'
-                                  ' skipping...')
+                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                    ' skipping...')
                 return 'FAIL'
             gga_time = str(self.f.reads(9))
             time = tmlib.timedelta(hours=int(gga_time[0:2]),
@@ -872,8 +875,8 @@ class _RDIReader():
                 ens.latitude_gps[k] *= -1
             elif tcNS != 'N':
                 if self._debug_level > 1:
-                    warnings.warn(f'Invalid GPGGA string found in ensemble {k},'
-                                  ' skipping...')
+                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                    ' skipping...')
                 return 'FAIL'
             ens.longitude_gps[k] = self.f.read_f64(1)
             tcEW = self.f.reads(1)
@@ -881,22 +884,22 @@ class _RDIReader():
                 ens.longitude_gps[k] *= -1
             elif tcEW != 'E':
                 if self._debug_level > 1:
-                    warnings.warn(f'Invalid GPGGA string found in ensemble {k},'
-                                  ' skipping...')
+                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                    ' skipping...')
                 return 'FAIL'
             ucqual, n_sat = self.f.read_ui8(2)
             tmp = self.f.read_float(2)
             ens.hdop, ens.altitude = tmp
             if self.f.reads(1) != 'M':
                 if self._debug_level > 1:
-                    warnings.warn(f'Invalid GPGGA string found in ensemble {k},'
-                                  ' skipping...')
+                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                    ' skipping...')
                 return 'FAIL'
             ggeoid_sep = self.f.read_float(1)
             if self.f.reads(1) != 'M':
                 if self._debug_level > 1:
-                    warnings.warn(f'Invalid GPGGA string found in ensemble {k},'
-                                  ' skipping...')
+                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                    ' skipping...')
                 return 'FAIL'
             gage = self.f.read_float(1)
             gstation_id = self.f.read_ui16(1)
@@ -905,17 +908,17 @@ class _RDIReader():
             # 2 reserved + 2 checksum
             self.vars_read += ['longitude_gps', 'latitude_gps', 'time_gps']
             self._nbyte = self.f.tell() - startpos + 2
-            if self._debug_level >= 5:
-                print('')
-                print(sz, ens.longitude_gps[k])
+            if self._debug_level > 2:
+                logging.debug(
+                    f"size: {sz}, ensemble longitude: {ens.longitude_gps[k]}")
 
     def read_winriver(self, nbt):
         self._winrivprob = True
         self.cfg['sourceprog'] = 'WINRIVER'
         if self._source not in [2, 3]:
-            if self._debug_level >= 1:
-                warnings.warn('\n  ***** Apparently a WINRIVER file - '
-                              'Raw NMEA data handler not yet implemented\n\n')
+            if self._debug_level > 0:
+                logging.warning('\n  ***** Apparently a WINRIVER file - '
+                                'Raw NMEA data handler not yet implemented\n\n')
             self._source = 2
         startpos = self.f.tell()
         sz = self.f.read_ui16(1)
@@ -950,7 +953,8 @@ class _RDIReader():
             dfac = bin(int(hxid[3], 0) & 3).count('1')
             self.skip_Nbyte(12 * nflds * dfac)
         else:
-            print('  Unrecognized ID code: %0.4X\n' % id)
+            if self._debug_level > 0:
+                logging.warning('  Unrecognized ID code: %0.4X\n' % id)
 
     def remove_end(self, iens):
         dat = self.outd
