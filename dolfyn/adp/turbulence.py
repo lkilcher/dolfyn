@@ -105,7 +105,7 @@ class ADPBinner(VelBinner):
         """
         return self.dudz ** 2 + self.dvdz ** 2
 
-    def calc_stress_4beam(self, ds, beam_angle=None, orientation=None):
+    def calc_stress_4beam(self, ds, doppler_noise, beam_angle=None, orientation=None):
         """
         Calculate the stresses from the difference in the beam variances.
         Assumes zero mean pitch and roll
@@ -128,17 +128,25 @@ class ADPBinner(VelBinner):
         # Nortek Signature x-axis points from beam 3 to 1
         #                  y-axis points from beam 2 to 4
         if 'Signature' in ds.inst_model:
-            b = [2, 0, 3, 1]  # this order for down-facing Norteks
-        elif 'RDI' in ds.inst_make:
-            b = [0, 1, 2, 3]  # this order is correct given the note above
+            beams = [2, 0, 3, 1]  # this order for down-facing Norteks
+        elif 'TRDI' in ds.inst_make:
+            # this order is correct given the note above (for down-looking)
+            beams = [0, 1, 2, 3]
+
+        # beam_vel prime squared bar
+        bp2_ = np.empty((5, len(ds.range), len(beam_vel)))*np.nan
+        for i in beams:
+            bp2_[i] = np.nanvar(self.reshape(beam_vel[i]), axis=-1)
+
+        # Remove doppler_noise
+        # TODO Remove based on velocity
+        bp2_ -= doppler_noise
 
         denm = 4 * np.sin(np.deg2rad(b_angle)) * np.cos(np.deg2rad(b_angle))
-        upwp_ = (np.nanvar(self.reshape(beam_vel[b[0]]), axis=-1) -
-                 np.nanvar(self.reshape(beam_vel[b[1]]), axis=-1)) / denm
-        vpwp_ = (np.nanvar(self.reshape(beam_vel[b[2]]), axis=-1) -
-                 np.nanvar(self.reshape(beam_vel[b[3]]), axis=-1)) / denm
+        upwp_ = (bp2_[0] - bp2_[1]) / denm
+        vpwp_ = (bp2_[2] - bp2_[3]) / denm
 
-        if getattr(ds, 'orientation').lower() == 'up' or orientation == 'up':
+        if getattr(ds, 'orientation').lower() == 'up' or orientation == 'up' or orientation == 'AHRS':
             if 'RDI' in ds.inst_make:
                 # When the ADCP is 'up', the u and w velocities need to be
                 # multiplied by -1 (equivalent to adding pi to the roll).
@@ -150,7 +158,7 @@ class ADPBinner(VelBinner):
             elif 'Signature' in ds.inst_model:
                 # Similarly for Nortek roll axis
                 upwp_ *= -1
-        elif getattr(ds, 'orientation') == 'AHRS' and not orientation:
+        else:
             warnings.warn('Orientation not taken into accout. Assuming '
                           'instrument is facing down')
 
@@ -172,7 +180,7 @@ class ADPBinner(VelBinner):
 
         return stress
 
-    def calc_stress_5beam(self, ds, beam_angle=25):
+    def calc_stress_5beam(self, ds, doppler_noise, beam_angle=25):
         """
         Calculate the stresses from the difference in the beam variances.
         Assumes small-angle approximation is applicable
@@ -217,6 +225,10 @@ class ADPBinner(VelBinner):
         bp2_ = np.empty((5, len(ds.range), len(phi2)))*np.nan
         for i in beams:
             bp2_[i] = np.nanvar(self.reshape(beam_vel[i]), axis=-1)
+
+        # Remove doppler_noise
+        # TODO Remove based on velocity
+        bp2_ -= doppler_noise
 
         th = np.deg2rad(b_angle)
         sin = np.sin
