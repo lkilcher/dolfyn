@@ -148,7 +148,7 @@ def _check_inst2head_rotmat(advo):
     return True
 
 
-def _earth2principal(advo, reverse=False):
+def _earth2principal(advo, reverse=False, rotate_vars=None):
     """
     Rotate data in an ADV dataset to/from principal axes. Principal
     heading must be within the dataset.
@@ -180,6 +180,12 @@ def _earth2principal(advo, reverse=False):
         cs_now = 'earth'
         cs_new = 'principal'
 
+    if rotate_vars is None:
+        if 'rotate_vars' in advo.attrs:
+            rotate_vars = advo.rotate_vars
+        else:
+            rotate_vars = ['vel']
+
     cs = advo.coord_sys.lower()
     if cs == cs_new:
         print('Data is already in the %s coordinate system' % cs_new)
@@ -196,7 +202,7 @@ def _earth2principal(advo, reverse=False):
                        [0, 0, 1]], dtype=np.float32)
 
     # Perform the rotation:
-    for nm in advo.rotate_vars:
+    for nm in rotate_vars:
         dat = advo[nm].values
         dat[:2] = np.einsum('ij,j...->i...', rotmat[:2, :2], dat[:2])
         advo[nm].values = dat.copy()

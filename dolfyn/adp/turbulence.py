@@ -1,6 +1,9 @@
+from re import M
 import numpy as np
 import xarray as xr
 import warnings
+from ..rotate import rdi, signature
+from ..rotate.vector import _earth2principal
 from ..velocity import VelBinner
 #import matplotlib.pyplot as plt
 
@@ -105,7 +108,30 @@ class ADPBinner(VelBinner):
         """
         return self.dudz ** 2 + self.dvdz ** 2
 
-    def calc_stress_4beam(self, ds, doppler_noise, beam_angle=None, orientation=None):
+    def _stress_rotations(self, ds_avg, stress_matrix):
+        # Create dummy dataset to handle rotations
+        ds_rot = type(ds_avg)()
+        ds_rot.attrs = ds_avg.attrs
+        ds_rot = ds_rot.assign_coords(ds_avg.coords)
+        ds_rot['orientmat'] = ds_avg.orientmat
+
+        ds_rot['stress_matrix'] = stress_matrix
+
+        # Rotate into coordinate system of binned dataset
+        if ds_rot.coord_sys != 'inst':
+            if 'rdi' in ds_avg.inst_make.lower():
+                func = rdi._inst2earth
+            elif 'signature' in ds_avg.inst_model.lower():
+                func = signature._inst2earth
+            # rotate to earth
+            ds_rot = func(ds_rot, rotate_vars=('stress_matrix',), force=True)
+        # rotate to principal
+        if ds_rot.coord_sys == 'principal':
+            ds_rot = _earth2principal(ds_rot, rotate_vars='stress_matrix')
+
+        return ds_rot
+
+    def calc_stress_4beam(self, ds, ds_avg, doppler_noise=[0, 0, 0, 0], beam_angle=25, detrend=True):
         """
         Calculate the stresses from the difference in the beam variances.
         Assumes zero mean pitch and roll
@@ -114,73 +140,79 @@ class ADPBinner(VelBinner):
         "Measurements of Reynolds stress profiles in unstratified tidal flow"
 
         """
+        if 'beam' in ds_avg.coord_sys:
+            raise Exception(
+                'Binned data should be in "inst", "earth", or "principal" coordinates.')
         if 'beam' not in ds.coord_sys:
-            raise Exception("Data must be in 'beam' coordinate system")
+            warnings.warn(
+                "Raw data must be in 'beam' coordinate system. Rotating raw data into beam coordinates")
+            ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
         beam_vel = ds['vel'].values
 
-        # Note: Stacey defines the beams incorrectly for Workhorse ADCPs.
+        # Note: Stacey defines the beams for down-looking Workhorse ADCPs.
         #       According to the workhorse coordinate transformation
         #       documentation, the instrument's:
         #                        x-axis points from beam 1 to 2, and
         #                        y-axis points from beam 4 to 3.
         # Nortek Signature x-axis points from beam 3 to 1
         #                  y-axis points from beam 2 to 4
-        if 'Signature' in ds.inst_model:
-            beams = [2, 0, 3, 1]  # this order for down-facing Norteks
-        elif 'TRDI' in ds.inst_make:
-            # this order is correct given the note above (for down-looking)
-            beams = [0, 1, 2, 3]
+        if 'TRDI' in ds.inst_make:
+            if 'down' in ds.orientation.lower():
+                # this order is correct given the note above
+                beams = [0, 1, 2, 3]  # for down-facing RDIs
+            else:
+                beams = [0, 1, 3, 2]  # for up-facing RDIs
 
-        # beam_vel prime squared bar
-        bp2_ = np.empty((5, len(ds.range), len(beam_vel)))*np.nan
-        for i in beams:
-            bp2_[i] = np.nanvar(self.reshape(beam_vel[i]), axis=-1)
+        # For Nortek Signatures
+        elif 'Signature' in ds.inst_model:
+            if 'down' in ds.orientation.lower():
+                beams = [2, 0, 3, 1]  # for down-facing Norteks
+            else:
+                # for up-facing or AHRS-equipped Norteks
+                beams = [0, 2, 3, 1]
+
+        # Calculate along-beam velocity prime squared bar
+        bp2_ = np.empty((4, len(ds.range), len(ds_avg.time)))*np.nan
+        for i, beam in enumerate(beams):
+            bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
         # TODO Remove based on velocity
-        bp2_ -= doppler_noise
+        bp2_ -= np.array(doppler_noise)[:, None, None]
 
         denm = 4 * np.sin(np.deg2rad(b_angle)) * np.cos(np.deg2rad(b_angle))
         upwp_ = (bp2_[0] - bp2_[1]) / denm
         vpwp_ = (bp2_[2] - bp2_[3]) / denm
 
-        if getattr(ds, 'orientation').lower() == 'up' or orientation == 'up' or orientation == 'AHRS':
-            if 'RDI' in ds.inst_make:
-                # When the ADCP is 'up', the u and w velocities need to be
-                # multiplied by -1 (equivalent to adding pi to the roll).
-                # See the coordinate transformation documentation for more info.
-                #
-                # The uw component has two minus signs, but the vw
-                # component only has one, therefore:
-                vpwp_ *= -1
-            elif 'Signature' in ds.inst_model:
-                # Similarly for Nortek roll axis
-                upwp_ *= -1
-        else:
-            warnings.warn('Orientation not taken into accout. Assuming '
-                          'instrument is facing down')
+        # Set other stress variables as None for tensor rotation
+        upvp_ = np.empty(upwp_.shape)
+        upup_ = np.empty(upwp_.shape)
+        vpvp_ = np.empty(upwp_.shape)
+        wpwp_ = np.empty(upwp_.shape)
 
-        #!!!
-        # - Stress rotations should be **tensor rotations**.
-        # - These should be handled by rotate2.
-        warnings.warn("The calc_stress function does not yet "
-                      "properly handle the coordinate system.")
+        stress_matrix = xr.DataArray(np.stack([[upup_, upvp_, upwp_],
+                                               [upvp_, vpvp_, vpwp_],
+                                               [upwp_, vpwp_, wpwp_]]),
+                                     dims=['inst', 'dirIMU',
+                                           'range', 'time'],  # use dummy dimensions
+                                     attrs={'units': 'm^2/^2'})
 
-        upvp_ = np.empty(upwp_[0].shape)*np.nan  # Set as None
+        # Tensor rotation
+        ds_rot = self._stress_rotations(ds_avg, stress_matrix)
 
-        time = self._mean(ds.vel.time.values)
-        stress = xr.DataArray(np.stack([upvp_, upwp_, vpwp_]), name='stress_vec',
-                              coords={'tke': ["upvp_", "upwp_", "vpwp_"],
-                                      'range': ds.range,
-                                      'time': time},
-                              attrs={'units': 'm^2/^2',
-                                     'rotate_vars': 1})
+        ds_avg['stress_vec'] = xr.DataArray(np.stack([ds_rot.stress_matrix[0, 1]*np.nan,
+                                                      ds_rot.stress_matrix[0, 2],
+                                                      ds_rot.stress_matrix[1, 2]]),
+                                            coords={'tau': ["upvp_", "upwp_", "vpwp_"],
+                                                    'range': ds_avg.range,
+                                                    'time': ds_avg.time},
+                                            attrs={'units': 'm^2/^2'})
 
-        return stress
+        # Function works inplace
 
-    def calc_stress_5beam(self, ds, doppler_noise, beam_angle=25):
+    def calc_stress_5beam(self, ds, ds_avg, doppler_noise=[0, 0, 0, 0, 0], beam_angle=25, detrend=True):
         """
         Calculate the stresses from the difference in the beam variances.
         Assumes small-angle approximation is applicable
@@ -193,10 +225,15 @@ class ADPBinner(VelBinner):
         Doppler current profilers", JTech, vol34, pp1267-1284.
 
         """
-        if 'beam' not in ds.coord_sys:
-            raise Exception("Data must be in 'beam' coordinate system")
         if 'vel_b5' not in ds.data_vars:
             raise Exception("Must have 5th beam data")
+        if 'beam' in ds_avg.coord_sys:
+            raise Exception(
+                'Binned data should be in "inst", "earth", or "principal" coordinates.')
+        if 'beam' not in ds.coord_sys:
+            warnings.warn(
+                "Raw data must be in 'beam' coordinate system. Rotating raw data into beam coordinates")
+            ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
         beam_vel = np.concatenate((ds['vel'].values,
@@ -221,22 +258,25 @@ class ADPBinner(VelBinner):
                 # for up-facing or AHRS-equipped Norteks
                 beams = [0, 2, 3, 1, 4]
 
-        # beam_vel prime squared bar
+        # Calculate along-beam velocity prime squared bar
         bp2_ = np.empty((5, len(ds.range), len(phi2)))*np.nan
-        for i in beams:
-            bp2_[i] = np.nanvar(self.reshape(beam_vel[i]), axis=-1)
+        for i, beam in enumerate(beams):
+            bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
         # TODO Remove based on velocity
-        bp2_ -= doppler_noise
+        bp2_ -= np.array(doppler_noise)[:, None, None]
+
+        # Guerra Thomson calculate u'v' bar from from the covariance of u' and v'
+        ds.velds.rotate2('inst')
+        vel = self.detrend(ds.vel.values)
+        upvp_ = np.nanmean(vel[0] * vel[1], axis=-1, dtype=np.float64).astype(np.float32)
+        ds.velds.rotate2('beam')
 
         th = np.deg2rad(b_angle)
         sin = np.sin
         cos = np.cos
         denm = -4 * sin(th)**6 * cos(th)**2
-
-        # calc'd from covariance of up and vp
-        upvp_ = np.empty(bp2_[0].shape)*np.nan
 
         upup_ = (-2*sin(th)**4*cos(th)**2*(bp2_[1]+bp2_[0]-2*cos(th)**2*bp2_[4]) +
                  2*sin(th)**5*cos(th)*phi3*(bp2_[1]-bp2_[0])) / denm
@@ -260,25 +300,32 @@ class ADPBinner(VelBinner):
                  4*sin(th)**4*cos(th)*2*phi2*bp2_[4] +
                  4*sin(th)**6*cos(th)*2*phi3*upvp_) / denm
 
-        # - Stress rotations should be **tensor rotations**.
-        # - These should be handled by rotate2.
-        warnings.warn("The calc_stress function does not yet "
-                      "properly handle the coordinate system.")
+        stress_matrix = xr.DataArray(np.stack([[upup_, upvp_, upwp_],
+                                               [upvp_, vpvp_, vpwp_],
+                                               [upwp_, vpwp_, wpwp_]]),
+                                     dims=['inst', 'dirIMU',
+                                           'range', 'time'],  # use dummy dimensions
+                                     attrs={'units': 'm^2/^2'})
 
-        time = self.mean(ds.time.values)
-        tke = xr.DataArray(np.stack([upup_, vpvp_, wpwp_]), name='tke_vec',
-                           coords={'tke': ["upup_", "vpvp_", "wpwp_"],
-                                   'range': ds.range,
-                                   'time': time},
-                           attrs={'units': 'm^2/^2',
-                                  'rotate_vars': 1})
-        stress = xr.DataArray(np.stack([upvp_, upwp_, vpwp_]), name='stress_vec',
-                              coords={'tke': ["upvp_", "upwp_", "vpwp_"],
-                                      'range': ds.range,
-                                      'time': time},
-                              attrs={'units': 'm^2/^2',
-                                     'rotate_vars': 1})
-        return tke, stress
+        # Tensor rotation
+        ds_rot = self._stress_rotations(ds_avg, stress_matrix)
+
+        # Reorganize stress matrix into readable fashion
+        ds_avg['tke_vec'] = xr.DataArray(np.stack([ds_rot.stress_matrix[0, 0],
+                                                   ds_rot.stress_matrix[1, 1],
+                                                   ds_rot.stress_matrix[2, 2]]),
+                                         coords={'tke': ["upup_", "vpvp_", "wpwp_"],
+                                                 'range': ds_avg.range,
+                                                 'time': ds_avg.time},
+                                         attrs={'units': 'm^2/^2'})
+        ds_avg['stress_vec'] = xr.DataArray(np.stack([ds_rot.stress_matrix[0, 1],
+                                                      ds_rot.stress_matrix[0, 2],
+                                                      ds_rot.stress_matrix[1, 2]]),
+                                            coords={'tau': ["upvp_", "upwp_", "vpwp_"],
+                                                    'range': ds_avg.range,
+                                                    'time': ds_avg.time},
+                                            attrs={'units': 'm^2/^2'})
+        # Function works in place
 
     def calc_ustar_fit(self, ds, upwp_, d_inds=slice(None), H=None):
         """

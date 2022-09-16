@@ -3,8 +3,7 @@ from .vector import _earth2principal
 from .base import _beam2inst, _set_coords
 
 
-def _inst2earth(adcpo, reverse=False,
-                fixed_orientation=False, force=False):
+def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     """
     Rotate velocities from the instrument to earth coordinates.
 
@@ -15,14 +14,17 @@ def _inst2earth(adcpo, reverse=False,
 
     Parameters
     ----------
-    adpo : The ADP object containing the data.
+    adcpo : xarray.Dataset
+        The ADCP object containing the data.
 
     reverse : bool (default: False)
-           If True, this function performs the inverse rotation
-           (earth->inst).
-    fixed_orientation : bool (default: False)
-        When true, take the average orientation and apply it over the
-        whole record.
+        If True, this function performs the inverse rotation
+        (earth->inst).
+
+    rotate_vars : iterable
+        The list of variables to rotate. By default this is taken from
+        adcpo.props['rotate_vars'].
+
     force : bool (default: False)
         When true do not check which coordinate system the data is in
         prior to performing this rotation.
@@ -46,6 +48,12 @@ def _inst2earth(adcpo, reverse=False,
     else:
         rmat = _calc_orientmat(adcpo)
 
+    if rotate_vars is None:
+        if 'rotate_vars' in adcpo.attrs:
+            rotate_vars = adcpo.rotate_vars
+        else:
+            rotate_vars = ['vel']
+
     # rollaxis gives transpose of orientation matrix.
     # The 'rotation matrix' is the transpose of the 'orientation matrix'
     # NOTE: the double 'rollaxis' within this function, and here, has
@@ -60,7 +68,7 @@ def _inst2earth(adcpo, reverse=False,
         sumstr = 'ijk,j...k->i...k'
 
     # Only operate on the first 3-components, b/c the 4th is err_vel
-    for nm in adcpo.rotate_vars:
+    for nm in rotate_vars:
         dat = adcpo[nm].values
         dat[:3] = np.einsum(sumstr, rotmat, dat[:3])
         adcpo[nm].values = dat.copy()

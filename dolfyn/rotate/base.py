@@ -23,7 +23,7 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
     return np.abs(det(rotmat) - 1) < thresh
 
 
-def _set_coords(ds, ref_frame, forced=False):
+def _set_coords(ds, ref_frame):
     """
     Checks the current reference frame and adjusts xarray coords/dims 
     as necessary.
@@ -34,7 +34,7 @@ def _set_coords(ds, ref_frame, forced=False):
 
     XYZ = ['X', 'Y', 'Z']
     ENU = ['E', 'N', 'U']
-    beam = list(range(1, ds['vel'].shape[0]+1))
+    beam = ds.beam.values
     principal = ['streamwise', 'x-stream', 'vert']
 
     # check make/model
@@ -58,9 +58,6 @@ def _set_coords(ds, ref_frame, forced=False):
               'principal': princ}
     orientIMU = {'beam': XYZ, 'inst': XYZ, 'ship': XYZ, 'earth': ENU,
                  'principal': principal}
-
-    if forced:
-        ref_frame += '-forced'
 
     # update 'orient' and 'orientIMU' dimensions
     ds['dir'] = orient[ref_frame]
@@ -120,10 +117,7 @@ def _beam2inst(dat, reverse=False, force=False):
     for ky in rotate_vars:
         dat[ky].values = np.einsum('ij,j...->i...', rotmat, dat[ky].values)
 
-    if force:
-        dat = _set_coords(dat, cs, forced=True)
-    else:
-        dat = _set_coords(dat, cs)
+    dat = _set_coords(dat, cs)
 
     return dat
 
