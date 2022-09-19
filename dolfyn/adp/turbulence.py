@@ -1,4 +1,3 @@
-from re import M
 import numpy as np
 import xarray as xr
 import warnings
@@ -105,6 +104,30 @@ class ADPBinner(VelBinner):
         """
         return self.dudz ** 2 + self.dvdz ** 2
 
+    def calc_ustar_fit(self, ds_avg, d_inds=slice(None), H=None):
+        """
+        Approximate friction velocity from shear stress
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+        d_inds :
+            depth indices to use
+        H : int
+            water depth
+
+        """
+        if not H:
+            H = self.mean(ds_avg.depth.values)
+        z = ds_avg['range'].values
+        upwp_ = ds_avg['stress_vec'].sel(tau='upwp_').values
+
+        sign = np.nanmean(np.sign(upwp_[d_inds, :]), axis=0)
+        ustar = np.nanmean(sign * upwp_[d_inds, :] /
+                           (1 - z[d_inds, None] / H[None, :]), axis=0) ** 0.5
+
+        return ustar
+
     def _stress_rotations(self, ds_avg, stress_matrix):
         # Create dummy dataset to handle rotations
         ds_rot = type(ds_avg)()
@@ -129,13 +152,31 @@ class ADPBinner(VelBinner):
 
         return ds_rot
 
-    def calc_stress_4beam(self, ds, ds_avg, noise=0, beam_angle=25, detrend=True):
-        """
-        Calculate the stresses from the difference in the beam variances.
+    def calc_stress_4beam(self, ds, ds_avg, noise=0, beam_angle=25):
+        """Calculate the stresses from the difference in the beam variances.
         Assumes zero mean pitch and roll
 
-        Stacey, Monosmith and Burau, (1999) JGR [104]
-        "Measurements of Reynolds stress profiles in unstratified tidal flow"
+        Parameters
+        ----------
+        ds (xarray.Dataset):
+          Raw dataset in beam coordinates
+        ds_avg (xarray.Dataset):
+          Binned dataset in final coordinate reference frame
+        noise (int or xarray.DataArray):
+          Doppler noise level
+        beam_angle (int, default=25):
+          ADCP beam angle
+
+        Returns
+        -------
+        None :
+          Operates inplace. Adds `tke_vec` and `stress_vec` to 'ds_avg'
+
+        Notes
+        -----
+        Stacey, Mark T., Stephen G. Monismith, and Jon R. Burau. "Measurements 
+        of Reynolds stress profiles in unstratified tidal flow." Journal of 
+        Geophysical Research: Oceans 104.C5 (1999): 10933-10949.
 
         """
         if 'beam' in ds_avg.coord_sys:
@@ -143,7 +184,8 @@ class ADPBinner(VelBinner):
                 'Binned data should be in "inst", "earth", or "principal" coordinates.')
         if 'beam' not in ds.coord_sys:
             warnings.warn(
-                "Raw data must be in 'beam' coordinate system. Rotating raw data into beam coordinates")
+                "Raw data must be in 'beam' coordinate system. \
+                    Rotating raw data into beam coordinates")
             ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
@@ -177,7 +219,6 @@ class ADPBinner(VelBinner):
             bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
-        # TODO Remove based on velocity
         bp2_ -= noise**2
 
         denm = 4 * np.sin(np.deg2rad(b_angle)) * np.cos(np.deg2rad(b_angle))
@@ -210,17 +251,35 @@ class ADPBinner(VelBinner):
 
         # Function works inplace
 
-    def calc_stress_5beam(self, ds, ds_avg, noise=0, beam_angle=25, detrend=True):
-        """
-        Calculate the stresses from the difference in the beam variances.
+    def calc_stress_5beam(self, ds, ds_avg, noise=0, beam_angle=25):
+        """Calculate the stresses from the difference in the beam variances.
         Assumes small-angle approximation is applicable
 
-        Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic 
-        energy estimates from various ADCP beam configurations: Theory." J. of 
+        Parameters
+        ----------
+        ds (xarray.Dataset):
+          Raw dataset in beam coordinates
+        ds_avg (xarray.Dataset):
+          Binned dataset in final coordinate reference frame
+        noise (int or xarray.DataArray):
+          Doppler noise level
+        beam_angle (int, default=25):
+          ADCP beam angle
+
+        Returns
+        -------
+        None :
+          Operates inplace. Adds `tke_vec` and `stress_vec` to 'ds_avg'
+
+        Notes
+        -----
+        Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic
+        energy estimates from various ADCP beam configurations: Theory." J. of
         Phys. Ocean (2007): 1-35.
 
-        Guerra, Thomson (2017) "Turbulence measurements from five-beam acoustic
-        Doppler current profilers", JTech, vol34, pp1267-1284.
+        Guerra, Maricarmen, and Jim Thomson. "Turbulence measurements from 
+        five-beam acoustic Doppler current profilers." Journal of Atmospheric 
+        and Oceanic Technology 34.6 (2017): 1267-1284.
 
         """
         if 'vel_b5' not in ds.data_vars:
@@ -230,7 +289,8 @@ class ADPBinner(VelBinner):
                 'Binned data should be in "inst", "earth", or "principal" coordinates.')
         if 'beam' not in ds.coord_sys:
             warnings.warn(
-                "Raw data must be in 'beam' coordinate system. Rotating raw data into beam coordinates")
+                "Raw data must be in 'beam' coordinate system. \
+                Rotating raw data into beam coordinates")
             ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
@@ -262,7 +322,6 @@ class ADPBinner(VelBinner):
             bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
-        # TODO Remove based on velocity
         bp2_ -= noise**2
 
         # Guerra Thomson calculate u'v' bar from from the covariance of u' and v'
@@ -326,29 +385,136 @@ class ADPBinner(VelBinner):
                                             attrs={'units': 'm^2/^2'})
         # Function works in place
 
-    def calc_ustar_fit(self, ds, upwp_, d_inds=slice(None), H=None):
-        """
-        Approximate friction velocity from shear stress
+    def calc_doppler_noise(self, psd):
+        """Calculate bias due to Doppler noise from the spectral noise floor
 
         Parameters
         ----------
-        ds : xarray.Dataset
-        d_inds : 
-            depth indices to use
-        H : int
-            water depth
+        psd (xarray.DataArray): 
+            Power spectral density with dimensions of frequency (rad/s) and time
+
+        Returns
+        -------
+        noise_level (xarray.DataArray): 
+              Doppler noise level in units of m/s
+
+        Notes
+        -----
+        Approximates bias from
+
+        .. :math: \\sigma^{2}_{noise} = N x f_{c}
+
+        where :math: `\\sigma_{noise}` is the bias due to Doppler noise,
+        `N` is the constant variance or spectral density, and `f_{c}`
+        is the characteristic frequency.
+
+        The characteristic frequency is then found as 
+
+        .. :math: f_{c} = 0.8 * (f_{s}/2)
+
+        where `f_{s}/2` is the Nyquist frequency.
+
+
+        Richard, Jean-Baptiste, et al. "Method for identification of Doppler noise 
+        levels in turbulent flow measurements dedicated to tidal energy." International 
+        Journal of Marine Energy 3 (2013): 52-64.
+
+        Thiébaut, Maxime, et al. "Investigating the flow dynamics and turbulence at a 
+        tidal-stream energy site in a highly energetic estuary." Renewable Energy 195 
+        (2022): 252-262.
 
         """
-        if not H:
-            H = self._mean(ds.d_range.values)
-        z = ds['range'].values
-        upwp_ = upwp_.values
+        # Characteristic frequency set to 80% of Nyquist frequency
+        fc = 0.8 * (self.fs/2)
+        omega_range = slice(2*np.pi*fc, 2*np.pi*self.fs)
+        N2 = psd.sel(omega=omega_range) * psd.omega.sel(omega=omega_range)
+        noise_level = np.sqrt(N2.mean(dim='omega'))
 
-        sign = np.nanmean(np.sign(upwp_[d_inds, :]), axis=0)
-        ustar = np.nanmean(sign * upwp_[d_inds, :] /
-                           (1 - z[d_inds, None] / H[None, :]), axis=0) ** 0.5
+        out = xr.DataArray(noise_level, name='noise_level',
+                           dims=['time'],
+                           attrs={'units': 'm/s',
+                                  'description': 'Doppler noise level calculated \
+                                                    from PSD white noise'})
+        return out
 
-        return ustar
+    def calc_tke_dissipation(self, psd, U_mag, noise_level, omega_range=[6.28, 12.57]):
+        """Calculate the dissipation rate from the PSD
+
+        Parameters
+        ----------
+        psd : xarray.DataArray (...,time,f)
+          The psd [m^2/s/rad] with frequency vector 'omega' [rad/s]
+        U_mag : xarray.DataArray (...,time)
+          The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
+        omega_range : iterable(2)
+          The range over which to integrate/average the spectrum.
+
+        Returns
+        -------
+        epsilon : xarray.DataArray (...,n_time)
+          dataArray of the dissipation rate
+
+        Notes
+        -----
+        This uses the `standard` formula for dissipation:
+
+        .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3} + N
+
+        where :math:`\\alpha = 0.5` (1.5 for all three velocity
+        components), `k` is wavenumber, `S(k)` is the turbulent
+        kinetic energy spectrum, and `N' is the doppler noise level
+        associated with the TKE spectrum.
+
+        With :math:`k \\rightarrow \\omega / U`, then -- to preserve variance --
+        :math:`S(k) = U S(\\omega)`, and so this becomes:
+
+        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3} + N
+
+        LT83 : Lumley and Terray, "Kinematics of turbulence convected
+        by a random wave field". JPO, 1983, vol13, pp2000-2007.
+
+        """
+        omega = psd.omega
+        psd -= noise_level
+
+        idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
+        idx = idx[0]
+
+        a = 0.5
+        out = (psd.isel(omega=idx) *
+               omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
+
+        out = xr.DataArray(out, name='dissipation_rate',
+                           attrs={'units': 'm^2/s^3',
+                                  'description': 'Turbulent kinetic energy \
+                                                  dissipation rate'})
+        return out
+
+    def calc_tke_production(self, ds_avg):
+        """Calculate turbulent kinetic energy production rate
+
+        Parameters
+        ----------
+        ds_avg (xarray.Dataset): 
+          Binned dataset containing `tke_vec` and `stress_vec`
+
+        Returns
+        -------
+        out (xarray_Dataset):
+          Production rate with single dimension `time`
+
+        """
+
+        P = -(ds_avg['stress_vec'].sel(tau='upwp_') * self.dudz +
+              ds_avg['stress_vec'].sel(tau='vpwp_') * self.dvdz +
+              ds_avg['tke_vec'].sel(tau='wpwp_') * self.dwdz)
+
+        out = xr.DataArray(P, name='production_rate',
+                           dims=['time'],
+                           attrs={'units': 'm^2/s^3',
+                                  'description': 'Turbulent kinetic energy \
+                                                  production rate'})
+        return out
 
     # def calc_epsilon_SFz(self, vel_raw, vel_avg, r_range=[0.1, 5]):
     #     """
@@ -418,7 +584,6 @@ class ADPBinner(VelBinner):
 
     #     # find best fit line y = mx + b (aka D(z,r) = A*r^2/3 + N) to solve
     #     # epsilon for each depth and ensemble
-    #     # only analyze r on "flat" part of curve (select r values to estimate slope)
     #     plt.figure()
     #     for idx in range(vel_avg.shape[-1]):  # for each ensemble
     #         for i in range(D.shape[1], D.shape[0]):  # for depth cells
@@ -445,7 +610,7 @@ class ADPBinner(VelBinner):
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann', doppler_noise=0):
     """
-    Functional version of `ADVBinner` that computes a suite of turbulence 
+    Functional version of `ADVBinner` that computes a suite of turbulence
     statistics for the input dataset, and returns a `binned` data object.
 
     Parameters
