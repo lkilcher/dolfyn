@@ -22,23 +22,20 @@ class ADPBinner(VelBinner):
     """A class for calculating turbulence statistics from ADCP data
     """
 
-    def __call___(self, ds, diff_func='centered', out_type=None,
-                  window='hann', doppler_noise=[0, 0, 0, 0, 0]):
+    def __call___(self, ds, diff_func='centered', window='hann', doppler_noise=0):
         self.nm = ds
         self.diff_style = diff_func
 
         out = type(ds)()
         out = self.do_avg(ds, out)
 
-        out['doppler_noise'] = xr.DataArray(
-            doppler_noise, coords={'beam': ['1', '2', '3', '4', '5']}, dims='beam')
+        if hasattr(ds, 'vel_b5'):
+            out['auto_spectra_b5'] = self.calc_psd(ds['vel_b5'].isel(range=5),
+                                                   window=window,
+                                                   freq_units='rad/s',
+                                                   noise=doppler_noise)
 
-        # out['auto_spectra_b5'] = self.calc_psd(ds['vel_b5'].isel(range=5),
-        #                                        window=window,
-        #                                        freq_units='rad/s',
-        #                                        noise=doppler_noise)
-
-        # out['tke_b5'] = self.calc_tke(ds['vel_b5'], noise=doppler_noise)
+            out['tke_b5'] = self.calc_tke(ds['vel_b5'], noise=doppler_noise)
 
         out.attrs['n_bin'] = self.n_bin
         out.attrs['n_fft'] = self.n_fft
@@ -113,9 +110,10 @@ class ADPBinner(VelBinner):
         ds_rot = type(ds_avg)()
         ds_rot.attrs = ds_avg.attrs
         ds_rot = ds_rot.assign_coords(ds_avg.coords)
-        ds_rot['orientmat'] = ds_avg.orientmat
 
+        # Add Reynolds stress tensor and orientation matrix
         ds_rot['stress_matrix'] = stress_matrix
+        ds_rot['orientmat'] = ds_avg.orientmat
 
         # Rotate into coordinate system of binned dataset
         if ds_rot.coord_sys != 'inst':
@@ -131,7 +129,7 @@ class ADPBinner(VelBinner):
 
         return ds_rot
 
-    def calc_stress_4beam(self, ds, ds_avg, doppler_noise=[0, 0, 0, 0], beam_angle=25, detrend=True):
+    def calc_stress_4beam(self, ds, ds_avg, noise=0, beam_angle=25, detrend=True):
         """
         Calculate the stresses from the difference in the beam variances.
         Assumes zero mean pitch and roll
@@ -180,7 +178,7 @@ class ADPBinner(VelBinner):
 
         # Remove doppler_noise
         # TODO Remove based on velocity
-        bp2_ -= np.array(doppler_noise)[:, None, None]
+        bp2_ -= noise**2
 
         denm = 4 * np.sin(np.deg2rad(b_angle)) * np.cos(np.deg2rad(b_angle))
         upwp_ = (bp2_[0] - bp2_[1]) / denm
@@ -212,7 +210,7 @@ class ADPBinner(VelBinner):
 
         # Function works inplace
 
-    def calc_stress_5beam(self, ds, ds_avg, doppler_noise=[0, 0, 0, 0, 0], beam_angle=25, detrend=True):
+    def calc_stress_5beam(self, ds, ds_avg, noise=0, beam_angle=25, detrend=True):
         """
         Calculate the stresses from the difference in the beam variances.
         Assumes small-angle approximation is applicable
@@ -265,12 +263,13 @@ class ADPBinner(VelBinner):
 
         # Remove doppler_noise
         # TODO Remove based on velocity
-        bp2_ -= np.array(doppler_noise)[:, None, None]
+        bp2_ -= noise**2
 
         # Guerra Thomson calculate u'v' bar from from the covariance of u' and v'
         ds.velds.rotate2('inst')
         vel = self.detrend(ds.vel.values)
-        upvp_ = np.nanmean(vel[0] * vel[1], axis=-1, dtype=np.float64).astype(np.float32)
+        upvp_ = np.nanmean(vel[0] * vel[1], axis=-1,
+                           dtype=np.float64).astype(np.float32)
         ds.velds.rotate2('beam')
 
         th = np.deg2rad(b_angle)
@@ -442,3 +441,53 @@ class ADPBinner(VelBinner):
     #                         dims=vel_avg.dims,
     #                         attrs={'units': 'm^2/s^3',
     #                                'method': 'structure function'})
+
+
+def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann', doppler_noise=0):
+    """
+    Functional version of `ADVBinner` that computes a suite of turbulence 
+    statistics for the input dataset, and returns a `binned` data object.
+
+    Parameters
+    ----------
+    ds_raw : xarray.Dataset
+      The raw adv datset to `bin`, average and compute
+      turbulence statistics of.
+    omega_range_epsilon : iterable(2)
+      The frequency range (low, high) over which to estimate the
+      dissipation rate `epsilon`, in units of [rad/s].
+    window : 1, None, 'hann'
+      The window to use for calculating power spectral densities
+
+    Returns
+    -------
+    ds : xarray.Dataset
+      Returns an 'binned' (i.e. 'averaged') data object. All
+      fields (variables) of the input data object are averaged in n_bin
+      chunks. This object also computes the following items over
+      those chunks:
+
+      - tke_vec : The energy in each component, each components is
+        alternatively accessible as:
+        :attr:`upup_ <dolfyn.velocity.Velocity.upup_>`,
+        :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
+        :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
+
+      - stress : The Reynolds stresses, each component is
+        alternatively accessible as:
+        :attr:`upwp_ <dolfyn.data.velocity.Velocity.upwp_>`,
+        :attr:`vpwp_ <dolfyn.data.velocity.Velocity.vpwp_>`,
+        :attr:`upvp_ <dolfyn.data.velocity.Velocity.upvp_>`)
+
+      - U_std : The standard deviation of the horizontal
+        velocity `U_mag`.
+
+      - psd : DataArray containing the spectra of the velocity
+        in radial frequency units. The data-array contains:
+        - vel : the velocity spectra array (m^2/s/rad))
+        - omega : the radial frequncy (rad/s)
+
+    """
+    calculator = ADPBinner(n_bin, fs, n_fft=n_fft, doppler_noise=doppler_noise)
+
+    return calculator(ds_raw, freq_units=freq_units, window=window)
