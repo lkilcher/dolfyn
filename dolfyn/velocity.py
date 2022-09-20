@@ -936,7 +936,7 @@ class VelBinner(TimeBinner):
         return da
 
     def calc_psd(self, veldat,
-                 freq_units='rad/s',
+                 freq_units='Hz',
                  fs=None,
                  window='hann',
                  noise=[0, 0, 0],
@@ -991,11 +991,9 @@ class VelBinner(TimeBinner):
             fs = 2*np.pi*fs
             freq_units = 'rad/s'
             units = 'm^2/s/rad'
-            f_key = 'omega'
         else:
             freq_units = 'Hz'
             units = 'm^2/s^2/Hz'
-            f_key = 'f'
 
         # Spectra, if input is full velocity or a single array
         if len(veldat.shape) == 2:
@@ -1007,19 +1005,19 @@ class VelBinner(TimeBinner):
                 out[idx] = self.calc_psd_base(veldat[idx], fs=fs, noise=noise[idx],
                                               window=window, n_bin=n_bin,
                                               n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, f_key: freq}
-            dims = ['S', time_str, f_key]
+            coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, 'freq': freq}
+            dims = ['S', time_str, 'freq']
         else:
             out = self.calc_psd_base(veldat, fs=fs, noise=noise[0], window=window,
                                      n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {time_str: time, f_key: freq}
-            dims = [time_str, f_key]
+            coords = {time_str: time, 'freq': freq}
+            dims = [time_str, 'freq']
 
         da = xr.DataArray(out,
                           name='psd',
                           coords=coords,
                           dims=dims,
                           attrs={'units': units, 'n_fft': n_fft})
-        da[f_key].attrs['units'] = freq_units
+        da['freq'].attrs['units'] = freq_units
 
         return da

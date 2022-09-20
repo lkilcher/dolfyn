@@ -132,7 +132,7 @@ class ADVBinner(VelBinner):
         return da
 
     def calc_csd(self, veldat,
-                 freq_units='rad/s',
+                 freq_units='Hz',
                  fs=None,
                  window='hann',
                  n_bin=None,
@@ -176,11 +176,9 @@ class ADVBinner(VelBinner):
             fs = 2*np.pi*fs
             freq_units = 'rad/s'
             units = 'm^2/s/rad'
-            f_key = 'omega'
         else:
             freq_units = 'Hz'
             units = 'm^2/s^2/Hz'
-            f_key = 'f'
 
         for ip, ipair in enumerate(self._cross_pairs):
             out[ip] = self.calc_csd_base(veldat[ipair[0]],
@@ -193,25 +191,25 @@ class ADVBinner(VelBinner):
                           name='csd',
                           coords={'C': ['Cxy', 'Cxz', 'Cyz'],
                                   'time': time,
-                                  f_key: coh_freq},
-                          dims=['C', 'time', f_key],
+                                  'freq': coh_freq},
+                          dims=['C', 'time', 'freq'],
                           attrs={'units': units, 'n_fft_coh': n_fft})
-        da[f_key].attrs['units'] = freq_units
+        da['freq'].attrs['units'] = freq_units
 
         return da
 
-    def calc_epsilon_LT83(self, psd, U_mag, omega_range=[6.28, 12.57]):
-        """
-        Calculate the dissipation rate from the PSD
+    def calc_epsilon_LT83(self, psd, U_mag, f_range=[6.28, 12.57]):
+        """Calculate the dissipation rate from the PSD
 
         Parameters
         ----------
-        psd : xarray.DataArray (...,n_time,n_f)
-          The psd [m^2/s/rad] with frequency vector 'omega' [rad/s]
-        U_mag : |np.ndarray| (...,n_time)
+        psd : xarray.DataArray (...,time,f)
+          The power spectral density
+        U_mag : xarray.DataArray (...,time)
           The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
-        omega_range : iterable(2)
-          The range over which to integrate/average the spectrum.
+        f_range : iterable(2)
+          The range over which to integrate/average the spectrum, in units 
+          of the psd frequency vector (Hz or rad/s)
 
         Returns
         -------
@@ -222,29 +220,39 @@ class ADVBinner(VelBinner):
         -----
         This uses the `standard` formula for dissipation:
 
-        .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3}
+        .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3} + N
 
         where :math:`\\alpha = 0.5` (1.5 for all three velocity
-        components), `k` is wavenumber and `S(k)` is the turbulent
-        kinetic energy spectrum.
+        components), `k` is wavenumber, `S(k)` is the turbulent
+        kinetic energy spectrum, and `N' is the doppler noise level
+        associated with the TKE spectrum.
 
-        With :math:`k \\rightarrow \\omega / U`, then -- to preserve variance -- 
+        With :math:`k \\rightarrow \\omega / U`, then -- to preserve variance --
         :math:`S(k) = U S(\\omega)`, and so this becomes:
 
-        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3}
+        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3} + N
+
+        With :math:`k \\rightarrow (2\\pi f) / U`, then
+
+        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} f^{-5/3} (U/(2*\\pi))^{2/3} + N
 
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
 
         """
-        omega = psd.omega
+        freq = psd.freq
 
-        idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
+        idx = np.where((f_range[0] < freq) & (freq < f_range[1]))
         idx = idx[0]
 
+        if freq.units == 'Hz':
+            U = U_mag/(2*np.pi)
+        else:
+            U = U_mag
+
         a = 0.5
-        out = (psd.isel(omega=idx) *
-               omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
+        out = (psd.isel(freq=idx) *
+               freq.isel(freq=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U
 
         out = xr.DataArray(out, name='dissipation_rate',
                            attrs={'units': 'm^2/s^3',
@@ -346,7 +354,7 @@ class ADVBinner(VelBinner):
         return out.reshape(I_tke.shape) * \
             (2 * np.pi) ** (-0.5) * I_tke ** (2 / 3)
 
-    def calc_epsilon_TE01(self, dat_raw, dat_avg, omega_range=[6.28, 12.57]):
+    def calc_epsilon_TE01(self, dat_raw, dat_avg, f_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate according to TE01.
 
@@ -373,24 +381,24 @@ class ADVBinner(VelBinner):
         I_tke = dat_avg.velds.I_tke.values
         theta = np.angle(dat_avg.velds.U.values) - \
             self._up_angle(dat_raw.velds.U.values)
-        omega = dat_avg.psd.omega.values
+        freq = dat_avg['psd'].freq.values
 
         # Calculate constants
         alpha = 1.5
         intgrl = self._calc_epsTE01_int(I_tke, theta)
 
         # Index data to be used
-        inds = (omega_range[0] < omega) & (omega < omega_range[1])
+        inds = (f_range[0] < freq) & (freq < f_range[1])
         psd = dat_avg.psd[..., inds].values
-        omega = omega[inds].reshape([1] * (dat_avg.psd.ndim - 2) + [sum(inds)])
+        freq = freq[inds].reshape([1] * (dat_avg.psd.ndim - 2) + [sum(inds)])
 
         # Estimate values
         # u & v components (equation 6)
-        out = (np.nanmean((psd[0] + psd[1]) * omega**(5/3), -1) /
+        out = (np.nanmean((psd[0] + psd[1]) * freq**(5/3), -1) /
                (21/55 * alpha * intgrl))**(3/2) / U_mag
 
         # Add w component
-        out += (np.nanmean(psd[2] * omega**(5/3), -1) /
+        out += (np.nanmean(psd[2] * freq**(5/3), -1) /
                 (12/55 * alpha * intgrl))**(3/2) / U_mag
 
         # Average the two estimates

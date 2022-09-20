@@ -128,6 +128,67 @@ class ADPBinner(VelBinner):
 
         return ustar
 
+    def calc_doppler_noise(self, psd, pct_fN=0.8):
+        """Calculate bias due to Doppler noise from the spectral noise floor
+
+        Parameters
+        ----------
+        psd (xarray.DataArray): 
+            Power spectral density with dimensions of frequency and time
+        pct_fN (float):
+            Percent of Nyquist frequency to calculate characeristic frequency
+
+        Returns
+        -------
+        noise_level (xarray.DataArray): 
+              Doppler noise level in units of m/s
+
+        Notes
+        -----
+        Approximates bias from
+
+        .. :math: \\sigma^{2}_{noise} = N x f_{c}
+
+        where :math: `\\sigma_{noise}` is the bias due to Doppler noise,
+        `N` is the constant variance or spectral density, and `f_{c}`
+        is the characteristic frequency.
+
+        The characteristic frequency is then found as 
+
+        .. :math: f_{c} = pct_fN * (f_{s}/2)
+
+        where `f_{s}/2` is the Nyquist frequency.
+
+
+        Richard, Jean-Baptiste, et al. "Method for identification of Doppler noise 
+        levels in turbulent flow measurements dedicated to tidal energy." International 
+        Journal of Marine Energy 3 (2013): 52-64.
+
+        Thiébaut, Maxime, et al. "Investigating the flow dynamics and turbulence at a 
+        tidal-stream energy site in a highly energetic estuary." Renewable Energy 195 
+        (2022): 252-262.
+
+        """
+        # Characteristic frequency set to 80% of Nyquist frequency
+        fc = pct_fN * (self.fs/2)
+
+        # Get units right
+        if psd.freq.units == "Hz":
+            f_range = slice(fc, self.fs)
+        else:
+            f_range = slice(2*np.pi*fc, 2*np.pi*self.fs)
+
+        # Noise floor
+        N2 = psd.sel(freq=f_range) * psd.freq.sel(freq=f_range)
+        noise_level = np.sqrt(N2.mean(dim='freq'))
+
+        out = xr.DataArray(noise_level.values, name='noise_level',
+                           dims=['time'],
+                           attrs={'units': 'm/s',
+                                  'description': 'Doppler noise level calculated \
+                                                    from PSD white noise'})
+        return out
+
     def _stress_rotations(self, ds_avg, stress_matrix):
         # Create dummy dataset to handle rotations
         ds_rot = type(ds_avg)()
@@ -219,6 +280,8 @@ class ADPBinner(VelBinner):
             bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
+        if type(noise) == type(ds_avg.vel):
+            noise = noise.values
         bp2_ -= noise**2
 
         denm = 4 * np.sin(np.deg2rad(b_angle)) * np.cos(np.deg2rad(b_angle))
@@ -322,6 +385,8 @@ class ADPBinner(VelBinner):
             bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
+        if type(noise) == type(ds_avg.vel):
+            noise = noise.values
         bp2_ -= noise**2
 
         # Guerra Thomson calculate u'v' bar from from the covariance of u' and v'
@@ -385,69 +450,18 @@ class ADPBinner(VelBinner):
                                             attrs={'units': 'm^2/^2'})
         # Function works in place
 
-    def calc_doppler_noise(self, psd):
-        """Calculate bias due to Doppler noise from the spectral noise floor
-
-        Parameters
-        ----------
-        psd (xarray.DataArray): 
-            Power spectral density with dimensions of frequency (rad/s) and time
-
-        Returns
-        -------
-        noise_level (xarray.DataArray): 
-              Doppler noise level in units of m/s
-
-        Notes
-        -----
-        Approximates bias from
-
-        .. :math: \\sigma^{2}_{noise} = N x f_{c}
-
-        where :math: `\\sigma_{noise}` is the bias due to Doppler noise,
-        `N` is the constant variance or spectral density, and `f_{c}`
-        is the characteristic frequency.
-
-        The characteristic frequency is then found as 
-
-        .. :math: f_{c} = 0.8 * (f_{s}/2)
-
-        where `f_{s}/2` is the Nyquist frequency.
-
-
-        Richard, Jean-Baptiste, et al. "Method for identification of Doppler noise 
-        levels in turbulent flow measurements dedicated to tidal energy." International 
-        Journal of Marine Energy 3 (2013): 52-64.
-
-        Thiébaut, Maxime, et al. "Investigating the flow dynamics and turbulence at a 
-        tidal-stream energy site in a highly energetic estuary." Renewable Energy 195 
-        (2022): 252-262.
-
-        """
-        # Characteristic frequency set to 80% of Nyquist frequency
-        fc = 0.8 * (self.fs/2)
-        omega_range = slice(2*np.pi*fc, 2*np.pi*self.fs)
-        N2 = psd.sel(omega=omega_range) * psd.omega.sel(omega=omega_range)
-        noise_level = np.sqrt(N2.mean(dim='omega'))
-
-        out = xr.DataArray(noise_level, name='noise_level',
-                           dims=['time'],
-                           attrs={'units': 'm/s',
-                                  'description': 'Doppler noise level calculated \
-                                                    from PSD white noise'})
-        return out
-
-    def calc_tke_dissipation(self, psd, U_mag, noise_level, omega_range=[6.28, 12.57]):
+    def calc_tke_dissipation(self, psd, U_mag, noise_level, f_range=[1, 2]):
         """Calculate the dissipation rate from the PSD
 
         Parameters
         ----------
         psd : xarray.DataArray (...,time,f)
-          The psd [m^2/s/rad] with frequency vector 'omega' [rad/s]
+          The power spectral density
         U_mag : xarray.DataArray (...,time)
           The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
-        omega_range : iterable(2)
-          The range over which to integrate/average the spectrum.
+        f_range : iterable(2)
+          The range over which to integrate/average the spectrum, in units 
+          of the psd frequency vector (Hz or rad/s)
 
         Returns
         -------
@@ -470,19 +484,28 @@ class ADPBinner(VelBinner):
 
         .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3} + N
 
+        With :math:`k \\rightarrow (2\\pi f) / U`, then
+
+        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} f^{-5/3} (U/(2*\\pi))^{2/3} + N
+
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
 
         """
-        omega = psd.omega
+        freq = psd.freq
         psd -= noise_level
 
-        idx = np.where((omega_range[0] < omega) & (omega < omega_range[1]))
+        idx = np.where((f_range[0] < freq) & (freq < f_range[1]))
         idx = idx[0]
 
+        if freq.units == 'Hz':
+            U = U_mag/(2*np.pi)
+        else:
+            U = U_mag
+
         a = 0.5
-        out = (psd.isel(omega=idx) *
-               omega.isel(omega=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U_mag
+        out = (psd.isel(freq=idx) *
+               freq.isel(freq=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U
 
         out = xr.DataArray(out, name='dissipation_rate',
                            attrs={'units': 'm^2/s^3',
