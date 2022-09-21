@@ -1,7 +1,6 @@
 import numpy as np
 import xarray as xr
 import warnings
-from ..rotate import rdi, signature
 from ..rotate.vector import _earth2principal
 from ..velocity import VelBinner
 #import matplotlib.pyplot as plt
@@ -201,12 +200,16 @@ class ADPBinner(VelBinner):
 
         # Rotate into coordinate system of binned dataset
         if ds_rot.coord_sys != 'inst':
-            if 'rdi' in ds_avg.inst_make.lower():
-                func = rdi._inst2earth
-            elif 'signature' in ds_avg.inst_model.lower():
-                func = signature._inst2earth
             # rotate to earth
-            ds_rot = func(ds_rot, rotate_vars=('stress_matrix',), force=True)
+            dat = ds_rot['stress_matrix'].values
+            rotmat = ds_rot['orientmat'].values
+
+            # stress tensor coordinate transformation
+            # np.einsum('ij, jk, kl -> il', aa, sigma, aa.transpose())
+            dat = np.einsum('ijm, jk...m, mkl -> il...m', rotmat, dat, rotmat.transpose())
+
+            ds_rot['stress_matrix'].values = dat
+
         # rotate to principal
         if ds_rot.coord_sys == 'principal':
             ds_rot = _earth2principal(ds_rot, rotate_vars='stress_matrix')
