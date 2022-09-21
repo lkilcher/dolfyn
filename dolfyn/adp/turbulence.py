@@ -1,7 +1,6 @@
 import numpy as np
 import xarray as xr
 import warnings
-from ..rotate.vector import _earth2principal
 from ..velocity import VelBinner
 #import matplotlib.pyplot as plt
 
@@ -199,20 +198,36 @@ class ADPBinner(VelBinner):
         ds_rot['orientmat'] = ds_avg.orientmat
 
         # Rotate into coordinate system of binned dataset
+        # Rotate to earth
         if ds_rot.coord_sys != 'inst':
-            # rotate to earth
+            # Copy vars
             dat = ds_rot['stress_matrix'].values
             rotmat = ds_rot['orientmat'].values
 
             # stress tensor coordinate transformation
             # np.einsum('ij, jk, kl -> il', aa, sigma, aa.transpose())
-            dat = np.einsum('ijm, jk...m, mkl -> il...m', rotmat, dat, rotmat.transpose())
+            dat = np.einsum('ijm, jk...m, mkl -> il...m',
+                            rotmat, dat, rotmat.transpose())
 
             ds_rot['stress_matrix'].values = dat
 
-        # rotate to principal
+        # rotate to principal (Have to recalculate things (copy paste code))
         if ds_rot.coord_sys == 'principal':
-            ds_rot = _earth2principal(ds_rot, rotate_vars='stress_matrix')
+            # This is in degrees CW from North
+            ang = np.deg2rad(90 - ds_rot.principal_heading)
+            # convert this to radians CCW from east (which is expected by
+            # the rest of the function)
+            ang *= -1
+            # Calculate the rotation matrix:
+            cp, sp = np.cos(ang), np.sin(ang)
+            rotmat = np.array([[cp, -sp, 0],
+                               [sp, cp, 0],
+                               [0, 0, 1]], dtype=np.float32)
+
+            dat = ds_rot['stress_matrix'].values
+            dat = np.einsum('ij, jk...m, kl -> il...m',
+                            rotmat, dat, rotmat.transpose())
+            ds_rot['stress_matrix'].values = dat
 
         return ds_rot
 
