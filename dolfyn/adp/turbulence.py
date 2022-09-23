@@ -5,24 +5,45 @@ from ..velocity import VelBinner
 #import matplotlib.pyplot as plt
 
 
-def _diffz_first(dat, z, axis=0):
+def _diffz_first(dat, z):
     return np.diff(dat, axis=0) / (np.diff(z)[:, None])
 
 
-def _diffz_centered(dat, z, axis=0):
+def _diffz_centered(dat, z):
     # Want top - bottom here (u_x+1 - u_x-1)/dx
     # Can use 2*np.diff b/c depth bin size never changes
-    return (dat[2:, ...]-dat[:-2, ...]) / (2*np.diff(z)[1:, None])
+    return (dat[2:]-dat[:-2]) / (2*np.diff(z)[1:, None])
 
 
 class ADPBinner(VelBinner):
-    """A class for calculating turbulence statistics from ADCP data
-    """
+    def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
+                 noise=0, diff_style='centered'):
+        """A class for calculating turbulence statistics from ADCP data
 
-    def __call___(self, ds, diff_func='centered', window='hann', doppler_noise=0):
-        self.nm = ds
-        self.diff_style = diff_func
+        Parameters
+        ----------
+        n_bin : int
+            Number of data points to include in a 'bin' (ensemble), not the
+            number of bins
+        fs : int
+            Instrument sampling frequency in Hz
+        n_fft : int
+            Number of data points to use for fft (`n_fft`<=`n_bin`).
+            Default: `n_fft`=`n_bin`
+        n_fft_coh : int
+            Number of data points to use for coherence and cross-spectra ffts
+            Default: `n_fft_coh`=`n_fft`
+        noise : float, list or numpy.ndarray
+            Instrument's doppler noise in same units as velocity
+        diff_style : str, default='centered'
+            Style of numerical differentiation using Newton's Method, 
+            either 'first' or 'centered'
 
+        """
+        VelBinner.__init__(self, n_bin, fs, n_fft, n_fft_coh, noise)
+        self.diff_style = diff_style
+
+    def __call___(self, ds, window='hann', doppler_noise=0):
         out = type(ds)()
         out = self.do_avg(ds, out)
 
@@ -40,14 +61,13 @@ class ADPBinner(VelBinner):
 
         return out
 
-    def _diff_func(self, nm):
+    def _diff_func(self, vel, u):
         if self.diff_style == 'first':
-            return _diffz_first(getattr(self, nm), self['range'])
-        else:
-            return _diffz_centered(getattr(self, nm), self['range'])
+            return _diffz_first(vel[u].values, vel['range'].values)
+        elif self.diff_style == 'centered':
+            return _diffz_centered(vel[u].values, vel['range'].values)
 
-    @property
-    def dudz(self):
+    def dudz(self, vel):
         """The shear in the first velocity component.
 
         Notes
@@ -57,10 +77,9 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
 
         """
-        return self._diff_func('u')
+        return self._diff_func(vel, 0)
 
-    @property
-    def dvdz(self):
+    def dvdz(self, vel):
         """The shear in the second velocity component.
 
         Notes
@@ -70,10 +89,9 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
 
         """
-        return self._diff_func('v')
+        return self._diff_func(vel, 1)
 
-    @property
-    def dwdz(self):
+    def dwdz(self, vel):
         """The shear in the third velocity component.
 
         Notes
@@ -83,10 +101,10 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
 
         """
-        return self._diff_func('w')
+        return self._diff_func(vel, 2)
 
     @property
-    def tau2(self):
+    def tau2(self, vel):
         """The horizontal shear squared.
 
         Notes
@@ -100,34 +118,46 @@ class ADPBinner(VelBinner):
         :math:`dudz`, :math:`dvdz`
 
         """
-        return self.dudz ** 2 + self.dvdz ** 2
+        return self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
 
-    def calc_ustar_fit(self, ds_avg, d_inds=slice(None), H=None):
+    def calc_ustar_fit(self, ds_avg, z_inds=slice(1, 5), H=None):
         """
-        Approximate friction velocity from shear stress
+        Approximate friction velocity from shear stress using a 
+        log profile
 
         Parameters
         ----------
-        ds : xarray.Dataset
-        d_inds :
-            depth indices to use
-        H : int
-            water depth
+        ds_avg : xarray.Dataset
+          Bin-averaged dataset containing `stress_vec`
+        z_inds : slice(int,int)
+          Depth indices to use for profile
+        H : int (default=`ds_avg.depth`)
+          Total water depth
+
+        Returns
+        -------
+        ustar : xarray.DataArray
 
         """
         if not H:
-            H = self.mean(ds_avg.depth.values)
+            H = ds_avg.depth.values
         z = ds_avg['range'].values
         upwp_ = ds_avg['stress_vec'].sel(tau='upwp_').values
 
-        sign = np.nanmean(np.sign(upwp_[d_inds, :]), axis=0)
-        ustar = np.nanmean(sign * upwp_[d_inds, :] /
-                           (1 - z[d_inds, None] / H[None, :]), axis=0) ** 0.5
+        sign = np.nanmean(np.sign(upwp_[z_inds, :]), axis=0)
+        ustar = np.nanmean(sign * upwp_[z_inds, :] /
+                           (1 - z[z_inds, None] / H), axis=0) ** 0.5
 
-        return ustar
+        out = xr.DataArray(ustar,
+                           coords={'time': ds_avg.time},
+                           attrs={'units': 'm/s',
+                                  'description': 'Friction velocity'})
+
+        return out
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
-        """Calculate bias due to Doppler noise from the spectral noise floor
+        """Calculate bias due to Doppler noise using the noise floor
+        of the velocity spectra.
 
         Parameters
         ----------
@@ -184,37 +214,28 @@ class ADPBinner(VelBinner):
                            dims=['time'],
                            attrs={'units': 'm/s',
                                   'description': 'Doppler noise level calculated \
-                                                    from PSD white noise'})
+                                                  from PSD white noise'})
         return out
 
     def _stress_rotations(self, ds_avg, stress_matrix):
-        # Create dummy dataset to handle rotations
-        ds_rot = type(ds_avg)()
-        ds_rot.attrs = ds_avg.attrs
-        ds_rot = ds_rot.assign_coords(ds_avg.coords)
-
-        # Add Reynolds stress tensor and orientation matrix
-        ds_rot['stress_matrix'] = stress_matrix
-        ds_rot['orientmat'] = ds_avg.orientmat
-
         # Rotate into coordinate system of binned dataset
         # Rotate to earth
-        if ds_rot.coord_sys != 'inst':
+        if ds_avg.coord_sys != 'inst':
             # Copy vars
-            dat = ds_rot['stress_matrix'].values
-            rotmat = ds_rot['orientmat'].values
+            dat = stress_matrix.values
+            rotmat = ds_avg['orientmat'].values
 
             # stress tensor coordinate transformation
             # np.einsum('ij, jk, kl -> il', aa, sigma, aa.transpose())
             dat = np.einsum('ijm, jk...m, mkl -> il...m',
                             rotmat, dat, rotmat.transpose())
 
-            ds_rot['stress_matrix'].values = dat
+            stress_matrix.values = dat
 
         # rotate to principal (Have to recalculate things (copy paste code))
-        if ds_rot.coord_sys == 'principal':
+        if ds_avg.coord_sys == 'principal':
             # This is in degrees CW from North
-            ang = np.deg2rad(90 - ds_rot.principal_heading)
+            ang = np.deg2rad(90 - ds_avg.principal_heading)
             # convert this to radians CCW from east (which is expected by
             # the rest of the function)
             ang *= -1
@@ -224,12 +245,12 @@ class ADPBinner(VelBinner):
                                [sp, cp, 0],
                                [0, 0, 1]], dtype=np.float32)
 
-            dat = ds_rot['stress_matrix'].values
+            dat = stress_matrix.values
             dat = np.einsum('ij, jk...m, kl -> il...m',
                             rotmat, dat, rotmat.transpose())
-            ds_rot['stress_matrix'].values = dat
+            stress_matrix.values = dat
 
-        return ds_rot
+        return stress_matrix
 
     def calc_stress_4beam(self, ds, ds_avg, noise=0, beam_angle=25):
         """Calculate the stresses from the difference in the beam variances.
@@ -241,10 +262,10 @@ class ADPBinner(VelBinner):
           Raw dataset in beam coordinates
         ds_avg (xarray.Dataset):
           Binned dataset in final coordinate reference frame
-        noise (int or xarray.DataArray):
-          Doppler noise level
+        noise (int or xarray.DataArray, default=0):
+          Doppler noise level in units of m/s
         beam_angle (int, default=25):
-          ADCP beam angle
+          ADCP beam angle in units of degrees
 
         Returns
         -------
@@ -320,11 +341,11 @@ class ADPBinner(VelBinner):
                                      attrs={'units': 'm^2/^2'})
 
         # Tensor rotation
-        ds_rot = self._stress_rotations(ds_avg, stress_matrix)
+        stress_matrix = self._stress_rotations(ds_avg, stress_matrix)
 
-        ds_avg['stress_vec'] = xr.DataArray(np.stack([ds_rot.stress_matrix[0, 1]*np.nan,
-                                                      ds_rot.stress_matrix[0, 2],
-                                                      ds_rot.stress_matrix[1, 2]]),
+        ds_avg['stress_vec'] = xr.DataArray(np.stack([stress_matrix[0, 1]*np.nan,
+                                                      stress_matrix[0, 2],
+                                                      stress_matrix[1, 2]]),
                                             coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                                                     'range': ds_avg.range,
                                                     'time': ds_avg.time},
@@ -342,10 +363,10 @@ class ADPBinner(VelBinner):
           Raw dataset in beam coordinates
         ds_avg (xarray.Dataset):
           Binned dataset in final coordinate reference frame
-        noise (int or xarray.DataArray):
-          Doppler noise level
+        noise (int or xarray.DataArray, default=0):
+          Doppler noise level in units of m/s
         beam_angle (int, default=25):
-          ADCP beam angle
+          ADCP beam angle in units of degrees
 
         Returns
         -------
@@ -449,34 +470,36 @@ class ADPBinner(VelBinner):
                                      attrs={'units': 'm^2/^2'})
 
         # Tensor rotation
-        ds_rot = self._stress_rotations(ds_avg, stress_matrix)
+        stress_matrix = self._stress_rotations(ds_avg, stress_matrix)
 
-        # Reorganize stress matrix into readable fashion
-        ds_avg['tke_vec'] = xr.DataArray(np.stack([ds_rot.stress_matrix[0, 0],
-                                                   ds_rot.stress_matrix[1, 1],
-                                                   ds_rot.stress_matrix[2, 2]]),
+        # Reorganize stress matrix into dolfyn standard
+        ds_avg['tke_vec'] = xr.DataArray(np.stack([stress_matrix[0, 0],
+                                                   stress_matrix[1, 1],
+                                                   stress_matrix[2, 2]]),
                                          coords={'tke': ["upup_", "vpvp_", "wpwp_"],
                                                  'range': ds_avg.range,
                                                  'time': ds_avg.time},
                                          attrs={'units': 'm^2/^2'})
-        ds_avg['stress_vec'] = xr.DataArray(np.stack([ds_rot.stress_matrix[0, 1],
-                                                      ds_rot.stress_matrix[0, 2],
-                                                      ds_rot.stress_matrix[1, 2]]),
+        ds_avg['stress_vec'] = xr.DataArray(np.stack([stress_matrix[0, 1],
+                                                      stress_matrix[0, 2],
+                                                      stress_matrix[1, 2]]),
                                             coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                                                     'range': ds_avg.range,
                                                     'time': ds_avg.time},
                                             attrs={'units': 'm^2/^2'})
         # Function works in place
 
-    def calc_tke_dissipation(self, psd, U_mag, noise_level, f_range=[1, 2]):
-        """Calculate the dissipation rate from the PSD
+    def calc_tke_dissipation(self, psd, U_mag, noise=0, f_range=[0.5, 1]):
+        """Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
         ----------
         psd : xarray.DataArray (...,time,f)
           The power spectral density
-        U_mag : xarray.DataArray (...,time)
-          The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
+        U_mag : xarray.DataArray (time)
+          The bin-averaged horizontal velocity (a.k.a. speed)
+        noise : int or xarray.DataArray, default=0 (time)
+          Doppler noise level in units of m/s
         f_range : iterable(2)
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
@@ -510,9 +533,12 @@ class ADPBinner(VelBinner):
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
 
         """
-        freq = psd.freq
-        psd -= noise_level
+        # Remove doppler_noise
+        if type(noise) == type(psd.freq):
+            noise = noise.values[:, None]
+        psd -= noise**2
 
+        freq = psd.freq
         idx = np.where((f_range[0] < freq) & (freq < f_range[1]))
         idx = idx[0]
 
@@ -522,8 +548,8 @@ class ADPBinner(VelBinner):
             U = U_mag
 
         a = 0.5
-        out = (psd.isel(freq=idx) *
-               freq.isel(freq=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U
+        out = (psd[:, idx] * freq[idx]**(5/3) /
+               a).mean(axis=-1)**(3/2) / U.values
 
         out = xr.DataArray(out, name='dissipation_rate',
                            attrs={'units': 'm^2/s^3',
@@ -531,27 +557,36 @@ class ADPBinner(VelBinner):
                                                   dissipation rate'})
         return out
 
-    def calc_tke_production(self, ds_avg):
+    def calc_tke_production(self, veldat, tke_vector, stress_vector):
         """Calculate turbulent kinetic energy production rate
 
         Parameters
         ----------
-        ds_avg (xarray.Dataset): 
-          Binned dataset containing `tke_vec` and `stress_vec`
+        veldat : xarray.Dataarray
+          Bin-averaged Velocity data array
+        tke_vector : xarray.Dataarray
+          Turbulent kinetic energy data array
+        stress_vector : xarray.Datarray
+          Reynolds stress (from beam covariances) data array
 
         Returns
         -------
-        out (xarray_Dataset):
+        out (xarray.Dataset):
           Production rate with single dimension `time`
 
         """
+        if self.diff_style == 'centered':
+            range_slice = slice(1, -1)
+        else:
+            range_slice = slice(1, None)
 
-        P = -(ds_avg['stress_vec'].sel(tau='upwp_') * self.dudz +
-              ds_avg['stress_vec'].sel(tau='vpwp_') * self.dvdz +
-              ds_avg['tke_vec'].sel(tau='wpwp_') * self.dwdz)
+        P = -(stress_vector[0, range_slice] * self.dudz(veldat) +
+              stress_vector[1, range_slice] * self.dvdz(veldat) +
+              tke_vector[2, range_slice] * self.dwdz(veldat))
 
-        out = xr.DataArray(P, name='production_rate',
-                           dims=['time'],
+        out = xr.DataArray(P.values, name='production_rate',
+                           coords={'range': tke_vector.range[range_slice],
+                                   'time': tke_vector.time},
                            attrs={'units': 'm^2/s^3',
                                   'description': 'Turbulent kinetic energy \
                                                   production rate'})
@@ -649,7 +684,7 @@ class ADPBinner(VelBinner):
     #                                'method': 'structure function'})
 
 
-def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann', doppler_noise=0):
+def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='Hz', window='hann', noise=0):
     """
     Functional version of `ADVBinner` that computes a suite of turbulence
     statistics for the input dataset, and returns a `binned` data object.
@@ -659,11 +694,20 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
     ds_raw : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
-    omega_range_epsilon : iterable(2)
-      The frequency range (low, high) over which to estimate the
-      dissipation rate `epsilon`, in units of [rad/s].
-    window : 1, None, 'hann'
+    n_bin : int
+      Number of data points to include in a 'bin' (ensemble), not the
+      number of bins
+    fs : int
+      Instrument sampling frequency in Hz
+    n_fft : int
+      Number of data points to use for fft (`n_fft`<=`n_bin`).
+      Default: `n_fft`=`n_bin`
+    freq_units : string
+      Frequency units of the returned spectra in either Hz or rad/s 
+    window : 1, None, 'hann', 'hamm'
       The window to use for calculating power spectral densities
+    noise : int or xarray.DataArray, default=0 (time)
+      Doppler noise level in units of m/s
 
     Returns
     -------
@@ -694,6 +738,6 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
         - omega : the radial frequncy (rad/s)
 
     """
-    calculator = ADPBinner(n_bin, fs, n_fft=n_fft, doppler_noise=doppler_noise)
+    calculator = ADPBinner(n_bin, fs, n_fft=n_fft, noise=noise)
 
     return calculator(ds_raw, freq_units=freq_units, window=window)

@@ -14,13 +14,19 @@ class ADVBinner(VelBinner):
     Parameters
     ----------
     n_bin : int
-      The length of `bin` s, in number of points, for this averaging
+      The length of each `bin`, in number of points, for this averaging
       operator.
+    fs : int
+      Instrument sampling frequency in Hz
     n_fft : int (optional, default: n_fft = n_bin)
-      The length of the FFT for computing spectra (must be < n_bin)
+      The length of the FFT for computing spectra (must be <= n_bin)
+    n_fft_coh : int
+      Number of data points to use for coherence and cross-spectra ffts
+      Default: `n_fft_coh`=`n_fft`
+    noise : float, list or numpy.ndarray
+      Instrument's doppler noise in same units as velocity
 
     """
-
     def __call__(self, ds, freq_units='rad/s', window='hann'):
         """
         Compute a suite of turbulence statistics for the input data

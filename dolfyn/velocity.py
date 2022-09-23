@@ -469,7 +469,7 @@ class VelBinner(TimeBinner):
            The names of variables to be averaged.  If `names` is None,
            all data in `raw_ds` will be binned.
         noise : list or numpy.ndarray
-          instrument's doppler noise in same units as velocity
+          Instrument's doppler noise in same units as velocity
 
         Returns
         -------
@@ -997,7 +997,8 @@ class VelBinner(TimeBinner):
 
         # Spectra, if input is full velocity or a single array
         if len(veldat.shape) == 2:
-            assert veldat.shape[0] == 3, "Function can only handle 1D or 3D arrays"
+            assert veldat.shape[0] == 3, "Function can only handle 1D or 3D arrays." \
+                " If ADCP data, please select a specific depth bin."
 
             out = np.empty(self._outshape_fft(veldat[:3].shape),
                            dtype=np.float32)

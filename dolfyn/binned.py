@@ -25,7 +25,7 @@ class TimeBinner:
         n_fft_coh : int
           Number of data points to use for coherence and cross-spectra ffts
           Default: `n_fft_coh`=`n_fft`
-        noise : list or ndarray
+        noise : float, list or numpy.ndarray
           Instrument's doppler noise in same units as velocity
 
         """
