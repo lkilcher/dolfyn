@@ -409,7 +409,7 @@ class ADPBinner(VelBinner):
                 beams = [0, 1, 3, 2, 4]  # for up-facing RDIs
 
         # For Nortek Signatures
-        elif 'Signature' in ds.inst_model:
+        elif 'Signature' in ds.inst_model or 'AD2CP' in ds.inst_model:
             phi2 = np.deg2rad(self.mean(ds['roll'].values))
             phi3 = -np.deg2rad(self.mean(ds['pitch'].values))
             if 'down' in ds.orientation.lower():
