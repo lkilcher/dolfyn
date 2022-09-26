@@ -14,19 +14,17 @@ Below is a list of functions that can be called from `VelBinner`.
 	
 	~dolfyn.velocity.VelBinner
 	~dolfyn.binned.TimeBinner.reshape
-	~dolfyn.binned.TimeBinner.demean
 	~dolfyn.binned.TimeBinner.detrend 
 	~dolfyn.binned.TimeBinner.demean
 	~dolfyn.binned.TimeBinner.mean 
 	~dolfyn.binned.TimeBinner.var 
 	~dolfyn.binned.TimeBinner.std 
-	~dolfyn.binned.TimeBinner.do_avg
-	~dolfyn.binned.TimeBinner.do_var
-	~dolfyn.binned.TimeBinner.reshape
-	~dolfyn.binned.TimeBinner.calc_coh
-	~dolfyn.binned.TimeBinner.calc_phase_angle
-	~dolfyn.binned.TimeBinner.calc_acov
-	~dolfyn.binned.TimeBinner.calc_xcov
+	~dolfyn.binned.VelBinner.do_avg
+	~dolfyn.binned.VelBinner.do_var
+	~dolfyn.binned.VelBinner.calc_coh
+	~dolfyn.binned.VelBinner.calc_phase_angle
+	~dolfyn.binned.VelBinner.calc_acov
+	~dolfyn.binned.VelBinner.calc_xcov
 	~dolfyn.velocity.VelBinner.calc_tke
 	~dolfyn.velocity.VelBinner.calc_psd
 	~dolfyn.binned.TimeBinner.calc_freq
