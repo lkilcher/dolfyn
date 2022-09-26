@@ -443,10 +443,10 @@ class VelBinner(TimeBinner):
     example::
 
         # First read or load some data.
-        rawdat = dlfn.read_example('BenchFile01.ad2cp')
+        rawdat = dolfyn.read_example('BenchFile01.ad2cp')
 
         # Now initialize the averaging tool:
-        binner = dlfn.VelBinner(n_bin=600, fs=rawdat.fs)
+        binner = dolfyn.VelBinner(n_bin=600, fs=rawdat.fs)
 
         # This computes the basic averages
         avg = binner.do_avg(rawdat)

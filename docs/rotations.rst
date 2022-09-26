@@ -74,8 +74,8 @@ use the ``rotate2`` method:
 
 .. code-block::
 
-  >> dat = dlfn.read_example('vector_data_imu01.VEC')
-  >> dlfn.rotate2(dat, 'earth')
+  >> dat = dolfyn.read_example('vector_data_imu01.VEC')
+  >> dolfyn.rotate2(dat, 'earth')
   >> dat
   <xarray.Dataset>
   Dimensions:              (time: 27043, dir: 3, beam: 3, x*: 3, earth: 3, inst: 3, dirIMU: 3)
@@ -217,7 +217,7 @@ to set a data-object's declination:
 #. Set declination explicitly using the ``set_declination``
    method, for example::
 
-     dlfn.set_declination(dat, 16.53)
+     dolfyn.set_declination(dat, 16.53)
 
 #. Set declination in the ``<data_filename>.userdata.json`` file
    (`more details <json-userdata>`_ ), then read the binary data
@@ -239,7 +239,7 @@ this:
 
 .. code-block::
 
-  dat.attrs['principal_heading'] = dlfn.calc_principal_heading(dat.vel)
+  dat.attrs['principal_heading'] = dolfyn.calc_principal_heading(dat.vel)
   dat.rotate2('principal')
 
 Note here that if ``dat`` is in a coordinate system other than EARTH,

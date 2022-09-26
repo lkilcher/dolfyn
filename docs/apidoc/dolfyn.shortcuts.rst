@@ -17,8 +17,8 @@ They are accessed through the `xarray accessor
 
 For example, to return the magnitude of the horizontal velocity::
 
-	>> import dolfyn as dlfn
-	>> dat = dlfn.read_example('AWAC_test01.wpr')
+	>> import dolfyn
+	>> dat = dolfyn.read_example('AWAC_test01.wpr')
 	
 	>> dat.velds.U_mag
 

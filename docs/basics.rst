@@ -14,8 +14,8 @@ Reading Source Datafiles
 
 To begin, we load the |dlfn| module and read a data file::
 
-  >> import dolfyn as dlfn
-  >> dat = dlfn.read(<path/to/my_data_file>)
+  >> import dolfyn
+  >> dat = dolfyn.read(<path/to/my_data_file>)
 
 |dlfn|'s read function supports reading Nortek and TRDI binary data files straight 
 from the ADCP or from the manufacturer's processing software (e.g. TRDI's WinADCP, 
@@ -23,7 +23,7 @@ VMDAS, or WinRiver).
 
 In an interactive shell, typing the variable name followed by enter/return will display information about the dataset, e.g.::
 
-  >> dat = dlfn.read_example('AWAC_test01.wpr')
+  >> dat = dolfyn.read_example('AWAC_test01.wpr')
   >> dat
   <xarray.Dataset>
   Dimensions:              (range: 20, time: 9997, beam: 3, dir: 3, x*: 3, earth: 3, inst: 3)
