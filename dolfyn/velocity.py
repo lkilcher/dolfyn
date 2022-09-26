@@ -796,13 +796,13 @@ class VelBinner(TimeBinner):
 
         dims_list, coords_dict = self._new_coords(veldat)
         # tack on new coordinate
-        dims_list.append('dt')
-        coords_dict['dt'] = np.arange(n_bin//4)
+        dims_list.append('lag')
+        coords_dict['lag'] = np.arange(n_bin//4)
 
-        da = xr.DataArray(out, name='auto-covariance',
+        da = xr.DataArray(out, name='auto_covariance',
                           coords=coords_dict,
                           dims=dims_list,)
-        da['dt'].attrs['units'] = 'timestep'
+        da['lag'].attrs['units'] = 'timestep'
 
         return da
 
@@ -867,9 +867,11 @@ class VelBinner(TimeBinner):
         dims_list.append('dt')
         coords_dict['dt'] = np.arange(npt)
 
-        da = xr.DataArray(out, name='cross-covariance',
+        da = xr.DataArray(out, name='cross_covariance',
                           coords=coords_dict,
                           dims=dims_list)
+        da['dt'].attrs['units'] = 'timestep'
+
         return da
 
     def calc_tke(self, veldat, noise=[0, 0, 0], detrend=True):
@@ -975,12 +977,12 @@ class VelBinner(TimeBinner):
           The spectra in the 'u', 'v', and 'w' directions.
 
         """
-        try:
-            time = self.mean(veldat.time.values)
-            time_str = 'time'
-        except:
+        if 'b5' in veldat.name:
             time = self.mean(veldat.time_b5.values)
             time_str = 'time_b5'
+        else:
+            time = self.mean(veldat.time.values)
+            time_str = 'time'
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft(n_fft)
         veldat = veldat.values
@@ -1014,11 +1016,10 @@ class VelBinner(TimeBinner):
             coords = {time_str: time, 'freq': freq}
             dims = [time_str, 'freq']
 
-        da = xr.DataArray(out,
-                          name='psd',
-                          coords=coords,
-                          dims=dims,
-                          attrs={'units': units, 'n_fft': n_fft})
-        da['freq'].attrs['units'] = freq_units
+        psd = xr.DataArray(out, name='psd',
+                           coords=coords,
+                           dims=dims,
+                           attrs={'units': units, 'n_fft': n_fft})
+        psd['freq'].attrs['units'] = freq_units
 
-        return da
+        return psd

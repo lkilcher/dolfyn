@@ -27,6 +27,7 @@ class ADVBinner(VelBinner):
       Instrument's doppler noise in same units as velocity
 
     """
+
     def __call__(self, ds, freq_units='rad/s', window='hann'):
         """
         Compute a suite of turbulence statistics for the input data
@@ -37,9 +38,9 @@ class ADVBinner(VelBinner):
         ds : xarray.Dataset
           The raw adv dataset to `bin`, average and compute
           turbulence statistics of.
-        omega_range_epsilon : iterable(2)
-          The frequency range (low, high) over which to estimate the
-          dissipation rate `epsilon` [rad/s].
+        freq_units : string
+          Frequency units of the returned spectra in either Hz or rad/s 
+          (`f` or :math:`\\omega`)
         window : 1, None, 'hann'
           The window to use for psds.
 
@@ -109,7 +110,7 @@ class ADVBinner(VelBinner):
 
         Returns
         -------
-        ds : xarray.DataArray
+        out : xarray.DataArray
 
         """
         time = self.mean(veldat.time.values)
@@ -193,19 +194,19 @@ class ADVBinner(VelBinner):
                                          n_fft=n_fft,
                                          window=window)
 
-        da = xr.DataArray(out,
-                          name='csd',
-                          coords={'C': ['Cxy', 'Cxz', 'Cyz'],
-                                  'time': time,
-                                  'freq': coh_freq},
-                          dims=['C', 'time', 'freq'],
-                          attrs={'units': units, 'n_fft_coh': n_fft})
-        da['freq'].attrs['units'] = freq_units
+        csd = xr.DataArray(out, name='csd',
+                           coords={'C': ['Cxy', 'Cxz', 'Cyz'],
+                                   'time': time,
+                                   'freq': coh_freq},
+                           dims=['C', 'time', 'freq'],
+                           attrs={'units': units, 'n_fft_coh': n_fft})
+        csd['freq'].attrs['units'] = freq_units
 
-        return da
+        return csd
 
     def calc_epsilon_LT83(self, psd, U_mag, f_range=[6.28, 12.57]):
-        """Calculate the dissipation rate from the PSD
+        """
+        Calculate the dissipation rate from the PSD
 
         Parameters
         ----------
@@ -463,9 +464,9 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
     ds_raw : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
-    omega_range_epsilon : iterable(2)
-      The frequency range (low, high) over which to estimate the
-      dissipation rate `epsilon`, in units of [rad/s].
+    freq_units : string
+      Frequency units of the returned spectra in either Hz or rad/s 
+      (`f` or :math:`\\omega`)
     window : 1, None, 'hann'
       The window to use for calculating power spectral densities
 
