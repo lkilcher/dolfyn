@@ -161,11 +161,11 @@ class ADPBinner(VelBinner):
 
         Parameters
         ----------
-        psd (xarray.DataArray): 
-            Power spectral density with dimensions of frequency and time.
-            From an ADCP, typically this is spectra from a mid-water location.
-        pct_fN (float):
-            Percent of Nyquist frequency to calculate characeristic frequency
+        psd : xarray.DataArray (time, f)
+          The power spectral density from a single depth bin (range), typically
+          in the mid-water range
+        pct_fN : float
+          Percent of Nyquist frequency to calculate characeristic frequency
 
         Returns
         -------
@@ -199,13 +199,14 @@ class ADPBinner(VelBinner):
 
         """
         # Characteristic frequency set to 80% of Nyquist frequency
-        fc = pct_fN * (self.fs/2)
+        fN = self.fs/2
+        fc = pct_fN * fN
 
         # Get units right
         if psd.freq.units == "Hz":
-            f_range = slice(fc, self.fs)
+            f_range = slice(fc, fN)
         else:
-            f_range = slice(2*np.pi*fc, 2*np.pi*self.fs)
+            f_range = slice(2*np.pi*fc, 2*np.pi*fN)
 
         # Noise floor
         N2 = psd.sel(freq=f_range) * psd.freq.sel(freq=f_range)
@@ -259,13 +260,13 @@ class ADPBinner(VelBinner):
 
         Parameters
         ----------
-        ds (xarray.Dataset):
+        ds : xarray.Dataset
           Raw dataset in beam coordinates
-        ds_avg (xarray.Dataset):
+        ds_avg : xarray.Dataset
           Binned dataset in final coordinate reference frame
-        noise (int or xarray.DataArray, default=0):
+        noise : int or xarray.DataArray (time)
           Doppler noise level in units of m/s
-        beam_angle (int, default=25):
+        beam_angle : int, default=25
           ADCP beam angle in units of degrees
 
         Returns
@@ -360,13 +361,13 @@ class ADPBinner(VelBinner):
 
         Parameters
         ----------
-        ds (xarray.Dataset):
+        ds : xarray.Dataset
           Raw dataset in beam coordinates
-        ds_avg (xarray.Dataset):
+        ds_avg : xarray.Dataset
           Binned dataset in final coordinate reference frame
-        noise (int or xarray.DataArray, default=0):
+        noise : int or xarray.DataArray, default=0 (time)
           Doppler noise level in units of m/s
-        beam_angle (int, default=25):
+        beam_angle : int, default=25
           ADCP beam angle in units of degrees
 
         Returns
@@ -490,13 +491,13 @@ class ADPBinner(VelBinner):
                                             attrs={'units': 'm^2/^2'})
         # Function works in place
 
-    def calc_tke_dissipation(self, psd, U_mag, noise=0, f_range=[0.5, 1]):
+    def calc_tke_dissipation(self, psd, U_mag, f_range=[0.5, 1]):
         """Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
         ----------
-        psd : xarray.DataArray (...,time,f)
-          The power spectral density
+        psd : xarray.DataArray (time,f)
+          The power spectral density from a single depth bin (range)
         U_mag : xarray.DataArray (time)
           The bin-averaged horizontal velocity (a.k.a. speed)
         noise : int or xarray.DataArray, default=0 (time)
@@ -534,11 +535,6 @@ class ADPBinner(VelBinner):
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
 
         """
-        # Remove doppler_noise
-        if type(noise) == type(psd.freq):
-            noise = noise.values[:, None]
-        psd -= noise**2
-
         freq = psd.freq
         idx = np.where((f_range[0] < freq) & (freq < f_range[1]))
         idx = idx[0]
@@ -563,11 +559,11 @@ class ADPBinner(VelBinner):
 
         Parameters
         ----------
-        veldat : xarray.Dataarray
+        veldat : xarray.Dataarray (...,range,time)
           Bin-averaged Velocity data array
-        tke_vector : xarray.Dataarray
+        tke_vector : xarray.Dataarray (...,range,time)
           Turbulent kinetic energy data array
-        stress_vector : xarray.Datarray
+        stress_vector : xarray.Datarray (...,range,time)
           Reynolds stress (from beam covariances) data array
 
         Returns
@@ -581,13 +577,11 @@ class ADPBinner(VelBinner):
         else:
             range_slice = slice(1, None)
 
-        P = -(stress_vector[0, range_slice] * self.dudz(veldat) +
-              stress_vector[1, range_slice] * self.dvdz(veldat) +
-              tke_vector[2, range_slice] * self.dwdz(veldat))
+        P = -(stress_vector[0, range_slice] * abs(self.dudz(veldat)) +
+              stress_vector[1, range_slice] * abs(self.dvdz(veldat)) +
+              tke_vector[2, range_slice] * abs(self.dwdz(veldat)))
 
-        out = xr.DataArray(P.values, name='production_rate',
-                           coords={'range': tke_vector.range[range_slice],
-                                   'time': tke_vector.time},
+        out = xr.DataArray(P.drop('tke'), name='production_rate',
                            attrs={'units': 'm^2/s^3',
                                   'description': 'Turbulent kinetic energy \
                                                   production rate'})
