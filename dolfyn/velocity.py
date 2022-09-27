@@ -977,10 +977,10 @@ class VelBinner(TimeBinner):
           The spectra in the 'u', 'v', and 'w' directions.
 
         """
-        if 'b5' in veldat.name:
+        try:
             time = self.mean(veldat.time_b5.values)
             time_str = 'time_b5'
-        else:
+        except:
             time = self.mean(veldat.time.values)
             time_str = 'time'
         fs = self._parse_fs(fs)

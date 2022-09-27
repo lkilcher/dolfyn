@@ -241,7 +241,7 @@ class ADVBinner(VelBinner):
 
         With :math:`k \\rightarrow (2\\pi f) / U`, then
 
-        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} f^{-5/3} (U/(2*\\pi))^{2/3} + N
+        .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} f^{-5/3} (U/(2\\pi))^{2/3} + N
 
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.

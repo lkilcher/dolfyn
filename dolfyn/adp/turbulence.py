@@ -162,7 +162,8 @@ class ADPBinner(VelBinner):
         Parameters
         ----------
         psd (xarray.DataArray): 
-            Power spectral density with dimensions of frequency and time
+            Power spectral density with dimensions of frequency and time.
+            From an ADCP, typically this is spectra from a mid-water location.
         pct_fN (float):
             Percent of Nyquist frequency to calculate characeristic frequency
 
