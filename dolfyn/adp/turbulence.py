@@ -43,17 +43,73 @@ class ADPBinner(VelBinner):
         VelBinner.__init__(self, n_bin, fs, n_fft, n_fft_coh, noise)
         self.diff_style = diff_style
 
-    def __call___(self, ds, window='hann', doppler_noise=0):
+    def __call___(self, ds, freq_units, window):
+        """
+        Functional version of `ADVBinner` that computes a suite of turbulence
+        statistics for the input dataset, and returns a `binned` data object.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+          The raw adv datset to `bin`, average and compute
+          turbulence statistics of.
+        freq_units : string
+          Frequency units of the returned spectra in either Hz or rad/s 
+        window : 1, None, 'hann', 'hamm'
+          The window to use for calculating power spectral densities
+
+        Returns
+        -------
+        ds : xarray.Dataset
+          Returns an 'binned' (i.e. 'averaged') data object. All
+          fields (variables) of the input data object are averaged in n_bin
+          chunks. This object also computes the following items over
+          those chunks:
+
+          - tke_vec : The energy in each component, each components is
+            alternatively accessible as:
+            :attr:`upup_ <dolfyn.velocity.Velocity.upup_>`,
+            :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
+            :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
+
+          - stress_vec : The Reynolds stresses, each component is
+            alternatively accessible as:
+            :attr:`upwp_ <dolfyn.data.velocity.Velocity.upwp_>`,
+            :attr:`vpwp_ <dolfyn.data.velocity.Velocity.vpwp_>`,
+            :attr:`upvp_ <dolfyn.data.velocity.Velocity.upvp_>`)
+
+          - U_std : The standard deviation of the horizontal
+            velocity `U_mag`.
+
+          - auto_spectra : DataArray containing the auto-spectra of 
+            the velocity for all depth bins
+
+          - dissipation : DataArray containing the TKE dissipation 
+            rate for all depth bins
+
+        """
         out = type(ds)()
         out = self.do_avg(ds, out)
 
+        # Calculate spectra and dissipation rate for each depth bin
         if hasattr(ds, 'vel_b5'):
-            out['auto_spectra_b5'] = self.calc_psd(ds['vel_b5'].isel(range=5),
-                                                   window=window,
-                                                   freq_units='rad/s',
-                                                   noise=doppler_noise)
+            spec = [None]*len(ds.range)
+            e = [None]*len(ds.range)
+            for r in range(len(ds.range)):
+                spec[r] = self.calc_psd(ds['vel_b5'].isel(range_b5=r),
+                                        window=window,
+                                        freq_units=freq_units)
+                e[r] = self.calc_tke_dissipation(spec[r],
+                                                 out.velds.U_mag.isel(range=r),
+                                                 f_range=[0.1, 0.3])  # Hz
 
-            out['tke_b5'] = self.calc_tke(ds['vel_b5'], noise=doppler_noise)
+            out['auto_spectra_b5'] = xr.concat(spec, dim='range')
+            out['dissipation'] = xr.concat(e, dim='range')
+
+        # Calculate doppler noise from spectra from mid-water column
+        out['noise'] = self.calc_doppler_noise(
+            out['auto_spectra'].isel(range=len(range)//2), pct_fN=0.8)
+        self.calc_stress_5beam(ds, out, noise=out['noise'])
 
         out.attrs['n_bin'] = self.n_bin
         out.attrs['n_fft'] = self.n_fft
@@ -254,7 +310,7 @@ class ADPBinner(VelBinner):
 
         return stress_matrix
 
-    def calc_stress_4beam(self, ds, ds_avg, noise=0, beam_angle=25):
+    def calc_stress_4beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
         """Calculate the stresses from the difference in the beam variances.
         Assumes zero mean pitch and roll
 
@@ -266,6 +322,8 @@ class ADPBinner(VelBinner):
           Binned dataset in final coordinate reference frame
         noise : int or xarray.DataArray (time)
           Doppler noise level in units of m/s
+        orientation : str, default=ds.orientation
+          Direction ADCP is facing ('up' or 'down')
         beam_angle : int, default=25
           ADCP beam angle in units of degrees
 
@@ -300,20 +358,27 @@ class ADPBinner(VelBinner):
         #                        y-axis points from beam 4 to 3.
         # Nortek Signature x-axis points from beam 3 to 1
         #                  y-axis points from beam 2 to 4
+        if not orientation:
+            orientation = ds.orientation
         if 'TRDI' in ds.inst_make:
-            if 'down' in ds.orientation.lower():
+            if 'down' in orientation.lower():
                 # this order is correct given the note above
                 beams = [0, 1, 2, 3]  # for down-facing RDIs
-            else:
+            elif 'up' in orientation.lower():
                 beams = [0, 1, 3, 2]  # for up-facing RDIs
+            else:
+                raise Exception(
+                    "Please provide instrument orientation ['up' or 'down']")
 
         # For Nortek Signatures
         elif 'Signature' in ds.inst_model:
-            if 'down' in ds.orientation.lower():
+            if 'down' in orientation.lower():
                 beams = [2, 0, 3, 1]  # for down-facing Norteks
+            elif 'up' in orientation.lower():
+                beams = [0, 2, 3, 1]  # for up-facing Norteks
             else:
-                # for up-facing or AHRS-equipped Norteks
-                beams = [0, 2, 3, 1]
+                raise Exception(
+                    "Please provide instrument orientation ['up' or 'down']")
 
         # Calculate along-beam velocity prime squared bar
         bp2_ = np.empty((4, len(ds.range), len(ds_avg.time)))*np.nan
@@ -355,7 +420,7 @@ class ADPBinner(VelBinner):
 
         # Function works inplace
 
-    def calc_stress_5beam(self, ds, ds_avg, noise=0, beam_angle=25):
+    def calc_stress_5beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
         """Calculate the stresses from the difference in the beam variances.
         Assumes small-angle approximation is applicable
 
@@ -367,6 +432,8 @@ class ADPBinner(VelBinner):
           Binned dataset in final coordinate reference frame
         noise : int or xarray.DataArray, default=0 (time)
           Doppler noise level in units of m/s
+        orientation : str, default=ds.orientation
+          Direction ADCP is facing ('up' or 'down')
         beam_angle : int, default=25
           ADCP beam angle in units of degrees
 
@@ -401,24 +468,33 @@ class ADPBinner(VelBinner):
         beam_vel = np.concatenate((ds['vel'].values,
                                    ds['vel_b5'].values[None, ...]))
 
+        if not orientation:
+            orientation = ds.orientation
+        # For TRDI Sentinel V
         if 'TRDI' in ds.inst_make:
-            # For TRDI Sentinel V
             phi2 = np.deg2rad(ds['pitch'].values)
             phi3 = np.deg2rad(ds['roll'].values)
-            if 'down' in ds.orientation.lower():
+
+            if 'down' in orientation.lower():
                 beams = [0, 1, 2, 3, 4]  # for down-facing RDIs
-            else:
+            elif 'up' in orientation.lower():
                 beams = [0, 1, 3, 2, 4]  # for up-facing RDIs
+            else:
+                raise Exception(
+                    "Please provide instrument orientation ['up' or 'down']")
 
         # For Nortek Signatures
         elif 'Signature' in ds.inst_model or 'AD2CP' in ds.inst_model:
             phi2 = np.deg2rad(self.mean(ds['roll'].values))
             phi3 = -np.deg2rad(self.mean(ds['pitch'].values))
-            if 'down' in ds.orientation.lower():
+
+            if 'down' in orientation.lower():
                 beams = [2, 0, 3, 1, 4]  # for down-facing Norteks
+            elif 'up' in orientation.lower():
+                beams = [0, 2, 3, 1, 4]  # for up-facing Norteks
             else:
-                # for up-facing or AHRS-equipped Norteks
-                beams = [0, 2, 3, 1, 4]
+                raise Exception(
+                    "Please provide instrument orientation ['up' or 'down']")
 
         # Calculate along-beam velocity prime squared bar
         bp2_ = np.empty((5, len(ds.range), len(phi2)))*np.nan
@@ -554,7 +630,7 @@ class ADPBinner(VelBinner):
                                                   dissipation rate'})
         return out
 
-    def calc_tke_production(self, veldat, tke_vector, stress_vector):
+    def calc_tke_production(self, veldat, tke_vector, stress_vector, orientation=None):
         """Calculate turbulent kinetic energy production rate
 
         Parameters
@@ -565,6 +641,8 @@ class ADPBinner(VelBinner):
           Turbulent kinetic energy data array
         stress_vector : xarray.Datarray (...,range,time)
           Reynolds stress (from beam covariances) data array
+        orientation : str, default=ds.orientation
+          Direction ADCP is facing ('up' or 'down')
 
         Returns
         -------
@@ -572,14 +650,25 @@ class ADPBinner(VelBinner):
           Production rate with single dimension `time`
 
         """
+        if not orientation:
+            raise Exception(
+                "Please provide instrument orientation ['up' or 'down']")
+
         if self.diff_style == 'centered':
             range_slice = slice(1, -1)
         else:
             range_slice = slice(1, None)
 
-        P = -(stress_vector[0, range_slice] * abs(self.dudz(veldat)) +
-              stress_vector[1, range_slice] * abs(self.dvdz(veldat)) +
-              tke_vector[2, range_slice] * abs(self.dwdz(veldat)))
+        if 'down' in orientation.lower():
+            # Have to flip for dudz to be the correct sign
+            sign = -1
+        else:
+            sign = 1
+
+        # P = -(upwp_ * dudz + vpwp_ * dvdz + wpwp_ * dwdz)
+        P = -(stress_vector[1, range_slice] * sign*self.dudz(veldat) +
+              stress_vector[2, range_slice] * sign*self.dvdz(veldat) +
+              tke_vector[2, range_slice] * sign*self.dwdz(veldat))
 
         out = xr.DataArray(P.drop('tke'), name='production_rate',
                            attrs={'units': 'm^2/s^3',
@@ -689,20 +778,10 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='Hz', window='hann
     ds_raw : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
-    n_bin : int
-      Number of data points to include in a 'bin' (ensemble), not the
-      number of bins
-    fs : int
-      Instrument sampling frequency in Hz
-    n_fft : int
-      Number of data points to use for fft (`n_fft`<=`n_bin`).
-      Default: `n_fft`=`n_bin`
     freq_units : string
       Frequency units of the returned spectra in either Hz or rad/s 
     window : 1, None, 'hann', 'hamm'
       The window to use for calculating power spectral densities
-    noise : int or xarray.DataArray, default=0 (time)
-      Doppler noise level in units of m/s
 
     Returns
     -------
@@ -718,7 +797,7 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='Hz', window='hann
         :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
         :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
 
-      - stress : The Reynolds stresses, each component is
+      - stress_vec : The Reynolds stresses, each component is
         alternatively accessible as:
         :attr:`upwp_ <dolfyn.data.velocity.Velocity.upwp_>`,
         :attr:`vpwp_ <dolfyn.data.velocity.Velocity.vpwp_>`,
@@ -727,10 +806,11 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='Hz', window='hann
       - U_std : The standard deviation of the horizontal
         velocity `U_mag`.
 
-      - psd : DataArray containing the spectra of the velocity
-        in radial frequency units. The data-array contains:
-        - vel : the velocity spectra array (m^2/s/rad))
-        - omega : the radial frequncy (rad/s)
+      - auto_spectra : DataArray containing the auto-spectra of 
+        the velocity for all depth bins
+
+      - dissipation : DataArray containing the TKE dissipation 
+        rate for all depth bins
 
     """
     calculator = ADPBinner(n_bin, fs, n_fft=n_fft, noise=noise)

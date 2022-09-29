@@ -484,7 +484,7 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
         :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
         :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
 
-      - stress : The Reynolds stresses, each component is
+      - stress_vec : The Reynolds stresses, each component is
         alternatively accessible as:
         :attr:`upwp_ <dolfyn.data.velocity.Velocity.upwp_>`,
         :attr:`vpwp_ <dolfyn.data.velocity.Velocity.vpwp_>`,
