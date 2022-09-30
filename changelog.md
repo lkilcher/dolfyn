@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Clean thresh function failed to remove spikes
 		- ADV despiking max gap input
 		- Fix input error to calc_L_int
+		- `dist_bt` and `prcnt_gd` variables should be in beam coordinates
 
 	- API/Useability
 		- Moved "calc_stress" and "calc_csd" functions to ADVBinner class
