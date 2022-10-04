@@ -23,5 +23,6 @@ debug/
 src/
 .cache/
 tmp/
+*.log
 
 .vscode

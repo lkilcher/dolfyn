@@ -682,13 +682,13 @@ class _RDIReader():
                 self._nbyte += 2
         else:  # cfg['name'] == 'wh-adcp':
             ens.error_status_wd[k] = fd.read_ui32(1)
-            self.vars_read += ['error_status_wd', 'pressure', 'pressure_std', ]
+            self.vars_read += ['pressure', 'pressure_std']
             self._nbyte += 4
             if cfg['prog_ver'] >= 8.13:
                 # Added pressure sensor stuff in 8.13
                 fd.seek(2, 1)
-                ens.pressure[k] = fd.read_ui32(1) / 10  # kPa to dbar
-                ens.pressure_std[k] = fd.read_ui32(1) / 10
+                ens.pressure[k] = fd.read_ui32(1) / 1000  # dPa to dbar
+                ens.pressure_std[k] = fd.read_ui32(1) / 1000
                 self._nbyte += 10
             if cfg['prog_ver'] >= 8.24:
                 # Spare byte added 8.24
