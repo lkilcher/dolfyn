@@ -28,7 +28,7 @@ def test_GN2002(make_data=False):
 def test_spike_thresh(make_data=False):
     td = tv.dat_imu.copy(deep=True)
 
-    mask = avm.clean.spike_thresh(td.vel, thresh=10)
+    mask = avm.clean.spike_thresh(td.vel, thresh=1)
     td['vel'] = avm.clean.clean_fill(td.vel, mask, method='cubic')
 
     if make_data:

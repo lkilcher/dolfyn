@@ -12,6 +12,6 @@ E_coh, m\ :sup:`2`/s\ :sup:`2`, Coherent TKE (root-sum-square of Reynold's stres
 upup\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'].sel(tke="upup_")``
 vpvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'].sel(tke="vpvp_")``
 wpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['tke_vec'].sel(tke="wpwp_")``
-upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'].sel(tau="upvp_")``
-upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'].sel(tau="upwp_")``
-vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress'].sel(tau="vpwp_")``
+upvp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'].sel(tau="upvp_")``
+upwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'].sel(tau="upwp_")``
+vpwp\_, m\ :sup:`2`/s\ :sup:`2`, ``dat['stress_vec'].sel(tau="vpwp_")``
