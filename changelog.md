@@ -4,18 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unversioned
+## Version 1.1.0
     - Bugfixes
 	    - "calc_tke" function now errors if given multi-beam ADCP velocity vector
 	    - Clean thresh function failed to remove spikes
 		- ADV despiking max gap input
 		- Fix input error to calc_L_int
+		- `dist_bt` and `prcnt_gd` variables should be in beam coordinates
 
 	- API/Useability
 		- Moved "calc_stress" and "calc_csd" functions to ADVBinner class
 		- Removed "do_tke" function
 		- Frequency units for calculating power spectral densities are consistently set to rad/s
 		- Made base PSD and CPSD functions public
+		- Renamed variable "stress" to "stress_vec" to stay consistent
 
 ## Version 1.0.2
     - Bugfixes

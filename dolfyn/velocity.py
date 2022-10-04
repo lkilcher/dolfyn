@@ -938,7 +938,7 @@ class VelBinner(TimeBinner):
         return da
 
     def calc_psd(self, veldat,
-                 freq_units='Hz',
+                 freq_units='rad/s',
                  fs=None,
                  window='hann',
                  noise=[0, 0, 0],
