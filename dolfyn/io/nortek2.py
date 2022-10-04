@@ -12,7 +12,7 @@ from ..time import epoch2dt64, _fill_time_gaps
 
 
 def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
-                   debug=False):
+                   debug=False, **kwargs):
     """Read a Nortek Signature (.ad2cp) datafile
 
     Parameters
