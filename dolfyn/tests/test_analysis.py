@@ -69,7 +69,7 @@ def test_calc_func(make_data=False):
 
     # Test ADCP single vector spectra, cross-spectra to test radians code
     test_ds_adp['psd_b5'] = c2.calc_psd(
-        dat_adp.dat.vel_b5.isel(range_b5=5), freq_units='Hz', window='hamm')
+        dat_adp.dat.vel_b5.isel(range_b5=5), freq_units='rad', window='hamm')
     test_ds_adp['tke_b5'] = c2.calc_tke(dat_adp.dat.vel_b5)
 
     if make_data:
