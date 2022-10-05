@@ -35,19 +35,21 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=0, vmdas_search=False,
         An xarray dataset from the binary instrument data
 
     """
+    # Start debugger logging
+    if debug_level >= 0:
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        filepath = Path(fname)
+        logfile = filepath.with_suffix('.log')
+        logging.basicConfig(filename=str(logfile),
+                            filemode='w',
+                            level=logging.NOTSET,
+                            format='%(name)s - %(levelname)s - %(message)s')
+
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
     with _RDIReader(fname, debug_level=debug_level,
                     vmdas_search=vmdas_search) as ldr:
-        if debug_level > 0:
-            for handler in logging.root.handlers[:]:
-                logging.root.removeHandler(handler)
-            filepath = Path(fname)
-            logfile = filepath.with_suffix('.log')
-            logging.basicConfig(filename=str(logfile),
-                                filemode='w',
-                                level=logging.NOTSET,
-                                format='%(name)s - %(levelname)s - %(message)s')
         datNB, datBB = ldr.load_data(nens=nens)
 
     dats = [dat for dat in [datNB, datBB] if dat is not None]
@@ -203,9 +205,9 @@ class _RDIReader():
 
         self._bb = self.check_for_double_buffer()
         if self._debug_level >= 0:
-            logging.info('Config: ')
+            logging.info('Done: {}'.format(self.cfg))
+            logging.info('self._bb {}'.format(self._bb))
             logging.info(self.cfgbb)
-            logging.info('self._bb', self._bb)
         self.f.seek(self._pos, 0)
         self.n_avg = navg
 
@@ -229,14 +231,16 @@ class _RDIReader():
         """
         found = False
         pos = self.f.pos
-        if self._debug_level > 1:
+        if self._debug_level >= 0:
             logging.info(self.hdr)
-            logging.info('pos', pos)
+            logging.info('pos {}'.format(pos))
+        self.id_positions = {}
         for offset in self.hdr['dat_offsets']:
             self.f.seek(offset+pos - self.hdr['dat_offsets'][0], rel=0)
             id = self.f.read_ui16(1)
-            if self._debug_level > 1:
-                logging.info('offset', offset, id)
+            self.id_positions[id] = offset
+            if self._debug_level >= 0:
+                logging.info('pos {} id {}'.format(offset, id))
             if id == 1:
                 self.read_fixed(bb=True)
                 found = True
@@ -248,9 +252,9 @@ class _RDIReader():
         fd = self.f
         cfgid = list(fd.read_ui8(2))
         nread = 0
-        if self._debug_level > 2:
-            logging.info(self.f.pos)
-            logging.info('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
+        if self._debug_level >= 0:
+            logging.info('pos {}'.format(self.f.pos))
+            logging.info('cfgid0: [{:x}, {:x}]'.format(*cfgid))
         while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
             nextbyte = fd.read_ui8(1)
             if nextbyte is None:
@@ -260,12 +264,10 @@ class _RDIReader():
             cfgid[1] = cfgid[0]
             cfgid[0] = nextbyte
             if not pos % 1000:
-                if self._debug_level > 0:
+                if self._debug_level >= 0:
                     logging.info('  Still looking for valid cfgid at file '
                                  'position %d ...' % pos)
         self._pos = self.f.tell() - 2
-        if self._debug_level > 0:
-            logging.info(fd.tell())
         self.read_hdrseg()
         return True
 
@@ -412,9 +414,8 @@ class _RDIReader():
             self._read_vmdas = False
             for n in range(len(hdr['dat_offsets'])):
                 id = fd.read_ui16(1)
-                if self._debug_level > 1:
-                    logging.info(f'id {n}: {id} {id:04x}')
-                self._winrivprob = False
+                if self._debug_level > 0:
+                    logging.info(f'n {n}: {id} {id:04x}')
                 self.print_pos()
                 retval = self.read_dat(id)
 
@@ -498,7 +499,8 @@ class _RDIReader():
             logging.info("  ###In checkheader.")
         fd = self.f
         valid = False
-        # print(self.f.pos)
+        if self._debug_level>=0:
+            logging.info('pos {}'.format(self.f.pos))
         numbytes = fd.read_i16(1)
         if numbytes > 0:
             fd.seek(numbytes - 2, 1)
@@ -525,9 +527,6 @@ class _RDIReader():
         fd = self.f
         hdr = self.hdr
         hdr['nbyte'] = fd.read_i16(1)
-
-        if self._debug_level > 2:
-            logging.info(fd.tell())
         spare = fd.read_ui8(1)
         #print('spare', spare)
         ndat = fd.read_ui8(1)
@@ -669,22 +668,27 @@ class _RDIReader():
 
     def read_fixed(self, bb=False):
         self.read_cfgseg(bb=bb)
-        if self._debug_level >= 1:
-            logging.info(self._pos)
         self._nbyte += 2
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read Fixed')
 
-    def read_fixed2(self):
-        fd = self.f
-        if hasattr(self.cfg, 'n_cells2'):
-            fd.seek(63, 1)
+    def read_fixed2(self,):
+        # When dual profile is set but doesn't exist
+        offsets = list(self.id_positions.values())
+        idx = np.where(offsets == self.id_positions[16])[0][0]
+        byte_len = offsets[idx+1] - offsets[idx] - 2
+
+        if self._debug_level>=0:
+            logging.info("Found 2nd profile")
+            logging.info("size: {}".format(byte_len))
+
+        if byte_len == 63: # what it should be for a dual profile
+            self.read_fixed(bb=not self._bb) # set the other config
         else:
-            fd.seek(6, 1)
-            self.cfg['n_beams2'] = fd.read_ui8(1)
-            self.cfg['n_cells2'] = fd.read_ui8(1)
-            fd.seek(55, 1)
-        self._nbyte = 2 + 63
+            self.skip_Nbyte(byte_len)
+            if self._debug_level >= 0:
+                logging.debug("2nd profile id in file but data is nonexistent, skipping id 16")
+
 
     def read_cfgseg(self, bb=False):
         cfgstart = self.f.tell()
@@ -770,13 +774,13 @@ class _RDIReader():
             self._nbyte += 6
 
         self.configsize = self.f.tell() - cfgstart
-        if self._debug_level >= 2:
-            logging.info('Read Cfg')
+        if self._debug_level >= 1:
+            logging.info('Read Config')
 
     def read_var(self, bb=False):
         """ Read variable leader """
         if self._debug_level > 0:
-            logging.info("Reading var {}".format(self.ensemble.number))
+            logging.info("Reading Ensemble {}".format(self.ensemble.number[0]))
         fd = self.f
         if bb:
             ens = self.ensembleBB
@@ -858,7 +862,7 @@ class _RDIReader():
                 fd.seek(1)  # lag near bottom flag
                 self._nbyte += 1
 
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read Var')
 
     def read_vel(self, bb=False):
@@ -874,13 +878,12 @@ class _RDIReader():
 
         if self._debug_level > 1:
             logging.info('{} NCells'.format(cfg['n_cells']))
-            logging.info(np.shape(ens['vel']))
         k = ens.k
         ens['vel'][:cfg['n_cells'], :, k] = np.array(
             self.f.read_i16(4 * cfg['n_cells'])
         ).reshape((cfg['n_cells'], 4)) * .001
         self._nbyte = 2 + 4 * cfg['n_cells'] * 2
-        if self._debug_level >= 0:
+        if self._debug_level >= 1:
             logging.info('Read Vel')
 
     def read_corr(self, bb=False):
@@ -898,7 +901,7 @@ class _RDIReader():
             self.f.read_ui8(4 * cfg['n_cells'])
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read Corr')
 
     def read_amp(self, bb=False):
@@ -915,7 +918,7 @@ class _RDIReader():
             self.f.read_ui8(4 * cfg['n_cells'])
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read Amp')
 
     def read_prcnt_gd(self, bb=False):
@@ -931,7 +934,7 @@ class _RDIReader():
             self.f.read_ui8(4 * cfg['n_cells'])
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read PG')
 
     def read_status(self, bb=False):
@@ -947,7 +950,7 @@ class _RDIReader():
             self.f.read_ui8(4 * cfg['n_cells'])
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read Status')
 
     def read_bottom(self,):
@@ -1002,7 +1005,7 @@ class _RDIReader():
                 if cfg['prog_ver'] >= 16.20:
                     fd.seek(4, 1)
                     self._nbyte += 4
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read Bottom')
 
     def read_vmdas(self,):
@@ -1013,7 +1016,7 @@ class _RDIReader():
         self.cfg['sourceprog'] = 'VMDAS'
         ens = self.ensemble
         k = ens.k
-        if self._source != 1 and self._debug_level > 0:
+        if self._source != 1 and self._debug_level >= 0:
             logging.info('  \n***** Apparently a VMDAS file \n\n')
         self._source = 1
         self.vars_read += ['time_gps',
@@ -1050,7 +1053,7 @@ class _RDIReader():
             milliseconds=int(fd.read_ui32(1) / 10)))[0]
         fd.seek(16, 1)
         self._nbyte = 2 + 76
-        if self._debug_level >= 2:
+        if self._debug_level >= 1:
             logging.info('Read VMDAS')
         self._read_vmdas = True
 
@@ -1060,7 +1063,7 @@ class _RDIReader():
         self.cfg['sourceprog'] = 'WINRIVER'
         ens = self.ensemble
         k = ens.k
-        if self._source != 3 and self._debug_level > 0:
+        if self._source != 3 and self._debug_level >= 0:
             logging.warning('  \n***** Apparently a WINRIVER2 file\n'
                             '***** Raw NMEA data '
                             'handler not yet fully implemented\n\n')
@@ -1167,8 +1170,19 @@ class _RDIReader():
             dfac = bin(int(hxid[3], 0) & 3).count('1')
             self.skip_Nbyte(12 * nflds * dfac)
         else:
-            if self._debug_level > 0:
-                logging.warning('  Unrecognized ID code: %0.4X\n' % id)
+            if self._debug_level >= 0:
+                logging.warning('  Unrecognized ID code: %0.4X' % id)
+            self.skip_nocode(id)
+
+    def skip_nocode(self, id):
+        # Skipping bytes if ID isn't known
+        offsets = list(self.id_positions.values())
+        idx = np.where(offsets == self.id_positions[id])[0][0]
+        byte_len = offsets[idx+1] - offsets[idx] - 2
+        
+        self.skip_Nbyte(byte_len)
+        if self._debug_level >= 0:
+            logging.debug(f"Skipping ID code {id}\n")
 
     def remove_end(self, iens):
         dat = self.outd
