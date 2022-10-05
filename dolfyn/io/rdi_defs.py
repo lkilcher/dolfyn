@@ -36,6 +36,8 @@ data_defs = {'number': ([], 'data_vars', 'uint32', ''),
              'time_gps': ([], 'coords', 'float64', ''),
              'latitude_gps': ([], 'data_vars', 'float64', 'deg'),
              'longitude_gps': ([], 'data_vars', 'float64', 'deg'),
+             'speed_made_good': ([], 'data_vars', 'float64', 'm/s'),
+             'direction_made_good': ([], 'data_vars', 'float64', 'deg'),
              'ntime': ([], 'coords', 'float64', ''),
              'flags': ([], 'data_vars', 'float32', ''),
              }

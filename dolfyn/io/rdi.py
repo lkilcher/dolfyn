@@ -74,7 +74,6 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=0, vmdas_search=False,
 
         if 'hdwtime_gps' in ds:
             ds.hdwtime_gps.encoding['units'] = 'seconds since 1970-01-01 00:00:00'
-            ds.hdwtime_gps.attrs.pop('units')
 
         # Create orientation matrices
         if 'beam2inst_orientmat' not in ds:
@@ -114,7 +113,10 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=0, vmdas_search=False,
             ds[ky].data = dt
         dss += [ds]
 
-    return dss
+    if len(dss) == 2:
+        warnings.warn("\nTwo profiling configurations retrieved from file"
+                      "\nReturning first.")
+    return dss[0]
 
 
 def _remove_gps_duplicates(dat):
@@ -246,6 +248,8 @@ class _RDIReader():
                 found = True
             elif id == 0:
                 self.read_fixed(bb=False)
+            elif id == 8192:
+                self._vmdas_search = True
         return found
 
     def read_hdr(self,):
@@ -389,9 +393,10 @@ class _RDIReader():
                     dat['coords']['time'][iens] = np.median(dates)
 
         for dat in datl:
+            self.finalize(dat)
             if 'vel_bt' in dat['data_vars']:
                 dat['attrs']['rotate_vars'].append('vel_bt')
-            self.finalize(dat)
+
         dat = self.outd
         datbb = self.outdBB if self._bb else None
         return dat, datbb
@@ -408,7 +413,7 @@ class _RDIReader():
                 return False
             startpos = fd.tell() - 2
             self.read_hdrseg()
-            if self._debug_level > 1:
+            if self._debug_level >= 1:
                 logging.info('HDR', hdr)
             byte_offset = self._nbyte + 2
             self._read_vmdas = False
@@ -441,7 +446,7 @@ class _RDIReader():
             # check for vmdas again because VmDAS doesn't set the offsets
             # correctly, and we need this info:
             if not self._read_vmdas and self._vmdas_search:
-                if self._debug_level >= 2:
+                if self._debug_level >= 1:
                     logging.info(
                         'Searching for vmdas nav data. Going to next ensemble')
                 self.search_buffer()
@@ -449,7 +454,7 @@ class _RDIReader():
                 fd.seek(-98, 1)
                 id = self.f.read_ui16(1)
                 if id is not None:
-                    if self._debug_level >= 2:
+                    if self._debug_level >= 1:
                         logging.info(f'Found {id:04d}')
                     if id == 8192:
                         self.read_dat(id)
@@ -499,7 +504,7 @@ class _RDIReader():
             logging.info("  ###In checkheader.")
         fd = self.f
         valid = False
-        if self._debug_level>=0:
+        if self._debug_level >= 0:
             logging.info('pos {}'.format(self.f.pos))
         numbytes = fd.read_i16(1)
         if numbytes > 0:
@@ -678,17 +683,17 @@ class _RDIReader():
         idx = np.where(offsets == self.id_positions[16])[0][0]
         byte_len = offsets[idx+1] - offsets[idx] - 2
 
-        if self._debug_level>=0:
+        if self._debug_level >= 0:
             logging.info("Found 2nd profile")
             logging.info("size: {}".format(byte_len))
 
-        if byte_len == 63: # what it should be for a dual profile
-            self.read_fixed(bb=not self._bb) # set the other config
+        if byte_len == 63:  # what it should be for a dual profile
+            self.read_fixed(bb=not self._bb)  # set the other config
         else:
             self.skip_Nbyte(byte_len)
             if self._debug_level >= 0:
-                logging.debug("2nd profile id in file but data is nonexistent, skipping id 16")
-
+                logging.debug(
+                    "2nd profile id in file but data is nonexistent, skipping id 16\n")
 
     def read_cfgseg(self, bb=False):
         cfgstart = self.f.tell()
@@ -1064,7 +1069,7 @@ class _RDIReader():
         ens = self.ensemble
         k = ens.k
         if self._source != 3 and self._debug_level >= 0:
-            logging.warning('  \n***** Apparently a WINRIVER2 file\n'
+            logging.warning('\n***** Apparently a WINRIVER2 file\n'
                             '***** Raw NMEA data '
                             'handler not yet fully implemented\n\n')
         self._source = 3
@@ -1075,7 +1080,7 @@ class _RDIReader():
             start_string = self.f.reads(6)
             _ = self.f.reads(1)
             if start_string != '$GPGGA':
-                if self._debug_level > 1:
+                if self._debug_level >= 1:
                     logging.warning(f'Invalid GPGGA string found in ensemble {k},'
                                     ' skipping...')
                 return 'FAIL'
@@ -1095,7 +1100,7 @@ class _RDIReader():
             if tcNS == 'S':
                 ens.latitude_gps[k] *= -1
             elif tcNS != 'N':
-                if self._debug_level > 1:
+                if self._debug_level >= 1:
                     logging.warning(f'Invalid GPGGA string found in ensemble {k},'
                                     ' skipping...')
                 return 'FAIL'
@@ -1104,7 +1109,7 @@ class _RDIReader():
             if tcEW == 'W':
                 ens.longitude_gps[k] *= -1
             elif tcEW != 'E':
-                if self._debug_level > 1:
+                if self._debug_level >= 1:
                     logging.warning(f'Invalid GPGGA string found in ensemble {k},'
                                     ' skipping...')
                 return 'FAIL'
@@ -1112,13 +1117,13 @@ class _RDIReader():
             tmp = self.f.read_float(2)
             ens.hdop, ens.altitude = tmp
             if self.f.reads(1) != 'M':
-                if self._debug_level > 1:
+                if self._debug_level >= 1:
                     logging.warning(f'Invalid GPGGA string found in ensemble {k},'
                                     ' skipping...')
                 return 'FAIL'
             ggeoid_sep = self.f.read_float(1)
             if self.f.reads(1) != 'M':
-                if self._debug_level > 1:
+                if self._debug_level >= 1:
                     logging.warning(f'Invalid GPGGA string found in ensemble {k},'
                                     ' skipping...')
                 return 'FAIL'
@@ -1129,7 +1134,7 @@ class _RDIReader():
             # 2 reserved + 2 checksum
             self.vars_read += ['longitude_gps', 'latitude_gps', 'time_gps']
             self._nbyte = self.f.tell() - startpos + 2
-            if self._debug_level > 2:
+            if self._debug_level >= 1:
                 logging.debug(
                     f"size: {sz}, ensemble longitude: {ens.longitude_gps[k]}")
 
@@ -1137,8 +1142,8 @@ class _RDIReader():
         self._winrivprob = True
         self.cfg['sourceprog'] = 'WINRIVER'
         if self._source not in [2, 3]:
-            if self._debug_level > 0:
-                logging.warning('\n  ***** Apparently a WINRIVER file - '
+            if self._debug_level >= 0:
+                logging.warning('\n***** Apparently a WINRIVER file - '
                                 'Raw NMEA data handler not yet implemented\n\n')
             self._source = 2
         startpos = self.f.tell()
@@ -1179,7 +1184,7 @@ class _RDIReader():
         offsets = list(self.id_positions.values())
         idx = np.where(offsets == self.id_positions[id])[0][0]
         byte_len = offsets[idx+1] - offsets[idx] - 2
-        
+
         self.skip_Nbyte(byte_len)
         if self._debug_level >= 0:
             logging.debug(f"Skipping ID code {id}\n")
