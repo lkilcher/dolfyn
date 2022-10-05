@@ -262,7 +262,7 @@ class _RDIReader():
                       'position %d ...' % pos)
         self._pos = self.f.tell() - 2
         if self._debug_level > 0:
-            print(fd.tell())
+            logging.info(fd.tell())
         self.read_hdrseg()
         return True
 
@@ -387,45 +387,6 @@ class _RDIReader():
         dat = self.outd
         datbb = self.outdBB if self._bb else None
         return dat, datbb
-
-    def print_progress(self,):
-        self.progress = self.f.tell()
-        if self._debug_level > 1:
-            logging.debug('  pos %0.0fmb/%0.0fmb\n' %
-                          (self.f.tell() / 1048576., self._filesize / 1048576.))
-
-    def print_pos(self, byte_offset=-1):
-        """Print the position in the file, used for debugging.
-        """
-        if self._debug_level > 2:
-            if hasattr(self, 'ensemble'):
-                k = self.ensemble.k
-            else:
-                k = 0
-            logging.debug(
-                f'  pos: {self.f.tell()}, pos_: {self._pos}, nbyte: {self._nbyte}, k: {k}, byte_offset: {byte_offset}')
-
-    def check_offset(self, offset, readbytes):
-        fd = self.f
-        if offset != 4 and self._fixoffset == 0:
-            if self._debug_level > 0:
-                if fd.tell() == self._filesize:
-                    logging.error(
-                        ' EOF reached unexpectedly - discarding this last ensemble\n')
-                else:
-                    logging.debug("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
-                                  .format(offset, readbytes, self.hdr['nbyte']))
-                    logging.warning("""
-                    NOTE - If this appears at the beginning of the file, it may be
-                           a dolfyn problem. Please report this message, with details here:
-                           https://github.com/lkilcher/dolfyn/issues/8
-
-                         - If this appears at the end of the file it means
-                           The file is corrupted and only a partial record
-                           has been read\n
-                    """)
-            self._fixoffset = offset - 4
-        fd.seek(4 + self._fixoffset, 1)
 
     def read_buffer(self,):
         fd = self.f
@@ -558,29 +519,6 @@ class _RDIReader():
             logging.info("  ###Leaving checkheader.")
         return valid
 
-    def read_hdr(self,):
-        fd = self.f
-        cfgid = list(fd.read_ui8(2))
-        nread = 0
-        if self._debug_level > 2:
-            logging.debug(f"position: {self.f.pos}")
-            logging.debug('  cfgid0: [{:x}, {:x}]'.format(*cfgid))
-        while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
-            nextbyte = fd.read_ui8(1)
-            pos = fd.tell()
-            nread += 1
-            cfgid[1] = cfgid[0]
-            cfgid[0] = nextbyte
-            if not pos % 1000:
-                print('  Still looking for valid cfgid at file '
-                      'position %d ...' % pos)
-        self._pos = self.f.tell() - 2
-        if nread > 0:
-            print('  Junk found at BOF... skipping %d bytes until\n'
-                  '  cfgid: (%x,%x) at file pos %d.'
-                  % (self._pos, cfgid[0], cfgid[1], nread))
-        self.read_hdrseg()
-
     def read_hdrseg(self,):
         fd = self.f
         hdr = self.hdr
@@ -595,11 +533,50 @@ class _RDIReader():
         hdr['dat_offsets'] = fd.read_ui16(ndat)
         self._nbyte = 4 + ndat * 2
 
+    def print_progress(self,):
+        self.progress = self.f.tell()
+        if self._debug_level > 1:
+            logging.debug('  pos %0.0fmb/%0.0fmb\n' %
+                          (self.f.tell() / 1048576., self._filesize / 1048576.))
+
+    def print_pos(self, byte_offset=-1):
+        """Print the position in the file, used for debugging.
+        """
+        if self._debug_level > 2:
+            if hasattr(self, 'ensemble'):
+                k = self.ensemble.k
+            else:
+                k = 0
+            logging.debug(
+                f'  pos: {self.f.tell()}, pos_: {self._pos}, nbyte: {self._nbyte}, k: {k}, byte_offset: {byte_offset}')
+
+    def check_offset(self, offset, readbytes):
+        fd = self.f
+        if offset != 4 and self._fixoffset == 0:
+            if self._debug_level > 0:
+                if fd.tell() == self._filesize:
+                    logging.error(
+                        ' EOF reached unexpectedly - discarding this last ensemble\n')
+                else:
+                    logging.debug("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
+                                  .format(offset, readbytes, self.hdr['nbyte']))
+                    logging.warning("""
+                    NOTE - If this appears at the beginning of the file, it may be
+                           a dolfyn problem. Please report this message, with details here:
+                           https://github.com/lkilcher/dolfyn/issues/8
+
+                         - If this appears at the end of the file it means
+                           The file is corrupted and only a partial record
+                           has been read\n
+                    """)
+            self._fixoffset = offset - 4
+        fd.seek(4 + self._fixoffset, 1)
+
     def read_dat(self, id):
         function_map = {0: (self.read_fixed, []),   # 0000 1st profile fixed leader
                         1:  (self.read_fixed, [True]),  # 0001
                         # 0010 2nd profile fixed leader
-                        16: (self.read_fixed2, []),
+                        16: (self.read_fixed, [True]),
                         # 0080 1st profile variable leader
                         128: (self.read_var, []),
                         # 0081 2nd profile variable leader
@@ -674,7 +651,7 @@ class _RDIReader():
                         }
         # Call the correct function:
         if self._debug_level >= 2:
-            print(f'Trying to Reading {id}')
+            logging.debug(f'Trying to Reading {id}')
         if id in function_map:
             if self._debug_level > 1:
                 logging.info('  Reading code {}...'.format(hex(id)))
@@ -689,25 +666,10 @@ class _RDIReader():
     def read_fixed(self, bb=False):
         self.read_cfgseg(bb=bb)
         if self._debug_level >= 1:
-            print(self._pos)
+            logging.info(self._pos)
         self._nbyte += 2
         if self._debug_level >= 2:
-            print('Read Fixed')
-
-    def read_fixed2(self):
-        fd = self.f
-        if hasattr(self.cfg, 'n_cells2'):
-            fd.seek(63, 1)
-        else:
-            fd.seek(6, 1)
-            self.cfg['n_beams2'] = fd.read_ui8(1)
-            self.cfg['n_cells2'] = fd.read_ui8(1)
-            fd.seek(55, 1)
-        self._nbyte = 2 + 63
-
-    def read_cfg(self,):
-        cfgid = self.f.read_ui16(1)
-        self.read_cfgseg()
+            logging.info('Read Fixed')
 
     def read_cfgseg(self, bb=False):
         cfgstart = self.f.tell()
@@ -794,7 +756,7 @@ class _RDIReader():
 
         self.configsize = self.f.tell() - cfgstart
         if self._debug_level >= 2:
-            print('Read Cfg')
+            logging.info('Read Cfg')
 
     def read_var(self, bb=False):
         """ Read variable leader """
@@ -841,8 +803,8 @@ class _RDIReader():
         ens.roll_std[k] = fd.read_ui8(1) * 0.1
         ens.adc[:, k] = fd.read_i8(8)
         self._nbyte = 2 + 40
-        cfg = self.cfg
 
+        cfg = self.cfg
         if cfg['name'] == 'bb-adcp':
             if cfg['prog_ver'] >= 5.55:
                 fd.seek(15, 1)
@@ -879,8 +841,9 @@ class _RDIReader():
             if cfg['prog_ver'] >= 56:
                 fd.seek(1)  # lag near bottom flag
                 self._nbyte += 1
+
         if self._debug_level >= 2:
-            print('Read Var')
+            logging.info('Read Var')
 
     def read_vel(self, bb=False):
         if bb:
@@ -919,7 +882,7 @@ class _RDIReader():
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
         if self._debug_level >= 2:
-            print('Read Corr')
+            logging.info('Read Corr')
 
     def read_amp(self, bb=False):
         if bb:
@@ -936,7 +899,7 @@ class _RDIReader():
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
         if self._debug_level >= 2:
-            print('Read Amp')
+            logging.info('Read Amp')
 
     def read_prcnt_gd(self, bb=False):
         if bb:
@@ -952,7 +915,7 @@ class _RDIReader():
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
         if self._debug_level >= 2:
-            print('Read PG')
+            logging.info('Read PG')
 
     def read_status(self, bb=False):
         if bb:
@@ -968,7 +931,7 @@ class _RDIReader():
         ).reshape((cfg['n_cells'], 4))
         self._nbyte = 2 + 4 * cfg['n_cells']
         if self._debug_level >= 2:
-            print('Read Status')
+            logging.info('Read Status')
 
     def read_bottom(self,):
         self.vars_read += ['dist_bt', 'vel_bt', 'corr_bt', 'amp_bt',
@@ -1022,7 +985,7 @@ class _RDIReader():
                     fd.seek(4, 1)
                     self._nbyte += 4
         if self._debug_level >= 2:
-            print('Read Bottom')
+            logging.info('Read Bottom')
 
     def read_vmdas(self,):
         """ Read something from VMDAS """
@@ -1070,7 +1033,7 @@ class _RDIReader():
         fd.seek(16, 1)
         self._nbyte = 2 + 76
         if self._debug_level >= 2:
-            print('Read VMDAS')
+            logging.info('Read VMDAS')
         self._read_vmdas = True
 
     def read_winriver2(self, ):
