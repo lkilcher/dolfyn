@@ -14,25 +14,28 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-def read_rdi(fname, userdata=None, nens=None, debug_level=0, vmdas_search=False, **kwargs):
-    """Read a TRDI binary data file.
+def read_rdi(fname, userdata=None, nens=None, debug_level=-1, vmdas_search=False, **kwargs):
+    """
+    Read a TRDI binary data file.
 
     Parameters
     ----------
     filename : string
-        Filename of TRDI file to read.
+      Filename of TRDI file to read.
     userdata : True, False, or string of userdata.json filename (default ``True``)
-        Whether to read the '<base-filename>.userdata.json' file.
+      Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
-        Number of pings to read from the file
-    vmdas_search : boolean (False)
-        Search from the end of each ensemble for the VMDAS navigation
-        block.  The byte offsets are sometimes incorrect.
+      Number of pings to read from the file
+    debug_level : int (default=-1)
+      Debug level [0 - 2]
+    vmdas_search : boolean (default=False)
+      Search from the end of each ensemble for the VMDAS navigation
+      block.  The byte offsets are sometimes incorrect.
 
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from the binary instrument data
+      An xarray dataset from the binary instrument data
 
     """
     # Start debugger logging
@@ -121,8 +124,8 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=0, vmdas_search=False,
 
 def _remove_gps_duplicates(dat):
     """
-    Removes duplicate and nan timestamp values in 'time_gps' coordinate, and
-    add hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
+    Removes duplicate and nan timestamp values in 'time_gps' coordinate, 
+    and add hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
     (in addition to the GPS unit's timestamp).
     """
 
@@ -229,8 +232,8 @@ class _RDIReader():
 
     def check_for_double_buffer(self,):
         """
-        VMDAS will record two buffers in NB or NB/BB mode, so we need to figure out
-        if that is happening here
+        VMDAS will record two buffers in NB or NB/BB mode, so we need to 
+        figure out if that is happening here
         """
         found = False
         pos = self.f.pos
@@ -1088,14 +1091,13 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:  # TRDI rewrites the nmea string into their format if one is found
                 start_string = self.f.reads(6)
-                if type(start_string)!=str:
+                if type(start_string) != str:
                     if self._debug_level >= 1:
                         logging.warning(f'Invalid GGA string found in ensemble {k},'
                                         ' skipping...')
                     return 'FAIL'
                 self.f.seek(1, 1)
                 gga_time = self.f.reads(9)
-                float(gga_time)
                 time = tmlib.timedelta(hours=int(gga_time[0:2]),
                                        minutes=int(gga_time[2:4]),
                                        seconds=int(gga_time[4:6]),
@@ -1133,7 +1135,7 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:
                 start_string = self.f.reads(6)
-                if type(start_string)!=str:
+                if type(start_string) != str:
                     if self._debug_level >= 1:
                         logging.warning(f'Invalid VTG string found in ensemble {k},'
                                         ' skipping...')
@@ -1163,7 +1165,7 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:
                 start_string = self.f.reads(6)
-                if type(start_string)!=str:
+                if type(start_string) != str:
                     if self._debug_level >= 1:
                         logging.warning(f'Invalid DBT string found in ensemble {k},'
                                         ' skipping...')
@@ -1194,7 +1196,7 @@ class _RDIReader():
             self._source = 2
         startpos = self.f.tell()
         sz = self.f.read_ui16(1)
-        tmp = self.f.reads(sz)
+        tmp = self.f.reads(sz-2)
         self._nbyte = self.f.tell() - startpos + 2
 
     def skip_Ncol(self, n_skip=1):
