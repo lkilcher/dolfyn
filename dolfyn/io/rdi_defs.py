@@ -31,17 +31,18 @@ data_defs = {'number': ([], 'data_vars', 'uint32', ''),
              'prcnt_gd_bt': ([4], 'data_vars', 'uint8', '%'),
              'time': ([], 'coords', 'float64', ''),
              'etime_gps': ([], 'coords', 'float64', ''),
-             'elatitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'elongitude_gps': ([], 'data_vars', 'float64', 'deg'),
+             'elatitude_gps': ([], 'data_vars', 'float32', 'deg'),
+             'elongitude_gps': ([], 'data_vars', 'float32', 'deg'),
              'time_gps': ([], 'coords', 'float64', ''),
-             'latitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'longitude_gps': ([], 'data_vars', 'float64', 'deg'),
-             'speed_made_good': ([], 'data_vars', 'float64', 'm/s'),
-             'direction_made_good': ([], 'data_vars', 'float64', 'deg'),
-             'speed_over_ground': ([], 'data_vars', 'float64', 'm/s'),
-             'direction_over_ground': ([], 'data_vars', 'float64', 'deg'),
-             'ntime': ([], 'coords', 'float64', ''),
-             'flags': ([], 'data_vars', 'float32', ''),
+             'latitude_gps': ([], 'data_vars', 'float32', 'deg'),
+             'longitude_gps': ([], 'data_vars', 'float32', 'deg'),
+             'speed_made_good_gps': ([], 'data_vars', 'float32', 'm/s'),
+             'direction_made_good_gps': ([], 'data_vars', 'float32', 'deg'),
+             'speed_over_ground_gps': ([], 'data_vars', 'float32', 'm/s'),
+             'direction_over_ground_gps': ([], 'data_vars', 'float32', 'deg'),
+             'depth_sounder_gps': ([], 'data_vars', 'float32', 'm'),
+             'ntime_gps': ([], 'coords', 'float64', ''),
+             'flags_gps': ([], 'data_vars', 'float32', ''),
              }
 
 
@@ -117,6 +118,7 @@ class _ensemble():
         if navg is None or navg == 0:
             navg = 1
         self.n_avg = navg
+        self.n_cells = n_cells
         for nm in data_defs:
             setattr(self, nm,
                     np.zeros(_get_size(nm, n=navg, ncell=n_cells),
