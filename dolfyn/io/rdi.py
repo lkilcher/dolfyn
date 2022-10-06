@@ -1088,6 +1088,11 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:  # TRDI rewrites the nmea string into their format if one is found
                 start_string = self.f.reads(6)
+                if type(start_string)!=str:
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GGA string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
                 self.f.seek(1, 1)
                 gga_time = self.f.reads(9)
                 float(gga_time)
@@ -1128,6 +1133,11 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:
                 start_string = self.f.reads(6)
+                if type(start_string)!=str:
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid VTG string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
                 self.f.seek(1, 1)
                 true_track = self.f.read_float(1)
                 t = self.f.reads(1)  # 'T'
@@ -1153,6 +1163,11 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:
                 start_string = self.f.reads(6)
+                if type(start_string)!=str:
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid DBT string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
                 self.f.seek(1, 1)
                 depth_ft = self.f.read_float(1)
                 ft = self.f.reads(1)  # 'f'
