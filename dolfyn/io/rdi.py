@@ -122,7 +122,7 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=0, vmdas_search=False,
 def _remove_gps_duplicates(dat):
     """
     Removes duplicate and nan timestamp values in 'time_gps' coordinate, and
-    ads hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
+    add hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
     (in addition to the GPS unit's timestamp).
     """
 
@@ -1079,7 +1079,7 @@ class _RDIReader():
             logging.info('Read WinRiver2')
         self._source = 3
 
-        spid = self.f.read_ui16(1) # NMEA specific IDs
+        spid = self.f.read_ui16(1)  # NMEA specific IDs
         if spid in [4, 104]:  # GGA
             sz = self.f.read_ui16(1)
             dtime = self.f.read_f64(1)
@@ -1088,29 +1088,30 @@ class _RDIReader():
                 self.f.seek(2, 1)
             else:  # TRDI rewrites the nmea string into their format if one is found
                 start_string = self.f.reads(6)
-                self.f.seek(1,1)
-                gga_time = str(self.f.reads(9))
+                self.f.seek(1, 1)
+                gga_time = self.f.reads(9)
+                float(gga_time)
                 time = tmlib.timedelta(hours=int(gga_time[0:2]),
                                        minutes=int(gga_time[2:4]),
                                        seconds=int(gga_time[4:6]),
-                                       milliseconds=int(gga_time[7:])*100)
+                                       milliseconds=int(float(gga_time[6:])*1000))
                 clock = self.ensemble.rtc[:, :]
                 if clock[0, 0] < 100:
                     clock[0, :] += defs.century
-                ens.time_gps[k] = tmlib.date2epoch(tmlib.datetime(
-                    *clock[:3, 0]) + time)[0]
+                date = tmlib.datetime(*clock[:3, 0]) + time
+                ens.time_gps[k] = tmlib.date2epoch(date)[0]
                 self.f.seek(1, 1)
                 ens.latitude_gps[k] = self.f.read_f64(1)
-                tcNS = self.f.reads(1) # 'N' or 'S'
+                tcNS = self.f.reads(1)  # 'N' or 'S'
                 ens.longitude_gps[k] = self.f.read_f64(1)
-                tcEW = self.f.reads(1) # 'E' or 'W'
-                fix = self.f.read_ui8(1)  #  gps fix type/quality
-                n_sat = self.f.read_ui8(1) #  of satellites
-                hdop = self.f.read_float(1) # horizontal dilution of precision
-                alt = self.f.read_float(1) # altitude
-                m = self.f.reads(1) # altitude unit, 'm'
-                h_geoid = self.f.read_float(1) # height of geoid
-                m2 = self.f.reads(1) # geoid unit, 'm'
+                tcEW = self.f.reads(1)  # 'E' or 'W'
+                fix = self.f.read_ui8(1)  # gps fix type/quality
+                n_sat = self.f.read_ui8(1)  # of satellites
+                hdop = self.f.read_float(1)  # horizontal dilution of precision
+                alt = self.f.read_float(1)  # altitude
+                m = self.f.reads(1)  # altitude unit, 'm'
+                h_geoid = self.f.read_float(1)  # height of geoid
+                m2 = self.f.reads(1)  # geoid unit, 'm'
                 age = self.f.read_float(1)
                 station_id = self.f.read_ui16(1)
             # 4 unknown bytes (2 reserved+2 checksum?)
@@ -1161,6 +1162,11 @@ class _RDIReader():
                 f = self.f.reads(1)  # 'F'
                 ens.depth_sounder_gps[k] = depth_m
             self.vars_read += ['depth_sounder_gps']
+            self._nbyte = self.f.tell() - startpos + 2
+
+        elif spid in [7, 107]:  # 'HDT'
+            if self._debug_level >= 1:
+                logging.warning("NMEA HDT not yet integrated")
             self._nbyte = self.f.tell() - startpos + 2
 
     def read_winriver(self, nbt):
