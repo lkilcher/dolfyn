@@ -652,7 +652,7 @@ class _RDIReader():
                         # 3000 Fixed attitude data format for OS-ADCPs
                         12288: (self.skip_Nbyte, [32]),
                         # 4100 beam 5 range
-                        16640: (self.skip_Nbyte, [7]),
+                        16640: (self.read_alt, []),
                         # 5803 high res bottom track velocity
                         22531: (self.skip_Nbyte, [68]),
                         # 5804 bottom track range
@@ -1023,6 +1023,17 @@ class _RDIReader():
         if self._debug_level >= 0:
             logging.info('Read Bottom Track')
 
+    def read_alt(self,):
+        """Read altimeter (vertical beam range) """
+        fd = self.f
+        ens = self.ensemble
+        k = ens.k
+        self.vars_read += ['alt']
+        fd.seek(2, 1)
+        ens.alt[k] = fd.read_ui32(1) / 1000
+        fd.seek(1, 1)
+        self._nbyte = 7 + 2
+
     def read_vmdas(self,):
         """ Read something from VMDAS """
         fd = self.f
@@ -1087,7 +1098,7 @@ class _RDIReader():
             sz = self.f.read_ui16(1)
             dtime = self.f.read_f64(1)
             if sz <= 43:  # If no sentence, data is still stored in nmea format
-                empty_nmea = self.f.reads(sz-2)
+                empty_gps = self.f.reads(sz-2)
                 self.f.seek(2, 1)
             else:  # TRDI rewrites the nmea string into their format if one is found
                 start_string = self.f.reads(6)
@@ -1131,7 +1142,7 @@ class _RDIReader():
             sz = self.f.read_ui16(1)
             dtime = self.f.read_f64(1)
             if sz <= 22:  # if no data
-                empty_nmea = self.f.reads(sz-2)
+                empty_gps = self.f.reads(sz-2)
                 self.f.seek(2, 1)
             else:
                 start_string = self.f.reads(6)
@@ -1161,7 +1172,7 @@ class _RDIReader():
             sz = self.f.read_ui16(1)
             dtime = self.f.read_f64(1)
             if sz <= 20:
-                empty_nmea = self.f.reads(sz-2)
+                empty_gps = self.f.reads(sz-2)
                 self.f.seek(2, 1)
             else:
                 start_string = self.f.reads(6)
@@ -1184,6 +1195,9 @@ class _RDIReader():
         elif spid in [7, 107]:  # 'HDT'
             if self._debug_level >= 1:
                 logging.warning("NMEA HDT not yet integrated")
+            startpos = self.f.tell()
+            sz = self.f.read_ui16(1)
+            tmp = self.f.reads(sz-2)
             self._nbyte = self.f.tell() - startpos + 2
 
     def read_winriver(self, nbt):
@@ -1205,7 +1219,7 @@ class _RDIReader():
 
     def skip_Nbyte(self, n_skip):
         self.f.seek(n_skip, 1)
-        self._nbyte = self._nbyte = 2 + n_skip
+        self._nbyte = 2 + n_skip
 
     def read_nocode(self, id):
         # Skipping bytes from codes 0340-30FC, commented if needed
