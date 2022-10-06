@@ -223,7 +223,7 @@ class _RDIReader():
         if self._bb:
             self.vars_readBB = defs._variable_setlist(['time'])
 
-        if self._debug_level > 0:
+        if self._debug_level >= 0:
             logging.info('  %d pings estimated in this file' % self._npings)
 
     def check_for_double_buffer(self,):
@@ -337,10 +337,10 @@ class _RDIReader():
         else:
             self._nens = nens
             self._ens_range = (0, nens)
-        if self._debug_level > 0:
+        if self._debug_level >= 0:
             logging.info('  taking data from pings %d - %d' %
                          tuple(self._ens_range))
-            logging.info('  %d ensembles will be produced.' % self._nens)
+            logging.info('  %d ensembles will be produced.\n' % self._nens)
         self.init_data()
         dat = self.outd
         cfg = self.cfg
@@ -414,7 +414,7 @@ class _RDIReader():
             startpos = fd.tell() - 2
             self.read_hdrseg()
             if self._debug_level >= 1:
-                logging.info('HDR', hdr)
+                logging.info('Read HDR', hdr)
             byte_offset = self._nbyte + 2
             self._read_vmdas = False
             for n in range(len(hdr['dat_offsets'])):
@@ -459,7 +459,7 @@ class _RDIReader():
                     if id == 8192:
                         self.read_dat(id)
             readbytes = fd.tell() - startpos
-            offset = hdr['nbyte'] + 2 - byte_offset
+            offset = hdr['nbyte'] + 2 - readbytes
             self.check_offset(offset, readbytes)
             self.print_pos(byte_offset=byte_offset)
 
@@ -477,7 +477,7 @@ class _RDIReader():
         id1 = list(id)
         search_cnt = 0
         fd = self.f
-        if self._debug_level > 3:
+        if self._debug_level >= 2:
             logging.info('  -->In search_buffer...')
         while (search_cnt < self._search_num and
                ((id1[0] != 127 or id1[1] != 127) or
@@ -493,7 +493,7 @@ class _RDIReader():
                 'Searched {} entries... Bad data encountered. -> {}'
                 .format(search_cnt, id1))
         elif search_cnt > 0:
-            if self._debug_level > 0:
+            if self._debug_level >= 1:
                 logging.info('  Searched {} bytes to find next '
                              'valid ensemble start [{:x}, {:x}]'.format(search_cnt,
                                                                         *id1))
@@ -550,7 +550,7 @@ class _RDIReader():
     def print_pos(self, byte_offset=-1):
         """Print the position in the file, used for debugging.
         """
-        if self._debug_level > 2:
+        if self._debug_level >= 2:
             if hasattr(self, 'ensemble'):
                 k = self.ensemble.k
             else:
@@ -566,17 +566,8 @@ class _RDIReader():
                     logging.error(
                         ' EOF reached unexpectedly - discarding this last ensemble\n')
                 else:
-                    logging.debug("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d}\n"
+                    logging.debug("  Adjust location by {:d} (readbytes={:d},hdr['nbyte']={:d})\n"
                                   .format(offset, readbytes, self.hdr['nbyte']))
-                    logging.warning("""
-                    NOTE - If this appears at the beginning of the file, it may be
-                           a dolfyn problem. Please report this message, with details here:
-                           https://github.com/lkilcher/dolfyn/issues/8
-
-                         - If this appears at the end of the file it means
-                           The file is corrupted and only a partial record
-                           has been read\n
-                    """)
             self._fixoffset = offset - 4
         fd.seek(4 + self._fixoffset, 1)
 
@@ -682,18 +673,12 @@ class _RDIReader():
         offsets = list(self.id_positions.values())
         idx = np.where(offsets == self.id_positions[16])[0][0]
         byte_len = offsets[idx+1] - offsets[idx] - 2
-
-        if self._debug_level >= 0:
-            logging.info("Found 2nd profile")
-            logging.info("size: {}".format(byte_len))
-
-        if byte_len == 63:  # what it should be for a dual profile
+        # 2nd profile should have a length of 63 bytes
+        if byte_len == 63:
             self.read_fixed(bb=not self._bb)  # set the other config
         else:
-            self.skip_Nbyte(byte_len)
-            if self._debug_level >= 0:
-                logging.debug(
-                    "2nd profile id in file but data is nonexistent, skipping id 16\n")
+            logging.info("2nd profile config not found")
+            self.skip_nocode(16)
 
     def read_cfgseg(self, bb=False):
         cfgstart = self.f.tell()
@@ -784,8 +769,6 @@ class _RDIReader():
 
     def read_var(self, bb=False):
         """ Read variable leader """
-        if self._debug_level > 0:
-            logging.info("Reading Ensemble {}".format(self.ensemble.number[0]))
         fd = self.f
         if bb:
             ens = self.ensembleBB
@@ -881,7 +864,7 @@ class _RDIReader():
             cfg = self.cfg
             self.vars_read += ['vel']
 
-        if self._debug_level > 1:
+        if self._debug_level >= 2:
             logging.info('{} NCells'.format(cfg['n_cells']))
         k = ens.k
         ens['vel'][:cfg['n_cells'], :, k] = np.array(
@@ -1068,75 +1051,100 @@ class _RDIReader():
         self.cfg['sourceprog'] = 'WINRIVER'
         ens = self.ensemble
         k = ens.k
-        if self._source != 3 and self._debug_level >= 0:
-            logging.warning('\n***** Apparently a WINRIVER2 file\n'
-                            '***** Raw NMEA data '
-                            'handler not yet fully implemented\n\n')
+        if self._debug_level >= 1:
+            logging.info('Read WinRiver2')
         self._source = 3
+
         spid = self.f.read_ui16(1)
-        if spid == 104:
+        if spid in [4, 104]:  # GGA
             sz = self.f.read_ui16(1)
             dtime = self.f.read_f64(1)
-            start_string = self.f.reads(6)
-            _ = self.f.reads(1)
-            if start_string != '$GPGGA':
-                if self._debug_level >= 1:
-                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
-                                    ' skipping...')
-                return 'FAIL'
-            gga_time = str(self.f.reads(9))
-            time = tmlib.timedelta(hours=int(gga_time[0:2]),
-                                   minutes=int(gga_time[2:4]),
-                                   seconds=int(gga_time[4:6]),
-                                   milliseconds=int(gga_time[7:])*100)
-            clock = self.ensemble.rtc[:, :]
-            if clock[0, 0] < 100:
-                clock[0, :] += defs.century
-            ens.time_gps[k] = tmlib.date2epoch(tmlib.datetime(
-                *clock[:3, 0]) + time)[0]
-            self.f.seek(1, 1)
-            ens.latitude_gps[k] = self.f.read_f64(1)
-            tcNS = self.f.reads(1)
-            if tcNS == 'S':
-                ens.latitude_gps[k] *= -1
-            elif tcNS != 'N':
-                if self._debug_level >= 1:
-                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
-                                    ' skipping...')
-                return 'FAIL'
-            ens.longitude_gps[k] = self.f.read_f64(1)
-            tcEW = self.f.reads(1)
-            if tcEW == 'W':
-                ens.longitude_gps[k] *= -1
-            elif tcEW != 'E':
-                if self._debug_level >= 1:
-                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
-                                    ' skipping...')
-                return 'FAIL'
-            ucqual, n_sat = self.f.read_ui8(2)
-            tmp = self.f.read_float(2)
-            ens.hdop, ens.altitude = tmp
-            if self.f.reads(1) != 'M':
-                if self._debug_level >= 1:
-                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
-                                    ' skipping...')
-                return 'FAIL'
-            ggeoid_sep = self.f.read_float(1)
-            if self.f.reads(1) != 'M':
-                if self._debug_level >= 1:
-                    logging.warning(f'Invalid GPGGA string found in ensemble {k},'
-                                    ' skipping...')
-                return 'FAIL'
-            gage = self.f.read_float(1)
-            gstation_id = self.f.read_ui16(1)
+            if sz <= 43:  # If no sentence, data is still stored in nmea format
+                sentence = self.f.reads(sz-2)
+            else:  # TRDI rewrites the nmea string into their format if one is found
+                start_string = self.f.reads(6)
+                _ = self.f.reads(1)
+                if start_string != '$GPGGA':
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                gga_time = str(self.f.reads(9))
+                time = tmlib.timedelta(hours=int(gga_time[0:2]),
+                                       minutes=int(gga_time[2:4]),
+                                       seconds=int(gga_time[4:6]),
+                                       milliseconds=int(gga_time[7:])*100)
+                clock = self.ensemble.rtc[:, :]
+                if clock[0, 0] < 100:
+                    clock[0, :] += defs.century
+                ens.time_gps[k] = tmlib.date2epoch(tmlib.datetime(
+                    *clock[:3, 0]) + time)[0]
+                self.f.seek(1, 1)
+                ens.latitude_gps[k] = self.f.read_f64(1)
+                tcNS = self.f.reads(1)
+                if tcNS == 'S':
+                    ens.latitude_gps[k] *= -1
+                elif tcNS != 'N':
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                ens.longitude_gps[k] = self.f.read_f64(1)
+                tcEW = self.f.reads(1)
+                if tcEW == 'W':
+                    ens.longitude_gps[k] *= -1
+                elif tcEW != 'E':
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                ucqual, n_sat = self.f.read_ui8(2)
+                tmp = self.f.read_float(2)
+                ens.hdop, ens.altitude = tmp
+                if self.f.reads(1) != 'M':
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                ggeoid_sep = self.f.read_float(1)
+                if self.f.reads(1) != 'M':
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GPGGA string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                gage = self.f.read_float(1)
+                gstation_id = self.f.read_ui16(1)
+
             # 4 unknown bytes (2 reserved+2 checksum?)
             # 78 bytes for GPGGA string (including \r\n)
             # 2 reserved + 2 checksum
             self.vars_read += ['longitude_gps', 'latitude_gps', 'time_gps']
             self._nbyte = self.f.tell() - startpos + 2
-            if self._debug_level >= 1:
-                logging.debug(
-                    f"size: {sz}, ensemble longitude: {ens.longitude_gps[k]}")
+
+        elif spid in [5, 105]:  # VTG
+            sz = self.f.read_ui16(1)
+            dtime = self.f.read_f64(1)
+            if sz <= 22:  # if no data
+                sentence = self.f.reads(sz-2)
+            else:
+                start_string = self.f.reads(6)
+                self.f.seek(1, 1)
+                if start_string != '$GPVTG':
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid GPVTG string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                true_track = self.f.read_float(1)
+                ttrack = self.f.reads(1)  # 'T'
+                magn_track = self.f.read_float(1)
+                mtrack = self.f.reads(1)  # 'M'
+                speed = self.f.read_float(1)
+                ens.speed_over_ground[k] = speed / 1.944  # knots -> m/s
+                ens.direction_over_ground[k] = true_track
+                self.f.seek(7, 1)  # ignoring the rest
+
+            self.vars_read += ['speed_over_ground', 'direction_over_ground']
+            self._nbyte = self.f.tell() - startpos + 2
 
     def read_winriver(self, nbt):
         self._winrivprob = True
@@ -1144,7 +1152,7 @@ class _RDIReader():
         if self._source not in [2, 3]:
             if self._debug_level >= 0:
                 logging.warning('\n***** Apparently a WINRIVER file - '
-                                'Raw NMEA data handler not yet implemented\n\n')
+                                'Raw NMEA data handler not yet implemented\n')
             self._source = 2
         startpos = self.f.tell()
         sz = self.f.read_ui16(1)
