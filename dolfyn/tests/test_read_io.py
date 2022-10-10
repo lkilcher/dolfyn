@@ -101,4 +101,3 @@ class warnings_testcase(unittest.TestCase):
             read(rfnm('AWAC_test01.nc'))
         with self.assertRaises(Exception):
             save_netcdf(tp.dat_rdi, 'test_save.fail')
-        os.remove(rfnm('test_save.fail.nc'))

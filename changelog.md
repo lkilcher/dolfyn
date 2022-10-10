@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		  manually from the end of the ensemble - credit: Thank you jklymak!
 		- Added ability to read WinRiver2 NMEA sentences (GGA, VTG, and DBT)
 		- Added ability to read TRDI altimeter data
+		- Updated TRDI attribute names
 		- Debugging readers now uses logging module
 
 ## Version 1.1.0

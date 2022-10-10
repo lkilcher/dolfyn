@@ -9,8 +9,8 @@ dolfyn.egg-info
 *~
 ~/.pypirc
 
-example_data/*.index
-example_data/*.log
+dolfyn/example_data/*.index
+dolfyn/example_data/*.log
 
 tests/.coverage
 

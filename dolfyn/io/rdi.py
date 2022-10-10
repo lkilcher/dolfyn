@@ -69,7 +69,7 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=Fa
             dat = _remove_gps_duplicates(dat)
 
         # Create xarray dataset from upper level dictionary
-        #print('Time in dat', dat['coords']['time'])
+        # print('Time in dat', dat['coords']['time'])
         if not np.isfinite(dat['coords']['time'][0]):
             continue
         ds = _create_dataset(dat)
@@ -124,13 +124,13 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=Fa
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
         handler.close()
-    
+
     return dss[0]
 
 
 def _remove_gps_duplicates(dat):
     """
-    Removes duplicate and nan timestamp values in 'time_gps' coordinate, 
+    Removes duplicate and nan timestamp values in 'time_gps' coordinate,
     and add hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
     (in addition to the GPS unit's timestamp).
     """
@@ -184,9 +184,6 @@ class _RDIReader():
     _n_beams = 4  # Placeholder for 5-beam adcp, not currently used.
     _pos = 0
     progress = 0
-    _cfgnames = dict.fromkeys([4, 5], 'bb-adcp')
-    _cfgnames.update(dict.fromkeys([8, 9, 16], 'wh-adcp'))
-    _cfgnames.update(dict.fromkeys([14, 23], 'os-adcp'))
     _cfac = 180 / 2 ** 31
     _source = 0
     _fixoffset = 0
@@ -203,13 +200,7 @@ class _RDIReader():
         self._vmdas_search = vmdas_search
         self.flag = 0
         self.cfg = {}
-        self.cfg['name'] = 'wh-adcp'
-        self.cfg['sourceprog'] = 'instrument'
-        self.cfg['prog_ver'] = 0
         self.cfgbb = {}
-        self.cfgbb['name'] = 'wh-adcp'
-        self.cfgbb['sourceprog'] = 'instrument'
-        self.cfgbb['prog_ver'] = 0
         self.hdr = {}
         self.f = bin_reader(self.fname)
         if not self.read_hdr():
@@ -238,7 +229,7 @@ class _RDIReader():
 
     def check_for_double_buffer(self,):
         """
-        VMDAS will record two buffers in NB or NB/BB mode, so we need to 
+        VMDAS will record two buffers in NB or NB/BB mode, so we need to
         figure out if that is happening here
         """
         found = False
@@ -289,7 +280,6 @@ class _RDIReader():
         outd = {'data_vars': {}, 'coords': {},
                 'attrs': {}, 'units': {}, 'sys': {}}
         outd['attrs']['inst_make'] = 'TRDI'
-        outd['attrs']['inst_model'] = 'Workhorse'
         outd['attrs']['inst_type'] = 'ADCP'
         outd['attrs']['rotate_vars'] = ['vel', ]
         # Currently RDI doesn't use IMUs
@@ -298,7 +288,6 @@ class _RDIReader():
             outdbb = {'data_vars': {}, 'coords': {},
                       'attrs': {}, 'units': {}, 'sys': {}}
             outdbb['attrs']['inst_make'] = 'TRDI'
-            outdbb['attrs']['inst_model'] = 'Workhorse'
             outdbb['attrs']['inst_type'] = 'ADCP'
             outdbb['attrs']['rotate_vars'] = ['vel', ]
             # Currently RDI doesn't use IMUs
@@ -555,9 +544,9 @@ class _RDIReader():
         hdr = self.hdr
         hdr['nbyte'] = fd.read_i16(1)
         spare = fd.read_ui8(1)
-        #print('spare', spare)
+        # print('spare', spare)
         ndat = fd.read_ui8(1)
-        #print('ndat', ndat)
+        # print('ndat', ndat)
         hdr['dat_offsets'] = fd.read_ui16(ndat)
         self._nbyte = 4 + ndat * 2
 
@@ -641,7 +630,7 @@ class _RDIReader():
                         2816: (self.skip_Ncol, []),  # 0B00 Beam 5 correlation
                         3072: (self.skip_Ncol, []),  # 0C00 Beam 5 amplitude
                         3328: (self.skip_Ncol, []),  # 0D00 Beam 5 pct_good
-                        # Fixed attitude data format for OS-ADCPs
+                        # Fixed attitude data format for Ocean Surveyor ADCPs
                         3000: (self.skip_Nbyte, [32]),
                         3841: (self.skip_Nbyte, [38]),  # 0F01 Beam 5 leader
                         8192: (self.read_vmdas, []),   # 2000
@@ -655,7 +644,7 @@ class _RDIReader():
                         8452: (self.read_winriver, [38]),  # 2104
                         # 3200 transformation matrix
                         12800: (self.skip_Nbyte, [32]),
-                        # 3000 Fixed attitude data format for OS-ADCPs
+                        # 3000 Fixed attitude data format for Ocean Surveyor ADCPs
                         12288: (self.skip_Nbyte, [32]),
                         # 4100 beam 5 range
                         16640: (self.read_alt, []),
@@ -723,8 +712,8 @@ class _RDIReader():
         tmp = fd.read_ui8(5)
         prog_ver0 = tmp[0]
         cfg['prog_ver'] = tmp[0] + tmp[1] / 100.
-        cfg['name'] = self._cfgnames.get(tmp[0],
-                                         'unrecognized firmware version')
+        cfg['inst_model'] = defs.adcp_type.get(tmp[0],
+                                               'unrecognized firmware version')
         config = tmp[2:4]
         cfg['beam_angle'] = [15, 20, 30][(config[1] & 3)]
         # cfg['numbeams'] = [4, 5][int((config[1] & 16) == 16)]
@@ -738,12 +727,12 @@ class _RDIReader():
         cfg['n_cells'] = fd.read_ui8(1)
         cfg['pings_per_ensemble'] = fd.read_ui16(1)
         cfg['cell_size'] = fd.read_ui16(1) * .01
-        cfg['blank'] = fd.read_ui16(1) * .01
-        cfg['prof_mode'] = fd.read_ui8(1)
-        cfg['corr_threshold'] = fd.read_ui8(1)
-        cfg['prof_codereps'] = fd.read_ui8(1)
-        cfg['min_pgood'] = fd.read_ui8(1)
-        cfg['evel_threshold'] = fd.read_ui16(1)
+        cfg['blank_dist'] = fd.read_ui16(1) * .01
+        cfg['profiling_mode'] = fd.read_ui8(1)
+        cfg['min_corr_threshold'] = fd.read_ui8(1)
+        cfg['n_code_reps'] = fd.read_ui8(1)
+        cfg['min_prcnt_gd'] = fd.read_ui8(1)
+        cfg['max_error_vel'] = fd.read_ui16(1)
         cfg['sec_between_ping_groups'] = (
             np.sum(np.array(fd.read_ui8(3)) *
                    np.array([60., 1., .01])))
@@ -753,46 +742,39 @@ class _RDIReader():
         cfg['use_pitchroll'] = ['no', 'yes'][(coord_sys & 4) == 4]
         cfg['use_3beam'] = ['no', 'yes'][(coord_sys & 2) == 2]
         cfg['bin_mapping'] = ['no', 'yes'][(coord_sys & 1) == 1]
-        cfg['xducer_misalign_deg'] = fd.read_i16(1) * .01
+        cfg['heading_misalign_deg'] = fd.read_i16(1) * .01
         cfg['magnetic_var_deg'] = fd.read_i16(1) * .01
         cfg['sensors_src'] = np.binary_repr(fd.read_ui8(1), 8)
         cfg['sensors_avail'] = np.binary_repr(fd.read_ui8(1), 8)
         cfg['bin1_dist_m'] = fd.read_ui16(1) * .01
-        cfg['xmit_pulse'] = fd.read_ui16(1) * .01
+        cfg['transmit_pulse_m'] = fd.read_ui16(1) * .01
         cfg['water_ref_cells'] = list(fd.read_ui8(2))  # list for attrs
-        cfg['fls_target_threshold'] = fd.read_ui8(1)
+        cfg['false_target_threshold'] = fd.read_ui8(1)
         fd.seek(1, 1)
-        cfg['xmit_lag_m'] = fd.read_ui16(1) * .01
+        cfg['transmit_lag_m'] = fd.read_ui16(1) * .01
         self._nbyte = 40
 
-        if prog_ver0 in [8, 16]:
-            if cfg['prog_ver'] >= 8.14:
-                cfg['cpu_serialnum'] = fd.read_ui8(8)
-                self._nbyte += 8
-            if cfg['prog_ver'] >= 8.24:
-                cfg['bandwidth'] = fd.read_ui8(2)
-                self._nbyte += 2
-            if cfg['prog_ver'] >= 16.05:
-                cfg['power_level'] = fd.read_ui8(1)
-                self._nbyte += 1
-            if cfg['prog_ver'] >= 16.27:
-                cfg['navigator_basefreqindex'] = fd.read_ui8(1)
-                cfg['serialnum'] = fd.reaadcpd('uint8', 4)
-                cfg['h_adcp_beam_angle'] = fd.read_ui8(1)
-                self._nbyte += 6
-        elif prog_ver0 == 9:
-            if cfg['prog_ver'] >= 9.10:
-                cfg['serialnum'] = fd.read_ui8(8)
-                cfg['bandwidth'] = fd.read_ui8(2)
-                self._nbyte += 10
-        elif prog_ver0 in [14, 23]:
-            cfg['serialnum'] = fd.read_ui8(8)
+        if cfg['prog_ver'] >= 8.14:
+            cpu_sn = fd.read_ui8(8)
+            #cfg['cpu_serialnum'] = int("".join(str(x) for x in cpu_sn))
             self._nbyte += 8
-
-        if cfg['prog_ver'] >= 55:
+        if cfg['prog_ver'] >= 8.24:
+            cfg['bandwidth'] = fd.read_ui16(1)
+            self._nbyte += 2
+        if cfg['prog_ver'] >= 16.05:
+            cfg['power_level'] = fd.read_ui8(1)
+            self._nbyte += 1
+        if cfg['prog_ver'] >= 16.27:
+            # cfg['navigator_basefreqindex'] = fd.read_ui8(1)
             fd.seek(1, 1)
-            cfg['ping_per_ensemble'] = fd.read_ui16(1)
-            cfg['carrier_freq'] = list(fd.read_ui8(3))
+            cfg['serialnum'] = fd.read_ui32(1)
+            cfg['beam_angle'] = fd.read_ui8(1)
+            self._nbyte += 6
+        if cfg['prog_ver'] >= 56:
+            fd.seek(3, 1)
+            # cfg['ping_per_ensemble'] = fd.read_ui16(1)
+            exact_freq = fd.read_ui8(3)
+            #cfg['exact_freq'] = int("".join(str(x) for x in exact_freq))
             self._nbyte += 6
 
         self.configsize = self.f.tell() - cfgstart
@@ -845,20 +827,20 @@ class _RDIReader():
         self._nbyte = 2 + 40
 
         cfg = self.cfg
-        if cfg['name'] == 'bb-adcp':
+        if cfg['inst_model'].lower() == 'broadband':
             if cfg['prog_ver'] >= 5.55:
                 fd.seek(15, 1)
                 cent = fd.read_ui8(1)
                 ens.rtc[:, k] = fd.read_ui8(7)
                 ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
                 self._nbyte += 23
-        elif cfg['name'] == 'os-adcp':
+        elif cfg['inst_model'].lower() == 'ocean_surveyor':
             fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
             self._nbyte += 16
             if cfg['prog_ver'] > 23:
                 fd.seek(2, 1)
                 self._nbyte += 2
-        else:  # cfg['name'] == 'wh-adcp':
+        else:
             ens.error_status_wd[k] = fd.read_ui32(1)
             self.vars_read += ['pressure', 'pressure_std']
             self._nbyte += 4
@@ -1014,16 +996,14 @@ class _RDIReader():
             fd.seek(71 - 45 - 16 - 17, 1)
             self._nbyte = 2 + 68
         else:
+            # Skip reference layer data
             fd.seek(26, 1)
             self._nbyte = 2 + 68
         if cfg['prog_ver'] >= 5.3:
             fd.seek(7, 1)  # skip to rangeMsb bytes
             ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
-            if cfg['name'] == 'wh-adcp':
-                if cfg['prog_ver'] >= 16.20:
-                    fd.seek(4, 1)
-                    self._nbyte += 4
+
         if self._debug_level >= 0:
             logging.info('Read Bottom Track')
 
@@ -1032,10 +1012,11 @@ class _RDIReader():
         fd = self.f
         ens = self.ensemble
         k = ens.k
-        self.vars_read += ['alt']
-        fd.seek(2, 1)
-        ens.alt[k] = fd.read_ui32(1) / 1000
-        fd.seek(1, 1)
+        self.vars_read += ['alt_dist', 'alt_rssi', 'alt_eval', 'alt_status']
+        ens.alt_eval[k] = fd.read_ui8(1)  # evaluation amplitude
+        ens.alt_rssi[k] = fd.read_ui8(1)  # RSSI amplitude
+        ens.alt_dist[k] = fd.read_ui32(1) / 1000  # range to surface/seafloor
+        ens.alt_status[k] = fd.read_ui8(1)  # status bit flags
         self._nbyte = 7 + 2
         if self._debug_level >= 0:
             logging.info('Read Altimeter')
@@ -1273,6 +1254,7 @@ class _RDIReader():
             dat['attrs'][nm] = self.cfg[nm]
         dat['attrs']['fs'] = (dat['attrs']['sec_between_ping_groups'] *
                               dat['attrs']['pings_per_ensemble']) ** (-1)
+        dat['attrs']['n_cells'] = self.ensemble['n_cells']
         for nm in defs.data_defs:
             shp = defs.data_defs[nm][0]
             if len(shp) and shp[0] == 'nc' and defs._in_group(dat, nm):
