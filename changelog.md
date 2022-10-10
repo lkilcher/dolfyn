@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unversioned
+    - Bugfixes
+	    - Fixed errors in TRDI reader that caused ensembles to be skipped
+		- Variables found from NMEA data now all contain _gps tag
+
+	- API/Useability
+		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
+		  manually from the end of the ensemble - credit: Thank you jklymak!
+		- Added ability to read WinRiver2 NMEA sentences (GGA, VTG, and DBT)
+		- Added ability to read TRDI altimeter data
+		- Debugging readers now uses logging module
+
 ## Version 1.1.0
     - Bugfixes
 	    - "calc_tke" function now errors if given multi-beam ADCP velocity vector

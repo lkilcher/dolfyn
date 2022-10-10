@@ -14,7 +14,7 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-def read_rdi(fname, userdata=None, nens=None, debug_level=-1, vmdas_search=False, **kwargs):
+def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=False, **kwargs):
     """
     Read a TRDI binary data file.
 
@@ -42,7 +42,7 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=-1, vmdas_search=False
     if debug_level >= 0:
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
-        filepath = Path(fname)
+        filepath = Path(filename)
         logfile = filepath.with_suffix('.log')
         logging.basicConfig(filename=str(logfile),
                             filemode='w',
@@ -51,14 +51,14 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=-1, vmdas_search=False
 
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
-    with _RDIReader(fname, debug_level=debug_level,
+    with _RDIReader(filename, debug_level=debug_level,
                     vmdas_search=vmdas_search) as ldr:
         datNB, datBB = ldr.load_data(nens=nens)
 
     dats = [dat for dat in [datNB, datBB] if dat is not None]
 
     # Read in userdata
-    userdata = _find_userdata(fname, userdata)
+    userdata = _find_userdata(filename, userdata)
     dss = []
     for dat in dats:
         for nm in userdata:
@@ -95,10 +95,10 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=-1, vmdas_search=False
                                            dims=['earth', 'inst', 'time'])
 
         # Check magnetic declination if provided via software and/or userdata
-        _set_rdi_declination(ds, fname, inplace=True)
+        _set_rdi_declination(ds, filename, inplace=True)
 
         # VMDAS applies gps correction on velocity in .ENX files only
-        if fname.rsplit('.')[-1] == 'ENX':
+        if filename.rsplit('.')[-1] == 'ENX':
             ds.attrs['vel_gps_corrected'] = 1
         else:  # (not ENR or ENS) or WinRiver files
             ds.attrs['vel_gps_corrected'] = 0
@@ -119,6 +119,12 @@ def read_rdi(fname, userdata=None, nens=None, debug_level=-1, vmdas_search=False
     if len(dss) == 2:
         warnings.warn("\nTwo profiling configurations retrieved from file"
                       "\nReturning first.")
+
+    # Close handler
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+        handler.close()
+    
     return dss[0]
 
 
@@ -308,7 +314,7 @@ class _RDIReader():
                 outdbb = defs._idata(outdbb, nm,
                                      sz=defs._get_size(nm, self._nens, self.cfgbb['n_cells']))
             self.outdBB = outdbb
-            if self._debug_level > 2:
+            if self._debug_level > 1:
                 logging.info(np.shape(outdbb['data_vars']['vel']))
 
         if self._debug_level > 1:
@@ -890,8 +896,6 @@ class _RDIReader():
             cfg = self.cfg
             self.vars_read += ['vel']
 
-        if self._debug_level >= 2:
-            logging.info('{} NCells'.format(cfg['n_cells']))
         k = ens.k
         vel = np.array(
             self.f.read_i16(4 * cfg['n_cells'])
@@ -1033,6 +1037,8 @@ class _RDIReader():
         ens.alt[k] = fd.read_ui32(1) / 1000
         fd.seek(1, 1)
         self._nbyte = 7 + 2
+        if self._debug_level >= 0:
+            logging.info('Read Altimeter')
 
     def read_vmdas(self,):
         """ Read something from VMDAS """

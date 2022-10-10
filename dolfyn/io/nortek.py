@@ -2,6 +2,9 @@ import numpy as np
 import xarray as xr
 from struct import unpack
 import warnings
+from pathlib import Path
+import logging
+
 from . import nortek_defs
 from .base import _find_userdata, _create_dataset, _handle_nan, _abspath
 from .. import time
@@ -34,6 +37,17 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
         An xarray dataset from the binary instrument data
 
     """
+    # Start debugger logging
+    if debug:
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        filepath = Path(filename)
+        logfile = filepath.with_suffix('.log')
+        logging.basicConfig(filename=str(logfile),
+                            filemode='w',
+                            level=logging.NOTSET,
+                            format='%(name)s - %(levelname)s - %(message)s')
+
     userdata = _find_userdata(filename, userdata)
 
     with _NortekReader(filename, debug=debug, do_checksum=do_checksum,
@@ -91,6 +105,11 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
         rot.set_declination(ds, declin, inplace=True)
 
     ds['time'] = time.epoch2dt64(ds['time']).astype('datetime64[us]')
+
+    # Close handler
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+        handler.close()
 
     return ds
 
@@ -238,7 +257,7 @@ class _NortekReader():
                            'beam': 'beam'}[self.config['coord_sys_axes']]
         da['has_imu'] = 0  # Initiate attribute
         if self.debug:
-            print('Init completed')
+            logging.info('Init completed')
 
     @property
     def filesize(self,):
@@ -329,16 +348,17 @@ class _NortekReader():
         self._thisid_bytes = bts = self.read(2)
         tmp = unpack(self.endian + 'BB', bts)
         if self.debug:
-            print('Position: {}, codes: {}'.format(self.f.tell(), tmp))
+            logging.info('Position: {}, codes: {}'.format(self.f.tell(), tmp))
         if tmp[0] != 165:  # This catches a corrupted data block.
             if self.debug:
-                print("Corrupted data block sync code (%d, %d) found "
-                      "in ping %d. Searching for next valid code..." %
-                      (tmp[0], tmp[1], self.c))
+                logging.warning("Corrupted data block sync code (%d, %d) found "
+                                "in ping %d. Searching for next valid code..." %
+                                (tmp[0], tmp[1], self.c))
             val = int(self.findnext(do_cs=False), 0)
             self.f.seek(2, 1)
             if self.debug:
-                print(' ...FOUND {} at position: {}.'.format(val, self.pos))
+                logging.debug(
+                    ' ...FOUND {} at position: {}.'.format(val, self.pos))
             return val
         return tmp[1]
 
@@ -350,7 +370,7 @@ class _NortekReader():
             self._lastread = [func_name[5:]] + self._lastread[:-1]
             return out
         else:
-            print('Unrecognized identifier: ' + id)
+            logging.warning('Unrecognized identifier: ' + id)
             self.f.seek(-2, 1)
             return 10
 
@@ -373,9 +393,11 @@ class _NortekReader():
                             pass
                     break
         except EOFError:
-            print(' end of file at {} bytes.'.format(self.pos))
+            if self.debug:
+                logging.info(' end of file at {} bytes.'.format(self.pos))
         else:
-            print(' stopped at {} bytes.'.format(self.pos))
+            if self.debug:
+                logging.info(' stopped at {} bytes.'.format(self.pos))
         self.c -= 1
         _crop_data(self.data, slice(0, self.c), self.n_samp_guess)
 
@@ -406,7 +428,7 @@ class _NortekReader():
             except EOFError:
                 break
         if self.debug:
-            print('p0={}, pos={}, i={}'.format(p0, self.pos, i))
+            logging.info('p0={}, pos={}, i={}'.format(p0, self.pos, i))
         # Compute the average of the data size:
         return (self.pos - p0) / (i + 1)
 
@@ -425,8 +447,8 @@ class _NortekReader():
     def read_user_cfg(self,):
         # ID: '0x00 = 00
         if self.debug:
-            print('Reading user configuration (0x00) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading user configuration (0x00) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         cfg_u = self.config
         byts = self.read(508)
         # the first two bytes are the size.
@@ -514,8 +536,8 @@ class _NortekReader():
     def read_head_cfg(self,):
         # ID: '0x04 = 04
         if self.debug:
-            print('Reading head configuration (0x04) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading head configuration (0x04) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         cfg = self.config
         cfg['head'] = {}
         byts = self.read(220)
@@ -532,8 +554,8 @@ class _NortekReader():
     def read_hw_cfg(self,):
         # ID 0x05 = 05
         if self.debug:
-            print('Reading hardware configuration (0x05) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading hardware configuration (0x05) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         cfg_hw = self.config
         cfg_hw['hdw'] = {}
         byts = self.read(44)
@@ -592,8 +614,8 @@ class _NortekReader():
         c = self.c
         dat = self.data
         if self.debug:
-            print('Reading vector velocity data (0x10) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading vector velocity data (0x10) ping #{} @ {}...'
+                         .format(self.c, self.pos))
 
         if 'vel' not in dat['data_vars']:
             self._init_data(nortek_defs.vec_data)
@@ -624,8 +646,8 @@ class _NortekReader():
     def read_vec_checkdata(self,):
         # ID: 0x07 = 07
         if self.debug:
-            print('Reading vector check data (0x07) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading vector check data (0x07) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         byts0 = self.read(6)
         checknow = {}
         tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
@@ -686,8 +708,8 @@ class _NortekReader():
     def read_vec_hdr(self,):
         # ID: '0x12 = 18
         if self.debug:
-            print('Reading vector header data (0x12) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading vector header data (0x12) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         byts = self.read(38)
         # The first two are size, the next 6 are time.
         tmp = unpack(self.endian + '8xH7B21x', byts)
@@ -714,8 +736,8 @@ class _NortekReader():
         # ID: 0x11 = 17
         c = self.c
         if self.debug:
-            print('Reading vector system data (0x11) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading vector system data (0x11) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         dat = self.data
         if self._lastread[:2] == ['vec_checkdata', 'vec_hdr', ]:
             self.burst_start[c] = True
@@ -795,18 +817,18 @@ class _NortekReader():
         """
         # 0x71 = 113
         if self.c == 0:
-            print('Warning: First "microstrain data" block '
-                  'is before first "vector system data" block.')
+            logging.warning('First "microstrain data" block '
+                            'is before first "vector system data" block.')
         else:
             self.c -= 1
         if self.debug:
-            print('Reading vector microstrain data (0x71) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading vector microstrain data (0x71) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         byts0 = self.read(4)
         # The first 2 are the size, 3rd is count, 4th is the id.
         ahrsid = unpack(self.endian + '3xB', byts0)[0]
         if hasattr(self, '_ahrsid') and self._ahrsid != ahrsid:
-            warnings.warn('AHRS_ID changes mid-file!')
+            logging.warning('AHRS_ID changes mid-file!')
 
         if ahrsid in [195, 204, 210, 211]:
             self._ahrsid = ahrsid
@@ -887,7 +909,7 @@ class _NortekReader():
              dv['accel'][:, c],
              dv['mag'][:, c]) = (dt[0:3], dt[3:6], dt[6:9],)
         else:
-            print('Unrecognized IMU identifier: ' + str(ahrsid))
+            logging.warning('Unrecognized IMU identifier: ' + str(ahrsid))
             self.f.seek(-2, 1)
             return 10
         self.checksum(byts0 + byts)
@@ -924,8 +946,8 @@ class _NortekReader():
         # ID: '0x20' = 32
         dat = self.data
         if self.debug:
-            print('Reading AWAC velocity data (0x20) ping #{} @ {}...'
-                  .format(self.c, self.pos))
+            logging.info('Reading AWAC velocity data (0x20) ping #{} @ {}...'
+                         .format(self.c, self.pos))
         nbins = self.config['usr']['n_bins']
         if 'temp' not in dat['data_vars']:
             self._init_data(nortek_defs.awac_profile)

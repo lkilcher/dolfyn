@@ -10,9 +10,8 @@ dolfyn.egg-info
 ~/.pypirc
 
 example_data/*.index
+example_data/*.log
 
-tests/data/test_save.mat
-tests/data/test_save.nc
 tests/.coverage
 
 docs/build
@@ -23,6 +22,5 @@ debug/
 src/
 .cache/
 tmp/
-*.log
 
 .vscode
