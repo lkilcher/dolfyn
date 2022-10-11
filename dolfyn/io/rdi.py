@@ -147,7 +147,7 @@ def _remove_gps_duplicates(dat):
         dat['coords']['time_gps'] = dat['coords']['time_gps'][~nan]
 
     for key in dat['data_vars']:
-        if 'gps' in key:
+        if ('gps' in key) or ('nmea' in key):
             dat['data_vars'][key] = dat['data_vars'][key][idx]
             if sum(nan) > 0:
                 dat['data_vars'][key] = dat['data_vars'][key][~nan]
@@ -841,7 +841,7 @@ class _RDIReader():
                 fd.seek(2, 1)
                 self._nbyte += 2
         else:
-            ens.error_status_wd[k] = fd.read_ui32(1)
+            ens.error_status[k] = np.binary_repr(fd.read_ui32(1), 32)
             self.vars_read += ['pressure', 'pressure_std']
             self._nbyte += 4
             if cfg['prog_ver'] >= 8.13:
@@ -1022,10 +1022,8 @@ class _RDIReader():
             logging.info('Read Altimeter')
 
     def read_vmdas(self,):
-        """ Read something from VMDAS """
+        """Read VMDAS Navigation block"""
         fd = self.f
-        # The raw files produced by VMDAS contain a binary navigation data
-        # block.
         self.cfg['sourceprog'] = 'VMDAS'
         ens = self.ensemble
         k = ens.k
@@ -1033,39 +1031,53 @@ class _RDIReader():
             logging.info('  \n***** Apparently a VMDAS file \n\n')
         self._source = 1
         self.vars_read += ['time_gps',
+                           'clock_offset_UTC_gps',
                            'latitude_gps',
                            'longitude_gps',
-                           'etime_gps',
-                           'elatitude_gps',
-                           'elongitude_gps',
+                           'avg_speed_gps',
+                           'avg_dir_gps',
                            'speed_made_good_gps',
-                           'direction_made_good_gps',
+                           'dir_made_good_gps',
                            'flags_gps',
-                           'ntime_gps', ]
+                           ]
+        # UTC date time
         utim = fd.read_ui8(4)
-        date = tmlib.datetime(utim[2] + utim[3] * 256, utim[1], utim[0])
+        date_utc = tmlib.datetime(utim[2] + utim[3] * 256, utim[1], utim[0])
+
+        # 1st lat/lon position after previous ADCP ping
         # This byte is in hundredths of seconds (10s of milliseconds):
-        time = tmlib.timedelta(milliseconds=(int(fd.read_ui32(1) / 10)))
-        fd.seek(4, 1)  # "PC clock offset from UTC" - clock drift in ms?
-        ens.time_gps[k] = tmlib.date2epoch(date + time)[0]
+        utc_time_first_fix = tmlib.timedelta(
+            milliseconds=(int(fd.read_ui32(1) / 10)))
+        ens.clock_offset_UTC_gps[k] = fd.read_i32(
+            1) / 1000  # "PC clock offset from UTC" in ms
+        latitude_first_gps = fd.read_i32(1) * self._cfac
+        longitude_first_gps = fd.read_i32(1) * self._cfac
+
+        # Last lat/lon position prior to current ADCP ping
+        utc_time_fix = tmlib.timedelta(
+            milliseconds=(int(fd.read_ui32(1) / 10)))
+        ens.time_gps[k] = tmlib.date2epoch(date_utc + utc_time_fix)[0]
         ens.latitude_gps[k] = fd.read_i32(1) * self._cfac
         ens.longitude_gps[k] = fd.read_i32(1) * self._cfac
-        ens.etime_gps[k] = tmlib.date2epoch(date + tmlib.timedelta(
-            milliseconds=int(fd.read_ui32(1) * 10)))[0]
-        ens.elatitude_gps[k] = fd.read_i32(1) * self._cfac
-        ens.elongitude_gps[k] = fd.read_i32(1) * self._cfac
-        fd.seek(6, 1)
-        ens.speed_made_good_gps[k] = fd.read_i16(1) / 1000
-        ens.direction_made_good_gps[k] = fd.read_ui16(1) * 180 / 2 ** 15
-        fd.seek(2, 1)
-        ens.flags_gps[k] = fd.read_ui16(1)
-        fd.seek(6, 1)
+
+        ens.avg_speed_gps[k] = fd.read_ui16(1) / 1000
+        ens.avg_dir_gps[k] = fd.read_ui16(1) * 180 / 2 ** 15  # avg true track
+        fd.seek(2, 1)  # avg magnetic track
+        ens.speed_made_good_gps[k] = fd.read_ui16(1) / 1000
+        ens.dir_made_good_gps[k] = fd.read_ui16(1) * 180 / 2 ** 15
+        fd.seek(2, 1)  # reserved
+        ens.flags_gps[k] = int(np.binary_repr(fd.read_ui16(1)))
+        fd.seek(6, 1)  # reserved, ADCP ensemble #
+
+        # ADCP date time
         utim = fd.read_ui8(4)
-        date = tmlib.datetime(utim[0] + utim[1] * 256, utim[3], utim[2])
-        ens.ntime_gps[k] = tmlib.date2epoch(date + tmlib.timedelta(
-            milliseconds=int(fd.read_ui32(1) / 10)))[0]
+        date_adcp = tmlib.datetime(utim[0] + utim[1] * 256, utim[3], utim[2])
+        time_adcp = tmlib.timedelta(
+            milliseconds=(int(fd.read_ui32(1) / 10)))
+
         fd.seek(16, 1)
         self._nbyte = 2 + 76
+
         if self._debug_level >= 0:
             logging.info('Read VMDAS')
         self._read_vmdas = True
@@ -1108,21 +1120,24 @@ class _RDIReader():
                 self.f.seek(1, 1)
                 ens.latitude_gps[k] = self.f.read_f64(1)
                 tcNS = self.f.reads(1)  # 'N' or 'S'
+                if tcNS == 'S':
+                    ens.latitude_gps[k] *= -1
                 ens.longitude_gps[k] = self.f.read_f64(1)
                 tcEW = self.f.reads(1)  # 'E' or 'W'
-                fix = self.f.read_ui8(1)  # gps fix type/quality
-                n_sat = self.f.read_ui8(1)  # of satellites
-                hdop = self.f.read_float(1)  # horizontal dilution of precision
-                alt = self.f.read_float(1)  # altitude
+                if tcEW == 'W':
+                    ens.longitude_gps[k] *= -1
+                ens.fix_gps[k] = self.f.read_ui8(1)  # gps fix type/quality
+                ens.n_sat_gps[k] = self.f.read_ui8(1)  # of satellites
+                # horizontal dilution of precision
+                ens.hdop_gps[k] = self.f.read_float(1)
+                ens.elevation_gps[k] = self.f.read_float(1)  # altitude
                 m = self.f.reads(1)  # altitude unit, 'm'
                 h_geoid = self.f.read_float(1)  # height of geoid
                 m2 = self.f.reads(1)  # geoid unit, 'm'
-                age = self.f.read_float(1)
+                ens.rtk_age_gps[k] = self.f.read_float(1)
                 station_id = self.f.read_ui16(1)
-            # 4 unknown bytes (2 reserved+2 checksum?)
-            # 78 bytes for GPGGA string (including \r\n)
-            # 2 reserved + 2 checksum
-            self.vars_read += ['longitude_gps', 'latitude_gps', 'time_gps']
+            self.vars_read += ['time_gps', 'longitude_gps', 'latitude_gps', 'fix_gps',
+                               'n_sat_gps', 'hdop_gps', 'elevation_gps', 'rtk_age_gps']
             self._nbyte = self.f.tell() - startpos + 2
 
         elif spid in [5, 105]:  # VTG
@@ -1149,10 +1164,10 @@ class _RDIReader():
                 kph = self.f.reads(1)  # 'K'
                 mode = self.f.reads(1)
                 # knots -> m/s
-                ens.speed_over_ground_gps[k] = speed_knot / 1.944
-                ens.direction_over_ground_gps[k] = true_track
-            self.vars_read += ['speed_over_ground_gps',
-                               'direction_over_ground_gps']
+                ens.speed_over_grnd_gps[k] = speed_knot / 1.944
+                ens.dir_over_grnd_gps[k] = true_track
+            self.vars_read += ['speed_over_grnd_gps',
+                               'dir_over_grnd_gps']
             self._nbyte = self.f.tell() - startpos + 2
 
         elif spid in [6, 106]:  # 'DBT' depth sounder
@@ -1175,8 +1190,8 @@ class _RDIReader():
                 m = self.f.reads(1)  # 'm'
                 depth_fathom = self.f.read_float(1)
                 f = self.f.reads(1)  # 'F'
-                ens.depth_sounder_gps[k] = depth_m
-            self.vars_read += ['depth_sounder_gps']
+                ens.dist_nmea[k] = depth_m
+            self.vars_read += ['dist_nmea']
             self._nbyte = self.f.tell() - startpos + 2
 
         elif spid in [7, 107]:  # 'HDT'

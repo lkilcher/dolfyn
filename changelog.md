@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	- API/Useability
 		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
 		  manually from the end of the ensemble - credit: Thank you jklymak!
-		- Added ability to read WinRiver2 NMEA sentences (GGA, VTG, and DBT)
-		- Added ability to read TRDI altimeter data
+		- Clarified VMDAS navigation block variable names
+		- Added ability to read WinRiver2 NMEA data (GGA, VTG, and DBT)
+		- Added ability to read TRDI 5th beam altimeter data
 		- Updated TRDI attribute names
 		- Debugging readers now uses logging module
 
