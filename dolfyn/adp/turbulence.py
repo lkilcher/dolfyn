@@ -510,8 +510,7 @@ class ADPBinner(VelBinner):
         ds.velds.rotate2('inst')
         vel = self.detrend(ds.vel.values)
         upvp_ = np.nanmean(vel[0] * vel[1], axis=-1,
-                           dtype=np.float64).astype(np.float32)
-        ds.velds.rotate2('beam')
+                           dtype=np.float64).astype(np.float32) - noise**2
 
         th = np.deg2rad(b_angle)
         sin = np.sin
