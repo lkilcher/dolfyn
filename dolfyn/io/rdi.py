@@ -679,7 +679,7 @@ class _RDIReader():
         if self._debug_level >= 0:
             logging.info('Read Fixed')
 
-        # Check if n_cells changed (winriver)
+        # Check if n_cells changed (for winriver transect files)
         if hasattr(self, 'ensemble') and (self.ensemble['n_cells'] != self.cfg['n_cells']):
             diff = self.cfg['n_cells'] - self.ensemble['n_cells']
             if diff > 0:
@@ -690,7 +690,7 @@ class _RDIReader():
                                 .format(self.cfg['n_cells']))
 
     def read_fixed2(self,):
-        # When dual profile is set but doesn't exist
+        # Check if 2nd profile exists
         offsets = list(self.id_positions.values())
         idx = np.where(offsets == self.id_positions[16])[0][0]
         byte_len = offsets[idx+1] - offsets[idx] - 2
@@ -716,14 +716,14 @@ class _RDIReader():
                                                'unrecognized firmware version')
         config = tmp[2:4]
         cfg['beam_angle'] = [15, 20, 30][(config[1] & 3)]
-        # cfg['numbeams'] = [4, 5][int((config[1] & 16) == 16)]
+        beam5 = [0, 1][int((config[1] & 16) == 16)]
         cfg['freq'] = ([75, 150, 300, 600, 1200, 2400, 38][(config[0] & 7)])
         cfg['beam_pattern'] = (['concave',
                                 'convex'][int((config[0] & 8) == 8)])
         cfg['orientation'] = ['down', 'up'][int((config[0] & 128) == 128)]
         # cfg['simflag'] = ['real', 'simulated'][tmp[4]]
         fd.seek(1, 1)
-        cfg['n_beams'] = fd.read_ui8(1)
+        cfg['n_beams'] = fd.read_ui8(1) + beam5
         cfg['n_cells'] = fd.read_ui8(1)
         cfg['pings_per_ensemble'] = fd.read_ui16(1)
         cfg['cell_size'] = fd.read_ui16(1) * .01
@@ -732,7 +732,7 @@ class _RDIReader():
         cfg['min_corr_threshold'] = fd.read_ui8(1)
         cfg['n_code_reps'] = fd.read_ui8(1)
         cfg['min_prcnt_gd'] = fd.read_ui8(1)
-        cfg['max_error_vel'] = fd.read_ui16(1)
+        cfg['max_error_vel'] = fd.read_ui16(1) / 1000
         cfg['sec_between_ping_groups'] = (
             np.sum(np.array(fd.read_ui8(3)) *
                    np.array([60., 1., .01])))
@@ -746,7 +746,7 @@ class _RDIReader():
         cfg['magnetic_var_deg'] = fd.read_i16(1) * .01
         cfg['sensors_src'] = np.binary_repr(fd.read_ui8(1), 8)
         cfg['sensors_avail'] = np.binary_repr(fd.read_ui8(1), 8)
-        cfg['bin1_dist_m'] = fd.read_ui16(1) * .01
+        cfg['bin1_dist_m'] = round(fd.read_ui16(1) * .01, 4)
         cfg['transmit_pulse_m'] = fd.read_ui16(1) * .01
         cfg['water_ref_cells'] = list(fd.read_ui8(2))  # list for attrs
         cfg['false_target_threshold'] = fd.read_ui8(1)
@@ -755,8 +755,7 @@ class _RDIReader():
         self._nbyte = 40
 
         if cfg['prog_ver'] >= 8.14:
-            cpu_sn = fd.read_ui8(8)
-            #cfg['cpu_serialnum'] = int("".join(str(x) for x in cpu_sn))
+            cpu_serialnum = fd.read_ui8(8)
             self._nbyte += 8
         if cfg['prog_ver'] >= 8.24:
             cfg['bandwidth'] = fd.read_ui16(1)
@@ -770,12 +769,13 @@ class _RDIReader():
             cfg['serialnum'] = fd.read_ui32(1)
             cfg['beam_angle'] = fd.read_ui8(1)
             self._nbyte += 6
-        if cfg['prog_ver'] >= 56:
-            fd.seek(3, 1)
-            # cfg['ping_per_ensemble'] = fd.read_ui16(1)
-            exact_freq = fd.read_ui8(3)
-            #cfg['exact_freq'] = int("".join(str(x) for x in exact_freq))
-            self._nbyte += 6
+        # # Documented in latest PDDecoder 10/12/22 but must be instrument specific
+        # if cfg['prog_ver'] >= 56:
+        #     fd.seek(1, 1)
+        #     pings_per_ensemble = fd.read_ui16(1)
+        #     exact_freq = fd.read_ui8(3)
+        #     #cfg['exact_freq'] = int("".join(str(x) for x in exact_freq))
+        #     self._nbyte += 6
 
         self.configsize = self.f.tell() - cfgstart
         if self._debug_level >= 0:
@@ -1003,6 +1003,12 @@ class _RDIReader():
             fd.seek(7, 1)  # skip to rangeMsb bytes
             ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
+        if cfg['prog_ver'] >= 16.2 and (cfg.get('sourceprog') is not 'WINRIVER'):
+            fd.seek(4, 1)  # not documented
+            self._nbyte += 4
+        if cfg['prog_ver'] >= 56.1:
+            fd.seek(4, 1)  # not documented
+            self._nbyte += 4
 
         if self._debug_level >= 0:
             logging.info('Read Bottom Track')
@@ -1195,11 +1201,22 @@ class _RDIReader():
             self._nbyte = self.f.tell() - startpos + 2
 
         elif spid in [7, 107]:  # 'HDT'
-            if self._debug_level >= 1:
-                logging.warning("NMEA HDT not yet integrated")
-            startpos = self.f.tell()
             sz = self.f.read_ui16(1)
-            tmp = self.f.reads(sz-2)
+            dtime = self.f.read_f64(1)
+            if sz <= 14:
+                empty_gps = self.f.reads(sz-2)
+                self.f.seek(2, 1)
+            else:
+                start_string = self.f.reads(6)
+                if type(start_string) != str:
+                    if self._debug_level >= 1:
+                        logging.warning(f'Invalid HDT string found in ensemble {k},'
+                                        ' skipping...')
+                    return 'FAIL'
+                self.f.seek(1, 1)
+                ens.heading_gps[k] = self.f.read_f64(1)
+                tt = self.f.reads(1)
+            self.vars_read += ['heading_gps']
             self._nbyte = self.f.tell() - startpos + 2
 
     def read_winriver(self, nbt):
@@ -1267,9 +1284,16 @@ class _RDIReader():
             defs._pop(dat, nm)
         for nm in self.cfg:
             dat['attrs'][nm] = self.cfg[nm]
-        dat['attrs']['fs'] = (dat['attrs']['sec_between_ping_groups'] *
-                              dat['attrs']['pings_per_ensemble']) ** (-1)
-        dat['attrs']['n_cells'] = self.ensemble['n_cells']
+
+        # VMDAS and WinRiver have different set sampling frequency
+        da = dat['attrs']
+        if hasattr(da, 'sourceprog') and (da['sourceprog'].lower() in ['vmdas', 'winriver', 'winriver2']):
+            da['fs'] = round(np.diff(dat['coords']['time']).mean() ** -1, 2)
+        else:
+            da['fs'] = (da['sec_between_ping_groups'] *
+                        da['pings_per_ensemble']) ** (-1)
+        da['n_cells'] = self.ensemble['n_cells']
+
         for nm in defs.data_defs:
             shp = defs.data_defs[nm][0]
             if len(shp) and shp[0] == 'nc' and defs._in_group(dat, nm):

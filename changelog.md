@@ -8,12 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - Bugfixes
 	    - Fixed errors in TRDI reader that caused ensembles to be skipped
 		- Variables found from NMEA data now all contain _gps tag
+		- Calculate VMDAS and WinRiver sampling frequency from diff of time coordinate
 
 	- API/Useability
 		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
 		  manually from the end of the ensemble - credit: Thank you jklymak!
 		- Clarified VMDAS navigation block variable names
-		- Added ability to read WinRiver2 NMEA data (GGA, VTG, and DBT)
+		- Added ability to read WinRiver2 NMEA data (GGA, VTG, HDT, DBT)
 		- Added ability to read TRDI 5th beam altimeter data
 		- Updated TRDI attribute names
 		- Debugging readers now uses logging module

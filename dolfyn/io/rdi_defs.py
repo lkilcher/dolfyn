@@ -84,6 +84,7 @@ data_defs = {'number': ([], 'data_vars', 'uint32', ''),
              'rtk_age_gps': ([], 'data_vars', 'float32', 's'),
              'speed_over_grnd_gps': ([], 'data_vars', 'float32', 'm/s'),
              'dir_over_grnd_gps': ([], 'data_vars', 'float32', 'deg'),
+             'heading_gps': ([], 'data_vars', 'float64', 'deg'),
              'dist_nmea': ([], 'data_vars', 'float32', 'm'),
              }
 
