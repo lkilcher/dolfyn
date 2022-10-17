@@ -122,6 +122,9 @@ class _CalcMotion():
         n = self._check_duty_cycle()
 
         if n:
+            warnings.warn("   Duty Cycle detected."
+                          "Motion corrected data may contain edge effects"
+                          "at the beginning and end of each duty cycle.")
             self.accel = self.reshape(self.accel, n_bin=n)
 
         self.acclow = acc = self.accel.copy()
