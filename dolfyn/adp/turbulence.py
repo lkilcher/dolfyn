@@ -44,38 +44,6 @@ class ADPBinner(VelBinner):
         self.diff_style = diff_style
 
     def __call___(self, ds, freq_units, window, frequency_range):
-        """
-        Functional version of `ADVBinner` that computes a suite of turbulence
-        statistics for the input dataset, and returns a `binned` data object.
-
-        Parameters
-        ----------
-        ds : xarray.Dataset
-          The raw adv datset to `bin`, average and compute
-          turbulence statistics of.
-        freq_units : string
-          Frequency units of the returned spectra in either Hz or rad/s 
-        window : 1, None, 'hann', 'hamm'
-          The window to use for calculating power spectral densities
-        frequency_range : iterable
-          Frequency range over which to integrate/average the spectrum 
-          to calculate TKE dissipation, in Hz
-
-        Returns
-        -------
-        ds : xarray.Dataset
-          Returns an 'binned' (i.e. 'averaged') data object. All
-          fields (variables) of the input data object are averaged in n_bin
-          chunks. This object also computes the following items over
-          those chunks:
-
-          - auto_spectra : DataArray containing the auto-spectra of 
-            the velocity for all depth bins
-
-          - dissipation : DataArray containing the TKE dissipation 
-            rate for all depth bins
-
-        """
         out = type(ds)()
         out = self.do_avg(ds, out)
 
@@ -111,7 +79,7 @@ class ADPBinner(VelBinner):
             return _diffz_centered(vel[u].values, vel['range'].values)
 
     @property
-    def dudz(self, vel):
+    def dudz(self, vel, orientation='up'):
         """The shear in the first velocity component.
 
         Notes
@@ -121,7 +89,10 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
 
         """
-        return self._diff_func(vel, 0)
+        sign = 1
+        if orientation == 'down':
+            sign *= -1
+        return sign*self._diff_func(vel, 0)
 
     @property
     def dvdz(self, vel):
@@ -165,41 +136,6 @@ class ADPBinner(VelBinner):
 
         """
         return self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
-
-    def calc_ustar_fit(self, ds_avg, z_inds=slice(1, 5), H=None):
-        """
-        Approximate friction velocity from shear stress using a 
-        log profile
-
-        Parameters
-        ----------
-        ds_avg : xarray.Dataset
-          Bin-averaged dataset containing `stress_vec`
-        z_inds : slice(int,int)
-          Depth indices to use for profile
-        H : int (default=`ds_avg.depth`)
-          Total water depth
-
-        Returns
-        -------
-        ustar : xarray.DataArray
-
-        """
-        if not H:
-            H = ds_avg.depth.values
-        z = ds_avg['range'].values
-        upwp_ = ds_avg['stress_vec'].sel(tau='upwp_').values
-
-        sign = np.nanmean(np.sign(upwp_[z_inds, :]), axis=0)
-        ustar = np.nanmean(sign * upwp_[z_inds, :] /
-                           (1 - z[z_inds, None] / H), axis=0) ** 0.5
-
-        out = xr.DataArray(ustar,
-                           coords={'time': ds_avg.time},
-                           attrs={'units': 'm/s',
-                                  'description': 'Friction velocity'})
-
-        return out
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
         """Calculate bias due to Doppler noise using the noise floor
@@ -267,7 +203,9 @@ class ADPBinner(VelBinner):
 
     def calc_stress_4beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
         """Calculate the stresses from the difference in the beam variances.
-        Assumes zero mean pitch and roll
+        Assumes zero mean pitch and roll.
+        Assumes ADCP instrument coordinate system is aligned with principal flow
+        directions.
 
         Parameters
         ----------
@@ -289,18 +227,21 @@ class ADPBinner(VelBinner):
 
         Notes
         -----
+        Because u'v'_ is unknown and the covariance approximation has high 
+        uncertainty, stress tensor rotations aren't supported.
+
         Stacey, Mark T., Stephen G. Monismith, and Jon R. Burau. "Measurements 
         of Reynolds stress profiles in unstratified tidal flow." Journal of 
         Geophysical Research: Oceans 104.C5 (1999): 10933-10949.
 
         """
+        warnings.warn("The equations utilized by this function assume ADCP "
+                      "instrument coordinate system is aligned with principal "
+                      "flow directions.")
         if 'inst' not in ds_avg.coord_sys:
             raise Exception(
                 'Binned data should be in "inst" coordinates.')
         if 'beam' not in ds.coord_sys:
-            warnings.warn(
-                "Raw data must be in 'beam' coordinate system. \
-                    Rotating raw data into beam coordinates")
             ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
@@ -355,11 +296,14 @@ class ADPBinner(VelBinner):
                                           'time': ds_avg.time},
                                   attrs={'units': 'm^2/^2'})
 
+        ds.velds.rotate2('inst')  # return raw dataset to inst coordinates
         return stress_vec
 
     def calc_stress_5beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25, tke_only=False):
         """Calculate the stresses from the difference in the beam variances.
-        Assumes small-angle approximation is applicable
+        Assumes small-angle approximation is applicable.
+        Assumes ADCP instrument coordinate system is aligned with principal flow
+        directions.
 
         Parameters
         ----------
@@ -381,6 +325,15 @@ class ADPBinner(VelBinner):
 
         Notes
         -----
+        The stress equations here utilize u'v'_ to account for small variations
+        in pitch and roll. u'v'_ cannot be directly calculated by a 5-beam ADCP,
+        so it is approximated by the covariance of `u` and `v`. The uncertainty
+        introduced by using this approximation is small if deviations from pitch
+        and roll are small (<5-10 degrees).
+
+        Because u'v'_ is unknown and the covariance approximation has high 
+        uncertainty, stress tensor rotations aren't supported.
+
         Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic
         energy estimates from various ADCP beam configurations: Theory." J. of
         Phys. Ocean (2007): 1-35.
@@ -390,6 +343,9 @@ class ADPBinner(VelBinner):
         and Oceanic Technology 34.6 (2017): 1267-1284.
 
         """
+        warnings.warn("The equations utilized by this function assume ADCP "
+                      "instrument coordinate system is aligned with principal "
+                      "flow directions.")
         if 'vel_b5' not in ds.data_vars:
             raise Exception("Must have 5th beam data")
         if 'inst' not in ds_avg.coord_sys:
@@ -491,9 +447,29 @@ class ADPBinner(VelBinner):
 
             return tke_vec, stress_vec
 
-    def calc_tke(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
-        """Calculate turbulent kinetic energy (sum of the three components)
-        from 5-beam ADCP. Wrapper around 'calc_stress_5beam'
+    def calc_total_tke(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
+        """Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
+        This function is a wrapper around 'calc_stress_5beam' that sums the 
+        three TKE components.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+          Raw dataset in beam coordinates
+        ds_avg : xarray.Dataset
+          Binned dataset in final coordinate reference frame
+        noise : int or xarray.DataArray, default=0 (time)
+          Doppler noise level in units of m/s
+        orientation : str, default=ds.orientation
+          Direction ADCP is facing ('up' or 'down')
+        beam_angle : int, default=25
+          ADCP beam angle in units of degrees
+
+        Returns
+        -------
+        None :
+          Operates inplace. Adds `tke_vec` and `stress_vec` to 'ds_avg'
+
         """
         tke_vec = self.calc_stress_5beam(
             self, ds, ds_avg, noise, orientation, beam_angle, tke_only=True)
@@ -562,25 +538,153 @@ class ADPBinner(VelBinner):
 
         out = xr.DataArray(out, name='dissipation_rate',
                            attrs={'units': 'm^2/s^3',
-                                  'description': 'Turbulent kinetic energy \
-                                                  dissipation rate'})
+                                  'description': 'TKE dissipation rate'})
+        return out
+
+    # def calc_epsilon_SFz(self, vel_raw, vel_avg, r_range=[0.1, 5]):
+    #     """
+    #     Calculate dissipation rate from ADCP beam velocity using the
+    #     "structure function" (SF) method.
+
+    #     Parameters
+    #     ----------
+    #     vel_raw : xarray.DataArray
+    #       The raw beam velocity data (one beam, last dimension time) upon
+    #       which to perform the SF technique.
+    #     vel_avg : xarray.DataArray
+    #       The ensemble-averaged beam velocity (calc'd from 'do_avg')
+
+    #     r_range: numeric
+    #         Range of r in [m] to calc dissipation across. Low end of range should be
+    #         bin size, upper end of range is limited to the length of largest eddies
+    #         in the inertial subrange.
+
+    #     Returns
+    #     -------
+    #     epsilon : xarray.DataArray
+    #       The dissipation rate
+
+    #     Notes
+    #     -----
+    #     Velocity data should be cleaned of surface interference
+
+    #     Wiles, et al, "A novel technique for measuring the rate of
+    #     turbulent dissipation in the marine environment"
+    #     GRL, 2006, 33, L21608.
+
+    #     """
+    #     if type(vel_raw.dir) == list:
+    #         raise Exception(
+    #             "Function input must be single beam and in 'beam' coordinate system")
+    #     if type(vel_raw.dir) == str:
+    #         raise Exception("Data must be in 'beam' coordinate system")
+
+    #     e = np.empty(vel_avg.shape, dtype='float32')*np.nan
+    #     n = np.empty(vel_avg.shape, dtype='float32')*np.nan
+
+    #     # bm shape is [range, ensemble time, 'data within ensemble']
+    #     bm = self.reshape(vel_raw.values)  # will fail if not in beam coord
+    #     bm -= vel_avg.values[:, :, None]  # take out the ensemble mean
+
+    #     bin_size = round(np.diff(vel_raw.range)[0], 3)
+    #     #surface = np.count_nonzero(~np.isnan(vel_raw.isel(time_b5=0)))
+    #     R = int(r_range[0]/bin_size)
+    #     r = np.arange(bin_size, r_range[1]+bin_size, bin_size)
+
+    #     # D(z,r,time)
+    #     D = np.zeros((vel_avg.shape[0], r.size, vel_avg.shape[1]))
+    #     for r_value in r:
+    #         # the i in d is the index based on r and bin size
+    #         # bin size index, > 1
+    #         i = int(r_value/bin_size)
+    #         for idx in range(vel_avg.shape[-1]):  # for each ensemble
+    #             # subtract the variance of adjacent depth cells
+    #             d = np.nanmean(
+    #                 (bm[:-i, idx, :] - bm[i:, idx, :]) ** 2, axis=-1)
+
+    #             # have to insert 0/nan in first bin to match length
+    #             spaces = np.empty((i,))
+    #             spaces[:] = np.NaN
+    #             D[:, i-1, idx] = np.concatenate((spaces, d))
+
+    #     # find best fit line y = mx + b (aka D(z,r) = A*r^2/3 + N) to solve
+    #     # epsilon for each depth and ensemble
+    #     plt.figure()
+    #     for idx in range(vel_avg.shape[-1]):  # for each ensemble
+    #         for i in range(D.shape[1], D.shape[0]):  # for depth cells
+    #             plt.plot(r, D[i, :, 100])  # randomly choose 100th ensemble
+    #             try:
+    #                 e[i, idx], n[i, idx] = np.polyfit(r[R:] ** 2/3,
+    #                                                   D[i, R:, idx],
+    #                                                   deg=1)
+    #             except:
+    #                 e[i, idx], n[i, idx] = np.nan, np.nan
+    #     # A taken as 2.1, n = y-intercept
+    #     epsilon = (e/2.1)**(3/2)
+    #     plt.yscale('log')
+    #     plt.ylabel('D [m2/s2]')
+    #     plt.xlabel('r [m]')
+    #     plt.show()
+
+    #     return xr.DataArray(epsilon, name='dissipation_rate',
+    #                         coords=vel_avg.coords,
+    #                         dims=vel_avg.dims,
+    #                         attrs={'units': 'm^2/s^3',
+    #                                'method': 'structure function'})
+
+    def calc_ustar_fit(self, ds_avg, z_inds=slice(1, 5), H=None):
+        """
+        Approximate friction velocity from shear stress using a 
+        log profile
+
+        Parameters
+        ----------
+        ds_avg : xarray.Dataset
+          Bin-averaged dataset containing `stress_vec`
+        z_inds : slice(int,int)
+          Depth indices to use for profile
+        H : int (default=`ds_avg.depth`)
+          Total water depth
+
+        Returns
+        -------
+        ustar : xarray.DataArray
+
+        """
+        if not H:
+            H = ds_avg.depth.values
+        z = ds_avg['range'].values
+        upwp_ = ds_avg['stress_vec'].sel(tau='upwp_').values
+
+        sign = np.nanmean(np.sign(upwp_[z_inds, :]), axis=0)
+        ustar = np.nanmean(sign * upwp_[z_inds, :] /
+                           (1 - z[z_inds, None] / H), axis=0) ** 0.5
+
+        out = xr.DataArray(ustar,
+                           coords={'time': ds_avg.time},
+                           attrs={'units': 'm/s',
+                                  'description': 'Friction velocity'})
+
         return out
 
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, freq_units='Hz', window='hann', frequency_range=[0.1, 0.3]):
     """
-    Functional version of `ADVBinner` that computes a suite of turbulence
+    Functional version of `ADPBinner` that computes a suite of turbulence
     statistics for the input dataset, and returns a `binned` data object.
 
     Parameters
     ----------
-    ds_raw : xarray.Dataset
+    ds : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
     freq_units : string
       Frequency units of the returned spectra in either Hz or rad/s 
     window : 1, None, 'hann', 'hamm'
       The window to use for calculating power spectral densities
+    frequency_range : iterable
+      Frequency range over which to integrate/average the spectrum 
+      to calculate TKE dissipation, in Hz
 
     Returns
     -------
@@ -591,10 +695,13 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, freq_units='Hz', win
       those chunks:
 
       - auto_spectra : DataArray containing the auto-spectra of 
-        the velocity for all depth bins
+        the vertical (5th beam) along-beam velocity for all depth bins
 
       - dissipation : DataArray containing the TKE dissipation 
         rate for all depth bins
+
+      - noise : DataArray containing the doppler noise level from 
+        the mid-water column
 
     """
     calculator = ADPBinner(n_bin, fs, n_fft=n_fft, noise=noise)

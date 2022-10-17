@@ -29,50 +29,6 @@ class ADVBinner(VelBinner):
     """
 
     def __call__(self, ds, freq_units='rad/s', window='hann'):
-        """
-        Compute a suite of turbulence statistics for the input data
-        ds, and return a `binned` data object.
-
-        Parameters
-        ----------
-        ds : xarray.Dataset
-          The raw adv dataset to `bin`, average and compute
-          turbulence statistics of.
-        freq_units : string
-          Frequency units of the returned spectra in either Hz or rad/s 
-          (`f` or :math:`\\omega`)
-        window : 1, None, 'hann'
-          The window to use for psds.
-
-        Returns
-        -------
-        advb : xarray.Dataset
-          Returns an 'binned' (i.e. 'averaged') dataset. All
-          fields (variables) of the input dataset are averaged in n_bin
-          chunks. This object also computes the following items over
-          those chunks:
-
-          - tke_vec : The energy in each component (components are also
-            accessible as
-            :attr:`upup_ <dolfyn.velocity.Velocity.upup_>`,
-            :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
-            :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
-
-          - stress_vec : The Reynolds stresses (each component is
-            accessible as
-            :attr:`upvp_ <dolfyn.velocity.Velocity.upvp_>`,
-            :attr:`upwp_ <dolfyn.velocity.Velocity.upwp_>`,
-            :attr:`vpwp_ <dolfyn.velocity.Velocity.vpwp_>`)
-
-          - U_std : The standard deviation of the horizontal
-            velocity `U_mag`.
-
-          - psd: A DataArray containing the spectra of the velocity
-            in radial frequency units. This DataArray contains:
-            - spectra : the velocity spectra array (m^2/s/rad))
-            - omega : the radial frequency (rad/s)
-
-        """
         out = type(ds)()
         out = self.do_avg(ds, out)
 
