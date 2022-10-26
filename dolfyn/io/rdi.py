@@ -1003,7 +1003,7 @@ class _RDIReader():
             fd.seek(7, 1)  # skip to rangeMsb bytes
             ens.dist_bt[:, k] = ens.dist_bt[:, k] + fd.read_ui8(4) * 655.36
             self._nbyte += 11
-        if cfg['prog_ver'] >= 16.2 and (cfg.get('sourceprog') is not 'WINRIVER'):
+        if cfg['prog_ver'] >= 16.2 and (cfg.get('sourceprog') != 'WINRIVER'):
             fd.seek(4, 1)  # not documented
             self._nbyte += 4
         if cfg['prog_ver'] >= 56.1:

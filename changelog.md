@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Added ability to read TRDI 5th beam altimeter data
 		- Updated TRDI attribute names
 		- Debugging readers now uses logging module
+		- ADP cleaning functions `nan_beyond_surface` and `correlation_filter` now operate
+		  in-place for speed
 
 ## Version 1.1.0
     - Bugfixes

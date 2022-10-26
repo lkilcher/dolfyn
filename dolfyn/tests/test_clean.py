@@ -56,12 +56,12 @@ def test_clean_upADCP(make_data=False):
     td_sig = tp.dat_sig_tide.copy(deep=True)
 
     apm.clean.find_surface_from_P(td_awac, salinity=30)
-    td_awac = apm.clean.nan_beyond_surface(td_awac)
+    apm.clean.nan_beyond_surface(td_awac)
 
     apm.clean.set_range_offset(td_sig, 0.6)
     apm.clean.find_surface_from_P(td_sig, salinity=31)
-    td_sig = apm.clean.nan_beyond_surface(td_sig)
-    td_sig = apm.clean.correlation_filter(td_sig, thresh=50)
+    apm.clean.nan_beyond_surface(td_sig)
+    apm.clean.correlation_filter(td_sig, thresh=50)
 
     if make_data:
         save(td_awac, 'AWAC_test01_clean.nc')
@@ -85,7 +85,7 @@ def test_clean_downADCP(make_data=False):
     # Then clean below seabed
     apm.clean.set_range_offset(td, 0.5)
     apm.clean.find_surface(td, thresh=10, nfilt=3)
-    td = apm.clean.nan_beyond_surface(td)
+    apm.clean.nan_beyond_surface(td)
 
     if make_data:
         save(td, 'Sig500_Echo_clean.nc')
