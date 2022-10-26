@@ -121,9 +121,10 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=Fa
                       "\nReturning first.")
 
     # Close handler
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-        handler.close()
+    if debug_level >= 0:
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+            handler.close()
 
     return dss[0]
 

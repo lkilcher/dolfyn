@@ -107,9 +107,10 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     ds['time'] = time.epoch2dt64(ds['time']).astype('datetime64[us]')
 
     # Close handler
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-        handler.close()
+    if debug:
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+            handler.close()
 
     return ds
 

@@ -4,7 +4,6 @@ import numpy as np
 import xarray as xr
 from scipy.signal import medfilt
 from ..tools.misc import medfiltnan
-from ..rotate.api import rotate2
 from ..rotate.base import _make_model, quaternion2orient
 
 
