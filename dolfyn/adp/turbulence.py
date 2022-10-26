@@ -78,7 +78,6 @@ class ADPBinner(VelBinner):
         elif self.diff_style == 'centered':
             return _diffz_centered(vel[u].values, vel['range'].values)
 
-    @property
     def dudz(self, vel, orientation='up'):
         """The shear in the first velocity component.
 
@@ -94,7 +93,6 @@ class ADPBinner(VelBinner):
             sign *= -1
         return sign*self._diff_func(vel, 0)
 
-    @property
     def dvdz(self, vel):
         """The shear in the second velocity component.
 
@@ -107,7 +105,6 @@ class ADPBinner(VelBinner):
         """
         return self._diff_func(vel, 1)
 
-    @property
     def dwdz(self, vel):
         """The shear in the third velocity component.
 
@@ -120,7 +117,6 @@ class ADPBinner(VelBinner):
         """
         return self._diff_func(vel, 2)
 
-    @property
     def tau2(self, vel):
         """The horizontal shear squared.
 
@@ -235,13 +231,12 @@ class ADPBinner(VelBinner):
         Geophysical Research: Oceans 104.C5 (1999): 10933-10949.
 
         """
-        warnings.warn("The equations utilized by this function assume ADCP "
-                      "instrument coordinate system is aligned with principal "
+        warnings.warn("The 4-beam stress equations assume the instrument's "
+                      "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
-        if 'inst' not in ds_avg.coord_sys:
-            raise Exception(
-                'Binned data should be in "inst" coordinates.')
         if 'beam' not in ds.coord_sys:
+            warnings.warn("Raw dataset must be in the 'beam' coordinate system. "
+                          "Rotating raw dataset...")
             ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
@@ -294,9 +289,10 @@ class ADPBinner(VelBinner):
                                   coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                                           'range': ds_avg.range,
                                           'time': ds_avg.time},
-                                  attrs={'units': 'm^2/^2'})
+                                  attrs={'units': 'm^2/^2',
+                                         'description': "Axes are aligned in "
+                                         "instrument's (XYZ) frame of reference"})
 
-        ds.velds.rotate2('inst')  # return raw dataset to inst coordinates
         return stress_vec
 
     def calc_stress_5beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25, tke_only=False):
@@ -343,15 +339,14 @@ class ADPBinner(VelBinner):
         and Oceanic Technology 34.6 (2017): 1267-1284.
 
         """
-        warnings.warn("The equations utilized by this function assume ADCP "
-                      "instrument coordinate system is aligned with principal "
+        warnings.warn("The 5-beam TKE/stress equations assume the instrument's "
+                      "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
         if 'vel_b5' not in ds.data_vars:
             raise Exception("Must have 5th beam data")
-        if 'inst' not in ds_avg.coord_sys:
-            raise Exception(
-                'Binned data should be in "inst" coordinates.')
         if 'beam' not in ds.coord_sys:
+            warnings.warn("Raw dataset must be in the 'beam' coordinate system. "
+                          "Rotating raw dataset...")
             ds.velds.rotate2('beam')
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
@@ -417,10 +412,11 @@ class ADPBinner(VelBinner):
                                coords={'tke': ["upup_", "vpvp_", "wpwp_"],
                                        'range': ds_avg.range,
                                        'time': ds_avg.time},
-                               attrs={'units': 'm^2/^2'})
+                               attrs={'units': 'm^2/^2',
+                                      'description': "u', v' and w' are aligned to "
+                                      "the instrument's (XYZ) frame of reference"})
 
         if tke_only:
-            ds.velds.rotate2('inst')  # return raw dataset to inst coordinates
             return tke_vec
         else:
             # Guerra Thomson calculate u'v' bar from from the covariance of u' and v'
@@ -443,7 +439,8 @@ class ADPBinner(VelBinner):
                                       coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                                               'range': ds_avg.range,
                                               'time': ds_avg.time},
-                                      attrs={'units': 'm^2/^2'})
+                                      attrs={'units': 'm^2/^2',
+                                      'description': "u', v' and w' are aligned to the instrument's (XYZ) frame of reference"})
 
             return tke_vec, stress_vec
 
@@ -472,14 +469,14 @@ class ADPBinner(VelBinner):
 
         """
         tke_vec = self.calc_stress_5beam(
-            self, ds, ds_avg, noise, orientation, beam_angle, tke_only=True)
+            ds, ds_avg, noise, orientation, beam_angle, tke_only=True)
 
         tke = tke_vec.sum('tke') / 2
-        tke.attrs['units'] = self.ds['tke_vec'].units
+        tke.attrs['units'] = 'm^2/s^2'
 
         return tke
 
-    def calc_tke_dissipation(self, psd, U_mag, f_range=[0.5, 1]):
+    def calc_tke_dissipation(self, psd, U_mag, f_range=[0.2, 0.4]):
         """Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
