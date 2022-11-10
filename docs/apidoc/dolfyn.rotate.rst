@@ -23,7 +23,7 @@ Contains functions for rotating data through frames of reference (FoR):
 These functions pertain to both ADCPs and ADVs::
 
 	>> import dolfyn as dlfn
-	>> dat = dlfn.read_example('burst_mode01.VEC')
+	>> dat = dlfn.read_example('vector_burst_mode01.VEC')
 	
 	>> dlfn.set_declination(dat, 12)
 	>> dlfn.rotate2(dat, 'earth')

@@ -72,7 +72,7 @@ def read_example(name, **kwargs):
             AWAC_test01.wpr
             BenchFile01.ad2cp
             RDI_test01.000
-            burst_mode01.VEC
+            vector_burst_mode01.VEC
             vector_data01.VEC
             vector_data_imu01.VEC
             winriver01.PD0

@@ -835,7 +835,7 @@ class _RDIReader():
                 ens.rtc[:, k] = fd.read_ui8(7)
                 ens.rtc[0, k] = ens.rtc[0, k] + cent * 100
                 self._nbyte += 23
-        elif cfg['inst_model'].lower() == 'ocean_surveyor':
+        elif cfg['inst_model'].lower() == 'ocean surveyor':
             fd.seek(16, 1)  # 30 bytes all set to zero, 14 read above
             self._nbyte += 16
             if cfg['prog_ver'] > 23:

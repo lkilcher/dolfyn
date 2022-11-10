@@ -12,7 +12,7 @@ assert_allclose = tb.assert_allclose
 dat = load('vector_data01')
 dat_imu = load('vector_data_imu01')
 dat_imu_json = load('vector_data_imu01-json')
-dat_burst = load('burst_mode01')
+dat_burst = load('vector_burst_mode01')
 
 
 def test_io_adv(make_data=False):
@@ -20,7 +20,7 @@ def test_io_adv(make_data=False):
     td = tb.drop_config(read('vector_data01.VEC', nens=nens))
     tdm = tb.drop_config(read('vector_data_imu01.VEC', userdata=False,
                               nens=nens))
-    tdb = tb.drop_config(read('burst_mode01.VEC', nens=nens))
+    tdb = tb.drop_config(read('vector_burst_mode01.VEC', nens=nens))
     tdm2 = tb.drop_config(read('vector_data_imu01.VEC',
                                userdata=tb.exdt(
                                    'vector_data_imu01.userdata.json'),
@@ -34,7 +34,7 @@ def test_io_adv(make_data=False):
     if make_data:
         save(td, 'vector_data01.nc')
         save(tdm, 'vector_data_imu01.nc')
-        save(tdb, 'burst_mode01.nc')
+        save(tdb, 'vector_burst_mode01.nc')
         save(tdm2, 'vector_data_imu01-json.nc')
         return
 
