@@ -53,7 +53,7 @@ def test_io_rdi(make_data=False):
         save(td_vm, 'vmdas01.nc')
         save(td_wr1, 'winriver01.nc')
         save(td_wr2, 'winriver02.nc')
-        save(td_rr, 'riverpro_test01.nc')
+        save(td_rr, 'RiverPro_test01.nc')
         save(td_transect, 'winriver02_transect.nc')
         return
 
