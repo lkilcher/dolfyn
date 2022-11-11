@@ -16,7 +16,7 @@ def _get_body2imu(make_model):
         raise Exception("The imu->body vector is unknown for this instrument.")
 
 
-class _CalcMotion():
+class CalcMotion():
     """
     A 'calculator' for computing the velocity of points that are
     rigidly connected to an ADV-body with an IMU.
@@ -397,10 +397,10 @@ def correct_motion(ds,
     rot._check_inst2head_rotmat(ds)
 
     # Create the motion 'calculator':
-    calcobj = _CalcMotion(ds,
-                          accel_filtfreq=accel_filtfreq,
-                          vel_filtfreq=vel_filtfreq,
-                          to_earth=to_earth)
+    calcobj = CalcMotion(ds,
+                         accel_filtfreq=accel_filtfreq,
+                         vel_filtfreq=vel_filtfreq,
+                         to_earth=to_earth)
 
     ##########
     # Calculate the translational velocity (from the accel):
