@@ -75,6 +75,7 @@ def test_duty_cycle():
 
     # with duty cycle code
     td = correct_motion(tdc, accel_filtfreq=0.03, to_earth=False)
+    td_ENU = correct_motion(tdc, accel_filtfreq=0.03, to_earth=True)
 
     # Wrapped function
     n_burst = 50
@@ -87,7 +88,10 @@ def test_duty_cycle():
         cd = xr.merge((cd, cd0), combine_attrs='no_conflicts')
     cd.attrs['duty_cycle_n_burst'] = n_burst
 
+    cd_ENU = cd.velds.rotate2('earth', inplace=False)
+
     assert_allclose(td, cd, atol=1e-7)
+    assert_allclose(td_ENU, cd_ENU, atol=1e-7)
 
 # def test_motion_adcp():
 #     # Correction for ADCPs not completed yet

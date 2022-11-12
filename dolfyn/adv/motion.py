@@ -169,15 +169,18 @@ class CalcMotion():
 
         if n:
             # remove reshape
-            acc_shaped = np.empty(self.angrt.shape)
+            velacc_shaped = np.empty(self.angrt.shape)
             acclow_shaped = np.empty(self.angrt.shape)
+            accel_shaped = np.empty(self.angrt.shape)
             for idx in range(hp.shape[0]):
-                acc_shaped[idx] = np.ravel(dat[idx], 'C')
+                velacc_shaped[idx] = np.ravel(dat[idx], 'C')
                 acclow_shaped[idx] = np.ravel(self.acclow[idx], 'C')
+                accel_shaped[idx] = np.ravel(self.accel[idx], 'C')
 
-            # return acclow and accel
+            # return acclow and velacc
             self.acclow = acclow_shaped
-            return acc_shaped
+            self.accel = accel_shaped
+            return velacc_shaped
 
         else:
             return dat
@@ -449,6 +452,7 @@ def correct_motion(ds,
     #       calc_velacc() call.
     inst2earth = rot._inst2earth
     if to_earth:
+        # accel was converted to earth coordinates
         ds['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']
         ds = inst2earth(ds, rotate_vars=[e for e in
@@ -457,7 +461,7 @@ def correct_motion(ds,
     else:
         # rotate these variables back to the instrument frame.
         ds = inst2earth(ds, reverse=True,
-                        rotate_vars=['accel', 'acclow', 'velacc'],
+                        rotate_vars=['acclow', 'velacc'],
                         force=True)
 
     ##########
