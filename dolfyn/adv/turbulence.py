@@ -95,7 +95,7 @@ class ADVBinner(VelBinner):
         return da
 
     def calc_csd(self, veldat,
-                 freq_units='Hz',
+                 freq_units='rad/s',
                  fs=None,
                  window='hann',
                  n_bin=None,
@@ -160,7 +160,7 @@ class ADVBinner(VelBinner):
 
         return csd
 
-    def calc_epsilon_LT83(self, psd, U_mag, f_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate from the PSD
 
@@ -170,7 +170,7 @@ class ADVBinner(VelBinner):
           The power spectral density
         U_mag : xarray.DataArray (...,time)
           The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
-        f_range : iterable(2)
+        freq_range : iterable(2)
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
 
@@ -205,7 +205,7 @@ class ADVBinner(VelBinner):
         """
         freq = psd.freq
 
-        idx = np.where((f_range[0] < freq) & (freq < f_range[1]))
+        idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
         idx = idx[0]
 
         if freq.units == 'Hz':
@@ -222,7 +222,7 @@ class ADVBinner(VelBinner):
                                   'method': 'LT83'})
         return out
 
-    def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_rng=[2., 4.]):
+    def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_range=[2., 4.]):
         """
         Calculate dissipation rate using the "structure function" (SF) method
 
@@ -235,7 +235,7 @@ class ADVBinner(VelBinner):
           The bin-averaged horizontal velocity (from dataset shortcut)
         fs : float
           The sample rate of `vel_raw` [Hz]
-        freq_rng : iterable(2)
+        freq_range : iterable(2)
           The frequency range over which to compute the SF [Hz]
           (i.e. the frequency range within which the isotropic 
           turbulence cascade falls)
@@ -251,7 +251,7 @@ class ADVBinner(VelBinner):
             raise Exception("Function input should be a 1D velocity vector")
 
         fs = self._parse_fs(fs)
-        if freq_rng[1] > fs:
+        if freq_range[1] > fs:
             warnings.warn('Max freq_range cannot be greater than fs')
 
         dt = self.reshape(veldat)
@@ -260,7 +260,7 @@ class ADVBinner(VelBinner):
             up = dt[slc]
             lag = U_mag.values[slc[:-1]] / fs * np.arange(up.shape[0])
             DAA = _nans_like(lag)
-            for L in range(int(fs / freq_rng[1]), int(fs / freq_rng[0])):
+            for L in range(int(fs / freq_range[1]), int(fs / freq_range[0])):
                 DAA[L] = np.nanmean((up[L:] - up[:-L]) ** 2, dtype=np.float64)
             cv2 = DAA / (lag ** (2 / 3))
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
@@ -317,20 +317,21 @@ class ADVBinner(VelBinner):
         return out.reshape(I_tke.shape) * \
             (2 * np.pi) ** (-0.5) * I_tke ** (2 / 3)
 
-    def calc_epsilon_TE01(self, dat_raw, dat_avg, f_range=[6.28, 12.57]):
+    def calc_epsilon_TE01(self, dat_raw, dat_avg, freq_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate according to TE01.
 
         Parameters
         ----------
-
         dat_raw : xarray.Dataset
           The raw (off the instrument) adv dataset
-
         dat_avg : xarray.Dataset
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
           'do_avg'). The spectra (psd) and basic turbulence statistics 
           ('tke_vec' and 'stress_vec') must already be computed.
+        freq_range : iterable(2)
+          The range over which to integrate/average the spectrum, in units 
+          of the psd frequency vector (Hz or rad/s)
 
         Notes
         -----
@@ -351,7 +352,7 @@ class ADVBinner(VelBinner):
         intgrl = self._calc_epsTE01_int(I_tke, theta)
 
         # Index data to be used
-        inds = (f_range[0] < freq) & (freq < f_range[1])
+        inds = (freq_range[0] < freq) & (freq < freq_range[1])
         psd = dat_avg.psd[..., inds].values
         freq = freq[inds].reshape([1] * (dat_avg.psd.ndim - 2) + [sum(inds)])
 

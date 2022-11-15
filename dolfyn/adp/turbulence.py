@@ -17,7 +17,7 @@ def _diffz_centered(dat, z):
 
 class ADPBinner(VelBinner):
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
-                 noise=0, diff_style='centered'):
+                 noise=0, orientation='up', diff_style='centered'):
         """A class for calculating turbulence statistics from ADCP data
 
         Parameters
@@ -42,8 +42,9 @@ class ADPBinner(VelBinner):
         """
         VelBinner.__init__(self, n_bin, fs, n_fft, n_fft_coh, noise)
         self.diff_style = diff_style
+        self.orientation = orientation
 
-    def __call___(self, ds, freq_units, window, frequency_range):
+    def __call___(self, ds, window, freq_units, freq_range):
         out = type(ds)()
         out = self.do_avg(ds, out)
 
@@ -57,14 +58,21 @@ class ADPBinner(VelBinner):
                                         freq_units=freq_units)
                 e[r] = self.calc_tke_dissipation(spec[r],
                                                  out.velds.U_mag.isel(range=r),
-                                                 f_range=frequency_range)  # Hz
+                                                 f_range=freq_range)
 
             out['auto_spectra_b5'] = xr.concat(spec, dim='range')
-            out['dissipation'] = xr.concat(e, dim='range')
+            out['dissipation_rate'] = xr.concat(e, dim='range')
 
         # Calculate doppler noise from spectra from mid-water column
         out['noise'] = self.calc_doppler_noise(
             out['auto_spectra'].isel(range=len(range)//2), pct_fN=0.8)
+
+        # Calculate total turbulent kinetic energy with noise subtraction
+        out['tke'] = self.calc_total_tke(
+            ds, out, noise=out['noise'], orientation=self.orientation)
+
+        # Remove TKE dissipation calculation where noise is greater than TKE signal
+        out['dissipation_rate'] = out['dissipation_rate'].where(out['tke'] > 0)
 
         out.attrs['n_bin'] = self.n_bin
         out.attrs['n_fft'] = self.n_fft
@@ -78,7 +86,7 @@ class ADPBinner(VelBinner):
         elif self.diff_style == 'centered':
             return _diffz_centered(vel[u].values, vel['range'].values)
 
-    def dudz(self, vel, orientation='up'):
+    def dudz(self, vel, orientation=None):
         """The shear in the first velocity component.
 
         Notes
@@ -88,6 +96,8 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
 
         """
+        if not orientation:
+            orientation = self.orientation
         sign = 1
         if orientation == 'down':
             sign *= -1
@@ -218,8 +228,8 @@ class ADPBinner(VelBinner):
 
         Returns
         -------
-        None :
-          Operates inplace. Adds `tke_vec` and `stress_vec` to 'ds_avg'
+        stress_vec : xarray.DataArray(s)
+          Stress vector with u'w'_ and v'w'_ components
 
         Notes
         -----
@@ -313,11 +323,13 @@ class ADPBinner(VelBinner):
           Direction ADCP is facing ('up' or 'down')
         beam_angle : int, default=25
           ADCP beam angle in units of degrees
+        tke_only : bool, default=False
 
         Returns
         -------
-        None :
-          Operates inplace. Adds `tke_vec` and `stress_vec` to 'ds_avg'
+        tke_vec(, stress_vec) : xarray.DataArray or tuple[xarray.DataArray]
+          If tke_only is set to False, function returns `tke_vec` and `stress_vec`.
+          Otherwise only `tke_vec` is returned
 
         Notes
         -----
@@ -418,6 +430,7 @@ class ADPBinner(VelBinner):
 
         if tke_only:
             return tke_vec
+
         else:
             # Guerra Thomson calculate u'v' bar from from the covariance of u' and v'
             ds.velds.rotate2('inst')
@@ -440,7 +453,8 @@ class ADPBinner(VelBinner):
                                               'range': ds_avg.range,
                                               'time': ds_avg.time},
                                       attrs={'units': 'm^2/^2',
-                                      'description': "u', v' and w' are aligned to the instrument's (XYZ) frame of reference"})
+                                      'description': "u', v' and w' are aligned to "
+                                             "the instrument's (XYZ) frame of reference"})
 
             return tke_vec, stress_vec
 
@@ -464,8 +478,8 @@ class ADPBinner(VelBinner):
 
         Returns
         -------
-        None :
-          Operates inplace. Adds `tke_vec` and `stress_vec` to 'ds_avg'
+        tke :
+          Turbulent kinetic energy magnitude
 
         """
         tke_vec = self.calc_stress_5beam(
@@ -476,7 +490,7 @@ class ADPBinner(VelBinner):
 
         return tke
 
-    def calc_tke_dissipation(self, psd, U_mag, f_range=[0.2, 0.4]):
+    def calc_tke_dissipation(self, psd, U_mag, freq_range=[0.2, 0.4]):
         """Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
@@ -493,8 +507,8 @@ class ADPBinner(VelBinner):
 
         Returns
         -------
-        epsilon : xarray.DataArray (...,n_time)
-          dataArray of the dissipation rate
+        dissipation_rate : xarray.DataArray (...,n_time)
+          Turbulent kinetic energy dissipation rate
 
         Notes
         -----
@@ -521,7 +535,7 @@ class ADPBinner(VelBinner):
 
         """
         freq = psd.freq
-        idx = np.where((f_range[0] < freq) & (freq < f_range[1]))
+        idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
         idx = idx[0]
 
         if freq.units == 'Hz':
@@ -665,7 +679,7 @@ class ADPBinner(VelBinner):
         return out
 
 
-def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, freq_units='Hz', window='hann', frequency_range=[0.1, 0.3]):
+def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, window='hann', freq_units='Hz', freq_range=[0.1, 0.3]):
     """
     Functional version of `ADPBinner` that computes a suite of turbulence
     statistics for the input dataset, and returns a `binned` data object.
@@ -703,4 +717,4 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, freq_units='Hz', win
     """
     calculator = ADPBinner(n_bin, fs, n_fft=n_fft, noise=noise)
 
-    return calculator(ds_raw, freq_units=freq_units, window=window, frequency_range=frequency_range)
+    return calculator(ds_raw, window=window, freq_units=freq_units, freq_range=freq_range)
