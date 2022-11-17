@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unversioned
+    - Bugfixes
+	    - Fix duty cycle attributes for some Nortek instruments
+		- Fix bug where 'accel' variable was rotated incorrected in `correct_motion`
+	
+	- API/Useability
+	    - `correct_motion` filtering updated for duty cycled ADVs
+	    - `CalcMotion` class is changed from private to public
+
 ## Version 1.1.0
     - Bugfixes
 	    - "calc_tke" function now errors if given multi-beam ADCP velocity vector

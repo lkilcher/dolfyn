@@ -1,7 +1,6 @@
 from dolfyn.rotate.api import set_inst2head_rotmat
 from dolfyn.io.api import read_example as read
 from dolfyn.tests import base as tb
-import dolfyn.io.nortek as vector
 import numpy as np
 
 
