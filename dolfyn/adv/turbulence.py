@@ -51,7 +51,8 @@ class ADVBinner(VelBinner):
         return out
 
     def calc_stress(self, veldat, detrend=True):
-        """Calculate the stresses (covariances of u,v,w)
+        """
+        Calculate the stresses (covariances of u,v,w)
 
         Parameters
         ----------
@@ -100,7 +101,8 @@ class ADVBinner(VelBinner):
                  window='hann',
                  n_bin=None,
                  n_fft_coh=None):
-        """Calculate the cross-spectral density of velocity components.
+        """
+        Calculate the cross-spectral density of velocity components.
 
         Parameters
         ----------

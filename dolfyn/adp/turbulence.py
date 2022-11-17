@@ -18,7 +18,8 @@ def _diffz_centered(dat, z):
 class ADPBinner(VelBinner):
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
                  noise=0, orientation='up', diff_style='centered'):
-        """A class for calculating turbulence statistics from ADCP data
+        """
+        A class for calculating turbulence statistics from ADCP data
 
         Parameters
         ----------
@@ -35,6 +36,8 @@ class ADPBinner(VelBinner):
             Default: `n_fft_coh`=`n_fft`
         noise : float, list or numpy.ndarray
             Instrument's doppler noise in same units as velocity
+        orientation : str, default='up'
+            Instrument's orientation, either 'up' or 'down'
         diff_style : str, default='centered'
             Style of numerical differentiation using Newton's Method, 
             either 'first' or 'centered'
@@ -44,7 +47,7 @@ class ADPBinner(VelBinner):
         self.diff_style = diff_style
         self.orientation = orientation
 
-    def __call___(self, ds, window, freq_units, freq_range):
+    def __call___(self, ds, freq_units, freq_range,  window):
         out = type(ds)()
         out = self.do_avg(ds, out)
 
@@ -61,7 +64,7 @@ class ADPBinner(VelBinner):
                                                  f_range=freq_range)
 
             out['auto_spectra_b5'] = xr.concat(spec, dim='range')
-            out['dissipation_rate'] = xr.concat(e, dim='range')
+            dissipation_rate = xr.concat(e, dim='range')
 
         # Calculate doppler noise from spectra from mid-water column
         out['noise'] = self.calc_doppler_noise(
@@ -72,7 +75,7 @@ class ADPBinner(VelBinner):
             ds, out, noise=out['noise'], orientation=self.orientation)
 
         # Remove TKE dissipation calculation where noise is greater than TKE signal
-        out['dissipation_rate'] = out['dissipation_rate'].where(out['tke'] > 0)
+        out['dissipation_rate'] = dissipation_rate.where(out['tke'] > 0)
 
         out.attrs['n_bin'] = self.n_bin
         out.attrs['n_fft'] = self.n_fft
@@ -87,7 +90,8 @@ class ADPBinner(VelBinner):
             return _diffz_centered(vel[u].values, vel['range'].values)
 
     def dudz(self, vel, orientation=None):
-        """The shear in the first velocity component.
+        """
+        The shear in the first velocity component.
 
         Notes
         -----
@@ -104,7 +108,8 @@ class ADPBinner(VelBinner):
         return sign*self._diff_func(vel, 0)
 
     def dvdz(self, vel):
-        """The shear in the second velocity component.
+        """
+        The shear in the second velocity component.
 
         Notes
         -----
@@ -116,7 +121,8 @@ class ADPBinner(VelBinner):
         return self._diff_func(vel, 1)
 
     def dwdz(self, vel):
-        """The shear in the third velocity component.
+        """
+        The shear in the third velocity component.
 
         Notes
         -----
@@ -128,7 +134,8 @@ class ADPBinner(VelBinner):
         return self._diff_func(vel, 2)
 
     def tau2(self, vel):
-        """The horizontal shear squared.
+        """
+        The horizontal shear squared.
 
         Notes
         -----
@@ -144,13 +151,14 @@ class ADPBinner(VelBinner):
         return self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
-        """Calculate bias due to Doppler noise using the noise floor
+        """
+        Calculate bias due to Doppler noise using the noise floor
         of the velocity spectra.
 
         Parameters
         ----------
         psd : xarray.DataArray (time, f)
-          The power spectral density from a single depth bin (range), typically
+          The velocity spectra from a single depth bin (range), typically
           in the mid-water range
         pct_fN : float
           Percent of Nyquist frequency to calculate characeristic frequency
@@ -208,10 +216,8 @@ class ADPBinner(VelBinner):
         return out
 
     def calc_stress_4beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
-        """Calculate the stresses from the difference in the beam variances.
-        Assumes zero mean pitch and roll.
-        Assumes ADCP instrument coordinate system is aligned with principal flow
-        directions.
+        """
+        Calculate the stresses from the covariance of along-beam velocity measurements
 
         Parameters
         ----------
@@ -233,8 +239,10 @@ class ADPBinner(VelBinner):
 
         Notes
         -----
-        Because u'v'_ is unknown and the covariance approximation has high 
-        uncertainty, stress tensor rotations aren't supported.
+        Assumes zero mean pitch and roll.
+
+        Assumes ADCP instrument coordinate system is aligned with principal flow
+        directions.
 
         Stacey, Mark T., Stephen G. Monismith, and Jon R. Burau. "Measurements 
         of Reynolds stress profiles in unstratified tidal flow." Journal of 
@@ -306,10 +314,8 @@ class ADPBinner(VelBinner):
         return stress_vec
 
     def calc_stress_5beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25, tke_only=False):
-        """Calculate the stresses from the difference in the beam variances.
-        Assumes small-angle approximation is applicable.
-        Assumes ADCP instrument coordinate system is aligned with principal flow
-        directions.
+        """
+        Calculate the stresses from the covariance of along-beam velocity measurements
 
         Parameters
         ----------
@@ -333,14 +339,16 @@ class ADPBinner(VelBinner):
 
         Notes
         -----
+        Assumes small-angle approximation is applicable.
+
+        Assumes ADCP instrument coordinate system is aligned with principal flow
+        directions.
+
         The stress equations here utilize u'v'_ to account for small variations
         in pitch and roll. u'v'_ cannot be directly calculated by a 5-beam ADCP,
         so it is approximated by the covariance of `u` and `v`. The uncertainty
         introduced by using this approximation is small if deviations from pitch
         and roll are small (<5-10 degrees).
-
-        Because u'v'_ is unknown and the covariance approximation has high 
-        uncertainty, stress tensor rotations aren't supported.
 
         Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic
         energy estimates from various ADCP beam configurations: Theory." J. of
@@ -459,9 +467,8 @@ class ADPBinner(VelBinner):
             return tke_vec, stress_vec
 
     def calc_total_tke(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
-        """Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
-        This function is a wrapper around 'calc_stress_5beam' that sums the 
-        three TKE components.
+        """
+        Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
 
         Parameters
         ----------
@@ -481,6 +488,11 @@ class ADPBinner(VelBinner):
         tke :
           Turbulent kinetic energy magnitude
 
+        Notes
+        -----
+        This function is a wrapper around 'calc_stress_5beam' that then
+        combines the TKE components
+
         """
         tke_vec = self.calc_stress_5beam(
             ds, ds_avg, noise, orientation, beam_angle, tke_only=True)
@@ -491,7 +503,8 @@ class ADPBinner(VelBinner):
         return tke
 
     def calc_tke_dissipation(self, psd, U_mag, freq_range=[0.2, 0.4]):
-        """Calculate the TKE dissipation rate from the velocity spectra.
+        """
+        Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
         ----------
@@ -679,7 +692,7 @@ class ADPBinner(VelBinner):
         return out
 
 
-def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, window='hann', freq_units='Hz', freq_range=[0.1, 0.3]):
+def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, freq_units='Hz', freq_range=[0.1, 0.3], window='hann'):
     """
     Functional version of `ADPBinner` that computes a suite of turbulence
     statistics for the input dataset, and returns a `binned` data object.
@@ -689,13 +702,13 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, window='hann', freq_
     ds : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
-    freq_units : string
+    freq_units : str
       Frequency units of the returned spectra in either Hz or rad/s 
-    window : 1, None, 'hann', 'hamm'
-      The window to use for calculating power spectral densities
     frequency_range : iterable
       Frequency range over which to integrate/average the spectrum 
       to calculate TKE dissipation, in Hz
+    window : 1, None, 'hann', 'hamm'
+      The window to use for calculating power spectral densities
 
     Returns
     -------
@@ -717,4 +730,4 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, window='hann', freq_
     """
     calculator = ADPBinner(n_bin, fs, n_fft=n_fft, noise=noise)
 
-    return calculator(ds_raw, window=window, freq_units=freq_units, freq_range=freq_range)
+    return calculator(ds_raw, freq_units=freq_units, freq_range=freq_range, window=window)
