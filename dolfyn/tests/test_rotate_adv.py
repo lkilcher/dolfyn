@@ -173,6 +173,7 @@ class warnings_testcase(unittest.TestCase):
         with self.assertRaises(Exception):
             rotate2(warn2, 'earth')
         with self.assertRaises(Exception):
+            # Check that function can't be run twice
             set_inst2head_rotmat(warn3, np.eye(3))
             set_inst2head_rotmat(warn3, np.eye(3))
         with self.assertRaises(Exception):

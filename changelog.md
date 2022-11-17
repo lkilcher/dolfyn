@@ -8,11 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - Bugfixes
 	    - Fixed bug that dropped shared but differing "lag" coordinate between auto-covariance
 		  and cross-covariance functions
+	    - Fix duty cycle attributes for some Nortek instruments
+		- Fix bug where 'accel' variable was rotated incorrected in `correct_motion`
 
 	- API/Useability
+		- `correct_motion` filtering updated for duty cycled ADVs
+	    - `CalcMotion` class is changed from private to public
 		- Added ADCP turbulence functions
 		- The spectral frequency component is renamed to "freq", rather than set to "f"
 		  for units of "Hz" and "omega" for "rad/s"
+
 
 ## Version 1.1.0
     - Bugfixes
