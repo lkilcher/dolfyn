@@ -255,6 +255,29 @@ class _RDIReader():
         self._debug_level = debug_level
         return size
 
+    def read_hdr(self,):
+        fd = self.f
+        cfgid = list(fd.read_ui8(2))
+        nread = 0
+        if self._debug_level >= 0:
+            logging.info('pos {}'.format(self.f.pos))
+            logging.info('cfgid0: [{:x}, {:x}]'.format(*cfgid))
+        while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
+            nextbyte = fd.read_ui8(1)
+            if nextbyte is None:
+                return False
+            pos = fd.tell()
+            nread += 1
+            cfgid[1] = cfgid[0]
+            cfgid[0] = nextbyte
+            if not pos % 1000:
+                if self._debug_level >= 0:
+                    logging.info('  Still looking for valid cfgid at file '
+                                 'position %d ...' % pos)
+        self._pos = self.f.tell() - 2
+        self.read_hdrseg()
+        return True
+
     def check_for_double_buffer(self,):
         """
         VMDAS will record two buffers in NB or NB/BB mode, so we need to
@@ -280,64 +303,6 @@ class _RDIReader():
             elif id == 8192:
                 self._vmdas_search = True
         return found
-
-    def read_hdr(self,):
-        fd = self.f
-        cfgid = list(fd.read_ui8(2))
-        nread = 0
-        if self._debug_level >= 0:
-            logging.info('pos {}'.format(self.f.pos))
-            logging.info('cfgid0: [{:x}, {:x}]'.format(*cfgid))
-        while (cfgid[0] != 127 or cfgid[1] != 127) or not self.checkheader():
-            nextbyte = fd.read_ui8(1)
-            if nextbyte is None:
-                return False
-            pos = fd.tell()
-            nread += 1
-            cfgid[1] = cfgid[0]
-            cfgid[0] = nextbyte
-            if not pos % 1000:
-                if self._debug_level >= 0:
-                    logging.info('  Still looking for valid cfgid at file '
-                                 'position %d ...' % pos)
-        self._pos = self.f.tell() - 2
-        self.read_hdrseg()
-        return True
-
-    def init_data(self,):
-        outd = {'data_vars': {}, 'coords': {},
-                'attrs': {}, 'units': {}, 'sys': {}}
-        outd['attrs']['inst_make'] = 'TRDI'
-        outd['attrs']['inst_type'] = 'ADCP'
-        outd['attrs']['rotate_vars'] = ['vel', ]
-        # Currently RDI doesn't use IMUs
-        outd['attrs']['has_imu'] = 0
-        if self._bb:
-            outdbb = {'data_vars': {}, 'coords': {},
-                      'attrs': {}, 'units': {}, 'sys': {}}
-            outdbb['attrs']['inst_make'] = 'TRDI'
-            outdbb['attrs']['inst_type'] = 'ADCP'
-            outdbb['attrs']['rotate_vars'] = ['vel', ]
-            # Currently RDI doesn't use IMUs
-            outdbb['attrs']['has_imu'] = 0
-
-        for nm in defs.data_defs:
-            outd = defs._idata(outd, nm,
-                               sz=defs._get_size(nm, self._nens, self.cfg['n_cells']))
-        self.outd = outd
-
-        if self._bb:
-            for nm in defs.data_defs:
-                outdbb = defs._idata(outdbb, nm,
-                                     sz=defs._get_size(nm, self._nens, self.cfgbb['n_cells']))
-            self.outdBB = outdbb
-            if self._debug_level > 1:
-                logging.info(np.shape(outdbb['data_vars']['vel']))
-
-        if self._debug_level > 1:
-            logging.info('{} ncells, not BB'.format(self.cfg['n_cells']))
-            if self._bb:
-                logging.info('{} ncells, BB'.format(self.cfgbb['n_cells']))
 
     def mean(self, dat):
         if self.n_avg == 1:
@@ -439,6 +404,41 @@ class _RDIReader():
         dat = self.outd
         datbb = self.outdBB if self._bb else None
         return dat, datbb
+
+    def init_data(self,):
+        outd = {'data_vars': {}, 'coords': {},
+                'attrs': {}, 'units': {}, 'sys': {}}
+        outd['attrs']['inst_make'] = 'TRDI'
+        outd['attrs']['inst_type'] = 'ADCP'
+        outd['attrs']['rotate_vars'] = ['vel', ]
+        # Currently RDI doesn't use IMUs
+        outd['attrs']['has_imu'] = 0
+        if self._bb:
+            outdbb = {'data_vars': {}, 'coords': {},
+                      'attrs': {}, 'units': {}, 'sys': {}}
+            outdbb['attrs']['inst_make'] = 'TRDI'
+            outdbb['attrs']['inst_type'] = 'ADCP'
+            outdbb['attrs']['rotate_vars'] = ['vel', ]
+            # Currently RDI doesn't use IMUs
+            outdbb['attrs']['has_imu'] = 0
+
+        for nm in defs.data_defs:
+            outd = defs._idata(outd, nm,
+                               sz=defs._get_size(nm, self._nens, self.cfg['n_cells']))
+        self.outd = outd
+
+        if self._bb:
+            for nm in defs.data_defs:
+                outdbb = defs._idata(outdbb, nm,
+                                     sz=defs._get_size(nm, self._nens, self.cfgbb['n_cells']))
+            self.outdBB = outdbb
+            if self._debug_level > 1:
+                logging.info(np.shape(outdbb['data_vars']['vel']))
+
+        if self._debug_level > 1:
+            logging.info('{} ncells, not BB'.format(self.cfg['n_cells']))
+            if self._bb:
+                logging.info('{} ncells, BB'.format(self.cfgbb['n_cells']))
 
     def read_buffer(self,):
         fd = self.f
@@ -609,6 +609,13 @@ class _RDIReader():
                                   .format(offset, readbytes, self.hdr['nbyte']))
             self._fixoffset = offset - 4
         fd.seek(4 + self._fixoffset, 1)
+
+    def remove_end(self, iens):
+        dat = self.outd
+        if self._debug_level > 0:
+            logging.info('  Encountered end of file.  Cleaning up data.')
+        for nm in self.vars_read:
+            defs._setd(dat, nm, defs._get(dat, nm)[..., :iens])
 
     def read_dat(self, id):
         function_map = {0: (self.read_fixed, []),   # 0000 1st profile fixed leader
@@ -1297,13 +1304,6 @@ class _RDIReader():
         if self._debug_level >= 0:
             logging.debug(f"Skipping ID code {id}\n")
 
-    def remove_end(self, iens):
-        dat = self.outd
-        if self._debug_level > 0:
-            logging.info('  Encountered end of file.  Cleaning up data.')
-        for nm in self.vars_read:
-            defs._setd(dat, nm, defs._get(dat, nm)[..., :iens])
-
     def finalize(self, dat):
         """Remove the attributes from the data that were never loaded.
         """
@@ -1326,8 +1326,8 @@ class _RDIReader():
             if len(shp) and shp[0] == 'nc' and defs._in_group(dat, nm):
                 defs._setd(dat, nm, np.swapaxes(defs._get(dat, nm), 0, 1))
 
-    def __exit__(self, type, value, traceback):
-        self.f.close()
-
     def __enter__(self,):
         return self
+
+    def __exit__(self, type, value, traceback):
+        self.f.close()
