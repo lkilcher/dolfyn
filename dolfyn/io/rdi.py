@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 import warnings
 from os.path import getsize
+from struct import unpack
 from pathlib import Path
 import logging
 
@@ -204,10 +205,11 @@ class _RDIReader():
         self.cfgbb = {}
         self.hdr = {}
         self.f = bin_reader(self.fname)
-        if not self.read_hdr():
-            raise RuntimeError('No header in this file')
 
-        self._bb = self.check_for_double_buffer()
+        # Check header, double buffer, and get filesize
+        self._filesize = getsize(self.fname)
+        space = self.code_spacing()  # '0x7F'
+        self._npings = int(self._filesize / (space + 2 + self.extrabytes))
         if self._debug_level >= 0:
             logging.info('Done: {}'.format(self.cfg))
             logging.info('self._bb {}'.format(self._bb))
@@ -218,15 +220,40 @@ class _RDIReader():
         self.ensemble = defs._ensemble(self.n_avg, self.cfg['n_cells'])
         if self._bb:
             self.ensembleBB = defs._ensemble(self.n_avg, self.cfgbb['n_cells'])
-        self._filesize = getsize(self.fname)
-        self._npings = int(self._filesize / (self.hdr['nbyte'] + 2 +
-                                             self.extrabytes))
+
         self.vars_read = defs._variable_setlist(['time'])
         if self._bb:
             self.vars_readBB = defs._variable_setlist(['time'])
 
         if self._debug_level >= 0:
             logging.info('  %d pings estimated in this file' % self._npings)
+
+    def code_spacing(self, iternum=50):
+        """
+        Returns the average spacing, in bytes, between pings.
+        Repeat this * iternum * times(default 50).
+        """
+        fd = self.f
+        p0 = self._pos
+        # Get basic header data and check dual profile
+        if not self.read_hdr():
+            raise RuntimeError('No header in this file')
+        self._bb = self.check_for_double_buffer()
+
+        # Turn off debugging to check code spacing
+        debug_level = self._debug_level
+        self._debug_level = -1
+        for i in range(iternum):
+            try:
+                self.read_hdr()
+            except:
+                break
+        # Compute the average of the data size:
+        size = (self._pos - p0) / (i+1)
+        self.f = fd
+        self._pos = p0
+        self._debug_level = debug_level
+        return size
 
     def check_for_double_buffer(self,):
         """
@@ -873,7 +900,6 @@ class _RDIReader():
             ens = self.ensembleBB
             cfg = self.cfgbb
             self.vars_readBB += ['vel']
-
         else:
             ens = self.ensemble
             cfg = self.cfg
