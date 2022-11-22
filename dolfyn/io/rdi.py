@@ -254,7 +254,7 @@ class _RDIReader():
             except:
                 break
         # Compute the average of the data size:
-        size = (self._pos - p0) / (i+1)
+        size = (self._pos - p0) / (i+1) * 0.995
         self.f = fd
         self._pos = p0
         self._debug_level = debug_level
@@ -712,9 +712,10 @@ class _RDIReader():
             if diff > 0:
                 self.flag = diff
                 self.ensemble = defs._ensemble(self.n_avg, self.cfg['n_cells'])
-            if self._debug_level >= 1:
-                logging.warning('Number of cells changed to {}'
-                                .format(self.cfg['n_cells']))
+                # Not concerned if # of cells decreases
+                if self._debug_level >= 1:
+                    logging.warning('Number of cells changed to {}'
+                                    .format(self.cfg['n_cells']))
 
     def read_fixed2(self,):
         # Check if 2nd profile exists
