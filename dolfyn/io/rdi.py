@@ -2,7 +2,6 @@ import numpy as np
 import xarray as xr
 import warnings
 from os.path import getsize
-from struct import unpack
 from pathlib import Path
 import logging
 
@@ -15,7 +14,8 @@ from ..rotate.base import _set_coords
 from ..rotate.api import set_declination
 
 
-def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=False, **kwargs):
+def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
+             vmdas_search=False, winriver=False, **kwargs):
     """
     Read a TRDI binary data file.
 
@@ -25,13 +25,16 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=Fa
       Filename of TRDI file to read.
     userdata : True, False, or string of userdata.json filename (default ``True``)
       Whether to read the '<base-filename>.userdata.json' file.
-    nens : None (default: read entire file), int, or 2-element tuple (start, stop)
+    nens : int, (default: None, read entire file)
       Number of pings to read from the file
     debug_level : int (default=-1)
       Debug level [0 - 2]
-    vmdas_search : boolean (default=False)
+    vmdas_search : bool (default=False)
       Search from the end of each ensemble for the VMDAS navigation
       block.  The byte offsets are sometimes incorrect.
+    winriver : bool (default=False)
+      If file is winriver or not. Automatically set by dolfyn, this is helpful 
+      for debugging
 
     Returns
     -------
@@ -52,8 +55,10 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1, vmdas_search=Fa
 
     # Reads into a dictionary of dictionaries using netcdf naming conventions
     # Should be easier to debug
-    with _RDIReader(filename, debug_level=debug_level,
-                    vmdas_search=vmdas_search) as ldr:
+    with _RDIReader(filename,
+                    debug_level=debug_level,
+                    vmdas_search=vmdas_search,
+                    winriver=winriver) as ldr:
         datNB, datBB = ldr.load_data(nens=nens)
 
     dats = [dat for dat in [datNB, datBB] if dat is not None]
@@ -158,8 +163,10 @@ def _remove_gps_duplicates(dat):
 
 
 def _set_rdi_declination(dat, fname, inplace):
-    # If magnetic_var_deg is set, this means that the declination is already
-    # included in the heading and in the velocity data.
+    """
+    If magnetic_var_deg is set, this means that the declination is already
+    included in the heading and in the velocity data.
+    """
 
     declin = dat.attrs.pop('declination', None)  # userdata declination
 
@@ -183,23 +190,21 @@ def _set_rdi_declination(dat, fname, inplace):
 
 
 class _RDIReader():
-    _n_beams = 4  # Placeholder for 5-beam adcp, not currently used.
     _pos = 0
     progress = 0
     _cfac = 180 / 2 ** 31
     _source = 0
     _fixoffset = 0
     _nbyte = 0
-    _winrivprob = False
     _search_num = 30000  # Maximum distance? to search
     _debug7f79 = None
-    extrabytes = 0
 
-    def __init__(self, fname, navg=1, debug_level=0, vmdas_search=False):
+    def __init__(self, fname, navg=1, debug_level=0, vmdas_search=False, winriver=False):
         self.fname = _abspath(fname)
         print('\nReading file {} ...'.format(fname))
         self._debug_level = debug_level
         self._vmdas_search = vmdas_search
+        self._winrivprob = winriver
         self.flag = 0
         self.cfg = {}
         self.cfgbb = {}
@@ -209,7 +214,7 @@ class _RDIReader():
         # Check header, double buffer, and get filesize
         self._filesize = getsize(self.fname)
         space = self.code_spacing()  # '0x7F'
-        self._npings = int(self._filesize / (space + 2 + self.extrabytes))
+        self._npings = int(self._filesize / (space + 2))
         if self._debug_level >= 0:
             logging.info('Done: {}'.format(self.cfg))
             logging.info('self._bb {}'.format(self._bb))
@@ -312,22 +317,12 @@ class _RDIReader():
     def load_data(self, nens=None):
         if nens is None:
             self._nens = int(self._npings / self.n_avg)
-            self._ens_range = (0, self._nens)
-        elif (nens.__class__ is tuple or nens.__class__ is list) and \
-                len(nens) == 2:
-            nens = list(nens)
-            if nens[1] == -1:
-                nens[1] = self._npings
-            self._nens = int((nens[1] - nens[0]) / self.n_avg)
-            self._ens_range = nens
-            self.f.seek((self.hdr['nbyte'] + 2 + self.extrabytes) *
-                        self._ens_range[0], 1)
+        elif (nens.__class__ is tuple or nens.__class__ is list):
+            raise Exception("    `nens` must be a integer")
         else:
             self._nens = nens
-            self._ens_range = (0, nens)
         if self._debug_level >= 0:
-            logging.info('  taking data from pings %d - %d' %
-                         tuple(self._ens_range))
+            logging.info('  taking data from pings 0 - %d' % self._nens)
             logging.info('  %d ensembles will be produced.\n' % self._nens)
         self.init_data()
         dat = self.outd
@@ -419,7 +414,6 @@ class _RDIReader():
             outdbb['attrs']['inst_make'] = 'TRDI'
             outdbb['attrs']['inst_type'] = 'ADCP'
             outdbb['attrs']['rotate_vars'] = ['vel', ]
-            # Currently RDI doesn't use IMUs
             outdbb['attrs']['has_imu'] = 0
 
         for nm in defs.data_defs:
@@ -482,7 +476,7 @@ class _RDIReader():
                                               .format(id, hdr['nbyte'] - 2 - byte_offset))
                             self.f.seek(hdr['nbyte'] - 2 - byte_offset, 1)
                     byte_offset = hdr['nbyte'] - 2
-            # check for vmdas again because VmDAS doesn't set the offsets
+            # Check for vmdas again because vmdas doesn't set the offsets
             # correctly, and we need this info:
             if not self._read_vmdas and self._vmdas_search:
                 if self._debug_level >= 1:
@@ -572,9 +566,7 @@ class _RDIReader():
         hdr = self.hdr
         hdr['nbyte'] = fd.read_i16(1)
         spare = fd.read_ui8(1)
-        # print('spare', spare)
         ndat = fd.read_ui8(1)
-        # print('ndat', ndat)
         hdr['dat_offsets'] = fd.read_ui16(ndat)
         self._nbyte = 4 + ndat * 2
 
@@ -756,7 +748,7 @@ class _RDIReader():
         cfg['beam_pattern'] = (['concave',
                                 'convex'][int((config[0] & 8) == 8)])
         cfg['orientation'] = ['down', 'up'][int((config[0] & 128) == 128)]
-        # cfg['simflag'] = ['real', 'simulated'][tmp[4]]
+        simflag = ['real', 'simulated'][tmp[4]]
         fd.seek(1, 1)
         cfg['n_beams'] = fd.read_ui8(1) + beam5
         cfg['n_cells'] = fd.read_ui8(1)
