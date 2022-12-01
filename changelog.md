@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unversioned
     - Bugfixes
+	    - Fixed bug that dropped shared but differing "lag" coordinate between auto-covariance
+		  and cross-covariance functions
 	    - Fix duty cycle attributes for some Nortek instruments
 		- Fix bug where 'accel' variable was rotated incorrected in `correct_motion`
 	
 	- API/Useability
+		- Spectra frequency coordinate name is set to 'freq', whether using radial (rad/s) or
+		  classical (Hz) frequency units instead of 'omega' and 'f', respectively
 	    - `correct_motion` filtering updated for duty cycled ADVs
 	    - `CalcMotion` class is changed from private to public
 

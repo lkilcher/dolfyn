@@ -1,5 +1,4 @@
 import numpy as np
-import xarray as xr
 import warnings
 from .tools.psd import psd_freq, psd, cpsd_quasisync, cpsd
 from .tools.misc import slice1d_along_axis, detrend
