@@ -1,4 +1,4 @@
-import dolfyn as dlfn
+import dolfyn
 import dolfyn.adv.api as api
 
 import numpy as np
@@ -14,10 +14,10 @@ accel_filter = .03  # motion correction filter [Hz]
 ensemble_size = 32*300  # sampling frequency * 300 seconds
 
 # Read the data in, use the '.userdata.json' file
-data_raw = dlfn.read(fname, userdata=True)
+data_raw = dolfyn.read(fname, userdata=True)
 
 # Crop the data for the time range of interest:
-t_start = dlfn.time.date2dt64(datetime(2012, 6, 12, 12, 8, 30))
+t_start = dolfyn.time.date2dt64(datetime(2012, 6, 12, 12, 8, 30))
 t_end = data_raw.time[-1]
 data = data_raw.sel(time=slice(t_start, t_end))
 
@@ -67,13 +67,13 @@ plt.show()
 
 # Rotate the uncorrected data into the earth frame for comparison to motion
 # correction:
-dlfn.rotate2(data, 'earth', inplace=True)
-data_uncorrected = dlfn.rotate2(data_cleaned, 'earth', inplace=False)
+dolfyn.rotate2(data, 'earth', inplace=True)
+data_uncorrected = dolfyn.rotate2(data_cleaned, 'earth', inplace=False)
 
 # Calc principal heading (from earth coordinates) and rotate into the
 # principal axes
-data.attrs['principal_heading'] = dlfn.calc_principal_heading(data.vel)
-data_uncorrected.attrs['principal_heading'] = dlfn.calc_principal_heading(
+data.attrs['principal_heading'] = dolfyn.calc_principal_heading(data.vel)
+data_uncorrected.attrs['principal_heading'] = dolfyn.calc_principal_heading(
     data_uncorrected.vel)
 data.velds.rotate2('principal')
 data_uncorrected.velds.rotate2('principal')
@@ -109,13 +109,14 @@ uh_spec = ensemble_tool.calc_psd(data['velacc'] + data['velrot'],
 U = ['u', 'v', 'w']
 for i in range(len(U)):
     plt.figure(figsize=(15, 13))
-    plt.loglog(uh_spec.f, uh_spec[i].mean(axis=0), 'c',
+    plt.loglog(uh_spec.freq, uh_spec[i].mean(axis=0), 'c',
                label=('motion spectra ' + str(accel_filter) + 'Hz filter'))
-    plt.loglog(unm_spec.f, unm_spec[i].mean(axis=0), 'r', label='uncorrected')
-    plt.loglog(mc_spec.f, mc_spec[i].mean(
+    plt.loglog(unm_spec.freq, unm_spec[i].mean(
+        axis=0), 'r', label='uncorrected')
+    plt.loglog(mc_spec.freq, mc_spec[i].mean(
         axis=0), 'b', label='motion corrected')
 
-    # plot -5/3 line
+    # plot -5/3 slope
     f_tmp = np.logspace(-2, 1)
     plt.plot(f_tmp, 4e-5*f_tmp**(-5/3), 'k--', label='f^-5/3 slope')
 

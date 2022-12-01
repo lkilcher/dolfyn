@@ -15,9 +15,9 @@ Contains high level routines for reading in instrument binary data, and saving a
 	
 I/O functions can be accessed directly from |dlfn|'s main import::
 
-	>> import dolfyn as dlfn
-	>> dat = dlfn.read(<path/to/my_data_file>)
-	>> dlfn.save(dat, <path/to/save_file.nc>)
+	>> import dolfyn
+	>> dat = dolfyn.read(<path/to/my_data_file>)
+	>> dolfyn.save(dat, <path/to/save_file.nc>)
 
 .. automodule:: dolfyn.io.api
     :members:

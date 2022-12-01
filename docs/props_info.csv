@@ -5,7 +5,7 @@ rotate_vars*,The variables in the data object that should be rotated when rotati
 declination**,"The magnetic declination where the measurements were made (in degrees that magnetic North is right of True North). Set this value using ``dat.velds.set_declination(<value>)``."
 declination_in_orientmat*,"A boolean specifying whether the ``dat.orientmat`` includes the declination. If this is True, then the earth coordinate system is True (i.e., v is velocity toward True North)."
 principal_heading,"The heading of the +u direction for the 'principal' coordinate system [degrees clockwise from north]."
-has imu*, A boolean indicating whether the instrument has an IMU (inertial measurement unit) or AHRS (attitude heading reference system).
+has_imu*, A boolean indicating whether the instrument has an IMU (inertial measurement unit) or AHRS (attitude heading reference system).
 inst_make*, The manufacturer name.
 inst_model*, The instrument model.
 DutyCycle_NBurst*, The number of pings in a burst.
