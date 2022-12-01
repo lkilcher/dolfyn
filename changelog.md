@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Fix bug where 'accel' variable was rotated incorrected in `correct_motion`
 	
 	- API/Useability
+		- Add 'fill_nan_ensemble_mean' function to ADV cleaning methods
 		- Spectra frequency coordinate name is set to 'freq', whether using radial (rad/s) or
 		  classical (Hz) frequency units instead of 'omega' and 'f', respectively
 	    - `correct_motion` filtering updated for duty cycled ADVs

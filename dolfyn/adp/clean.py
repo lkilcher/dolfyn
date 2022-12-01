@@ -354,7 +354,7 @@ def fillgaps_time(var, method='cubic', maxgap=None):
     method : string
       Interpolation method to use
     maxgap : numeric
-      Maximum length of missing data in seconds to interpolate across
+      Maximum gap of missing data to interpolate across
 
     Returns
     -------
@@ -367,12 +367,10 @@ def fillgaps_time(var, method='cubic', maxgap=None):
 
     """
     time_dim = [t for t in var.dims if 'time' in t][0]
-    if maxgap:
-        maxgap = np.timedelta64(maxgap, 's')
 
     return var.interpolate_na(dim=time_dim, method=method,
                               use_coordinate=True,
-                              max_gap=maxgap)
+                              limit=maxgap)
 
 
 def fillgaps_depth(var, method='cubic', maxgap=None):
@@ -386,7 +384,7 @@ def fillgaps_depth(var, method='cubic', maxgap=None):
     method : string
       Interpolation method to use
     maxgap : int
-      Maximum length of missing data in bins to interpolate across depth
+      Maximum gap of missing data to interpolate across
 
     Returns
     -------
@@ -402,4 +400,4 @@ def fillgaps_depth(var, method='cubic', maxgap=None):
 
     return var.interpolate_na(dim=range_dim, method=method,
                               use_coordinate=False,
-                              max_gap=maxgap)
+                              limit=maxgap)
