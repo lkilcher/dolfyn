@@ -2,7 +2,6 @@ import numpy as np
 import xarray as xr
 import warnings
 from ..velocity import VelBinner
-#import matplotlib.pyplot as plt
 
 
 def _diffz_first(dat, z):
@@ -129,7 +128,7 @@ class ADPBinner(VelBinner):
 
         Returns
         -------
-        noise_level (xarray.DataArray): 
+        doppler_noise (xarray.DataArray): 
               Doppler noise level in units of m/s
 
         Notes
@@ -172,14 +171,15 @@ class ADPBinner(VelBinner):
         N2 = psd.sel(freq=f_range) * psd.freq.sel(freq=f_range)
         noise_level = np.sqrt(N2.mean(dim='freq'))
 
-        out = xr.DataArray(noise_level.values, name='noise_level',
-                           dims=['time'],
-                           attrs={'units': 'm/s',
-                                  'description': 'Doppler noise level calculated \
-                                                  from PSD white noise'})
+        out = xr.DataArray(
+            noise_level.values,
+            dims=['time'],
+            attrs={'units': 'm/s',
+                   'description': 'Doppler noise level calculated '
+                   'from PSD white noise'})
         return out
 
-    def calc_stress_4beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
+    def calc_stress_4beam(self, ds, noise=0, orientation=None, beam_angle=25):
         """
         Calculate the stresses from the covariance of along-beam velocity measurements
 
@@ -187,8 +187,6 @@ class ADPBinner(VelBinner):
         ----------
         ds : xarray.Dataset
           Raw dataset in beam coordinates
-        ds_avg : xarray.Dataset
-          Binned dataset in instrument reference frame
         noise : int or xarray.DataArray (time)
           Doppler noise level in units of m/s
         orientation : str, default=ds.orientation
@@ -223,6 +221,7 @@ class ADPBinner(VelBinner):
 
         b_angle = getattr(ds, 'beam_angle', beam_angle)
         beam_vel = ds['vel'].values
+        time = self.mean(ds['time'].values)
 
         # Note: Stacey defines the beams for down-looking Workhorse ADCPs.
         #       According to the workhorse coordinate transformation
@@ -254,12 +253,12 @@ class ADPBinner(VelBinner):
                     "Please provide instrument orientation ['up' or 'down']")
 
         # Calculate along-beam velocity prime squared bar
-        bp2_ = np.empty((4, len(ds.range), len(ds_avg.time)))*np.nan
+        bp2_ = np.empty((4, len(ds.range), len(time)))*np.nan
         for i, beam in enumerate(beams):
             bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
-        if type(noise) == type(ds_avg.vel):
+        if type(noise) == type(ds.vel):
             noise = noise.values
         bp2_ -= noise**2
 
@@ -267,17 +266,18 @@ class ADPBinner(VelBinner):
         upwp_ = (bp2_[0] - bp2_[1]) / denm
         vpwp_ = (bp2_[2] - bp2_[3]) / denm
 
-        stress_vec = xr.DataArray(np.stack([upwp_*np.nan, upwp_, vpwp_]),
-                                  coords={'tau': ["upvp_", "upwp_", "vpwp_"],
-                                          'range': ds_avg.range,
-                                          'time': ds_avg.time},
-                                  attrs={'units': 'm^2/^2',
-                                         'description': "Axes are aligned in "
-                                         "instrument's (XYZ) frame of reference"})
+        stress_vec = xr.DataArray(
+            np.stack([upwp_*np.nan, upwp_, vpwp_]),
+            coords={'tau': ["upvp_", "upwp_", "vpwp_"],
+                    'range': ds.range,
+                    'time': time},
+            attrs={'units': 'm^2/^2',
+                   'description': "u', v' and w' are aligned to the instrument's "
+                                  "(XYZ) frame of reference"})
 
         return stress_vec
 
-    def calc_stress_5beam(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25, tke_only=False):
+    def calc_stress_5beam(self, ds, noise=0, orientation=None, beam_angle=25, tke_only=False):
         """
         Calculate the stresses from the covariance of along-beam velocity measurements
 
@@ -285,8 +285,6 @@ class ADPBinner(VelBinner):
         ----------
         ds : xarray.Dataset
           Raw dataset in beam coordinates
-        ds_avg : xarray.Dataset
-          Binned dataset in final coordinate reference frame
         noise : int or xarray.DataArray, default=0 (time)
           Doppler noise level in units of m/s
         orientation : str, default=ds.orientation
@@ -336,13 +334,14 @@ class ADPBinner(VelBinner):
         b_angle = getattr(ds, 'beam_angle', beam_angle)
         beam_vel = np.concatenate((ds['vel'].values,
                                    ds['vel_b5'].values[None, ...]))
+        time = self.mean(ds['time'].values)
 
         if not orientation:
             orientation = ds.orientation
         # For TRDI Sentinel V
         if 'TRDI' in ds.inst_make:
-            phi2 = np.deg2rad(ds['pitch'].values)
-            phi3 = np.deg2rad(ds['roll'].values)
+            phi2 = np.deg2rad(self.mean(ds['pitch'].values))
+            phi3 = np.deg2rad(self.mean(ds['roll'].values))
 
             if 'down' in orientation.lower():
                 beams = [0, 1, 2, 3, 4]  # for down-facing RDIs
@@ -366,12 +365,12 @@ class ADPBinner(VelBinner):
                     "Please provide instrument orientation ['up' or 'down']")
 
         # Calculate along-beam velocity prime squared bar
-        bp2_ = np.empty((5, len(ds.range), len(phi2)))*np.nan
+        bp2_ = np.empty((5, len(ds.range), len(time)))*np.nan
         for i, beam in enumerate(beams):
             bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
 
         # Remove doppler_noise
-        if type(noise) == type(ds_avg.vel):
+        if type(noise) == type(ds.vel):
             noise = noise.values
         bp2_ -= noise**2
 
@@ -392,13 +391,14 @@ class ADPBinner(VelBinner):
                  (bp2_[1]-bp2_[0] + 2*sin(th)**5*cos(th)*phi2*(bp2_[3]-bp2_[2]) -
                   4*sin(th)**6*cos(th)**2*bp2_[4])) / denm
 
-        tke_vec = xr.DataArray(np.stack([upup_, vpvp_, wpwp_]),
-                               coords={'tke': ["upup_", "vpvp_", "wpwp_"],
-                                       'range': ds_avg.range,
-                                       'time': ds_avg.time},
-                               attrs={'units': 'm^2/^2',
-                                      'description': "u', v' and w' are aligned to "
-                                      "the instrument's (XYZ) frame of reference"})
+        tke_vec = xr.DataArray(
+            np.stack([upup_, vpvp_, wpwp_]),
+            coords={'tke': ["upup_", "vpvp_", "wpwp_"],
+                    'range': ds.range,
+                    'time': time},
+            attrs={'units': 'm^2/^2',
+                   'description': "u', v' and w' are aligned to the instrument's "
+                                  "(XYZ) frame of reference"})
 
         if tke_only:
             return tke_vec
@@ -420,17 +420,18 @@ class ADPBinner(VelBinner):
                      4*sin(th)**4*cos(th)*2*phi2*bp2_[4] +
                      4*sin(th)**6*cos(th)*2*phi3*upvp_) / denm
 
-            stress_vec = xr.DataArray(np.stack([upvp_, upwp_, vpwp_]),
-                                      coords={'tau': ["upvp_", "upwp_", "vpwp_"],
-                                              'range': ds_avg.range,
-                                              'time': ds_avg.time},
-                                      attrs={'units': 'm^2/^2',
-                                      'description': "u', v' and w' are aligned to "
-                                             "the instrument's (XYZ) frame of reference"})
+            stress_vec = xr.DataArray(
+                np.stack([upvp_, upwp_, vpwp_]),
+                coords={'tau': ["upvp_", "upwp_", "vpwp_"],
+                        'range': ds.range,
+                        'time': time},
+                attrs={'units': 'm^2/^2',
+                       'description': "u', v' and w' are aligned to the instrument's "
+                                      "(XYZ) frame of reference"})
 
             return tke_vec, stress_vec
 
-    def calc_total_tke(self, ds, ds_avg, noise=0, orientation=None, beam_angle=25):
+    def calc_total_tke(self, ds, noise=0, orientation=None, beam_angle=25):
         """
         Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
 
@@ -459,14 +460,14 @@ class ADPBinner(VelBinner):
 
         """
         tke_vec = self.calc_stress_5beam(
-            ds, ds_avg, noise, orientation, beam_angle, tke_only=True)
+            ds, noise, orientation, beam_angle, tke_only=True)
 
         tke = tke_vec.sum('tke') / 2
         tke.attrs['units'] = 'm^2/s^2'
 
         return tke
 
-    def calc_tke_dissipation(self, psd, U_mag, freq_range=[0.2, 0.4]):
+    def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4]):
         """
         Calculate the TKE dissipation rate from the velocity spectra.
 
@@ -524,106 +525,148 @@ class ADPBinner(VelBinner):
         out = (psd[:, idx] * freq[idx]**(5/3) /
                a).mean(axis=-1)**(3/2) / U.values
 
-        out = xr.DataArray(out, name='dissipation_rate',
+        out = xr.DataArray(out,
                            attrs={'units': 'm^2/s^3',
-                                  'description': 'TKE dissipation rate'})
+                                  'description': 'Dissipation rate calculated from LT83'})
         return out
 
-    # def calc_epsilon_SFz(self, vel_raw, vel_avg, r_range=[0.1, 5]):
-    #     """
-    #     Calculate dissipation rate from ADCP beam velocity using the
-    #     "structure function" (SF) method.
+    def calc_dissipation_SF(self, vel_raw, r_range=[1, 5]):
+        """
+        Calculate TKE dissipation rate from ADCP along-beam velocity using the
+        "structure function" (SF) method.
 
-    #     Parameters
-    #     ----------
-    #     vel_raw : xarray.DataArray
-    #       The raw beam velocity data (one beam, last dimension time) upon
-    #       which to perform the SF technique.
-    #     vel_avg : xarray.DataArray
-    #       The ensemble-averaged beam velocity (calc'd from 'do_avg')
+        Parameters
+        ----------
+        vel_raw : xarray.DataArray
+          The raw beam velocity data (one beam, last dimension time) upon
+          which to perform the SF technique.
+        r_range: numeric
+          Range of r in [m] to calc dissipation across. Low end of range should be
+          bin size, upper end of range is limited to the length of largest eddies
+          in the inertial subrange.
 
-    #     r_range: numeric
-    #         Range of r in [m] to calc dissipation across. Low end of range should be
-    #         bin size, upper end of range is limited to the length of largest eddies
-    #         in the inertial subrange.
+        Returns
+        -------
+        dissipation_rate : xarray.DataArray (range, time)
+          Dissipation rate estimated from the structure function
+        noise : xarray.DataArray (range, time)
+          Noise estimated from the structure function at r = 0
+        structure_function : xarray.DataArray (range, r, time)
+          Structure function D(z,r)
 
-    #     Returns
-    #     -------
-    #     epsilon : xarray.DataArray
-    #       The dissipation rate
+        Notes
+        -----
+        Dissipation rate outputted by this function is only valid if the isotropic 
+        turbulence cascade can be seen in the TKE spectra. 
 
-    #     Notes
-    #     -----
-    #     Velocity data should be cleaned of surface interference
+        Velocity data must be in beam coordinates and should be cleaned of surface 
+        interference.
 
-    #     Wiles, et al, "A novel technique for measuring the rate of
-    #     turbulent dissipation in the marine environment"
-    #     GRL, 2006, 33, L21608.
+        This method calculates the 2nd order structure function:
 
-    #     """
-    #     if type(vel_raw.dir) == list:
-    #         raise Exception(
-    #             "Function input must be single beam and in 'beam' coordinate system")
-    #     if type(vel_raw.dir) == str:
-    #         raise Exception("Data must be in 'beam' coordinate system")
+        .. math:: D(z,r) = [(u'(z) - u`(z+r))^2]
 
-    #     e = np.empty(vel_avg.shape, dtype='float32')*np.nan
-    #     n = np.empty(vel_avg.shape, dtype='float32')*np.nan
+        where `u'` is the velocity fluctuation `z` is the depth bin, 
+        `r` is the separation between depth bins, and [] denotes a time average 
+        (size 'ADPBinner.n_bin').
 
-    #     # bm shape is [range, ensemble time, 'data within ensemble']
-    #     bm = self.reshape(vel_raw.values)  # will fail if not in beam coord
-    #     bm -= vel_avg.values[:, :, None]  # take out the ensemble mean
+        The stucture function can then be used to estimate the dissipation rate:
 
-    #     bin_size = round(np.diff(vel_raw.range)[0], 3)
-    #     #surface = np.count_nonzero(~np.isnan(vel_raw.isel(time_b5=0)))
-    #     R = int(r_range[0]/bin_size)
-    #     r = np.arange(bin_size, r_range[1]+bin_size, bin_size)
+        .. math:: D(z,r) = C^2 \\epsilon^{2/3} r^{2/3} + N
 
-    #     # D(z,r,time)
-    #     D = np.zeros((vel_avg.shape[0], r.size, vel_avg.shape[1]))
-    #     for r_value in r:
-    #         # the i in d is the index based on r and bin size
-    #         # bin size index, > 1
-    #         i = int(r_value/bin_size)
-    #         for idx in range(vel_avg.shape[-1]):  # for each ensemble
-    #             # subtract the variance of adjacent depth cells
-    #             d = np.nanmean(
-    #                 (bm[:-i, idx, :] - bm[i:, idx, :]) ** 2, axis=-1)
+        where `C` is a constant (set to 2.1), `\\epsilon` is the dissipation rate,
+        and `N` is the offset due to noise. Noise is then calculated by
 
-    #             # have to insert 0/nan in first bin to match length
-    #             spaces = np.empty((i,))
-    #             spaces[:] = np.NaN
-    #             D[:, i-1, idx] = np.concatenate((spaces, d))
+        .. math:: \\sigma = (N/2)^{1/2}
 
-    #     # find best fit line y = mx + b (aka D(z,r) = A*r^2/3 + N) to solve
-    #     # epsilon for each depth and ensemble
-    #     plt.figure()
-    #     for idx in range(vel_avg.shape[-1]):  # for each ensemble
-    #         for i in range(D.shape[1], D.shape[0]):  # for depth cells
-    #             plt.plot(r, D[i, :, 100])  # randomly choose 100th ensemble
-    #             try:
-    #                 e[i, idx], n[i, idx] = np.polyfit(r[R:] ** 2/3,
-    #                                                   D[i, R:, idx],
-    #                                                   deg=1)
-    #             except:
-    #                 e[i, idx], n[i, idx] = np.nan, np.nan
-    #     # A taken as 2.1, n = y-intercept
-    #     epsilon = (e/2.1)**(3/2)
-    #     plt.yscale('log')
-    #     plt.ylabel('D [m2/s2]')
-    #     plt.xlabel('r [m]')
-    #     plt.show()
+        Wiles, et al, "A novel technique for measuring the rate of
+        turbulent dissipation in the marine environment"
+        GRL, 2006, 33, L21608.
+        """
 
-    #     return xr.DataArray(epsilon, name='dissipation_rate',
-    #                         coords=vel_avg.coords,
-    #                         dims=vel_avg.dims,
-    #                         attrs={'units': 'm^2/s^3',
-    #                                'method': 'structure function'})
+        if len(vel_raw.shape) != 2:
+            raise Exception(
+                "Function input must be single beam and in 'beam' coordinate system")
+
+        if 'range_b5' in vel_raw.dims:
+            rng = vel_raw.range_b5
+            time = self.mean(vel_raw.time_b5.values)
+        else:
+            rng = vel_raw.range
+            time = self.mean(vel_raw.time.values)
+
+        # bm shape is [range, ensemble time, 'data within ensemble']
+        bm = self.demean(vel_raw.values)  # take out the ensemble mean
+
+        e = np.empty(bm.shape[:2], dtype='float32')*np.nan
+        n = np.empty(bm.shape[:2], dtype='float32')*np.nan
+
+        bin_size = round(np.diff(rng)[0], 3)
+        R = int(r_range[0]/bin_size)
+        r = np.arange(bin_size, r_range[1]+bin_size, bin_size)
+
+        # D(z,r,time)
+        D = np.zeros((bm.shape[0], r.size, bm.shape[1]))
+        for r_value in r:
+            # the i in d is the index based on r and bin size
+            # bin size index, > 1
+            i = int(r_value/bin_size)
+            for idx in range(bm.shape[1]):  # for each ensemble
+                # subtract the variance of adjacent depth cells
+                d = np.nanmean(
+                    (bm[:-i, idx, :] - bm[i:, idx, :]) ** 2, axis=-1)
+
+                # have to insert 0/nan in first bin to match length
+                spaces = np.empty((i,))
+                spaces[:] = np.NaN
+                D[:, i-1, idx] = np.concatenate((spaces, d))
+
+        # find best fit line y = mx + b (aka D(z,r) = A*r^2/3 + N) to solve
+        # epsilon for each depth and ensemble
+        for idx in range(bm.shape[1]):  # for each ensemble
+            # start at minimum r_range and work up to surface
+            for i in range(D.shape[1], D.shape[0]):
+                # average ensembles together
+                if not all(np.isnan(D[i, R:, idx])):  # if no nan's
+                    e[i, idx], n[i, idx] = np.polyfit(r[R:] ** 2/3,
+                                                      D[i, R:, idx],
+                                                      deg=1)
+                else:
+                    e[i, idx], n[i, idx] = np.nan, np.nan
+        # A taken as 2.1, n = y-intercept
+        epsilon = (e/2.1)**(3/2)
+        noise = np.sqrt(n/2)
+
+        epsilon = xr.DataArray(
+            epsilon,
+            coords={vel_raw.dims[0]: rng,
+                    vel_raw.dims[1]: time},
+            dims=vel_raw.dims,
+            attrs={'units': 'm^2/s^3',
+                   'description': 'Dissipation rate calculated from structure '
+                                  'function'})
+
+        noise = xr.DataArray(
+            noise,
+            coords={vel_raw.dims[0]: rng,
+                    vel_raw.dims[1]: time},
+            attrs={'units': 'm/s',
+                   'description': 'Noise calculated from structure function'})
+
+        SF = xr.DataArray(
+            SF,
+            coords={vel_raw.dims[0]: rng,
+                    'range_SF': r,
+                    vel_raw.dims[1]: time},
+            attrs={'units': 'm^2/s^2',
+                   'description': 'Structure function D(z,r)'})
+
+        return epsilon, noise, SF
 
     def calc_ustar_fit(self, ds_avg, z_inds=slice(1, 5), H=None):
         """
         Approximate friction velocity from shear stress using a 
-        log profile
+        logarithmic profile.
 
         Parameters
         ----------
@@ -636,7 +679,8 @@ class ADPBinner(VelBinner):
 
         Returns
         -------
-        ustar : xarray.DataArray
+        u_star : xarray.DataArray
+          Friction velocity
 
         """
         if not H:
@@ -645,10 +689,10 @@ class ADPBinner(VelBinner):
         upwp_ = ds_avg['stress_vec'].sel(tau='upwp_').values
 
         sign = np.nanmean(np.sign(upwp_[z_inds, :]), axis=0)
-        ustar = np.nanmean(sign * upwp_[z_inds, :] /
-                           (1 - z[z_inds, None] / H), axis=0) ** 0.5
+        u_star = np.nanmean(sign * upwp_[z_inds, :] /
+                            (1 - z[z_inds, None] / H), axis=0) ** 0.5
 
-        out = xr.DataArray(ustar,
+        out = xr.DataArray(u_star,
                            coords={'time': ds_avg.time},
                            attrs={'units': 'm/s',
                                   'description': 'Friction velocity'})
