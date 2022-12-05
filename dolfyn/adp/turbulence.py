@@ -47,42 +47,6 @@ class ADPBinner(VelBinner):
         self.diff_style = diff_style
         self.orientation = orientation
 
-    def __call___(self, ds, freq_units, freq_range,  window):
-        out = type(ds)()
-        out = self.do_avg(ds, out)
-
-        # Calculate spectra and dissipation rate for each depth bin
-        if hasattr(ds, 'vel_b5'):
-            spec = [None]*len(ds.range)
-            e = [None]*len(ds.range)
-            for r in range(len(ds.range)):
-                spec[r] = self.calc_psd(ds['vel_b5'].isel(range_b5=r),
-                                        window=window,
-                                        freq_units=freq_units)
-                e[r] = self.calc_tke_dissipation(spec[r],
-                                                 out.velds.U_mag.isel(range=r),
-                                                 f_range=freq_range)
-
-            out['auto_spectra_b5'] = xr.concat(spec, dim='range')
-            dissipation_rate = xr.concat(e, dim='range')
-
-        # Calculate doppler noise from spectra from mid-water column
-        out['noise'] = self.calc_doppler_noise(
-            out['auto_spectra'].isel(range=len(range)//2), pct_fN=0.8)
-
-        # Calculate total turbulent kinetic energy with noise subtraction
-        out['tke'] = self.calc_total_tke(
-            ds, out, noise=out['noise'], orientation=self.orientation)
-
-        # Remove TKE dissipation calculation where noise is greater than TKE signal
-        out['dissipation_rate'] = dissipation_rate.where(out['tke'] > 0)
-
-        out.attrs['n_bin'] = self.n_bin
-        out.attrs['n_fft'] = self.n_fft
-        out.attrs['n_fft_coh'] = self.n_fft_coh
-
-        return out
-
     def _diff_func(self, vel, u):
         if self.diff_style == 'first':
             return _diffz_first(vel[u].values, vel['range'].values)
@@ -690,44 +654,3 @@ class ADPBinner(VelBinner):
                                   'description': 'Friction velocity'})
 
         return out
-
-
-def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, noise=0, freq_units='Hz', freq_range=[0.1, 0.3], window='hann'):
-    """
-    Functional version of `ADPBinner` that computes a suite of turbulence
-    statistics for the input dataset, and returns a `binned` data object.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-      The raw adv datset to `bin`, average and compute
-      turbulence statistics of.
-    freq_units : str
-      Frequency units of the returned spectra in either Hz or rad/s 
-    frequency_range : iterable
-      Frequency range over which to integrate/average the spectrum 
-      to calculate TKE dissipation, in Hz
-    window : 1, None, 'hann', 'hamm'
-      The window to use for calculating power spectral densities
-
-    Returns
-    -------
-    ds : xarray.Dataset
-      Returns an 'binned' (i.e. 'averaged') data object. All
-      fields (variables) of the input data object are averaged in n_bin
-      chunks. This object also computes the following items over
-      those chunks:
-
-      - auto_spectra : DataArray containing the auto-spectra of 
-        the vertical (5th beam) along-beam velocity for all depth bins
-
-      - dissipation : DataArray containing the TKE dissipation 
-        rate for all depth bins
-
-      - noise : DataArray containing the doppler noise level from 
-        the mid-water column
-
-    """
-    calculator = ADPBinner(n_bin, fs, n_fft=n_fft, noise=noise)
-
-    return calculator(ds_raw, freq_units=freq_units, freq_range=freq_range, window=window)

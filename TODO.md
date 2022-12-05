@@ -46,9 +46,7 @@ Data Processing
 Coordinate systems:
 - Support for rotating directly from 'inst' to 'principal'
 
-ADV burst mode: need to add checks that turbulence averaging doesn't "cross bursts".
-
-Implement Reynolds stress rotations (e.g. rotating u'w'_ from 'inst' to 'principal' coordinates)
+Implement Reynolds stress rotations (e.g. rotating u'w'_ from 'inst' to 'principal' coordinates) for ADVs
       This is in the `reorg-add_omat` branch. The big issue is: `orientmat` is bad (`det != 1`) after averaging data from a moving instrument.
     - Do quaternions average better?
     - Obviously there are some issues with doing rotations of some data based on the average orientation, but it still seems like we ought to be able to do it if it's moving slowly, right?
