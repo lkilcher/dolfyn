@@ -57,7 +57,7 @@ def test_calc_func(make_data=False):
         dat_vec.dat1.vel[0], dat_vec.dat1.vel[1], n_fft_coh=dat_vec.dat1.fs)
     test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
     test_ds['acov'] = c.calc_acov(dat_vec.dat1.vel)
-    test_ds['tke_vec_detrend'] = c.calc_tke(dat_vec.dat1.vel)
+    test_ds['tke_vec_detrend'] = c.calc_tke(dat_vec.dat1.vel, detrend=True)
     test_ds['tke_vec_demean'] = c.calc_tke(dat_vec.dat1.vel, detrend=False)
     test_ds['psd'] = c.calc_psd(dat_vec.dat1.vel, freq_units='Hz')
 

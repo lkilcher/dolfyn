@@ -86,7 +86,7 @@ def group(bl, min_length=0):
         if len(ups) == 0:
             ups = np.array([0])
         else:
-            ups = np.concatenate((np.arange([0]), [len(ups)]))
+            ups = np.concatenate((np.array([0]), [len(ups)]))
     if bl[-1]:
         if len(dns) == 0:
             dns = np.array([len(bl)])

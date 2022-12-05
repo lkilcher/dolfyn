@@ -109,13 +109,14 @@ uh_spec = ensemble_tool.calc_psd(data['velacc'] + data['velrot'],
 U = ['u', 'v', 'w']
 for i in range(len(U)):
     plt.figure(figsize=(15, 13))
-    plt.loglog(uh_spec.f, uh_spec[i].mean(axis=0), 'c',
+    plt.loglog(uh_spec.freq, uh_spec[i].mean(axis=0), 'c',
                label=('motion spectra ' + str(accel_filter) + 'Hz filter'))
-    plt.loglog(unm_spec.f, unm_spec[i].mean(axis=0), 'r', label='uncorrected')
-    plt.loglog(mc_spec.f, mc_spec[i].mean(
+    plt.loglog(unm_spec.freq, unm_spec[i].mean(
+        axis=0), 'r', label='uncorrected')
+    plt.loglog(mc_spec.freq, mc_spec[i].mean(
         axis=0), 'b', label='motion corrected')
 
-    # plot -5/3 line
+    # plot -5/3 slope
     f_tmp = np.logspace(-2, 1)
     plt.plot(f_tmp, 4e-5*f_tmp**(-5/3), 'k--', label='f^-5/3 slope')
 

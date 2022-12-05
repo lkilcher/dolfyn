@@ -38,8 +38,8 @@ def set_range_offset(ds, h_deploy):
     the height of the tripod +/- any extra distance to the transducer faces.
     If the instrument is vessel-mounted, `h_deploy` is the distance between
     the surface and downward-facing ADCP's transducers.
-
     """
+
     r = [s for s in ds.dims if 'range' in s]
     for val in r:
         ds[val] = ds[val].values + h_deploy
@@ -70,8 +70,8 @@ def find_surface(ds, thresh=10, nfilt=None):
     Returns
     -------
     None, operates "in place"
-
     """
+
     # This finds the maximum of the echo profile:
     inds = np.argmax(ds.amp.values, axis=1)
     # This finds the first point that increases (away from the profiler) in
@@ -128,8 +128,8 @@ def find_surface_from_P(ds, salinity=35):
 
     Calculates seawater density at normal atmospheric pressure according
     to the UNESCO 1981 equation of state. Does not include hydrostatic pressure.
-
     """
+
     # Density calcation
     T = ds.temp.values
     S = salinity
@@ -180,8 +180,8 @@ def nan_beyond_surface(ds, val=np.nan):
     Notes
     -----
     Surface interference expected to happen at `distance > range * cos(beam angle) - cell size`
-
     """
+
     ds = ds.copy(deep=True)
 
     # Get all variables with 'range' coordinate
@@ -241,8 +241,8 @@ def val_exceeds_thresh(var, thresh=5, val=np.nan):
     -------
     ds : xarray.Dataset
       The adcp dataset with datapoints beyond thresh are set to `val`
-
     """
+
     var = var.copy(deep=True)
 
     bd = np.zeros(var.shape, dtype='bool')
@@ -275,8 +275,8 @@ def correlation_filter(ds, thresh=50, val=np.nan):
     Notes
     -----
     Does not edit correlation or amplitude data.
-
     """
+
     ds = ds.copy(deep=True)
 
     # 4 or 5 beam
@@ -321,8 +321,8 @@ def medfilt_orient(ds, nfilt=7):
     See Also
     --------
     scipy.signal.medfilt()
-
     """
+
     ds = ds.copy(deep=True)
 
     if getattr(ds, 'has_imu'):
@@ -354,7 +354,7 @@ def fillgaps_time(var, method='cubic', maxgap=None):
     method : string
       Interpolation method to use
     maxgap : numeric
-      Maximum length of missing data in seconds to interpolate across
+      Maximum gap of missing data to interpolate across
 
     Returns
     -------
@@ -364,15 +364,13 @@ def fillgaps_time(var, method='cubic', maxgap=None):
     See Also
     --------
     xarray.DataArray.interpolate_na()
-
     """
+
     time_dim = [t for t in var.dims if 'time' in t][0]
-    if maxgap:
-        maxgap = np.timedelta64(maxgap, 's')
 
     return var.interpolate_na(dim=time_dim, method=method,
                               use_coordinate=True,
-                              max_gap=maxgap)
+                              limit=maxgap)
 
 
 def fillgaps_depth(var, method='cubic', maxgap=None):
@@ -386,7 +384,7 @@ def fillgaps_depth(var, method='cubic', maxgap=None):
     method : string
       Interpolation method to use
     maxgap : int
-      Maximum length of missing data in bins to interpolate across depth
+      Maximum gap of missing data to interpolate across
 
     Returns
     -------
@@ -396,10 +394,10 @@ def fillgaps_depth(var, method='cubic', maxgap=None):
     See Also
     --------
     xarray.DataArray.interpolate_na()
-
     """
+
     range_dim = [t for t in var.dims if 'range' in t][0]
 
     return var.interpolate_na(dim=range_dim, method=method,
                               use_coordinate=False,
-                              max_gap=maxgap)
+                              limit=maxgap)
