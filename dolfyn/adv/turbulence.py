@@ -10,6 +10,7 @@ class ADVBinner(VelBinner):
     """
     A class that builds upon `VelBinner` for calculating turbulence 
     statistics and velocity spectra from ADV data
+
     Parameters
     ----------
     n_bin : int
@@ -51,6 +52,7 @@ class ADVBinner(VelBinner):
     def calc_stress(self, veldat, detrend=True):
         """
         Calculate the stresses (covariances of u,v,w)
+
         Parameters
         ----------
         veldat : xr.DataArray
@@ -61,14 +63,15 @@ class ADVBinner(VelBinner):
             (False), prior to computing stress. Note: the psd routines
             use detrend, so if you want to have the same amount of
             variance here as there use ``detrend=True``.
+
         Returns
         -------
         out : xarray.DataArray
         """
+
         time = self.mean(veldat.time.values)
         vel = veldat.values
 
-        # Will error for ADCP 4-beam
         out = np.empty(self._outshape(vel.shape)[:-1],
                        dtype=np.float32)
 
@@ -98,6 +101,7 @@ class ADVBinner(VelBinner):
                  n_fft_coh=None):
         """
         Calculate the cross-spectral density of velocity components.
+
         Parameters
         ----------
         veldat   : xarray.DataArray
@@ -113,12 +117,14 @@ class ADVBinner(VelBinner):
           The bin-size (default: from the binner).
         n_fft_coh : int (optional)
           The fft size (default: n_fft_coh from the binner).
+
         Returns
         -------
         csd : xarray.DataArray (3, M, N_FFT)
           The first-dimension of the cross-spectrum is the three
           different cross-spectra: 'uv', 'uw', 'vw'.
         """
+
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft_coh(n_fft_coh)
         time = self.mean(veldat.time.values)
@@ -157,6 +163,7 @@ class ADVBinner(VelBinner):
     def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate from the PSD
+
         Parameters
         ----------
         psd : xarray.DataArray (...,time,f)
@@ -166,26 +173,36 @@ class ADVBinner(VelBinner):
         freq_range : iterable(2)
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
+
         Returns
         -------
         epsilon : xarray.DataArray (...,n_time)
           dataArray of the dissipation rate
+        
         Notes
         -----
         This uses the `standard` formula for dissipation:
+
         .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3} + N
+
         where :math:`\\alpha = 0.5` (1.5 for all three velocity
         components), `k` is wavenumber, `S(k)` is the turbulent
         kinetic energy spectrum, and `N' is the doppler noise level
         associated with the TKE spectrum.
+
         With :math:`k \\rightarrow \\omega / U`, then -- to preserve variance --
         :math:`S(k) = U S(\\omega)`, and so this becomes:
+
         .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} \\omega^{-5/3} U^{2/3} + N
+        
         With :math:`k \\rightarrow (2\\pi f) / U`, then
+
         .. math:: S(\\omega) = \\alpha \\epsilon^{2/3} f^{-5/3} (U/(2\\pi))^{2/3} + N
+        
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
         """
+
         freq = psd.freq
 
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
@@ -208,6 +225,7 @@ class ADVBinner(VelBinner):
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_range=[2., 4.]):
         """
         Calculate dissipation rate using the "structure function" (SF) method
+        
         Parameters
         ----------
         vel_raw : xarray.DataArray
@@ -221,11 +239,13 @@ class ADVBinner(VelBinner):
           The frequency range over which to compute the SF [Hz]
           (i.e. the frequency range within which the isotropic 
           turbulence cascade falls)
+
         Returns
         -------
         epsilon : xarray.DataArray
           dataArray of the dissipation rate
         """
+
         veldat = vel_raw.values
         if len(veldat.shape) > 1:
             raise Exception("Function input should be a 1D velocity vector")
@@ -255,15 +275,18 @@ class ADVBinner(VelBinner):
     def _up_angle(self, U_complex):
         """
         Calculate the angle of the turbulence fluctuations.
+
         Parameters
         ----------
         U_complex  : |np.ndarray| (..., n_time * n_bin)
           The complex, raw horizontal velocity (non-binned)
+
         Returns
         -------
         theta : |np.ndarray| (..., n_time)
           The angle of the turbulence [rad]
         """
+
         dt = self.demean(U_complex)
         fx = dt.imag <= 0
         dt[fx] = dt[fx] * np.exp(1j * np.pi)
@@ -273,6 +296,7 @@ class ADVBinner(VelBinner):
     def _calc_epsTE01_int(self, I_tke, theta):
         """
         The integral, equation A13, in [TE01].
+
         Parameters
         ----------
         I_tke : |np.ndarray|
@@ -282,6 +306,7 @@ class ADVBinner(VelBinner):
           is the angle between the mean flow and the primary axis of
           velocity fluctuations
         """
+
         x = np.arange(-20, 20, 1e-2)  # I think this is a long enough range.
         out = np.empty_like(I_tke.flatten())
         for i, (b, t) in enumerate(zip(I_tke.flatten(), theta.flatten())):
@@ -295,6 +320,7 @@ class ADVBinner(VelBinner):
     def calc_epsilon_TE01(self, dat_raw, dat_avg, freq_range=[6.28, 12.57]):
         """
         Calculate the dissipation rate according to TE01.
+
         Parameters
         ----------
         dat_raw : xarray.Dataset
@@ -306,6 +332,7 @@ class ADVBinner(VelBinner):
         freq_range : iterable(2)
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
+
         Notes
         -----
         TE01 : Trowbridge, J and Elgar, S, "Turbulence measurements in
@@ -349,6 +376,7 @@ class ADVBinner(VelBinner):
     def calc_L_int(self, a_cov, U_mag, fs=None):
         """
         Calculate integral length scales.
+
         Parameters
         ----------
         a_cov : xarray.DataArray
@@ -357,16 +385,20 @@ class ADVBinner(VelBinner):
           The bin-averaged horizontal velocity (from dataset shortcut)
         fs : float
           The raw sample rate
+
         Returns
         -------
         L_int : |np.ndarray| (..., n_time)
           The integral length scale (T_int*U_mag).
+
         Notes
         ----
         The integral time scale (T_int) is the lag-time at which the
         auto-covariance falls to 1/e.
+
         If T_int is not reached, L_int will default to '0'.
         """
+
         acov = a_cov.values
         fs = self._parse_fs(fs)
 
@@ -382,6 +414,7 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
     """
     Functional version of `ADVBinner` that computes a suite of turbulence 
     statistics for the input dataset, and returns a `binned` data object.
+    
     Parameters
     ----------
     ds_raw : xarray.Dataset
@@ -392,6 +425,7 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
       (`f` or :math:`\\omega`)
     window : 1, None, 'hann'
       The window to use for calculating power spectral densities
+    
     Returns
     -------
     ds : xarray.Dataset
@@ -399,23 +433,28 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
       fields (variables) of the input data object are averaged in n_bin
       chunks. This object also computes the following items over
       those chunks:
+
       - tke_vec : The energy in each component, each components is
         alternatively accessible as:
         :attr:`upup_ <dolfyn.velocity.Velocity.upup_>`,
         :attr:`vpvp_ <dolfyn.velocity.Velocity.vpvp_>`,
         :attr:`wpwp_ <dolfyn.velocity.Velocity.wpwp_>`)
+
       - stress_vec : The Reynolds stresses, each component is
         alternatively accessible as:
         :attr:`upwp_ <dolfyn.data.velocity.Velocity.upwp_>`,
         :attr:`vpwp_ <dolfyn.data.velocity.Velocity.vpwp_>`,
         :attr:`upvp_ <dolfyn.data.velocity.Velocity.upvp_>`)
+
       - U_std : The standard deviation of the horizontal
         velocity `U_mag`.
+        
       - psd : DataArray containing the spectra of the velocity
         in radial frequency units. The data-array contains:
         - vel : the velocity spectra array (m^2/s/rad))
         - omega : the radial frequncy (rad/s)
     """
+    
     calculator = ADVBinner(n_bin, fs, n_fft=n_fft)
 
     return calculator(ds_raw, freq_units=freq_units, window=window)

@@ -37,8 +37,8 @@ def clean_fill(u, mask, npt=12, method='cubic', maxgap=6):
     See Also
     --------
     xarray.DataArray.interpolate_na()
-
     """
+
     # Apply mask
     u.values[..., mask] = np.nan
 
@@ -151,7 +151,7 @@ def fill_nan_ensemble_mean(u, mask, fs, window):
     if diff:
         vel = np.empty((var.shape[0], var.shape[-1]+extra_nans))
         extra = var[:, -diff:]
-        empty = np.empty((vel.shape[0], vel_reshaped.shape[-1]-diff))*np.nan
+        empty = np.empty((vel.shape[0], extra_nans))*np.nan
         extra = np.concatenate((extra, empty), axis=-1)
         vel_reshaped = np.concatenate(
             (vel_reshaped, extra[:, None, :]), axis=1)
@@ -193,8 +193,8 @@ def spike_thresh(u, thresh=10):
     -------
     mask : |np.ndarray|
       Logical vector with spikes labeled as 'True'
-
     """
+
     du = np.diff(u.values, prepend=0)
     mask = (du > thresh) + (du < -thresh)
 
@@ -217,8 +217,8 @@ def range_limit(u, range=[-5, 5]):
     -------
     mask : |np.ndarray|
       Logical vector with spikes labeled as 'True'
-
     """
+
     return ~((range[0] < u.values) & (u.values < range[1]))
 
 
@@ -282,8 +282,8 @@ def GN2002(u, npt=5000):
     -------
     mask : |np.ndarray|
       Logical vector with spikes labeled as 'True'
-
     """
+
     if not isinstance(u, np.ndarray):
         return GN2002(u.values, npt=npt)
 
