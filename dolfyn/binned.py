@@ -1,5 +1,4 @@
 import numpy as np
-import xarray as xr
 import warnings
 from .tools.psd import psd_freq, psd, cpsd_quasisync, cpsd
 from .tools.misc import slice1d_along_axis, detrend
@@ -10,7 +9,8 @@ warnings.simplefilter('ignore', RuntimeWarning)
 class TimeBinner:
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
                  noise=[0, 0, 0]):
-        """Initialize an averaging object
+        """
+        Initialize an averaging object
 
         Parameters
         ----------
@@ -27,8 +27,8 @@ class TimeBinner:
           Default: `n_fft_coh`=`n_fft`
         noise : list or ndarray
           Instrument's doppler noise in same units as velocity
-
         """
+
         self.n_bin = n_bin
         self.fs = fs
         self.n_fft = n_fft
@@ -81,7 +81,8 @@ class TimeBinner:
         return n_fft_coh
 
     def _check_ds(self, raw_ds, out_ds):
-        """Check that the attributes between two datasets match up.
+        """
+        Check that the attributes between two datasets match up.
 
         Parameters
         ----------
@@ -94,8 +95,8 @@ class TimeBinner:
         Returns
         -------
         out_ds : xarray.Dataset
-
         """
+
         for v in raw_ds.data_vars:
             if np.any(np.array(raw_ds[v].shape) == 0):
                 raise RuntimeError(f"{v} cannot be averaged "
@@ -153,7 +154,8 @@ class TimeBinner:
         return dims_list, coords_dict
 
     def reshape(self, arr, n_pad=0, n_bin=None):
-        """Reshape the array `arr` to shape (...,n,n_bin+n_pad).
+        """
+        Reshape the array `arr` to shape (...,n,n_bin+n_pad).
 
         Parameters
         ----------
@@ -181,8 +183,8 @@ class TimeBinner:
         example:
         - for n_bin=2048.2 every 1/5 bins will have a skipped point.
         - for n_bin=4096.9 every 9/10 bins will have a skipped point.
-
         """
+
         n_bin = self._parse_nbin(n_bin)
         npd0 = int(n_pad // 2)
         npd1 = int((n_pad + 1) // 2)
@@ -210,7 +212,8 @@ class TimeBinner:
         return out
 
     def detrend(self, arr, axis=-1, n_pad=0, n_bin=None):
-        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """
+        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and remove the best-fit trend line from each bin.
 
         Parameters
@@ -231,12 +234,13 @@ class TimeBinner:
         Returns
         -------
         out : numpy.ndarray
-
         """
+
         return detrend(self.reshape(arr, n_pad=n_pad, n_bin=n_bin), axis=axis)
 
     def demean(self, arr, axis=-1, n_pad=0, n_bin=None):
-        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """
+        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and remove the mean from each bin.
 
         Parameters
@@ -257,13 +261,14 @@ class TimeBinner:
         Returns
         -------
         out : numpy.ndarray
-
         """
+
         dt = self.reshape(arr, n_pad=n_pad, n_bin=n_bin)
         return dt - np.nanmean(dt, axis)[..., None]
 
     def mean(self, arr, axis=-1, n_bin=None):
-        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """
+        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and take the mean of each bin along the specified `axis`.
 
         Parameters
@@ -277,8 +282,8 @@ class TimeBinner:
         Returns
         -------
         out : numpy.ndarray
-
         """
+
         if np.issubdtype(arr.dtype, np.datetime64):
             return epoch2dt64(self.mean(dt642epoch(arr), axis=axis, n_bin=n_bin))
         if axis != -1:
@@ -289,7 +294,8 @@ class TimeBinner:
         return np.nanmean(tmp, -1)
 
     def var(self, arr, axis=-1, n_bin=None):
-        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """
+        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and take the variance of each bin along the specified `axis`.
 
         Parameters
@@ -303,12 +309,13 @@ class TimeBinner:
         Returns
         -------
         out : numpy.ndarray
-
         """
+
         return self.reshape(arr, n_bin=n_bin).var(axis)
 
     def std(self, arr, axis=-1, n_bin=None):
-        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """
+        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and take the standard deviation of each bin along the 
         specified `axis`.
 
@@ -323,13 +330,14 @@ class TimeBinner:
         Returns
         -------
         out : numpy.ndarray
-
         """
+
         return self.reshape(arr, n_bin=n_bin).std(axis)
 
     def calc_psd_base(self, dat, fs=None, window='hann', noise=0,
                       n_bin=None, n_fft=None, n_pad=None, step=None):
-        """Calculate power spectral density of `dat`
+        """
+        Calculate power spectral density of `dat`
 
         Parameters
         ----------
@@ -363,8 +371,8 @@ class TimeBinner:
         Notes
         -----
         PSD's are calculated based on sample rate units
-
         """
+
         fs = self._parse_fs(fs)
         n_bin = self._parse_nbin(n_bin)
         n_fft = self._parse_nfft(n_fft)
@@ -385,7 +393,8 @@ class TimeBinner:
 
     def calc_csd_base(self, dat1, dat2, fs=None, window='hann',
                       n_fft=None, n_bin=None):
-        """Calculate the cross power spectral density of `dat`.
+        """
+        Calculate the cross power spectral density of `dat`.
 
         Parameters
         ----------
@@ -417,8 +426,8 @@ class TimeBinner:
 
         The two velocity inputs do not have to be perfectly synchronized, but 
         they should have the same start and end timestamps
-
         """
+
         fs = self._parse_fs(fs)
         if n_fft is None:
             n_fft = self.n_fft_coh
@@ -443,7 +452,8 @@ class TimeBinner:
         return out
 
     def calc_freq(self, fs=None, units='rad/s', n_fft=None, coh=False):
-        """Calculate the ordinary or radial frequency vector for the PSDs
+        """
+        Calculate the ordinary or radial frequency vector for the PSDs
 
         Parameters
         ----------
@@ -463,8 +473,8 @@ class TimeBinner:
         -------
         out: numpy.ndarray
           Spectrum frequency array in units of 'Hz' or 'rad/s'
-
         """
+
         if n_fft is None:
             n_fft = self.n_fft
             if coh:

@@ -10,17 +10,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Variables found from NMEA data now all contain _gps tag
 		- Calculate VMDAS and WinRiver sampling frequency from diff of time coordinate
 
+		- Fix bug where 'accel' variable was rotated incorrectly in `correct_motion`
+	    - Fixed bug that dropped shared but differing "lag" coordinate between auto-covariance
+		  and cross-covariance functions
+	    - Fix duty cycle attributes for some Nortek instruments
+
 	- API/Useability
 		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
-		  manually from the end of the ensemble - credit: Thank you jklymak!
+		  manually and determine which slot (nb vs bb) that VMDAS is saved in - Thank you jklymak!
 		- Clarified VMDAS navigation block variable names
 		- Added ability to read WinRiver2 NMEA data (GGA, VTG, HDT, DBT)
 		- Added ability to read TRDI 5th beam altimeter data
 		- Added ability to read RiverPro/StreamPro surface layer profile
 		- Updated TRDI attribute names
+
 		- Debugging readers now uses logging module
+
 		- ADP cleaning functions `nan_beyond_surface` and `correlation_filter` now operate
-		  in-place for speed
+		  in-place for speed and return "None"
+		- Add 'fill_nan_ensemble_mean' function to ADV cleaning methods
+
+		- Spectra frequency coordinate name is set to 'freq', whether using radial (rad/s) or
+		  classical (Hz) frequency units instead of 'omega' and 'f', respectively
+
+	    - `correct_motion` is now capable of processing data from duty-cycled ADVs
+	    - `CalcMotion` class is changed from private to public
 
 ## Version 1.1.0
     - Bugfixes

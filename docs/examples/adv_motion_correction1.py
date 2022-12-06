@@ -130,9 +130,9 @@ fig2 = plt.figure(2, figsize=[6, 6])
 fig2.clf()
 ax = fig2.add_axes([.14, .14, .8, .74])
 
-ax.loglog(dat_bin.psd.omega, dat_bin.psd.sel(S='Sxx').mean(axis=0),
+ax.loglog(dat_bin.freq, dat_bin['psd'].sel(S='Sxx').mean(axis=0),
           'b-', label='motion corrected')
-ax.loglog(dat_cln_bin.psd.omega, dat_cln_bin.psd.sel(S='Sxx').mean(axis=0),
+ax.loglog(dat_cln_bin.freq, dat_cln_bin['psd'].sel(S='Sxx').mean(axis=0),
           'r-', label='no motion correction')
 
 # Add some annotations

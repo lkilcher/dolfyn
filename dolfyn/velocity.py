@@ -10,8 +10,8 @@ from .tools.misc import slice1d_along_axis
 
 @xr.register_dataset_accessor('velds')  # 'vel dataset'
 class Velocity():
-    """All ADCP and ADV xarray datasets wrap this base class.
-
+    """
+    All ADCP and ADV xarray datasets wrap this base class.
     The turbulence-related attributes defined within this class 
     assume that the  ``'tke_vec'`` and ``'stress_vec'`` data entries are 
     included in the dataset. These are typically calculated using a
@@ -22,20 +22,19 @@ class Velocity():
     See Also
     ========
     :class:`VelBinner`
-
     """
 
     ########
     # Major components of the dolfyn-API
 
     def rotate2(self, out_frame='earth', inplace=True):
-        """Rotate the dataset to a new coordinate system.
+        """
+        Rotate the dataset to a new coordinate system.
 
         Parameters
         ----------
         out_frame : string {'beam', 'inst', 'earth', 'principal'}
           The coordinate system to rotate the data into.
-
         inplace : bool (default: True)
           When True the existing data object is modified. When False
           a copy is returned.
@@ -59,19 +58,19 @@ class Velocity():
 
           where here we are using the depth-averaged velocity to calculate
           the principal direction.
-
         """
+
         return rotate2(self.ds, out_frame, inplace)
 
     def set_declination(self, declin, inplace=True):
-        """Set the magnetic declination
+        """
+        Set the magnetic declination
 
         Parameters
         ----------
         declination : float
           The value of the magnetic declination in degrees (positive
           values specify that Magnetic North is clockwise from True North)
-
         inplace : bool (default: True)
           When True the existing data object is modified. When False
           a copy is returned.
@@ -107,8 +106,8 @@ class Velocity():
         data object in the principal coordinate system, then calling
         dat.rotate2('earth') will yield a data object in the new
         'True' earth coordinate system)
-
         """
+
         return set_declination(self.ds, declin, inplace)
 
     def set_inst2head_rotmat(self, rotmat, inplace=True):
@@ -137,12 +136,13 @@ class Velocity():
         rotated back to the coordinate system in which it was input. This
         way the inst2head_rotmat gets applied correctly (in inst
         coordinate system).
-
         """
+
         return set_inst2head_rotmat(self.ds, rotmat, inplace)
 
     def save(self, filename, **kwargs):
-        """Save the data object (underlying xarray dataset) as netCDF (.nc).
+        """
+        Save the data object (underlying xarray dataset) as netCDF (.nc).
 
         Parameters
         ----------
@@ -154,8 +154,8 @@ class Velocity():
         -----
         See |dlfn|'s :func:`save <dolfyn.io.api.save>` function for
         additional details.
-
         """
+
         save(self.ds, filename, **kwargs)
 
     ########
@@ -296,11 +296,9 @@ class Velocity():
     @property
     def w(self,):
         """The third velocity component.
-
         This is simply a shortcut to self['vel'][2]. Therefore,
         depending on the coordinate system of the data object
         (self.attrs['coord_sys']), it is:
-
         - beam:      beam3
         - inst:      z
         - earth:     up
@@ -433,7 +431,8 @@ class Velocity():
 
 
 class VelBinner(TimeBinner):
-    """This is the base binning (averaging) tool.
+    """
+    This is the base binning (averaging) tool.
     All |dlfn| binning tools derive from this base class.
 
     Examples
@@ -443,20 +442,21 @@ class VelBinner(TimeBinner):
     example::
 
         # First read or load some data.
-        rawdat = dlfn.read_example('BenchFile01.ad2cp')
+        rawdat = dolfyn.read_example('BenchFile01.ad2cp')
 
         # Now initialize the averaging tool:
-        binner = dlfn.VelBinner(n_bin=600, fs=rawdat.fs)
+        binner = dolfyn.VelBinner(n_bin=600, fs=rawdat.fs)
 
         # This computes the basic averages
         avg = binner.do_avg(rawdat)
-
     """
+
     # This defines how cross-spectra and stresses are computed.
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
 
     def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0, 0, 0]):
-        """Bin the dataset and calculate the ensemble averages of each 
+        """
+        Bin the dataset and calculate the ensemble averages of each 
         variable.
 
         Parameters
@@ -469,7 +469,7 @@ class VelBinner(TimeBinner):
            The names of variables to be averaged.  If `names` is None,
            all data in `raw_ds` will be binned.
         noise : list or numpy.ndarray
-          instrument's doppler noise in same units as velocity
+          Instrument's doppler noise in same units as velocity
 
         Returns
         -------
@@ -489,8 +489,8 @@ class VelBinner(TimeBinner):
         raw_ds.attrs are copied to out_ds.attrs. Inconsistencies
         between the two (when out_ds is specified as input) raise an
         AttributeError.
-
         """
+
         out_ds = self._check_ds(raw_ds, out_ds)
 
         if names is None:
@@ -528,7 +528,8 @@ class VelBinner(TimeBinner):
         return out_ds
 
     def do_var(self, raw_ds, out_ds=None, names=None, suffix='_var'):
-        """Bin the dataset and calculate the ensemble variances of each 
+        """
+        Bin the dataset and calculate the ensemble variances of each 
         variable. Complementary to `do_avg()`.
 
         Parameters
@@ -560,8 +561,8 @@ class VelBinner(TimeBinner):
         raw_ds.attrs are copied to out_ds.attrs. Inconsistencies
         between the two (when out_ds is specified as input) raise an
         AttributeError.
-
         """
+
         out_ds = self._check_ds(raw_ds, out_ds)
 
         if names is None:
@@ -591,7 +592,8 @@ class VelBinner(TimeBinner):
 
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
                  noise=(0, 0), n_fft_coh=None, n_bin=None):
-        """Calculate coherence between `veldat1` and `veldat2`.
+        """
+        Calculate coherence between `veldat1` and `veldat2`.
 
         Parameters
         ----------
@@ -622,8 +624,8 @@ class VelBinner(TimeBinner):
         -----
         The two velocity inputs do not have to be perfectly synchronized, but 
         they should have the same start and end timestamps.
-
         """
+
         if veldat1.size < veldat2.size:
             raise Exception(
                 "veldat1 is shorter than veldat2. Please switch these inputs.")
@@ -670,7 +672,8 @@ class VelBinner(TimeBinner):
 
     def calc_phase_angle(self, veldat1, veldat2, window='hann',
                          n_fft_coh=None, n_bin=None):
-        """Calculate the phase difference between two signals as a
+        """
+        Calculate the phase difference between two signals as a
         function of frequency (complimentary to coherence).
 
         Parameters
@@ -698,8 +701,8 @@ class VelBinner(TimeBinner):
         -----
         The two velocity inputs do not have to be perfectly synchronized, but 
         they should have the same start and end timestamps.
-
         """
+
         if veldat1.size < veldat2.size:
             raise Exception(
                 "veldat1 is shorter than veldat2. Please switch these inputs.")
@@ -745,7 +748,8 @@ class VelBinner(TimeBinner):
         return da
 
     def calc_acov(self, veldat, n_bin=None):
-        """Calculate the auto-covariance of the raw-signal `veldat`
+        """
+        Calculate the auto-covariance of the raw-signal `veldat`
 
         Parameters
         ----------
@@ -768,8 +772,8 @@ class VelBinner(TimeBinner):
         sides (to return a 'quartered' covariance).
 
         This has the advantage that the 0 index is actually zero-lag.
-
         """
+
         indat = veldat.values
 
         n_bin = self._parse_nbin(n_bin)
@@ -796,19 +800,20 @@ class VelBinner(TimeBinner):
 
         dims_list, coords_dict = self._new_coords(veldat)
         # tack on new coordinate
-        dims_list.append('dt')
-        coords_dict['dt'] = np.arange(n_bin//4)
+        dims_list.append('lag')
+        coords_dict['lag'] = np.arange(n_bin//4)
 
-        da = xr.DataArray(out, name='auto-covariance',
+        da = xr.DataArray(out, name='auto_covariance',
                           coords=coords_dict,
                           dims=dims_list,)
-        da['dt'].attrs['units'] = 'timestep'
+        da['lag'].attrs['units'] = 'timestep'
 
         return da
 
     def calc_xcov(self, veldat1, veldat2, npt=1,
                   n_bin=None, normed=False):
-        """Calculate the cross-covariance between arrays veldat1 and veldat2
+        """
+        Calculate the cross-covariance between arrays veldat1 and veldat2
 
         Parameters
         ----------
@@ -833,8 +838,8 @@ class VelBinner(TimeBinner):
         Notes
         -----
         The two velocity inputs must be the same length
-
         """
+
         dat1 = veldat1.values
         dat2 = veldat2.values
 
@@ -851,7 +856,8 @@ class VelBinner(TimeBinner):
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
 
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2)
+                                    :int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(dat2, n_bin=n_bin2)
 
@@ -867,13 +873,17 @@ class VelBinner(TimeBinner):
         dims_list.append('dt')
         coords_dict['dt'] = np.arange(npt)
 
-        da = xr.DataArray(out, name='cross-covariance',
+        da = xr.DataArray(out, name='cross_covariance',
                           coords=coords_dict,
                           dims=dims_list)
+        da['dt'].attrs['units'] = 'timestep'
+
         return da
 
     def calc_tke(self, veldat, noise=[0, 0, 0], detrend=True):
-        """Calculate the tke (variances of u,v,w).
+        """
+        Calculate the turbulent kinetic energy (TKE) (variances 
+        of u,v,w).
 
         Parameters
         ----------
@@ -893,8 +903,8 @@ class VelBinner(TimeBinner):
         -------
         ds : xarray.DataArray
             dataArray containing u'u'_, v'v'_ and w'w'_
-
         """
+
         if 'dir' in veldat.dims:
             # will error for ADCP 4-beam, but not for single beam
             vel = veldat.values
@@ -942,7 +952,8 @@ class VelBinner(TimeBinner):
                  noise=[0, 0, 0],
                  n_bin=None, n_fft=None, n_pad=None,
                  step=None):
-        """Calculate the power spectral density of velocity.
+        """
+        Calculate the power spectral density of velocity.
 
         Parameters
         ----------
@@ -973,14 +984,14 @@ class VelBinner(TimeBinner):
         -------
         psd : xarray.DataArray (3, M, N_FFT)
           The spectra in the 'u', 'v', and 'w' directions.
-
         """
-        try:
-            time = self.mean(veldat.time.values)
-            time_str = 'time'
-        except:
+
+        if 'b5' in veldat.name:
             time = self.mean(veldat.time_b5.values)
             time_str = 'time_b5'
+        else:
+            time = self.mean(veldat.time.values)
+            time_str = 'time'
         fs = self._parse_fs(fs)
         n_fft = self._parse_nfft(n_fft)
         veldat = veldat.values
@@ -991,15 +1002,14 @@ class VelBinner(TimeBinner):
             fs = 2*np.pi*fs
             freq_units = 'rad/s'
             units = 'm^2/s/rad'
-            f_key = 'omega'
         else:
             freq_units = 'Hz'
             units = 'm^2/s^2/Hz'
-            f_key = 'f'
 
         # Spectra, if input is full velocity or a single array
         if len(veldat.shape) == 2:
-            assert veldat.shape[0] == 3, "Function can only handle 1D or 3D arrays"
+            assert veldat.shape[0] == 3, "Function can only handle 1D or 3D arrays." \
+                " If ADCP data, please select a specific depth bin."
 
             out = np.empty(self._outshape_fft(veldat[:3].shape),
                            dtype=np.float32)
@@ -1007,19 +1017,18 @@ class VelBinner(TimeBinner):
                 out[idx] = self.calc_psd_base(veldat[idx], fs=fs, noise=noise[idx],
                                               window=window, n_bin=n_bin,
                                               n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, f_key: freq}
-            dims = ['S', time_str, f_key]
+            coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, 'freq': freq}
+            dims = ['S', time_str, 'freq']
         else:
             out = self.calc_psd_base(veldat, fs=fs, noise=noise[0], window=window,
                                      n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {time_str: time, f_key: freq}
-            dims = [time_str, f_key]
+            coords = {time_str: time, 'freq': freq}
+            dims = [time_str, 'freq']
 
-        da = xr.DataArray(out,
-                          name='psd',
-                          coords=coords,
-                          dims=dims,
-                          attrs={'units': units, 'n_fft': n_fft})
-        da[f_key].attrs['units'] = freq_units
+        psd = xr.DataArray(out, name='psd',
+                           coords=coords,
+                           dims=dims,
+                           attrs={'units': units, 'n_fft': n_fft})
+        psd['freq'].attrs['units'] = freq_units
 
-        return da
+        return psd

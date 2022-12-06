@@ -1,10 +1,11 @@
 import numpy as np
+import xarray as xr
+import warnings
 import scipy.signal as ss
 from scipy.integrate import cumtrapz
-import xarray as xr
+
 from ..rotate import vector as rot
 from ..rotate.api import _make_model, rotate2
-import warnings
 
 
 def _get_body2imu(make_model):
@@ -15,7 +16,7 @@ def _get_body2imu(make_model):
         raise Exception("The imu->body vector is unknown for this instrument.")
 
 
-class _CalcMotion():
+class CalcMotion():
     """
     A 'calculator' for computing the velocity of points that are
     rigidly connected to an ADV-body with an IMU.
@@ -86,14 +87,53 @@ class _CalcMotion():
                              "perform motion correction.")
                             % (self.ds.coord_sys))
 
+    def _check_duty_cycle(self, ):
+        """
+        Function to check if duty cycle exists and if it is followed
+        consistently in the datafile
+
+        """
+        n_burst = self.ds.attrs.get('duty_cycle_n_burst')
+        if not n_burst:
+            return
+
+        # duty cycle interval in seconds
+        interval = self.ds.attrs.get('duty_cycle_interval')
+        actual_interval = (
+            self.ds.time[n_burst:].values - self.ds.time[:-n_burst].values)/1e9
+
+        rng = actual_interval.max() - actual_interval.min()
+        mean = actual_interval.mean()
+        # Range will vary depending on how datetime64 rounds the timestamp
+        # But isn't an issue if it does
+        if rng > 2 or (mean > interval+1 and mean < interval-1):
+            raise Exception("Bad duty cycle detected")
+
+        # If this passes, it means we're save to blindly skip n_burst for every integral
+        return n_burst
+
+    def reshape(self, dat, n_bin):
+        # Assumes shape is (3, time)
+        length = dat.shape[-1]//n_bin
+        return np.reshape(dat[..., :length*n_bin], (dat.shape[0], length, n_bin))
+
     def _set_acclow(self, ):
+        # Check if file is duty cycled
+        n = self._check_duty_cycle()
+
+        if n:
+            warnings.warn("   Duty Cycle detected. "
+                          "Motion corrected data may contain edge effects "
+                          "at the beginning and end of each duty cycle.")
+            self.accel = self.reshape(self.accel, n_bin=n)
+
         self.acclow = acc = self.accel.copy()
         if self.accel_filtfreq == 0:
             acc[:] = acc.mean(-1)[..., None]
         else:
             flt = ss.butter(1, self.accel_filtfreq / (self.ds.fs / 2))
             for idx in range(3):
-                acc[idx] = ss.filtfilt(flt[0], flt[1], acc[idx])
+                acc[idx] = ss.filtfilt(flt[0], flt[1], acc[idx], axis=-1)
 
     def calc_velacc(self, ):
         """
@@ -107,12 +147,16 @@ class _CalcMotion():
         """
         samp_freq = self.ds.fs
 
+        # Check if file is duty cycled
+        n = self._check_duty_cycle()
+        # accel & accel-low will already be reshaped if n isn't none
+
         # Get high-pass accelerations
         hp = self.accel - self.acclow
 
         # Integrate in time to get velocities
         dat = np.concatenate((np.zeros(list(hp.shape[:-1]) + [1]),
-                              cumtrapz(hp, dx=1 / samp_freq)), axis=-1)
+                              cumtrapz(hp, dx=1 / samp_freq, axis=-1)), axis=-1)
 
         if self.accelvel_filtfreq > 0:
             filt_freq = self.accelvel_filtfreq
@@ -120,8 +164,26 @@ class _CalcMotion():
             # Applied twice by 'filtfilt' = 4th order butterworth
             filt = ss.butter(2, float(filt_freq) / (samp_freq / 2))
             for idx in range(hp.shape[0]):
-                dat[idx] = dat[idx] - ss.filtfilt(filt[0], filt[1], dat[idx])
-        return dat
+                dat[idx] = dat[idx] - \
+                    ss.filtfilt(filt[0], filt[1], dat[idx], axis=-1)
+
+        if n:
+            # remove reshape
+            velacc_shaped = np.empty(self.angrt.shape)
+            acclow_shaped = np.empty(self.angrt.shape)
+            accel_shaped = np.empty(self.angrt.shape)
+            for idx in range(hp.shape[0]):
+                velacc_shaped[idx] = np.ravel(dat[idx], 'C')
+                acclow_shaped[idx] = np.ravel(self.acclow[idx], 'C')
+                accel_shaped[idx] = np.ravel(self.accel[idx], 'C')
+
+            # return acclow and velacc
+            self.acclow = acclow_shaped
+            self.accel = accel_shaped
+            return velacc_shaped
+
+        else:
+            return dat
 
     def calc_velrot(self, vec, to_earth=None):
         """
@@ -238,7 +300,7 @@ def correct_motion(ds,
     Parameters
     ----------
     ds : xarray.Dataset
-      Cleaned ADV dataset
+      Cleaned ADV dataset in "inst" coordinates
 
     accel_filtfreq : float
       the frequency at which to high-pass filter the acceleration
@@ -338,10 +400,10 @@ def correct_motion(ds,
     rot._check_inst2head_rotmat(ds)
 
     # Create the motion 'calculator':
-    calcobj = _CalcMotion(ds,
-                          accel_filtfreq=accel_filtfreq,
-                          vel_filtfreq=vel_filtfreq,
-                          to_earth=to_earth)
+    calcobj = CalcMotion(ds,
+                         accel_filtfreq=accel_filtfreq,
+                         vel_filtfreq=vel_filtfreq,
+                         to_earth=to_earth)
 
     ##########
     # Calculate the translational velocity (from the accel):
@@ -390,6 +452,7 @@ def correct_motion(ds,
     #       calc_velacc() call.
     inst2earth = rot._inst2earth
     if to_earth:
+        # accel was converted to earth coordinates
         ds['accel'].values = calcobj.accel
         to_remove = ['accel', 'acclow', 'velacc']
         ds = inst2earth(ds, rotate_vars=[e for e in
@@ -398,7 +461,7 @@ def correct_motion(ds,
     else:
         # rotate these variables back to the instrument frame.
         ds = inst2earth(ds, reverse=True,
-                        rotate_vars=['accel', 'acclow', 'velacc'],
+                        rotate_vars=['acclow', 'velacc'],
                         force=True)
 
     ##########
