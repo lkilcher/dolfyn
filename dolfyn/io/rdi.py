@@ -305,6 +305,9 @@ class _RDIReader():
                 found = True
             elif id == 0:
                 self.read_fixed(bb=False)
+            elif id == 16:
+                self.read_fixed_sl() # bb=True
+                found = True
             elif id == 8192:
                 self._vmdas_search = True
         return found
@@ -612,8 +615,8 @@ class _RDIReader():
     def read_dat(self, id):
         function_map = {0: (self.read_fixed, []),   # 0000 1st profile fixed leader
                         1:  (self.read_fixed, [True]),  # 0001
-                        # 0010 2nd profile fixed leader
-                        16: (self.read_fixed2, []),
+                        # 0010 Surface layer fixed leader (RiverPro & StreamPro)
+                        16: (self.read_fixed_sl, []),
                         # 0080 1st profile variable leader
                         128: (self.read_var, []),
                         # 0081 2nd profile variable leader
@@ -624,6 +627,8 @@ class _RDIReader():
                         257: (self.read_vel, [True]),
                         # 0103 Waves first leader
                         259: (self.skip_Nbyte, [74]),
+                        # 0110 Surface layer velocity (RiverPro & StreamPro)
+                        272: (self.read_vel, [True]),
                         # 0200 1st profile correlation
                         512: (self.read_corr, []),
                         # 0201 2nd profile correlation
@@ -632,6 +637,8 @@ class _RDIReader():
                         515: (self.skip_Nbyte, [186]),
                         # 020C Ambient sound profile
                         524: (self.skip_Nbyte, [4]),
+                        # 0210 Surface layer correlation (RiverPro & StreamPro)
+                        528: (self.read_corr, [True]),
                         # 0300 1st profile amplitude
                         768: (self.read_amp, []),
                         # 0301 2nd profile amplitude
@@ -640,12 +647,16 @@ class _RDIReader():
                         770: (self.skip_Ncol, []),
                         # 0303 Waves last leader
                         771: (self.skip_Ncol, [18]),
+                        # 0310 Surface layer amplitude (RiverPro & StreamPro)
+                        784: (self.read_amp, [True]),
                         # 0400 1st profile % good
                         1024: (self.read_prcnt_gd, []),
                         # 0401 2nd profile pct good
                         1025: (self.read_prcnt_gd, [True]),
                         # 0403 Waves HPR data
                         1027: (self.skip_Nbyte, [6]),
+                        # 0410 Surface layer pct good (RiverPro & StreamPro)
+                        1040: (self.read_prcnt_gd, [True]),
                         # 0500 1st profile status
                         1280: (self.read_status, []),
                         1281: (self.skip_Ncol, [4]),  # 0501 2nd profile status
@@ -669,19 +680,23 @@ class _RDIReader():
                         8450: (self.read_winriver, [45]),  # 2102
                         8451: (self.read_winriver, [60]),  # 2103
                         8452: (self.read_winriver, [38]),  # 2104
-                        # 3200 transformation matrix
+                        # 3200 Transformation matrix
                         12800: (self.skip_Nbyte, [32]),
                         # 3000 Fixed attitude data format for Ocean Surveyor ADCPs
                         12288: (self.skip_Nbyte, [32]),
                         # 4100 beam 5 range
                         16640: (self.read_alt, []),
-                        # 5803 high res bottom track velocity
+                        # 4400 Firmware status data (RiverPro & StreamPro)
+                        17408: (self.skip_Nbyte, [28]),
+                        # 4401 Auto mode setup (RiverPro & StreamPro)
+                        17409: (self.skip_Nbyte, [82]),
+                        # 5803 High resolution bottom track velocity
                         22531: (self.skip_Nbyte, [68]),
-                        # 5804 bottom track range
+                        # 5804 Bottom track range
                         22532: (self.skip_Nbyte, [21]),
                         # 5901 ISM (IMU) data
                         22785: (self.skip_Nbyte, [65]),
-                        # 5902 ping attitude
+                        # 5902 Ping attitude
                         22786: (self.skip_Nbyte, [105]),
                         # 7001 ADC data
                         28673: (self.skip_Nbyte, [14]),
@@ -717,17 +732,16 @@ class _RDIReader():
                     logging.warning('Number of cells changed to {}'
                                     .format(self.cfg['n_cells']))
 
-    def read_fixed2(self,):
-        # Check if 2nd profile exists
-        offsets = list(self.id_positions.values())
-        idx = np.where(offsets == self.id_positions[16])[0][0]
-        byte_len = offsets[idx+1] - offsets[idx] - 2
-        # 2nd profile should have a length of 63 bytes
-        if byte_len == 63:
-            self.read_fixed(bb=not self._bb)  # set the other config
-        else:
-            logging.info("2nd profile config not found")
-            self.skip_nocode(16)
+    def read_fixed_sl(self,):
+        # Surface layer profile
+        cfg = self.cfgbb
+        cfg['n_cells'] = self.f.read_ui8(1)
+        cfg['cell_size'] = self.f.read_ui16(1) * .01
+        cfg['bin1_dist_m'] = round(self.f.read_ui16(1) * .01, 4)
+
+        if self._debug_level >= 0:
+            logging.info('Read Surface Layer Config')
+        self._nbyte = 2 + 5
 
     def read_cfgseg(self, bb=False):
         cfgstart = self.f.tell()
