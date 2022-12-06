@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Clarified VMDAS navigation block variable names
 		- Added ability to read WinRiver2 NMEA data (GGA, VTG, HDT, DBT)
 		- Added ability to read TRDI 5th beam altimeter data
+		- Added ability to read RiverPro/StreamPro surface layer profile
 		- Updated TRDI attribute names
 		- Debugging readers now uses logging module
 		- ADP cleaning functions `nan_beyond_surface` and `correlation_filter` now operate

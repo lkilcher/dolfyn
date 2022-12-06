@@ -17,9 +17,9 @@ root - INFO - pos 492 id 1536
 root - INFO - Done: {'prog_ver': 51.41, 'inst_model': 'Workhorse', 'beam_angle': 20, 'freq': 600, 'beam_pattern': 'convex', 'orientation': 'down', 'n_beams': 4, 'n_cells': 17, 'pings_per_ensemble': 1, 'cell_size': 1.0, 'blank_dist': 0.88, 'profiling_mode': 1, 'min_corr_threshold': 64, 'n_code_reps': 5, 'min_prcnt_gd': 0, 'max_error_vel': 2.0, 'sec_between_ping_groups': 0.5, 'coord_sys': 'earth', 'use_pitchroll': 'yes', 'use_3beam': 'yes', 'bin_mapping': 'yes', 'heading_misalign_deg': 0.0, 'magnetic_var_deg': 0.0, 'sensors_src': '01111101', 'sensors_avail': '00111101', 'bin1_dist_m': 2.09, 'transmit_pulse_m': 1.18, 'water_ref_cells': [1, 5], 'false_target_threshold': 50, 'transmit_lag_m': 0.24, 'bandwidth': 0, 'power_level': 255, 'serialnum': 18655}
 root - INFO - self._bb False
 root - INFO - {}
-root - INFO -   1715 pings estimated in this file
-root - INFO -   taking data from pings 0 - 1715
-root - INFO -   1715 ensembles will be produced.
+root - INFO -   1723 pings estimated in this file
+root - INFO -   taking data from pings 0 - 1723
+root - INFO -   1723 ensembles will be produced.
 
 root - INFO - 17 ncells, not BB
 root - DEBUG -   pos 0mb/1mb
@@ -87487,3 +87487,316 @@ root - INFO -   Reading code 0x600...
 root - INFO - Read Bottom Track
 root - INFO -     success!
 root - DEBUG -   pos: 996415, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 996417
+root - INFO -   ###Leaving checkheader.
+root - INFO - Read Header
+root - INFO - n 0: 0 0000
+root - DEBUG -   pos: 996437, pos_: 0, nbyte: 18, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 0
+root - INFO -   Reading code 0x0...
+root - INFO - Read Config
+root - INFO - Read Fixed
+root - INFO -     success!
+root - INFO - n 1: 128 0080
+root - DEBUG -   pos: 996496, pos_: 0, nbyte: 59, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 128
+root - INFO -   Reading code 0x80...
+root - INFO - Read Var
+root - INFO -     success!
+root - INFO - n 2: 256 0100
+root - DEBUG -   pos: 996561, pos_: 0, nbyte: 65, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 256
+root - INFO -   Reading code 0x100...
+root - INFO - Read Vel
+root - INFO -     success!
+root - INFO - n 3: 512 0200
+root - DEBUG -   pos: 996699, pos_: 0, nbyte: 138, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 512
+root - INFO -   Reading code 0x200...
+root - INFO - Read Corr
+root - INFO -     success!
+root - INFO - n 4: 768 0300
+root - DEBUG -   pos: 996769, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 768
+root - INFO -   Reading code 0x300...
+root - INFO - Read Amp
+root - INFO -     success!
+root - INFO - n 5: 1024 0400
+root - DEBUG -   pos: 996839, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1024
+root - INFO -   Reading code 0x400...
+root - INFO - Read PG
+root - INFO -     success!
+root - INFO - n 6: 1536 0600
+root - DEBUG -   pos: 996909, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1536
+root - INFO -   Reading code 0x600...
+root - INFO - Read Bottom Track
+root - INFO -     success!
+root - DEBUG -   pos: 996996, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 996998
+root - INFO -   ###Leaving checkheader.
+root - INFO - Read Header
+root - INFO - n 0: 0 0000
+root - DEBUG -   pos: 997018, pos_: 0, nbyte: 18, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 0
+root - INFO -   Reading code 0x0...
+root - INFO - Read Config
+root - INFO - Read Fixed
+root - INFO -     success!
+root - INFO - n 1: 128 0080
+root - DEBUG -   pos: 997077, pos_: 0, nbyte: 59, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 128
+root - INFO -   Reading code 0x80...
+root - INFO - Read Var
+root - INFO -     success!
+root - INFO - n 2: 256 0100
+root - DEBUG -   pos: 997142, pos_: 0, nbyte: 65, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 256
+root - INFO -   Reading code 0x100...
+root - INFO - Read Vel
+root - INFO -     success!
+root - INFO - n 3: 512 0200
+root - DEBUG -   pos: 997280, pos_: 0, nbyte: 138, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 512
+root - INFO -   Reading code 0x200...
+root - INFO - Read Corr
+root - INFO -     success!
+root - INFO - n 4: 768 0300
+root - DEBUG -   pos: 997350, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 768
+root - INFO -   Reading code 0x300...
+root - INFO - Read Amp
+root - INFO -     success!
+root - INFO - n 5: 1024 0400
+root - DEBUG -   pos: 997420, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1024
+root - INFO -   Reading code 0x400...
+root - INFO - Read PG
+root - INFO -     success!
+root - INFO - n 6: 1536 0600
+root - DEBUG -   pos: 997490, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1536
+root - INFO -   Reading code 0x600...
+root - INFO - Read Bottom Track
+root - INFO -     success!
+root - DEBUG -   pos: 997577, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 997579
+root - INFO -   ###Leaving checkheader.
+root - INFO - Read Header
+root - INFO - n 0: 0 0000
+root - DEBUG -   pos: 997599, pos_: 0, nbyte: 18, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 0
+root - INFO -   Reading code 0x0...
+root - INFO - Read Config
+root - INFO - Read Fixed
+root - INFO -     success!
+root - INFO - n 1: 128 0080
+root - DEBUG -   pos: 997658, pos_: 0, nbyte: 59, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 128
+root - INFO -   Reading code 0x80...
+root - INFO - Read Var
+root - INFO -     success!
+root - INFO - n 2: 256 0100
+root - DEBUG -   pos: 997723, pos_: 0, nbyte: 65, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 256
+root - INFO -   Reading code 0x100...
+root - INFO - Read Vel
+root - INFO -     success!
+root - INFO - n 3: 512 0200
+root - DEBUG -   pos: 997861, pos_: 0, nbyte: 138, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 512
+root - INFO -   Reading code 0x200...
+root - INFO - Read Corr
+root - INFO -     success!
+root - INFO - n 4: 768 0300
+root - DEBUG -   pos: 997931, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 768
+root - INFO -   Reading code 0x300...
+root - INFO - Read Amp
+root - INFO -     success!
+root - INFO - n 5: 1024 0400
+root - DEBUG -   pos: 998001, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1024
+root - INFO -   Reading code 0x400...
+root - INFO - Read PG
+root - INFO -     success!
+root - INFO - n 6: 1536 0600
+root - DEBUG -   pos: 998071, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1536
+root - INFO -   Reading code 0x600...
+root - INFO - Read Bottom Track
+root - INFO -     success!
+root - DEBUG -   pos: 998158, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 998160
+root - INFO -   ###Leaving checkheader.
+root - INFO - Read Header
+root - INFO - n 0: 0 0000
+root - DEBUG -   pos: 998180, pos_: 0, nbyte: 18, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 0
+root - INFO -   Reading code 0x0...
+root - INFO - Read Config
+root - INFO - Read Fixed
+root - INFO -     success!
+root - INFO - n 1: 128 0080
+root - DEBUG -   pos: 998239, pos_: 0, nbyte: 59, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 128
+root - INFO -   Reading code 0x80...
+root - INFO - Read Var
+root - INFO -     success!
+root - INFO - n 2: 256 0100
+root - DEBUG -   pos: 998304, pos_: 0, nbyte: 65, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 256
+root - INFO -   Reading code 0x100...
+root - INFO - Read Vel
+root - INFO -     success!
+root - INFO - n 3: 512 0200
+root - DEBUG -   pos: 998442, pos_: 0, nbyte: 138, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 512
+root - INFO -   Reading code 0x200...
+root - INFO - Read Corr
+root - INFO -     success!
+root - INFO - n 4: 768 0300
+root - DEBUG -   pos: 998512, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 768
+root - INFO -   Reading code 0x300...
+root - INFO - Read Amp
+root - INFO -     success!
+root - INFO - n 5: 1024 0400
+root - DEBUG -   pos: 998582, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1024
+root - INFO -   Reading code 0x400...
+root - INFO - Read PG
+root - INFO -     success!
+root - INFO - n 6: 1536 0600
+root - DEBUG -   pos: 998652, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1536
+root - INFO -   Reading code 0x600...
+root - INFO - Read Bottom Track
+root - INFO -     success!
+root - DEBUG -   pos: 998739, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 998741
+root - INFO -   ###Leaving checkheader.
+root - INFO - Read Header
+root - INFO - n 0: 0 0000
+root - DEBUG -   pos: 998761, pos_: 0, nbyte: 18, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 0
+root - INFO -   Reading code 0x0...
+root - INFO - Read Config
+root - INFO - Read Fixed
+root - INFO -     success!
+root - INFO - n 1: 128 0080
+root - DEBUG -   pos: 998820, pos_: 0, nbyte: 59, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 128
+root - INFO -   Reading code 0x80...
+root - INFO - Read Var
+root - INFO -     success!
+root - INFO - n 2: 256 0100
+root - DEBUG -   pos: 998885, pos_: 0, nbyte: 65, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 256
+root - INFO -   Reading code 0x100...
+root - INFO - Read Vel
+root - INFO -     success!
+root - INFO - n 3: 512 0200
+root - DEBUG -   pos: 999023, pos_: 0, nbyte: 138, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 512
+root - INFO -   Reading code 0x200...
+root - INFO - Read Corr
+root - INFO -     success!
+root - INFO - n 4: 768 0300
+root - DEBUG -   pos: 999093, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 768
+root - INFO -   Reading code 0x300...
+root - INFO - Read Amp
+root - INFO -     success!
+root - INFO - n 5: 1024 0400
+root - DEBUG -   pos: 999163, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1024
+root - INFO -   Reading code 0x400...
+root - INFO - Read PG
+root - INFO -     success!
+root - INFO - n 6: 1536 0600
+root - DEBUG -   pos: 999233, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1536
+root - INFO -   Reading code 0x600...
+root - INFO - Read Bottom Track
+root - INFO -     success!
+root - DEBUG -   pos: 999320, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 999322
+root - INFO -   ###Leaving checkheader.
+root - INFO - Read Header
+root - INFO - n 0: 0 0000
+root - DEBUG -   pos: 999342, pos_: 0, nbyte: 18, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 0
+root - INFO -   Reading code 0x0...
+root - INFO - Read Config
+root - INFO - Read Fixed
+root - INFO -     success!
+root - INFO - n 1: 128 0080
+root - DEBUG -   pos: 999401, pos_: 0, nbyte: 59, k: -1, byte_offset: -1
+root - DEBUG - Trying to Read 128
+root - INFO -   Reading code 0x80...
+root - INFO - Read Var
+root - INFO -     success!
+root - INFO - n 2: 256 0100
+root - DEBUG -   pos: 999466, pos_: 0, nbyte: 65, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 256
+root - INFO -   Reading code 0x100...
+root - INFO - Read Vel
+root - INFO -     success!
+root - INFO - n 3: 512 0200
+root - DEBUG -   pos: 999604, pos_: 0, nbyte: 138, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 512
+root - INFO -   Reading code 0x200...
+root - INFO - Read Corr
+root - INFO -     success!
+root - INFO - n 4: 768 0300
+root - DEBUG -   pos: 999674, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 768
+root - INFO -   Reading code 0x300...
+root - INFO - Read Amp
+root - INFO -     success!
+root - INFO - n 5: 1024 0400
+root - DEBUG -   pos: 999744, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1024
+root - INFO -   Reading code 0x400...
+root - INFO - Read PG
+root - INFO -     success!
+root - INFO - n 6: 1536 0600
+root - DEBUG -   pos: 999814, pos_: 0, nbyte: 70, k: 0, byte_offset: -1
+root - DEBUG - Trying to Read 1536
+root - INFO -   Reading code 0x600...
+root - INFO - Read Bottom Track
+root - INFO -     success!
+root - DEBUG -   pos: 999901, pos_: 0, nbyte: 85, k: 0, byte_offset: 577
+root - DEBUG -   pos 1mb/1mb
+
+root - INFO -   -->In search_buffer...
+root - INFO -   ###In checkheader.
+root - INFO - pos 999903
+root - INFO - EOF
+root - INFO -   Encountered end of file.  Cleaning up data.

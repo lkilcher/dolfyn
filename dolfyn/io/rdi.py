@@ -306,8 +306,7 @@ class _RDIReader():
             elif id == 0:
                 self.read_fixed(bb=False)
             elif id == 16:
-                self.read_fixed_sl() # bb=True
-                found = True
+                self.read_fixed_sl()  # bb=True
             elif id == 8192:
                 self._vmdas_search = True
         return found
@@ -328,8 +327,6 @@ class _RDIReader():
             logging.info('  taking data from pings 0 - %d' % self._nens)
             logging.info('  %d ensembles will be produced.\n' % self._nens)
         self.init_data()
-        dat = self.outd
-        cfg = self.cfg
 
         for iens in range(self._nens):
             if not self.read_buffer():
@@ -381,19 +378,11 @@ class _RDIReader():
                 else:
                     dat['coords']['time'][iens] = np.median(dates)
 
-        dat['coords']['range'] = (cfg['bin1_dist_m'] +
-                                  np.arange(self.ensemble['n_cells']) *
-                                  cfg['cell_size'])
-        for nm in cfg:
-            dat['attrs'][nm] = cfg[nm]
+        self.cleanup(self.cfg, self.outd)
         if self._bb:
-            dat = self.outdBB
-            cfg = self.cfgbb
-            dat['coords']['range'] = (cfg['bin1_dist_m'] +
-                                      np.arange(self.ensemble['n_cells']) *
-                                      cfg['cell_size'])
-            for nm in cfg:
-                dat['attrs'][nm] = cfg[nm]
+            self.cleanup(self.cfgbb, self.outdBB)
+
+        # Finalize dataset (runs through both nb and bb)
         for dat in datl:
             self.finalize(dat)
             if 'vel_bt' in dat['data_vars']:
@@ -618,48 +607,51 @@ class _RDIReader():
                         # 0010 Surface layer fixed leader (RiverPro & StreamPro)
                         16: (self.read_fixed_sl, []),
                         # 0080 1st profile variable leader
-                        128: (self.read_var, []),
+                        128: (self.read_var, [0]),
                         # 0081 2nd profile variable leader
-                        129: (self.read_var, [True]),
+                        129: (self.read_var, [1]),
                         # 0100 1st profile velocity
-                        256: (self.read_vel, []),
+                        256: (self.read_vel, [0]),
                         # 0101 2nd profile velocity
-                        257: (self.read_vel, [True]),
+                        257: (self.read_vel, [1]),
                         # 0103 Waves first leader
                         259: (self.skip_Nbyte, [74]),
                         # 0110 Surface layer velocity (RiverPro & StreamPro)
-                        272: (self.read_vel, [True]),
+                        272: (self.read_vel, [2]),
                         # 0200 1st profile correlation
-                        512: (self.read_corr, []),
+                        512: (self.read_corr, [0]),
                         # 0201 2nd profile correlation
-                        513: (self.read_corr, [True]),
+                        513: (self.read_corr, [1]),
                         # 0203 Waves data
                         515: (self.skip_Nbyte, [186]),
                         # 020C Ambient sound profile
                         524: (self.skip_Nbyte, [4]),
                         # 0210 Surface layer correlation (RiverPro & StreamPro)
-                        528: (self.read_corr, [True]),
+                        528: (self.read_corr, [2]),
                         # 0300 1st profile amplitude
-                        768: (self.read_amp, []),
+                        768: (self.read_amp, [0]),
                         # 0301 2nd profile amplitude
-                        769: (self.read_amp, [True]),
+                        769: (self.read_amp, [1]),
                         # 0302 Beam 5 Sum of squared velocities
                         770: (self.skip_Ncol, []),
                         # 0303 Waves last leader
                         771: (self.skip_Ncol, [18]),
                         # 0310 Surface layer amplitude (RiverPro & StreamPro)
-                        784: (self.read_amp, [True]),
+                        784: (self.read_amp, [2]),
                         # 0400 1st profile % good
-                        1024: (self.read_prcnt_gd, []),
+                        1024: (self.read_prcnt_gd, [0]),
                         # 0401 2nd profile pct good
-                        1025: (self.read_prcnt_gd, [True]),
+                        1025: (self.read_prcnt_gd, [1]),
                         # 0403 Waves HPR data
                         1027: (self.skip_Nbyte, [6]),
                         # 0410 Surface layer pct good (RiverPro & StreamPro)
-                        1040: (self.read_prcnt_gd, [True]),
+                        1040: (self.read_prcnt_gd, [2]),
                         # 0500 1st profile status
-                        1280: (self.read_status, []),
-                        1281: (self.skip_Ncol, [4]),  # 0501 2nd profile status
+                        1280: (self.read_status, [0]),
+                        # 0501 2nd profile status
+                        1281: (self.read_status, [1]),
+                        # 0510 Surface layer status (RiverPro & StreamPro)
+                        1296: (self.read_status, [2]),
                         1536: (self.read_bottom, []),  # 0600 bottom tracking
                         1793: (self.skip_Ncol, [4]),  # 0701 number of pings
                         1794: (self.skip_Ncol, [4]),  # 0702 sum of squared vel
@@ -734,10 +726,11 @@ class _RDIReader():
 
     def read_fixed_sl(self,):
         # Surface layer profile
-        cfg = self.cfgbb
-        cfg['n_cells'] = self.f.read_ui8(1)
-        cfg['cell_size'] = self.f.read_ui16(1) * .01
-        cfg['bin1_dist_m'] = round(self.f.read_ui16(1) * .01, 4)
+        cfg = self.cfg
+        cfg['surface_layer'] = 1
+        cfg['n_cells_sl'] = self.f.read_ui8(1)
+        cfg['cell_size_sl'] = self.f.read_ui16(1) * .01
+        cfg['bin1_dist_m_sl'] = round(self.f.read_ui16(1) * .01, 4)
 
         if self._debug_level >= 0:
             logging.info('Read Surface Layer Config')
@@ -909,89 +902,85 @@ class _RDIReader():
         if self._debug_level >= 0:
             logging.info('Read Var')
 
-    def read_vel(self, bb=False):
-        if bb:
+    def switch_profile(self, bb):
+        if bb == 1:
             ens = self.ensembleBB
             cfg = self.cfgbb
-            self.vars_readBB += ['vel']
+            # Placeholder for dual profile mode
+            # Solution for vmdas profile in bb spot (vs nb)
+            tag = ''
+        elif bb == 2:
+            ens = self.ensemble
+            cfg = self.cfg
+            tag = '_sl'
         else:
             ens = self.ensemble
             cfg = self.cfg
-            self.vars_read += ['vel']
+            tag = ''
+
+        return ens, cfg, tag
+
+    def read_vel(self, bb=0):
+        ens, cfg, tg = self.switch_profile(bb)
+        self.vars_read += ['vel'+tg]
+        n_cells = cfg['n_cells'+tg]
 
         k = ens.k
         vel = np.array(
-            self.f.read_i16(4 * cfg['n_cells'])
-        ).reshape((cfg['n_cells'], 4)) * .001
-        ens['vel'][:cfg['n_cells'], :, k] = vel
-        self._nbyte = 2 + 4 * cfg['n_cells'] * 2
+            self.f.read_i16(4 * n_cells)
+        ).reshape((n_cells, 4)) * .001
+        ens['vel'+tg][:n_cells, :, k] = vel
+        self._nbyte = 2 + 4 * n_cells * 2
         if self._debug_level >= 0:
             logging.info('Read Vel')
 
-    def read_corr(self, bb=False):
-        if bb:
-            ens = self.ensembleBB
-            cfg = self.cfgbb
-            self.vars_readBB += ['corr']
-        else:
-            ens = self.ensemble
-            cfg = self.cfg
-            self.vars_read += ['corr']
+    def read_corr(self, bb=0):
+        ens, cfg, tg = self.switch_profile(bb)
+        self.vars_read += ['corr'+tg]
+        n_cells = cfg['n_cells'+tg]
 
         k = ens.k
-        ens.corr[:cfg['n_cells'], :, k] = np.array(
-            self.f.read_ui8(4 * cfg['n_cells'])
-        ).reshape((cfg['n_cells'], 4))
-        self._nbyte = 2 + 4 * cfg['n_cells']
+        ens['corr'+tg][:n_cells, :, k] = np.array(
+            self.f.read_ui8(4 * n_cells)
+        ).reshape((n_cells, 4))
+        self._nbyte = 2 + 4 * n_cells
         if self._debug_level >= 0:
             logging.info('Read Corr')
 
-    def read_amp(self, bb=False):
-        if bb:
-            ens = self.ensembleBB
-            cfg = self.cfgbb
-            self.vars_readBB += ['amp']
-        else:
-            ens = self.ensemble
-            cfg = self.cfg
-            self.vars_read += ['amp']
+    def read_amp(self, bb=0):
+        ens, cfg, tg = self.switch_profile(bb)
+        self.vars_read += ['amp'+tg]
+        n_cells = cfg['n_cells'+tg]
+
         k = ens.k
-        ens.amp[:cfg['n_cells'], :, k] = np.array(
-            self.f.read_ui8(4 * cfg['n_cells'])
-        ).reshape((cfg['n_cells'], 4))
-        self._nbyte = 2 + 4 * cfg['n_cells']
+        ens['amp'+tg][:n_cells, :, k] = np.array(
+            self.f.read_ui8(4 * n_cells)
+        ).reshape((n_cells, 4))
+        self._nbyte = 2 + 4 * n_cells
         if self._debug_level >= 0:
             logging.info('Read Amp')
 
-    def read_prcnt_gd(self, bb=False):
-        if bb:
-            ens = self.ensembleBB
-            cfg = self.cfgbb
-            self.vars_readBB += ['prcnt_gd']
-        else:
-            ens = self.ensemble
-            cfg = self.cfg
-            self.vars_read += ['prcnt_gd']
-        ens.prcnt_gd[:cfg['n_cells'], :, ens.k] = np.array(
-            self.f.read_ui8(4 * cfg['n_cells'])
-        ).reshape((cfg['n_cells'], 4))
-        self._nbyte = 2 + 4 * cfg['n_cells']
+    def read_prcnt_gd(self, bb=0):
+        ens, cfg, tg = self.switch_profile(bb)
+        self.vars_read += ['prcnt_gd'+tg]
+        n_cells = cfg['n_cells'+tg]
+
+        ens['prcnt_gd'+tg][:n_cells, :, ens.k] = np.array(
+            self.f.read_ui8(4 * n_cells)
+        ).reshape((n_cells, 4))
+        self._nbyte = 2 + 4 * n_cells
         if self._debug_level >= 0:
             logging.info('Read PG')
 
-    def read_status(self, bb=False):
-        if bb:
-            ens = self.ensembleBB
-            cfg = self.cfgbb
-            self.vars_readBB += ['status']
-        else:
-            ens = self.ensemble
-            cfg = self.cfg
-            self.vars_read += ['status']
-        ens.status[:cfg['n_cells'], :, ens.k] = np.array(
-            self.f.read_ui8(4 * cfg['n_cells'])
-        ).reshape((cfg['n_cells'], 4))
-        self._nbyte = 2 + 4 * cfg['n_cells']
+    def read_status(self, bb=0):
+        ens, cfg, tg = self.switch_profile(bb)
+        self.vars_read += ['status'+tg]
+        n_cells = cfg['n_cells'+tg]
+
+        ens['status'+tg][:n_cells, :, ens.k] = np.array(
+            self.f.read_ui8(4 * n_cells)
+        ).reshape((n_cells, 4))
+        self._nbyte = 2 + 4 * n_cells
         if self._debug_level >= 0:
             logging.info('Read Status')
 
@@ -1310,6 +1299,25 @@ class _RDIReader():
         self.skip_Nbyte(byte_len)
         if self._debug_level >= 0:
             logging.debug(f"Skipping ID code {id}\n")
+
+    def cleanup(self, cfg, dat):
+        dat['coords']['range'] = (cfg['bin1_dist_m'] +
+                                  np.arange(self.ensemble['n_cells']) *
+                                  cfg['cell_size'])
+
+        for nm in cfg:
+            dat['attrs'][nm] = cfg[nm]
+
+        if 'surface_layer' in cfg:  # RiverPro/StreamPro
+            dat['coords']['range_sl'] = (cfg['bin1_dist_m_sl'] +
+                                         np.arange(self.cfg['n_cells_sl']) *
+                                         cfg['cell_size_sl'])
+            # Trim surface layer profile to length
+            dv = dat['data_vars']
+            for var in dv:
+                if 'sl' in var:
+                    dv[var] = dv[var][:cfg['n_cells_sl']]
+            dat['attrs']['rotate_vars'].append('vel_sl')
 
     def finalize(self, dat):
         """Remove the attributes from the data that were never loaded.

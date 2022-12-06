@@ -17,7 +17,7 @@ dat_rdi_bt = load('RDI_withBT.nc')
 dat_rdi_vm = load('vmdas01.nc')
 dat_wr1 = load('winriver01.nc')
 dat_wr2 = load('winriver02.nc')
-dat_rr = load('RiverPro_test01.nc')
+dat_rp = load('RiverPro_test01.nc')
 dat_trsc = load('winriver02_transect.nc')
 
 dat_awac = load('AWAC_test01.nc')
@@ -34,7 +34,7 @@ dat_sig_badt = load('Sig1000_BadTime01.nc')
 dat_sig5_leiw = load('Sig500_last_ensemble_is_whole.nc')
 
 
-def test_io_rdi(make_data=False):
+def test_io_rdi(make_data=True):
     warnings.simplefilter('ignore', UserWarning)
     nens = 100
     td_rdi = tb.drop_config(read('RDI_test01.000'))
@@ -43,7 +43,7 @@ def test_io_rdi(make_data=False):
     td_vm = tb.drop_config(read('vmdas01.ENX', nens=nens))
     td_wr1 = tb.drop_config(read('winriver01.PD0'))
     td_wr2 = tb.drop_config(read('winriver02.PD0'))
-    td_rr = tb.drop_config(read('RiverPro_test01.PD0', nens=nens))
+    td_rp = tb.drop_config(read('RiverPro_test01.PD0', nens=nens))
     td_transect = tb.drop_config(read('winriver02_transect.PD0', nens=nens))
 
     if make_data:
@@ -53,7 +53,8 @@ def test_io_rdi(make_data=False):
         save(td_vm, 'vmdas01.nc')
         save(td_wr1, 'winriver01.nc')
         save(td_wr2, 'winriver02.nc')
-        save(td_rr, 'RiverPro_test01.nc')
+
+        save(td_rp, 'RiverPro_test01.nc')
         save(td_transect, 'winriver02_transect.nc')
         return
 
@@ -63,7 +64,7 @@ def test_io_rdi(make_data=False):
     assert_allclose(td_vm, dat_rdi_vm, atol=1e-6)
     assert_allclose(td_wr1, dat_wr1, atol=1e-6)
     assert_allclose(td_wr2, dat_wr2, atol=1e-6)
-    assert_allclose(td_rr, dat_rr, atol=1e-6)
+    assert_allclose(td_rp, dat_rp, atol=1e-6)
     assert_allclose(td_transect, dat_trsc, atol=1e-6)
 
 
