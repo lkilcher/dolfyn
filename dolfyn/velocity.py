@@ -938,7 +938,7 @@ class VelBinner(TimeBinner):
             da = da.assign_coords({'tke': ["upup_", "vpvp_", "wpwp_"],
                                    'time': time})
         else:
-            if 'b5' in veldat.name:
+            if 'time_b5' in veldat.dims:
                 da = da.assign_coords({'time_b5': time})
             else:
                 da = da.assign_coords({'time': time})
