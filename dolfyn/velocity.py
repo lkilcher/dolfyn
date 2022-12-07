@@ -916,7 +916,7 @@ class VelBinner(TimeBinner):
         else:
             vel = self.demean(vel)
 
-        if 'b5' in veldat.name:
+        if 'time_b5' in veldat.dims:
             time = self.mean(veldat.time_b5.values)
         else:
             time = self.mean(veldat.time.values)
@@ -938,7 +938,7 @@ class VelBinner(TimeBinner):
             da = da.assign_coords({'tke': ["upup_", "vpvp_", "wpwp_"],
                                    'time': time})
         else:
-            if 'b5' in veldat.name:
+            if 'time_b5' in veldat.dims:
                 da = da.assign_coords({'time_b5': time})
             else:
                 da = da.assign_coords({'time': time})
@@ -986,7 +986,7 @@ class VelBinner(TimeBinner):
           The spectra in the 'u', 'v', and 'w' directions.
         """
 
-        if 'b5' in veldat.name:
+        if 'time_b5' in veldat.dims:
             time = self.mean(veldat.time_b5.values)
             time_str = 'time_b5'
         else:
