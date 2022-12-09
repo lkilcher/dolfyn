@@ -172,7 +172,7 @@ class ADPBinner(VelBinner):
         noise_level = np.sqrt(N2.mean(dim='freq'))
 
         out = xr.DataArray(
-            noise_level.values,
+            noise_level.values.astype('float32'),
             dims=['time'],
             attrs={'units': 'm/s',
                    'description': 'Doppler noise level calculated '
@@ -267,7 +267,7 @@ class ADPBinner(VelBinner):
         vpwp_ = (bp2_[2] - bp2_[3]) / denm
 
         stress_vec = xr.DataArray(
-            np.stack([upwp_*np.nan, upwp_, vpwp_]),
+            np.stack([upwp_*np.nan, upwp_, vpwp_]).astype('float32'),
             coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                     'range': ds.range,
                     'time': time},
@@ -392,7 +392,7 @@ class ADPBinner(VelBinner):
                   4*sin(th)**6*cos(th)**2*bp2_[4])) / denm
 
         tke_vec = xr.DataArray(
-            np.stack([upup_, vpvp_, wpwp_]),
+            np.stack([upup_, vpvp_, wpwp_]).astype('float32'),
             coords={'tke': ["upup_", "vpvp_", "wpwp_"],
                     'range': ds.range,
                     'time': time},
@@ -421,7 +421,7 @@ class ADPBinner(VelBinner):
                      4*sin(th)**6*cos(th)*2*phi3*upvp_) / denm
 
             stress_vec = xr.DataArray(
-                np.stack([upvp_, upwp_, vpwp_]),
+                np.stack([upvp_, upwp_, vpwp_]).astype('float32'),
                 coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                         'range': ds.range,
                         'time': time},
@@ -465,7 +465,7 @@ class ADPBinner(VelBinner):
         tke = tke_vec.sum('tke') / 2
         tke.attrs['units'] = 'm^2/s^2'
 
-        return tke
+        return tke.astype('float32')
 
     def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4]):
         """
@@ -525,7 +525,7 @@ class ADPBinner(VelBinner):
         out = (psd[:, idx] * freq[idx]**(5/3) /
                a).mean(axis=-1)**(3/2) / U.values
 
-        out = xr.DataArray(out,
+        out = xr.DataArray(out.astype('float32'),
                            attrs={'units': 'm^2/s^3',
                                   'description': 'Dissipation rate calculated from LT83'})
         return out
@@ -638,7 +638,7 @@ class ADPBinner(VelBinner):
         noise = np.sqrt(n/2)
 
         epsilon = xr.DataArray(
-            epsilon,
+            epsilon.astype('float32'),
             coords={vel_raw.dims[0]: rng,
                     vel_raw.dims[1]: time},
             dims=vel_raw.dims,
@@ -647,14 +647,14 @@ class ADPBinner(VelBinner):
                                   'function'})
 
         noise = xr.DataArray(
-            noise,
+            noise.astype('float32'),
             coords={vel_raw.dims[0]: rng,
                     vel_raw.dims[1]: time},
             attrs={'units': 'm/s',
                    'description': 'Noise calculated from structure function'})
 
         SF = xr.DataArray(
-            SF,
+            D.astype('float32'),
             coords={vel_raw.dims[0]: rng,
                     'range_SF': r,
                     vel_raw.dims[1]: time},
@@ -692,7 +692,7 @@ class ADPBinner(VelBinner):
         u_star = np.nanmean(sign * upwp_[z_inds, :] /
                             (1 - z[z_inds, None] / H), axis=0) ** 0.5
 
-        out = xr.DataArray(u_star,
+        out = xr.DataArray(u_star.astype('float32'),
                            coords={'time': ds_avg.time},
                            attrs={'units': 'm/s',
                                   'description': 'Friction velocity'})
