@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		  and cross-covariance functions
 	    - Fix duty cycle attributes for some Nortek instruments
 		- Fix bug where 'accel' variable was rotated incorrected in `correct_motion`
-
+		- Fix bug where ADV IMU variables could not be rotated to beam coordinates
+	
 	- New Methods
 		- Add 'fill_nan_ensemble_mean' function to ADV cleaning methods
 		- Added ADCP turbulence functions
