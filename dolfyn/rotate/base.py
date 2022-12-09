@@ -109,7 +109,7 @@ def _beam2inst(dat, reverse=False, force=False):
         # specifying it here.
         rotate_vars = force
     else:
-        rotate_vars = [ky for ky in dat.rotate_vars if ky.startswith('vel')]
+        rotate_vars = [ky for ky in dat.rotate_vars if dat[ky].shape[0] == rotmat.shape[0]]
 
     cs = 'inst'
     if reverse:

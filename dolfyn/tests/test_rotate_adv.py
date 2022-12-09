@@ -116,8 +116,8 @@ def test_rotate_beam2inst():
     cd = tr.dat.copy(deep=True)
     cdm = tr.dat_imu.copy(deep=True)
 
-    assert_allclose(td, cd, atol=1e-6)
-    assert_allclose(tdm, cdm, atol=1e-6)
+    assert_allclose(td, cd, atol=1e-5)
+    assert_allclose(tdm, cdm, atol=1e-5)
 
 
 def test_rotate_earth2principal(make_data=False):
