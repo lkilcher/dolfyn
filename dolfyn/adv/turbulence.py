@@ -85,8 +85,8 @@ class ADVBinner(VelBinner):
                                   -1, dtype=np.float64
                                   ).astype(np.float32)
 
-        da = xr.DataArray(out, name='stress_vec',
-                          dims=veldat.dims,
+        da = xr.DataArray(out.astype('float32'), 
+                          dims=veldat.dims, 
                           attrs={'units': 'm^2/^2'})
         da = da.rename({'dir': 'tau'})
         da = da.assign_coords({'tau': ["upvp_", "upwp_", "vpwp_"],
@@ -150,7 +150,7 @@ class ADVBinner(VelBinner):
                                          n_fft=n_fft,
                                          window=window)
 
-        csd = xr.DataArray(out, name='csd',
+        csd = xr.DataArray(out,
                            coords={'C': ['Cxy', 'Cxz', 'Cyz'],
                                    'time': time,
                                    'freq': coh_freq},

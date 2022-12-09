@@ -407,11 +407,11 @@ def correct_motion(ds,
 
     ##########
     # Calculate the translational velocity (from the accel):
-    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(),
-                                dims=['dirIMU', 'time'])
+    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(), dims=[
+                                'dirIMU', 'time']).astype('float32')
     # Copy acclow to the adv-object.
-    ds['acclow'] = xr.DataArray(calcobj.acclow,
-                                dims=['dirIMU', 'time'])
+    ds['acclow'] = xr.DataArray(
+        calcobj.acclow, dims=['dirIMU', 'time']).astype('float32')
 
     ##########
     # Calculate rotational velocity (from angrt):
