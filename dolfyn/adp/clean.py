@@ -160,7 +160,7 @@ def find_surface_from_P(ds, salinity=35):
                                'units': 'm', 'description': description})
 
 
-def nan_beyond_surface(ds, val=np.nan):
+def nan_beyond_surface(ds, val=np.nan, inplace=False):
     """
     Mask the values of 3D data (vel, amp, corr, echo) that are beyond the surface.
 
@@ -170,6 +170,9 @@ def nan_beyond_surface(ds, val=np.nan):
       The adcp dataset to clean
     val : nan or numeric
       Specifies the value to set the bad values to (default np.nan).
+    inplace : bool (default: False)
+      When True the existing data object is modified. When False
+      a copy is returned.
 
     Returns
     -------
@@ -183,7 +186,8 @@ def nan_beyond_surface(ds, val=np.nan):
     `distance > range * cos(beam angle) - cell size`
     """
 
-    ds = ds.copy(deep=True)
+    if not inplace:
+        ds = ds.copy(deep=True)
 
     # Get all variables with 'range' coordinate
     var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
@@ -220,10 +224,11 @@ def nan_beyond_surface(ds, val=np.nan):
             a[..., bds] = 0
         ds[nm].values = a
 
-    return ds
+    if not inplace:
+        return ds
 
 
-def correlation_filter(ds, thresh=50):
+def correlation_filter(ds, thresh=50, inplace=False):
     """
     Filters out data where correlation is below a threshold in the 
     along-beam correlation data.
@@ -234,6 +239,9 @@ def correlation_filter(ds, thresh=50):
       The adcp dataset to clean.
     thresh : numeric
       The maximum value of correlation to screen, in counts or %
+    inplace : bool (default: False)
+      When True the existing data object is modified. When False
+      a copy is returned.
 
     Returns
     -------
@@ -246,7 +254,8 @@ def correlation_filter(ds, thresh=50):
     Does not edit correlation or amplitude data.
     """
 
-    ds = ds.copy(deep=True)
+    if not inplace:
+        ds = ds.copy(deep=True)
 
     # 4 or 5 beam
     if hasattr(ds, 'vel_b5'):
@@ -272,7 +281,9 @@ def correlation_filter(ds, thresh=50):
                 str(thresh) + ds.corr.units
 
     rotate2(ds, coord_sys_orig, inplace=True)
-    return ds
+
+    if not inplace:
+        return ds
 
 
 def medfilt_orient(ds, nfilt=7):
