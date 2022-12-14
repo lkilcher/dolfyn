@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 from scipy.signal import medfilt
 from ..tools.misc import medfiltnan
+from ..rotate.api import rotate2
 from ..rotate.base import _make_model, quaternion2orient
 
 
@@ -172,13 +173,17 @@ def nan_beyond_surface(ds, val=np.nan):
 
     Returns
     -------
-    None, operates "in place" and sets the adcp dataset where relevant arrays with 
-    values greater than `depth` are set to NaN
+    ds : xarray.Dataset
+      Sets the adcp dataset where relevant arrays with values greater than `depth`
+      set to NaN
 
     Notes
     -----
-    Surface interference expected to happen at `distance > range * cos(beam angle) - cell size`
+    Surface interference expected to happen at 
+    `distance > range * cos(beam angle) - cell size`
     """
+
+    ds = ds.copy(deep=True)
 
     # Get all variables with 'range' coordinate
     var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
@@ -215,6 +220,8 @@ def nan_beyond_surface(ds, val=np.nan):
             a[..., bds] = 0
         ds[nm].values = a
 
+    return ds
+
 
 def correlation_filter(ds, thresh=50):
     """
@@ -230,8 +237,9 @@ def correlation_filter(ds, thresh=50):
 
     Returns
     -------
-    None, operates "in place". Elements in velocity, correlation, and amplitude
-      are removed if below the correlation threshold
+    ds : xarray.Dataset
+      Elements in velocity, correlation, and amplitude are removed if below the 
+      correlation threshold
 
     Notes
     -----
@@ -246,6 +254,11 @@ def correlation_filter(ds, thresh=50):
     else:
         tag = ['']
 
+    # copy original ref frame
+    coord_sys_orig = ds.coord_sys
+
+    # correlation is always in beam coordinates
+    rotate2(ds, 'beam', inplace=True)
     # correlation is always in beam coordinates
     for tg in tag:
         mask = ds['corr'+tg].values <= thresh
@@ -257,6 +270,9 @@ def correlation_filter(ds, thresh=50):
                 ds[var+tg].values[mask] = 0
             ds[var+tg].attrs['Comments'] = 'Filtered of data with a correlation value below ' + \
                 str(thresh) + ds.corr.units
+
+    rotate2(ds, coord_sys_orig, inplace=True)
+    return ds
 
 
 def medfilt_orient(ds, nfilt=7):
