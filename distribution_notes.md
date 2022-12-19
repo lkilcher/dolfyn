@@ -50,6 +50,29 @@ Before uploading to the distribution version of PyPi, it is a best practice to:
     python3 -m twine upload dist/dolfyn-*
 
 
+## Upload to Conda
+
+1. Update package version and requirements in meta.yaml
+2. Update source url and sha256 from pypi page (https://pypi.org/project/dolfyn/#files)
+3. Updated conda, conda-build, and conda-verify
+
+        conda update conda conda-build conda-verify anaconda-client
+
+3. Build conda package:
+
+        conda-build .
+
+4. Note where package is saved locally (~/miniconda3/conda-bld/linux-64/dolfyn-v1.2.0-py39_0.tar.bz2)
+
+4. Test package:
+
+        conda install --use-local dolfyn
+
+5. Upload to anaconda:
+
+        anaconda login
+        anaconda upload <package_local_filepath>
+
 # Building docs
 
 Change directories in a command window:

@@ -3,17 +3,14 @@ package:
   version: v1.2.0
 
 source:
-  git_rev: v1.2.0
-  git_url: https://github.com/lkilcher/dolfyn/.git
-
-build:
-  number: 0
-  script: "python3 -m pip install . --no-deps --ignore-installed -vv"
+  url: https://files.pythonhosted.org/packages/c2/d5/613346df7123cf2e16fbe4f13748bbd26e6840e44391b2d51fdad7fbe173/dolfyn-1.2.0.tar.gz
+  sha256: c6a81557d4ff6510836a24b0d621a05b4ee35a809249d10aa3ec0c799d589c6a
 
 requirements:
   build:
     - python=3.9
-    - numpy>=1.21
+    - setuptools
+    - numpy>=1.21.0
     - scipy>=1.7.0
     - xarray>=0.19.0
     - netcdf4<1.6.0
@@ -21,6 +18,11 @@ requirements:
 
   run:
     - python
+    - numpy>=1.21.0
+    - scipy>=1.7.0
+    - xarray>=0.19.0
+    - netcdf4<1.6.0
+    - bottleneck
 
 test:
   imports:
