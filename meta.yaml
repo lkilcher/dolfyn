@@ -1,0 +1,31 @@
+package:
+  name: dolfyn
+  version: 0.9.0
+
+source:
+  path: ./
+
+requirements:
+  build:
+    - python=2.7
+    - setuptools
+    - h5py
+    - numpy
+    - scipy
+    - pydicth5
+
+  run:
+    - python=2.7
+    - h5py
+    - pydicth5
+    - matplotlib
+    - scipy
+
+build:
+  noarch: python
+  number: 0
+
+about:
+  home: https://lkilcher.github.io/dolfyn/
+  license: Apache 2.0
+  license_file: License.txt

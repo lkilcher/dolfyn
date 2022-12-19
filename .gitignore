@@ -1,3 +1,10 @@
+*deprecated*
+*dep*
+
+doc-build
+
+!config_files/**/*.dep
+
 dist
 
 dolfyn.egg-info
