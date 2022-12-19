@@ -3,7 +3,10 @@
 1. Update version number and release date in dolfyn/_version.py
 2. Update version number in changelog.md
 3. Commit version number changes
-4. Create a new version tag (v#.#.#) and push to repository
+4. Create a new version tag and push to repository:
+
+        git tag v#.#.#
+        git push origin --tags
 
 # Building Package
 
