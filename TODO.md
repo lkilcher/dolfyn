@@ -37,8 +37,6 @@ Support for AWAC waves data (AST)
 
 Support for files containing data from 2 water-track profiling configurations
 
-Occasional TRDI sampling frequency calculation error - calculation depends on a variable that can be haphazardly written by TRDI software (VMDAS)
-
 
 Data Processing
 ===============

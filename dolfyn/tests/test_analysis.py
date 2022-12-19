@@ -10,7 +10,7 @@ import pytest
 class adv_setup():
     def __init__(self, tv):
         self.dat1 = tv.dat.copy(deep=True)
-        self.dat2 = read_example('burst_mode01.VEC', nens=90)
+        self.dat2 = read_example('vector_burst_mode01.VEC', nens=90)
         fs = self.dat1.fs
         self.avg_tool = VelBinner(n_bin=fs, fs=fs)
 

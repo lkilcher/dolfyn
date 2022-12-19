@@ -161,7 +161,7 @@ def find_surface_from_P(ds, salinity=35):
                                'units': 'm', 'description': description})
 
 
-def nan_beyond_surface(ds, val=np.nan):
+def nan_beyond_surface(ds, val=np.nan, inplace=False):
     """
     Mask the values of 3D data (vel, amp, corr, echo) that are beyond the surface.
 
@@ -171,19 +171,24 @@ def nan_beyond_surface(ds, val=np.nan):
       The adcp dataset to clean
     val : nan or numeric
       Specifies the value to set the bad values to (default np.nan).
+    inplace : bool (default: False)
+      When True the existing data object is modified. When False
+      a copy is returned.
 
     Returns
     -------
     ds : xarray.Dataset
-      The adcp dataset where relevant arrays with values greater than
-      `depth` are set to NaN
+      Sets the adcp dataset where relevant arrays with values greater than `depth`
+      set to NaN
 
     Notes
     -----
-    Surface interference expected to happen at `distance > range * cos(beam angle) - cell size`
+    Surface interference expected to happen at 
+    `distance > range * cos(beam angle) - cell size`
     """
 
-    ds = ds.copy(deep=True)
+    if not inplace:
+        ds = ds.copy(deep=True)
 
     # Get all variables with 'range' coordinate
     var = [h for h in ds.keys() if any(s for s in ds[h].dims if 'range' in s)]
@@ -220,44 +225,14 @@ def nan_beyond_surface(ds, val=np.nan):
             a[..., bds] = 0
         ds[nm].values = a
 
-    return ds
+    if not inplace:
+        return ds
 
 
-def val_exceeds_thresh(var, thresh=5, val=np.nan):
+def correlation_filter(ds, thresh=50, inplace=False):
     """
-    Find values of a variable that exceed a threshold value,
-    and assign "val" to the velocity data where the threshold is
-    exceeded.
-
-    Parameters
-    ----------
-    var : xarray.DataArray
-      Variable to clean
-    thresh : numeric
-      The maximum value of velocity to screen
-    val : nan or numeric
-      Specifies the value to set the bad values to (default np.nan)
-
-    Returns
-    -------
-    ds : xarray.Dataset
-      The adcp dataset with datapoints beyond thresh are set to `val`
-    """
-
-    var = var.copy(deep=True)
-
-    bd = np.zeros(var.shape, dtype='bool')
-    bd |= (np.abs(var.values) > thresh)
-
-    var.values[bd] = val
-
-    return var
-
-
-def correlation_filter(ds, thresh=50, val=np.nan):
-    """
-    Filters out velocity data where correlation is below a
-    threshold in the beam correlation data.
+    Filters out data where correlation is below a threshold in the 
+    along-beam correlation data.
 
     Parameters
     ----------
@@ -265,20 +240,23 @@ def correlation_filter(ds, thresh=50, val=np.nan):
       The adcp dataset to clean.
     thresh : numeric
       The maximum value of correlation to screen, in counts or %
-    val : numeric
-      Value to set masked correlation data to, default is nan
+    inplace : bool (default: False)
+      When True the existing data object is modified. When False
+      a copy is returned.
 
     Returns
     -------
     ds : xarray.Dataset
-     Velocity data with low correlation values set to `val`
+      Elements in velocity, correlation, and amplitude are removed if below the 
+      correlation threshold
 
     Notes
     -----
     Does not edit correlation or amplitude data.
     """
 
-    ds = ds.copy(deep=True)
+    if not inplace:
+        ds = ds.copy(deep=True)
 
     # 4 or 5 beam
     if hasattr(ds, 'vel_b5'):
@@ -291,15 +269,22 @@ def correlation_filter(ds, thresh=50, val=np.nan):
 
     # correlation is always in beam coordinates
     rotate2(ds, 'beam', inplace=True)
+    # correlation is always in beam coordinates
     for tg in tag:
-        mask = (ds['corr'+tg].values <= thresh)
-        ds['vel'+tg].values[mask] = val
-        ds['vel'+tg].attrs['Comments'] = 'Filtered of data with a correlation value below ' + \
-            str(thresh) + ds.corr.units
+        mask = ds['corr'+tg].values <= thresh
+
+        for var in ['vel', 'corr', 'amp']:
+            try:
+                ds[var+tg].values[mask] = np.nan
+            except:
+                ds[var+tg].values[mask] = 0
+            ds[var+tg].attrs['Comments'] = 'Filtered of data with a correlation value below ' + \
+                str(thresh) + ds.corr.units
 
     rotate2(ds, coord_sys_orig, inplace=True)
 
-    return ds
+    if not inplace:
+        return ds
 
 
 def medfilt_orient(ds, nfilt=7):
@@ -342,6 +327,37 @@ def medfilt_orient(ds, nfilt=7):
             ds[nm].values = medfilt(ds[nm].values, nfilt)
 
         return ds.drop_vars('orientmat')
+
+
+def val_exceeds_thresh(var, thresh=5, val=np.nan):
+    """
+    Find values of a variable that exceed a threshold value,
+    and assign "val" to the velocity data where the threshold is
+    exceeded.
+
+    Parameters
+    ----------
+    var : xarray.DataArray
+      Variable to clean
+    thresh : numeric
+      The maximum value of velocity to screen
+    val : nan or numeric
+      Specifies the value to set the bad values to (default np.nan)
+
+    Returns
+    -------
+    ds : xarray.Dataset
+      The adcp dataset with datapoints beyond thresh are set to `val`
+
+    """
+    var = var.copy(deep=True)
+
+    bd = np.zeros(var.shape, dtype='bool')
+    bd |= (np.abs(var.values) > thresh)
+
+    var.values[bd] = val
+
+    return var
 
 
 def fillgaps_time(var, method='cubic', maxgap=None):

@@ -2,13 +2,15 @@ import dolfyn.io.rdi as wh
 import dolfyn.io.nortek as awac
 import dolfyn.io.nortek2 as sig
 from dolfyn.io.api import read_example as read
-from dolfyn.tests.base import assert_allclose, save_netcdf, save_matlab, load_matlab, exdt, rfnm, drop_config
+from dolfyn.tests.base import assert_allclose, save_netcdf, \
+    save_matlab, load_matlab, exdt, rfnm, drop_config
 from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests import test_read_adv as tv
 import contextlib
 import unittest
 import pytest
 import os
+from shutil import copy2
 import io
 
 
@@ -19,6 +21,9 @@ def test_save():
 
     assert os.path.exists(rfnm('test_save.nc'))
     assert os.path.exists(rfnm('test_save.mat'))
+
+    os.remove(rfnm('test_save.nc'))
+    os.remove(rfnm('test_save.mat'))
 
 
 def test_matlab_io(make_data=False):
@@ -49,67 +54,39 @@ def test_matlab_io(make_data=False):
 
 
 def test_debugging(make_data=False):
-    def debug_output(f, func, datafile, nens, *args, **kwargs):
-        with contextlib.redirect_stdout(f):
-            drop_config(func(exdt(datafile), nens=nens, *args, **kwargs))
-
-    def remove_local_path(stringIO):
-        string = stringIO.getvalue()
-        start = string.find("Indexing")
-        if start != -1:
-            start += 8
-            end = stringIO.getvalue().find("...")
-            string = string[0:start] + string[end+3:]
-
-        start = string.find("Reading file") + 12
-        end = string.find(" ...")
-        return string[0:start] + string[end:]
-
-    def save_txt(fname, string):
-        with open(rfnm(fname), 'w') as f:
-            f.write(string)
-
-    def read_txt(fname):
-        with open(rfnm(fname), 'r') as f:
+    def read_txt(fname, loc):
+        with open(loc(fname), 'r') as f:
             string = f.read()
         return string
 
-    nens = 100
-    db_rdi = io.StringIO()
-    db_awac = io.StringIO()
-    db_vec = io.StringIO()
-    db_sig = io.StringIO()
+    def read_file_and_test(fname):
+        td = read_txt(fname, exdt)
+        cd = read_txt(fname, rfnm)
+        assert td == cd
+        os.remove(exdt(fname))
 
-    debug_output(db_rdi, wh.read_rdi, 'RDI_withBT.000', nens, debug=11)
-    debug_output(db_awac, awac.read_nortek, 'AWAC_test01.wpr',
-                 nens, debug=True, do_checksum=True)
-    debug_output(db_vec, awac.read_nortek, 'vector_data_imu01.VEC',
-                 nens, debug=True, do_checksum=True)
-    debug_output(db_sig, sig.read_signature, 'Sig500_Echo.ad2cp',
-                 nens, rebuild_index=True, debug=True)
+    nens = 100
+    drop_config(wh.read_rdi(
+        exdt('RDI_withBT.000'), nens, debug_level=3))
+    drop_config(awac.read_nortek(
+        exdt('AWAC_test01.wpr'), nens, debug=True, do_checksum=True))
+    drop_config(awac.read_nortek(
+        exdt('vector_data_imu01.VEC'), nens, debug=True, do_checksum=True))
+    drop_config(sig.read_signature(
+        exdt('Sig500_Echo.ad2cp'), nens, rebuild_index=True, debug=True))
     os.remove(exdt('Sig500_Echo.ad2cp.index'))
 
-    str_rdi = remove_local_path(db_rdi)
-    str_awac = remove_local_path(db_awac)
-    str_vec = remove_local_path(db_vec)
-    str_sig = remove_local_path(db_sig)
-
     if make_data:
-        save_txt('rdi_debug_out.txt', str_rdi)
-        save_txt('awac_debug_out.txt', str_awac)
-        save_txt('vec_debug_out.txt', str_vec)
-        save_txt('sig_debug_out.txt', str_sig)
+        copy2(exdt('RDI_withBT.log'), rfnm('RDI_withBT.log'))
+        copy2(exdt('AWAC_test01.log'), rfnm('AWAC_test01.log'))
+        copy2(exdt('vector_data_imu01.log'), rfnm('vector_data_imu01.log'))
+        copy2(exdt('Sig500_Echo.log'), rfnm('Sig500_Echo.log'))
         return
 
-    test_rdi = read_txt('rdi_debug_out.txt')
-    test_awac = read_txt('awac_debug_out.txt')
-    test_vec = read_txt('vec_debug_out.txt')
-    test_sig = read_txt('sig_debug_out.txt')
-
-    assert test_rdi == str_rdi
-    assert test_awac == str_awac
-    assert test_vec == str_vec
-    assert test_sig == str_sig
+    read_file_and_test('RDI_withBT.log')
+    read_file_and_test('AWAC_test01.log')
+    read_file_and_test('vector_data_imu01.log')
+    read_file_and_test('Sig500_Echo.log')
 
 
 class warnings_testcase(unittest.TestCase):
