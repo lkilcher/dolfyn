@@ -407,11 +407,11 @@ def correct_motion(ds,
 
     ##########
     # Calculate the translational velocity (from the accel):
-    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(),
-                                dims=['dirIMU', 'time'])
+    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(), dims=[
+                                'dirIMU', 'time']).astype('float32')
     # Copy acclow to the adv-object.
-    ds['acclow'] = xr.DataArray(calcobj.acclow,
-                                dims=['dirIMU', 'time'])
+    ds['acclow'] = xr.DataArray(
+        calcobj.acclow, dims=['dirIMU', 'time']).astype('float32')
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -436,7 +436,8 @@ def correct_motion(ds,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    ds['velrot'] = xr.DataArray(velrot, dims=['dirIMU', 'time'])
+    ds['velrot'] = xr.DataArray(
+        velrot, dims=['dirIMU', 'time']).astype('float32')
 
     ##########
     # Rotate the data into the correct coordinate system.
@@ -466,7 +467,8 @@ def correct_motion(ds,
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    ds['vel_raw'] = xr.DataArray(ds.vel.copy(deep=True), dims=ds.vel.dims)
+    ds['vel_raw'] = xr.DataArray(ds.vel.copy(
+        deep=True), dims=ds.vel.dims).astype('float32')
     # Add it to rotate_vars:
     ds.attrs['rotate_vars'].append('vel_raw')
 

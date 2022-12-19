@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Fixed errors in TRDI reader that caused ensembles to be skipped
 		- Variables found from NMEA data now all contain _gps tag
 		- Calculate VMDAS and WinRiver sampling frequency from diff of time coordinate
-		- Fix bug where 'accel' variable was rotated incorrectly in `correct_motion`
 	    - Fixed bug that dropped shared but differing "lag" coordinate between auto-covariance
 		  and cross-covariance functions
 	    - Fix duty cycle attributes for some Nortek instruments
-
+		- Fix bug where 'accel' variable was rotated incorrectly in `correct_motion`
+		- Fix bug where ADV IMU variables could not be rotated to beam coordinates
+	
 	- API/Useability
 		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
 		  manually and determine which slot (nb vs bb) that VMDAS is saved in - Thank you jklymak!

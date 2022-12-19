@@ -100,7 +100,8 @@ def find_surface(ds, thresh=10, nfilt=None):
         dfilt[dfilt == 0] = np.NaN
         d = dfilt
 
-    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={'units': 'm'})
+    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={
+                               'units': 'm'}).astype('float32')
 
 
 def find_surface_from_P(ds, salinity=35):
@@ -152,11 +153,11 @@ def find_surface_from_P(ds, salinity=35):
         description = "Water depth to ADCP"
 
     ds['water_density'] = xr.DataArray(
-        rho_atm0,
+        rho_atm0.astype('float32'),
         dims=['time'],
         attrs={'units': 'kg/m^3',
                'description': 'Water density according to UNESCO 1981 equation of state'})
-    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={
+    ds['depth'] = xr.DataArray(d.astype('float32'), dims=['time'], attrs={
                                'units': 'm', 'description': description})
 
 
