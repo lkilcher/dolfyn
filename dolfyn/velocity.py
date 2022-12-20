@@ -320,7 +320,7 @@ class Velocity():
         """Horizontal velocity magnitude
         """
         return xr.DataArray(
-            np.abs(self.U),
+            np.abs(self.U).astype('float32'),
             attrs={'units': 'm/s',
                    'description': 'horizontal velocity magnitude'})
 
@@ -332,7 +332,7 @@ class Velocity():
         # Convert from radians to degrees
         angle = np.angle(self.U)*(180/np.pi)
 
-        return xr.DataArray(angle,
+        return xr.DataArray(angle.astype('float32'),
                             dims=self.U.dims,
                             coords=self.U.coords,
                             attrs={'units': 'deg',
@@ -349,11 +349,10 @@ class Velocity():
         """
         E_coh = (self.upwp_**2 + self.upvp_**2 + self.vpwp_**2) ** (0.5)
 
-        return xr.DataArray(E_coh,
+        return xr.DataArray(E_coh.astype('float32'),
                             coords={'time': self.ds['stress_vec'].time},
                             dims=['time'],
-                            attrs={'units': self.ds['stress_vec'].units},
-                            name='E_coh')
+                            attrs={'units': self.ds['stress_vec'].units})
 
     @property
     def I_tke(self, thresh=0):
@@ -363,11 +362,10 @@ class Velocity():
         """
         I_tke = np.ma.masked_where(self.U_mag < thresh,
                                    np.sqrt(2 * self.tke) / self.U_mag)
-        return xr.DataArray(I_tke.data,
+        return xr.DataArray(I_tke.data.astype('float32'),
                             coords=self.U_mag.coords,
                             dims=self.U_mag.dims,
-                            attrs={'units': '% [0,1]'},
-                            name='TKE intensity')
+                            attrs={'units': '% [0,1]'})
 
     @property
     def I(self, thresh=0):
@@ -378,11 +376,10 @@ class Velocity():
         """
         I = np.ma.masked_where(self.U_mag < thresh,
                                self.ds['U_std'] / self.U_mag)
-        return xr.DataArray(I.data,
+        return xr.DataArray(I.data.astype('float32'),
                             coords=self.U_mag.coords,
                             dims=self.U_mag.dims,
-                            attrs={'units': '% [0,1]'},
-                            name='turbulence intensity')
+                            attrs={'units': '% [0,1]'})
 
     @property
     def tke(self,):
