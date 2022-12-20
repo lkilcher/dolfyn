@@ -119,7 +119,7 @@ def _create_dataset(data):
     inst = ['X', 'Y', 'Z']
     earth = ['E', 'N', 'U']
     beam = list(range(1, data['data_vars']['vel'].shape[0]+1))
-    tag = ['_b5', '_echo', '_bt', '_gps', '_ast']
+    tag = ['_b5', '_echo', '_bt', '_gps', '_ast', '_sl']
 
     for key in data['data_vars']:
         # orientation matrices
@@ -206,11 +206,12 @@ def _create_dataset(data):
                                                      'time'+tg: data['coords']['time'+tg]})
 
             elif l == 3:  # 3D variables
+                if 'vel' in key:
+                    dim0 = 'dir'
+                else:  # amp, corr, prcnt_gd, status
+                    dim0 = 'beam'
+
                 if not any(val in key for val in tag):
-                    if 'vel' in key:
-                        dim0 = 'dir'
-                    else:  # amp, corr
-                        dim0 = 'beam'
                     ds[key] = ds[key].rename({'dim_0': dim0,
                                               'dim_1': 'range',
                                               'dim_2': 'time'})
@@ -224,7 +225,14 @@ def _create_dataset(data):
                                               'dim_2': 'time_b5'})
                     ds[key] = ds[key].assign_coords({'range_b5': data['coords']['range_b5'],
                                                      'time_b5': data['coords']['time_b5']})
+                elif 'sl' in key:
+                    ds[key] = ds[key].rename({'dim_0': dim0,
+                                              'dim_1': 'range_sl',
+                                              'dim_2': 'time'})
+                    ds[key] = ds[key].assign_coords({'range_sl': data['coords']['range_sl'],
+                                                     'time': data['coords']['time']})
                 else:
+                    ds = ds.drop_vars(key)
                     warnings.warn(f'Variable not included in dataset: {key}')
 
     # coordinate units

@@ -102,6 +102,7 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
         n = dat.shape[0]
         # Nortek documents sign change for upside-down instruments (equiv to adding 180 deg to roll)
         if down:
+            # This is equivalent to adding 180 degrees to roll axis in _calc_omat()
             sign = np.array([1, -1, -1, -1], ndmin=dat.ndim).T
             signIMU = np.array([1, -1, -1], ndmin=dat.ndim).T
             if not reverse:

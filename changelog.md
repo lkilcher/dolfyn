@@ -5,21 +5,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unversioned
+	- API/Useability
+		- Added ADCP turbulence functions
+
+## Version 1.2.0
     - Bugfixes
+	    - Fixed errors in TRDI reader that caused ensembles to be skipped
+		- Variables found from NMEA data now all contain _gps tag
+		- Calculate VMDAS and WinRiver sampling frequency from diff of time coordinate
 	    - Fixed bug that dropped shared but differing "lag" coordinate between auto-covariance
 		  and cross-covariance functions
 	    - Fix duty cycle attributes for some Nortek instruments
-		- Fix bug where 'accel' variable was rotated incorrected in `correct_motion`
+		- Fix bug where 'accel' variable was rotated incorrectly in `correct_motion`
 		- Fix bug where ADV IMU variables could not be rotated to beam coordinates
 	
-	- New Methods
-		- Add 'fill_nan_ensemble_mean' function to ADV cleaning methods
-		- Added ADCP turbulence functions
-
 	- API/Useability
-		- The spectral frequency component is renamed to "freq", rather than set to "f"
-		  for units of "Hz" and "omega" for "rad/s"
-	    - `correct_motion` filtering updated for duty cycled ADVs
+		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
+		  manually and determine which slot (nb vs bb) that VMDAS is saved in - Thank you jklymak!
+		- Clarified VMDAS navigation block variable names
+		- Added ability to read WinRiver2 NMEA data (GGA, VTG, HDT, DBT)
+		- Added ability to read TRDI 5th beam altimeter data
+		- Added ability to read RiverPro/StreamPro surface layer profile
+		- Updated TRDI attribute names
+		- Debugging readers now uses logging module
+		- Add 'fill_nan_ensemble_mean' function to ADV cleaning methods
+		- Spectra frequency coordinate name is set to 'freq', whether using radial (rad/s) or
+		  classical (Hz) frequency units instead of 'omega' and 'f', respectively
+	    - `correct_motion` is now capable of processing data from duty-cycled ADVs
 	    - `CalcMotion` class is changed from private to public
 
 

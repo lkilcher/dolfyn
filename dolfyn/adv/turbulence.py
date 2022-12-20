@@ -85,8 +85,8 @@ class ADVBinner(VelBinner):
                                   -1, dtype=np.float64
                                   ).astype(np.float32)
 
-        da = xr.DataArray(out,
-                          dims=veldat.dims,
+        da = xr.DataArray(out.astype('float32'), 
+                          dims=veldat.dims, 
                           attrs={'units': 'm^2/^2'})
         da = da.rename({'dir': 'tau'})
         da = da.assign_coords({'tau': ["upvp_", "upwp_", "vpwp_"],

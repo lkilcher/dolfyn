@@ -509,7 +509,8 @@ class VelBinner(TimeBinner):
                     out_ds[ky] = xr.DataArray(self.mean(raw_ds[ky].values),
                                               coords=coords_dict,
                                               dims=dims_list,
-                                              attrs=raw_ds[ky].attrs)
+                                              attrs=raw_ds[ky].attrs
+                                              ).astype('float32')
                 except:  # variables not needing averaging
                     pass
             # Add standard deviation
@@ -517,7 +518,7 @@ class VelBinner(TimeBinner):
                              axis=-1,
                              dtype=np.float64) - (noise[0] + noise[1])/2)
             out_ds['U_std'] = xr.DataArray(
-                std,
+                std.astype('float32'),
                 dims=raw_ds.vel.dims[1:],
                 attrs={'units': 'm/s',
                        'description': 'horizontal velocity std dev'})
@@ -581,7 +582,8 @@ class VelBinner(TimeBinner):
                     out_ds[ky+suffix] = xr.DataArray(self.var(raw_ds[ky].values),
                                                      coords=coords_dict,
                                                      dims=dims_list,
-                                                     attrs=raw_ds[ky].attrs)
+                                                     attrs=raw_ds[ky].attrs
+                                                     ).astype('float32')
                 except:  # variables not needing averaging
                     pass
 
@@ -660,7 +662,7 @@ class VelBinner(TimeBinner):
         dims_list.append('f')
         coords_dict['f'] = freq
 
-        da = xr.DataArray(out, name='coherence',
+        da = xr.DataArray(out.astype('float32'),
                           coords=coords_dict,
                           dims=dims_list)
         da['f'].attrs['units'] = 'Hz'
@@ -737,7 +739,7 @@ class VelBinner(TimeBinner):
         dims_list.append('f')
         coords_dict['f'] = freq
 
-        da = xr.DataArray(out, name='phase_angle',
+        da = xr.DataArray(out,
                           coords=coords_dict,
                           dims=dims_list)
         da['f'].attrs['units'] = 'Hz'
@@ -800,7 +802,7 @@ class VelBinner(TimeBinner):
         dims_list.append('lag')
         coords_dict['lag'] = np.arange(n_bin//4)
 
-        da = xr.DataArray(out, name='auto_covariance',
+        da = xr.DataArray(out.astype('float32'),
                           coords=coords_dict,
                           dims=dims_list,)
         da['lag'].attrs['units'] = 'timestep'
@@ -870,7 +872,7 @@ class VelBinner(TimeBinner):
         dims_list.append('dt')
         coords_dict['dt'] = np.arange(npt)
 
-        da = xr.DataArray(out, name='cross_covariance',
+        da = xr.DataArray(out.astype('float32'),
                           coords=coords_dict,
                           dims=dims_list)
         da['dt'].attrs['units'] = 'timestep'
@@ -926,7 +928,7 @@ class VelBinner(TimeBinner):
         out[1] -= noise[1] ** 2
         out[2] -= noise[2] ** 2
 
-        da = xr.DataArray(out, name='tke_vec',
+        da = xr.DataArray(out.astype('float32'),
                           dims=veldat.dims,
                           attrs={'units': 'm^2/^2'})
 
@@ -1022,7 +1024,7 @@ class VelBinner(TimeBinner):
             coords = {time_str: time, 'freq': freq}
             dims = [time_str, 'freq']
 
-        psd = xr.DataArray(out, name='psd',
+        psd = xr.DataArray(out.astype('float32'),
                            coords=coords,
                            dims=dims,
                            attrs={'units': units, 'n_fft': n_fft})
