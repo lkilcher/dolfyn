@@ -6,12 +6,10 @@ from dolfyn.tests.base import assert_allclose, save_netcdf, \
     save_matlab, load_matlab, exdt, rfnm, drop_config
 from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests import test_read_adv as tv
-import contextlib
 import unittest
 import pytest
 import os
 from shutil import copy2
-import io
 
 
 def test_save():
@@ -36,7 +34,7 @@ def test_matlab_io(make_data=False):
     # .userdata.json file. NOTE: DOLfYN defaults to using what is in
     # the .userdata.json file.
     with pytest.warns(UserWarning, match='magnetic_var_deg'):
-        td_vm = drop_config(read('vmdas01.ENX', nens=nens))
+        td_vm = drop_config(read('vmdas01_wh.ENX', nens=nens))
 
     if make_data:
         save_matlab(td_vec, 'dat_vec')

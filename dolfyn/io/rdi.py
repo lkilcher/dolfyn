@@ -676,6 +676,8 @@ class _RDIReader():
                         12800: (self.skip_Nbyte, [32]),
                         # 3000 Fixed attitude data format for Ocean Surveyor ADCPs
                         12288: (self.skip_Nbyte, [32]),
+                        12496: (self.skip_Nbyte, [24]),  # 30D0
+                        12504: (self.skip_Nbyte, [48]),  # 30D8
                         # 4100 beam 5 range
                         16640: (self.read_alt, []),
                         # 4400 Firmware status data (RiverPro & StreamPro)
