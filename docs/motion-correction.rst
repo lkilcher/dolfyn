@@ -56,11 +56,12 @@ and configured correctly:
 
    inst2head_vec
      The 3-element vector that specifies the position of the ADV head in
-     the inst coordinate system (Figure 1). This property must be in
-     ``dat.attrs`` in order to do motion correction.
+     the inst coordinate system (IMU coordinate system, Figure 1). This 
+     property must be in ``dat.attrs`` in order to do motion correction.
 
    These variables are set in either the userdata.json file (prior to calling
-    ``dolfyn.read``), or by setting them explicitly after the data file has been read::
+    ``dolfyn.read``), or by setting them explicitly after the data file has been 
+    read::
 
      dat.velds.set_inst2head_rotmat(<3x3 rotation matrix>)
      dat.attrs['inst2head_vec'] = np.array([3-element vector])
@@ -119,7 +120,7 @@ The 'userdata.json' file corresponding to the ADV sounding weight in Figure 2 lo
 	{"inst2head_rotmat": [[ 0, 0, 1],
 	                      [ 0, 1, 0],
 	                      [-1, 0, 0]],
-	 "inst2head_vec": [0.20, 0, 0.04],
+	 "inst2head_vec": [0.04, 0, 0.20],
 	 "motion accel_filtfreq Hz": 0.03,
 	}
 

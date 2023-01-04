@@ -96,7 +96,7 @@ def find_surface(ds, thresh=10, nfilt=None):
             d[ip] = np.NaN
 
     if nfilt:
-        dfilt = medfiltnan(d, nfilt, thresh=.4)
+        dfilt = medfiltnan(d, nfilt, thresh=4)
         dfilt[dfilt == 0] = np.NaN
         d = dfilt
 

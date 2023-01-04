@@ -271,7 +271,7 @@ def quaternion2orient(quaternions):
     Returns
     -------
     orientmat : |np.ndarray|
-        The inst2earth rotation maxtrix as calculated from the quaternions
+        The earth2inst rotation maxtrix as calculated from the quaternions
 
     See Also
     --------
@@ -293,4 +293,4 @@ def quaternion2orient(quaternions):
 
     xyz = ['X', 'Y', 'Z']
     enu = ['E', 'N', 'U']
-    return omat.assign_coords({'inst': xyz, 'earth': enu, 'time': quaternions.time})
+    return omat.assign_coords({'earth': enu, 'inst': xyz, 'time': quaternions.time})
