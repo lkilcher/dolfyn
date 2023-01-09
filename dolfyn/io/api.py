@@ -30,19 +30,20 @@ def read(fname, userdata=True, nens=None, **kwargs):
     Parameters
     ----------
     filename : string
-        Filename of instrument file to read.
-    userdata : True, False, or string of userdata.json filename (default ``True``)
-        Whether to read the '<base-filename>.userdata.json' file.
+      Filename of instrument file to read.
+    userdata : bool, or string of userdata.json filename (default ``True``)
+      Whether to read the '<base-filename>.userdata.json' file.
     nens : None (default: read entire file), int, or 2-element tuple (start, stop)
-        Number of pings or ensembles to read from the
-    **kwargs : passed to instrument-specific parser.
+      Number of pings or ensembles to read from the file
+    **kwargs : dict
+      Passed to instrument-specific parser.
 
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from instrument datafile.
-
+      An xarray dataset from instrument datafile.
     """
+
     file_type = _get_filetype(fname)
     if file_type == '<GIT-LFS pointer>':
         raise IOError("File '{}' looks like a git-lfs pointer. You may need to "
@@ -67,7 +68,7 @@ def read_example(name, **kwargs):
     Parameters
     ----------
     name : str
-        A few available files:
+      A few available files:
 
             AWAC_test01.wpr
             BenchFile01.ad2cp
@@ -81,9 +82,9 @@ def read_example(name, **kwargs):
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from the binary instrument data.
-
+      An xarray dataset from the binary instrument data.
     """
+
     filename = pkg_resources.resource_filename(
         'dolfyn',
         'example_data/' + name)
@@ -99,11 +100,13 @@ def save(ds, filename,
     Parameters
     ----------
     ds : xarray.Dataset
+      Dataset to save
     filename : str
-        Filename and/or path with the '.nc' extension
+      Filename and/or path with the '.nc' extension
     compression : bool (default: False)
-        When true, compress all variables with zlib complevel=1.
-    **kwargs : these are passed directly to :func:`xarray.Dataset.to_netcdf`
+      When true, compress all variables with zlib complevel=1.
+    **kwargs : dict
+      These are passed directly to :func:`xarray.Dataset.to_netcdf`
 
     Notes
     -----
@@ -113,8 +116,8 @@ def save(ds, filename,
     'encoding' in kwargs. The values in encoding will take precedence
     over whatever is set according to the compression option above.
     See the xarray.to_netcdf documentation for more details.
-
     """
+
     filename = _check_file_ext(filename, 'nc')
 
     # Dropping the detailed configuration stats because netcdf can't save it
@@ -151,14 +154,14 @@ def load(filename):
     Parameters
     ----------
     filename : str
-        Filename and/or path with the '.nc' extension
+      Filename and/or path with the '.nc' extension
 
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from the binary instrument data.
-
+      An xarray dataset from the binary instrument data.
     """
+
     filename = _check_file_ext(filename, 'nc')
 
     ds = xr.load_dataset(filename, engine='netcdf4')
@@ -188,12 +191,12 @@ def save_mat(ds, filename, datenum=True):
     Parameters
     ----------
     ds : xarray.Dataset
-        Data to save
+      Dataset to save
     filename : str
-        Filename and/or path with the '.mat' extension
+      Filename and/or path with the '.mat' extension
     datenum : bool
-        If true, converts time to datenum. If false, time will be saved
-        in "epoch time".
+      If true, converts time to datenum. If false, time will be saved
+      in "epoch time".
 
     Notes
     -----
@@ -203,8 +206,8 @@ def save_mat(ds, filename, datenum=True):
     See Also
     --------
     scipy.io.savemat()
-
     """
+
     filename = _check_file_ext(filename, 'mat')
 
     # Convert time to datenum
@@ -250,21 +253,21 @@ def load_mat(filename, datenum=True):
     Parameters
     ----------
     filename : str
-        Filename and/or path with the '.mat' extension
+      Filename and/or path with the '.mat' extension
     datenum : bool
-        If true, converts time from datenum. If false, converts time from 
-        "epoch time".
+      If true, converts time from datenum. If false, converts time from 
+      "epoch time".
 
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from the binary instrument data.
+      An xarray dataset from the binary instrument data.
 
     See Also
     --------
     scipy.io.loadmat()
-
     """
+
     filename = _check_file_ext(filename, 'mat')
 
     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)

@@ -11,22 +11,22 @@ cos = np.cos
 
 
 def clean_fill(u, mask, npt=12, method='cubic', maxgap=6):
-    """
-    Interpolate over mask values in timeseries data using the specified method
+    """Interpolate over mask values in timeseries data using the 
+    specified method
 
     Parameters
     ----------
     u : xarray.DataArray
       The dataArray to clean.
     mask : bool
-      Logical tensor of elements to "nan" out (from `spikeThresh`, `rangeLimit`,
-      or `GN2002`) and replace
+      Logical tensor of elements to "nan" out (from `spikeThresh`, 
+      `rangeLimit`, or `GN2002`) and replace
     npt : int
       The number of points on either side of the bad values that 
       interpolation occurs over
-    method : string
+    method : string (default: 'cubic')
       Interpolation scheme to use (linear, cubic, pchip, etc)
-    limit : int
+    maxgap : int (default: 6)
       Max number of consective nan's to interpolate across
 
     Returns
@@ -53,8 +53,7 @@ def clean_fill(u, mask, npt=12, method='cubic', maxgap=6):
 
 
 def _interp_nan(da, npt, method, maxgap):
-    """
-    Interpolate over the points in `bad` that are True.
+    """Interpolate over the points in `bad` that are True.
 
     Parameters
     ----------
@@ -63,8 +62,17 @@ def _interp_nan(da, npt, method, maxgap):
     npt : int
       The number of points on either side of the gap that the fit
       occurs over
+    method : string
+      Interpolation scheme to use (linear, cubic, pchip, etc)
+    maxgap : int
+      Max number of consective nan's to interpolate across
 
+    Returns
+    -------
+    da : xarray.DataArray
+      The dataArray with nan's filled in
     """
+
     searching = True
     bds = da.isnull().values
     ntail = 0
@@ -106,8 +114,7 @@ def _interp_nan(da, npt, method, maxgap):
 
 
 def fill_nan_ensemble_mean(u, mask, fs, window):
-    """
-    Fill missing values with the ensemble mean.
+    """Fill missing values with the ensemble mean.
 
     Parameters
     ----------
@@ -178,15 +185,14 @@ def fill_nan_ensemble_mean(u, mask, fs, window):
 
 
 def spike_thresh(u, thresh=10):
-    """
-    Returns a logical vector where a spike in `u` of magnitude greater than
-    `thresh` occurs. Both 'Negative' and 'positive' spikes are found.
+    """Returns a logical vector where a spike in `u` of magnitude greater 
+    than `thresh` occurs. Both 'Negative' and 'positive' spikes are found.
 
     Parameters
     ----------
     u : xarray.DataArray
       The timeseries data to clean.
-    thresh : int
+    thresh : int (default: 10)
        Magnitude of velocity spike, must be positive.
 
     Returns
@@ -202,15 +208,14 @@ def spike_thresh(u, thresh=10):
 
 
 def range_limit(u, range=[-5, 5]):
-    """
-    Returns a logical vector that is True where the values of `u` are 
-    outside of `range`.
+    """Returns a logical vector that is True where the values of `u` 
+    are outside of `range`.
 
     Parameters
     ----------
     u : xarray.DataArray
       The timeseries data to clean.
-    range : list
+    range : list (default: [-5, 5])
        Min and max magnitudes beyond which are masked
 
     Returns
@@ -225,6 +230,7 @@ def range_limit(u, range=[-5, 5]):
 def _calcab(al, Lu_std_u, Lu_std_d2u):
     """Solve equations 10 and 11 of Goring+Nikora2002
     """
+
     return tuple(np.linalg.solve(
         np.array([[cos(al) ** 2, sin(al) ** 2],
                   [sin(al) ** 2, cos(al) ** 2]]),
@@ -267,15 +273,15 @@ def _phaseSpaceThresh(u):
 
 
 def GN2002(u, npt=5000):
-    """
-    The Goring & Nikora 2002 'despiking' method, with Wahl2003 correction.
+    """The Goring & Nikora 2002 'despiking' method, with Wahl2003 
+    correction.
     Returns a logical vector that is true where spikes are identified.
 
     Parameters
     ----------
     u : xarray.DataArray
       The velocity array (1D or 3D) to clean.
-    npt : int
+    npt : int (default: 5000)
       The number of points over which to perform the method.
 
     Returns

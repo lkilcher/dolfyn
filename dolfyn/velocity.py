@@ -10,8 +10,7 @@ from .tools.misc import slice1d_along_axis
 
 @xr.register_dataset_accessor('velds')  # 'vel dataset'
 class Velocity():
-    """
-    All ADCP and ADV xarray datasets wrap this base class.
+    """All ADCP and ADV xarray datasets wrap this base class.
     The turbulence-related attributes defined within this class 
     assume that the  ``'tke_vec'`` and ``'stress_vec'`` data entries are 
     included in the dataset. These are typically calculated using a
@@ -28,8 +27,7 @@ class Velocity():
     # Major components of the dolfyn-API
 
     def rotate2(self, out_frame='earth', inplace=True):
-        """
-        Rotate the dataset to a new coordinate system.
+        """Rotate the dataset to a new coordinate system.
 
         Parameters
         ----------
@@ -63,8 +61,7 @@ class Velocity():
         return rotate2(self.ds, out_frame, inplace)
 
     def set_declination(self, declin, inplace=True):
-        """
-        Set the magnetic declination
+        """Set the magnetic declination
 
         Parameters
         ----------
@@ -111,8 +108,7 @@ class Velocity():
         return set_declination(self.ds, declin, inplace)
 
     def set_inst2head_rotmat(self, rotmat, inplace=True):
-        """
-        Set the instrument to head rotation matrix for the Nortek ADV if it
+        """Set the instrument to head rotation matrix for the Nortek ADV if it
         hasn't already been set through a '.userdata.json' file.
 
         Parameters
@@ -141,8 +137,7 @@ class Velocity():
         return set_inst2head_rotmat(self.ds, rotmat, inplace)
 
     def save(self, filename, **kwargs):
-        """
-        Save the data object (underlying xarray dataset) as netCDF (.nc).
+        """Save the data object (underlying xarray dataset) as netCDF (.nc).
 
         Parameters
         ----------
@@ -431,8 +426,7 @@ class Velocity():
 
 
 class VelBinner(TimeBinner):
-    """
-    This is the base binning (averaging) tool.
+    """This is the base binning (averaging) tool.
     All |dlfn| binning tools derive from this base class.
 
     Examples
@@ -455,8 +449,7 @@ class VelBinner(TimeBinner):
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
 
     def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0, 0, 0]):
-        """
-        Bin the dataset and calculate the ensemble averages of each 
+        """Bin the dataset and calculate the ensemble averages of each 
         variable.
 
         Parameters
@@ -529,8 +522,7 @@ class VelBinner(TimeBinner):
         return out_ds
 
     def do_var(self, raw_ds, out_ds=None, names=None, suffix='_var'):
-        """
-        Bin the dataset and calculate the ensemble variances of each 
+        """Bin the dataset and calculate the ensemble variances of each 
         variable. Complementary to `do_avg()`.
 
         Parameters
@@ -594,8 +586,7 @@ class VelBinner(TimeBinner):
 
     def calc_coh(self, veldat1, veldat2, window='hann', debias=True,
                  noise=(0, 0), n_fft_coh=None, n_bin=None):
-        """
-        Calculate coherence between `veldat1` and `veldat2`.
+        """Calculate coherence between `veldat1` and `veldat2`.
 
         Parameters
         ----------
@@ -674,8 +665,7 @@ class VelBinner(TimeBinner):
 
     def calc_phase_angle(self, veldat1, veldat2, window='hann',
                          n_fft_coh=None, n_bin=None):
-        """
-        Calculate the phase difference between two signals as a
+        """Calculate the phase difference between two signals as a
         function of frequency (complimentary to coherence).
 
         Parameters
@@ -750,8 +740,7 @@ class VelBinner(TimeBinner):
         return da
 
     def calc_acov(self, veldat, n_bin=None):
-        """
-        Calculate the auto-covariance of the raw-signal `veldat`
+        """Calculate the auto-covariance of the raw-signal `veldat`
 
         Parameters
         ----------
@@ -814,8 +803,7 @@ class VelBinner(TimeBinner):
 
     def calc_xcov(self, veldat1, veldat2, npt=1,
                   n_bin=None, normed=False):
-        """
-        Calculate the cross-covariance between arrays veldat1 and veldat2
+        """Calculate the cross-covariance between arrays veldat1 and veldat2
 
         Parameters
         ----------
@@ -883,8 +871,7 @@ class VelBinner(TimeBinner):
         return da
 
     def calc_tke(self, veldat, noise=[0, 0, 0], detrend=True):
-        """
-        Calculate the turbulent kinetic energy (TKE) (variances 
+        """Calculate the turbulent kinetic energy (TKE) (variances 
         of u,v,w).
 
         Parameters
@@ -954,8 +941,7 @@ class VelBinner(TimeBinner):
                  noise=[0, 0, 0],
                  n_bin=None, n_fft=None, n_pad=None,
                  step=None):
-        """
-        Calculate the power spectral density of velocity.
+        """Calculate the power spectral density of velocity.
 
         Parameters
         ----------
@@ -968,6 +954,7 @@ class VelBinner(TimeBinner):
           The sample rate (default: from the binner).
         window : string or array
           Specify the window function.
+          Options: 1, None, 'hann', 'hamm'
         noise : list(3 floats) (optional)
           Noise level of each component's velocity measurement
           (default 0).

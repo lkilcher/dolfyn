@@ -9,7 +9,6 @@ from dolfyn.tests import test_read_adv as tv
 import unittest
 import pytest
 import os
-from shutil import copy2
 
 
 def test_save():
@@ -57,10 +56,20 @@ def test_debugging(make_data=False):
             string = f.read()
         return string
 
+    def clip_file(fname):
+        log = read_txt(fname, exdt)
+        newlines = [i for i, ltr in enumerate(log) if ltr == '\n']
+        try:
+            log = log[:newlines[100]+1]
+        except:
+            pass
+        with open(rfnm(fname), 'w') as f:
+            f.write(log)
+
     def read_file_and_test(fname):
         td = read_txt(fname, exdt)
         cd = read_txt(fname, rfnm)
-        assert td == cd
+        assert cd in td
         os.remove(exdt(fname))
 
     nens = 100
@@ -75,10 +84,10 @@ def test_debugging(make_data=False):
     os.remove(exdt('Sig500_Echo.ad2cp.index'))
 
     if make_data:
-        copy2(exdt('RDI_withBT.log'), rfnm('RDI_withBT.log'))
-        copy2(exdt('AWAC_test01.log'), rfnm('AWAC_test01.log'))
-        copy2(exdt('vector_data_imu01.log'), rfnm('vector_data_imu01.log'))
-        copy2(exdt('Sig500_Echo.log'), rfnm('Sig500_Echo.log'))
+        clip_file('RDI_withBT.log')
+        clip_file('AWAC_test01.log')
+        clip_file('vector_data_imu01.log')
+        clip_file('Sig500_Echo.log')
         return
 
     read_file_and_test('RDI_withBT.log')

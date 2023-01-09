@@ -9,8 +9,7 @@ from ..rotate.base import _make_model, quaternion2orient
 
 
 def set_range_offset(ds, h_deploy):
-    """
-    Adds an instrument's height above seafloor (for an up-facing instrument)
+    """Adds an instrument's height above seafloor (for an up-facing instrument)
     or depth below water surface (for a down-facing instrument) to the range
     coordinate. Also adds an attribute to the Dataset with the current
     "h_deploy" distance.
@@ -52,19 +51,18 @@ def set_range_offset(ds, h_deploy):
 
 
 def find_surface(ds, thresh=10, nfilt=None):
-    """
-    Find the surface (water level or seafloor) from amplitude data and
+    """Find the surface (water level or seafloor) from amplitude data and
     adds the variable "depth" to the input Dataset.
 
     Parameters
     ----------
     ds : xarray.Dataset
       The full adcp dataset
-    thresh : int
+    thresh : int (default: 10)
       Specifies the threshold used in detecting the surface.
       (The amount that amplitude must increase by near the surface for it to
       be considered a surface hit)
-    nfilt : int
+    nfilt : int (default: None)
       Specifies the width of the median filter applied, must be odd
 
     Returns
@@ -105,8 +103,7 @@ def find_surface(ds, thresh=10, nfilt=None):
 
 
 def find_surface_from_P(ds, salinity=35):
-    """
-    Calculates the distance to the water surface. Temperature and salinity
+    """Calculates the distance to the water surface. Temperature and salinity
     are used to calculate seawater density, which is in turn used with the
     pressure data to calculate depth.
 
@@ -114,7 +111,7 @@ def find_surface_from_P(ds, salinity=35):
     ----------
     ds : xarray.Dataset
       The full adcp dataset
-    salinity: numeric
+    salinity: numeric (default: 35)
       Water salinity in psu
 
     Returns
@@ -162,15 +159,14 @@ def find_surface_from_P(ds, salinity=35):
 
 
 def nan_beyond_surface(ds, val=np.nan, inplace=False):
-    """
-    Mask the values of 3D data (vel, amp, corr, echo) that are beyond the surface.
+    """Mask the values of 3D data (vel, amp, corr, echo) that are beyond the surface.
 
     Parameters
     ----------
     ds : xarray.Dataset
       The adcp dataset to clean
-    val : nan or numeric
-      Specifies the value to set the bad values to (default np.nan).
+    val : nan or numeric (default: np.nan)
+      Specifies the value to set the bad values to
     inplace : bool (default: False)
       When True the existing data object is modified. When False
       a copy is returned.
@@ -230,15 +226,14 @@ def nan_beyond_surface(ds, val=np.nan, inplace=False):
 
 
 def correlation_filter(ds, thresh=50, inplace=False):
-    """
-    Filters out data where correlation is below a threshold in the 
+    """Filters out data where correlation is below a threshold in the 
     along-beam correlation data.
 
     Parameters
     ----------
     ds : xarray.Dataset
       The adcp dataset to clean.
-    thresh : numeric
+    thresh : numeric (default: 50)
       The maximum value of correlation to screen, in counts or %
     inplace : bool (default: False)
       When True the existing data object is modified. When False
@@ -288,14 +283,13 @@ def correlation_filter(ds, thresh=50, inplace=False):
 
 
 def medfilt_orient(ds, nfilt=7):
-    """
-    Median filters the orientation data (heading-pitch-roll or quaternions)
+    """Median filters the orientation data (heading-pitch-roll or quaternions)
 
     Parameters
     ----------
     ds : xarray.Dataset
       The adcp dataset to clean
-    nfilt : numeric
+    nfilt : numeric (default: 7)
       The length of the median-filtering kernel
       *nfilt* must be odd.
 
@@ -330,8 +324,7 @@ def medfilt_orient(ds, nfilt=7):
 
 
 def val_exceeds_thresh(var, thresh=5, val=np.nan):
-    """
-    Find values of a variable that exceed a threshold value,
+    """Find values of a variable that exceed a threshold value,
     and assign "val" to the velocity data where the threshold is
     exceeded.
 
@@ -339,17 +332,17 @@ def val_exceeds_thresh(var, thresh=5, val=np.nan):
     ----------
     var : xarray.DataArray
       Variable to clean
-    thresh : numeric
+    thresh : numeric (default: 5)
       The maximum value of velocity to screen
-    val : nan or numeric
-      Specifies the value to set the bad values to (default np.nan)
+    val : nan or numeric (default: np.nan)
+      Specifies the value to set the bad values to
 
     Returns
     -------
     ds : xarray.Dataset
       The adcp dataset with datapoints beyond thresh are set to `val`
-
     """
+
     var = var.copy(deep=True)
 
     bd = np.zeros(var.shape, dtype='bool')
@@ -361,16 +354,15 @@ def val_exceeds_thresh(var, thresh=5, val=np.nan):
 
 
 def fillgaps_time(var, method='cubic', maxgap=None):
-    """
-    Fill gaps (nan values) in var across time using the specified method
+    """Fill gaps (nan values) in var across time using the specified method
 
     Parameters
     ----------
     var : xarray.DataArray
       The variable to clean
-    method : string
+    method : string (default: 'cubic')
       Interpolation method to use
-    maxgap : numeric
+    maxgap : numeric (default: None)
       Maximum gap of missing data to interpolate across
 
     Returns
@@ -391,16 +383,15 @@ def fillgaps_time(var, method='cubic', maxgap=None):
 
 
 def fillgaps_depth(var, method='cubic', maxgap=None):
-    """
-    Fill gaps (nan values) in var along the depth profile using the specified method
+    """Fill gaps (nan values) in var along the depth profile using the specified method
 
     Parameters
     ----------
     var : xarray.DataArray
       The variable to clean
-    method : string
+    method : string (default: 'cubic')
       Interpolation method to use
-    maxgap : int
+    maxgap : numeric (default: None)
       Maximum gap of missing data to interpolate across
 
     Returns

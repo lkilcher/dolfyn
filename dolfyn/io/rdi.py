@@ -27,12 +27,12 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
       Whether to read the '<base-filename>.userdata.json' file.
     nens : int, (default: None, read entire file)
       Number of pings to read from the file
-    debug_level : int (default=-1)
+    debug_level : int (default: -1)
       Debug level [0 - 2]
-    vmdas_search : bool (default=False)
+    vmdas_search : bool (default: False)
       Search from the end of each ensemble for the VMDAS navigation
       block.  The byte offsets are sometimes incorrect.
-    winriver : bool (default=False)
+    winriver : bool (default: False)
       If file is winriver or not. Automatically set by dolfyn, this is helpful 
       for debugging
 
