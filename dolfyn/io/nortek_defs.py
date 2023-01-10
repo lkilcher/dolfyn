@@ -33,7 +33,6 @@ class _VarAtts():
         The units of this variable.
     dim_names : (list, optional)
         A list of names for each dimension of the array.
-
     """
 
     def __init__(self, dims=[], dtype=None, group='main',

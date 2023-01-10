@@ -25,8 +25,9 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
       Filename of TRDI file to read.
     userdata : True, False, or string of userdata.json filename (default ``True``)
       Whether to read the '<base-filename>.userdata.json' file.
-    nens : int, (default: None, read entire file)
-      Number of pings to read from the file
+    nens : None, int
+      Number of pings or ensembles to read from the file. 
+      Default is None, read entire file
     debug_level : int (default: -1)
       Debug level [0 - 2]
     vmdas_search : bool (default: False)

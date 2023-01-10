@@ -33,8 +33,9 @@ def read(fname, userdata=True, nens=None, **kwargs):
       Filename of instrument file to read.
     userdata : bool, or string of userdata.json filename (default ``True``)
       Whether to read the '<base-filename>.userdata.json' file.
-    nens : None (default: read entire file), int, or 2-element tuple (start, stop)
-      Number of pings or ensembles to read from the file
+    nens : None, int or 2-element tuple (start, stop)
+      Number of pings or ensembles to read from the file. 
+      Default is None, read entire file
     **kwargs : dict
       Passed to instrument-specific parser.
 

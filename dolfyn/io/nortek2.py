@@ -24,8 +24,9 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
       The filename of the file to load.
     userdata : bool
       To search for and use a .userdata.json or not
-    nens : None (default: read entire file), int, or 2-element tuple (start, stop)
-      Number of pings or ensembles to read from the file
+    nens : None, int or 2-element tuple (start, stop)
+      Number of pings or ensembles to read from the file. 
+      Default is None, read entire file
     rebuild_index : bool (default: False)
       Force rebuild of dolfyn-written datafile index. Useful for code updates.
     debug : bool (default: False)
