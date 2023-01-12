@@ -920,9 +920,7 @@ class VelBinner(TimeBinner):
         else:
             time = self.mean(veldat.time.values)
 
-        out = np.nanmean(vel**2, -1,
-                         dtype=np.float64,
-                         ).astype('float32')
+        out = np.nanmean(vel**2, -1)
 
         out[0] -= noise[0] ** 2
         out[1] -= noise[1] ** 2

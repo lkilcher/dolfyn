@@ -114,8 +114,7 @@ class ADPBinner(VelBinner):
         return self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
-        """
-        Calculate bias due to Doppler noise using the noise floor
+        """Calculate bias due to Doppler noise using the noise floor
         of the velocity spectra.
 
         Parameters
@@ -129,7 +128,7 @@ class ADPBinner(VelBinner):
         Returns
         -------
         doppler_noise (xarray.DataArray): 
-              Doppler noise level in units of m/s
+          Doppler noise level in units of m/s
 
         Notes
         -----
