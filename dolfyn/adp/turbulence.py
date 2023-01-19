@@ -17,8 +17,7 @@ def _diffz_centered(dat, z):
 class ADPBinner(VelBinner):
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
                  noise=0, orientation='up', diff_style='centered'):
-        """
-        A class for calculating turbulence statistics from ADCP data
+        """A class for calculating turbulence statistics from ADCP data
 
         Parameters
         ----------
@@ -40,8 +39,8 @@ class ADPBinner(VelBinner):
         diff_style : str, default='centered'
             Style of numerical differentiation using Newton's Method, 
             either 'first' or 'centered'
-
         """
+
         VelBinner.__init__(self, n_bin, fs, n_fft, n_fft_coh, noise)
         self.diff_style = diff_style
         self.orientation = orientation
@@ -53,16 +52,15 @@ class ADPBinner(VelBinner):
             return _diffz_centered(vel[u].values, vel['range'].values)
 
     def dudz(self, vel, orientation=None):
-        """
-        The shear in the first velocity component.
+        """The shear in the first velocity component.
 
         Notes
         -----
         The derivative direction is along the profiler's 'z'
         coordinate ('dz' is actually diff(self['range'])), not necessarily the
         'true vertical' direction.
-
         """
+
         if not orientation:
             orientation = self.orientation
         sign = 1
@@ -71,34 +69,31 @@ class ADPBinner(VelBinner):
         return sign*self._diff_func(vel, 0)
 
     def dvdz(self, vel):
-        """
-        The shear in the second velocity component.
+        """The shear in the second velocity component.
 
         Notes
         -----
         The derivative direction is along the profiler's 'z'
         coordinate ('dz' is actually diff(self['range'])), not necessarily the
         'true vertical' direction.
-
         """
+
         return self._diff_func(vel, 1)
 
     def dwdz(self, vel):
-        """
-        The shear in the third velocity component.
+        """The shear in the third velocity component.
 
         Notes
         -----
         The derivative direction is along the profiler's 'z'
         coordinate ('dz' is actually diff(self['range'])), not necessarily the
         'true vertical' direction.
-
         """
+
         return self._diff_func(vel, 2)
 
     def tau2(self, vel):
-        """
-        The horizontal shear squared.
+        """The horizontal shear squared.
 
         Notes
         -----
@@ -109,8 +104,8 @@ class ADPBinner(VelBinner):
         See Also
         --------
         :math:`dudz`, :math:`dvdz`
-
         """
+
         return self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
@@ -154,8 +149,8 @@ class ADPBinner(VelBinner):
         Thiébaut, Maxime, et al. "Investigating the flow dynamics and turbulence at a 
         tidal-stream energy site in a highly energetic estuary." Renewable Energy 195 
         (2022): 252-262.
-
         """
+
         # Characteristic frequency set to 80% of Nyquist frequency
         fN = self.fs/2
         fc = pct_fN * fN
@@ -179,8 +174,8 @@ class ADPBinner(VelBinner):
         return out
 
     def calc_stress_4beam(self, ds, noise=0, orientation=None, beam_angle=25):
-        """
-        Calculate the stresses from the covariance of along-beam velocity measurements
+        """Calculate the stresses from the covariance of along-beam 
+        velocity measurements
 
         Parameters
         ----------
@@ -208,8 +203,8 @@ class ADPBinner(VelBinner):
         Stacey, Mark T., Stephen G. Monismith, and Jon R. Burau. "Measurements 
         of Reynolds stress profiles in unstratified tidal flow." Journal of 
         Geophysical Research: Oceans 104.C5 (1999): 10933-10949.
-
         """
+
         warnings.warn("The 4-beam stress equations assume the instrument's "
                       "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
@@ -277,8 +272,8 @@ class ADPBinner(VelBinner):
         return stress_vec
 
     def calc_stress_5beam(self, ds, noise=0, orientation=None, beam_angle=25, tke_only=False):
-        """
-        Calculate the stresses from the covariance of along-beam velocity measurements
+        """Calculate the stresses from the covariance of along-beam 
+        velocity measurements
 
         Parameters
         ----------
@@ -318,8 +313,8 @@ class ADPBinner(VelBinner):
         Guerra, Maricarmen, and Jim Thomson. "Turbulence measurements from 
         five-beam acoustic Doppler current profilers." Journal of Atmospheric 
         and Oceanic Technology 34.6 (2017): 1267-1284.
-
         """
+
         warnings.warn("The 5-beam TKE/stress equations assume the instrument's "
                       "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
@@ -431,8 +426,7 @@ class ADPBinner(VelBinner):
             return tke_vec, stress_vec
 
     def calc_total_tke(self, ds, noise=0, orientation=None, beam_angle=25):
-        """
-        Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
+        """Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
 
         Parameters
         ----------
@@ -456,8 +450,8 @@ class ADPBinner(VelBinner):
         -----
         This function is a wrapper around 'calc_stress_5beam' that then
         combines the TKE components
-
         """
+
         tke_vec = self.calc_stress_5beam(
             ds, noise, orientation, beam_angle, tke_only=True)
 
@@ -467,8 +461,7 @@ class ADPBinner(VelBinner):
         return tke.astype('float32')
 
     def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4]):
-        """
-        Calculate the TKE dissipation rate from the velocity spectra.
+        """Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
         ----------
@@ -509,8 +502,8 @@ class ADPBinner(VelBinner):
 
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
-
         """
+
         freq = psd.freq
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
         idx = idx[0]
@@ -530,8 +523,7 @@ class ADPBinner(VelBinner):
         return out
 
     def calc_dissipation_SF(self, vel_raw, r_range=[1, 5]):
-        """
-        Calculate TKE dissipation rate from ADCP along-beam velocity using the
+        """Calculate TKE dissipation rate from ADCP along-beam velocity using the
         "structure function" (SF) method.
 
         Parameters
@@ -539,7 +531,7 @@ class ADPBinner(VelBinner):
         vel_raw : xarray.DataArray
           The raw beam velocity data (one beam, last dimension time) upon
           which to perform the SF technique.
-        r_range: numeric
+        r_range : numeric
           Range of r in [m] to calc dissipation across. Low end of range should be
           bin size, upper end of range is limited to the length of largest eddies
           in the inertial subrange.
@@ -549,7 +541,7 @@ class ADPBinner(VelBinner):
         dissipation_rate : xarray.DataArray (range, time)
           Dissipation rate estimated from the structure function
         noise : xarray.DataArray (range, time)
-          Noise estimated from the structure function at r = 0
+          Noise offset estimated from the structure function at r = 0
         structure_function : xarray.DataArray (range, r, time)
           Structure function D(z,r)
 
@@ -663,8 +655,7 @@ class ADPBinner(VelBinner):
         return epsilon, noise, SF
 
     def calc_ustar_fit(self, ds_avg, z_inds=slice(1, 5), H=None):
-        """
-        Approximate friction velocity from shear stress using a 
+        """Approximate friction velocity from shear stress using a 
         logarithmic profile.
 
         Parameters
@@ -680,8 +671,8 @@ class ADPBinner(VelBinner):
         -------
         u_star : xarray.DataArray
           Friction velocity
-
         """
+
         if not H:
             H = ds_avg.depth.values
         z = ds_avg['range'].values

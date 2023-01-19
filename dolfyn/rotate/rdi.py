@@ -3,7 +3,7 @@ from .vector import _earth2principal
 from .base import _beam2inst, _set_coords
 
 
-def _inst2earth(adcpo, reverse=False, force=False):
+def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     """Rotate velocities from the instrument to earth coordinates.
 
     This function also rotates data from the 'ship' frame, into the
@@ -17,6 +17,9 @@ def _inst2earth(adcpo, reverse=False, force=False):
       The adcp dataset containing the data.
     reverse : bool (default: False)
       If True, this function performs the inverse rotation (earth->inst).
+    rotate_vars : iterable (default: None, list in adcpo.rotate_vars)
+      The list of variables to rotate. By default this is taken from
+      adcpo.rotate_vars.
     force : bool (default: False)
       When true do not check which coordinate system the data is in
       prior to performing this rotation.

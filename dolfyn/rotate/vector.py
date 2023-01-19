@@ -145,7 +145,7 @@ def _check_inst2head_rotmat(advo):
     return True
 
 
-def _earth2principal(advo, reverse=False):
+def _earth2principal(advo, reverse=False, rotate_vars=None):
     """Rotate data in an ADV dataset to/from principal axes. Principal
     heading must be within the dataset.
 
@@ -162,6 +162,9 @@ def _earth2principal(advo, reverse=False):
     reverse : bool (default: False)
       If True, this function performs the inverse rotation
       (principal->earth).
+    rotate_vars : iterable (default: None, list in advo.rotate_vars)
+      The list of variables to rotate. By default this is taken from
+      advo.props['rotate_vars'].
     """
 
     # This is in degrees CW from North

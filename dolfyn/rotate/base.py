@@ -88,9 +88,9 @@ def _beam2inst(dat, reverse=False, force=False):
       When true do not check which coordinate system the data is in
       prior to performing this rotation. When forced-rotations are
       applied, the string '-forced!' is appended to the
-      dat.props['coord_sys'] string. If force is a list, it contains
+      dat['coord_sys'] string. If force is a list, it contains
       a list of variables that should be rotated (rather than the
-      default values in adpo.props['rotate_vars']).
+      default values in adpo['rotate_vars']).
     """
 
     if not force:
