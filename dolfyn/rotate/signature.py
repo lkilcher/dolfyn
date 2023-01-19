@@ -7,27 +7,21 @@ from numpy.linalg import inv
 
 
 def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
-    """
-    Rotate data in an ADCP object to the earth from the instrument
+    """Rotate data in an ADCP object to the earth from the instrument
     frame (or vice-versa).
 
     Parameters
     ----------
     adcpo : xarray.Dataset
-        The ADCP object containing the data.
-
+      The adcp dataset containing the data.
     reverse : bool (default: False)
-        If True, this function performs the inverse rotation
-        (earth->inst).
-
-    rotate_vars : iterable
-        The list of variables to rotate. By default this is taken from
-        adcpo.props['rotate_vars'].
-
+      If True, this function performs the inverse rotation (earth->inst).
+    rotate_vars : iterable (default: None, list in adcpo.rotate_vars)
+      The list of variables to rotate. By default this is taken from
+      adcpo.rotate_vars.
     force : bool (default: False)
-        Do not check which frame the data is in prior to
-        performing this rotation.
-
+      Do not check which frame the data is in prior to performing 
+      this rotation.
     """
 
     if reverse:

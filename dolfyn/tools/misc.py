@@ -40,6 +40,7 @@ def detrend(arr, axis=-1, in_place=False):
     This works much faster than mpl.mlab.detrend for multi-dimensional
     arrays, and is also faster than linalg.lstsq methods.
     """
+    
     arr = np.asarray(arr)
     if not in_place:
         arr = arr.copy()
@@ -75,8 +76,8 @@ def group(bl, min_length=0):
     -----
     This function has funny behavior for single points.  It will
     return the same two indices for the beginning and end.
-
     """
+
     if not any(bl):
         return np.empty(0)
     vl = np.diff(bl.astype('int'))
@@ -103,9 +104,8 @@ def group(bl, min_length=0):
 
 
 def slice1d_along_axis(arr_shape, axis=0):
-    """
-    Return an iterator object for looping over 1-D slices, along ``axis``, of
-    an array of shape arr_shape.
+    """Return an iterator object for looping over 1-D slices, along 
+    ``axis``, of an array of shape arr_shape.
 
     Parameters
     ----------
@@ -125,8 +125,8 @@ def slice1d_along_axis(arr_shape, axis=0):
     >> out=np.empty(replace(arr.shape,0,1))
     >> for slc in slice1d_along_axis(arr.shape,axis=0):
     >>     out[slc]=my_1d_function(arr[slc])
-
     """
+
     nd = len(arr_shape)
     if axis < 0:
         axis += nd
@@ -176,7 +176,6 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
     This function interpolates assuming spacing/timestep between
     successive points is constant. If the spacing is not constant, use
     interpgaps.
-
     """
 
     # If this is a multi-dimensional array, operate along axis dim.
@@ -221,8 +220,7 @@ def fillgaps(a, maxgap=np.inf, dim=0, extrapFlg=False):
 
 
 def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
-    """
-    Fill gaps (NaN values) in ``a`` by linear interpolation along
+    """Fill gaps (NaN values) in ``a`` by linear interpolation along
     dimension ``dim`` with the point spacing specified in ``t``.
 
     Parameters
@@ -242,7 +240,6 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
     See Also
     --------
     dolfyn.tools.misc.fillgaps : Linearly interpolates in array-index space.
-
     """
 
     # If this is a multi-dimensional array, operate along dim dim.
@@ -275,8 +272,7 @@ def interpgaps(a, t, maxgap=np.inf, dim=0, extrapFlg=False):
 
 
 def medfiltnan(a, kernel, thresh=0):
-    """
-    Do a running median filter of the data. Regions where more than 
+    """Do a running median filter of the data. Regions where more than 
     ``thresh`` fraction of the points are NaN are set to NaN.
 
     Parameters
@@ -299,8 +295,8 @@ def medfiltnan(a, kernel, thresh=0):
     See Also
     --------
     scipy.signal.medfilt2d
-
     """
+
     flag_1D = False
     if a.ndim == 1:
         a = a[None, :]

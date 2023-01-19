@@ -4,8 +4,7 @@ fft = np.fft.fft
 
 
 def psd_freq(nfft, fs, full=False):
-    """
-    Compute the frequency for vector for a `nfft` and `fs`.
+    """Compute the frequency for vector for a `nfft` and `fs`.
 
     Parameters
     ----------
@@ -20,8 +19,8 @@ def psd_freq(nfft, fs, full=False):
     -------
     freq : |np.ndarray|
       The frequency vector, in same units as 'fs'
-
     """
+
     fs = np.float64(fs)
     f = np.fft.fftfreq(int(nfft), 1 / fs)
     if full:
@@ -41,8 +40,7 @@ def _getwindow(window, nfft):
 
 
 def stepsize(l, nfft, nens=None, step=None):
-    """
-    Calculates the fft-step size for a length *l* array.
+    """Calculates the fft-step size for a length *l* array.
 
     If nens is None, the step size is chosen to maximize data use,
     minimize nens and have a minimum of 50% overlap.
@@ -60,8 +58,8 @@ def stepsize(l, nfft, nens=None, step=None):
     step    : The step size.
     nens    : The number of ensemble ffts to average together.
     nfft    : The number of points in the fft (set to l if nfft>l).
-
     """
+
     if l < nfft:
         nfft = l
     if nens is None and step is None:
@@ -78,8 +76,7 @@ def stepsize(l, nfft, nens=None, step=None):
 
 
 def coherence(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
-    """
-    Computes the magnitude-squared coherence of `a` and `b`.
+    """Computes the magnitude-squared coherence of `a` and `b`.
 
     Parameters
     ----------
@@ -115,8 +112,8 @@ def coherence(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
 
     Here :math:`S_{ab}`, :math:`S_{aa}` and :math:`S_{bb}` are the cross,
     and auto spectral densities of the signal `a` and `b`.
-
     """
+
     l = [len(a), len(b)]
     cross = cpsd_quasisync
     if l[0] == l[1]:
@@ -146,8 +143,8 @@ def coherence(a, b, nfft, window='hann', debias=True, noise=(0, 0)):
 
 
 def cpsd_quasisync(a, b, nfft, fs, window='hann'):
-    """
-    Compute the cross power spectral density (CPSD) of the signals `a` and `b`.
+    """Compute the cross power spectral density (CPSD) of the 
+    signals `a` and `b`.
 
     Parameters
     ----------
@@ -200,8 +197,8 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
 
     The units of the spectra is the product of the units of `a` and
     `b`, divided by the units of fs.
-
     """
+
     if np.iscomplexobj(a) or np.iscomplexobj(b):
         raise Exception("Velocity cannot be complex")
     l = [len(a), len(b)]
@@ -229,8 +226,8 @@ def cpsd_quasisync(a, b, nfft, fs, window='hann'):
 
 
 def cpsd(a, b, nfft, fs, window='hann', step=None):
-    """
-    Compute the cross power spectral density (CPSD) of the signals `a` and `b`.
+    """Compute the cross power spectral density (CPSD) of the 
+    signals `a` and `b`.
 
     Parameters
     ----------
@@ -284,8 +281,8 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
 
     The units of the spectra is the product of the units of `a` and
     `b`, divided by the units of fs.
-
     """
+
     if np.iscomplexobj(a) or np.iscomplexobj(b):
         raise Exception("Velocity cannot be complex")
     auto_psd = False
@@ -315,8 +312,7 @@ def cpsd(a, b, nfft, fs, window='hann', step=None):
 
 
 def psd(a, nfft, fs, window='hann', step=None):
-    """
-    Compute the power spectral density (PSD).
+    """Compute the power spectral density (PSD).
 
     This function computes the one-dimensional `n`-point PSD.
 
@@ -359,15 +355,14 @@ def psd(a, nfft, fs, window='hann', step=None):
     :func:`cpsd`
     :func:`coherence`
     `numpy.fft`
-
     """
+
     return np.abs(cpsd(a, a, nfft, fs, window=window, step=step))
 
 
 def phase_angle(a, b, nfft, window='hann', step=None):
-    """
-    Compute the phase difference between signals `a` and `b`. This is the
-    complimentary function to coherence and cpsd.
+    """Compute the phase difference between signals `a` and `b`. This 
+    is the complimentary function to coherence and cpsd.
 
     Positive angles means that `b` leads `a`, i.e. this does,
     essentially:
@@ -406,8 +401,8 @@ def phase_angle(a, b, nfft, window='hann', step=None):
     `numpy.fft`
     :func:`coherence`
     :func:`cpsd`
-
     """
+
     window = _getwindow(window, nfft)
     fft_inds = slice(1, int(nfft / 2. + 1))
     s1 = fft(detrend(a[0:nfft]) * window)[fft_inds]

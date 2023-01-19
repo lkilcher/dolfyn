@@ -9,8 +9,7 @@ warnings.simplefilter('ignore', RuntimeWarning)
 class TimeBinner:
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
                  noise=[0, 0, 0]):
-        """
-        Initialize an averaging object
+        """Initialize an averaging object
 
         Parameters
         ----------
@@ -81,8 +80,7 @@ class TimeBinner:
         return n_fft_coh
 
     def _check_ds(self, raw_ds, out_ds):
-        """
-        Check that the attributes between two datasets match up.
+        """Check that the attributes between two datasets match up.
 
         Parameters
         ----------
@@ -139,6 +137,7 @@ class TimeBinner:
         """Function for setting up a new xarray.DataArray regardless of how 
         many dimensions the input data-array has
         """
+
         dims = array.dims
         dims_list = []
         coords_dict = {}
@@ -154,8 +153,7 @@ class TimeBinner:
         return dims_list, coords_dict
 
     def reshape(self, arr, n_pad=0, n_bin=None):
-        """
-        Reshape the array `arr` to shape (...,n,n_bin+n_pad).
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad).
 
         Parameters
         ----------
@@ -167,7 +165,7 @@ class TimeBinner:
           current.  Zeros are padded in the upper-left and lower-right
           corners of the matrix (beginning/end of timeseries).  In
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
-        n_bin : int (default is self.n_bin)
+        n_bin : int (default: self.n_bin)
           Override this binner's n_bin.
 
         Returns
@@ -212,23 +210,22 @@ class TimeBinner:
         return out
 
     def detrend(self, arr, axis=-1, n_pad=0, n_bin=None):
-        """
-        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and remove the best-fit trend line from each bin.
 
         Parameters
         ----------
         arr : numpy.ndarray
-        axis : int (default is -1)
+        axis : int (default: -1)
           Axis along which to take mean
-        n_pad : int (default is 0)
+        n_pad : int (default: 0)
           Is used to add `n_pad`/2 points from the end of the previous
           ensemble to the top of the current, and `n_pad`/2 points
           from the top of the next ensemble to the bottom of the
           current.  Zeros are padded in the upper-left and lower-right
           corners of the matrix (beginning/end of timeseries).  In
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
-        n_bin : int (default is self.n_bin)
+        n_bin : int (default: self.n_bin)
           Override this binner's n_bin.
 
         Returns
@@ -239,23 +236,22 @@ class TimeBinner:
         return detrend(self.reshape(arr, n_pad=n_pad, n_bin=n_bin), axis=axis)
 
     def demean(self, arr, axis=-1, n_pad=0, n_bin=None):
-        """
-        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and remove the mean from each bin.
 
         Parameters
         ----------
         arr : numpy.ndarray
-        axis : int (default is -1)
+        axis : int (default: -1)
           Axis along which to take mean
-        n_pad : int (default is 0)
+        n_pad : int (default: 0)
           Is used to add `n_pad`/2 points from the end of the previous
           ensemble to the top of the current, and `n_pad`/2 points
           from the top of the next ensemble to the bottom of the
           current.  Zeros are padded in the upper-left and lower-right
           corners of the matrix (beginning/end of timeseries).  In
           this case, the array shape will be (...,`n`,`n_pad`+`n_bin`)
-        n_bin : int (default is self.n_bin)
+        n_bin : int (default: self.n_bin)
           Override this binner's n_bin.
 
         Returns
@@ -267,16 +263,15 @@ class TimeBinner:
         return dt - np.nanmean(dt, axis)[..., None]
 
     def mean(self, arr, axis=-1, n_bin=None):
-        """
-        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and take the mean of each bin along the specified `axis`.
 
         Parameters
         ----------
         arr : numpy.ndarray
-        axis : int (default is -1)
+        axis : int (default: -1)
           Axis along which to take mean
-        n_bin : int (default is self.n_bin)
+        n_bin : int (default: self.n_bin)
           Override this binner's n_bin.
 
         Returns
@@ -294,16 +289,15 @@ class TimeBinner:
         return np.nanmean(tmp, -1)
 
     def var(self, arr, axis=-1, n_bin=None):
-        """
-        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and take the variance of each bin along the specified `axis`.
 
         Parameters
         ----------
         arr : numpy.ndarray
-        axis : int (default is -1)
+        axis : int (default: -1)
           Axis along which to take variance
-        n_bin : int (default is self.n_bin)
+        n_bin : int (default: self.n_bin)
           Override this binner's n_bin.
 
         Returns
@@ -314,17 +308,16 @@ class TimeBinner:
         return self.reshape(arr, n_bin=n_bin).var(axis)
 
     def std(self, arr, axis=-1, n_bin=None):
-        """
-        Reshape the array `arr` to shape (...,n,n_bin+n_pad)
+        """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
         and take the standard deviation of each bin along the 
         specified `axis`.
 
         Parameters
         ----------
         arr : numpy.ndarray
-        axis : int (default is -1)
+        axis : int (default: -1)
           Axis along which to take std dev
-        n_bin : int (default is self.n_bin)
+        n_bin : int (default: self.n_bin)
           Override this binner's n_bin.
 
         Returns
@@ -336,8 +329,7 @@ class TimeBinner:
 
     def calc_psd_base(self, dat, fs=None, window='hann', noise=0,
                       n_bin=None, n_fft=None, n_pad=None, step=None):
-        """
-        Calculate power spectral density of `dat`
+        """Calculate power spectral density of `dat`
 
         Parameters
         ----------
@@ -393,8 +385,7 @@ class TimeBinner:
 
     def calc_csd_base(self, dat1, dat2, fs=None, window='hann',
                       n_fft=None, n_bin=None):
-        """
-        Calculate the cross power spectral density of `dat`.
+        """Calculate the cross power spectral density of `dat`.
 
         Parameters
         ----------
@@ -452,8 +443,7 @@ class TimeBinner:
         return out
 
     def calc_freq(self, fs=None, units='rad/s', n_fft=None, coh=False):
-        """
-        Calculate the ordinary or radial frequency vector for the PSDs
+        """Calculate the ordinary or radial frequency vector for the PSDs
 
         Parameters
         ----------

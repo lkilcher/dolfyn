@@ -3,9 +3,8 @@ from .vector import _earth2principal
 from .base import _beam2inst, _set_coords
 
 
-def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
-    """
-    Rotate velocities from the instrument to earth coordinates.
+def _inst2earth(adcpo, reverse=False, force=False):
+    """Rotate velocities from the instrument to earth coordinates.
 
     This function also rotates data from the 'ship' frame, into the
     earth frame when it is in the ship frame (and
@@ -15,26 +14,19 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     Parameters
     ----------
     adcpo : xarray.Dataset
-        The ADCP object containing the data.
-
+      The adcp dataset containing the data.
     reverse : bool (default: False)
-        If True, this function performs the inverse rotation
-        (earth->inst).
-
-    rotate_vars : iterable
-        The list of variables to rotate. By default this is taken from
-        adcpo.props['rotate_vars'].
-
+      If True, this function performs the inverse rotation (earth->inst).
     force : bool (default: False)
-        When true do not check which coordinate system the data is in
-        prior to performing this rotation.
+      When true do not check which coordinate system the data is in
+      prior to performing this rotation.
 
     Notes
     -----
     The rotation matrix is taken from the Teledyne RDI ADCP Coordinate
     Transformation manual January 2008
-
     """
+
     csin = adcpo.coord_sys.lower()
     cs_allowed = ['inst', 'ship']
     if reverse:
@@ -84,13 +76,14 @@ def _calc_beam_orientmat(theta=20, convex=True, degrees=True):
 
     Parameters
     ----------
-    theta : is the angle of the heads (usually 20 or 30 degrees)
-
-    convex : is a flag for convex or concave head configuration.
-
-    degrees : is a flag which specifies whether theta is in degrees
-        or radians (default: degrees=True)
+    theta : int (default: 20)
+      Angle of the heads (usually 20 or 30 degrees)
+    convex : bool (default: True)
+      Flag for convex or concave head configuration.
+    degrees : bool (default: True) 
+      Flag which specifies whether theta is in degrees or radians
     """
+
     if degrees:
         theta = np.deg2rad(theta)
     if convex == 0 or convex == -1:
@@ -107,13 +100,13 @@ def _calc_beam_orientmat(theta=20, convex=True, degrees=True):
 
 
 def _calc_orientmat(adcpo):
-    """
-    Calculate the orientation matrix using the raw 
+    """Calculate the orientation matrix using the raw 
     heading, pitch, roll values from the RDI binary file.
 
     Parameters
     ----------
-    adcpo : The ADP object containing the data.
+    adcpo : xarray.Dataset
+      The adcp dataset containing the data.
 
     ## RDI-ADCP-MANUAL (Jan 08, section 5.6 page 18)
     The internal tilt sensors do not measure exactly the same

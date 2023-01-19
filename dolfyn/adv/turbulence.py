@@ -7,8 +7,7 @@ import xarray as xr
 
 
 class ADVBinner(VelBinner):
-    """
-    A class that builds upon `VelBinner` for calculating turbulence 
+    """A class that builds upon `VelBinner` for calculating turbulence 
     statistics and velocity spectra from ADV data
 
     Parameters
@@ -20,9 +19,8 @@ class ADVBinner(VelBinner):
       Instrument sampling frequency in Hz
     n_fft : int (optional, default: n_fft = n_bin)
       The length of the FFT for computing spectra (must be <= n_bin)
-    n_fft_coh : int
+    n_fft_coh : int (optional, default: `n_fft_coh`=`n_fft`)
       Number of data points to use for coherence and cross-spectra ffts
-      Default: `n_fft_coh`=`n_fft`
     noise : float, list or numpy.ndarray
       Instrument's doppler noise in same units as velocity
     """
@@ -163,8 +161,7 @@ class ADVBinner(VelBinner):
                  window='hann',
                  n_bin=None,
                  n_fft_coh=None):
-        """
-        Calculate the cross-spectral density of velocity components.
+        """Calculate the cross-spectral density of velocity components.
 
         Parameters
         ----------
@@ -177,6 +174,7 @@ class ADVBinner(VelBinner):
           The sample rate (default: from the binner).
         window : string or array
           Specify the window function.
+          Options: 1, None, 'hann', 'hamm'
         n_bin : int (optional)
           The bin-size (default: from the binner).
         n_fft_coh : int (optional)
@@ -225,8 +223,7 @@ class ADVBinner(VelBinner):
         return csd
 
     def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
-        """
-        Calculate the dissipation rate from the PSD
+        """Calculate the dissipation rate from the PSD
 
         Parameters
         ----------
@@ -234,7 +231,7 @@ class ADVBinner(VelBinner):
           The power spectral density
         U_mag : xarray.DataArray (...,time)
           The bin-averaged horizontal velocity [m/s] (from dataset shortcut)
-        freq_range : iterable(2)
+        freq_range : iterable(2) (default: [6.28, 12.57])
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
 
@@ -287,8 +284,7 @@ class ADVBinner(VelBinner):
         return out
 
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_range=[2., 4.]):
-        """
-        Calculate dissipation rate using the "structure function" (SF) method
+        """Calculate dissipation rate using the "structure function" (SF) method
         
         Parameters
         ----------
@@ -299,7 +295,7 @@ class ADVBinner(VelBinner):
           The bin-averaged horizontal velocity (from dataset shortcut)
         fs : float
           The sample rate of `vel_raw` [Hz]
-        freq_range : iterable(2)
+        freq_range : iterable(2) (default: [2., 4.])
           The frequency range over which to compute the SF [Hz]
           (i.e. the frequency range within which the isotropic 
           turbulence cascade falls)
@@ -337,8 +333,7 @@ class ADVBinner(VelBinner):
                                    'method': 'structure function'})
 
     def _up_angle(self, U_complex):
-        """
-        Calculate the angle of the turbulence fluctuations.
+        """Calculate the angle of the turbulence fluctuations.
 
         Parameters
         ----------
@@ -358,8 +353,7 @@ class ADVBinner(VelBinner):
         return np.angle(np.mean(dt, -1, dtype=np.complex128))
 
     def _calc_epsTE01_int(self, I_tke, theta):
-        """
-        The integral, equation A13, in [TE01].
+        """The integral, equation A13, in [TE01].
 
         Parameters
         ----------
@@ -382,8 +376,7 @@ class ADVBinner(VelBinner):
             (2 * np.pi) ** (-0.5) * I_tke ** (2 / 3)
 
     def calc_epsilon_TE01(self, dat_raw, dat_avg, freq_range=[6.28, 12.57]):
-        """
-        Calculate the dissipation rate according to TE01.
+        """Calculate the dissipation rate according to TE01.
 
         Parameters
         ----------
@@ -393,7 +386,7 @@ class ADVBinner(VelBinner):
           The bin-averaged adv dataset (calc'd from 'calc_turbulence' or
           'do_avg'). The spectra (psd) and basic turbulence statistics 
           ('tke_vec' and 'stress_vec') must already be computed.
-        freq_range : iterable(2)
+        freq_range : iterable(2) (default: [6.28, 12.57])
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
 
@@ -438,8 +431,7 @@ class ADVBinner(VelBinner):
                                    'method': 'TE01'})
 
     def calc_L_int(self, a_cov, U_mag, fs=None):
-        """
-        Calculate integral length scales.
+        """Calculate integral length scales.
 
         Parameters
         ----------
@@ -475,8 +467,7 @@ class ADVBinner(VelBinner):
 
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann'):
-    """
-    Functional version of `ADVBinner` that computes a suite of turbulence 
+    """Functional version of `ADVBinner` that computes a suite of turbulence 
     statistics for the input dataset, and returns a `binned` data object.
     
     Parameters
@@ -484,10 +475,10 @@ def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='h
     ds_raw : xarray.Dataset
       The raw adv datset to `bin`, average and compute
       turbulence statistics of.
-    freq_units : string
+    freq_units : string (default: rad/s)
       Frequency units of the returned spectra in either Hz or rad/s 
       (`f` or :math:`\\omega`)
-    window : 1, None, 'hann'
+    window : 1, None, 'hann', 'hamm'
       The window to use for calculating power spectral densities
     
     Returns

@@ -27,7 +27,7 @@ Create a 'contributing to DOLfYN' page.
 Packaging
 =========
 
-Build a conda install
+Update conda-forge install
 
 
 File I/O
@@ -57,5 +57,4 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
 
 ADCPs:
-  - Support for calculating principal heading by ensemble?
   - Support for motion-correcting ADCP data

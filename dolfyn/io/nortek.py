@@ -22,21 +22,24 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     Parameters
     ----------
     filename : string
-        Filename of Nortek file to read.
+      Filename of Nortek file to read.
     userdata : True, False, or string of userdata.json filename
-        (default ``True``) Whether to read the '<base-filename>.userdata.json'
-        file.
+      (default ``True``) Whether to read the '<base-filename>.userdata.json'
+      file.
+    debug : bool (default: False)
+      Logs debugger ouput if true
     do_checksum : bool (default False)
-        Whether to perform the checksum of each data block.
-    nens : None (default: read entire file), int, or 2-element tuple (start, stop)
-        Number of pings to read from the file
+      Whether to perform the checksum of each data block.
+    nens : None, int or 2-element tuple (start, stop)
+      Number of pings or ensembles to read from the file. 
+      Default is None, read entire file
 
     Returns
     -------
     ds : xarray.Dataset
-        An xarray dataset from the binary instrument data
-
+      An xarray dataset from the binary instrument data
     """
+
     # Start debugger logging
     if debug:
         for handler in logging.root.handlers[:]:
@@ -116,9 +119,8 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
 
 
 def _bcd2char(cBCD):
-    """
-    Taken from the Nortek System Integrator
-    Manual "Example Program" Chapter.
+    """Taken from the Nortek System Integrator Manual 
+    "Example Program" Chapter.
     """
     cBCD = min(cBCD, 153)
     c = (cBCD & 15)
@@ -144,21 +146,21 @@ class _NortekReader():
     Parameters
     ----------
     fname : string
-        Nortek file filename to read.
+      Nortek filename to read.
     endian : {'<','>'} (optional)
-        Specifies if the file is in 'little' or 'big' endian format. By
-        default the reader will attempt to determine this.
+      Specifies if the file is in 'little' or 'big' endian format. By
+      default the reader will attempt to determine this.
     debug : {True, False*} (optional)
-        Print debug/progress information?
+      Print debug/progress information?
     do_checksum : {True*, False} (optional)
-        Specifies whether to perform the checksum.
+      Specifies whether to perform the checksum.
     bufsize : int (default 100000)
-        The size of the read buffer to use.
+      The size of the read buffer to use.
     nens : None (default: None, read all files), int, or 2-element tuple (start, stop).
-        The number of pings to read from the file. By default, the entire file
-        is read.
-
+      The number of pings to read from the file. By default, the entire file
+      is read.
     """
+
     _lastread = [None, None, None, None, None]
     fun_map = {'0x00': 'read_user_cfg',
                '0x04': 'read_head_cfg',

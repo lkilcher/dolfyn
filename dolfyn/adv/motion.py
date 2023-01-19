@@ -17,24 +17,21 @@ def _get_body2imu(make_model):
 
 
 class CalcMotion():
-    """
-    A 'calculator' for computing the velocity of points that are
+    """A 'calculator' for computing the velocity of points that are
     rigidly connected to an ADV-body with an IMU.
 
     Parameters
     ----------
     ds : xarray.Dataset
-           The IMU-adv data that will be used to compute motion.
-
+      The IMU-adv data that will be used to compute motion.
     accel_filtfreq : float
       the frequency at which to high-pass filter the acceleration
       sigal to remove low-frequency drift. (default: 0.03 Hz)
-
     vel_filtfreq : float (optional)
       a second frequency to high-pass filter the integrated
       acceleration.  (default: 1/3 of accel_filtfreq)
-
     """
+
     _default_accel_filtfreq = 0.03
 
     def __init__(self, ds,
@@ -88,11 +85,10 @@ class CalcMotion():
                             % (self.ds.coord_sys))
 
     def _check_duty_cycle(self, ):
-        """
-        Function to check if duty cycle exists and if it is followed
+        """Function to check if duty cycle exists and if it is followed
         consistently in the datafile
-
         """
+
         n_burst = self.ds.attrs.get('duty_cycle_n_burst')
         if not n_burst:
             return
@@ -109,7 +105,7 @@ class CalcMotion():
         if rng > 2 or (mean > interval+1 and mean < interval-1):
             raise Exception("Bad duty cycle detected")
 
-        # If this passes, it means we're save to blindly skip n_burst for every integral
+        # If this passes, it means we're safe to blindly skip n_burst for every integral
         return n_burst
 
     def reshape(self, dat, n_bin):
@@ -136,15 +132,15 @@ class CalcMotion():
                 acc[idx] = ss.filtfilt(flt[0], flt[1], acc[idx], axis=-1)
 
     def calc_velacc(self, ):
-        """
-        Calculates the translational velocity from the high-pass
+        """Calculates the translational velocity from the high-pass
         filtered acceleration signal.
 
         Returns
         -------
         velacc : numpy.ndarray (3 x n_time)
-               The acceleration-induced velocity array (3, n_time).
+          The acceleration-induced velocity array (3, n_time).
         """
+
         samp_freq = self.ds.fs
 
         # Check if file is duty cycled
@@ -186,9 +182,8 @@ class CalcMotion():
             return dat
 
     def calc_velrot(self, vec, to_earth=None):
-        """
-        Calculate the induced velocity due to rotations of the instrument
-        about the IMU center.
+        """Calculate the induced velocity due to rotations of the 
+        instrument about the IMU center.
 
         Parameters
         ----------
@@ -201,8 +196,8 @@ class CalcMotion():
         -------
         velrot : numpy.ndarray (3 x M x N_time)
           The rotation-induced velocity array (3, n_time).
-
         """
+
         if to_earth is None:
             to_earth = self.to_earth
 
@@ -242,14 +237,13 @@ class CalcMotion():
 
 
 def _calc_probe_pos(ds, separate_probes=False):
-    """
-    Calculates the position of probe (or "head") of an ADV.
+    """Calculates the position of probe (or "head") of an ADV.
 
     Paratmeters
     -----------
     ds : xarray.Dataset
       ADV dataset
-    separate_probes : bool (optional, default=False)
+    separate_probes : bool (optional, default: False)
       If a Nortek Vector ADV, this function returns the 
       transformation matrix of positions of the probe's 
       acoustic recievers to the ADV's instrument frame of
@@ -260,8 +254,8 @@ def _calc_probe_pos(ds, separate_probes=False):
     vec : 3x3 numpy.ndarray
       Transformation matrix to convert from ADV probe to 
       instrument frame of reference
-
     """
+
     vec = ds.inst2head_vec
     if type(vec) != np.ndarray:
         vec = np.array(vec)
@@ -292,8 +286,7 @@ def correct_motion(ds,
                    vel_filtfreq=None,
                    to_earth=True,
                    separate_probes=False):
-    """
-    This function performs motion correction on an IMU-ADV data
+    """This function performs motion correction on an IMU-ADV data
     object. The IMU and ADV data should be tightly synchronized and
     contained in a single data object.
 
@@ -380,8 +373,8 @@ def correct_motion(ds,
     low-frequency motion is known separate from the ADV (e.g. from a
     bottom-tracking ADP, or from a ship's GPS), it may be possible to
     remove that sigal from the ADV sigal in post-processing.
-
     """
+
     # Ensure acting on new dataset
     ds = ds.copy(deep=True)
 
