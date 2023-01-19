@@ -531,7 +531,7 @@ class ADPBinner(VelBinner):
         vel_raw : xarray.DataArray
           The raw beam velocity data (one beam, last dimension time) upon
           which to perform the SF technique.
-        r_range : numeric
+        r_range : numeric, default=[1,5]
           Range of r in [m] to calc dissipation across. Low end of range should be
           bin size, upper end of range is limited to the length of largest eddies
           in the inertial subrange.
@@ -663,7 +663,7 @@ class ADPBinner(VelBinner):
         ds_avg : xarray.Dataset
           Bin-averaged dataset containing `stress_vec`
         z_inds : slice(int,int)
-          Depth indices to use for profile
+          Depth indices to use for profile. Default = slice(1, 5)
         H : int (default=`ds_avg.depth`)
           Total water depth
 

@@ -9,13 +9,14 @@ FFT-based Functions:
 
 .. autosummary::
 	:nosignatures:
-	
+
+	~dolfyn.tools.psd.psd_freq
+	~dolfyn.tools.psd.stepsize
+	~dolfyn.tools.psd.coherence
+	~dolfyn.tools.psd.phase_angle
 	~dolfyn.tools.psd.psd
 	~dolfyn.tools.psd.cpsd
 	~dolfyn.tools.psd.cpsd_quasisync
-	~dolfyn.tools.psd.coherence
-	~dolfyn.tools.psd.phase_angle
-	~dolfyn.tools.psd.psd_freq
 
 Other Functions:
 
