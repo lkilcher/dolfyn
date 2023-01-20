@@ -128,7 +128,10 @@ def _create_dataset(data):
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'x': beam,
                                                'x*': beam},
-                                       dims=['x', 'x*'])
+                                       dims=['x', 'x*'],
+                                       attrs={'units': '1',
+                                              'long_name': 'Rotation Matrix',
+                                              'standard_name': 'instrument_rotation_matrix'})
             else:  # earth2inst orientation matrix
                 if any(val in key for val in tag):
                     tg = '_' + key.rsplit('_')[-1]
@@ -150,16 +153,20 @@ def _create_dataset(data):
                                            'time'+tg: data['coords']['time'+tg]},
                                    dims=['q', 'time'+tg])
         else:
+            # Assign each variable to a dataArray
             ds[key] = xr.DataArray(data['data_vars'][key])
-            if key in data['units']:   # not all variables have units
-                ds[key].attrs['units'] = data['units'][key]
-            try:  # make sure ones with tags get units
-                tg = '_' + key.rsplit('_')[-1]
-                if any(val in key for val in tag):
-                    ds[key].attrs['units'] = data['units'][key[:-len(tg)]]
-            except:
-                pass
+            # Assign metadata to each dataArray
+            for md in ['units', 'long_name', 'standard_name']:
+                if key in data[md]:
+                    ds[key].attrs[md] = data[md][key]
+                try:  # make sure ones with tags get units
+                    tg = '_' + key.rsplit('_')[-1]
+                    if any(val in key for val in tag):
+                        ds[key].attrs[md] = data[md][key[:-len(tg)]]
+                except:
+                    pass
 
+            # Fill in dimensions and coordinates for each dataArray
             shp = data['data_vars'][key].shape
             vshp = data['data_vars']['vel'].shape
             l = len(shp)
@@ -239,7 +246,15 @@ def _create_dataset(data):
     r_list = [r for r in ds.coords if 'range' in r]
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'
+        ds[ky].attrs['long_name'] = 'Profile Range'
+        ds[ky].attrs['standard_name'] = 'profile_range'
+    time_list = [t for t in ds.coords if 'time' in t]
+    for ky in time_list:
+        ds[ky].attrs['units'] = 'seconds since 1970-01-01 00:00:00'
+        ds[ky].attrs['long_name'] = 'Time'
+        ds[ky].attrs['standard_name'] = 'time'
 
+    # dataset metadata
     ds.attrs = data['attrs']
 
     return ds
