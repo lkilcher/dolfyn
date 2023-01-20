@@ -3,7 +3,6 @@ from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 import dolfyn.adv.api as avm
 import dolfyn.adp.api as apm
-import numpy as np
 
 
 def test_GN2002(make_data=False):

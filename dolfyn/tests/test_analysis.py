@@ -2,6 +2,7 @@ from dolfyn.tests import test_read_adp as tr, test_read_adv as tv
 from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
+import dolfyn.adp.api as apm
 from xarray.testing import assert_identical
 import numpy as np
 import pytest
@@ -115,3 +116,31 @@ def test_adv_turbulence(make_data=False):
         return
 
     assert_allclose(tdat, load('vector_data01_bin.nc'), atol=1e-6)
+
+
+# def test_adcp_turbulence(make_data=False):
+#     dat = tr.dat_sig_i.copy(deep=True)
+#     bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs)
+#     tdat = bnr.do_avg()
+#     tdat['dudz'] = bnr.dudz(tdat.vel)
+#     tdat['dvdz'] = bnr.dvdz(tdat.vel)
+#     tdat['dwdz'] = bnr.dwdz(tdat.vel)
+#     tdat['tau2'] = bnr.tau2(tdat.vel)
+#     tdat['psd'] = bnr.calc_psd(dat.vel, freq_units='Hz')
+#     tdat['noise'] = bnr.calc_doppler_noise(tdat['psd'], pct_fN=0.8)
+#     tdat['tke_vec4'], tdat['stress_vec4'] = bnr.calc_stress_4beam(
+#         dat, noise=tdat['noise'], tke_only=False)
+#     tdat['tke_vec5'], tdat['stress_vec5'] = bnr.calc_stress_5beam(
+#         dat, noise=tdat['noise'], tke_only=False)
+#     tdat['tke'] = bnr.calc_total_tke(dat, noise=tdat['noise'])
+#     tdat['dissipation_rate_LT83'] = bnr.calc_dissipation_LT83(
+#         tdat['psd'], tdat.velds.U_mag, freq_range=[0.2, 0.4])
+#     tdat['dissipation_rate_SF'], tdat['noise_SF'], tdat['D_SF'] = bnr.calc_dissipation_SF(
+#         dat.vel, r_range=[1, 5])
+#     tdat['friction_vel'] = bnr.calc_ustar_fit(tdat, z_inds=slice(1, 5), H=50)
+
+#     if make_data:
+#         save(tdat, 'Sig1000_IMU_bin.nc')
+#         return
+
+#     assert_allclose(tdat, load('Sig1000_IMU_bin.nc'), atol=1e-6)

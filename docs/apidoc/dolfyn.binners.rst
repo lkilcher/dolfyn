@@ -55,18 +55,18 @@ Functions for analyzing ADCP data via the `ADPBinner` class, beyond those descri
 .. autosummary::
 	:nosignatures:
 
-	~dolfyn.adv.turbulence.ADPBinner
-	~dolfyn.adv.turbulence.ADPBinner.dudz
-	~dolfyn.adv.turbulence.ADPBinner.dvdz
-	~dolfyn.adv.turbulence.ADPBinner.dwdz
-	~dolfyn.adv.turbulence.ADPBinner.tau2
-	~dolfyn.adv.turbulence.ADPBinner.calc_doppler_noise
-	~dolfyn.adv.turbulence.ADPBinner.calc_stress_4beam
-	~dolfyn.adv.turbulence.ADPBinner.calc_stress_5beam
-	~dolfyn.adv.turbulence.ADPBinner.calc_total_tke
-	~dolfyn.adv.turbulence.ADPBinner.calc_dissipation_LT83
-	~dolfyn.adv.turbulence.ADPBinner.calc_dissipation_SF
-	~dolfyn.adv.turbulence.ADPBinner.calc_ustar_fit
+	~dolfyn.adp.turbulence.ADPBinner
+	~dolfyn.adp.turbulence.ADPBinner.dudz
+	~dolfyn.adp.turbulence.ADPBinner.dvdz
+	~dolfyn.adp.turbulence.ADPBinner.dwdz
+	~dolfyn.adp.turbulence.ADPBinner.tau2
+	~dolfyn.adp.turbulence.ADPBinner.calc_doppler_noise
+	~dolfyn.adp.turbulence.ADPBinner.calc_stress_4beam
+	~dolfyn.adp.turbulence.ADPBinner.calc_stress_5beam
+	~dolfyn.adp.turbulence.ADPBinner.calc_total_tke
+	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_LT83
+	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_SF
+	~dolfyn.adp.turbulence.ADPBinner.calc_ustar_fit
 
 
 .. automodule:: dolfyn.binned
@@ -80,6 +80,11 @@ Functions for analyzing ADCP data via the `ADPBinner` class, beyond those descri
     :show-inheritance:
 
 .. automodule:: dolfyn.adv.turbulence
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: dolfyn.adp.turbulence
     :members:
     :undoc-members:
     :show-inheritance:
