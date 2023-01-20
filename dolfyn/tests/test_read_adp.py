@@ -35,7 +35,7 @@ dat_sig_badt = load('Sig1000_BadTime01.nc')
 dat_sig5_leiw = load('Sig500_last_ensemble_is_whole.nc')
 
 
-def test_io_rdi(make_data=True):
+def test_io_rdi(make_data=False):
     warnings.simplefilter('ignore', UserWarning)
     nens = 100
     td_rdi = tb.drop_config(read('RDI_test01.000'))
