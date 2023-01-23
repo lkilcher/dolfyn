@@ -832,7 +832,7 @@ class _NortekReader():
         """Read ADV microstrain sensor (IMU) data
         """
         def update_defs(dat, mag=False):
-            imu_data = {'accel': ['m/s^2', 'Acceleration', 'platform_acceleration'],
+            imu_data = {'accel': ['m s-2', 'Acceleration', 'platform_acceleration'],
                         'angrt': ['rad/s', 'Angular Velocity', 'platform_angular_velocity'],
                         'mag': ['gauss', 'Compass', 'magnetic_field_vector']}
             for ky in imu_data:

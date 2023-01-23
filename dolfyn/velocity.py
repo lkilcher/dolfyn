@@ -307,7 +307,7 @@ class Velocity():
         """
         return xr.DataArray(
             (self.u + self.v * 1j),
-            attrs={'units': 'm/s',
+            attrs={'units': 'm s-1',
                    'description': 'horizontal velocity (complex)'})
 
     @property
@@ -316,8 +316,9 @@ class Velocity():
         """
         return xr.DataArray(
             np.abs(self.U),
-            attrs={'units': 'm/s',
-                   'description': 'horizontal velocity magnitude'})
+            attrs={'units': 'm s-1',
+                   'long_name': 'Water Speed',
+                   'standard_name': 'sea_water_speed'})
 
     @property
     def U_dir(self,):
@@ -331,11 +332,13 @@ class Velocity():
                             dims=self.U.dims,
                             coords=self.U.coords,
                             attrs={'units': 'deg',
+                                   'long_name': 'Water Direction',
+                                   'standard_name': 'sea_water_to_direction',
                                    'description': 'horizontal velocity flow direction, CCW from X/East/streamwise'})
 
     @property
     def E_coh(self,):
-        """Coherent turbulent energy
+        """Coherent turbulence energy
 
         Niel Kelley's 'coherent turbulence energy', which is the RMS
         of the Reynold's stresses.
@@ -347,8 +350,10 @@ class Velocity():
         return xr.DataArray(E_coh,
                             coords={'time': self.ds['stress_vec'].time},
                             dims=['time'],
-                            attrs={'units': self.ds['stress_vec'].units},
-                            name='E_coh')
+                            attrs={'units': self.ds['stress_vec'].units,
+                                   'long_name': 'Coherent Turbulence Energy',
+                                   'standard_name': 'coherent_turbulence_energy_of_sea_water'},
+                            )
 
     @property
     def I_tke(self, thresh=0):
@@ -361,8 +366,10 @@ class Velocity():
         return xr.DataArray(I_tke.data,
                             coords=self.U_mag.coords,
                             dims=self.U_mag.dims,
-                            attrs={'units': '% [0,1]'},
-                            name='TKE intensity')
+                            attrs={'units': '% [0,1]',
+                                   'long_name': 'TKE Intensity',
+                                   'standard_name': 'specific_turbulent_kinetic_energy_intensity_of_sea_water'},
+                            )
 
     @property
     def I(self, thresh=0):
@@ -376,8 +383,10 @@ class Velocity():
         return xr.DataArray(I.data,
                             coords=self.U_mag.coords,
                             dims=self.U_mag.dims,
-                            attrs={'units': '% [0,1]'},
-                            name='turbulence intensity')
+                            attrs={'units': '% [0,1]',
+                                   'long_name': 'Turbulence Intensity',
+                                   'standard_name': 'turbulence_intensity_of_sea_water'}
+                            )
 
     @property
     def tke(self,):
@@ -386,6 +395,8 @@ class Velocity():
         tke = self.ds['tke_vec'].sum('tke') / 2
         tke.name = 'TKE'
         tke.attrs['units'] = self.ds['tke_vec'].units
+        tke.attrs['long_name'] = 'TKE'
+        tke.attrs['standard_name'] = 'specific_turbulent_kinetic_energy_of_sea_water'
         return tke
 
     @property
@@ -516,8 +527,9 @@ class VelBinner(TimeBinner):
             out_ds['U_std'] = xr.DataArray(
                 std.astype('float32'),
                 dims=raw_ds.vel.dims[1:],
-                attrs={'units': 'm/s',
-                       'description': 'horizontal velocity std dev'})
+                attrs={'units': 'm s-1',
+                       'long_name': 'Water Velocity Std',
+                       'standard_name': 'sea_water_velocity_standard_deviation'})
 
         return out_ds
 
@@ -846,8 +858,7 @@ class VelBinner(TimeBinner):
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
 
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(tmp // 2)
-                                    :int(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2)                        :int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(dat2, n_bin=n_bin2)
 
@@ -920,7 +931,10 @@ class VelBinner(TimeBinner):
 
         da = xr.DataArray(out.astype('float32'),
                           dims=veldat.dims,
-                          attrs={'units': 'm^2/^2'})
+                          attrs={'units': 'm2 s-2',
+                                 'long_name': 'TKE Vector',
+                                 'standard_name': 'specific_turbulent_kinetic_energy_of_sea_water'}
+                          )
 
         if 'dir' in veldat.dims:
             da = da.rename({'dir': 'tke'})
@@ -990,10 +1004,10 @@ class VelBinner(TimeBinner):
         if 'rad' in freq_units:
             fs = 2*np.pi*fs
             freq_units = 'rad/s'
-            units = 'm^2/s/rad'
+            units = 'm2 s-1 rad-1'
         else:
             freq_units = 'Hz'
-            units = 'm^2/s^2/Hz'
+            units = 'm2 s-2 Hz-1'
 
         # Spectra, if input is full velocity or a single array
         if len(veldat.shape) == 2:
@@ -1017,7 +1031,10 @@ class VelBinner(TimeBinner):
         psd = xr.DataArray(out.astype('float32'),
                            coords=coords,
                            dims=dims,
-                           attrs={'units': units, 'n_fft': n_fft})
+                           attrs={'units': units, 'n_fft': n_fft,
+                                  'long_name': 'Power Spectral Density',
+                                  'standard_name': 'power_spectral_density_of_sea_water_velocity'}
+                           )
         psd['freq'].attrs['units'] = freq_units
 
         return psd

@@ -186,7 +186,7 @@ _burst_hdr = [
     ('minute', 'B', [], None),
     ('second', 'B', [], None),
     ('usec100', 'H', [], None),
-    ('c_sound', 'H', [], _LinFunc(0.1, dtype=dt32), 'm/s',
+    ('c_sound', 'H', [], _LinFunc(0.1, dtype=dt32), 'm s-1',
      'Speed of Sound', 'speed_of_sound_in_sea_water'),
     ('temp', 'H', [], _LinFunc(0.01, dtype=dt32),
      'deg C', 'Temperature', 'sea_water_temperature'),
@@ -206,8 +206,8 @@ _burst_hdr = [
     ('mag', 'h', [3], _LinFunc(0.1, dtype=dt32),
      'uT', 'Compass', 'magnetic_field_vector'),
     ('accel', 'h', [3], _LinFunc(1. / 16384 * grav, dtype=dt32),
-     'm/s^2', 'Acceleration', 'platform_acceleration'),
-    ('ambig_vel', 'h', [], _LinFunc(0.001, dtype=dt32), 'm/s'),
+     'm s-2', 'Acceleration', 'platform_acceleration'),
+    ('ambig_vel', 'h', [], _LinFunc(0.001, dtype=dt32), 'm s-1'),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None, 'dB', 'Transmit Energy',
      'sound_pressure_level_of_acoustic_signal'),
@@ -233,7 +233,7 @@ _bt_hdr = [
     ('minute', 'B', [], None),
     ('second', 'B', [], None),
     ('usec100', 'H', [], None),
-    ('c_sound', 'H', [], _LinFunc(0.1, dtype=dt32), 'm/s',
+    ('c_sound', 'H', [], _LinFunc(0.1, dtype=dt32), 'm s-1',
      'Speed of Sound', 'speed_of_sound_in_sea_water'),
     ('temp', 'H', [], _LinFunc(0.01, dtype=dt32),
      'deg C', 'Temperature', 'sea_water_temperature'),
@@ -253,8 +253,8 @@ _bt_hdr = [
     ('mag', 'h', [3], None,
      'gauss', 'Compass', 'magnetic_field_vector'),
     ('accel', 'h', [3], _LinFunc(1. / 16384 * grav, dtype=dt32),
-     'm/s^2', 'Acceleration', 'platform_acceleration'),
-    ('ambig_vel', 'I', [], _LinFunc(0.001, dtype=dt32), 'm/s'),
+     'm s-2', 'Acceleration', 'platform_acceleration'),
+    ('ambig_vel', 'I', [], _LinFunc(0.001, dtype=dt32), 'm s-1'),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None, 'dB'),
     ('vel_scale', 'b', [], None),
@@ -281,7 +281,7 @@ def _calc_bt_struct(config, nb):
     dd = copy(_bt_hdr)
     if flags['vel']:
         # units handled in Ad2cpReader.sci_data
-        dd.append(('vel', 'i', [nb], None, 'm/s', 'Bottom Track Velocity',
+        dd.append(('vel', 'i', [nb], None, 'm s-1', 'Bottom Track Velocity',
                   'platform_velocity_from_bottom_track'))
     if flags['dist']:
         dd.append(('dist', 'i', [nb], _LinFunc(0.001, dtype=dt32), 'm',
@@ -315,7 +315,7 @@ def _calc_burst_struct(config, nb, nc):
     if flags['echo']:
         raise Exception("Echosounder data found in velocity ping?")
     if flags['vel']:
-        dd.append(('vel', 'h', [nb, nc], None, 'm/s', 'Water Velocity',
+        dd.append(('vel', 'h', [nb, nc], None, 'm s-1', 'Water Velocity',
                   'velocity_from_multibeam_acoustic_doppler_velocity_profiler_in_sea_water'))
     if flags['amp']:
         dd.append(('amp', 'B', [nb, nc], _LinFunc(0.5, dtype=dt32), 'dB', 'Acoustic Signal Amplitude',
