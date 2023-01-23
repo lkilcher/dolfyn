@@ -117,6 +117,7 @@ class _Ad2cpReader():
     def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False,
                  debug=False):
         self.fname = fname
+        self.debug = debug
         self._check_nortek(endian)
         self.f.seek(0, 2)  # Seek to end
         self._eof = self.f.tell()
