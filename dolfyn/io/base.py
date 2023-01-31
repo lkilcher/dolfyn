@@ -212,6 +212,8 @@ def _create_dataset(data):
                     ds[key] = ds[key].assign_coords({'dirIMU': [1, 2, 3],
                                                      'time'+tg: data['coords']['time'+tg]})
 
+                ds[key].attrs['coverage_content_type'] = 'physicalMeasurement'
+
             elif l == 3:  # 3D variables
                 if 'vel' in key:
                     dim0 = 'dir'
@@ -242,7 +244,11 @@ def _create_dataset(data):
                     ds = ds.drop_vars(key)
                     warnings.warn(f'Variable not included in dataset: {key}')
 
-    # coordinate units
+                ds[key].attrs['coverage_content_type'] = 'physicalMeasurement'
+
+    # coordinate attributes
+    for ky in ds.dims:
+        ds[ky].attrs['coverage_content_type'] = 'coordinate'
     r_list = [r for r in ds.coords if 'range' in r]
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'
