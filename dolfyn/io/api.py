@@ -209,13 +209,13 @@ def save_mat(ds, filename, datenum=True):
     scipy.io.savemat()
     """
 
-    def copy_attrs(ds, ky):
-        if hasattr(ds[ky], 'units'):
-            matfile['units'][ky] = ds[ky].units
-        if hasattr(ds[ky], 'long_name'):
-            matfile['long_name'][key] = ds[ky].long_name
-        if hasattr(ds[ky], 'standard_name'):
-            matfile['standard_name'][ky] = ds[ky].long_name
+    def copy_attrs(matfile, ds, key):
+        if hasattr(ds[key], 'units'):
+            matfile['units'][key] = ds[key].units
+        if hasattr(ds[key], 'long_name'):
+            matfile['long_name'][key] = ds[key].long_name
+        if hasattr(ds[key], 'standard_name'):
+            matfile['standard_name'][key] = ds[key].standard_name
 
     filename = _check_file_ext(filename, 'mat')
 
@@ -241,14 +241,14 @@ def save_mat(ds, filename, datenum=True):
     ds.attrs['time_data_vars'] = t_data
 
     # Save xarray structure with more descriptive structure names
-    matfile = {'vars': {}, 'coords': {}, 'config': {}, 
+    matfile = {'vars': {}, 'coords': {}, 'config': {},
                'units': {}, 'long_name': {}, 'standard_name': {}}
-    for key in ds.data_vars:
-        matfile['vars'][key] = ds[key].values
-        copy_attrs(ds, ky)
-    for key in ds.coords:
-        matfile['coords'][key] = ds[key].values
-        copy_attrs(ds, ky)
+    for ky in ds.data_vars:
+        matfile['vars'][ky] = ds[ky].values
+        copy_attrs(matfile, ds, ky)
+    for ky in ds.coords:
+        matfile['coords'][ky] = ds[ky].values
+        copy_attrs(matfile, ds, ky)
     matfile['config'] = ds.attrs
 
     sio.savemat(filename, matfile)
@@ -282,7 +282,7 @@ def load_mat(filename, datenum=True):
 
     data = sio.loadmat(filename, struct_as_record=False, squeeze_me=True)
 
-    ds_dict = {'vars': {}, 'coords': {}, 'config': {}, 
+    ds_dict = {'vars': {}, 'coords': {}, 'config': {},
                'units': {}, 'long_name': {}, 'standard_name': {}}
     for nm in ds_dict:
         key_list = data[nm]._fieldnames

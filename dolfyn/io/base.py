@@ -126,21 +126,24 @@ def _create_dataset(data):
         if 'mat' in key:
             if 'inst' in key:  # beam2inst & inst2head orientation matrices
                 ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'x': beam,
-                                               'x*': beam},
+                                       coords={'x': beam, 'x*': beam},
                                        dims=['x', 'x*'],
                                        attrs={'units': '1',
                                               'long_name': 'Rotation Matrix',
                                               'standard_name': 'instrument_rotation_matrix'})
-            else:  # earth2inst orientation matrix
+            elif 'orientmat' in key:  # earth2inst orientation matrix
                 if any(val in key for val in tag):
                     tg = '_' + key.rsplit('_')[-1]
                 else:
                     tg = ''
                 time = data['coords']['time'+tg]
-                coords = {'earth': earth, 'inst': inst, 'time'+tg: time}
-                dims = ['earth', 'inst', 'time'+tg]
-                ds[key] = xr.DataArray(data['data_vars'][key], coords, dims)
+                ds[key] = xr.DataArray(data['data_vars'][key],
+                                       coords={'earth': earth,
+                                               'inst': inst, 'time'+tg: time},
+                                       dims=['earth', 'inst', 'time'+tg],
+                                       attrs={'units': data['units']['orientmat'],
+                                              'long_name': data['long_name']['orientmat'],
+                                              'standard_name': data['standard_name']['orientmat']})
 
         # quaternion units never change
         elif 'quaternions' in key:
@@ -148,10 +151,14 @@ def _create_dataset(data):
                 tg = '_' + key.rsplit('_')[-1]
             else:
                 tg = ''
+            time = data['coords']['time'+tg]
             ds[key] = xr.DataArray(data['data_vars'][key],
                                    coords={'q': ['w', 'x', 'y', 'z'],
-                                           'time'+tg: data['coords']['time'+tg]},
-                                   dims=['q', 'time'+tg])
+                                           'time'+tg: time},
+                                   dims=['q', 'time'+tg],
+                                   attrs={'units': data['units']['quaternions'],
+                                          'long_name': data['long_name']['quaternions'],
+                                          'standard_name': data['standard_name']['quaternions']})
         else:
             # Assign each variable to a dataArray
             ds[key] = xr.DataArray(data['data_vars'][key])

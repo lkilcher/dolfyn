@@ -831,10 +831,11 @@ class _NortekReader():
     def read_microstrain(self,):
         """Read ADV microstrain sensor (IMU) data
         """
-        def update_defs(dat, mag=False):
+        def update_defs(dat, mag=False, orientmat=False):
             imu_data = {'accel': ['m s-2', 'Acceleration', 'platform_acceleration'],
-                        'angrt': ['rad/s', 'Angular Velocity', 'platform_angular_velocity'],
-                        'mag': ['gauss', 'Compass', 'magnetic_field_vector']}
+                        'angrt': ['rad s-1', 'Angular Velocity', 'platform_angular_velocity'],
+                        'mag': ['gauss', 'Compass', 'magnetic_field_vector'],
+                        'orientmat': ['1', 'Orientation Matrix', 'earth_to_instrument_orientation_matrix']}
             for ky in imu_data:
                 dat['units'].update({ky: imu_data[ky][0]})
                 dat['long_name'].update({ky: imu_data[ky][1]})
@@ -843,6 +844,10 @@ class _NortekReader():
                 dat['units'].pop('mag')
                 dat['long_name'].pop('mag')
                 dat['standard_name'].pop('mag')
+            if not orientmat:
+                dat['units'].pop('orientmat')
+                dat['long_name'].pop('orientmat')
+                dat['standard_name'].pop('orientmat')
 
         # 0x71 = 113
         if self.c == 0:
@@ -880,7 +885,7 @@ class _NortekReader():
                 rv = ['accel', 'angrt']
                 if not all(x in da['rotate_vars'] for x in rv):
                     da['rotate_vars'].extend(rv)
-                update_defs(dat, mag=False)
+                update_defs(dat, mag=False, orientmat=True)
 
             if ahrsid in [204, 210]:
                 self._orient_dnames = ['accel', 'angrt', 'mag', 'orientmat']
@@ -896,7 +901,7 @@ class _NortekReader():
                 if ahrsid == 204:
                     dv['orientmat'] = tbx._nans((3, 3, self.n_samp_guess),
                                                 dtype=np.float32)
-                update_defs(dat, mag=True)
+                update_defs(dat, mag=True, orientmat=True)
 
             if ahrsid == 211:
                 self._orient_dnames = ['angrt', 'accel', 'mag']
@@ -909,7 +914,7 @@ class _NortekReader():
                 rv = ['angrt', 'accel', 'mag']
                 if not all(x in da['rotate_vars'] for x in rv):
                     da['rotate_vars'].extend(rv)
-                update_defs(dat, mag=True)
+                update_defs(dat, mag=True, orientmat=False)
 
         byts = ''
         if ahrsid == 195:  # 0xc3

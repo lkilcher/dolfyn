@@ -95,19 +95,25 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
 
         # Create orientation matrices
         if 'beam2inst_orientmat' not in ds:
-            ds['beam2inst_orientmat'] = xr.DataArray(_calc_beam_orientmat(
-                ds.beam_angle,
-                ds.beam_pattern == 'convex'),
+            ds['beam2inst_orientmat'] = xr.DataArray(
+                _calc_beam_orientmat(ds.beam_angle,
+                                     ds.beam_pattern == 'convex'),
                 coords={'x': [1, 2, 3, 4],
                         'x*': [1, 2, 3, 4]},
-                dims=['x', 'x*'])
+                dims=['x', 'x*'],
+                attrs={'units': '1',
+                       'long_name': 'Rotation Matrix',
+                       'standard_name': 'instrument_rotation_matrix'})
 
         if 'orientmat' not in ds:
             ds['orientmat'] = xr.DataArray(_calc_orientmat(ds),
                                            coords={'earth': ['E', 'N', 'U'],
                                                    'inst': ['X', 'Y', 'Z'],
                                                    'time': ds['time']},
-                                           dims=['earth', 'inst', 'time'])
+                                           dims=['earth', 'inst', 'time'],
+                                           attrs={'units': '1',
+                                                  'long_name': 'Orientation Matrix',
+                                                  'standard_name': 'earth_to_instrument_orientation_matrix'})
 
         # Check magnetic declination if provided via software and/or userdata
         _set_rdi_declination(ds, filename, inplace=True)

@@ -193,9 +193,10 @@ _burst_hdr = [
     ('pressure', 'I', [], _LinFunc(0.001, dtype=dt32),
      'dbar', 'Pressure', 'sea_water_pressure'),
     ('heading', 'H', [], _LinFunc(0.01, dtype=dt32),
-     'deg', 'Heading', 'platform_orientation'),
-    ('pitch', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg', 'Pitch', 'platform_pitch'),
-    ('roll', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg', 'Roll', 'platform_roll'),
+     'degree', 'Heading', 'platform_orientation'),
+    ('pitch', 'h', [], _LinFunc(0.01, dtype=dt32),
+     'degree', 'Pitch', 'platform_pitch'),
+    ('roll', 'h', [], _LinFunc(0.01, dtype=dt32), 'degree', 'Roll', 'platform_roll'),
     ('beam_config', 'H', [], None),
     ('cell_size', 'H', [], _LinFunc(0.001), 'm'),
     ('blank_dist', 'H', [], _LinFunc(0.01), 'm'),
@@ -242,9 +243,10 @@ _bt_hdr = [
     ('pressure', 'I', [], _LinFunc(0.001, dtype=dt32),
      'dbar', 'Pressure', 'sea_water_pressure'),
     ('heading', 'H', [], _LinFunc(0.01, dtype=dt32),
-     'deg', 'Heading', 'platform_orientation'),
-    ('pitch', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg', 'Pitch', 'platform_pitch'),
-    ('roll', 'h', [], _LinFunc(0.01, dtype=dt32), 'deg', 'Roll', 'platform_roll'),
+     'degree', 'Heading', 'platform_orientation'),
+    ('pitch', 'h', [], _LinFunc(0.01, dtype=dt32),
+     'degree', 'Pitch', 'platform_pitch'),
+    ('roll', 'h', [], _LinFunc(0.01, dtype=dt32), 'degree', 'Roll', 'platform_roll'),
     ('beam_config', 'H', [], None),
     ('cell_size', 'H', [], _LinFunc(0.001), 'm'),
     ('blank_dist', 'H', [], _LinFunc(0.01), 'm'),
@@ -275,7 +277,7 @@ _ahrs_def = [
     ('quaternions', 'f', [4], None, '1',
      'Quaternions', 'platform_quaternion_vector'),
     ('angrt', 'f', [3], _LinFunc(np.pi / 180, dtype=dt32),
-     'rad/s', 'Angular Velocity', 'platform_angular_velocity'),
+     'rad s-1', 'Angular Velocity', 'platform_angular_velocity'),
 ]
 
 
@@ -361,11 +363,11 @@ def _calc_burst_struct(config, nb, nc):
                 'proportion_of_acceptable_signal_returns_from_acoustic_instrument_in_sea_water')]
     if flags['std']:
         dd += [('pitch_std', 'h', [],
-                _LinFunc(0.01, dtype=dt32), 'deg', 'Pitch Std', 'platform_pitch_standard_devation'),
+                _LinFunc(0.01, dtype=dt32), 'degree', 'Pitch Std', 'platform_pitch_standard_devation'),
                ('roll_std', 'h', [],
-                _LinFunc(0.01, dtype=dt32), 'deg', 'Roll Std', 'platform_roll_standard_devation'),
+                _LinFunc(0.01, dtype=dt32), 'degree', 'Roll Std', 'platform_roll_standard_devation'),
                ('heading_std', 'h', [],
-                _LinFunc(0.01, dtype=dt32), 'deg', 'Heading Std', 'platform_course_standard_devation'),
+                _LinFunc(0.01, dtype=dt32), 'degree', 'Heading Std', 'platform_course_standard_devation'),
                ('press_std', 'h', [],
                 _LinFunc(0.1, dtype=dt32), 'dbar', 'Pressure Std', 'sea_water_pressure_standard_devation'),
                # This use of 'x' here is a hack

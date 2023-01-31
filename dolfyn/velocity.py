@@ -331,7 +331,7 @@ class Velocity():
         return xr.DataArray(angle,
                             dims=self.U.dims,
                             coords=self.U.coords,
-                            attrs={'units': 'deg',
+                            attrs={'units': 'degree',
                                    'long_name': 'Water Direction',
                                    'standard_name': 'sea_water_to_direction',
                                    'description': 'horizontal velocity flow direction, CCW from X/East/streamwise'})
@@ -1003,7 +1003,7 @@ class VelBinner(TimeBinner):
         freq = self.calc_freq(units=freq_units)
         if 'rad' in freq_units:
             fs = 2*np.pi*fs
-            freq_units = 'rad/s'
+            freq_units = 'rad s-1'
             units = 'm2 s-1 rad-1'
         else:
             freq_units = 'Hz'
