@@ -72,7 +72,7 @@ and configured correctly:
    :alt: ADV head and inst coordinate systems.
    :figwidth: 560px
 
-   The ADV 'inst' (magenta) and head (yellow) coordinate
+   The ADV 'inst' (yellow) and head (magenta) coordinate
    systems. The :math:`\hat{x}^\mathrm{head}` -direction is known by
    the black-band around the transducer arm, and the
    :math:`\hat{x}^*` -direction is marked by a notch on the end-cap
@@ -117,9 +117,9 @@ The 'userdata.json' file corresponding to the ADV sounding weight in Figure 2 lo
 
 .. code-block:: text
 
-	{"inst2head_rotmat": [[ 0, 0, 1],
+	{"inst2head_rotmat": [[ 0, 0,-1],
 	                      [ 0, 1, 0],
-	                      [-1, 0, 0]],
+	                      [ 1, 0, 0]],
 	 "inst2head_vec": [0.04, 0, 0.20],
 	 "motion accel_filtfreq Hz": 0.03,
 	}
