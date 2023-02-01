@@ -8,7 +8,7 @@ from .tools.psd import coherence, phase_angle
 from .tools.misc import slice1d_along_axis
 
 
-@xr.register_dataset_accessor('velds')  # 'vel dataset'
+@xr.register_dataset_accessor('velds')  # 'velocity dataset'
 class Velocity():
     """All ADCP and ADV xarray datasets wrap this base class.
     The turbulence-related attributes defined within this class 
@@ -306,35 +306,35 @@ class Velocity():
         """Horizontal velocity as a complex quantity
         """
         return xr.DataArray(
-            (self.u + self.v * 1j),
+            (self.u + self.v * 1j).astype('complex64'),
             attrs={'units': 'm s-1',
-                   'description': 'horizontal velocity (complex)'})
+                   'long_name': 'Horizontal Water Velocity'})
 
     @property
     def U_mag(self,):
         """Horizontal velocity magnitude
         """
         return xr.DataArray(
-            np.abs(self.U),
+            np.abs(self.U).astype('float32'),
             attrs={'units': 'm s-1',
                    'long_name': 'Water Speed',
                    'standard_name': 'sea_water_speed'})
 
     @property
     def U_dir(self,):
-        """Angle of horizontal velocity vector, degrees counterclockwise from
-        X/East/streamwise. Direction is 'to', as opposed to 'from'.
+        """Angle of horizontal velocity vector, in degrees counterclockwise 
+        from X/East/streamwise. Direction is 'to', as opposed to 'from'.
         """
         # Convert from radians to degrees
         angle = np.angle(self.U)*(180/np.pi)
 
-        return xr.DataArray(angle,
-                            dims=self.U.dims,
-                            coords=self.U.coords,
-                            attrs={'units': 'degree',
-                                   'long_name': 'Water Direction',
-                                   'standard_name': 'sea_water_to_direction',
-                                   'description': 'horizontal velocity flow direction, CCW from X/East/streamwise'})
+        return xr.DataArray(
+            angle.astype('float32'),
+            dims=self.U.dims,
+            coords=self.U.coords,
+            attrs={'units': 'degree',
+                   'long_name': 'Water Direction',
+                   'standard_name': 'sea_water_to_direction'})
 
     @property
     def E_coh(self,):
@@ -347,13 +347,13 @@ class Velocity():
         """
         E_coh = (self.upwp_**2 + self.upvp_**2 + self.vpwp_**2) ** (0.5)
 
-        return xr.DataArray(E_coh,
-                            coords={'time': self.ds['stress_vec'].time},
-                            dims=['time'],
-                            attrs={'units': self.ds['stress_vec'].units,
-                                   'long_name': 'Coherent Turbulence Energy',
-                                   'standard_name': 'coherent_turbulence_energy_of_sea_water'},
-                            )
+        return xr.DataArray(
+            E_coh.astype('float32'),
+            coords={'time': self.ds['stress_vec'].time},
+            dims=['time'],
+            attrs={'units': self.ds['stress_vec'].units,
+                   'long_name': 'Coherent Turbulence Energy',
+                   'standard_name': 'coherent_turbulence_energy_of_sea_water'})
 
     @property
     def I_tke(self, thresh=0):
@@ -363,13 +363,13 @@ class Velocity():
         """
         I_tke = np.ma.masked_where(self.U_mag < thresh,
                                    np.sqrt(2 * self.tke) / self.U_mag)
-        return xr.DataArray(I_tke.data,
-                            coords=self.U_mag.coords,
-                            dims=self.U_mag.dims,
-                            attrs={'units': '% [0,1]',
-                                   'long_name': 'TKE Intensity',
-                                   'standard_name': 'specific_turbulent_kinetic_energy_intensity_of_sea_water'},
-                            )
+        return xr.DataArray(
+            I_tke.data.astype('float32'),
+            coords=self.U_mag.coords,
+            dims=self.U_mag.dims,
+            attrs={'units': '% [0,1]',
+                   'long_name': 'TKE Intensity',
+                   'standard_name': 'specific_turbulent_kinetic_energy_intensity_of_sea_water'})
 
     @property
     def I(self, thresh=0):
@@ -380,13 +380,13 @@ class Velocity():
         """
         I = np.ma.masked_where(self.U_mag < thresh,
                                self.ds['U_std'] / self.U_mag)
-        return xr.DataArray(I.data,
-                            coords=self.U_mag.coords,
-                            dims=self.U_mag.dims,
-                            attrs={'units': '% [0,1]',
-                                   'long_name': 'Turbulence Intensity',
-                                   'standard_name': 'turbulence_intensity_of_sea_water'}
-                            )
+        return xr.DataArray(
+            I.data.astype('float32'),
+            coords=self.U_mag.coords,
+            dims=self.U_mag.dims,
+            attrs={'units': '% [0,1]',
+                   'long_name': 'Turbulence Intensity',
+                   'standard_name': 'turbulence_intensity_of_sea_water'})
 
     @property
     def tke(self,):
@@ -459,6 +459,34 @@ class VelBinner(TimeBinner):
     # This defines how cross-spectra and stresses are computed.
     _cross_pairs = [(0, 1), (0, 2), (1, 2)]
 
+    tke = xr.DataArray(["upup_", "vpvp_", "wpwp_"],
+                       dims=['tke'],
+                       name='tke',
+                       attrs={'units': '1',
+                              'long_name': 'Reynolds Stress Vector Components',
+                              'coverage_content_type': 'coordinate'})
+
+    tau = xr.DataArray(["upvp_", "upwp_", "vpwp_"],
+                       dims=['tau'],
+                       name='tau',
+                       attrs={'units': '1',
+                              'long_name': 'Reynolds Stress Vector Components',
+                              'coverage_content_type': 'coordinate'})
+
+    S = xr.DataArray(['Sxx', 'Syy', 'Szz'],
+                     dims=['S'],
+                     name='S',
+                     attrs={'units': '1',
+                            'long_name': 'Power Spectral Density Vector Components',
+                            'coverage_content_type': 'coordinate'})
+
+    C = xr.DataArray(['Cxy', 'Cxz', 'Cyz'],
+                     dims=['C'],
+                     name='C',
+                     attrs={'units': '1',
+                            'long_name': 'Cross-Spectral Density Vector Components',
+                            'coverage_content_type': 'coordinate'})
+
     def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0, 0, 0]):
         """Bin the dataset and calculate the ensemble averages of each 
         variable.
@@ -528,7 +556,7 @@ class VelBinner(TimeBinner):
                 std.astype('float32'),
                 dims=raw_ds.vel.dims[1:],
                 attrs={'units': 'm s-1',
-                       'long_name': 'Water Velocity Std',
+                       'long_name': 'Water Velocity Standard Deviation',
                        'standard_name': 'sea_water_velocity_standard_deviation'})
 
         return out_ds
@@ -858,7 +886,8 @@ class VelBinner(TimeBinner):
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
 
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(tmp // 2)                        :int(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2)
+                                    :int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(dat2, n_bin=n_bin2)
 
@@ -933,12 +962,11 @@ class VelBinner(TimeBinner):
                           dims=veldat.dims,
                           attrs={'units': 'm2 s-2',
                                  'long_name': 'TKE Vector',
-                                 'standard_name': 'specific_turbulent_kinetic_energy_of_sea_water'}
-                          )
+                                 'standard_name': 'specific_turbulent_kinetic_energy_of_sea_water'})
 
         if 'dir' in veldat.dims:
             da = da.rename({'dir': 'tke'})
-            da = da.assign_coords({'tke': ["upup_", "vpvp_", "wpwp_"],
+            da = da.assign_coords({'tke': self.tke,
                                    'time': time})
         else:
             if 'time_b5' in veldat.dims:
@@ -1000,7 +1028,6 @@ class VelBinner(TimeBinner):
         veldat = veldat.values
 
         # Create frequency vector, also checks whether using f or omega
-        freq = self.calc_freq(units=freq_units)
         if 'rad' in freq_units:
             fs = 2*np.pi*fs
             freq_units = 'rad s-1'
@@ -1008,33 +1035,47 @@ class VelBinner(TimeBinner):
         else:
             freq_units = 'Hz'
             units = 'm2 s-2 Hz-1'
+        freq = xr.DataArray(self.calc_freq(units=freq_units),
+                            dims=['freq'],
+                            name='freq',
+                            attrs={'units': freq_units,
+                                   'long_name': 'FFT Frequency Vector',
+                                   'coverage_content_type': 'coordinate'}
+                            ).astype('float32')
 
         # Spectra, if input is full velocity or a single array
         if len(veldat.shape) == 2:
             assert veldat.shape[0] == 3, "Function can only handle 1D or 3D arrays." \
                 " If ADCP data, please select a specific depth bin."
-
-            out = np.empty(self._outshape_fft(veldat[:3].shape),
-                           dtype=np.float32)
+            out = np.empty(self._outshape_fft(
+                veldat[:3].shape), dtype=np.float32)
             for idx in range(3):
-                out[idx] = self.calc_psd_base(veldat[idx], fs=fs, noise=noise[idx],
-                                              window=window, n_bin=n_bin,
-                                              n_pad=n_pad, n_fft=n_fft, step=step)
-            coords = {'S': ['Sxx', 'Syy', 'Szz'], time_str: time, 'freq': freq}
+                out[idx] = self.calc_psd_base(veldat[idx],
+                                              fs=fs,
+                                              noise=noise[idx],
+                                              window=window,
+                                              n_bin=n_bin,
+                                              n_pad=n_pad,
+                                              n_fft=n_fft,
+                                              step=step)
+            coords = {'S': self.S, time_str: time, 'freq': freq}
             dims = ['S', time_str, 'freq']
         else:
-            out = self.calc_psd_base(veldat, fs=fs, noise=noise[0], window=window,
-                                     n_bin=n_bin, n_pad=n_pad, n_fft=n_fft, step=step)
+            out = self.calc_psd_base(veldat,
+                                     fs=fs,
+                                     noise=noise[0],
+                                     window=window,
+                                     n_bin=n_bin,
+                                     n_pad=n_pad,
+                                     n_fft=n_fft,
+                                     step=step)
             coords = {time_str: time, 'freq': freq}
             dims = [time_str, 'freq']
 
-        psd = xr.DataArray(out.astype('float32'),
-                           coords=coords,
-                           dims=dims,
-                           attrs={'units': units, 'n_fft': n_fft,
-                                  'long_name': 'Power Spectral Density',
-                                  'standard_name': 'power_spectral_density_of_sea_water_velocity'}
-                           )
-        psd['freq'].attrs['units'] = freq_units
-
-        return psd
+        return xr.DataArray(out.astype('float32'),
+                            coords=coords,
+                            dims=dims,
+                            attrs={'units': units,
+                                   'n_fft': n_fft,
+                                   'long_name': 'Power Spectral Density',
+                                   'standard_name': 'power_spectral_density_of_sea_water_velocity'})

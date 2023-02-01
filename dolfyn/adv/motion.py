@@ -400,11 +400,17 @@ def correct_motion(ds,
 
     ##########
     # Calculate the translational velocity (from the accel):
-    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(), dims=[
-                                'dirIMU', 'time']).astype('float32')
+    ds['velacc'] = xr.DataArray(calcobj.calc_velacc(),
+                                dims=['dirIMU', 'time'],
+                                attrs={'units': 'm s-1',
+                                       'long_name': 'Velocity from IMU Accelerometer'}
+                                ).astype('float32')
     # Copy acclow to the adv-object.
-    ds['acclow'] = xr.DataArray(
-        calcobj.acclow, dims=['dirIMU', 'time']).astype('float32')
+    ds['acclow'] = xr.DataArray(calcobj.acclow,
+                                dims=['dirIMU', 'time'],
+                                attrs={'units': 'm s-2',
+                                       'long_name': 'Low-Frequency Acceleration from IMU'}
+                                ).astype('float32')
 
     ##########
     # Calculate rotational velocity (from angrt):
@@ -429,8 +435,11 @@ def correct_motion(ds,
                                                  velrot)))
         # 5) Rotate back to body-coord.
         velrot = np.dot(rmat.T, velrot)
-    ds['velrot'] = xr.DataArray(
-        velrot, dims=['dirIMU', 'time']).astype('float32')
+    ds['velrot'] = xr.DataArray(velrot,
+                                dims=['dirIMU', 'time'],
+                                attrs={'units': 'm s-1',
+                                       'long_name': 'Velocity from IMU Gyroscope'}
+                                ).astype('float32')
 
     ##########
     # Rotate the data into the correct coordinate system.
@@ -460,8 +469,8 @@ def correct_motion(ds,
 
     ##########
     # Copy vel -> velraw prior to motion correction:
-    ds['vel_raw'] = xr.DataArray(ds.vel.copy(
-        deep=True), dims=ds.vel.dims).astype('float32')
+    ds['vel_raw'] = ds.vel.copy(deep=True)
+
     # Add it to rotate_vars:
     ds.attrs['rotate_vars'].append('vel_raw')
 

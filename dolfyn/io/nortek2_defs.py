@@ -36,24 +36,26 @@ class _DataDef():
         self._shape = []
         self._sci_func = []
         self._units = []
-        self.long_name = []
-        self.standard_name = []
+        self._long_name = []
+        self._standard_name = []
         self._N = []
         for itm in list_of_defs:
             self._names.append(itm[0])
             self._format.append(itm[1])
             self._shape.append(itm[2])
             self._sci_func.append(itm[3])
-            if len(itm) >= 5:
+            if len(itm) > 4:
                 self._units.append(itm[4])
             else:
                 self._units.append('1')
             if len(itm) > 5:
-                self.long_name.append(itm[5])
-                self.standard_name.append(itm[6])
+                self._long_name.append(itm[5])
             else:
-                self.long_name.append('')
-                self.standard_name.append('')
+                self._long_name.append('')
+            if len(itm) > 6:
+                self._standard_name.append(itm[6])
+            else:
+                self._standard_name.append('')
             if itm[2] == []:
                 self._N.append(1)
             else:
@@ -128,13 +130,13 @@ class _DataDef():
 
     def data_longnames(self):
         lngnms = {}
-        for ky, unit in zip(self._names, self.long_name):
+        for ky, unit in zip(self._names, self._long_name):
             lngnms[ky] = unit
         return lngnms
 
     def data_stdnames(self):
         stdnms = {}
-        for ky, unit in zip(self._names, self.standard_name):
+        for ky, unit in zip(self._names, self._standard_name):
             stdnms[ky] = unit
         return stdnms
 
@@ -202,7 +204,7 @@ _burst_hdr = [
     ('blank_dist', 'H', [], _LinFunc(0.01), 'm'),
     ('nominal_corr', 'B', [], None, '%'),
     ('temp_press', 'B', [], _LinFunc(0.2, -20, dtype=dt32),
-     'degree_C', 'Pressure Sensor Temperature', 'pressure_sensor_temperature'),
+     'degree_C', 'Pressure Sensor Temperature'),
     ('batt', 'H', [], _LinFunc(0.1, dtype=dt32),
      'V', 'Battery Voltage', 'battery_voltage'),
     ('mag', 'h', [3], _LinFunc(0.1, dtype=dt32),
@@ -217,10 +219,10 @@ _burst_hdr = [
     ('power_level_dB', 'b', [], _LinFunc(dtype=dt32), 'dB'),
     ('temp_mag', 'h', [], None),  # uncalibrated
     ('temp_clock', 'h', [], _LinFunc(0.01, dtype=dt32),
-     'degree_C', 'Internal Clock Temperature', 'internal_clock_temperature'),
-    ('error', 'H', [], None),
-    ('status0', 'H', [], None),
-    ('status', 'I', [], None),
+     'degree_C', 'Internal Clock Temperature'),
+    ('error', 'H', [], None, '1', 'Error Code'),
+    ('status0', 'H', [], None, '1', 'Status 0 Code'),
+    ('status', 'I', [], None, '1', 'Status Code'),
     ('_ensemble', 'I', [], None),
 ]
 
@@ -260,20 +262,20 @@ _bt_hdr = [
      'm s-2', 'Acceleration', 'platform_acceleration'),
     ('ambig_vel', 'I', [], _LinFunc(0.001, dtype=dt32), 'm s-1'),
     ('data_desc', 'H', [], None),
-    ('xmit_energy', 'H', [], None, 'dB'),
+    ('xmit_energy', 'H', [], None, 'dB', 'Transmit Energy',
+     'sound_pressure_level_of_acoustic_signal'),
     ('vel_scale', 'b', [], None),
-    ('power_level_dB', 'b', [], _LinFunc(dtype=dt32)),
+    ('power_level_dB', 'b', [], _LinFunc(dtype=dt32), 'dB'),
     ('temp_mag', 'h', [], None),  # uncalibrated
     ('temp_clock', 'h', [], _LinFunc(0.01, dtype=dt32),
-     'degree_C', 'Internal Clock Temperature', 'internal_clock_temperature'),
-    ('error', 'I', [], None),
-    ('status', 'I', [], None, 'binary'),
+     'degree_C', 'Internal Clock Temperature'),
+    ('error', 'I', [], None, '1', 'Error Code'),
+    ('status', 'I', [], None, '1', 'Status Code'),
     ('_ensemble', 'I', [], None),
 ]
 
 _ahrs_def = [
-    ('orientmat', 'f', [3, 3], None, '1', 'Orientation Matrix',
-     'earth_to_instrument_orientation_matrix'),
+    ('orientmat', 'f', [3, 3], None, '1', 'Orientation Matrix'),
     ('quaternions', 'f', [4], None, '1',
      'Quaternions', 'platform_quaternion_vector'),
     ('angrt', 'f', [3], _LinFunc(np.pi / 180, dtype=dt32),

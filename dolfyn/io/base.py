@@ -116,9 +116,12 @@ def _create_dataset(data):
     Direction 'dir' coordinates are set in `set_coords`
     """
     ds = xr.Dataset()
-    inst = ['X', 'Y', 'Z']
-    earth = ['E', 'N', 'U']
-    beam = list(range(1, data['data_vars']['vel'].shape[0]+1))
+    FoR = {}
+    beams = list(range(1, data['data_vars']['vel'].shape[0]+1))
+    FoR['beam'] = xr.DataArray(beams, dims=['beam'], name='beam', attrs={
+                               'units': '1', 'long_name': 'Beam Reference Frame'})
+    FoR['dir'] = xr.DataArray(beams, dims=['dir'], name='dir', attrs={
+                              'units': '1', 'long_name': 'Reference Frame'})
     tag = ['_b5', '_echo', '_bt', '_gps', '_ast', '_sl']
 
     for key in data['data_vars']:
@@ -126,24 +129,26 @@ def _create_dataset(data):
         if 'mat' in key:
             if 'inst' in key:  # beam2inst & inst2head orientation matrices
                 ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'x': beam, 'x*': beam},
+                                       coords={'x': beams, 'x*': beams},
                                        dims=['x', 'x*'],
                                        attrs={'units': '1',
-                                              'long_name': 'Rotation Matrix',
-                                              'standard_name': 'instrument_rotation_matrix'})
+                                              'long_name': 'Rotation Matrix'})
             elif 'orientmat' in key:  # earth2inst orientation matrix
                 if any(val in key for val in tag):
                     tg = '_' + key.rsplit('_')[-1]
                 else:
                     tg = ''
+                earth = xr.DataArray(['E', 'N', 'U'], dims=['earth'], name='earth', attrs={
+                    'units': '1', 'long_name': 'Earth Reference Frame'})
+                inst = xr.DataArray(['X', 'Y', 'Z'], dims=['inst'], name='inst', attrs={
+                    'units': '1', 'long_name': 'Instrument Reference Frame'})
                 time = data['coords']['time'+tg]
                 ds[key] = xr.DataArray(data['data_vars'][key],
                                        coords={'earth': earth,
                                                'inst': inst, 'time'+tg: time},
                                        dims=['earth', 'inst', 'time'+tg],
                                        attrs={'units': data['units']['orientmat'],
-                                              'long_name': data['long_name']['orientmat'],
-                                              'standard_name': data['standard_name']['orientmat']})
+                                              'long_name': data['long_name']['orientmat']})
 
         # quaternion units never change
         elif 'quaternions' in key:
@@ -151,9 +156,11 @@ def _create_dataset(data):
                 tg = '_' + key.rsplit('_')[-1]
             else:
                 tg = ''
+            q = xr.DataArray(['w', 'x', 'y', 'z'], dims=['q'], name='q', attrs={
+                             'units': '1', 'long_name': 'Quaternion Vector Components'})
             time = data['coords']['time'+tg]
             ds[key] = xr.DataArray(data['data_vars'][key],
-                                   coords={'q': ['w', 'x', 'y', 'z'],
+                                   coords={'q': q,
                                            'time'+tg: time},
                                    dims=['q', 'time'+tg],
                                    attrs={'units': data['units']['quaternions'],
@@ -204,7 +211,7 @@ def _create_dataset(data):
                         dim0 = 'dir'
                     ds[key] = ds[key].rename({'dim_0': dim0,
                                               'dim_1': 'time'+tg})
-                    ds[key] = ds[key].assign_coords({dim0: beam,
+                    ds[key] = ds[key].assign_coords({dim0: FoR[dim0],
                                                      'time'+tg: data['coords']['time'+tg]})
                 # ADCP IMU data
                 elif shp[0] == vshp[0]-1:
@@ -213,10 +220,11 @@ def _create_dataset(data):
                     else:
                         tg = [val for val in tag if val in key]
                         tg = tg[0]
-
+                    dirIMU = xr.DataArray([1, 2, 3], dims=['dirIMU'], name='dirIMU', attrs={
+                        'units': '1', 'long_name': 'Reference Frame'})
                     ds[key] = ds[key].rename({'dim_0': 'dirIMU',
                                               'dim_1': 'time'+tg})
-                    ds[key] = ds[key].assign_coords({'dirIMU': [1, 2, 3],
+                    ds[key] = ds[key].assign_coords({'dirIMU': dirIMU,
                                                      'time'+tg: data['coords']['time'+tg]})
 
                 ds[key].attrs['coverage_content_type'] = 'physicalMeasurement'
@@ -231,7 +239,7 @@ def _create_dataset(data):
                     ds[key] = ds[key].rename({'dim_0': dim0,
                                               'dim_1': 'range',
                                               'dim_2': 'time'})
-                    ds[key] = ds[key].assign_coords({dim0: beam,
+                    ds[key] = ds[key].assign_coords({dim0: FoR[dim0],
                                                      'range': data['coords']['range'],
                                                      'time': data['coords']['time']})
                 elif 'b5' in key:
@@ -260,7 +268,7 @@ def _create_dataset(data):
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'
         ds[ky].attrs['long_name'] = 'Profile Range'
-        ds[ky].attrs['standard_name'] = 'profile_range'
+        ds[ky].attrs['description'] = 'Distance from instrument face to the center of each depth bin'
     time_list = [t for t in ds.coords if 'time' in t]
     for ky in time_list:
         ds[ky].attrs['units'] = 'seconds since 1970-01-01 00:00:00'

@@ -93,18 +93,11 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
     if 'orientmat' not in ds:
-        omat = _calc_omat(ds['heading'].values,
-                          ds['pitch'].values,
-                          ds['roll'].values,
-                          ds.get('orientation_down', None))
-        ds['orientmat'] = xr.DataArray(omat,
-                                       coords={'earth': ['E', 'N', 'U'],
-                                               'inst': ['X', 'Y', 'Z'],
-                                               'time': ds['time']},
-                                       dims=['earth', 'inst', 'time'],
-                                       attrs={'units': '1',
-                                              'long_name': 'Orientation Matrix',
-                                              'standard_name': 'earth_to_instrument_orientation_matrix'})
+        ds['orientmat'] = _calc_omat(ds['time'],
+                                     ds['heading'],
+                                     ds['pitch'],
+                                     ds['roll'],
+                                     ds.get('orientation_down', None))
 
     if rotmat is not None:
         rot.set_inst2head_rotmat(ds, rotmat, inplace=True)
@@ -835,7 +828,7 @@ class _NortekReader():
             imu_data = {'accel': ['m s-2', 'Acceleration', 'platform_acceleration'],
                         'angrt': ['rad s-1', 'Angular Velocity', 'platform_angular_velocity'],
                         'mag': ['gauss', 'Compass', 'magnetic_field_vector'],
-                        'orientmat': ['1', 'Orientation Matrix', 'earth_to_instrument_orientation_matrix']}
+                        'orientmat': ['1', 'Orientation Matrix', '']}
             for ky in imu_data:
                 dat['units'].update({ky: imu_data[ky][0]})
                 dat['long_name'].update({ky: imu_data[ky][1]})

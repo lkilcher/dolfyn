@@ -89,8 +89,8 @@ class ADVBinner(VelBinner):
                                  'long_name': 'Reynolds Stress Vector',
                                  'standard_name': 'specific_reynolds_stress_of_sea_water'})
         da = da.rename({'dir': 'tau'})
-        da = da.assign_coords({'tau': ["upvp_", "upwp_", "vpwp_"],
-                               'time': time})
+        da = da.assign_coords({'tau': self.tau, 'time': time})
+        
         return da
 
     def calc_csd(self, veldat,
@@ -134,14 +134,20 @@ class ADVBinner(VelBinner):
                        dtype='complex')
 
         # Create frequency vector, also checks whether using f or omega
-        coh_freq = self.calc_freq(units=freq_units, coh=True)
         if 'rad' in freq_units:
             fs = 2*np.pi*fs
-            freq_units = 'rad/s'
+            freq_units = 'rad s-1'
             units = 'm2 s-1 rad-1'
         else:
             freq_units = 'Hz'
             units = 'm2 s-2 Hz-1'
+        coh_freq = xr.DataArray(self.calc_freq(units=freq_units, coh=True),
+                                dims=['freq'],
+                                name='freq',
+                                attrs={'units': freq_units,
+                                      'long_name': 'FFT Frequency Vector',
+                                      'coverage_content_type': 'coordinate'}
+                                ).astype('float32')
 
         for ip, ipair in enumerate(self._cross_pairs):
             out[ip] = self.calc_csd_base(veldat[ipair[0]],
@@ -150,12 +156,13 @@ class ADVBinner(VelBinner):
                                          n_fft=n_fft,
                                          window=window)
 
-        csd = xr.DataArray(out,
-                           coords={'C': ['Cxy', 'Cxz', 'Cyz'],
+        csd = xr.DataArray(out.astype('complex64'),
+                           coords={'C': self.C,
                                    'time': time,
                                    'freq': coh_freq},
                            dims=['C', 'time', 'freq'],
-                           attrs={'units': units, 'n_fft_coh': n_fft,
+                           attrs={'units': units, 
+                                  'n_fft_coh': n_fft,
                                   'long_name': 'Cross Spectral Density',
                                   'standard_name': 'cross_spectral_density_of_sea_water_velocity'})
         csd['freq'].attrs['units'] = freq_units
@@ -218,13 +225,11 @@ class ADVBinner(VelBinner):
         out = (psd.isel(freq=idx) *
                freq.isel(freq=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U
 
-        out = xr.DataArray(out, name='dissipation_rate',
-                           attrs={'units': 'm2 s-3',
-                                  'method': 'Lumley and Terray, 1983',
-                                  'long_name': 'Dissipation Rate',
-                                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
-                          )
-        return out
+        return xr.DataArray(out.astype('float32'),
+                            attrs={'units': 'm2 s-3',
+                                   'method': 'Lumley and Terray, 1983',
+                                   'long_name': 'Dissipation Rate',
+                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
 
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_range=[2., 4.]):
         """Calculate dissipation rate using the "structure function" (SF) method
@@ -269,14 +274,13 @@ class ADVBinner(VelBinner):
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
             out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
 
-        return xr.DataArray(out, name='dissipation_rate',
+        return xr.DataArray(out.astype('float32'),
                             coords=U_mag.coords,
                             dims=U_mag.dims,
                             attrs={'units': 'm2 s-3',
                                    'method': 'structure function',
                                    'long_name': 'Dissipation Rate',
-                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
-                           )
+                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
 
     def _up_angle(self, U_complex):
         """Calculate the angle of the turbulence fluctuations.
@@ -370,14 +374,13 @@ class ADVBinner(VelBinner):
         # Average the two estimates
         out *= 0.5
 
-        return xr.DataArray(out, name='dissipation_rate',
+        return xr.DataArray(out.astype('float32'),
                             coords={'time': dat_avg.psd.time},
                             dims='time',
                             attrs={'units': 'm2 s-3',
                                    'method': 'Trowbridge and Elgar, 2001',
                                    'long_name': 'Dissipation Rate',
-                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
-                           )
+                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
 
     def calc_L_int(self, a_cov, U_mag, fs=None):
         """Calculate integral length scales.
@@ -410,7 +413,7 @@ class ADVBinner(VelBinner):
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
         L_int = U_mag.values / fs * scale
 
-        return xr.DataArray(L_int, name='L_int',
+        return xr.DataArray(L_int.astype('float32'),
                             coords={'dir': a_cov.dir, 'time': a_cov.time},
                             attrs={'units': 'm',
                                    'long_name': 'Integral Length Scale',

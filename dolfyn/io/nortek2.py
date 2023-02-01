@@ -95,15 +95,9 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
     if 'orientmat' not in ds:
-        omat = _euler2orient(ds['heading'], ds['pitch'], ds['roll'])
-        ds['orientmat'] = xr.DataArray(omat,
-                                       coords={'earth': ['E', 'N', 'U'],
-                                               'inst': ['X', 'Y', 'Z'],
-                                               'time': ds['time']},
-                                       dims=['earth', 'inst', 'time'],
-                                       attrs={'units': '1',
-                                              'long_name': 'Orientation Matrix',
-                                              'standard_name': 'earth_to_instrument_orientation_matrix'})
+        ds['orientmat'] = _euler2orient(
+            ds['time'], ds['heading'], ds['pitch'], ds['roll'])
+
     if declin is not None:
         set_declination(ds, declin, inplace=True)
 

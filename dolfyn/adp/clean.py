@@ -98,8 +98,12 @@ def find_surface(ds, thresh=10, nfilt=None):
         dfilt[dfilt == 0] = np.NaN
         d = dfilt
 
-    ds['depth'] = xr.DataArray(d, dims=['time'], attrs={
-                               'units': 'm'}).astype('float32')
+    ds['depth'] = xr.DataArray(d.astype('float32'),
+                               dims=['time'],
+                               attrs={'units': 'm',
+                                      'long_name': 'Depth',
+                                      'standard_name': 'depth',
+                                      'positive': 'down'})
 
 
 def find_surface_from_P(ds, salinity=35):
@@ -145,17 +149,24 @@ def find_surface_from_P(ds, salinity=35):
 
     if hasattr(ds, 'h_deploy'):
         d += ds.h_deploy
-        description = "Water depth to seafloor"
+        description = "Depth to Seafloor"
     else:
-        description = "Water depth to ADCP"
+        description = "Depth to Instrument"
 
     ds['water_density'] = xr.DataArray(
         rho_atm0.astype('float32'),
         dims=['time'],
-        attrs={'units': 'kg/m^3',
+        attrs={'units': 'kg m-3',
+               'long_name': 'Water Density',
+               'standard_name': 'sea_water_density',
                'description': 'Water density according to UNESCO 1981 equation of state'})
-    ds['depth'] = xr.DataArray(d.astype('float32'), dims=['time'], attrs={
-                               'units': 'm', 'description': description})
+    ds['depth'] = xr.DataArray(
+        d.astype('float32'),
+        dims=['time'],
+        attrs={'units': 'm',
+              'long_name': description,
+              'standard_name': 'depth',
+              'positive': 'down'})
 
 
 def nan_beyond_surface(ds, val=np.nan, inplace=False):
