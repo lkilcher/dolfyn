@@ -47,9 +47,11 @@ class ADPBinner(VelBinner):
 
     def _diff_func(self, vel, u):
         if self.diff_style == 'first':
-            return _diffz_first(vel[u].values, vel['range'].values)
+            out = _diffz_first(vel[u].values, vel['range'].values)
+            return out, vel.range[1:]
         elif self.diff_style == 'centered':
-            return _diffz_centered(vel[u].values, vel['range'].values)
+            out = _diffz_centered(vel[u].values, vel['range'].values)
+            return out, vel.range[1:-1]
 
     def dudz(self, vel, orientation=None):
         """The shear in the first velocity component.
@@ -66,7 +68,15 @@ class ADPBinner(VelBinner):
         sign = 1
         if orientation == 'down':
             sign *= -1
-        return sign*self._diff_func(vel, 0)
+
+        dudz, rng = sign*self._diff_func(vel, 0)
+        return xr.DataArray(dudz,
+                            coords=[rng, vel.time],
+                            dims=['range', 'time'],
+                            attrs={'units': 's-1',
+                                   'long_name': 'Shear in X-direction',
+                                   'standard_name': 'x_sea_water_shear'}
+                            )
 
     def dvdz(self, vel):
         """The shear in the second velocity component.
@@ -78,7 +88,14 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
         """
 
-        return self._diff_func(vel, 1)
+        dvdz, rng = self._diff_func(vel, 1)
+        return xr.DataArray(dvdz,
+                            coords=[rng, vel.time],
+                            dims=['range', 'time'],
+                            attrs={'units': 's-1',
+                                   'long_name': 'Shear in Y-direction',
+                                   'standard_name': 'y_sea_water_shear'}
+                            )
 
     def dwdz(self, vel):
         """The shear in the third velocity component.
@@ -90,7 +107,14 @@ class ADPBinner(VelBinner):
         'true vertical' direction.
         """
 
-        return self._diff_func(vel, 2)
+        dwdz, rng = self._diff_func(vel, 2)
+        return xr.DataArray(dwdz,
+                            coords=[rng, vel.time],
+                            dims=['range', 'time'],
+                            attrs={'units': 's-1',
+                                   'long_name': 'Shear in Z-direction',
+                                   'standard_name': 'z_sea_water_shear'}
+                            )
 
     def tau2(self, vel):
         """The horizontal shear squared.
@@ -106,7 +130,12 @@ class ADPBinner(VelBinner):
         :math:`dudz`, :math:`dvdz`
         """
 
-        return self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
+        tau2 = self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
+        tau2.attrs['units'] = 's-2'
+        tau2.attrs['long_name'] = 'Horizontal Shear Squared'
+        tau2.attrs['standard_name'] = 'radial_sea_water_shear_squared'
+
+        return tau2
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
         """Calculate bias due to Doppler noise using the noise floor
@@ -168,9 +197,9 @@ class ADPBinner(VelBinner):
         out = xr.DataArray(
             noise_level.values.astype('float32'),
             dims=['time'],
-            attrs={'units': 'm/s',
-                   'description': 'Doppler noise level calculated '
-                   'from PSD white noise'})
+            attrs={'units': 'm s-1',
+                   'long_name': 'Doppler Noise Level',
+                   'standard_name': 'noise_level_of_multibeam_acoustic_doppler_velocity_profiler'})
         return out
 
     def calc_stress_4beam(self, ds, noise=0, orientation=None, beam_angle=25):
@@ -265,9 +294,9 @@ class ADPBinner(VelBinner):
             coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                     'range': ds.range,
                     'time': time},
-            attrs={'units': 'm^2/^2',
-                   'description': "u', v' and w' are aligned to the instrument's "
-                                  "(XYZ) frame of reference"})
+            attrs={'units': 'm2 s-2',
+                   'long_name': 'Reynolds Stress Vector',
+                   'standard_name': 'specific_reynolds_stress_of_sea_water'})
 
         return stress_vec
 
@@ -298,7 +327,8 @@ class ADPBinner(VelBinner):
         Assumes small-angle approximation is applicable.
 
         Assumes ADCP instrument coordinate system is aligned with principal flow
-        directions.
+        directions, i.e. u', v' and w' are aligned to the instrument's (XYZ) 
+        frame of reference.
 
         The stress equations here utilize u'v'_ to account for small variations
         in pitch and roll. u'v'_ cannot be directly calculated by a 5-beam ADCP,
@@ -390,9 +420,9 @@ class ADPBinner(VelBinner):
             coords={'tke': ["upup_", "vpvp_", "wpwp_"],
                     'range': ds.range,
                     'time': time},
-            attrs={'units': 'm^2/^2',
-                   'description': "u', v' and w' are aligned to the instrument's "
-                                  "(XYZ) frame of reference"})
+            attrs={'units': 'm2 s-2',
+                   'long_name': 'TKE Vector',
+                   'standard_name': 'specific_turbulent_kinetic_energy_of_sea_water'})
 
         if tke_only:
             return tke_vec
@@ -419,9 +449,9 @@ class ADPBinner(VelBinner):
                 coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                         'range': ds.range,
                         'time': time},
-                attrs={'units': 'm^2/^2',
-                       'description': "u', v' and w' are aligned to the instrument's "
-                                      "(XYZ) frame of reference"})
+                attrs={'units': 'm2 s-2',
+                       'long_name': 'Reynolds Stress Vector',
+                       'standard_name': 'specific_reynolds_stress_of_sea_water'})
 
             return tke_vec, stress_vec
 
@@ -456,7 +486,9 @@ class ADPBinner(VelBinner):
             ds, noise, orientation, beam_angle, tke_only=True)
 
         tke = tke_vec.sum('tke') / 2
-        tke.attrs['units'] = 'm^2/s^2'
+        tke.attrs['units'] = 'm2 s-2'
+        tke.attrs['long_name'] = 'TKE Magnitude',
+        tke.attrs['standard_name'] = 'specific_turbulent_kinetic_energy_of_sea_water'
 
         return tke.astype('float32')
 
@@ -468,7 +500,7 @@ class ADPBinner(VelBinner):
         psd : xarray.DataArray (time,f)
           The power spectral density from a single depth bin (range)
         U_mag : xarray.DataArray (time)
-          The bin-averaged horizontal velocity (a.k.a. speed)
+          The bin-averaged horizontal velocity (a.k.a. speed) from a single depth bin (range)
         noise : int or xarray.DataArray, default=0 (time)
           Doppler noise level in units of m/s
         f_range : iterable(2)
@@ -518,8 +550,9 @@ class ADPBinner(VelBinner):
                a).mean(axis=-1)**(3/2) / U.values
 
         out = xr.DataArray(out.astype('float32'),
-                           attrs={'units': 'm^2/s^3',
-                                  'description': 'Dissipation rate calculated from LT83'})
+                           attrs={'units': 'm2 s-3',
+                                  'long_name': 'Dissipation Rate',
+                                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
         return out
 
     def calc_dissipation_SF(self, vel_raw, r_range=[1, 5]):
@@ -633,28 +666,30 @@ class ADPBinner(VelBinner):
             coords={vel_raw.dims[0]: rng,
                     vel_raw.dims[1]: time},
             dims=vel_raw.dims,
-            attrs={'units': 'm^2/s^3',
-                   'description': 'Dissipation rate calculated from structure '
-                                  'function'})
+            attrs={'units': 'm2 s-3',
+                   'long_name': 'Dissipation Rate',
+                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
 
         noise = xr.DataArray(
             noise.astype('float32'),
             coords={vel_raw.dims[0]: rng,
                     vel_raw.dims[1]: time},
-            attrs={'units': 'm/s',
-                   'description': 'Noise calculated from structure function'})
+            attrs={'units': 'm s-1',
+                   'long_name': 'Structure Function Noise Offset',
+                   'standard_name': 'structure_function_offset_due_to_instrument_noise'})
 
         SF = xr.DataArray(
             D.astype('float32'),
             coords={vel_raw.dims[0]: rng,
                     'range_SF': r,
                     vel_raw.dims[1]: time},
-            attrs={'units': 'm^2/s^2',
-                   'description': 'Structure function D(z,r)'})
+            attrs={'units': 'm2 s-2',
+                   'long_name': 'Structure Function D(z,r)',
+                   'standard_name': 'specific_turbulent_kinetic_energy_structure_function_in_sea_water'})
 
         return epsilon, noise, SF
 
-    def calc_ustar_fit(self, ds_avg, z_inds=slice(1, 5), H=None):
+    def calc_ustar_fit(self, ds_avg, upwp_, z_inds=slice(1, 5), H=None):
         """Approximate friction velocity from shear stress using a 
         logarithmic profile.
 
@@ -662,6 +697,9 @@ class ADPBinner(VelBinner):
         ----------
         ds_avg : xarray.Dataset
           Bin-averaged dataset containing `stress_vec`
+        upwp_ : xarray.DataArray
+          First component of Reynolds shear stress vector, "u-prime v-prime bar"
+          Ex `ds_avg['stress_vec'].sel(tau='upwp_')`
         z_inds : slice(int,int)
           Depth indices to use for profile. Default = slice(1, 5)
         H : int (default=`ds_avg.depth`)
@@ -676,7 +714,7 @@ class ADPBinner(VelBinner):
         if not H:
             H = ds_avg.depth.values
         z = ds_avg['range'].values
-        upwp_ = ds_avg['stress_vec'].sel(tau='upwp_').values
+        upwp_ = upwp_.values
 
         sign = np.nanmean(np.sign(upwp_[z_inds, :]), axis=0)
         u_star = np.nanmean(sign * upwp_[z_inds, :] /
@@ -684,7 +722,8 @@ class ADPBinner(VelBinner):
 
         out = xr.DataArray(u_star.astype('float32'),
                            coords={'time': ds_avg.time},
-                           attrs={'units': 'm/s',
-                                  'description': 'Friction velocity'})
+                           attrs={'units': 'm s-1',
+                                  'long_name': 'Friction Velocity',
+                                  'standard_name': 'x_friction_velocity_in_sea_water'})
 
         return out
