@@ -87,7 +87,7 @@ class ADVBinner(VelBinner):
                           dims=veldat.dims, 
                           attrs={'units': 'm2 s-2',
                                  'long_name': 'Reynolds Stress Vector',
-                                 'standard_name': 'covariances_of_sea_water_velocity'})
+                                 'standard_name': 'specific_reynolds_stress_of_sea_water'})
         da = da.rename({'dir': 'tau'})
         da = da.assign_coords({'tau': ["upvp_", "upwp_", "vpwp_"],
                                'time': time})
@@ -274,8 +274,8 @@ class ADVBinner(VelBinner):
                             dims=U_mag.dims,
                             attrs={'units': 'm2 s-3',
                                    'method': 'structure function',
-                                  'long_name': 'Dissipation Rate',
-                                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
+                                   'long_name': 'Dissipation Rate',
+                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
                            )
 
     def _up_angle(self, U_complex):
@@ -375,8 +375,8 @@ class ADVBinner(VelBinner):
                             dims='time',
                             attrs={'units': 'm2 s-3',
                                    'method': 'Trowbridge and Elgar, 2001',
-                                  'long_name': 'Dissipation Rate',
-                                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
+                                   'long_name': 'Dissipation Rate',
+                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'}
                            )
 
     def calc_L_int(self, a_cov, U_mag, fs=None):
