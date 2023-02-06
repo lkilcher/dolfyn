@@ -126,7 +126,7 @@ def _inst2earth(advo, reverse=False, rotate_vars=None, force=False):
     return advo
 
 
-def _earth2principal(advo, reverse=False):
+def _earth2principal(advo, reverse=False, rotate_vars=None):
     """Rotate data in an ADV dataset to/from principal axes. Principal
     heading must be within the dataset.
 
