@@ -5,7 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unversioned
-	- API/Useability
+    - Bugfixes
+	    - Updated docs and docstrings
+		- Skipped unknown TRDI Ocean Surveyor ID codes
+
+    - API/Useability
+	    - Added CF convention metadata to variables
 		- Added ADCP turbulence functions
 
 ## Version 1.2.0
@@ -18,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Fix duty cycle attributes for some Nortek instruments
 		- Fix bug where 'accel' variable was rotated incorrectly in `correct_motion`
 		- Fix bug where ADV IMU variables could not be rotated to beam coordinates
-	
+
 	- API/Useability
 		- Added the ability for the TRDI reader to search for the VMDAS navigation header 
 		  manually and determine which slot (nb vs bb) that VMDAS is saved in - Thank you jklymak!
@@ -66,7 +71,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Remove extra entry added to ADV time dimension when `read` is 
 		  given "nens" argument
 		- Auto-convert "maxgap" argument in ADCP "fillgaps_time" to numpy.timedelta64
-      
+
 	- API/Useability
 		- Change functions in `TimeBinner` that use reshape (detrend, 
 		  demean, mean, var, std) from private to public

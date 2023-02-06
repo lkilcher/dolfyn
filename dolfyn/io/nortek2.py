@@ -81,7 +81,7 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
                           "extrapolating them. To identify which values were filled later, "
                           "look for 0 values in 'status{}'".format(ky, tag))
             tdat = _fill_time_gaps(tdat, sample_rate_hz=out['attrs']['fs'])
-        coords[ky] = epoch2dt64(tdat).astype('datetime64[us]')
+        coords[ky] = epoch2dt64(tdat).astype('datetime64[ns]')
 
     declin = None
     for nm in userdata:
@@ -95,12 +95,9 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
     if 'orientmat' not in ds:
-        omat = _euler2orient(ds['heading'], ds['pitch'], ds['roll'])
-        ds['orientmat'] = xr.DataArray(omat,
-                                       coords={'earth': ['E', 'N', 'U'],
-                                               'inst': ['X', 'Y', 'Z'],
-                                               'time': ds['time']},
-                                       dims=['earth', 'inst', 'time'])
+        ds['orientmat'] = _euler2orient(
+            ds['time'], ds['heading'], ds['pitch'], ds['roll'])
+
     if declin is not None:
         set_declination(ds, declin, inplace=True)
 
@@ -117,6 +114,7 @@ class _Ad2cpReader():
     def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False,
                  debug=False):
         self.fname = fname
+        self.debug = debug
         self._check_nortek(endian)
         self.f.seek(0, 2)  # Seek to end
         self._eof = self.f.tell()
@@ -227,6 +225,8 @@ class _Ad2cpReader():
             outdat[ky] = self._burst_readers[ky].init_data(n)
             outdat[ky]['ensemble'] = ens
             outdat[ky]['units'] = self._burst_readers[ky].data_units()
+            outdat[ky]['long_name'] = self._burst_readers[ky].data_longnames()
+            outdat[ky]['standard_name'] = self._burst_readers[ky].data_stdnames()
         return outdat
 
     def _read_hdr(self, do_cs=False):
@@ -384,7 +384,8 @@ def _reorg(dat):
     (organized by ID), and combines them into a single dictionary.
     """
     outdat = {'data_vars': {}, 'coords': {}, 'attrs': {},
-              'units': {}, 'sys': {}, 'altraw': {}}
+              'units': {}, 'long_name': {}, 'standard_name': {},
+              'sys': {}, 'altraw': {}}
     cfg = outdat['attrs']
     cfh = cfg['filehead_config'] = dat['filehead_config']
     cfg['inst_model'] = (cfh['ID'].split(',')[0][5:-1])
@@ -401,6 +402,8 @@ def _reorg(dat):
             continue
         dnow = dat[id]
         outdat['units'].update(dnow['units'])
+        outdat['long_name'].update(dnow['long_name'])
+        outdat['standard_name'].update(dnow['standard_name'])
         cfg['burst_config' + tag] = lib._headconfig_int2dict(
             lib._collapse(dnow['config'], exclude=collapse_exclude,
                           name='config'))
@@ -435,6 +438,8 @@ def _reorg(dat):
             if 'ensemble' in ky:
                 outdat['data_vars'][ky + tag] += 1
                 outdat['units'][ky + tag] = '#'
+                outdat['long_name'][ky + tag] = 'Ensemble Number'
+                outdat['standard_name'][ky + tag] = 'number_of_observations'
 
         for ky in ['vel', 'amp', 'corr', 'prcnt_gd', 'echo', 'dist',
                    'orientmat', 'angrt', 'quaternions', 'ast_pressure',

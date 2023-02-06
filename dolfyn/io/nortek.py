@@ -1,14 +1,14 @@
+import warnings
+import logging
 import numpy as np
 import xarray as xr
 from struct import unpack
-import warnings
 from pathlib import Path
-import logging
+from datetime import datetime
 
 from . import nortek_defs
-from .base import _find_userdata, _create_dataset, _handle_nan, _abspath
 from .. import time
-from datetime import datetime
+from .base import _find_userdata, _create_dataset, _handle_nan, _abspath
 from ..tools import misc as tbx
 from ..rotate.vector import _calc_omat
 from ..rotate.base import _set_coords
@@ -75,7 +75,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
                           "look for 0 values in 'status{}'".format(ky, tag))
             tdat = time._fill_time_gaps(
                 tdat, sample_rate_hz=dat['attrs']['fs'])
-        coords[ky] = tdat
+        coords[ky] = time.epoch2dt64(tdat).astype('datetime64[ns]')
 
     # Apply rotation matrix and declination
     rotmat = None
@@ -93,21 +93,16 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
     if 'orientmat' not in ds:
-        omat = _calc_omat(ds['heading'].values,
-                          ds['pitch'].values,
-                          ds['roll'].values,
-                          ds.get('orientation_down', None))
-        ds['orientmat'] = xr.DataArray(omat,
-                                       coords={'earth': ['E', 'N', 'U'],
-                                               'inst': ['X', 'Y', 'Z'],
-                                               'time': ds['time']},
-                                       dims=['earth', 'inst', 'time'])
+        ds['orientmat'] = _calc_omat(ds['time'],
+                                     ds['heading'],
+                                     ds['pitch'],
+                                     ds['roll'],
+                                     ds.get('orientation_down', None))
+
     if rotmat is not None:
         rot.set_inst2head_rotmat(ds, rotmat, inplace=True)
     if declin is not None:
         rot.set_declination(ds, declin, inplace=True)
-
-    ds['time'] = time.epoch2dt64(ds['time']).astype('datetime64[us]')
 
     # Close handler
     if debug:
@@ -283,7 +278,8 @@ class _NortekReader():
 
     def init_ADV(self,):
         dat = self.data = {'data_vars': {}, 'coords': {}, 'attrs': {},
-                           'units': {}, 'sys': {}}
+                           'units': {}, 'long_name': {}, 'standard_name': {},
+                           'sys': {}}
         da = dat['attrs']
         dv = dat['data_vars']
         da['inst_make'] = 'Nortek'
@@ -304,7 +300,8 @@ class _NortekReader():
 
     def init_AWAC(self,):
         dat = self.data = {'data_vars': {}, 'coords': {}, 'attrs': {},
-                           'units': {}, 'sys': {}}
+                           'units': {}, 'long_name': {}, 'standard_name': {},
+                           'sys': {}}
         da = dat['attrs']
         dv = dat['data_vars']
         da['inst_make'] = 'Nortek'
@@ -616,6 +613,8 @@ class _NortekReader():
                 if nm not in self.data[va.group]:
                     self.data[va.group][nm] = va._empty_array(**shape_args)
                     self.data['units'][nm] = va.units
+                    self.data['long_name'][nm] = va.long_name
+                    self.data['standard_name'][nm] = va.standard_name
 
     def read_vec_data(self,):
         # ID: 0x10 = 16
@@ -706,6 +705,8 @@ class _NortekReader():
             dat['data_vars']['PressureMSB'].astype('float32') * 65536 +
             dat['data_vars']['PressureLSW'].astype('float32')) / 1000.
         dat['units']['pressure'] = 'dbar'
+        dat['long_name']['pressure'] = 'Pressure'
+        dat['standard_name']['pressure'] = 'sea_water_pressure'
 
         dat['data_vars'].pop('PressureMSB')
         dat['data_vars'].pop('PressureLSW')
@@ -823,6 +824,24 @@ class _NortekReader():
     def read_microstrain(self,):
         """Read ADV microstrain sensor (IMU) data
         """
+        def update_defs(dat, mag=False, orientmat=False):
+            imu_data = {'accel': ['m s-2', 'Acceleration', 'platform_acceleration'],
+                        'angrt': ['rad s-1', 'Angular Velocity', 'platform_angular_velocity'],
+                        'mag': ['gauss', 'Compass', 'magnetic_field_vector'],
+                        'orientmat': ['1', 'Orientation Matrix', '']}
+            for ky in imu_data:
+                dat['units'].update({ky: imu_data[ky][0]})
+                dat['long_name'].update({ky: imu_data[ky][1]})
+                dat['standard_name'].update({ky: imu_data[ky][2]})
+            if not mag:
+                dat['units'].pop('mag')
+                dat['long_name'].pop('mag')
+                dat['standard_name'].pop('mag')
+            if not orientmat:
+                dat['units'].pop('orientmat')
+                dat['long_name'].pop('orientmat')
+                dat['standard_name'].pop('orientmat')
+
         # 0x71 = 113
         if self.c == 0:
             logging.warning('First "microstrain data" block '
@@ -859,8 +878,7 @@ class _NortekReader():
                 rv = ['accel', 'angrt']
                 if not all(x in da['rotate_vars'] for x in rv):
                     da['rotate_vars'].extend(rv)
-                dat['units'].update({'accel': 'm/s^2',
-                                     'angrt': 'rad/s'})
+                update_defs(dat, mag=False, orientmat=True)
 
             if ahrsid in [204, 210]:
                 self._orient_dnames = ['accel', 'angrt', 'mag', 'orientmat']
@@ -876,11 +894,9 @@ class _NortekReader():
                 if ahrsid == 204:
                     dv['orientmat'] = tbx._nans((3, 3, self.n_samp_guess),
                                                 dtype=np.float32)
-                dat['units'].update({'accel': 'm/s^2',
-                                     'angrt': 'rad/s',
-                                     'mag': 'gauss'})
+                update_defs(dat, mag=True, orientmat=True)
 
-            elif ahrsid == 211:
+            if ahrsid == 211:
                 self._orient_dnames = ['angrt', 'accel', 'mag']
                 dv['angrt'] = tbx._nans((3, self.n_samp_guess),
                                         dtype=np.float32)
@@ -891,9 +907,8 @@ class _NortekReader():
                 rv = ['angrt', 'accel', 'mag']
                 if not all(x in da['rotate_vars'] for x in rv):
                     da['rotate_vars'].extend(rv)
-                dat['units'].update({'accel': 'm/s^2',
-                                     'angrt': 'rad/s',
-                                     'mag': 'gauss'})
+                update_defs(dat, mag=True, orientmat=False)
+
         byts = ''
         if ahrsid == 195:  # 0xc3
             byts = self.read(64)

@@ -55,6 +55,3 @@ What if I want 30-minute turbulence averages spaced 15-minutes apart?
   - Add capability for `n_fft` > `n_bin`?
 
 What about dropping data from averaging? Is this something we should support? Via negative `n_pad`?
-
-ADCPs:
-  - Support for motion-correcting ADCP data
