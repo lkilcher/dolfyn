@@ -225,11 +225,13 @@ class ADVBinner(VelBinner):
         out = (psd.isel(freq=idx) *
                freq.isel(freq=idx)**(5/3) / a).mean(axis=-1)**(3/2) / U
 
-        return xr.DataArray(out.astype('float32'),
-                            attrs={'units': 'm2 s-3',
-                                   'method': 'Lumley and Terray, 1983',
-                                   'long_name': 'Dissipation Rate',
-                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
+        return xr.DataArray(
+          out.astype('float32'),
+          attrs={'units': 'm2 s-3',
+                  'long_name': 'Dissipation Rate',
+                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
+                  'description': 'TKE dissipation rate calculated using the method from Lumley and Terray, 1983',
+                  })
 
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_range=[2., 4.]):
         """Calculate dissipation rate using the "structure function" (SF) method
@@ -274,13 +276,15 @@ class ADVBinner(VelBinner):
             cv2m = np.median(cv2[np.logical_not(np.isnan(cv2))])
             out[slc[:-1]] = (cv2m / 2.1) ** (3 / 2)
 
-        return xr.DataArray(out.astype('float32'),
-                            coords=U_mag.coords,
-                            dims=U_mag.dims,
-                            attrs={'units': 'm2 s-3',
-                                   'method': 'structure function',
-                                   'long_name': 'Dissipation Rate',
-                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
+        return xr.DataArray(
+          out.astype('float32'),
+          coords=U_mag.coords,
+          dims=U_mag.dims,
+          attrs={'units': 'm2 s-3',
+                  'long_name': 'Dissipation Rate',
+                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
+                  'description': 'TKE dissipation rate calculated using the "structure function" method',
+                  })
 
     def _up_angle(self, U_complex):
         """Calculate the angle of the turbulence fluctuations.
@@ -374,13 +378,15 @@ class ADVBinner(VelBinner):
         # Average the two estimates
         out *= 0.5
 
-        return xr.DataArray(out.astype('float32'),
-                            coords={'time': dat_avg.psd.time},
-                            dims='time',
-                            attrs={'units': 'm2 s-3',
-                                   'method': 'Trowbridge and Elgar, 2001',
-                                   'long_name': 'Dissipation Rate',
-                                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
+        return xr.DataArray(
+          out.astype('float32'),
+          coords={'time': dat_avg.psd.time},
+          dims='time',
+          attrs={'units': 'm2 s-3',
+                  'long_name': 'Dissipation Rate',
+                  'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
+                  'description': 'TKE dissipation rate calculated using the method from Trowbridge and Elgar, 2001'
+                  })
 
     def calc_L_int(self, a_cov, U_mag, fs=None):
         """Calculate integral length scales.

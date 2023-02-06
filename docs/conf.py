@@ -67,7 +67,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = ver.__prog_name__
-copyright = '2022, National Renewable Energy Laboratory, Pacific Northwest National Laboratory, and Sandia National Laboratories'
+copyright = '2023, National Renewable Energy Laboratory, Pacific Northwest National Laboratory, and Sandia National Laboratories'
 author = 'DOLfYN Developers'
 
 # The version info for the project you're documenting, acts as replacement for
