@@ -23,6 +23,46 @@ def _check_file_ext(path, ext):
     return path + '.' + ext
 
 
+def _decode_cf(dataset: xr.Dataset) -> xr.Dataset:
+    """Wrapper around `xarray.decode_cf()` which handles additional edge cases.
+
+    This helps ensure that the dataset is formatted and encoded correctly after it has
+    been constructed or modified. Handles edge cases for units and data type encodings
+    on datetime variables.
+
+    Args:
+        dataset (xr.Dataset): The dataset to decode.
+
+    Returns:
+        xr.Dataset: The decoded dataset.
+    """
+
+    # We have to make sure that time variables do not have units set as attrs, and
+    # instead have units set on the encoding or else xarray will crash when trying
+    # to save: https://github.com/pydata/xarray/issues/3739
+    for variable in dataset.variables.values():
+        if (
+            np.issubdtype(variable.data.dtype, np.datetime64)
+            and "units" in variable.attrs
+        ):
+            units = variable.attrs["units"]
+            del variable.attrs["units"]
+            variable.encoding["units"] = units
+
+        # If the _FillValue is already encoded, remove it since it can't be overwritten per xarray
+        if "_FillValue" in variable.encoding:
+            del variable.encoding["_FillValue"]
+
+    # Leaving the "dtype" entry in the encoding for datetime64 variables causes a crash
+    # when saving the dataset. Not fixed by: https://github.com/pydata/xarray/pull/4684
+    ds: xr.Dataset = xr.decode_cf(dataset)
+    for variable in ds.variables.values():
+        if variable.data.dtype.type == np.datetime64:
+            if "dtype" in variable.encoding:
+                del variable.encoding["dtype"]
+    return ds
+
+
 def read(fname, userdata=True, nens=None, **kwargs):
     """Read a binary Nortek (e.g., .VEC, .wpr, .ad2cp, etc.) or RDI
     (.000, .PD0, .ENX, etc.) data file.
@@ -113,6 +153,8 @@ def save(ds, filename,
     -----
     Drops 'config' lines.
 
+    Rewrites variable encoding dict
+
     More detailed compression options can be specified by specifying
     'encoding' in kwargs. The values in encoding will take precedence
     over whatever is set according to the compression option above.
@@ -136,6 +178,11 @@ def save(ds, filename,
             ds = ds.drop_vars(var)
             ds.attrs['complex_vars'].append(var)
 
+    # For variables that get rewritten to float64
+    for v in ds.data_vars:
+        ds[v].encoding = {}
+        ds[v] = ds[v].astype('float32')
+
     if compression:
         enc = dict()
         for ky in ds.variables:
@@ -145,6 +192,9 @@ def save(ds, filename,
             enc.update(kwargs['encoding'])
         else:
             kwargs['encoding'] = enc
+
+    # Fix encoding on datetime64 variables.
+    ds = _decode_cf(ds)
 
     ds.to_netcdf(filename, format=format, engine=engine, **kwargs)
 
@@ -182,6 +232,11 @@ def load(filename):
             ds[var] = ds[var+'_real'] + ds[var+'_imag'] * 1j
             ds = ds.drop_vars([var+'_real', var+'_imag'])
     ds.attrs.pop('complex_vars')
+
+    # Return units attribute for time
+    for variable in ds.variables.values():
+        if np.issubdtype(variable.data.dtype, np.datetime64):
+            variable.attrs["units"] = "seconds since 1970-01-01 00:00:00"
 
     return ds
 

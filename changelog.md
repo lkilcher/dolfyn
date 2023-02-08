@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - Bugfixes
 	    - Updated docs and docstrings
 		- Skipped unknown TRDI Ocean Surveyor ID codes
+		- Workarounds for issues surrounding xarray datetime64 variables
 
     - API/Useability
 	    - Added CF convention metadata to variables
