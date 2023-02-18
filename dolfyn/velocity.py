@@ -463,7 +463,7 @@ class VelBinner(TimeBinner):
                        dims=['tke'],
                        name='tke',
                        attrs={'units': '1',
-                              'long_name': 'Reynolds Stress Vector Components',
+                              'long_name': 'Turbulent Kinetic Energy Vector Components',
                               'coverage_content_type': 'coordinate'})
 
     tau = xr.DataArray(["upvp_", "upwp_", "vpwp_"],

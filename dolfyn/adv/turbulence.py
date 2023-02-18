@@ -228,7 +228,7 @@ class ADVBinner(VelBinner):
         return xr.DataArray(
           out.astype('float32'),
           attrs={'units': 'm2 s-3',
-                  'long_name': 'Dissipation Rate',
+                  'long_name': 'TKE Dissipation Rate',
                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
                   'description': 'TKE dissipation rate calculated using the method from Lumley and Terray, 1983',
                   })
@@ -281,7 +281,7 @@ class ADVBinner(VelBinner):
           coords=U_mag.coords,
           dims=U_mag.dims,
           attrs={'units': 'm2 s-3',
-                  'long_name': 'Dissipation Rate',
+                  'long_name': 'TKE Dissipation Rate',
                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
                   'description': 'TKE dissipation rate calculated using the "structure function" method',
                   })
@@ -383,7 +383,7 @@ class ADVBinner(VelBinner):
           coords={'time': dat_avg.psd.time},
           dims='time',
           attrs={'units': 'm2 s-3',
-                  'long_name': 'Dissipation Rate',
+                  'long_name': 'TKE Dissipation Rate',
                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
                   'description': 'TKE dissipation rate calculated using the method from Trowbridge and Elgar, 2001'
                   })
