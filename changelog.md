@@ -4,11 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unversioned
+## Version 1.2.1
     - Bugfixes
-	    - Updated docs and docstrings
+	    - Fixed errors in docs and docstrings
 		- Skipped unknown TRDI Ocean Surveyor ID codes
-		- Workarounds for issues surrounding xarray datetime64 variables
 
     - API/Useability
 	    - Added CF convention metadata to variables
