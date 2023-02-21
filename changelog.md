@@ -5,13 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unversioned
+    - API/Useability
+		- Added ADCP turbulence functions
+		- Added function to calculate Doppler noise to ADV turbulence functions
+
+## Version 1.2.1
     - Bugfixes
-	    - Updated docs and docstrings
+	    - Fixed errors in docs and docstrings
 		- Skipped unknown TRDI Ocean Surveyor ID codes
 
     - API/Useability
 	    - Added CF convention metadata to variables
-		- Added ADCP turbulence functions
 
 ## Version 1.2.0
     - Bugfixes

@@ -268,7 +268,7 @@ def _create_dataset(data):
     for ky in r_list:
         ds[ky].attrs['units'] = 'm'
         ds[ky].attrs['long_name'] = 'Profile Range'
-        ds[ky].attrs['description'] = 'Distance from instrument face to the center of each depth bin'
+        ds[ky].attrs['description'] = 'Distance to the center of each depth bin'
     time_list = [t for t in ds.coords if 'time' in t]
     for ky in time_list:
         ds[ky].attrs['units'] = 'seconds since 1970-01-01 00:00:00'
