@@ -180,6 +180,9 @@ class ADPBinner(VelBinner):
         (2022): 252-262.
         """
 
+        assert(len(psd.values.shape) == 2,
+               'PSD should be 2-dimensional (time, frequency)')
+
         # Characteristic frequency set to 80% of Nyquist frequency
         fN = self.fs/2
         fc = pct_fN * fN
@@ -199,10 +202,11 @@ class ADPBinner(VelBinner):
             dims=['time'],
             attrs={'units': 'm s-1',
                    'long_name': 'Doppler Noise Level',
-                   'standard_name': 'noise_level_of_multibeam_acoustic_doppler_velocity_profiler'})
+                   'description': 'Doppler noise level calculated '
+                   'from PSD white noise'})
         return out
 
-    def calc_stress_4beam(self, ds, noise=0, orientation=None, beam_angle=25):
+    def calc_stress_4beam(self, ds, noise=None, orientation=None, beam_angle=25):
         """Calculate the stresses from the covariance of along-beam 
         velocity measurements
 
@@ -234,11 +238,16 @@ class ADPBinner(VelBinner):
         Geophysical Research: Oceans 104.C5 (1999): 10933-10949.
         """
 
-        warnings.warn("The 4-beam stress equations assume the instrument's "
+        warnings.warn("    The 4-beam stress equations assume the instrument's "
                       "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
+        if noise is None:
+            noise = 0
+            warnings.warn(
+                '    No "noise" input supplied. Consider calculating "noise" using `calc_doppler_noise`')
+
         if 'beam' not in ds.coord_sys:
-            warnings.warn("Raw dataset must be in the 'beam' coordinate system. "
+            warnings.warn("    Raw dataset must be in the 'beam' coordinate system. "
                           "Rotating raw dataset...")
             ds.velds.rotate2('beam')
 
@@ -300,7 +309,7 @@ class ADPBinner(VelBinner):
 
         return stress_vec
 
-    def calc_stress_5beam(self, ds, noise=0, orientation=None, beam_angle=25, tke_only=False):
+    def calc_stress_5beam(self, ds, noise=None, orientation=None, beam_angle=25, tke_only=False):
         """Calculate the stresses from the covariance of along-beam 
         velocity measurements
 
@@ -345,13 +354,18 @@ class ADPBinner(VelBinner):
         and Oceanic Technology 34.6 (2017): 1267-1284.
         """
 
-        warnings.warn("The 5-beam TKE/stress equations assume the instrument's "
+        warnings.warn("    The 5-beam TKE/stress equations assume the instrument's "
                       "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
+        if noise is None:
+            noise = 0
+            warnings.warn(
+                '    No "noise" input supplied. Consider calculating "noise" using `calc_doppler_noise`')
+
         if 'vel_b5' not in ds.data_vars:
             raise Exception("Must have 5th beam data")
         if 'beam' not in ds.coord_sys:
-            warnings.warn("Raw dataset must be in the 'beam' coordinate system. "
+            warnings.warn("    Raw dataset must be in the 'beam' coordinate system. "
                           "Rotating raw dataset...")
             ds.velds.rotate2('beam')
 
@@ -455,7 +469,7 @@ class ADPBinner(VelBinner):
 
             return tke_vec, stress_vec
 
-    def calc_total_tke(self, ds, noise=0, orientation=None, beam_angle=25):
+    def calc_total_tke(self, ds, noise=None, orientation=None, beam_angle=25):
         """Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
 
         Parameters
@@ -535,6 +549,11 @@ class ADPBinner(VelBinner):
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
         """
+
+        assert(len(psd.values.shape) == 2,
+               'PSD should be 2-dimensional (time, frequency)')
+        assert(len(U_mag.values.shape) == 1,
+               'U_mag should be 1-dimensional (time)')
 
         freq = psd.freq
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
