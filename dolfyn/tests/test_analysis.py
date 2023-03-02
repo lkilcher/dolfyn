@@ -4,8 +4,8 @@ from dolfyn import VelBinner, read_example
 import dolfyn.adv.api as avm
 import dolfyn.adp.api as apm
 from xarray.testing import assert_identical
-import numpy as np
 import pytest
+import numpy as np
 
 
 class adv_setup():
@@ -25,63 +25,73 @@ class adp_setup():
 
 
 def test_do_func(make_data=False):
-    dat_vec = adv_setup(tv)
-    adat_vec = dat_vec.avg_tool.do_avg(dat_vec.dat1)
-    adat_vec = dat_vec.avg_tool.do_var(dat_vec.dat1, adat_vec)
+    adv = adv_setup(tv)
+    bnr1 = adv.avg_tool
+    ds1 = adv.dat1
+    ds_vec = bnr1.do_avg(ds1)
+    ds_vec = bnr1.do_var(ds1, out_ds=ds_vec)
+    # test non-integer bin sizes
+    mean_test = bnr1.mean(ds1['vel'].values, n_bin=ds1.fs*1.01)
 
-    dat_sig = adp_setup(tr)
-    adat_sig = dat_sig.avg_tool.do_avg(dat_sig.dat)
-    adat_sig = dat_sig.avg_tool.do_var(dat_sig.dat, adat_sig)
+    sig = adp_setup(tr)
+    bnr2 = sig.avg_tool
+    ds2 = sig.dat
+    ds_sig = bnr2.do_avg(ds2)
+    ds_sig = bnr2.do_var(ds2, out_ds=ds_sig)
 
     if make_data:
-        save(adat_vec, 'vector_data01_avg.nc')
-        save(adat_sig, 'BenchFile01_avg.nc')
+        save(ds_vec, 'vector_data01_avg.nc')
+        save(ds_sig, 'BenchFile01_avg.nc')
         return
 
-    assert_allclose(adat_vec, load('vector_data01_avg.nc'), atol=1e-6)
-    assert_allclose(adat_sig, load('BenchFile01_avg.nc'), atol=1e-6)
+    assert(np.sum(mean_test-ds_vec.vel.values) == 0, "Mean test failed")
+    assert_allclose(ds_vec, load('vector_data01_avg.nc'), atol=1e-6)
+    assert_allclose(ds_sig, load('BenchFile01_avg.nc'), atol=1e-6)
 
 
 def test_calc_func(make_data=False):
-    dat_vec = adv_setup(tv)
-    test_ds = type(dat_vec.dat1)()
-    test_ds_dif = type(dat_vec.dat1)()
-    c = dat_vec.avg_tool
+    adv = adv_setup(tv)
+    bnr1 = adv.avg_tool
+    ds1 = adv.dat1
+    ds2 = adv.dat2
 
-    dat_adp = adp_setup(tr)
-    c2 = dat_adp.avg_tool
-    test_ds_adp = type(dat_adp.dat)()
+    sig = adp_setup(tr)
+    bnr = sig.avg_tool
+    ds = sig.dat
 
-    test_ds['coh'] = c.calc_coh(
-        dat_vec.dat1.vel[0], dat_vec.dat1.vel[1], n_fft_coh=dat_vec.dat1.fs)
-    test_ds['pang'] = c.calc_phase_angle(
-        dat_vec.dat1.vel[0], dat_vec.dat1.vel[1], n_fft_coh=dat_vec.dat1.fs)
-    test_ds['xcov'] = c.calc_xcov(dat_vec.dat1.vel[0], dat_vec.dat1.vel[1])
-    test_ds['acov'] = c.calc_acov(dat_vec.dat1.vel)
-    test_ds['tke_vec_detrend'] = c.calc_tke(dat_vec.dat1.vel, detrend=True)
-    test_ds['tke_vec_demean'] = c.calc_tke(dat_vec.dat1.vel, detrend=False)
-    test_ds['psd'] = c.calc_psd(dat_vec.dat1.vel, freq_units='Hz')
+    ds_adv = type(ds1)()
+    ds_adv['coh'] = bnr1.calc_coh(
+        ds1['vel'][0], ds1['vel'][1], n_fft_coh=ds1.fs)
+    ds_adv['pang'] = bnr1.calc_phase_angle(
+        ds1['vel'][0], ds1['vel'][1], n_fft_coh=ds1.fs)
+    ds_adv['xcov'] = bnr1.calc_xcov(ds1['vel'][0], ds1['vel'][1])
+    ds_adv['acov'] = bnr1.calc_acov(ds1['vel'])
+    ds_adv['tke_vec_detrend'] = bnr1.calc_tke(ds1['vel'], detrend=True)
+    ds_adv['tke_vec_demean'] = bnr1.calc_tke(ds1['vel'], detrend=False)
+    ds_adv['psd'] = bnr1.calc_psd(ds1['vel'], freq_units='Hz')
 
     # Different lengths
-    test_ds_dif['coh_dif'] = c.calc_coh(
-        dat_vec.dat1.vel, dat_vec.dat2.vel)
-    test_ds_dif['pang_dif'] = c.calc_phase_angle(
-        dat_vec.dat1.vel, dat_vec.dat2.vel)
+    ds_adv_dif = type(ds1)()
+    ds_adv_dif['coh_dif'] = bnr1.calc_coh(
+        ds1['vel'], ds2.vel)
+    ds_adv_dif['pang_dif'] = bnr1.calc_phase_angle(
+        ds1['vel'], ds2.vel)
 
     # Test ADCP single vector spectra, cross-spectra to test radians code
-    test_ds_adp['psd_b5'] = c2.calc_psd(
-        dat_adp.dat.vel_b5.isel(range_b5=5), freq_units='rad', window='hamm')
-    test_ds_adp['tke_b5'] = c2.calc_tke(dat_adp.dat.vel_b5)
+    ds_adp = type(ds)()
+    ds_adp['psd_b5'] = bnr.calc_psd(ds['vel_b5'].isel(
+        range_b5=5), freq_units='rad', window='hamm')
+    ds_adp['tke_b5'] = bnr.calc_tke(ds['vel_b5'])
 
     if make_data:
-        save(test_ds, 'vector_data01_func.nc')
-        save(test_ds_dif, 'vector_data01_funcdif.nc')
-        save(test_ds_adp, 'BenchFile01_func.nc')
+        save(ds_adv, 'vector_data01_func.nc')
+        save(ds_adv_dif, 'vector_data01_funcdif.nc')
+        save(ds_adp, 'BenchFile01_func.nc')
         return
 
-    assert_allclose(test_ds, load('vector_data01_func.nc'), atol=1e-6)
-    assert_allclose(test_ds_dif, load('vector_data01_funcdif.nc'), atol=1e-6)
-    assert_allclose(test_ds_adp, load('BenchFile01_func.nc'), atol=1e-6)
+    assert_allclose(ds_adv, load('vector_data01_func.nc'), atol=1e-6)
+    assert_allclose(ds_adv_dif, load('vector_data01_funcdif.nc'), atol=1e-6)
+    assert_allclose(ds_adp, load('BenchFile01_func.nc'), atol=1e-6)
 
 
 def test_calc_freq():
