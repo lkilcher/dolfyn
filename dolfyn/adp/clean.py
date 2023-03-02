@@ -213,7 +213,7 @@ def nan_beyond_surface(ds, val=np.nan, inplace=False):
         beam_angle = 25 * (np.pi/180)
     else:  # TRDI
         try:
-            beam_angle = ds.beam_angle
+            beam_angle = ds.beam_angle * (np.pi/180)
         except:
             beam_angle = 20 * (np.pi/180)
 
