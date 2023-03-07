@@ -378,6 +378,12 @@ def correct_motion(ds,
     # Ensure acting on new dataset
     ds = ds.copy(deep=True)
 
+    # Check that no nan's exist
+    if ds['accel'].isnull().sum(): 
+        raise Exception("There should be no missing data in `accel` variable")
+    if ds['angrt'].isnull().sum(): 
+        raise Exception("There should be no missing data in `angrt` variable")
+    
     if hasattr(ds, 'velrot') or ds.attrs.get('motion corrected', False):
         raise Exception('The data appears to already have been '
                         'motion corrected.')
