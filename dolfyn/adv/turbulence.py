@@ -274,9 +274,11 @@ class ADVBinner(VelBinner):
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
         """
+        # Ensure time has been averaged
+        if len(psd.time)!=len(U_mag.time):
+            raise Exception("`U_mag` should be from ensembled-averaged dataset")
 
         freq = psd.freq
-
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
         idx = idx[0]
 

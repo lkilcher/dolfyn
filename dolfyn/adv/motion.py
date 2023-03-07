@@ -131,6 +131,13 @@ class CalcMotion():
             for idx in range(3):
                 acc[idx] = ss.filtfilt(flt[0], flt[1], acc[idx], axis=-1)
 
+            # Fill nan with zeros - happens for some filter frequencies
+            if np.isnan(acc).any():
+                warnings.warn(
+                    "Error filtering acceleration data. "
+                    "Please decrease `accel_filtfreq`.")
+                acc = np.nan_to_num(acc)
+
     def calc_velacc(self, ):
         """Calculates the translational velocity from the high-pass
         filtered acceleration signal.
@@ -162,6 +169,13 @@ class CalcMotion():
             for idx in range(hp.shape[0]):
                 dat[idx] = dat[idx] - \
                     ss.filtfilt(filt[0], filt[1], dat[idx], axis=-1)
+
+            # Fill nan with zeros - happens for some filter frequencies
+            if np.isnan(dat).any():
+                warnings.warn("Error filtering acceleration data. "
+                              "Please decrease `vel_filtfreq`. "
+                              "(default is 1/3 `accel_filtfreq`)")
+                dat = np.nan_to_num(dat)
 
         if n:
             # remove reshape
@@ -378,6 +392,12 @@ def correct_motion(ds,
     # Ensure acting on new dataset
     ds = ds.copy(deep=True)
 
+    # Check that no nan's exist
+    if ds['accel'].isnull().sum():
+        raise Exception("There should be no missing data in `accel` variable")
+    if ds['angrt'].isnull().sum():
+        raise Exception("There should be no missing data in `angrt` variable")
+
     if hasattr(ds, 'velrot') or ds.attrs.get('motion corrected', False):
         raise Exception('The data appears to already have been '
                         'motion corrected.')
@@ -483,8 +503,7 @@ def correct_motion(ds,
 
     # use xarray to keep dimensions consistent
     velmot = ds['velrot'] + ds['velacc']
-    velmot = velmot.values
-    ds['vel'][:3] += velmot
+    ds['vel'].values += velmot.values
 
     ds.attrs['motion corrected'] = 1
     ds.attrs['motion accel_filtfreq Hz'] = calcobj.accel_filtfreq
