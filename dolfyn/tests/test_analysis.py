@@ -44,7 +44,7 @@ def test_do_func(make_data=False):
         save(ds_sig, 'BenchFile01_avg.nc')
         return
 
-    assert(np.sum(mean_test-ds_vec.vel.values) == 0, "Mean test failed")
+    assert np.sum(mean_test-ds_vec.vel.values) == 0, "Mean test failed"
     assert_allclose(ds_vec, load('vector_data01_avg.nc'), atol=1e-6)
     assert_allclose(ds_sig, load('BenchFile01_avg.nc'), atol=1e-6)
 

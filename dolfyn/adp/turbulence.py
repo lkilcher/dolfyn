@@ -180,8 +180,8 @@ class ADPBinner(VelBinner):
         (2022): 252-262.
         """
 
-        assert(len(psd.values.shape) == 2,
-               'PSD should be 2-dimensional (time, frequency)')
+        if len(psd.shape) != 2:
+            raise Exception('PSD should be 2-dimensional (time, frequency)')
 
         # Characteristic frequency set to 80% of Nyquist frequency
         fN = self.fs/2
@@ -550,10 +550,10 @@ class ADPBinner(VelBinner):
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
         """
 
-        assert(len(psd.values.shape) == 2,
-               'PSD should be 2-dimensional (time, frequency)')
-        assert(len(U_mag.values.shape) == 1,
-               'U_mag should be 1-dimensional (time)')
+        if len(psd.shape) != 2:
+            raise Exception('PSD should be 2-dimensional (time, frequency)')
+        if len(U_mag.shape) != 1:
+            raise Exception('U_mag should be 1-dimensional (time)')
 
         freq = psd.freq
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
