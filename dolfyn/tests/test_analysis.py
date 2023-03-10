@@ -112,7 +112,8 @@ def test_adv_turbulence(make_data=False):
 
     tdat['stress_detrend'] = bnr.calc_stress(dat.vel)
     tdat['stress_demean'] = bnr.calc_stress(dat.vel, detrend=False)
-    tdat['csd'] = bnr.calc_csd(dat.vel, freq_units='rad', window='hamm')
+    tdat['csd'] = bnr.calc_csd(
+        dat.vel, freq_units='rad', window='hamm', n_fft_coh=10)
     tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.velds.U_mag)
     tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.velds.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
