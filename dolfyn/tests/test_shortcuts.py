@@ -20,7 +20,6 @@ class adv_setup():
         short['U'] = self.tdat.velds.U
         short['U_mag'] = self.tdat.velds.U_mag
         short['U_dir'] = self.tdat.velds.U_dir
-        short['U_dir_N'] = self.dat.velds.U_dir
         short["upup_"] = self.tdat.velds.upup_
         short["vpvp_"] = self.tdat.velds.vpvp_
         short["wpwp_"] = self.tdat.velds.wpwp_
@@ -35,13 +34,13 @@ class adv_setup():
 
 
 def test_shortcuts(make_data=False):
-    test_dat = adv_setup(tv)
+    td = adv_setup(tv)
 
     if make_data:
-        save(test_dat.short, 'vector_data01_u.nc')
+        save(td.short, 'vector_data01_u.nc')
         return
 
-    assert_allclose(test_dat.short, load('vector_data01_u.nc'), atol=1e-6)
+    assert_allclose(td.short, load('vector_data01_u.nc'), atol=1e-6)
 
 
 def test_save_complex_data():

@@ -5,7 +5,7 @@ from .time import dt642epoch, dt642date
 from .rotate.api import rotate2, set_declination, set_inst2head_rotmat
 from .io.api import save
 from .tools.psd import coherence, phase_angle
-from .tools.misc import slice1d_along_axis
+from .tools.misc import slice1d_along_axis, convert_degrees
 
 
 @xr.register_dataset_accessor('velds')  # 'velocity dataset'
@@ -271,7 +271,7 @@ class Velocity():
         - earth:     east
         - principal: streamwise
         """
-        return self.ds['vel'][0]
+        return self.ds['vel'][0].drop('dir')
 
     @property
     def v(self,):
@@ -286,7 +286,7 @@ class Velocity():
         - earth:     north
         - principal: cross-stream
         """
-        return self.ds['vel'][1]
+        return self.ds['vel'][1].drop('dir')
 
     @property
     def w(self,):
@@ -299,7 +299,7 @@ class Velocity():
         - earth:     up
         - principal: up
         """
-        return self.ds['vel'][2]
+        return self.ds['vel'][2].drop('dir')
 
     @property
     def U(self,):
@@ -322,11 +322,24 @@ class Velocity():
 
     @property
     def U_dir(self,):
-        """Angle of horizontal velocity vector, in degrees counterclockwise 
-        from X/East/streamwise. Direction is 'to', as opposed to 'from'.
+        """Angle of horizontal velocity vector. Direction is 'to', 
+        as opposed to 'from'. This function calculates angle as 
+        "degrees CCW to X/East/streamwise" and then converts it to 
+        "degrees CW from X/North/streamwise".
         """
+
+        def convert_to_CW(angle):
+            if self.ds.coord_sys == 'earth':
+                # Convert "deg CCW from East" to "deg CW from North"
+                angle = convert_degrees(angle, tidal_mode=False)
+                relative_to = self.ds.dir[1].values
+            else:
+                angle *= -1  # switch to clockwise
+                relative_to = self.ds.dir[0].values
+            return angle, relative_to
+
         # Convert from radians to degrees
-        angle = np.angle(self.U)*(180/np.pi)
+        angle, rel = convert_to_CW(np.angle(self.U)*(180/np.pi))
 
         return xr.DataArray(
             angle.astype('float32'),
@@ -334,7 +347,8 @@ class Velocity():
             coords=self.U.coords,
             attrs={'units': 'degree',
                    'long_name': 'Water Direction',
-                   'standard_name': 'sea_water_to_direction'})
+                   'standard_name': 'sea_water_to_direction',
+                   'degrees_CW_relative_to': rel})
 
     @property
     def E_coh(self,):
@@ -403,37 +417,37 @@ class Velocity():
     def upvp_(self,):
         """u'v'bar Reynolds stress
         """
-        return self.ds['stress_vec'].sel(tau="upvp_")
+        return self.ds['stress_vec'].sel(tau="upvp_").drop('tau')
 
     @property
     def upwp_(self,):
         """u'w'bar Reynolds stress
         """
-        return self.ds['stress_vec'].sel(tau="upwp_")
+        return self.ds['stress_vec'].sel(tau="upwp_").drop('tau')
 
     @property
     def vpwp_(self,):
         """v'w'bar Reynolds stress
         """
-        return self.ds['stress_vec'].sel(tau="vpwp_")
+        return self.ds['stress_vec'].sel(tau="vpwp_").drop('tau')
 
     @property
     def upup_(self,):
         """u'u'bar component of the tke
         """
-        return self.ds['tke_vec'].sel(tke="upup_")
+        return self.ds['tke_vec'].sel(tke="upup_").drop('tke')
 
     @property
     def vpvp_(self,):
         """v'v'bar component of the tke
         """
-        return self.ds['tke_vec'].sel(tke="vpvp_")
+        return self.ds['tke_vec'].sel(tke="vpvp_").drop('tke')
 
     @property
     def wpwp_(self,):
         """w'w'bar component of the tke
         """
-        return self.ds['tke_vec'].sel(tke="wpwp_")
+        return self.ds['tke_vec'].sel(tke="wpwp_").drop('tke')
 
 
 class VelBinner(TimeBinner):
@@ -886,8 +900,7 @@ class VelBinner(TimeBinner):
         dt1 = self.reshape(dat1, n_pad=tmp-1, n_bin=n_bin1)
 
         # Note here I am demeaning only on the 'valid' range:
-        dt1 = dt1 - dt1[..., :, int(tmp // 2)
-                                    :int(-tmp // 2)].mean(-1)[..., None]
+        dt1 = dt1 - dt1[..., :, int(tmp // 2):int(-tmp // 2)].mean(-1)[..., None]
         # Don't need to pad the second variable:
         dt2 = self.demean(dat2, n_bin=n_bin2)
 
