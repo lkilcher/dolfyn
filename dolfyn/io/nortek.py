@@ -1,7 +1,6 @@
 import warnings
 import logging
 import numpy as np
-import xarray as xr
 from struct import unpack
 from pathlib import Path
 from datetime import datetime
@@ -421,8 +420,7 @@ class _NortekReader():
         return self.pos
 
     def code_spacing(self, searchcode, iternum=50):
-        """
-        Find the spacing, in bytes, between a specific hardware code.
+        """Find the spacing, in bytes, between a specific hardware code.
         Repeat this * iternum * times(default 50).
         Returns the average spacing, in bytes, between the code.
         """
@@ -597,8 +595,8 @@ class _NortekReader():
         vardict : (dict of :class:`<VarAttrs>`)
           The variable definitions in the :class:`<VarAttrs>` specify
           how to initialize each data variable.
-
         """
+
         shape_args = {'n': self.n_samp_guess}
         try:
             shape_args['nbins'] = self.config['usr']['n_bins']

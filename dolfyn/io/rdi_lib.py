@@ -4,8 +4,7 @@ from os.path import expanduser
 
 
 class bin_reader():
-    """
-    Reads binary data files. It is mostly for development purposes, to
+    """Reads binary data files. It is mostly for development purposes, to
     simplify learning a data file's format. Reading binary data files should
     minimize the number of calls to struct.unpack and file.read because many
     calls to these functions (i.e. using the code in this module) are slow.
@@ -30,8 +29,7 @@ class bin_reader():
         self.close()
 
     def __init__(self, fname, endian='<', checksum_size=None, debug_level=0):
-        """
-        Default to little-endian '<'...
+        """Default to little-endian '<'...
         *checksum_size* is in bytes, if it is None or False, this
          function does not perform checksums.
         """
@@ -65,8 +63,7 @@ class bin_reader():
         return self.f.seek(pos, rel)
 
     def reads(self, n):
-        """
-        Read a string of n characters.
+        """Read a string of n characters.
         """
         val = self.f.read(n)
         self.cs and self.cs.add(val)
@@ -115,7 +112,7 @@ class bin_reader():
     def read_i32(self, n):
         return self.read(n, 'l')
 
-#ics = 0  # This is a holder for the checksum index
+# ics = 0  # This is a holder for the checksum index
 # class checksum():
 #     # Checksum for TRDI
 #     def __init__(self, file, val, size, error_behavior='exception'):

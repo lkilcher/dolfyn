@@ -218,8 +218,7 @@ class Velocity():
         show_vars = ['time*', 'vel*', 'range', 'range_echo',
                      'orientmat', 'heading', 'pitch', 'roll',
                      'temp', 'press*', 'amp*', 'corr*',
-                     'accel', 'angrt', 'mag',
-                     'echo',
+                     'accel', 'angrt', 'mag', 'echo',
                      ]
         n = 0
         for v in show_vars:
@@ -327,7 +326,6 @@ class Velocity():
         "degrees CCW to X/East/streamwise" and then converts it to 
         "degrees CW from X/North/streamwise".
         """
-
         def convert_to_CW(angle):
             if self.ds.coord_sys == 'earth':
                 # Convert "deg CCW from East" to "deg CW from North"
@@ -1085,10 +1083,11 @@ class VelBinner(TimeBinner):
             coords = {time_str: time, 'freq': freq}
             dims = [time_str, 'freq']
 
-        return xr.DataArray(out.astype('float32'),
-                            coords=coords,
-                            dims=dims,
-                            attrs={'units': units,
-                                   'n_fft': n_fft,
-                                   'long_name': 'Power Spectral Density',
-                                   'standard_name': 'power_spectral_density_of_sea_water_velocity'})
+        return xr.DataArray(
+            out.astype('float32'),
+            coords=coords,
+            dims=dims,
+            attrs={'units': units,
+                   'n_fft': n_fft,
+                   'long_name': 'Power Spectral Density',
+                   'standard_name': 'power_spectral_density_of_sea_water_velocity'})

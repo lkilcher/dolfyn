@@ -24,41 +24,41 @@ class adp_setup():
 
 
 def test_do_func(make_data=False):
-    adv = adv_setup(tv)
-    bnr1 = adv.avg_tool
-    ds1 = adv.dat1
-    ds_vec = bnr1.do_avg(ds1)
-    ds_vec = bnr1.do_var(ds1, out_ds=ds_vec)
-    # test non-integer bin sizes
-    mean_test = bnr1.mean(ds1['vel'].values, n_bin=ds1.fs*1.01)
+    adv_tool = adv_setup(tv).avg_tool
+    ds1 = adv_setup(tv).dat1
+    ds_vec = adv_tool.do_avg(ds1)
+    ds_vec = adv_tool.do_var(ds1, out_ds=ds_vec)
 
-    sig = adp_setup(tr)
-    bnr2 = sig.avg_tool
-    ds2 = sig.dat
-    ds_sig = bnr2.do_avg(ds2)
-    ds_sig = bnr2.do_var(ds2, out_ds=ds_sig)
+    # test non-integer bin sizes
+    mean_test = adv_tool.mean(ds1['vel'].values, n_bin=ds1.fs*1.01)
+
+    adp_tool = adp_setup(tr).avg_tool
+    ds2 = adp_setup(tr).dat
+    ds_sig = adp_tool.do_avg(ds2)
+    ds_sig = adp_tool.do_var(ds2, out_ds=ds_sig)
 
     if make_data:
         save(ds_vec, 'vector_data01_avg.nc')
         save(ds_sig, 'BenchFile01_avg.nc')
         return
 
-    assert(np.sum(mean_test-ds_vec.vel.values) == 0, "Mean test failed")
+    assert np.sum(mean_test-ds_vec.vel.values) == 0, "Mean test failed"
     assert_allclose(ds_vec, load('vector_data01_avg.nc'), atol=1e-6)
     assert_allclose(ds_sig, load('BenchFile01_avg.nc'), atol=1e-6)
 
 
 def test_calc_func(make_data=False):
-    adv = adv_setup(tv)
-    bnr1 = adv.avg_tool
-    ds1 = adv.dat1
-    ds2 = adv.dat2
+    bnr1 = adv_setup(tv).avg_tool
+    ds1 = adv_setup(tv).dat1
+    ds2 = adv_setup(tv).dat2
 
-    sig = adp_setup(tr)
-    bnr = sig.avg_tool
-    ds = sig.dat
+    bnr = adp_setup(tr).avg_tool
+    ds = adp_setup(tr).dat
 
     ds_adv = type(ds1)()
+    ds_adv_dif = type(ds1)()
+    ds_adp = type(ds)()
+
     ds_adv['coh'] = bnr1.calc_coh(
         ds1['vel'][0], ds1['vel'][1], n_fft_coh=ds1.fs)
     ds_adv['pang'] = bnr1.calc_phase_angle(
@@ -70,14 +70,12 @@ def test_calc_func(make_data=False):
     ds_adv['psd'] = bnr1.calc_psd(ds1['vel'], freq_units='Hz')
 
     # Different lengths
-    ds_adv_dif = type(ds1)()
     ds_adv_dif['coh_dif'] = bnr1.calc_coh(
         ds1['vel'], ds2.vel)
     ds_adv_dif['pang_dif'] = bnr1.calc_phase_angle(
         ds1['vel'], ds2.vel)
 
     # Test ADCP single vector spectra, cross-spectra to test radians code
-    ds_adp = type(ds)()
     ds_adp['psd_b5'] = bnr.calc_psd(ds['vel_b5'].isel(
         range_b5=5), freq_units='rad', window='hamm')
     ds_adp['tke_b5'] = bnr.calc_tke(ds['vel_b5'])

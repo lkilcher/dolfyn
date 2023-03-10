@@ -103,7 +103,7 @@ class ADVBinner(VelBinner):
 
         Parameters
         ----------
-        veldat   : xarray.DataArray
+        veldat : xarray.DataArray
           The raw 3D velocity data.
         freq_units : string
           Frequency units of the returned spectra in either Hz or rad/s 
@@ -210,6 +210,7 @@ class ADVBinner(VelBinner):
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
         """
+
         # Ensure time has been averaged
         if len(psd.time)!=len(U_mag.time):
             raise Exception("`U_mag` should be from ensembled-averaged dataset")
@@ -421,11 +422,12 @@ class ADVBinner(VelBinner):
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
         L_int = U_mag.values / fs * scale
 
-        return xr.DataArray(L_int.astype('float32'),
-                            coords={'dir': a_cov.dir, 'time': a_cov.time},
-                            attrs={'units': 'm',
-                                   'long_name': 'Integral Length Scale',
-                                   'standard_name': 'turbulent_mixing_length_of_sea_water'})
+        return xr.DataArray(
+            L_int.astype('float32'),
+            coords={'dir': a_cov.dir, 'time': a_cov.time},
+            attrs={'units': 'm',
+                   'long_name': 'Integral Length Scale',
+                   'standard_name': 'turbulent_mixing_length_of_sea_water'})
 
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann'):
