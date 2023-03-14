@@ -62,7 +62,7 @@ def _inst2earth(advo, reverse=False, rotate_vars=None, force=False):
       If True, this function performs the inverse rotation (earth->inst).
     rotate_vars : iterable (default: None, list in advo.rotate_vars)
       The list of variables to rotate. By default this is taken from
-      advo.props['rotate_vars'].
+      advo.attrs['rotate_vars'].
     force : bool (default: False)
       Do not check which frame the data is in prior to performing 
       this rotation.
@@ -79,11 +79,7 @@ def _inst2earth(advo, reverse=False, rotate_vars=None, force=False):
         cs_now = 'inst'
         cs_new = 'earth'
 
-    if rotate_vars is None:
-        if 'rotate_vars' in advo.attrs:
-            rotate_vars = advo.rotate_vars
-        else:
-            rotate_vars = ['vel']
+    rotate_vars = rotb._check_rotate_vars(advo, rotate_vars)
 
     cs = advo.coord_sys.lower()
     if not force:
@@ -161,11 +157,7 @@ def _earth2principal(advo, reverse=False, rotate_vars=None):
         cs_now = 'earth'
         cs_new = 'principal'
 
-    if rotate_vars is None:
-        if 'rotate_vars' in advo.attrs:
-            rotate_vars = advo.rotate_vars
-        else:
-            rotate_vars = ['vel']
+    rotate_vars = rotb._check_rotate_vars(advo, rotate_vars)
 
     cs = advo.coord_sys.lower()
     if cs == cs_new:

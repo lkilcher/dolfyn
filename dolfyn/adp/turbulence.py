@@ -1,7 +1,9 @@
 import numpy as np
 import xarray as xr
 import warnings
+
 from ..velocity import VelBinner
+from ..rotate.base import calc_tilt
 
 
 def _diffz_first(dat, z):
@@ -16,7 +18,7 @@ def _diffz_centered(dat, z):
 
 class ADPBinner(VelBinner):
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
-                 noise=0, orientation='up', diff_style='centered'):
+                 noise=None, orientation='up', diff_style='centered'):
         """A class for calculating turbulence statistics from ADCP data
 
         Parameters
@@ -53,8 +55,15 @@ class ADPBinner(VelBinner):
             out = _diffz_centered(vel[u].values, vel['range'].values)
             return out, vel.range[1:-1]
 
-    def dudz(self, vel, orientation=None):
+    def calc_dudz(self, vel, orientation=None):
         """The shear in the first velocity component.
+
+        Parameters
+        ----------
+        vel : xarray.DataArray
+          ADCP raw velocity
+        orientation : str, default=ADPBinner.orientation
+          Direction ADCP is facing ('up' or 'down')
 
         Notes
         -----
@@ -78,8 +87,13 @@ class ADPBinner(VelBinner):
                                    'standard_name': 'x_sea_water_shear'}
                             )
 
-    def dvdz(self, vel):
+    def calc_dvdz(self, vel):
         """The shear in the second velocity component.
+
+        Parameters
+        ----------
+        vel : xarray.DataArray
+          ADCP raw velocity
 
         Notes
         -----
@@ -97,8 +111,13 @@ class ADPBinner(VelBinner):
                                    'standard_name': 'y_sea_water_shear'}
                             )
 
-    def dwdz(self, vel):
+    def calc_dwdz(self, vel):
         """The shear in the third velocity component.
+
+        Parameters
+        ----------
+        vel : xarray.DataArray
+          ADCP raw velocity
 
         Notes
         -----
@@ -116,8 +135,13 @@ class ADPBinner(VelBinner):
                                    'standard_name': 'z_sea_water_shear'}
                             )
 
-    def tau2(self, vel):
+    def calc_shear2(self, vel):
         """The horizontal shear squared.
+
+        Parameters
+        ----------
+        vel : xarray.DataArray
+          ADCP raw velocity
 
         Notes
         -----
@@ -130,12 +154,12 @@ class ADPBinner(VelBinner):
         :math:`dudz`, :math:`dvdz`
         """
 
-        tau2 = self.dudz(vel) ** 2 + self.dvdz(vel) ** 2
-        tau2.attrs['units'] = 's-2'
-        tau2.attrs['long_name'] = 'Horizontal Shear Squared'
-        tau2.attrs['standard_name'] = 'radial_sea_water_shear_squared'
+        shear2 = self.calc_dudz(vel) ** 2 + self.calc_dvdz(vel) ** 2
+        shear2.attrs['units'] = 's-2'
+        shear2.attrs['long_name'] = 'Horizontal Shear Squared'
+        shear2.attrs['standard_name'] = 'radial_sea_water_shear_squared'
 
-        return tau2
+        return shear2
 
     def calc_doppler_noise(self, psd, pct_fN=0.8):
         """Calculate bias due to Doppler noise using the noise floor
@@ -206,7 +230,108 @@ class ADPBinner(VelBinner):
                    'from PSD white noise'})
         return out
 
-    def calc_stress_4beam(self, ds, noise=None, orientation=None, beam_angle=25):
+    def _stress_func_warnings(self, ds, beam_angle, noise, tilt_thresh):
+        """List of error and warnings to run through for ADCP stress calculations.
+        """
+        # Error 1. Beam Angle
+        b_angle = getattr(ds, 'beam_angle', beam_angle)
+        if b_angle is None:
+            raise Exception(
+                "    Beam angle not found in dataset and no beam angle supplied.")
+
+        # Warning 1. Memo
+        warnings.warn("    The 4-beam stress equations assume the instrument's "
+                      "(XYZ) coordinate system is aligned with the principal "
+                      "flow directions.")
+
+        # Warning 2. Check tilt
+        if any(abs(calc_tilt(ds['pitch'], ds['roll']))) < tilt_thresh:
+            warnings.warn(f"    Instrument tilt is greater than {tilt_thresh} degrees."
+                          "Stress axes won't be well aligned with flow.")
+
+        # Warning 3. Noise level of instrument is important considering 50 % of variance
+        # in ADCP data can be noise
+        if noise is None:
+            warnings.warn('    No "noise" input supplied. Consider calculating "noise" '
+                          'using `calc_doppler_noise`')
+            noise = 0
+
+        # Warning 4. Likely not in beam coordinates after running a typical analysis workflow
+        if 'beam' not in ds.coord_sys:
+            warnings.warn("    Raw dataset must be in the 'beam' coordinate system. "
+                          "Rotating raw dataset...")
+            ds.velds.rotate2('beam')
+
+        return b_angle, noise
+
+    def _check_orientation(self, ds, orientation, beam5=False):
+        """Get the beam order for the beam-stress rotation algorithm
+
+        Note: Stacey defines the beams for down-looking Workhorse ADCPs.
+              According to the workhorse coordinate transformation
+              documentation, the instrument's:
+                               x-axis points from beam 1 to 2, and
+                               y-axis points from beam 4 to 3.
+        Nortek Signature x-axis points from beam 3 to 1
+                         y-axis points from beam 2 to 4
+        """
+
+        if orientation is None:
+            orientation = getattr(ds, 'orientation', self.orientation)
+
+        if 'TRDI' in ds.inst_make:
+            phi2 = np.deg2rad(self.mean(ds['pitch'].values))
+            phi3 = np.deg2rad(self.mean(ds['roll'].values))
+            if 'down' in orientation.lower():
+                # this order is correct given the note above
+                beams = [0, 1, 2, 3]  # for down-facing RDIs
+            elif 'up' in orientation.lower():
+                beams = [0, 1, 3, 2]  # for up-facing RDIs
+            else:
+                raise Exception(
+                    "Please provide instrument orientation ['up' or 'down']")
+
+        # For Nortek Signatures
+        elif 'Signature' in ds.inst_model:
+            phi2 = np.deg2rad(self.mean(ds['roll'].values))
+            phi3 = -np.deg2rad(self.mean(ds['pitch'].values))
+            if 'down' in orientation.lower():
+                beams = [2, 0, 3, 1]  # for down-facing Norteks
+            elif 'up' in orientation.lower():
+                beams = [0, 2, 3, 1]  # for up-facing Norteks
+            else:
+                raise Exception(
+                    "Please provide instrument orientation ['up' or 'down']")
+
+        if beam5:
+            beams.append(4)
+            return beams, phi2, phi3
+        else:
+            return beams
+
+    def _beam_variance(self, ds, time, noise, beam_order, n_beams):
+        """Calculate along-beam velocity variance and subtract noise
+        """
+        # Concatenate 5th beam velocity if need be
+        if n_beams == 4:
+            beam_vel = ds['vel'].values
+        elif n_beams == 5:
+            beam_vel = np.concatenate((ds['vel'].values,
+                                       ds['vel_b5'].values[None, ...]))
+
+        # Calculate along-beam velocity prime squared bar
+        bp2_ = np.empty((n_beams, len(ds.range), len(time)))*np.nan
+        for i, beam in enumerate(beam_order):
+            bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
+
+        # Remove doppler_noise
+        if type(noise) == type(ds.vel):
+            noise = noise.values
+        bp2_ -= noise**2
+
+        return bp2_
+
+    def calc_stress_4beam(self, ds, noise=None, orientation=None, beam_angle=None):
         """Calculate the stresses from the covariance of along-beam 
         velocity measurements
 
@@ -216,9 +341,9 @@ class ADPBinner(VelBinner):
           Raw dataset in beam coordinates
         noise : int or xarray.DataArray (time)
           Doppler noise level in units of m/s
-        orientation : str, default=ds.orientation
+        orientation : str, default=ds.attrs['orientation']
           Direction ADCP is facing ('up' or 'down')
-        beam_angle : int, default=25
+        beam_angle : int, default=ds.attrs['beam_angle']
           ADCP beam angle in units of degrees
 
         Returns
@@ -237,68 +362,23 @@ class ADPBinner(VelBinner):
         of Reynolds stress profiles in unstratified tidal flow." Journal of 
         Geophysical Research: Oceans 104.C5 (1999): 10933-10949.
         """
+        # Run through warnings
+        b_angle, noise = self._stress_func_warnings(
+            ds, beam_angle, noise, tilt_thresh=5)
 
-        warnings.warn("    The 4-beam stress equations assume the instrument's "
-                      "(XYZ) coordinate system is aligned with the principal "
-                      "flow directions.")
-        if noise is None:
-            noise = 0
-            warnings.warn(
-                '    No "noise" input supplied. Consider calculating "noise" using `calc_doppler_noise`')
+        # Fetch beam order
+        beam_order = self._check_orientation(ds, orientation, beam5=False)
 
-        if 'beam' not in ds.coord_sys:
-            warnings.warn("    Raw dataset must be in the 'beam' coordinate system. "
-                          "Rotating raw dataset...")
-            ds.velds.rotate2('beam')
-
-        b_angle = getattr(ds, 'beam_angle', beam_angle)
-        beam_vel = ds['vel'].values
+        # Calculate beam variance and subtract noise
         time = self.mean(ds['time'].values)
+        bp2_ = self._beam_variance(ds, time, noise, beam_order, n_beams=4)
 
-        # Note: Stacey defines the beams for down-looking Workhorse ADCPs.
-        #       According to the workhorse coordinate transformation
-        #       documentation, the instrument's:
-        #                        x-axis points from beam 1 to 2, and
-        #                        y-axis points from beam 4 to 3.
-        # Nortek Signature x-axis points from beam 3 to 1
-        #                  y-axis points from beam 2 to 4
-        if not orientation:
-            orientation = ds.orientation
-        if 'TRDI' in ds.inst_make:
-            if 'down' in orientation.lower():
-                # this order is correct given the note above
-                beams = [0, 1, 2, 3]  # for down-facing RDIs
-            elif 'up' in orientation.lower():
-                beams = [0, 1, 3, 2]  # for up-facing RDIs
-            else:
-                raise Exception(
-                    "Please provide instrument orientation ['up' or 'down']")
-
-        # For Nortek Signatures
-        elif 'Signature' in ds.inst_model:
-            if 'down' in orientation.lower():
-                beams = [2, 0, 3, 1]  # for down-facing Norteks
-            elif 'up' in orientation.lower():
-                beams = [0, 2, 3, 1]  # for up-facing Norteks
-            else:
-                raise Exception(
-                    "Please provide instrument orientation ['up' or 'down']")
-
-        # Calculate along-beam velocity prime squared bar
-        bp2_ = np.empty((4, len(ds.range), len(time)))*np.nan
-        for i, beam in enumerate(beams):
-            bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
-
-        # Remove doppler_noise
-        if type(noise) == type(ds.vel):
-            noise = noise.values
-        bp2_ -= noise**2
-
+        # Run stress calculations
         denm = 4 * np.sin(np.deg2rad(b_angle)) * np.cos(np.deg2rad(b_angle))
         upwp_ = (bp2_[0] - bp2_[1]) / denm
         vpwp_ = (bp2_[2] - bp2_[3]) / denm
 
-        stress_vec = xr.DataArray(
+        return xr.DataArray(
             np.stack([upwp_*np.nan, upwp_, vpwp_]).astype('float32'),
             coords={'tau': ["upvp_", "upwp_", "vpwp_"],
                     'range': ds.range,
@@ -307,9 +387,7 @@ class ADPBinner(VelBinner):
                    'long_name': 'Reynolds Stress Vector',
                    'standard_name': 'specific_reynolds_stress_of_sea_water'})
 
-        return stress_vec
-
-    def calc_stress_5beam(self, ds, noise=None, orientation=None, beam_angle=25, tke_only=False):
+    def calc_stress_5beam(self, ds, noise=None, orientation=None, beam_angle=None, tke_only=False):
         """Calculate the stresses from the covariance of along-beam 
         velocity measurements
 
@@ -319,11 +397,12 @@ class ADPBinner(VelBinner):
           Raw dataset in beam coordinates
         noise : int or xarray.DataArray, default=0 (time)
           Doppler noise level in units of m/s
-        orientation : str, default=ds.orientation
+        orientation : str, default=ds.attrs['orientation']
           Direction ADCP is facing ('up' or 'down')
-        beam_angle : int, default=25
+        beam_angle : int, default=ds.attrs['beam_angle']
           ADCP beam angle in units of degrees
         tke_only : bool, default=False
+          If true, only calculates tke components
 
         Returns
         -------
@@ -353,65 +432,23 @@ class ADPBinner(VelBinner):
         five-beam acoustic Doppler current profilers." Journal of Atmospheric 
         and Oceanic Technology 34.6 (2017): 1267-1284.
         """
-
-        warnings.warn("    The 5-beam TKE/stress equations assume the instrument's "
-                      "(XYZ) coordinate system is aligned with the principal "
-                      "flow directions.")
-        if noise is None:
-            noise = 0
-            warnings.warn(
-                '    No "noise" input supplied. Consider calculating "noise" using `calc_doppler_noise`')
-
+        # Check that beam 5 velocity exists
         if 'vel_b5' not in ds.data_vars:
-            raise Exception("Must have 5th beam data")
-        if 'beam' not in ds.coord_sys:
-            warnings.warn("    Raw dataset must be in the 'beam' coordinate system. "
-                          "Rotating raw dataset...")
-            ds.velds.rotate2('beam')
+            raise Exception("Must have 5th beam data to use this function.")
 
-        b_angle = getattr(ds, 'beam_angle', beam_angle)
-        beam_vel = np.concatenate((ds['vel'].values,
-                                   ds['vel_b5'].values[None, ...]))
+        # Run through warnings
+        b_angle, noise = self._stress_func_warnings(
+            ds, beam_angle, noise, tilt_thresh=5)
+
+        # Fetch beam order
+        beam_order, phi2, phi3 = self._check_orientation(
+            ds, orientation, beam5=True)
+
+        # Calculate beam variance and subtract noise
         time = self.mean(ds['time'].values)
+        bp2_ = self._beam_variance(ds, time, noise, beam_order, n_beams=5)
 
-        if not orientation:
-            orientation = ds.orientation
-        # For TRDI Sentinel V
-        if 'TRDI' in ds.inst_make:
-            phi2 = np.deg2rad(self.mean(ds['pitch'].values))
-            phi3 = np.deg2rad(self.mean(ds['roll'].values))
-
-            if 'down' in orientation.lower():
-                beams = [0, 1, 2, 3, 4]  # for down-facing RDIs
-            elif 'up' in orientation.lower():
-                beams = [0, 1, 3, 2, 4]  # for up-facing RDIs
-            else:
-                raise Exception(
-                    "Please provide instrument orientation ['up' or 'down']")
-
-        # For Nortek Signatures
-        elif 'Signature' in ds.inst_model or 'AD2CP' in ds.inst_model:
-            phi2 = np.deg2rad(self.mean(ds['roll'].values))
-            phi3 = -np.deg2rad(self.mean(ds['pitch'].values))
-
-            if 'down' in orientation.lower():
-                beams = [2, 0, 3, 1, 4]  # for down-facing Norteks
-            elif 'up' in orientation.lower():
-                beams = [0, 2, 3, 1, 4]  # for up-facing Norteks
-            else:
-                raise Exception(
-                    "Please provide instrument orientation ['up' or 'down']")
-
-        # Calculate along-beam velocity prime squared bar
-        bp2_ = np.empty((5, len(ds.range), len(time)))*np.nan
-        for i, beam in enumerate(beams):
-            bp2_[i] = np.nanvar(self.reshape(beam_vel[beam]), axis=-1)
-
-        # Remove doppler_noise
-        if type(noise) == type(ds.vel):
-            noise = noise.values
-        bp2_ -= noise**2
-
+        # Run tke and stress calculations
         th = np.deg2rad(b_angle)
         sin = np.sin
         cos = np.cos
@@ -480,14 +517,14 @@ class ADPBinner(VelBinner):
           Binned dataset in final coordinate reference frame
         noise : int or xarray.DataArray, default=0 (time)
           Doppler noise level in units of m/s
-        orientation : str, default=ds.orientation
+        orientation : str, default=ds.attrs['orientation']
           Direction ADCP is facing ('up' or 'down')
-        beam_angle : int, default=25
+        beam_angle : int, default=ds.attrs['beam_angle']
           ADCP beam angle in units of degrees
 
         Returns
         -------
-        tke :
+        tke : xarray.DataArray
           Turbulent kinetic energy magnitude
 
         Notes
@@ -568,14 +605,13 @@ class ADPBinner(VelBinner):
         out = (psd[:, idx] * freq[idx]**(5/3) /
                a).mean(axis=-1)**(3/2) / U.values
 
-        out = xr.DataArray(
+        return xr.DataArray(
             out.astype('float32'),
             attrs={'units': 'm2 s-3',
                    'long_name': 'Dissipation Rate',
                    'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
                    'description': 'TKE dissipation rate calculated using the method from Lumley and Terray, 1983'
                    })
-        return out
 
     def calc_dissipation_SF(self, vel_raw, r_range=[1, 5]):
         """Calculate TKE dissipation rate from ADCP along-beam velocity using the
@@ -708,7 +744,7 @@ class ADPBinner(VelBinner):
             attrs={'units': 'm2 s-2',
                    'long_name': 'Structure Function D(z,r)',
                    'standard_name': 'specific_turbulent_kinetic_energy_structure_function_in_sea_water',
-                   'description': 'TKE dissipation rate calculated using the "structure function" method'
+                   'description': 'TKE dissipation rate "structure function" from Wiles et al, 2006.'
                    })
 
         return epsilon, noise, SF
@@ -744,10 +780,9 @@ class ADPBinner(VelBinner):
         u_star = np.nanmean(sign * upwp_[z_inds, :] /
                             (1 - z[z_inds, None] / H), axis=0) ** 0.5
 
-        out = xr.DataArray(u_star.astype('float32'),
-                           coords={'time': ds_avg.time},
-                           attrs={'units': 'm s-1',
-                                  'long_name': 'Friction Velocity',
-                                  'standard_name': 'x_friction_velocity_in_sea_water'})
-
-        return out
+        return xr.DataArray(
+            u_star.astype('float32'),
+            coords={'time': ds_avg.time},
+            attrs={'units': 'm s-1',
+                   'long_name': 'Friction Velocity',
+                   'standard_name': 'x_friction_velocity_in_sea_water'})

@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 from .vector import _earth2principal
-from .base import _beam2inst, _set_coords
+from .base import _beam2inst, _set_coords, _check_rotate_vars
 
 
 def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
@@ -44,11 +44,7 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     else:
         omat = _calc_orientmat(adcpo)
 
-    if rotate_vars is None:
-        if 'rotate_vars' in adcpo.attrs:
-            rotate_vars = adcpo.rotate_vars
-        else:
-            rotate_vars = ['vel']
+    rotate_vars = _check_rotate_vars(adcpo, rotate_vars)
 
     # rollaxis gives transpose of orientation matrix.
     # The 'rotation matrix' is the transpose of the 'orientation matrix'

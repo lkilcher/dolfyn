@@ -1,5 +1,5 @@
 from .vector import _earth2principal, _euler2orient
-from .base import _beam2inst
+from .base import _beam2inst, _check_rotate_vars
 from . import base as rotb
 import numpy as np
 import warnings
@@ -41,11 +41,7 @@ def _inst2earth(adcpo, reverse=False, rotate_vars=None, force=False):
     else:  # orientation = 'up' or 'AHRS'
         down = False
 
-    if rotate_vars is None:
-        if 'rotate_vars' in adcpo.attrs:
-            rotate_vars = adcpo.rotate_vars
-        else:
-            rotate_vars = ['vel']
+    rotate_vars = _check_rotate_vars(adcpo, rotate_vars)
 
     cs = adcpo.coord_sys.lower()
     if not force:

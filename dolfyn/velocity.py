@@ -324,17 +324,19 @@ class Velocity():
     def U_dir(self,):
         """Angle of horizontal velocity vector. Direction is 'to', 
         as opposed to 'from'. This function calculates angle as 
-        "degrees CCW to X/East/streamwise" and then converts it to 
+        "degrees CCW from X/East/streamwise" and then converts it to 
         "degrees CW from X/North/streamwise".
         """
 
         def convert_to_CW(angle):
             if self.ds.coord_sys == 'earth':
-                # Convert "deg CCW from East" to "deg CW from North"
+                # Convert "deg CCW from East" to "deg CW from North" [0, 360]
                 angle = convert_degrees(angle, tidal_mode=False)
                 relative_to = self.ds.dir[1].values
             else:
-                angle *= -1  # switch to clockwise
+                # Switch to clockwise and from [-180, 180] to [0, 360]
+                angle *= -1
+                angle[angle < 0] += 360
                 relative_to = self.ds.dir[0].values
             return angle, relative_to
 
@@ -345,10 +347,9 @@ class Velocity():
             angle.astype('float32'),
             dims=self.U.dims,
             coords=self.U.coords,
-            attrs={'units': 'degree',
+            attrs={'units': 'degrees_CW_from_' + str(rel),
                    'long_name': 'Water Direction',
-                   'standard_name': 'sea_water_to_direction',
-                   'degrees_CW_relative_to': rel})
+                   'standard_name': 'sea_water_to_direction'})
 
     @property
     def E_coh(self,):

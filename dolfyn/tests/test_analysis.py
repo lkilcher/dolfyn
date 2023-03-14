@@ -132,17 +132,17 @@ def test_adcp_turbulence(make_data=False):
     dat = tr.dat_sig_i.copy(deep=True)
     bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs)
     tdat = bnr.do_avg(dat)
-    tdat['dudz'] = bnr.dudz(tdat.vel)
-    tdat['dvdz'] = bnr.dvdz(tdat.vel)
-    tdat['dwdz'] = bnr.dwdz(tdat.vel)
-    tdat['tau2'] = bnr.tau2(tdat.vel)
+    tdat['dudz'] = bnr.calc_dudz(tdat.vel)
+    tdat['dvdz'] = bnr.calc_dvdz(tdat.vel)
+    tdat['dwdz'] = bnr.calc_dwdz(tdat.vel)
+    tdat['tau2'] = bnr.calc_shear2(tdat.vel)
     tdat['psd'] = bnr.calc_psd(dat['vel'].isel(
         dir=2, range=len(dat.range)//2), freq_units='Hz')
     tdat['noise'] = bnr.calc_doppler_noise(tdat['psd'], pct_fN=0.8)
     tdat['stress_vec4'] = bnr.calc_stress_4beam(
-        dat, noise=tdat['noise'], orientation='up')
+        dat, noise=tdat['noise'], orientation='up', beam_angle=25)
     tdat['tke_vec5'], tdat['stress_vec5'] = bnr.calc_stress_5beam(
-        dat, noise=tdat['noise'], orientation='up', tke_only=False)
+        dat, noise=tdat['noise'], orientation='up', beam_angle=25, tke_only=False)
     tdat['tke'] = bnr.calc_total_tke(
         dat, noise=tdat['noise'], orientation='up')
     tdat['dissipation_rate_LT83'] = bnr.calc_dissipation_LT83(
