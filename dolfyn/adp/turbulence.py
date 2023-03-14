@@ -7,18 +7,34 @@ from ..rotate.base import calc_tilt
 
 
 def _diffz_first(dat, z):
+    """Newton's Method first difference.
+    """
     return np.diff(dat, axis=0) / (np.diff(z)[:, None])
 
 
 def _diffz_centered(dat, z):
-    # Want top - bottom here (u_x+1 - u_x-1)/dx
-    # Can use 2*np.diff b/c depth bin size never changes
+    """Newton's Method centered difference.
+    Want top - bottom here: (u_x+1 - u_x-1)/dx
+    Can use 2*np.diff b/c depth bin size never changes
+    """
     return (dat[2:]-dat[:-2]) / (2*np.diff(z)[1:, None])
+
+
+def _diffz_centered_extended(dat, z):
+    """Extended centered difference method.
+    Top - bottom centered difference with endpoints determined
+    with a first difference. Ensures the output array is the 
+    same size as the input array.
+    """
+    out = np.concatenate((_diffz_first(dat[:2], z[:2]),
+                          _diffz_centered(dat, z),
+                          _diffz_first(dat[-2:], z[-2:])))
+    return out
 
 
 class ADPBinner(VelBinner):
     def __init__(self, n_bin, fs, n_fft=None, n_fft_coh=None,
-                 noise=None, orientation='up', diff_style='centered'):
+                 noise=None, orientation='up', diff_style='centered_extended'):
         """A class for calculating turbulence statistics from ADCP data
 
         Parameters
@@ -38,9 +54,11 @@ class ADPBinner(VelBinner):
             Instrument's doppler noise in same units as velocity
         orientation : str, default='up'
             Instrument's orientation, either 'up' or 'down'
-        diff_style : str, default='centered'
-            Style of numerical differentiation using Newton's Method, 
-            either 'first' or 'centered'
+        diff_style : str, default='centered_extended'
+            Style of numerical differentiation using Newton's Method. 
+            Either 'first' (first difference), 'centered' (centered difference),
+            or 'centered_extended' (centered difference with first and last points
+             extended using a first difference).
         """
 
         VelBinner.__init__(self, n_bin, fs, n_fft, n_fft_coh, noise)
@@ -54,6 +72,9 @@ class ADPBinner(VelBinner):
         elif self.diff_style == 'centered':
             out = _diffz_centered(vel[u].values, vel['range'].values)
             return out, vel.range[1:-1]
+        elif self.diff_style == 'centered_extended':
+            out = _diffz_centered_extended(vel[u].values, vel['range'].values)
+            return out, vel.range
 
     def calc_dudz(self, vel, orientation=None):
         """The shear in the first velocity component.

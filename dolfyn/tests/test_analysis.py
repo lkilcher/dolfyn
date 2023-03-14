@@ -130,7 +130,7 @@ def test_adv_turbulence(make_data=False):
 
 def test_adcp_turbulence(make_data=False):
     dat = tr.dat_sig_i.copy(deep=True)
-    bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs)
+    bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs, diff_style='centered')
     tdat = bnr.do_avg(dat)
     tdat['dudz'] = bnr.calc_dudz(tdat.vel)
     tdat['dvdz'] = bnr.calc_dvdz(tdat.vel)
