@@ -221,14 +221,13 @@ class ADPBinner(VelBinner):
         N2 = psd.sel(freq=f_range) * psd.freq.sel(freq=f_range)
         noise_level = np.sqrt(N2.mean(dim='freq'))
 
-        out = xr.DataArray(
+        return xr.DataArray(
             noise_level.values.astype('float32'),
             dims=['time'],
             attrs={'units': 'm s-1',
                    'long_name': 'Doppler Noise Level',
                    'description': 'Doppler noise level calculated '
                    'from PSD white noise'})
-        return out
 
     def _stress_func_warnings(self, ds, beam_angle, noise, tilt_thresh):
         """List of error and warnings to run through for ADCP stress calculations.
@@ -506,7 +505,7 @@ class ADPBinner(VelBinner):
 
             return tke_vec, stress_vec
 
-    def calc_total_tke(self, ds, noise=None, orientation=None, beam_angle=25):
+    def calc_total_tke(self, ds, noise=None, orientation=None, beam_angle=None):
         """Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
 
         Parameters

@@ -144,7 +144,7 @@ def test_adcp_turbulence(make_data=False):
     tdat['tke_vec5'], tdat['stress_vec5'] = bnr.calc_stress_5beam(
         dat, noise=tdat['noise'], orientation='up', beam_angle=25, tke_only=False)
     tdat['tke'] = bnr.calc_total_tke(
-        dat, noise=tdat['noise'], orientation='up')
+        dat, noise=tdat['noise'], orientation='up', beam_angle=25)
     tdat['dissipation_rate_LT83'] = bnr.calc_dissipation_LT83(
         tdat['psd'], tdat.velds.U_mag.isel(range=len(dat.range)//2), freq_range=[0.2, 0.4])
     tdat['dissipation_rate_SF'], tdat['noise_SF'], tdat['D_SF'] = bnr.calc_dissipation_SF(
