@@ -569,8 +569,11 @@ def _reduce(data):
     else:
         da['has_imu'] = 0
 
-    da['fs'] = da['filehead_config']['BURST'].pop('SR')
-    tmat = da['filehead_config'].pop('XFBURST')
+    da['fs'] = da['filehead_config']['BURST']['SR']
+    theta = da['filehead_config']['BEAMCFGLIST'][0]
+    if 'THETA=' in theta:
+        da['beam_angle'] = int(theta[13:15])
+    tmat = da['filehead_config']['XFBURST']
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)
     for irow in range(tmat['ROWS']):
         for icol in range(tmat['COLS']):
