@@ -5,7 +5,7 @@ import dolfyn.adv.api as avm
 from dolfyn.io.api import read_example as read
 from dolfyn.adv.motion import correct_motion
 from dolfyn.tests import test_read_adv as tv
-from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose, drop_config
+from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 
 
 def test_motion_adv(make_data=False):
@@ -35,8 +35,7 @@ def test_motion_adv(make_data=False):
     tdmE = avm.correct_motion(tdmE)
 
     # ensure trailing nans are removed from AHRS data
-    ahrs = drop_config(read(
-        'vector_data_imu01.VEC', userdata=True))
+    ahrs = read('vector_data_imu01.VEC', userdata=True)
     for var in ['accel', 'angrt', 'mag']:
         assert not ahrs[var].isnull().any(), "nan's in {} variable".format(var)
 

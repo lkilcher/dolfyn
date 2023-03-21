@@ -4,6 +4,7 @@ from struct import unpack, calcsize
 import warnings
 from pathlib import Path
 import logging
+import json
 
 from . import nortek2_defs as defs
 from . import nortek2_lib as lib
@@ -100,6 +101,11 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
 
     if declin is not None:
         set_declination(ds, declin, inplace=True)
+
+    # Convert config dictionary to json string
+    for key in list(ds.attrs.keys()):
+        if 'config' in key:
+            ds.attrs[key] = json.dumps(ds.attrs[key])
 
     # Close handler
     if debug:

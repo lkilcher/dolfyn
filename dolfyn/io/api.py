@@ -163,11 +163,6 @@ def save(ds, filename,
 
     filename = _check_file_ext(filename, 'nc')
 
-    # Dropping the detailed configuration stats because netcdf can't save it
-    for key in list(ds.attrs.keys()):
-        if 'config' in key:
-            ds.attrs.pop(key)
-
     # Handling complex values for netCDF4
     ds.attrs['complex_vars'] = []
     for var in ds.data_vars:
