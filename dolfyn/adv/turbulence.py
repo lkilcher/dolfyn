@@ -103,7 +103,7 @@ class ADVBinner(VelBinner):
 
         Parameters
         ----------
-        veldat   : xarray.DataArray
+        veldat : xarray.DataArray
           The raw 3D velocity data.
         freq_units : string
           Frequency units of the returned spectra in either Hz or rad/s 
@@ -125,25 +125,26 @@ class ADVBinner(VelBinner):
           different cross-spectra: 'uv', 'uw', 'vw'.
         """
 
-        fs = self._parse_fs(fs)
+        fs_in = self._parse_fs(fs)
         n_fft = self._parse_nfft_coh(n_fft_coh)
         time = self.mean(veldat.time.values)
         veldat = veldat.values
 
-        out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft),
+        out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft, n_bin=n_bin),
                        dtype='complex')
 
         # Create frequency vector, also checks whether using f or omega
         if 'rad' in freq_units:
-            fs = 2*np.pi*fs
+            fs = 2*np.pi*fs_in
             freq_units = 'rad s-1'
             units = 'm2 s-1 rad-1'
         else:
+            fs = fs_in
             freq_units = 'Hz'
             units = 'm2 s-2 Hz-1'
-        coh_freq = xr.DataArray(self.calc_freq(units=freq_units, coh=True),
-                                dims=['freq'],
-                                name='freq',
+        coh_freq = xr.DataArray(self.calc_freq(fs=fs_in, units=freq_units, n_fft=n_fft, coh=True),
+                                dims=['coh_freq'],
+                                name='coh_freq',
                                 attrs={'units': freq_units,
                                       'long_name': 'FFT Frequency Vector',
                                       'coverage_content_type': 'coordinate'}
@@ -152,20 +153,21 @@ class ADVBinner(VelBinner):
         for ip, ipair in enumerate(self._cross_pairs):
             out[ip] = self.calc_csd_base(veldat[ipair[0]],
                                          veldat[ipair[1]],
-                                         n_bin=n_bin,
-                                         n_fft=n_fft,
-                                         window=window)
+                                     fs=fs,
+                                     window=window,
+                                     n_bin=n_bin,
+                                     n_fft=n_fft)
 
         csd = xr.DataArray(out.astype('complex64'),
                            coords={'C': self.C,
                                    'time': time,
-                                   'freq': coh_freq},
-                           dims=['C', 'time', 'freq'],
+                                   'coh_freq': coh_freq},
+                           dims=['C', 'time', 'coh_freq'],
                            attrs={'units': units, 
                                   'n_fft_coh': n_fft,
                                   'long_name': 'Cross Spectral Density',
                                   'standard_name': 'cross_spectral_density_of_sea_water_velocity'})
-        csd['freq'].attrs['units'] = freq_units
+        csd['coh_freq'].attrs['units'] = freq_units
 
         return csd
 
@@ -274,6 +276,7 @@ class ADVBinner(VelBinner):
         LT83 : Lumley and Terray, "Kinematics of turbulence convected
         by a random wave field". JPO, 1983, vol13, pp2000-2007.
         """
+
         # Ensure time has been averaged
         if len(psd.time)!=len(U_mag.time):
             raise Exception("`U_mag` should be from ensembled-averaged dataset")
@@ -485,11 +488,12 @@ class ADVBinner(VelBinner):
         scale = np.argmin((acov/acov[..., :1]) > (1/np.e), axis=-1)
         L_int = U_mag.values / fs * scale
 
-        return xr.DataArray(L_int.astype('float32'),
-                            coords={'dir': a_cov.dir, 'time': a_cov.time},
-                            attrs={'units': 'm',
-                                   'long_name': 'Integral Length Scale',
-                                   'standard_name': 'turbulent_mixing_length_of_sea_water'})
+        return xr.DataArray(
+            L_int.astype('float32'),
+            coords={'dir': a_cov.dir, 'time': a_cov.time},
+            attrs={'units': 'm',
+                   'long_name': 'Integral Length Scale',
+                   'standard_name': 'turbulent_mixing_length_of_sea_water'})
 
 
 def calc_turbulence(ds_raw, n_bin, fs, n_fft=None, freq_units='rad/s', window='hann'):
