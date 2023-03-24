@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Updated `dataset.velds.U_dir` shortcut to automatically convert "degrees CCW from
 		  X/East/streamwise" to "degrees CW from X/North/streamwise"
 		- `dolfyn.ADVBinner.calc_csd` now returns frequency coordinate `coh_freq` instead of `freq`
+		
 		- Added ADCP turbulence functions
 		- Added function to calculate Doppler noise to ADV turbulence functions
 		- Added "beam_angle" attribute to Nortek Signature datasets

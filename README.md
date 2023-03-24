@@ -4,6 +4,29 @@
 [![Coverage Status](https://coveralls.io/repos/github/lkilcher/dolfyn/badge.svg?branch=master)](https://coveralls.io/github/lkilcher/dolfyn?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/dolfyn/badge/?version=latest)](https://dolfyn.readthedocs.io/en/latest/?badge=latest)
 
+Update from Version 0.12 to 1.0
+-------------------------------
+
+Hello everyone! This is a MAJOR REFACTOR of the code so that DOLfYN is
+now built on xarray, rather than the somewhat contrived and
+purpose-built `pyDictH5` package.
+
+This means that DOLfYN 1.0 is _not_ backwards compatible with
+earlier version. This, in turn, means two things:
+
+1. The data files (`.h5` files) you created with earlier versions
+of DOLfYN will no longer load with DOLfYN > v1.0.0.
+2. The syntax of DOLfYN 1.0 is completely different from earlier version.
+
+Because of this, it's probably easiest to continue using earlier
+versions of DOLfYN for your old data. If you want to bring some data
+into DOLfYN 1.0, you will need to
+`dolfyn.read(binary_source_file.ext)`, and then refactor your code to
+work properly with DOLfYN's new syntax. I may be providing some
+updates to dolfyn 0.12 via the v0.12-backports branch (and associated
+releases), but I doubt that will last long. If you are
+using 0.13, we recommend switching to 1.0.
+
 Summary
 ------
 
