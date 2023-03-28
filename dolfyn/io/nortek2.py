@@ -1,5 +1,4 @@
 import numpy as np
-import xarray as xr
 from struct import unpack, calcsize
 import warnings
 from pathlib import Path

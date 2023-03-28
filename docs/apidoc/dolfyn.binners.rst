@@ -56,10 +56,10 @@ Functions for analyzing ADCP data via the `ADPBinner` class, beyond those descri
 	:nosignatures:
 
 	~dolfyn.adp.turbulence.ADPBinner
-	~dolfyn.adp.turbulence.ADPBinner.dudz
-	~dolfyn.adp.turbulence.ADPBinner.dvdz
-	~dolfyn.adp.turbulence.ADPBinner.dwdz
-	~dolfyn.adp.turbulence.ADPBinner.tau2
+	~dolfyn.adp.turbulence.ADPBinner.calc_dudz
+	~dolfyn.adp.turbulence.ADPBinner.calc_dvdz
+	~dolfyn.adp.turbulence.ADPBinner.calc_dwdz
+	~dolfyn.adp.turbulence.ADPBinner.calc_shear2
 	~dolfyn.adp.turbulence.ADPBinner.calc_doppler_noise
 	~dolfyn.adp.turbulence.ADPBinner.calc_stress_4beam
 	~dolfyn.adp.turbulence.ADPBinner.calc_stress_5beam

@@ -550,7 +550,11 @@ class ADPBinner(VelBinner):
         Notes
         -----
         This function is a wrapper around 'calc_stress_5beam' that then
-        combines the TKE components
+        combines the TKE components.
+
+        Warning: the integral length scale of turbulence captured by the
+        ADCP measurements (i.e. the size of turbulent structures) increases 
+        with increasing range from the instrument.
         """
 
         tke_vec = self.calc_stress_5beam(
@@ -754,7 +758,7 @@ class ADPBinner(VelBinner):
                     vel_raw.dims[1]: time},
             attrs={'units': 'm s-1',
                    'long_name': 'Structure Function Noise Offset',
-                   'standard_name': 'structure_function_offset_due_to_instrument_noise'})
+                   })
 
         SF = xr.DataArray(
             D.astype('float32'),
@@ -763,7 +767,6 @@ class ADPBinner(VelBinner):
                     vel_raw.dims[1]: time},
             attrs={'units': 'm2 s-2',
                    'long_name': 'Structure Function D(z,r)',
-                   'standard_name': 'specific_turbulent_kinetic_energy_structure_function_in_sea_water',
                    'description': 'TKE dissipation rate "structure function" from Wiles et al, 2006.'
                    })
 

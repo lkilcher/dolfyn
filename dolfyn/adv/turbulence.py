@@ -211,8 +211,8 @@ class ADVBinner(VelBinner):
         Thiébaut, Maxime, et al. "Investigating the flow dynamics and turbulence at a 
         tidal-stream energy site in a highly energetic estuary." Renewable Energy 195 
         (2022): 252-262.
-
         """
+        
         # Characteristic frequency set to 80% of Nyquist frequency
         fN = self.fs/2
         fc = pct_fN * fN
