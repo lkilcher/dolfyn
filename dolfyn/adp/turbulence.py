@@ -312,7 +312,7 @@ class ADPBinner(VelBinner):
                     "Please provide instrument orientation ['up' or 'down']")
 
         # For Nortek Signatures
-        elif 'Signature' in ds.inst_model:
+        elif ('Signature' in ds.inst_model) or ('AD2CP' in ds.inst_model):
             phi2 = np.deg2rad(self.mean(ds['roll'].values))
             phi3 = -np.deg2rad(self.mean(ds['pitch'].values))
             if 'down' in orientation.lower():
@@ -442,7 +442,7 @@ class ADPBinner(VelBinner):
         in pitch and roll. u'v'_ cannot be directly calculated by a 5-beam ADCP,
         so it is approximated by the covariance of `u` and `v`. The uncertainty
         introduced by using this approximation is small if deviations from pitch
-        and roll are small (<5-10 degrees).
+        and roll are small (<15 degrees).
 
         Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic
         energy estimates from various ADCP beam configurations: Theory." J. of
@@ -458,7 +458,7 @@ class ADPBinner(VelBinner):
 
         # Run through warnings
         b_angle, noise = self._stress_func_warnings(
-            ds, beam_angle, noise, tilt_thresh=5)
+            ds, beam_angle, noise, tilt_thresh=15)
 
         # Fetch beam order
         beam_order, phi2, phi3 = self._check_orientation(
