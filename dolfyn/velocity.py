@@ -980,7 +980,12 @@ class VelBinner(TimeBinner):
                 out -= noise ** 2
             # Set coords
             dims = veldat.dims
-            coords = {veldat.dims[-1]: self.mean(veldat[veldat.dims[-1]].values)}
+            coords = {}
+            for nm in veldat.dims:
+                if 'time' in nm:
+                    coords[nm] = self.mean(veldat[nm].values)
+                else:
+                    coords[nm] = veldat[nm].values
 
         return xr.DataArray(
             out.astype('float32'),
