@@ -129,6 +129,9 @@ class ADVBinner(VelBinner):
         n_fft = self._parse_nfft_coh(n_fft_coh)
         time = self.mean(veldat.time.values)
         veldat = veldat.values
+        if len(np.shape(veldat)) != 2:
+            raise Exception("This function is only valid for calculating TKE using "
+                            "the 3D velocity vector from an ADV.")
 
         out = np.empty(self._outshape_fft(veldat[:3].shape, n_fft=n_fft, n_bin=n_bin),
                        dtype='complex')

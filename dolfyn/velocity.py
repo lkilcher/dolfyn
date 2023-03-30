@@ -952,6 +952,10 @@ class VelBinner(TimeBinner):
         if 'xarray' in type(noise).__module__:
             noise = noise.values
 
+        if len(np.shape(vel)) > 2:
+            raise Exception("This function is only valid for calculating TKE using "
+                            "velocity from an ADV or a single ADCP beam.")
+
         # Calc TKE
         if detrend:
             out = np.nanmean(self.detrend(vel)**2, axis=-1)
