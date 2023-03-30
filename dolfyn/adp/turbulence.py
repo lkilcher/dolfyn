@@ -265,8 +265,8 @@ class ADPBinner(VelBinner):
                       "flow directions.")
 
         # Warning 2. Check tilt
-        if any(abs(calc_tilt(ds['pitch'], ds['roll']))) < tilt_thresh:
-            warnings.warn(f"    Instrument tilt is greater than {tilt_thresh} degrees."
+        if abs(np.nanmean(calc_tilt(ds['pitch'], ds['roll']))) <= tilt_thresh:
+            warnings.warn(f"    Average instrument tilt is greater than {tilt_thresh} degrees. "
                           "Stress axes won't be well aligned with flow.")
 
         # Warning 3. Noise level of instrument is important considering 50 % of variance
@@ -458,7 +458,7 @@ class ADPBinner(VelBinner):
 
         # Run through warnings
         b_angle, noise = self._stress_func_warnings(
-            ds, beam_angle, noise, tilt_thresh=15)
+            ds, beam_angle, noise, tilt_thresh=10)
 
         # Fetch beam order
         beam_order, phi2, phi3 = self._check_orientation(
