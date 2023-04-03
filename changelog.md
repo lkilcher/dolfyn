@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		
 		- Added ADCP turbulence functions
 		- Added function to calculate Doppler noise to ADV turbulence functions
+		- Added funtion to check slope of isotropic turbulence cascade to QC dissipation rate calculation
 		- Added "beam_angle" attribute to Nortek Signature datasets
 		- Saved full Nortek Signature "config" dictionary as json string in attributes
 		- Added warning if "rotate_vars" attribute not found

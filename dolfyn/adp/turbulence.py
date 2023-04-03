@@ -567,6 +567,61 @@ class ADPBinner(VelBinner):
 
         return tke.astype('float32')
 
+    def check_turbulence_cascade_slope(self, psd, freq_range=[0.2, 0.4]):
+        """This function calculates the slope of the PSD, the power spectra 
+        of velocity, within the given frequency range. The purpose of this
+        function is to check that the region of the PSD containing the 
+        isotropic turbulence cascade decreases at a rate of :math:`f^{-5/3}`.
+
+        Parameters
+        ----------
+        psd : xarray.DataArray (freq)
+          The power spectral density
+        freq_range : iterable(2) (default: [6.28, 12.57])
+          The range over which the isotropic turbulence cascade occures, in 
+          units of the psd frequency vector (Hz or rad/s)
+
+        Returns
+        -------
+        coeff: tuple (slope, y-intercept)
+          A tuple containing the coefficients of the log-adjusted linear 
+          regression between PSD and frequency 
+
+        Notes
+        -----
+        Calculates slope based on the `standard` formula for dissipation:
+
+        .. math:: S(k) = \\alpha \\epsilon^{2/3} k^{-5/3} + N
+
+        The slope of the isotropic turbulence cascade, which should be 
+        equal to :math:`k^{-5/3}` or :math:`f^{-5/3}`, where k and f are 
+        the wavenumber and frequency vectors, is estimated using linear 
+        regression with a log transformation:
+
+        .. math:: log10(y) = m*log10(x) + b
+
+        Which is equivalent to
+
+        .. math:: y = 10^{b} x^{m}
+
+        Where :math:`y` is S(k) or S(f), :math:`x` is k or f, :math:`m` 
+        is the slope (ideally -5/3), and :math:`10^{b}` is the intercept of 
+        y at x^m=1.
+        """
+
+        if len(psd.shape) > 1:
+            raise Exception(
+                "`psd` should be a 1D vector, where psd.dims=['freq']")
+
+        idx = np.where((freq_range[0] < psd.freq) & (psd.freq < freq_range[1]))
+        idx = idx[0]
+
+        x = psd.freq.isel(freq=idx)
+        y = psd.isel(freq=idx)
+
+        coeff = np.polyfit(np.log10(x), np.log10(y), 1)
+        return coeff
+
     def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4]):
         """Calculate the TKE dissipation rate from the velocity spectra.
 
