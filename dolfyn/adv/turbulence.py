@@ -238,7 +238,7 @@ class ADVBinner(VelBinner):
                    'description': 'Doppler noise level calculated '
                    'from PSD white noise'})
 
-    def check_turbulence_cascade_slope(self, psd, freq_range=[6.28, 12.57], weight_func=None):
+    def check_turbulence_cascade_slope(self, psd, freq_range=[6.28, 12.57]):
         """This function calculates the slope of the PSD, the power spectra 
         of velocity, within the given frequency range. The purpose of this
         function is to check that the region of the PSD containing the 
@@ -251,12 +251,10 @@ class ADVBinner(VelBinner):
         freq_range : iterable(2) (default: [6.28, 12.57])
           The range over which the isotropic turbulence cascade occures, in 
           units of the psd frequency vector (Hz or rad/s)
-        weight_func : function (default: None)
-          Weighting function to apply to linear regression.
 
         Returns
         -------
-        coeff: tuple (slope, y-intercept)
+        (m, b): tuple (slope, y-intercept)
           A tuple containing the coefficients of the log-adjusted linear 
           regression between PSD and frequency 
 
@@ -282,20 +280,26 @@ class ADVBinner(VelBinner):
         y at x^m=1.
         """
 
-        if len(psd.shape)>1:
-            raise Exception("`psd` should be a 1D vector, where psd.dims=['freq']")
-
         idx = np.where((freq_range[0] < psd.freq) & (psd.freq < freq_range[1]))
         idx = idx[0]
-        
-        x = psd.freq.isel(freq=idx)
-        y = psd.isel(freq=idx)
-        
-        if weight_func is not None:
-            coeff = np.polyfit(np.log10(x), np.log10(y), 1, w=np.log10(weight_func(y)))
-        else:
-            coeff = np.polyfit(np.log10(x), np.log10(y), 1)
-        return coeff
+
+        x = np.log10(psd['freq'].isel(freq=idx))
+        y = np.log10(psd.isel(freq=idx))
+
+        y_bar = y.mean('freq')
+        x_bar = x.mean('freq')
+
+        # using the formula to calculate the slope and intercept
+        n = np.sum((x - x_bar) * (y - y_bar), axis=0)
+        d = np.sum((x - x_bar)**2, axis=0)
+
+        m = n/d
+        b = y_bar - m*x_bar
+
+        try:
+            return m.drop('S'), b.drop('S')
+        except:
+            return m, b
 
     def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
         """Calculate the dissipation rate from the PSD
