@@ -567,7 +567,7 @@ class ADPBinner(VelBinner):
 
         return tke.astype('float32')
 
-    def check_turbulence_cascade_slope(self, psd, freq_range=[0.2, 0.4]):
+    def check_turbulence_cascade_slope(self, psd, freq_range=[0.2, 0.4], weight_func=np.sqrt):
         """This function calculates the slope of the PSD, the power spectra 
         of velocity, within the given frequency range. The purpose of this
         function is to check that the region of the PSD containing the 
@@ -580,6 +580,8 @@ class ADPBinner(VelBinner):
         freq_range : iterable(2) (default: [6.28, 12.57])
           The range over which the isotropic turbulence cascade occures, in 
           units of the psd frequency vector (Hz or rad/s)
+        weight_func : function (default: None)
+          Weighting function to apply to linear regression.
 
         Returns
         -------
@@ -619,7 +621,10 @@ class ADPBinner(VelBinner):
         x = psd.freq.isel(freq=idx)
         y = psd.isel(freq=idx)
 
-        coeff = np.polyfit(np.log10(x), np.log10(y), 1)
+        if weight_func is not None:
+            coeff = np.polyfit(np.log10(x), np.log10(y), 1, w=np.log10(weight_func(y)))
+        else:
+            coeff = np.polyfit(np.log10(x), np.log10(y), 1)
         return coeff
 
     def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4]):
