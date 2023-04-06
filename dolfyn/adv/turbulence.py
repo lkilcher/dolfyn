@@ -246,10 +246,10 @@ class ADVBinner(VelBinner):
 
         Parameters
         ----------
-        psd : xarray.DataArray (freq)
-          The power spectral density
+        psd : xarray.DataArray ([time,] freq)
+          The power spectral density (1D or 2D)
         freq_range : iterable(2) (default: [6.28, 12.57])
-          The range over which the isotropic turbulence cascade occures, in 
+          The range over which the isotropic turbulence cascade occurs, in 
           units of the psd frequency vector (Hz or rad/s)
 
         Returns
@@ -279,6 +279,8 @@ class ADVBinner(VelBinner):
         is the slope (ideally -5/3), and :math:`10^{b}` is the intercept of 
         y at x^m=1.
         """
+        # if len(np.shape(psd)) > 2:
+        #     raise Exception("PSD input should have shape 2 with dims 'time' and 'freq'")
 
         idx = np.where((freq_range[0] < psd.freq) & (psd.freq < freq_range[1]))
         idx = idx[0]
@@ -296,10 +298,7 @@ class ADVBinner(VelBinner):
         m = n/d
         b = y_bar - m*x_bar
 
-        try:
-            return m.drop('S'), b.drop('S')
-        except:
-            return m, b
+        return m, b
 
     def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
         """Calculate the dissipation rate from the PSD

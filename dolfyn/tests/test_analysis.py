@@ -104,26 +104,30 @@ def test_calc_freq():
 
 
 def test_adv_turbulence(make_data=False):
+    # Checks that code is functioning
     dat = tv.dat.copy(deep=True)
     bnr = avm.ADVBinner(n_bin=20.0, fs=dat.fs)
     tdat = bnr(dat)
-    acov = bnr.calc_acov(dat.vel)
+    acov = bnr.calc_acov(dat['vel'])
 
     assert_identical(tdat, avm.calc_turbulence(dat, n_bin=20.0, fs=dat.fs))
 
-    tdat['stress_detrend'] = bnr.calc_stress(dat.vel)
-    tdat['stress_demean'] = bnr.calc_stress(dat.vel, detrend=False)
+    tdat['stress_detrend'] = bnr.calc_stress(dat['vel'])
+    tdat['stress_demean'] = bnr.calc_stress(dat['vel'], detrend=False)
     tdat['csd'] = bnr.calc_csd(
-        dat.vel, freq_units='rad', window='hamm', n_fft_coh=10)
-    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat.psd, tdat.velds.U_mag)
-    tdat['SF'] = bnr.calc_epsilon_SF(dat.vel[0], tdat.velds.U_mag)
+        dat['vel'], freq_units='rad', window='hamm', n_fft_coh=10)
+    tdat['LT83'] = bnr.calc_epsilon_LT83(tdat['psd'], tdat.velds.U_mag)
+    tdat['SF'] = bnr.calc_epsilon_SF(dat['vel'][0], tdat.velds.U_mag)
     tdat['TE01'] = bnr.calc_epsilon_TE01(dat, tdat)
     tdat['L'] = bnr.calc_L_int(acov, tdat.velds.U_mag)
+    slope_check = bnr.check_turbulence_cascade_slope(
+        tdat['psd'][-1].mean('time'), freq_range=[10, 100])
 
     if make_data:
         save(tdat, 'vector_data01_bin.nc')
         return
 
+    assert np.round(slope_check[0].values, 4), 0.1713
     assert_allclose(tdat, load('vector_data01_bin.nc'), atol=1e-6)
 
 
@@ -152,9 +156,12 @@ def test_adcp_turbulence(make_data=False):
         dat.vel.isel(dir=2), r_range=[1, 5])
     tdat['friction_vel'] = bnr.calc_ustar_fit(
         tdat, upwp_=tdat['stress_vec5'].sel(tau='upwp_'), z_inds=slice(1, 5), H=50)
+    slope_check = bnr.check_turbulence_cascade_slope(
+        tdat['psd'].mean('time'), freq_range=[0.4, 4])
 
     if make_data:
         save(tdat, 'Sig1000_IMU_bin.nc')
         return
 
+    assert np.round(slope_check[0].values, 4), -1.0682
     assert_allclose(tdat, load('Sig1000_IMU_bin.nc'), atol=1e-6)

@@ -260,14 +260,16 @@ class ADPBinner(VelBinner):
                 "    Beam angle not found in dataset and no beam angle supplied.")
 
         # Warning 1. Memo
-        warnings.warn("    The 4-beam stress equations assume the instrument's "
+        warnings.warn("    The beam-variance algorithms assume the instrument's "
                       "(XYZ) coordinate system is aligned with the principal "
                       "flow directions.")
 
         # Warning 2. Check tilt
-        if abs(np.nanmean(calc_tilt(ds['pitch'], ds['roll']))) <= tilt_thresh:
-            warnings.warn(f"    Average instrument tilt is greater than {tilt_thresh} degrees. "
-                          "Stress axes won't be well aligned with flow.")
+        tilt_mask = calc_tilt(ds['pitch'], ds['roll']) > tilt_thresh
+        if sum(tilt_mask):
+            pct_above_thresh = sum(tilt_mask) / len(tilt_mask) * 100
+            warnings.warn(f"    {pct_above_thresh} % of measurements have a tilt "
+                          f"greater than {tilt_thresh} degrees.")
 
         # Warning 3. Noise level of instrument is important considering 50 % of variance
         # in ADCP data can be noise
@@ -442,7 +444,7 @@ class ADPBinner(VelBinner):
         in pitch and roll. u'v'_ cannot be directly calculated by a 5-beam ADCP,
         so it is approximated by the covariance of `u` and `v`. The uncertainty
         introduced by using this approximation is small if deviations from pitch
-        and roll are small (<15 degrees).
+        and roll are small (< 10 degrees).
 
         Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic
         energy estimates from various ADCP beam configurations: Theory." J. of
@@ -567,7 +569,7 @@ class ADPBinner(VelBinner):
 
         return tke.astype('float32')
 
-    def check_turbulence_cascade_slope(self, psd, freq_range=[6.28, 12.57]):
+    def check_turbulence_cascade_slope(self, psd, freq_range=[0.2, 0.4]):
         """This function calculates the slope of the PSD, the power spectra 
         of velocity, within the given frequency range. The purpose of this
         function is to check that the region of the PSD containing the 
@@ -575,10 +577,10 @@ class ADPBinner(VelBinner):
 
         Parameters
         ----------
-        psd : xarray.DataArray (freq)
-          The power spectral density
+        psd : xarray.DataArray ([[range,] time,] freq)
+          The power spectral density (1D, 2D or 3D)
         freq_range : iterable(2) (default: [6.28, 12.57])
-          The range over which the isotropic turbulence cascade occures, in 
+          The range over which the isotropic turbulence cascade occurs, in 
           units of the psd frequency vector (Hz or rad/s)
 
         Returns
@@ -603,7 +605,7 @@ class ADPBinner(VelBinner):
         Which is equivalent to
 
         .. math:: y = 10^{b} x^{m}
-        
+
         Where :math:`y` is S(k) or S(f), :math:`x` is k or f, :math:`m` 
         is the slope (ideally -5/3), and :math:`10^{b}` is the intercept of 
         y at x^m=1.

@@ -15,17 +15,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - API/Useability
 	    - Calculation of depth from pressure sensor updated to use linear approximation of the
 		  equation of state, rather than EOS-80
-		- Added warnings for ADV motion and turbulence functions
+		- Added warnings for ADV motion-correction function
 		- Updated `dataset.velds.U_dir` shortcut to automatically convert "degrees CCW from
 		  X/East/streamwise" to "degrees CW from X/North/streamwise"
 		- `dolfyn.ADVBinner.calc_csd` now returns frequency coordinate `coh_freq` instead of `freq`
-		
-		- Added ADCP turbulence functions
-		- Added function to calculate Doppler noise to ADV turbulence functions
-		- Added funtion to check slope of isotropic turbulence cascade to QC dissipation rate calculation
 		- Added "beam_angle" attribute to Nortek Signature datasets
 		- Saved full Nortek Signature "config" dictionary as json string in attributes
 		- Added warning if "rotate_vars" attribute not found
+		
+		- Added ADCP turbulence functions
+		- Added function to calculate Doppler noise to ADV turbulence functions
+		- Added funtion to check slope of spectra's isotropic turbulence cascade
 
 ## Version 1.2.1
     - Bugfixes
@@ -60,7 +60,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		  classical (Hz) frequency units instead of 'omega' and 'f', respectively
 	    - `correct_motion` is now capable of processing data from duty-cycled ADVs
 	    - `CalcMotion` class is changed from private to public
-
 
 ## Version 1.1.0
     - Bugfixes
