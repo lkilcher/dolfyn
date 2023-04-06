@@ -267,7 +267,7 @@ class ADPBinner(VelBinner):
         # Warning 2. Check tilt
         tilt_mask = calc_tilt(ds['pitch'], ds['roll']) > tilt_thresh
         if sum(tilt_mask):
-            pct_above_thresh = sum(tilt_mask) / len(tilt_mask) * 100
+            pct_above_thresh = round(sum(tilt_mask) / len(tilt_mask) * 100, 2)
             warnings.warn(f"    {pct_above_thresh} % of measurements have a tilt "
                           f"greater than {tilt_thresh} degrees.")
 
