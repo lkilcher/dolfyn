@@ -562,9 +562,7 @@ class VelBinner(TimeBinner):
                 except:  # variables not needing averaging
                     pass
             # Add standard deviation
-            std = (np.nanstd(self.reshape(raw_ds.velds.U_mag.values),
-                             axis=-1,
-                             dtype=np.float64) - (noise[0] + noise[1])/2)
+            std = self.std(raw_ds.velds.U_mag.values) - (noise[0] + noise[1])/2
             out_ds['U_std'] = xr.DataArray(
                 std.astype('float32'),
                 dims=raw_ds.vel.dims[1:],
