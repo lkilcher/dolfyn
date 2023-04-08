@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Added checks to ensure `n_fft` and `n_fft_coh` can't be greater than `n_bin`
 		- Fixed bug where `dolfyn.adp.nan_beyond_surface` overtrimmed TRDI instrument data
 		- Fixed bug where `dolfyn.ADVBinner.calc_csd` would fail if `n_fft` != `n_fft_coh`
+		- `VelBinner.std` and `VelBinner.var` can now handle nan values
 
     - API/Useability
 	    - Calculation of depth from pressure sensor updated to use linear approximation of the
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Added "beam_angle" attribute to Nortek Signature datasets
 		- Saved full Nortek Signature "config" dictionary as json string in attributes
 		- Added warning if "rotate_vars" attribute not found
+		- Added VMDAS variables containing GPS heading/pitch/roll (GPS must be AHRS-equipped for 
+		  these to return non-zero)
 		
 		- Added ADCP turbulence functions
 		- Added function to calculate Doppler noise to ADV turbulence functions
