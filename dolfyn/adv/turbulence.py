@@ -279,8 +279,6 @@ class ADVBinner(VelBinner):
         is the slope (ideally -5/3), and :math:`10^{b}` is the intercept of 
         y at x^m=1.
         """
-        # if len(np.shape(psd)) > 2:
-        #     raise Exception("PSD input should have shape 2 with dims 'time' and 'freq'")
 
         idx = np.where((freq_range[0] < psd.freq) & (psd.freq < freq_range[1]))
         idx = idx[0]

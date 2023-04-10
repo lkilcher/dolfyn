@@ -500,7 +500,7 @@ class VelBinner(TimeBinner):
                             'long_name': 'Cross-Spectral Density Vector Components',
                             'coverage_content_type': 'coordinate'})
 
-    def do_avg(self, raw_ds, out_ds=None, names=None, noise=[0, 0, 0]):
+    def do_avg(self, raw_ds, out_ds=None, names=None):
         """Bin the dataset and calculate the ensemble averages of each 
         variable.
 
@@ -513,8 +513,6 @@ class VelBinner(TimeBinner):
         names : list of strings
            The names of variables to be averaged.  If `names` is None,
            all data in `raw_ds` will be binned.
-        noise : list or numpy.ndarray
-          Instrument's doppler noise in same units as velocity
 
         Returns
         -------
@@ -562,7 +560,7 @@ class VelBinner(TimeBinner):
                 except:  # variables not needing averaging
                     pass
             # Add standard deviation
-            std = self.std(raw_ds.velds.U_mag.values) - (noise[0] + noise[1])/2
+            std = self.std(raw_ds.velds.U_mag.values)
             out_ds['U_std'] = xr.DataArray(
                 std.astype('float32'),
                 dims=raw_ds.vel.dims[1:],
