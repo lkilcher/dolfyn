@@ -18,7 +18,7 @@ Below is a list of functions that can be called from `VelBinner`.
 	~dolfyn.binned.TimeBinner.demean
 	~dolfyn.binned.TimeBinner.mean 
 	~dolfyn.binned.TimeBinner.var 
-	~dolfyn.binned.TimeBinner.std 
+	~dolfyn.binned.TimeBinner.std
 	~dolfyn.binned.VelBinner.do_avg
 	~dolfyn.binned.VelBinner.do_var
 	~dolfyn.binned.VelBinner.calc_coh
@@ -28,25 +28,45 @@ Below is a list of functions that can be called from `VelBinner`.
 	~dolfyn.velocity.VelBinner.calc_tke
 	~dolfyn.velocity.VelBinner.calc_psd
 	~dolfyn.binned.TimeBinner.calc_freq
+	~dolfyn.binned.TimeBinner.calc_psd_base
+	~dolfyn.binned.TimeBinner.calc_csd_base
 
 
 Turbulence Analysis
 """""""""""""""""""
 
 Functions for analyzing ADV data via the `ADVBinner` class, beyond those described in `VelBinner`.
-Functions for analyzing turbulence statistics from ADCP data are in development.
 
 .. autosummary::
 	:nosignatures:
 
 	~dolfyn.adv.turbulence.ADVBinner
 	~dolfyn.adv.turbulence.calc_turbulence
-	~dolfyn.adv.VelBinner.calc_csd
-	~dolfyn.adv.VelBinner.calc_stress
+	~dolfyn.adv.turbulence.ADVBinner.calc_csd
+	~dolfyn.adv.turbulence.ADVBinner.calc_stress
+	~dolfyn.adv.turbulence.ADVBinner.calc_doppler_noise
 	~dolfyn.adv.turbulence.ADVBinner.calc_epsilon_LT83
 	~dolfyn.adv.turbulence.ADVBinner.calc_epsilon_SF
 	~dolfyn.adv.turbulence.ADVBinner.calc_epsilon_TE01
 	~dolfyn.adv.turbulence.ADVBinner.calc_L_int
+
+Functions for analyzing ADCP data via the `ADPBinner` class, beyond those described in `VelBinner`.
+
+.. autosummary::
+	:nosignatures:
+
+	~dolfyn.adp.turbulence.ADPBinner
+	~dolfyn.adp.turbulence.ADPBinner.calc_dudz
+	~dolfyn.adp.turbulence.ADPBinner.calc_dvdz
+	~dolfyn.adp.turbulence.ADPBinner.calc_dwdz
+	~dolfyn.adp.turbulence.ADPBinner.calc_shear2
+	~dolfyn.adp.turbulence.ADPBinner.calc_doppler_noise
+	~dolfyn.adp.turbulence.ADPBinner.calc_stress_4beam
+	~dolfyn.adp.turbulence.ADPBinner.calc_stress_5beam
+	~dolfyn.adp.turbulence.ADPBinner.calc_total_tke
+	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_LT83
+	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_SF
+	~dolfyn.adp.turbulence.ADPBinner.calc_ustar_fit
 
 
 .. automodule:: dolfyn.binned
@@ -60,6 +80,11 @@ Functions for analyzing turbulence statistics from ADCP data are in development.
     :show-inheritance:
 
 .. automodule:: dolfyn.adv.turbulence
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: dolfyn.adp.turbulence
     :members:
     :undoc-members:
     :show-inheritance:

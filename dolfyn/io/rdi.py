@@ -16,8 +16,7 @@ from ..rotate.api import set_declination
 
 def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
              vmdas_search=False, winriver=False, **kwargs):
-    """
-    Read a TRDI binary data file.
+    """Read a TRDI binary data file.
 
     Parameters
     ----------
@@ -41,8 +40,8 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
     -------
     ds : xarray.Dataset
       An xarray dataset from the binary instrument data
-
     """
+
     # Start debugger logging
     if debug_level >= 0:
         for handler in logging.root.handlers[:]:
@@ -132,8 +131,7 @@ def read_rdi(filename, userdata=None, nens=None, debug_level=-1,
 
 
 def _remove_gps_duplicates(dat):
-    """
-    Removes duplicate and nan timestamp values in 'time_gps' coordinate,
+    """Removes duplicate and nan timestamp values in 'time_gps' coordinate,
     and add hardware (ADCP DAQ) timestamp corresponding to GPS acquisition
     (in addition to the GPS unit's timestamp).
     """
@@ -159,8 +157,7 @@ def _remove_gps_duplicates(dat):
 
 
 def _set_rdi_declination(dat, fname, inplace):
-    """
-    If magnetic_var_deg is set, this means that the declination is already
+    """If magnetic_var_deg is set, this means that the declination is already
     included in the heading and in the velocity data.
     """
 
@@ -489,8 +486,7 @@ class _RDIReader():
         return True
 
     def search_buffer(self):
-        """
-        Check to see if the next bytes indicate the beginning of a
+        """Check to see if the next bytes indicate the beginning of a
         data block.  If not, search for the next data block, up to
         _search_num times.
         """
@@ -1075,6 +1071,9 @@ class _RDIReader():
                            'speed_made_good_gps',
                            'dir_made_good_gps',
                            'flags_gps',
+                           'pitch_gps',
+                           'roll_gps',
+                           'heading_gps',
                            ]
         # UTC date time
         utim = fd.read_ui8(4)
@@ -1111,7 +1110,11 @@ class _RDIReader():
         time_adcp = tmlib.timedelta(
             milliseconds=(int(fd.read_ui32(1) / 10)))
 
-        fd.seek(16, 1)
+        ens.pitch_gps[k] = fd.read_ui16(1) * 180 / 2 ** 15
+        ens.roll_gps[k] = fd.read_ui16(1) * 180 / 2 ** 15
+        ens.heading_gps[k] = fd.read_ui16(1) * 180 / 2 ** 15
+
+        fd.seek(10, 1)
         self._nbyte = 2 + 76
 
         if self._debug_level >= 0:

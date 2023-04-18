@@ -1,12 +1,11 @@
 import numpy as np
 import xarray as xr
-from dolfyn.adv.motion import correct_motion
 
-from dolfyn.tests import test_read_adv as tv
-#from dolfyn.tests import test_read_adp as tp
-from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose, drop_config
 import dolfyn.adv.api as avm
 from dolfyn.io.api import read_example as read
+from dolfyn.adv.motion import correct_motion
+from dolfyn.tests import test_read_adv as tv
+from dolfyn.tests.base import load_netcdf as load, save_netcdf as save, assert_allclose
 
 
 def test_motion_adv(make_data=False):
@@ -36,8 +35,7 @@ def test_motion_adv(make_data=False):
     tdmE = avm.correct_motion(tdmE)
 
     # ensure trailing nans are removed from AHRS data
-    ahrs = drop_config(read(
-        'vector_data_imu01.VEC', userdata=True))
+    ahrs = read('vector_data_imu01.VEC', userdata=True)
     for var in ['accel', 'angrt', 'mag']:
         assert not ahrs[var].isnull().any(), "nan's in {} variable".format(var)
 
@@ -92,12 +90,3 @@ def test_duty_cycle():
 
     assert_allclose(td, cd, atol=1e-7)
     assert_allclose(td_ENU, cd_ENU, atol=1e-7)
-
-# def test_motion_adcp():
-#     # Correction for ADCPs not completed yet
-#     tdm = tp.dat_sig_i.copy(deep=True)
-#     avm.set_inst2head_rotmat(tdm, rotmat=np.eye(4), inplace=True) # 4th doesn't matter
-#     tdm.attrs['inst2head_vec'] = np.array([0,0,0,0])
-#     tdmc = avm.correct_motion(tdm)
-
-#    assert type(tdm)==type(tdmc) # simple way of making sure tdmc exists

@@ -11,8 +11,9 @@ This module contains routines for reading and working with ADV data. It contains
 	~dolfyn.io.api.read
 	~dolfyn.io.api.load
 	~dolfyn.rotate.api.rotate2
-	~dolfyn.adv.clean
 	~dolfyn.rotate.api.set_inst2head_rotmat
+	~dolfyn.rotate.api.calc_principal_heading
+	~dolfyn.adv.clean
 	~dolfyn.adv.motion.correct_motion
 	~dolfyn.velocity.VelBinner
 	~dolfyn.adv.turbulence.ADVBinner
@@ -31,6 +32,7 @@ Cleaning Data
 	:nosignatures:
 	
 	~dolfyn.adv.clean.clean_fill
+	~dolfyn.adv.clean.fill_nan_ensemble_mean
 	~dolfyn.adv.clean.spike_thresh
 	~dolfyn.adv.clean.range_limit
 	~dolfyn.adv.clean.GN2002

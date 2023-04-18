@@ -163,11 +163,6 @@ def save(ds, filename,
 
     filename = _check_file_ext(filename, 'nc')
 
-    # Dropping the detailed configuration stats because netcdf can't save it
-    for key in list(ds.attrs.keys()):
-        if 'config' in key:
-            ds.attrs.pop(key)
-
     # Handling complex values for netCDF4
     ds.attrs['complex_vars'] = []
     for var in ds.data_vars:
@@ -178,10 +173,9 @@ def save(ds, filename,
             ds = ds.drop_vars(var)
             ds.attrs['complex_vars'].append(var)
 
-    # For variables that get rewritten to float64
-    for v in ds.data_vars:
-        ds[v].encoding = {}
-        ds[v] = ds[v].astype('float32')
+        # For variables that get rewritten to float64
+        elif ds[var].dtype == np.float64:
+            ds[var] = ds[var].astype('float32')
 
     if compression:
         enc = dict()
@@ -232,11 +226,6 @@ def load(filename):
             ds[var] = ds[var+'_real'] + ds[var+'_imag'] * 1j
             ds = ds.drop_vars([var+'_real', var+'_imag'])
     ds.attrs.pop('complex_vars')
-
-    # Return units attribute for time
-    for variable in ds.variables.values():
-        if np.issubdtype(variable.data.dtype, np.datetime64):
-            variable.attrs["units"] = "seconds since 1970-01-01 00:00:00"
 
     return ds
 

@@ -3,7 +3,7 @@ import dolfyn.io.nortek as awac
 import dolfyn.io.nortek2 as sig
 from dolfyn.io.api import read_example as read
 from dolfyn.tests.base import assert_allclose, save_netcdf, \
-    save_matlab, load_matlab, exdt, rfnm, drop_config
+    save_matlab, load_matlab, exdt, rfnm
 from dolfyn.tests import test_read_adp as tp
 from dolfyn.tests import test_read_adv as tv
 import unittest
@@ -25,15 +25,15 @@ def test_save():
 
 def test_matlab_io(make_data=False):
     nens = 100
-    td_vec = drop_config(read('vector_data_imu01.VEC', nens=nens))
-    td_rdi_bt = drop_config(read('RDI_withBT.000', nens=nens))
+    td_vec = read('vector_data_imu01.VEC', nens=nens)
+    td_rdi_bt = read('RDI_withBT.000', nens=nens)
 
     # This read should trigger a warning about the declination being
     # defined in two places (in the binary .ENX files), and in the
     # .userdata.json file. NOTE: DOLfYN defaults to using what is in
     # the .userdata.json file.
     with pytest.warns(UserWarning, match='magnetic_var_deg'):
-        td_vm = drop_config(read('vmdas01_wh.ENX', nens=nens))
+        td_vm = read('vmdas01_wh.ENX', nens=nens)
 
     if make_data:
         save_matlab(td_vec, 'dat_vec')
@@ -73,14 +73,13 @@ def test_debugging(make_data=False):
         os.remove(exdt(fname))
 
     nens = 100
-    drop_config(wh.read_rdi(
-        exdt('RDI_withBT.000'), nens, debug_level=3))
-    drop_config(awac.read_nortek(
-        exdt('AWAC_test01.wpr'), nens, debug=True, do_checksum=True))
-    drop_config(awac.read_nortek(
-        exdt('vector_data_imu01.VEC'), nens, debug=True, do_checksum=True))
-    drop_config(sig.read_signature(
-        exdt('Sig500_Echo.ad2cp'), nens, rebuild_index=True, debug=True))
+    wh.read_rdi(exdt('RDI_withBT.000'), nens, debug_level=3)
+    awac.read_nortek(exdt('AWAC_test01.wpr'), nens,
+                     debug=True, do_checksum=True)
+    awac.read_nortek(exdt('vector_data_imu01.VEC'),
+                     nens, debug=True, do_checksum=True)
+    sig.read_signature(exdt('Sig500_Echo.ad2cp'), nens,
+                       rebuild_index=True, debug=True)
     os.remove(exdt('Sig500_Echo.ad2cp.index'))
 
     if make_data:

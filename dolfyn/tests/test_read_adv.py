@@ -16,14 +16,12 @@ dat_burst = load('vector_burst_mode01')
 
 def test_io_adv(make_data=False):
     nens = 100
-    td = tb.drop_config(read('vector_data01.VEC', nens=nens))
-    tdm = tb.drop_config(read('vector_data_imu01.VEC', userdata=False,
-                              nens=nens))
-    tdb = tb.drop_config(read('vector_burst_mode01.VEC', nens=nens))
-    tdm2 = tb.drop_config(read('vector_data_imu01.VEC',
-                               userdata=tb.exdt(
-                                   'vector_data_imu01.userdata.json'),
-                               nens=nens))
+    td = read('vector_data01.VEC', nens=nens)
+    tdm = read('vector_data_imu01.VEC', userdata=False, nens=nens)
+    tdb = read('vector_burst_mode01.VEC', nens=nens)
+    tdm2 = read('vector_data_imu01.VEC',
+                userdata=tb.exdt('vector_data_imu01.userdata.json'),
+                nens=nens)
 
     # These values are not correct for this data but I'm adding them for
     # test purposes only.

@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unversioned
+    - Bugfixes
+		- Added check to ensure `n_bin` is shorter than the total data length when calling
+		  `dolfyn.TimeBinner.reshape`
+	    - Added checks to ensure `n_fft` and `n_fft_coh` can't be greater than `n_bin`
+		- Fixed bug where `dolfyn.adp.nan_beyond_surface` overtrimmed TRDI instrument data
+		- Fixed bug where `dolfyn.ADVBinner.calc_csd` would fail if `n_fft` != `n_fft_coh`
+		- `VelBinner.std` and `VelBinner.var` can now handle nan values
+
+    - API/Useability
+	    - Calculation of depth from pressure sensor updated to use linear approximation of the
+		  equation of state, rather than EOS-80
+		- Added warnings for ADV motion-correction function
+		- Updated `dataset.velds.U_dir` shortcut to automatically convert "degrees CCW from
+		  X/East/streamwise" to "degrees CW from X/North/streamwise"
+		- `dolfyn.ADVBinner.calc_csd` now returns frequency coordinate `coh_freq` instead of `freq`
+		- Added "beam_angle" attribute to Nortek Signature datasets
+		- Saved full Nortek Signature "config" dictionary as json string in attributes
+		- Added warning if "rotate_vars" attribute not found
+		- Added VMDAS variables containing GPS heading/pitch/roll (GPS must be AHRS-equipped for 
+		  these to return non-zero)
+		
+		- Added ADCP turbulence functions
+		- Added function to calculate Doppler noise to ADV turbulence functions
+		- Added funtion to check slope of spectra's isotropic turbulence cascade
+
 ## Version 1.2.1
     - Bugfixes
 	    - Fixed errors in docs and docstrings

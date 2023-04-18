@@ -29,14 +29,6 @@ def assert_allclose(dat0, dat1, *args, **kwargs):
         dat1[v] = time.epoch2dt64(dat1[v])
 
 
-def drop_config(dataset):
-    # Can't save configuration string in netcdf
-    for key in list(dataset.attrs.keys()):
-        if 'config' in key:
-            dataset.attrs.pop(key)
-    return dataset
-
-
 class ResourceFilename(object):
 
     def __init__(self, package_or_requirement, prefix=''):

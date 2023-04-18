@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 from numpy.linalg import det, inv
 from scipy.spatial.transform import Rotation as R
+import warnings
 
 
 def _make_model(ds):
@@ -24,6 +25,17 @@ def _check_rotmat_det(rotmat, thresh=1e-3):
         rotmat = np.transpose(rotmat)
     return np.abs(det(rotmat) - 1) < thresh
 
+def _check_rotate_vars(ds, rotate_vars):
+    if rotate_vars is None:
+        if 'rotate_vars' in ds.attrs:
+            rotate_vars = ds.rotate_vars
+        else:
+            warnings.warn("    'rotate_vars' attribute not found."
+                          "Rotating `vel`.")
+            rotate_vars = ['vel']
+
+    return rotate_vars
+
 
 def _set_coords(ds, ref_frame, forced=False):
     """Checks the current reference frame and adjusts xarray coords/dims 
@@ -35,7 +47,7 @@ def _set_coords(ds, ref_frame, forced=False):
 
     XYZ = ['X', 'Y', 'Z']
     ENU = ['E', 'N', 'U']
-    beam = list(range(1, ds['vel'].shape[0]+1))
+    beam = ds.beam.values
     principal = ['streamwise', 'x-stream', 'vert']
 
     # check make/model
@@ -97,9 +109,9 @@ def _beam2inst(dat, reverse=False, force=False):
       When true do not check which coordinate system the data is in
       prior to performing this rotation. When forced-rotations are
       applied, the string '-forced!' is appended to the
-      dat.props['coord_sys'] string. If force is a list, it contains
+      dat['coord_sys'] string. If force is a list, it contains
       a list of variables that should be rotated (rather than the
-      default values in adpo.props['rotate_vars']).
+      default values in adpo['rotate_vars']).
     """
 
     if not force:
@@ -127,10 +139,7 @@ def _beam2inst(dat, reverse=False, force=False):
     for ky in rotate_vars:
         dat[ky].values = np.einsum('ij,j...->i...', rotmat, dat[ky].values)
 
-    if force:
-        dat = _set_coords(dat, cs, forced=True)
-    else:
-        dat = _set_coords(dat, cs)
+    dat = _set_coords(dat, cs)
 
     return dat
 
@@ -299,3 +308,31 @@ def quaternion2orient(quaternions):
     inst = xr.DataArray(['X', 'Y', 'Z'], dims=['inst'], name='inst', attrs={
         'units': '1', 'long_name': 'Instrument Reference Frame', 'coverage_content_type': 'coordinate'})
     return omat.assign_coords({'earth': earth, 'inst': inst, 'time': quaternions.time})
+
+
+def calc_tilt(pitch, roll):
+    """Calculate "tilt", the vertical inclination, from pitch and roll.
+
+    Parameters
+    ----------
+    roll : numpy.ndarray or xarray.DataArray
+      Instrument roll
+    pitch : numpy.ndarray or xarray.DataArray
+      Instrument pitch
+
+    Returns
+    -------
+    tilt : numpy.ndarray
+      Vertical inclination of the instrument
+    """
+
+    if 'xarray' in type(pitch).__module__:
+        pitch = pitch.values
+    if 'xarray' in type(roll).__module__:
+        roll = roll.values
+
+    tilt = np.arctan(
+        np.sqrt(np.tan(np.deg2rad(roll)) ** 2 + np.tan(np.deg2rad(pitch)) ** 2)
+    )
+
+    return np.rad2deg(tilt)

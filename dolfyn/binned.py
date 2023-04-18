@@ -24,7 +24,7 @@ class TimeBinner:
         n_fft_coh : int
           Number of data points to use for coherence and cross-spectra ffts
           Default: `n_fft_coh`=`n_fft`
-        noise : list or ndarray
+        noise : float, list or numpy.ndarray
           Instrument's doppler noise in same units as velocity
         """
 
@@ -328,7 +328,7 @@ class TimeBinner:
         out : numpy.ndarray
         """
 
-        return self.reshape(arr, n_bin=n_bin).var(axis)
+        return np.nanvar(self.reshape(arr, n_bin=n_bin), axis=axis, dtype=np.float32)
 
     def std(self, arr, axis=-1, n_bin=None):
         """Reshape the array `arr` to shape (...,n,n_bin+n_pad)
@@ -349,7 +349,7 @@ class TimeBinner:
         out : numpy.ndarray
         """
 
-        return self.reshape(arr, n_bin=n_bin).std(axis)
+        return np.nanstd(self.reshape(arr, n_bin=n_bin), axis=axis, dtype=np.float32)
 
     def calc_psd_base(self, dat, fs=None, window='hann', noise=0,
                       n_bin=None, n_fft=None, n_pad=None, step=None):
