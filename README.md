@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/lkilcher/dolfyn/badge.svg?branch=master)](https://coveralls.io/github/lkilcher/dolfyn?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/dolfyn/badge/?version=latest)](https://dolfyn.readthedocs.io/en/latest/?badge=latest)
 
-Update from Version 0.12 to 1.0
+Update from Version 0.12 to 1.0+
 -------------------------------
 
 Hello everyone! This is a MAJOR REFACTOR of the code so that DOLfYN is
