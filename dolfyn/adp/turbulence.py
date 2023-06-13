@@ -104,8 +104,7 @@ class ADPBinner(VelBinner):
                             coords=[rng, vel.time],
                             dims=['range', 'time'],
                             attrs={'units': 's-1',
-                                   'long_name': 'Shear in X-direction',
-                                   'standard_name': 'x_sea_water_shear'}
+                                   'long_name': 'Shear in X-direction'}
                             )
 
     def calc_dvdz(self, vel):
@@ -128,8 +127,7 @@ class ADPBinner(VelBinner):
                             coords=[rng, vel.time],
                             dims=['range', 'time'],
                             attrs={'units': 's-1',
-                                   'long_name': 'Shear in Y-direction',
-                                   'standard_name': 'y_sea_water_shear'}
+                                   'long_name': 'Shear in Y-direction'}
                             )
 
     def calc_dwdz(self, vel):
@@ -152,8 +150,7 @@ class ADPBinner(VelBinner):
                             coords=[rng, vel.time],
                             dims=['range', 'time'],
                             attrs={'units': 's-1',
-                                   'long_name': 'Shear in Z-direction',
-                                   'standard_name': 'z_sea_water_shear'}
+                                   'long_name': 'Shear in Z-direction'}
                             )
 
     def calc_shear2(self, vel):
@@ -178,7 +175,6 @@ class ADPBinner(VelBinner):
         shear2 = self.calc_dudz(vel) ** 2 + self.calc_dvdz(vel) ** 2
         shear2.attrs['units'] = 's-2'
         shear2.attrs['long_name'] = 'Horizontal Shear Squared'
-        shear2.attrs['standard_name'] = 'radial_sea_water_shear_squared'
 
         return shear2
 
@@ -406,8 +402,7 @@ class ADPBinner(VelBinner):
                     'range': ds.range,
                     'time': time},
             attrs={'units': 'm2 s-2',
-                   'long_name': 'Reynolds Stress Vector',
-                   'standard_name': 'specific_reynolds_stress_of_sea_water'})
+                   'long_name': 'Specific Reynolds Stress Vector'})
 
     def calc_stress_5beam(self, ds, noise=None, orientation=None, beam_angle=None, tke_only=False):
         """Calculate the stresses from the covariance of along-beam 
@@ -523,8 +518,7 @@ class ADPBinner(VelBinner):
                         'range': ds.range,
                         'time': time},
                 attrs={'units': 'm2 s-2',
-                       'long_name': 'Reynolds Stress Vector',
-                       'standard_name': 'specific_reynolds_stress_of_sea_water'})
+                       'long_name': 'Specific Reynolds Stress Vector'})
 
             return tke_vec, stress_vec
 
@@ -869,5 +863,4 @@ class ADPBinner(VelBinner):
             u_star.astype('float32'),
             coords={'time': ds_avg.time},
             attrs={'units': 'm s-1',
-                   'long_name': 'Friction Velocity',
-                   'standard_name': 'x_friction_velocity_in_sea_water'})
+                   'long_name': 'Friction Velocity'})

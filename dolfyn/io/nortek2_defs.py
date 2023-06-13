@@ -301,7 +301,7 @@ def _calc_echo_struct(config, nc):
                                  'alt_raw', 'p_gd', 'std']]):
         raise Exception("Echosounder ping contains invalid data?")
     if flags['echo']:
-        dd += [('echo', 'H', [nc], _LinFunc(0.01, dtype=dt32), '1', 'Echo Sounder Acoustic Signal Backscatter')]
+        dd += [('echo', 'H', [nc], _LinFunc(0.01, dtype=dt32), 'dB', 'Echo Sounder Acoustic Signal Backscatter')]
     if flags['ahrs']:
         dd += _ahrs_def
     return _DataDef(dd)
@@ -313,7 +313,7 @@ def _calc_burst_struct(config, nb, nc):
     if flags['echo']:
         raise Exception("Echosounder data found in velocity ping?")
     if flags['vel']:
-        dd.append(('vel', 'h', [nb, nc], None, 'm s-1', 'Sea Water Velocity from ADCP'))
+        dd.append(('vel', 'h', [nb, nc], None, 'm s-1', 'Water Velocity'))
     if flags['amp']:
         dd.append(('amp', 'B', [nb, nc], _LinFunc(0.5, dtype=dt32), '1', 'Acoustic Signal Amplitude',
                   'signal_intensity_from_multibeam_acoustic_doppler_velocity_sensor_in_sea_water'))
