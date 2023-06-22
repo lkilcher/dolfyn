@@ -120,7 +120,7 @@ def _create_dataset(data):
 
     FoR = {}
     n_beams = max(min(data['attrs']['n_beams'], 4), 3)  # need to keep dimension at 3 or 4
-    beams = list(range(1, n_beams+1))
+    beams = np.arange(1, n_beams+1, dtype=np.int32)
     FoR['beam'] = xr.DataArray(beams, dims=['beam'], name='beam', attrs={
                                'units': '1', 'long_name': 'Beam Reference Frame'})
     FoR['dir'] = xr.DataArray(beams, dims=['dir'], name='dir', attrs={
@@ -131,8 +131,8 @@ def _create_dataset(data):
         if 'mat' in key:
             if 'inst' in key:  # beam2inst & inst2head orientation matrices
                 ds[key] = xr.DataArray(data['data_vars'][key],
-                                       coords={'x': beams, 'x*': beams},
-                                       dims=['x', 'x*'],
+                                       coords={'x1': beams, 'x2': beams},
+                                       dims=['x1', 'x2'],
                                        attrs={'units': '1',
                                               'long_name': 'Rotation Matrix'})
             elif 'orientmat' in key:  # earth2inst orientation matrix

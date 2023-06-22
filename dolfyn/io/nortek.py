@@ -612,7 +612,8 @@ class _NortekReader():
                     self.data[va.group][nm] = va._empty_array(**shape_args)
                     self.data['units'][nm] = va.units
                     self.data['long_name'][nm] = va.long_name
-                    self.data['standard_name'][nm] = va.standard_name
+                    if va.standard_name:
+                        self.data['standard_name'][nm] = va.standard_name
 
     def read_vec_data(self,):
         # ID: 0x10 = 16

@@ -408,6 +408,9 @@ def _reorg(dat):
         dnow = dat[id]
         outdat['units'].update(dnow['units'])
         outdat['long_name'].update(dnow['long_name'])
+        for ky in dnow['units']:
+            if not dnow['standard_name'][ky]:
+                dnow['standard_name'].pop(ky)
         outdat['standard_name'].update(dnow['standard_name'])
         cfg['burst_config' + tag] = lib._headconfig_int2dict(
             lib._collapse(dnow['config'], exclude=collapse_exclude,

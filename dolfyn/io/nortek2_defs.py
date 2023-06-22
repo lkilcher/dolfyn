@@ -3,9 +3,8 @@ from copy import copy
 from struct import Struct
 from . import nortek2_lib as lib
 
-dt32 = 'float32'
-dt64 = 'float64'
 
+dt32 = 'float32'
 grav = 9.81
 # The starting value for the checksum:
 cs0 = int('0xb58c', 0)
@@ -208,9 +207,9 @@ _burst_hdr = [
     ('batt', 'H', [], _LinFunc(0.1, dtype=dt32),
      'V', 'Battery Voltage', 'battery_voltage'),
     ('mag', 'h', [3], _LinFunc(0.1, dtype=dt32),
-     'uT', 'Compass', 'magnetic_field_vector'),
+     'uT', 'Compass'),
     ('accel', 'h', [3], _LinFunc(1. / 16384 * grav, dtype=dt32),
-     'm s-2', 'Acceleration', 'platform_acceleration'),
+     'm s-2', 'Acceleration'),
     ('ambig_vel', 'h', [], _LinFunc(0.001, dtype=dt32), 'm s-1'),
     ('data_desc', 'H', [], None),
     ('xmit_energy', 'H', [], None, '1', 'Sound Pressure Level of Acoustic Signal'),
