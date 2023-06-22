@@ -116,13 +116,15 @@ def _create_dataset(data):
     Direction 'dir' coordinates are set in `set_coords`
     """
     ds = xr.Dataset()
+    tag = ['_b5', '_echo', '_bt', '_gps', '_ast', '_sl']
+
     FoR = {}
-    beams = list(range(1, data['data_vars']['vel'].shape[0]+1))
+    n_beams = max(min(data['attrs']['n_beams'], 4), 3)  # need to keep dimension at 3 or 4
+    beams = list(range(1, n_beams+1))
     FoR['beam'] = xr.DataArray(beams, dims=['beam'], name='beam', attrs={
                                'units': '1', 'long_name': 'Beam Reference Frame'})
     FoR['dir'] = xr.DataArray(beams, dims=['dir'], name='dir', attrs={
                               'units': '1', 'long_name': 'Reference Frame'})
-    tag = ['_b5', '_echo', '_bt', '_gps', '_ast', '_sl']
 
     for key in data['data_vars']:
         # orientation matrices
@@ -199,7 +201,7 @@ def _create_dataset(data):
                     ds[key] = ds[key].assign_coords({'range_echo': data['coords']['range_echo'],
                                                      'time_echo': data['coords']['time_echo']})
                 # ADV/ADCP instrument vector data, bottom tracking
-                elif shp[0] == vshp[0] and not any(val in key for val in tag[:2]):
+                elif shp[0] == n_beams and not any(val in key for val in tag[:2]):
                     if 'bt' in key and 'time_bt' in data['coords']:
                         tg = '_bt'
                     else:
@@ -213,7 +215,7 @@ def _create_dataset(data):
                     ds[key] = ds[key].assign_coords({dim0: FoR[dim0],
                                                      'time'+tg: data['coords']['time'+tg]})
                 # ADCP IMU data
-                elif shp[0] == vshp[0]-1:
+                elif shp[0] == 3:
                     if not any(val in key for val in tag):
                         tg = ''
                     else:
