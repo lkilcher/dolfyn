@@ -632,8 +632,6 @@ class ADPBinner(VelBinner):
           The power spectral density from a single depth bin (range)
         U_mag : xarray.DataArray (time)
           The bin-averaged horizontal velocity (a.k.a. speed) from a single depth bin (range)
-        noise : int or xarray.DataArray, default=0 (time)
-          Doppler noise level in units of m/s
         f_range : iterable(2)
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
