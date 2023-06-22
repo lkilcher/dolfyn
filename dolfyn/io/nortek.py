@@ -44,7 +44,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
         filepath = Path(filename)
-        logfile = filepath.with_suffix('.log')
+        logfile = filepath.with_suffix('.dolfyn.log')
         logging.basicConfig(filename=str(logfile),
                             filemode='w',
                             level=logging.NOTSET,
