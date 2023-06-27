@@ -183,7 +183,6 @@ def _create_dataset(data):
 
             # Fill in dimensions and coordinates for each dataArray
             shp = data['data_vars'][key].shape
-            vshp = data['data_vars']['vel'].shape
             l = len(shp)
             if l == 1:  # 1D variables
                 if any(val in key for val in tag):
