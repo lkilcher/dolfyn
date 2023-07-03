@@ -271,7 +271,7 @@ class _Ad2cpReader():
             except IOError:
                 return outdat
             id = hdr['id']
-            if id in [21, 23, 24, 28]:  # vel, bt, vel_b5, echo
+            if id in [21, 22, 23, 24, 28]:  # vel, bt, vel_b5, echo
                 self._read_burst(id, outdat[id], c)
             elif id in [26]:  # alt_raw (altimeter burst)
                 rdr = self._burst_readers[26]
@@ -312,8 +312,8 @@ class _Ad2cpReader():
                 outdat[id]['ensemble'][c26] = c
                 c26 += 1
 
-            elif id in [22, 27, 29, 30, 31, 35, 36]:  # avg record, bt record,
-                # DVL, alt record, avg alt_raw record, raw echo, raw echo transmit
+            elif id in [27, 29, 30, 31, 35, 36]:  # bt record, DVL,
+                # alt record, avg alt_raw record, raw echo, raw echo transmit
                 if self.debug:
                     logging.debug(
                         "Skipped ID: 0x{:02X} ({:02d})\n".format(id, id))
@@ -398,7 +398,8 @@ def _reorg(dat):
     cfg['inst_type'] = 'ADCP'
     cfg['rotate_vars'] = ['vel', ]
 
-    for id, tag in [(21, ''), (23, '_bt'), (24, '_b5'), (26, '_ast'), (28, '_echo')]:
+    for id, tag in [(21, ''), (22, '_avg'), (23, '_bt'), 
+                    (24, '_b5'), (26, '_ast'), (28, '_echo')]:
         if id in [24, 26]:
             collapse_exclude = [0]
         else:
@@ -556,9 +557,15 @@ def _reduce(data):
     for ky in ['heading', 'pitch', 'roll']:
         lib._reduce_by_average_angle(dv, ky, ky + '_b5')
 
-    dc['range'] = ((np.arange(dv['vel'].shape[1])+1) *
-                   da['cell_size'] +
-                   da['blank_dist'])
+    if 'vel' in dv:
+        dc['range'] = ((np.arange(dv['vel'].shape[1])+1) *
+                    da['cell_size'] +
+                    da['blank_dist'])
+        da['fs'] = da['filehead_config']['BURST']['SR']
+    if 'vel_avg' in dv:
+        dc['range_avg'] = ((np.arange(dv['vel_avg'].shape[1])+1) *
+                    da['cell_size_avg'] +
+                    da['blank_dist_avg'])
     if 'vel_b5' in dv:
         dc['range_b5'] = ((np.arange(dv['vel_b5'].shape[1])+1) *
                           da['cell_size_b5'] +
@@ -577,7 +584,6 @@ def _reduce(data):
     else:
         da['has_imu'] = 0
 
-    da['fs'] = da['filehead_config']['BURST']['SR']
     theta = da['filehead_config']['BEAMCFGLIST'][0]
     if 'THETA=' in theta:
         da['beam_angle'] = int(theta[13:15])
