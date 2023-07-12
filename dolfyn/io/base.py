@@ -116,10 +116,14 @@ def _create_dataset(data):
     Direction 'dir' coordinates are set in `set_coords`
     """
     ds = xr.Dataset()
-    tag = ['_b5', '_echo', '_bt', '_gps', '_ast', '_sl']
+    tag = ['_avg', '_b5', '_echo', '_bt', '_gps', '_ast', '_sl']
 
     FoR = {}
-    n_beams = max(min(data['attrs']['n_beams'], 4), 3)  # need to keep dimension at 3 or 4
+    try:
+        beams = data['attrs']['n_beams']
+    except:
+        beams = data['attrs']['n_beams_avg']
+    n_beams = max(min(beams, 4), 3)
     beams = np.arange(1, n_beams+1, dtype=np.int32)
     FoR['beam'] = xr.DataArray(beams, dims=['beam'], name='beam', attrs={
                                'units': '1', 'long_name': 'Beam Reference Frame'})
@@ -200,7 +204,7 @@ def _create_dataset(data):
                     ds[key] = ds[key].assign_coords({'range_echo': data['coords']['range_echo'],
                                                      'time_echo': data['coords']['time_echo']})
                 # ADV/ADCP instrument vector data, bottom tracking
-                elif shp[0] == n_beams and not any(val in key for val in tag[:2]):
+                elif shp[0] == n_beams and not any(val in key for val in tag[:3]):
                     if 'bt' in key and 'time_bt' in data['coords']:
                         tg = '_bt'
                     else:
@@ -235,13 +239,17 @@ def _create_dataset(data):
                 else:  # amp, corr, prcnt_gd, status
                     dim0 = 'beam'
 
-                if not any(val in key for val in tag):
+                if not any(val in key for val in tag) or ('_avg' in key):
+                    if '_avg' in key:
+                        tg = '_avg'
+                    else:
+                        tg = ''
                     ds[key] = ds[key].rename({'dim_0': dim0,
-                                              'dim_1': 'range',
-                                              'dim_2': 'time'})
+                                              'dim_1': 'range'+tg,
+                                              'dim_2': 'time'+tg})
                     ds[key] = ds[key].assign_coords({dim0: FoR[dim0],
-                                                     'range': data['coords']['range'],
-                                                     'time': data['coords']['time']})
+                                                     'range'+tg: data['coords']['range'+tg],
+                                                     'time'+tg: data['coords']['time'+tg]})
                 elif 'b5' in key:
                     # xarray can't handle coords of length 1
                     ds[key] = ds[key][0]

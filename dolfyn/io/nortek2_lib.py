@@ -325,7 +325,7 @@ def _headconfig_int2dict(val, mode='burst'):
     mode: {'burst', 'bt'}
        For 'burst' configs, or 'bottom-track' configs.
     """
-    if mode == 'burst':
+    if (mode == 'burst') or (mode == 'avg'):
         return dict(
             press_valid=_getbit(val, 0),
             temp_valid=_getbit(val, 1),

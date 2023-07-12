@@ -396,7 +396,6 @@ def _reorg(dat):
     cfg['inst_model'] = (cfh['ID'].split(',')[0][5:-1])
     cfg['inst_make'] = 'Nortek'
     cfg['inst_type'] = 'ADCP'
-    cfg['rotate_vars'] = ['vel', ]
 
     for id, tag in [(21, ''), (22, '_avg'), (23, '_bt'), 
                     (24, '_b5'), (26, '_ast'), (28, '_echo')]:
@@ -523,9 +522,15 @@ def _reorg(dat):
     [outdat['data_vars'].pop(var) for var in status0_vars]
 
     # Set coordinate system
+    if 21 not in dat:
+        cfg['rotate_vars'] = []
+        cy = cfg['coord_sys_axes_avg']
+    else:
+        cfg['rotate_vars'] = ['vel', ]
+        cy = cfg['coord_sys_axes']
     outdat['attrs']['coord_sys'] = {'XYZ': 'inst',
                                     'ENU': 'earth',
-                                    'beam': 'beam'}[cfg['coord_sys_axes']]
+                                    'beam': 'beam'}[cy]
 
     # Copy appropriate vars to rotate_vars
     for ky in ['accel', 'angrt', 'mag']:
@@ -534,6 +539,8 @@ def _reorg(dat):
                 outdat['attrs']['rotate_vars'].append(dky)
     if 'vel_bt' in outdat['data_vars']:
         outdat['attrs']['rotate_vars'].append('vel_bt')
+    if 'vel_avg' in outdat['data_vars']:
+        outdat['attrs']['rotate_vars'].append('vel_avg')
 
     return outdat
 
@@ -562,10 +569,16 @@ def _reduce(data):
                     da['cell_size'] +
                     da['blank_dist'])
         da['fs'] = da['filehead_config']['BURST']['SR']
+        tmat = da['filehead_config']['XFBURST']
     if 'vel_avg' in dv:
         dc['range_avg'] = ((np.arange(dv['vel_avg'].shape[1])+1) *
                     da['cell_size_avg'] +
                     da['blank_dist_avg'])
+        dv['orientmat'] = dv.pop('orientmat_avg')
+        tmat = da['filehead_config']['XFAVG']
+        da['fs'] = da['filehead_config']['PLAN']['MIAVG']
+        da['avg_interval_sec'] = da['filehead_config']['AVG']['AI']
+        da['bandwidth'] = da['filehead_config']['AVG']['BW']
     if 'vel_b5' in dv:
         dc['range_b5'] = ((np.arange(dv['vel_b5'].shape[1])+1) *
                           da['cell_size_b5'] +
@@ -587,9 +600,16 @@ def _reduce(data):
     theta = da['filehead_config']['BEAMCFGLIST'][0]
     if 'THETA=' in theta:
         da['beam_angle'] = int(theta[13:15])
-    tmat = da['filehead_config']['XFBURST']
+    
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)
     for irow in range(tmat['ROWS']):
         for icol in range(tmat['COLS']):
             tm[irow, icol] = tmat['M' + str(irow + 1) + str(icol + 1)]
     dv['beam2inst_orientmat'] = tm
+
+    # If burst velocity isn't used, need to copy one for 'time'
+    if 'time' not in dc:
+        for val in dc:
+            if 'time' in val:
+                time = val
+        dc['time'] = dc[time]
