@@ -144,7 +144,7 @@ def _create_index(infile, outfile, N_ens, debug):
                 # hex: [18, 15, 1C, 17] = [vel_b5, vel, echo, bt]
                 logging.info('%10d: %02X, %d, %02X, %d, %d, %d, %d\n' %
                              (pos, dat[0], dat[1], dat[2], dat[4],
-                             N[idk], ens[idk], last_ens[idk]))
+                              N[idk], ens[idk], last_ens[idk]))
         else:
             fin.seek(dat[4], 1)
     fin.close()
@@ -215,8 +215,8 @@ def get_index(infile, reload=False, debug=False):
     -------
     out: tuple
       Tuple containing info held within index file
-
     """
+
     index_file = infile + '.index'
     if not path.isfile(index_file) or reload:
         _create_index(infile, index_file, 2 ** 32, debug)
@@ -250,8 +250,8 @@ def crop_ensembles(infile, outfile, range):
       Path for new, cropped ad2cp file (with .ad2cp file extension)
     range: list
       2 element list of start and end ensemble (or time index)
-
     """
+
     idx = get_index(infile)
     with open(_abspath(infile), 'rb') as fin:
         with open(_abspath(outfile), 'wb') as fout:
@@ -325,6 +325,7 @@ def _headconfig_int2dict(val, mode='burst'):
     mode: {'burst', 'bt'}
        For 'burst' configs, or 'bottom-track' configs.
     """
+
     if (mode == 'burst') or (mode == 'avg'):
         return dict(
             press_valid=_getbit(val, 0),
@@ -430,6 +431,7 @@ def _collapse(vec, name=None, exclude=[]):
     """Check that the input vector is uniform, then collapse it to a
     single value, otherwise raise a warning.
     """
+
     if _isuniform(vec):
         return vec[0]
     elif _isuniform(vec, exclude=exclude):
@@ -449,6 +451,7 @@ def _collapse(vec, name=None, exclude=[]):
                           "Values found: {} (counts: {}).\n"
                           "Using the most common value: {}".format(
                               name, list(uniq), list(counts), val))
+        
         return val
 
 
@@ -461,6 +464,7 @@ def _calc_config(index):
     config : dict
         A dict containing the key information for initializing arrays.
     """
+
     ids = np.unique(index['ID'])
     config = {}
     for id in ids:
@@ -489,4 +493,5 @@ def _calc_config(index):
         config[id]['_beams_cy'] = _beams_cy[0]
         config[id]['type'] = type
         config[id].pop('cy', None)
+
     return config

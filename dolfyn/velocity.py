@@ -114,10 +114,10 @@ class Velocity():
         Parameters
         ----------
         rotmat : float
-            3x3 rotation matrix
+          3x3 rotation matrix
         inplace : bool (default: True)
-            When True the existing data object is rotated. When False
-            a copy is returned that is rotated.
+          When True the existing data object is rotated. When False
+          a copy is returned that is rotated.
 
         Returns
         -------
@@ -142,8 +142,9 @@ class Velocity():
         Parameters
         ----------
         filename : str
-            Filename and/or path with the '.nc' extension
-        **kwargs : these are passed directly to :func:`xarray.Dataset.to_netcdf`.
+          Filename and/or path with the '.nc' extension
+        **kwargs : dict
+          These are passed directly to :func:`xarray.Dataset.to_netcdf`.
 
         Notes
         -----
@@ -380,8 +381,7 @@ class Velocity():
             coords=self.U_mag.coords,
             dims=self.U_mag.dims,
             attrs={'units': '% [0,1]',
-                   'long_name': 'TKE Intensity',
-                   'standard_name': 'specific_turbulent_kinetic_energy_intensity_of_sea_water'})
+                   'long_name': 'TKE Intensity'})
 
     @property
     def I(self, thresh=0):

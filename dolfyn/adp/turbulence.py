@@ -686,9 +686,10 @@ class ADPBinner(VelBinner):
         return xr.DataArray(
             out.astype('float32'),
             attrs={'units': 'm2 s-3',
-                   'long_name': 'Dissipation Rate',
+                   'long_name': 'TKE Dissipation Rate',
                    'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
-                   'description': 'TKE dissipation rate calculated using the method from Lumley and Terray, 1983'
+                   'description': 'TKE dissipation rate calculated using '
+                                  'the method from Lumley and Terray, 1983',
                    })
 
     def calc_dissipation_SF(self, vel_raw, r_range=[1, 5]):
@@ -803,8 +804,11 @@ class ADPBinner(VelBinner):
                     vel_raw.dims[1]: time},
             dims=vel_raw.dims,
             attrs={'units': 'm2 s-3',
-                   'long_name': 'Dissipation Rate',
-                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
+                   'long_name': 'TKE Dissipation Rate',
+                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
+                   'description': 'TKE dissipation rate calculated from the '
+                                  '"structure function" method from Wiles et al, 2006.'
+                   })
 
         noise = xr.DataArray(
             noise.astype('float32'),
@@ -821,7 +825,7 @@ class ADPBinner(VelBinner):
                     vel_raw.dims[1]: time},
             attrs={'units': 'm2 s-2',
                    'long_name': 'Structure Function D(z,r)',
-                   'description': 'TKE dissipation rate "structure function" from Wiles et al, 2006.'
+                   'description': '"Structure function" from Wiles et al, 2006.'
                    })
 
         return epsilon, noise, SF

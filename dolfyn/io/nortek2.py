@@ -388,6 +388,7 @@ def _reorg(dat):
     """This function grabs the data from the dictionary of data types
     (organized by ID), and combines them into a single dictionary.
     """
+
     outdat = {'data_vars': {}, 'coords': {}, 'attrs': {},
               'units': {}, 'long_name': {}, 'standard_name': {},
               'sys': {}, 'altraw': {}}
@@ -551,6 +552,7 @@ def _reduce(data):
     --- from different data structures within the same ensemble --- by
     averaging.
     """
+    
     dv = data['data_vars']
     dc = data['coords']
     da = data['attrs']
