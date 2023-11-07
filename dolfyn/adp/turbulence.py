@@ -104,8 +104,7 @@ class ADPBinner(VelBinner):
                             coords=[rng, vel.time],
                             dims=['range', 'time'],
                             attrs={'units': 's-1',
-                                   'long_name': 'Shear in X-direction',
-                                   'standard_name': 'x_sea_water_shear'}
+                                   'long_name': 'Shear in X-direction'}
                             )
 
     def calc_dvdz(self, vel):
@@ -128,8 +127,7 @@ class ADPBinner(VelBinner):
                             coords=[rng, vel.time],
                             dims=['range', 'time'],
                             attrs={'units': 's-1',
-                                   'long_name': 'Shear in Y-direction',
-                                   'standard_name': 'y_sea_water_shear'}
+                                   'long_name': 'Shear in Y-direction'}
                             )
 
     def calc_dwdz(self, vel):
@@ -152,8 +150,7 @@ class ADPBinner(VelBinner):
                             coords=[rng, vel.time],
                             dims=['range', 'time'],
                             attrs={'units': 's-1',
-                                   'long_name': 'Shear in Z-direction',
-                                   'standard_name': 'z_sea_water_shear'}
+                                   'long_name': 'Shear in Z-direction'}
                             )
 
     def calc_shear2(self, vel):
@@ -178,7 +175,6 @@ class ADPBinner(VelBinner):
         shear2 = self.calc_dudz(vel) ** 2 + self.calc_dvdz(vel) ** 2
         shear2.attrs['units'] = 's-2'
         shear2.attrs['long_name'] = 'Horizontal Shear Squared'
-        shear2.attrs['standard_name'] = 'radial_sea_water_shear_squared'
 
         return shear2
 
@@ -406,8 +402,7 @@ class ADPBinner(VelBinner):
                     'range': ds.range,
                     'time': time},
             attrs={'units': 'm2 s-2',
-                   'long_name': 'Reynolds Stress Vector',
-                   'standard_name': 'specific_reynolds_stress_of_sea_water'})
+                   'long_name': 'Specific Reynolds Stress Vector'})
 
     def calc_stress_5beam(self, ds, noise=None, orientation=None, beam_angle=None, tke_only=False):
         """Calculate the stresses from the covariance of along-beam 
@@ -523,8 +518,7 @@ class ADPBinner(VelBinner):
                         'range': ds.range,
                         'time': time},
                 attrs={'units': 'm2 s-2',
-                       'long_name': 'Reynolds Stress Vector',
-                       'standard_name': 'specific_reynolds_stress_of_sea_water'})
+                       'long_name': 'Specific Reynolds Stress Vector'})
 
             return tke_vec, stress_vec
 
@@ -638,8 +632,6 @@ class ADPBinner(VelBinner):
           The power spectral density from a single depth bin (range)
         U_mag : xarray.DataArray (time)
           The bin-averaged horizontal velocity (a.k.a. speed) from a single depth bin (range)
-        noise : int or xarray.DataArray, default=0 (time)
-          Doppler noise level in units of m/s
         f_range : iterable(2)
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
@@ -694,9 +686,10 @@ class ADPBinner(VelBinner):
         return xr.DataArray(
             out.astype('float32'),
             attrs={'units': 'm2 s-3',
-                   'long_name': 'Dissipation Rate',
+                   'long_name': 'TKE Dissipation Rate',
                    'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
-                   'description': 'TKE dissipation rate calculated using the method from Lumley and Terray, 1983'
+                   'description': 'TKE dissipation rate calculated using '
+                                  'the method from Lumley and Terray, 1983',
                    })
 
     def calc_dissipation_SF(self, vel_raw, r_range=[1, 5]):
@@ -811,8 +804,11 @@ class ADPBinner(VelBinner):
                     vel_raw.dims[1]: time},
             dims=vel_raw.dims,
             attrs={'units': 'm2 s-3',
-                   'long_name': 'Dissipation Rate',
-                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water'})
+                   'long_name': 'TKE Dissipation Rate',
+                   'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
+                   'description': 'TKE dissipation rate calculated from the '
+                                  '"structure function" method from Wiles et al, 2006.'
+                   })
 
         noise = xr.DataArray(
             noise.astype('float32'),
@@ -829,7 +825,7 @@ class ADPBinner(VelBinner):
                     vel_raw.dims[1]: time},
             attrs={'units': 'm2 s-2',
                    'long_name': 'Structure Function D(z,r)',
-                   'description': 'TKE dissipation rate "structure function" from Wiles et al, 2006.'
+                   'description': '"Structure function" from Wiles et al, 2006.'
                    })
 
         return epsilon, noise, SF
@@ -869,5 +865,4 @@ class ADPBinner(VelBinner):
             u_star.astype('float32'),
             coords={'time': ds_avg.time},
             attrs={'units': 'm s-1',
-                   'long_name': 'Friction Velocity',
-                   'standard_name': 'x_friction_velocity_in_sea_water'})
+                   'long_name': 'Friction Velocity'})

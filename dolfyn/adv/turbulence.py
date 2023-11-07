@@ -54,13 +54,13 @@ class ADVBinner(VelBinner):
         Parameters
         ----------
         veldat : xr.DataArray
-            Velocity data array from ADV data. The last dimension is 
-            assumed to be time.
+          Velocity data array from ADV data. The last dimension is 
+          assumed to be time.
         detrend : bool (default: True)
-            detrend the velocity data (True), or simply de-mean it
-            (False), prior to computing stress. Note: the psd routines
-            use detrend, so if you want to have the same amount of
-            variance here as there use ``detrend=True``.
+          Detrend the velocity data (True), or simply de-mean it
+          (False), prior to computing stress. Note: the psd routines
+          use detrend, so if you want to have the same amount of
+          variance here as there use ``detrend=True``.
 
         Returns
         -------
@@ -86,8 +86,7 @@ class ADVBinner(VelBinner):
         da = xr.DataArray(out.astype('float32'), 
                           dims=veldat.dims, 
                           attrs={'units': 'm2 s-2',
-                                 'long_name': 'Reynolds Stress Vector',
-                                 'standard_name': 'specific_reynolds_stress_of_sea_water'})
+                                 'long_name': 'Specific Reynolds Stress Vector'})
         da = da.rename({'dir': 'tau'})
         da = da.assign_coords({'tau': self.tau, 'time': time})
         
@@ -149,8 +148,8 @@ class ADVBinner(VelBinner):
                                 dims=['coh_freq'],
                                 name='coh_freq',
                                 attrs={'units': freq_units,
-                                      'long_name': 'FFT Frequency Vector',
-                                      'coverage_content_type': 'coordinate'}
+                                       'long_name': 'FFT Frequency Vector',
+                                       'coverage_content_type': 'coordinate'}
                                 ).astype('float32')
 
         for ip, ipair in enumerate(self._cross_pairs):
@@ -168,8 +167,7 @@ class ADVBinner(VelBinner):
                            dims=['C', 'time', 'coh_freq'],
                            attrs={'units': units, 
                                   'n_fft_coh': n_fft,
-                                  'long_name': 'Cross Spectral Density',
-                                  'standard_name': 'cross_spectral_density_of_sea_water_velocity'})
+                                  'long_name': 'Cross Spectral Density'})
         csd['coh_freq'].attrs['units'] = freq_units
 
         return csd
@@ -236,7 +234,7 @@ class ADVBinner(VelBinner):
             attrs={'units': 'm/s',
                    'long_name': 'Doppler Noise Level',
                    'description': 'Doppler noise level calculated '
-                   'from PSD white noise'})
+                                  'from PSD white noise'})
 
     def check_turbulence_cascade_slope(self, psd, freq_range=[6.28, 12.57]):
         """This function calculates the slope of the PSD, the power spectra 
@@ -360,9 +358,10 @@ class ADVBinner(VelBinner):
         return xr.DataArray(
             out.astype('float32'),
             attrs={'units': 'm2 s-3',
-                   'long_name': 'Dissipation Rate',
+                   'long_name': 'TKE Dissipation Rate',
                    'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
-                   'description': 'TKE dissipation rate calculated using the method from Lumley and Terray, 1983',
+                   'description': 'TKE dissipation rate calculated using '
+                                  'the method from Lumley and Terray, 1983',
                    })
 
     def calc_epsilon_SF(self, vel_raw, U_mag, fs=None, freq_range=[2., 4.]):
@@ -415,7 +414,8 @@ class ADVBinner(VelBinner):
             attrs={'units': 'm2 s-3',
                    'long_name': 'Dissipation Rate',
                    'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
-                   'description': 'TKE dissipation rate calculated using the "structure function" method',
+                   'description': 'TKE dissipation rate calculated using the '
+                                  '"structure function" method',
                    })
 
     def _up_angle(self, U_complex):
@@ -517,7 +517,8 @@ class ADVBinner(VelBinner):
             attrs={'units': 'm2 s-3',
                    'long_name': 'Dissipation Rate',
                    'standard_name': 'specific_turbulent_kinetic_energy_dissipation_in_sea_water',
-                   'description': 'TKE dissipation rate calculated using the method from Trowbridge and Elgar, 2001'
+                   'description': 'TKE dissipation rate calculated using the '
+                                  'method from Trowbridge and Elgar, 2001'
                    })
 
     def calc_L_int(self, a_cov, U_mag, fs=None):

@@ -83,16 +83,16 @@ def test_debugging(make_data=False):
     os.remove(exdt('Sig500_Echo.ad2cp.index'))
 
     if make_data:
-        clip_file('RDI_withBT.log')
-        clip_file('AWAC_test01.log')
-        clip_file('vector_data_imu01.log')
-        clip_file('Sig500_Echo.log')
+        clip_file('RDI_withBT.dolfyn.log')
+        clip_file('AWAC_test01.dolfyn.log')
+        clip_file('vector_data_imu01.dolfyn.log')
+        clip_file('Sig500_Echo.dolfyn.log')
         return
 
-    read_file_and_test('RDI_withBT.log')
-    read_file_and_test('AWAC_test01.log')
-    read_file_and_test('vector_data_imu01.log')
-    read_file_and_test('Sig500_Echo.log')
+    read_file_and_test('RDI_withBT.dolfyn.log')
+    read_file_and_test('AWAC_test01.dolfyn.log')
+    read_file_and_test('vector_data_imu01.dolfyn.log')
+    read_file_and_test('Sig500_Echo.dolfyn.log')
 
 
 class warnings_testcase(unittest.TestCase):

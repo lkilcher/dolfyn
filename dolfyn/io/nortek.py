@@ -44,7 +44,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
         filepath = Path(filename)
-        logfile = filepath.with_suffix('.log')
+        logfile = filepath.with_suffix('.dolfyn.log')
         logging.basicConfig(filename=str(logfile),
                             filemode='w',
                             level=logging.NOTSET,
@@ -612,7 +612,8 @@ class _NortekReader():
                     self.data[va.group][nm] = va._empty_array(**shape_args)
                     self.data['units'][nm] = va.units
                     self.data['long_name'][nm] = va.long_name
-                    self.data['standard_name'][nm] = va.standard_name
+                    if va.standard_name:
+                        self.data['standard_name'][nm] = va.standard_name
 
     def read_vec_data(self,):
         # ID: 0x10 = 16
@@ -823,22 +824,19 @@ class _NortekReader():
         """Read ADV microstrain sensor (IMU) data
         """
         def update_defs(dat, mag=False, orientmat=False):
-            imu_data = {'accel': ['m s-2', 'Acceleration', 'platform_acceleration'],
-                        'angrt': ['rad s-1', 'Angular Velocity', 'platform_angular_velocity'],
-                        'mag': ['gauss', 'Compass', 'magnetic_field_vector'],
-                        'orientmat': ['1', 'Orientation Matrix', '']}
+            imu_data = {'accel': ['m s-2', 'Acceleration'],
+                        'angrt': ['rad s-1', 'Angular Velocity'],
+                        'mag': ['gauss', 'Compass'],
+                        'orientmat': ['1', 'Orientation Matrix']}
             for ky in imu_data:
                 dat['units'].update({ky: imu_data[ky][0]})
                 dat['long_name'].update({ky: imu_data[ky][1]})
-                dat['standard_name'].update({ky: imu_data[ky][2]})
             if not mag:
                 dat['units'].pop('mag')
                 dat['long_name'].pop('mag')
-                dat['standard_name'].pop('mag')
             if not orientmat:
                 dat['units'].pop('orientmat')
                 dat['long_name'].pop('orientmat')
-                dat['standard_name'].pop('orientmat')
 
         # 0x71 = 113
         if self.c == 0:
