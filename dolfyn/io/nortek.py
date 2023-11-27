@@ -166,8 +166,7 @@ class _NortekReader():
                '0x20': 'read_awac_profile',
                '0x30': 'read_awac_waves',
                '0x31': 'read_awac_waves_hdr',
-               '0x36': 'read_awac_waves',
-               '0x42': 'read_awac_AST',
+               '0x36': 'read_awac_waves',  # "SUV"
                '0x71': 'read_microstrain',
                }
 
@@ -1025,10 +1024,6 @@ class _NortekReader():
         self.data['coords']['range'] = r
         self.data['attrs']['cell_size'] = cs
         self.data['attrs']['blank_dist'] = bd
-<<<<<<< HEAD
-
-=======
-        
         
     def read_awac_waves_hdr(self,):
         # ID: '0x31'
@@ -1041,31 +1036,27 @@ class _NortekReader():
         ds = dat['sys']
         dv = dat['data_vars']
         if 'time' not in dat['coords']:
-            self._init_data(nortek_defs.awac_hdrdata) #!!! Write this
+            self._init_data(nortek_defs.waves_hdrdata)
         byts = self.read(56)
         # The first two are size, the next 6 are time.
-        tmp = unpack(self.endian + '8xHB8H5B4H38x', byts) #!!! check format
+        tmp = unpack(self.endian + '8x4H3h2HhH4B6H5h', byts)
         dat['coords']['time'][c] = self.rd_time(byts[2:8])
-        hdrnow['NRecords'] = tmp[0]
-        hdrnow['Blanking'] = tmp[1] # counts
-        ds['batt'][c] = tmp[2] #voltage (0.1 V)
-        dv['c_sound'][c] = tmp[3] # c (0.1 m/s)
-        dv['heading'][c] = tmp[4] # (0.1 deg)
-        dv['pitch'][c] = tmp[5] # (0.1 deg)
-        dv['roll'][c] = tmp[6] # (0.1 deg)
-        dv['P_min'][c] = tmp[7] # min pressure previous profile (0.001 dbar)
-        dv['P_max'][c] = tmp[8] # min pressure previous profile (0.001 dbar)
-        dv['temp'][c] = tmp[9] # (0.01 deg C)
-        hdrnow['CellSize'] = tmp[10] # (counts of T3)
-        hdrnow['Noise1'] = tmp[11] # noise amplitude beam 1 (counts)
-        hdrnow['Noise2'] = tmp[12]
-        hdrnow['Noise3'] = tmp[13]
-        hdrnow['Noise4'] = tmp[14]
-        hdrnow['ProcMagn1'] = tmp[15] # processing magnitude beam 1
-        hdrnow['ProcMagn2'] = tmp[16]
-        hdrnow['ProcMagn3'] = tmp[17]
-        hdrnow['ProcMagn4'] = tmp[18]
-        hdrnow['Spare1'] = byts[42:].decode('utf-8')
+        hdrnow['n_records_alt'] = tmp[0]
+        hdrnow['blank_dist_alt'] = tmp[1] # counts
+        ds['batt_alt'][c] = tmp[2] #voltage (0.1 V)
+        dv['c_sound_alt'][c] = tmp[3] # c (0.1 m/s)
+        dv['heading_alt'][c] = tmp[4] # (0.1 deg)
+        dv['pitch_alt'][c] = tmp[5] # (0.1 deg)
+        dv['roll_alt'][c] = tmp[6] # (0.1 deg)
+        dv['pressure1_alt'][c] = tmp[7] # min pressure previous profile (0.001 dbar)
+        dv['pressure2_alt'][c] = tmp[8] # max pressure previous profile (0.001 dbar)
+        dv['temp_alt'][c] = tmp[9] # (0.01 deg C)
+        hdrnow['cell_size_alt'][c] = tmp[10] # (counts of T3)
+        hdrnow['noise_alt'][c] = tmp[11:15] # noise amplitude beam 1-4 (counts)
+        hdrnow['proc_magn_alt'][c] = tmp[15:19] # processing magnitude beam 1-4
+        hdrnow['n_past_window_alt'] = tmp[19] # number of samples of AST window past boundary
+        hdrnow['n_window_alt'] = tmp[20] # AST window size (# samples)
+        hdrnow['Spare1'] = tmp[21:]
         self.checksum(byts)
         if 'data_header' not in self.config:
             self.config['data_header'] = hdrnow
@@ -1073,7 +1064,6 @@ class _NortekReader():
             if not isinstance(self.config['data_header'], list):
                 self.config['data_header'] = [self.config['data_header']]
             self.config['data_header'] += [hdrnow]
-            
             
     def read_awac_waves(self,):
         """Read awac wave and suv data
@@ -1084,77 +1074,28 @@ class _NortekReader():
         if self.debug:
             print('Reading awac wave data (0x30) ping #{} @ {}...'
                   .format(self.c, self.pos))
-
-        if 'Dist1' not in dat['data_vars']:
-            self._init_data(nortek_defs.wave_data) #!!! Write this
+        if 'dist1_alt' not in dat['data_vars']:
+            self._init_data(nortek_defs.wave_data)
             self._dtypes += ['wave_data']
-
-        byts = self.read(20)
         # The first two are size
+        byts = self.read(20)
         ds = dat['sys']
         dv = dat['data_vars']
         (dv['pressure'][c], # (0.001 dbar)
-         dv['dist1'][c], # distance 1 to surface, vertical beam (mm)
-         ds['AnaIn'][c], # analog input 1
-         dv['vel'][0, c], # velocity beam 1 (mm/s) East for SUV
-         dv['vel'][1, c], # North for SUV
-         dv['vel'][2, c], # Up for SUV
-         dv['vel'][3, c], # distance 1 to surface, vertical beam (mm) or vel 4 for non-AST
-         dv['amp'][0, c], # amplitude beam 1 (counts)
-         dv['amp'][1, c],
-         dv['amp'][2, c],
+         dv['dist1_alt'][c], # distance 1 to surface, vertical beam (mm)
+         ds['AnaIn_alt'][c], # analog input 1
+         dv['vel_alt'][0, c], # velocity beam 1 (mm/s) East for SUV
+         dv['vel_alt'][1, c], # North for SUV
+         dv['vel_alt'][2, c], # Up for SUV
+         dv['dist2_alt'][c], # distance 2 to surface, vertical beam (mm) or vel 4 for non-AST
+         dv['amp_alt'][0, c], # amplitude beam 1 (counts)
+         dv['amp_alt'][1, c], # amplitude beam 2 (counts)
+         dv['amp_alt'][2, c], # amplitude beam 3 (counts)
          # AST quality (counts) or amplitude beam 4 for non-AST
-         dv['amp'][3, c]) = unpack(self.endian + '3H4h4B', byts) #!!! check format
+         dv['quality_alt'][c]) = unpack(self.endian + '3H4h4B', byts)
         self.checksum(byts)
         self.c += 1
         
-        
-    def read_awac_AST(self,):
-        """Read awac "stage" data - acoustic surface tracking (AST) data
-        """
-        # ID: 0x42
-        c = self.c
-        dat = self.data
-        if self.debug:
-            print('Reading awac stage data (0x42) ping #{} @ {}...'
-                  .format(self.c, self.pos))
-            
-        nbins = self.config['NBins']
-        if 'AST1' not in dat['data_vars']:
-            self._init_data(nortek_defs.AST_data) #!!! Write this
-            self._dtypes += ['AST_data']
-        
-        ds = dat['sys']
-        dv = dat['data_vars']
-        # There is a 'fill' byte at the end, if nbins is odd.
-        byts = self.read(30 + nbins + np.mod(nbins, 2))
-        tmp = unpack(self.endian + 'x3Bx2HB2Hx3h2xB', byts) #!!! check format
-        # The first two are size
-        ds['Spare1'] = byts[0:2].decode('utf-8') # AST dist 1 duplicate
-        dv['amp'][0, c] = tmp[1] # amplitude beam 1 (counts)
-        dv['amp'][1, c] = tmp[2]
-        dv['amp'][2, c] = tmp[3]
-        ds['Spare2'] = byts[7:9].decode('utf-8') # AST quality duplicate
-        dv['pressure'][c] = tmp[5] # (0.001 dbar)
-        dv['AST'][0, c] = tmp[6] # AST1 (mm)
-        dv['AST_Q'][c] = tmp[7] # AST quality (counts)
-        dv['c_sound'][c] = tmp[8] # c (0.1 m/s)
-        dv['AST'][1, c] = tmp[9] # AST2 (mm)
-        ds['Spare3'] = byts[18:20].decode('utf-8')
-        dv['vel'][0, c] = tmp[11] # velocity beam 1 (mm/s) East for SUV
-        dv['vel'][1, c] = tmp[12] # North for SUV
-        dv['vel'][2, c] = tmp[13] # Up for SUV
-        ds['Spare4'] = byts[26:28].decode('utf-8') # AST dist 2 duplicate
-        ds['Spare5'] = byts[28].decode('utf-8')
-        dv['amp_b4'][0, c] = tmp[16] # amplitude cell 1 (counts)
-        # amplitude cells 2 through nbins - starts at byte 30
-        tmp = unpack(self.endian + str(nbins) + 'B', byts[30:30+nbins-1])
-        dv['amp_b4'][1:nbins-1, c] = tmp
-        
-        self.checksum(byts)
-        self.c += 1
-        
->>>>>>> 383567050d2939192a53ae41a26d5d6b4adf8a15
     def dat2sci(self,):
         for nm in self._dtypes:
             getattr(self, 'sci_' + nm)()
