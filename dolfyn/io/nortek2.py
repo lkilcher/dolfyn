@@ -477,12 +477,14 @@ def _reorg(dat):
             if ky.endswith('raw') and not ky.endswith('_altraw'):
                  outdat['data_vars'].pop(ky)
         outdat['coords']['time_altraw'] = outdat['coords'].pop('timeraw')
+        outdat['data_vars']['samp_altraw'] =  outdat['data_vars']['samp_altraw'].astype('float32') / 2**8  # convert "signed fractional" to float
 
         # Read altimeter status
-        alt_status = lib._alt_status2data(outdat['data_vars']['status_alt'])
-        for ky in alt_status:
+        outdat['data_vars'].pop('status_altraw')
+        status_alt = lib._alt_status2data(outdat['data_vars']['status_alt'])
+        for ky in status_alt:
             outdat['attrs'][ky] = lib._collapse(
-                alt_status[ky].astype('uint8'), name=ky)
+                status_alt[ky].astype('uint8'), name=ky)
         outdat['data_vars'].pop('status_alt')
 
         # Power level index

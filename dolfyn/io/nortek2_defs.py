@@ -346,7 +346,7 @@ def _calc_burst_struct(config, nb, nc):
             ('nsamp_alt', 'I', [], None, '1', 'Number of Altimeter Samples'),
             ('dsamp_alt', 'H', [], _LinFunc(0.0001, dtype=dt32), 'm',
              'Altimeter Distance between Samples'),
-            ('samp_alt', 'h', [], None, '1', 'Altimeter Samples (signed fractional)'),
+            ('samp_alt', 'h', [], None, '1', 'Altimeter Samples'),
         ]
     if flags['ahrs']:
         dd += _ahrs_def
