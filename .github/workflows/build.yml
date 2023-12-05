@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Set up Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           lfs: true
 
@@ -27,7 +27,7 @@ jobs:
         run: git lfs checkout
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: dolfyn-dev
           environment-file: environment.yml
