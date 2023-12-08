@@ -19,12 +19,12 @@ Below is a list of functions that can be called from `VelBinner`.
 	~dolfyn.binned.TimeBinner.mean 
 	~dolfyn.binned.TimeBinner.var 
 	~dolfyn.binned.TimeBinner.std
-	~dolfyn.binned.VelBinner.do_avg
-	~dolfyn.binned.VelBinner.do_var
-	~dolfyn.binned.VelBinner.calc_coh
-	~dolfyn.binned.VelBinner.calc_phase_angle
-	~dolfyn.binned.VelBinner.calc_acov
-	~dolfyn.binned.VelBinner.calc_xcov
+	~dolfyn.velocity.VelBinner.do_avg
+	~dolfyn.velocity.VelBinner.do_var
+	~dolfyn.velocity.VelBinner.calc_coh
+	~dolfyn.velocity.VelBinner.calc_phase_angle
+	~dolfyn.velocity.VelBinner.calc_acov
+	~dolfyn.velocity.VelBinner.calc_xcov
 	~dolfyn.velocity.VelBinner.calc_tke
 	~dolfyn.velocity.VelBinner.calc_psd
 	~dolfyn.binned.TimeBinner.calc_freq
@@ -45,6 +45,7 @@ Functions for analyzing ADV data via the `ADVBinner` class, beyond those describ
 	~dolfyn.adv.turbulence.ADVBinner.calc_csd
 	~dolfyn.adv.turbulence.ADVBinner.calc_stress
 	~dolfyn.adv.turbulence.ADVBinner.calc_doppler_noise
+	~dolfyn.adv.turbulence.ADVBinner.check_turbulence_cascade_slope
 	~dolfyn.adv.turbulence.ADVBinner.calc_epsilon_LT83
 	~dolfyn.adv.turbulence.ADVBinner.calc_epsilon_SF
 	~dolfyn.adv.turbulence.ADVBinner.calc_epsilon_TE01
@@ -64,6 +65,7 @@ Functions for analyzing ADCP data via the `ADPBinner` class, beyond those descri
 	~dolfyn.adp.turbulence.ADPBinner.calc_stress_4beam
 	~dolfyn.adp.turbulence.ADPBinner.calc_stress_5beam
 	~dolfyn.adp.turbulence.ADPBinner.calc_total_tke
+	~dolfyn.adp.turbulence.ADPBinner.check_turbulence_cascade_slope
 	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_LT83
 	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_SF
 	~dolfyn.adp.turbulence.ADPBinner.calc_ustar_fit
