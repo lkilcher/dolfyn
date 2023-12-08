@@ -3,7 +3,7 @@ channels:
   - defaults
 dependencies:
   - pip
-  - python>=3.6
+  - python>=3.8
   - pip:
     - alabaster>=0.7.12
     - atomicwrites>=1.4.0
