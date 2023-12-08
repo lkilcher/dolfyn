@@ -45,3 +45,4 @@ dependencies:
     - urllib3>=1.26.6
     - xarray>=0.18.2
     - nbsphinx
+    - dolfyn
