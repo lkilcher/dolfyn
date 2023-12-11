@@ -7,7 +7,6 @@ rdi = load('RDI_test01.nc')
 
 
 def test_repr(make_data=False):
-
     _str = []
     for dat, fnm in [(vec, rfnm('vector_data01.repr.txt')),
                      (sig, rfnm('BenchFile01.repr.txt')),
