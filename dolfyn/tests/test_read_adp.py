@@ -143,7 +143,7 @@ def test_io_nortek2(make_data=False):
     assert_allclose(td_sig_badt, dat_sig_badt, atol=1e-6)
 
 
-def test_nortek2_crop(make_data=True):
+def test_nortek2_crop(make_data=False):
     # Test file cropping function
     crop_ensembles(infile=tb.exdt('Sig500_Echo.ad2cp'),
                    outfile=tb.exdt('Sig500_Echo_crop.ad2cp'),
@@ -156,7 +156,7 @@ def test_nortek2_crop(make_data=True):
     td_sig_crop = read('BenchFile01_crop.ad2cp')
 
     if make_data:
-        #save(td_sig_ie_crop, 'Sig500_Echo_crop.nc')
+        save(td_sig_ie_crop, 'Sig500_Echo_crop.nc')
         save(td_sig_crop, 'BenchFile01_crop.nc')
         return
 
