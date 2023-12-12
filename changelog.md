@@ -12,8 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Fix for instruments that did not record water velocity
 		- Fix netCDF4 compression encoding
 		- Retain prior netCDF4 variable encoding
+		- Fix bug in reading raw Nortek Signature altimeter data
+
 	- API/Useability
 	    - Updates to support python 3.10 and 3.11
+		- Added ability to read Nortek AWAC waves data
 
 ## Version 1.3.0
     - Bugfixes
