@@ -19,7 +19,7 @@ Contains functions for rotating data through frames of reference (FoR):
 	~dolfyn.rotate.base.euler2orient
 	~dolfyn.rotate.base.orient2euler
 	~dolfyn.rotate.base.quaternion2orient
-	~dolfyn.rotate.base.calc_twist
+	~dolfyn.rotate.base.calc_tilt
 	
 These functions pertain to both ADCPs and ADVs::
 
