@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unversioned
+    - Bugfixes
+	    - Correct CF convention "standard_names"
+		- Rename debugger log files from ".log" to ".dolfyn.log"
+		- Fix recording for instruments in "average" mode (vs "burst" mode)
+		- Fix for instruments that did not record water velocity
+		- Fix netCDF4 compression encoding
+		- Retain prior netCDF4 variable encoding
+	- API/Useability
+	    - Updates to support python 3.10 and 3.11
+
 ## Version 1.3.0
     - Bugfixes
 		- Added check to ensure `n_bin` is shorter than the total data length when calling
