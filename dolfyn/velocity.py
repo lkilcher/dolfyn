@@ -920,6 +920,52 @@ class VelBinner(TimeBinner):
 
         return da
 
+    def calc_ti(self, U_mag, noise=0, thresh=0, detrend=False):
+        """Calculate noise-corrected turbulence intensity.
+
+        Parameters
+        ----------
+        U_mag : xarray.DataArray
+          Raw velocity magnitude
+        noise : numeric
+          Noise level in m/s
+        thresh : numeric
+          Theshold below which TI will not be calculated
+        detrend : bool (default: False)
+          Detrend the velocity data (True), or simply de-mean it
+          (False), prior to computing TI.
+        """
+
+        if 'xarray' in type(U_mag).__module__:
+            U = U_mag.values
+
+        if detrend:
+            up = self.detrend(U)
+        else:
+            up = self.demean(U)
+
+        # Take RMS and subtract noise
+        u_rms = np.sqrt(np.nanmean(up**2, axis=-1) - noise**2)
+        u_mag = self.mean(U)
+
+        ti = np.ma.masked_where(u_mag < thresh, u_rms / u_mag)
+
+        dims = U_mag.dims
+        coords = {}
+        for nm in U_mag.dims:
+            if 'time' in nm:
+                coords[nm] = self.mean(U_mag[nm].values)
+            else:
+                coords[nm] = U_mag[nm].values
+
+        return xr.DataArray(
+            ti.data.astype('float32'),
+            coords=coords,
+            dims=dims,
+            attrs={'units': '% [0,1]',
+                   'long_name': 'Turbulence Intensity'})
+
+
     def calc_tke(self, veldat, noise=None, detrend=True):
         """Calculate the turbulent kinetic energy (TKE) (variances 
         of u,v,w).
@@ -934,7 +980,7 @@ class VelBinner(TimeBinner):
           the same first dimension as the velocity vector.
         detrend : bool (default: False)
           Detrend the velocity data (True), or simply de-mean it
-          (False), prior to computing tke. Note: the psd routines
+          (False), prior to computing TKE. Note: the PSD routines
           use detrend, so if you want to have the same amount of
           variance here as there use ``detrend=True``.
 
