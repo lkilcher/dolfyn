@@ -132,13 +132,18 @@ def test_adv_turbulence(make_data=False):
 
 
 def test_adcp_turbulence(make_data=False):
-    dat = tr.dat_sig_i.copy(deep=True)
+    dat = tr.dat_sig_tide.copy(deep=True)
+    dat.velds.rotate2('earth')
+    dat.attrs['principal_heading'] = apm.calc_principal_heading(dat.vel.mean('range'))
     bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs, diff_style='centered')
     tdat = bnr.do_avg(dat)
+
     tdat['dudz'] = bnr.calc_dudz(tdat.vel)
     tdat['dvdz'] = bnr.calc_dvdz(tdat.vel)
     tdat['dwdz'] = bnr.calc_dwdz(tdat.vel)
     tdat['tau2'] = bnr.calc_shear2(tdat.vel)
+    tdat['I'] = tdat.velds.I
+    tdat['ti'] = bnr.calc_ti(dat.velds.U_mag, detrend=False)
     tdat['psd'] = bnr.calc_psd(dat['vel'].isel(
         dir=2, range=len(dat.range)//2), freq_units='Hz')
     tdat['noise'] = bnr.calc_doppler_noise(tdat['psd'], pct_fN=0.8)
@@ -160,8 +165,8 @@ def test_adcp_turbulence(make_data=False):
         tdat['psd'].mean('time'), freq_range=[0.4, 4])
 
     if make_data:
-        save(tdat, 'Sig1000_IMU_bin.nc')
+        save(tdat, 'Sig1000_tidal_bin.nc')
         return
 
     assert np.round(slope_check[0].values, 4), -1.0682
-    assert_allclose(tdat, load('Sig1000_IMU_bin.nc'), atol=1e-6)
+    assert_allclose(tdat, load('Sig1000_tidal_bin.nc'), atol=1e-6)

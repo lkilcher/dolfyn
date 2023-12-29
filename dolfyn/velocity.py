@@ -965,7 +965,6 @@ class VelBinner(TimeBinner):
             attrs={'units': '% [0,1]',
                    'long_name': 'Turbulence Intensity'})
 
-
     def calc_tke(self, veldat, noise=None, detrend=True):
         """Calculate the turbulent kinetic energy (TKE) (variances 
         of u,v,w).
