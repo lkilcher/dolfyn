@@ -146,7 +146,7 @@ def test_adcp_turbulence(make_data=False):
     tdat['tau2'] = bnr.calc_shear2(tdat.vel)
     tdat['I'] = tdat.velds.I
     tdat['ti'] = bnr.calc_ti(dat.velds.U_mag, detrend=False)
-    #dat.velds.rotate2('beam')
+    dat.velds.rotate2('beam')
     tdat['psd'] = bnr.calc_psd(dat['vel'].isel(
         dir=2, range=len(dat.range)//2), freq_units='Hz')
     tdat['noise'] = bnr.calc_doppler_noise(tdat['psd'], pct_fN=0.8)
