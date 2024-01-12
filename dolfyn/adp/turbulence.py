@@ -238,9 +238,10 @@ class ADPBinner(VelBinner):
         N2 = psd.sel(freq=f_range) * psd.freq.sel(freq=f_range)
         noise_level = np.sqrt(N2.mean(dim='freq'))
 
+        time_coord = psd.dims[0]  # no reason this shouldn't be time or time_b5
         return xr.DataArray(
             noise_level.values.astype('float32'),
-            coords={'time': psd['time']},
+            coords={time_coord: psd.coords[time_coord]},
             attrs={'units': 'm s-1',
                    'long_name': 'Doppler Noise Level',
                    'description': 'Doppler noise level calculated '
