@@ -240,7 +240,7 @@ class ADPBinner(VelBinner):
 
         return xr.DataArray(
             noise_level.values.astype('float32'),
-            dims=['time'],
+            coords={'time': psd['time']},
             attrs={'units': 'm s-1',
                    'long_name': 'Doppler Noise Level',
                    'description': 'Doppler noise level calculated '

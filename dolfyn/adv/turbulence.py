@@ -230,7 +230,7 @@ class ADVBinner(VelBinner):
 
         return xr.DataArray(
             noise_level.values.astype('float32'),
-            dims=['dir', 'time'],
+            coords={'S': psd['S'], 'time': psd['time']},
             attrs={'units': 'm/s',
                    'long_name': 'Doppler Noise Level',
                    'description': 'Doppler noise level calculated '
@@ -348,8 +348,6 @@ class ADVBinner(VelBinner):
             if np.shape(noise)[0] != 3:
                 raise Exception(
                     'Noise should have same first dimension as velocity')
-            # Edit first dim to work with PSD
-            noise = noise.assign_coords({'dir': psd['S'].values}).rename({'dir': "S"})
         else:
             noise = np.array([0, 0, 0])[:, None, None]
 
