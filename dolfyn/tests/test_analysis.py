@@ -171,16 +171,16 @@ def test_adcp_turbulence(make_data=False):
     tdat['psd_noise'] = bnr.calc_psd(dat['vel'].isel(
         dir=2, range=len(dat.range)//2), freq_units='Hz', noise=0.01)
 
-    with pytest.raises(Exception):
-        bnr.calc_psd(dat['vel'], freq_units='Hz', noise=0.01)
-
     if make_data:
         save(tdat, 'Sig1000_tidal_bin.nc')
         return
 
     with pytest.raises(Exception):
         bnr.calc_psd(dat['vel'], freq_units='Hz', noise=0.01)
+
     with pytest.raises(Exception):
         bnr.calc_psd(dat['vel'][0], freq_units='Hz', noise=0.01)
+
     assert np.round(slope_check[0].values, 4), -1.0682
+
     assert_allclose(tdat, load('Sig1000_tidal_bin.nc'), atol=1e-6)

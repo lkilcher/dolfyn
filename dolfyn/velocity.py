@@ -1108,7 +1108,7 @@ class VelBinner(TimeBinner):
 
         # Spectra, if input is full velocity or a single array
         if len(vel.shape) >= 2:
-            if vel.shape[0] == 3:
+            if vel.shape[0] != 3:
                 raise ValueError("Function can only handle 1D or 3D arrays."
                                  " If ADCP data, please select a specific depth bin.")
             if noise is not None:
