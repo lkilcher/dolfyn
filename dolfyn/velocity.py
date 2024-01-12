@@ -1115,7 +1115,7 @@ class VelBinner(TimeBinner):
                 if np.size(noise) != 3:
                     raise ValueError('Noise is expected to be an array of 3 scalars')
             else:
-                noise = 0
+                noise = np.array([0, 0, 0])
 
             out = np.empty(self._outshape_fft(vel[:3].shape, n_fft=n_fft, n_bin=n_bin),
                            dtype=np.float32)
