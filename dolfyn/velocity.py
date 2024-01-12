@@ -963,7 +963,8 @@ class VelBinner(TimeBinner):
             coords=coords,
             dims=dims,
             attrs={'units': '% [0,1]',
-                   'long_name': 'Turbulence Intensity'})
+                   'long_name': 'Turbulence Intensity',
+                   'comment': f'TI was corrected from a noise level of {noise} m/s'})
 
     def calc_tke(self, veldat, noise=None, detrend=True):
         """Calculate the turbulent kinetic energy (TKE) (variances 
@@ -1055,16 +1056,15 @@ class VelBinner(TimeBinner):
         veldat : xr.DataArray
           The raw velocity data (of dims 'dir' and 'time').
         freq_units : string
-          Frequency units of the returned spectra in either Hz or rad/s 
+          Frequency units of the returned spectra in either Hz or rad/s
           (`f` or :math:`\\omega`)
         fs : float (optional)
           The sample rate (default: from the binner).
         window : string or array
           Specify the window function.
           Options: 1, None, 'hann', 'hamm'
-        noise : float or array-like
-          A vector of the noise levels of the velocity data with 
-          the same first dimension as the velocity vector.
+        noise : numeric
+          The noise level in the same units as velocity
         n_bin : int (optional)
           The bin-size (default: from the binner).
         n_fft : int (optional)
@@ -1107,14 +1107,16 @@ class VelBinner(TimeBinner):
                             ).astype('float32')
 
         # Spectra, if input is full velocity or a single array
-        if len(vel.shape) == 2:
-            assert vel.shape[0] == 3, "Function can only handle 1D or 3D arrays." \
-                " If ADCP data, please select a specific depth bin."
-            if (noise is not None) and (np.shape(noise)[0] != 3):
-                raise Exception(
-                    'Noise should have same first dimension as velocity')
+        if len(vel.shape) >= 2:
+            if vel.shape[0] == 3:
+                raise ValueError("Function can only handle 1D or 3D arrays."
+                                 " If ADCP data, please select a specific depth bin.")
+            if noise is not None:
+                if np.size(noise) != 3:
+                    raise ValueError('Noise is expected to be an array of 3 scalars')
             else:
-                noise = np.array([0, 0, 0])
+                noise = 0
+
             out = np.empty(self._outshape_fft(vel[:3].shape, n_fft=n_fft, n_bin=n_bin),
                            dtype=np.float32)
             for idx in range(3):
@@ -1131,11 +1133,11 @@ class VelBinner(TimeBinner):
                       'freq': freq}
             dims = ['S', 'time', 'freq']
         else:
-            if (noise is not None) and (len(np.shape(noise)) > 1):
-                raise Exception(
-                    'Noise should have same first dimension as velocity')
+            if noise is not None:
+                if np.size(noise) > 1:
+                    raise ValueError('Noise is expected to be a scalar')
             else:
-                noise = np.array(0)
+                noise = 0
             out = self.calc_psd_base(vel,
                                      fs=fs,
                                      noise=noise,

@@ -165,7 +165,7 @@ class ADVBinner(VelBinner):
                                    'time': time,
                                    'coh_freq': coh_freq},
                            dims=['C', 'time', 'coh_freq'],
-                           attrs={'units': units, 
+                           attrs={'units': units,
                                   'n_fft_coh': n_fft,
                                   'long_name': 'Cross Spectral Density'})
         csd['coh_freq'].attrs['units'] = freq_units
@@ -296,7 +296,7 @@ class ADVBinner(VelBinner):
 
         return m, b
 
-    def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57], noise=None):
         """Calculate the dissipation rate from the PSD
 
         Parameters
@@ -308,6 +308,9 @@ class ADVBinner(VelBinner):
         freq_range : iterable(2) (default: [6.28, 12.57])
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
+        noise : float or array-like
+          A vector of the noise levels of the velocity data with
+          the same first dimension as the velocity vector.
 
         Returns
         -------
@@ -339,8 +342,22 @@ class ADVBinner(VelBinner):
         """
 
         # Ensure time has been averaged
-        if len(psd.time)!=len(U_mag.time):
+        if len(psd.time) != len(U_mag.time):
             raise Exception("`U_mag` should be from ensembled-averaged dataset")
+        if noise is not None:
+            if np.shape(noise)[0] != 3:
+                raise Exception(
+                    'Noise should have same first dimension as velocity')
+            # Edit first dim to work with PSD
+            noise = noise.assign_coords({'dir': psd['S'].values}).rename({'dir': "S"})
+        else:
+            noise = np.array([0, 0, 0])[:, None, None]
+
+        # Noise subtraction from binner.TimeBinner.calc_psd_base
+        psd = psd.copy()
+        if noise is not None:
+            psd -= (noise**2 / (self.fs / 2))
+            psd = psd.where(psd > 0, np.min(np.abs(psd)) / 100)
 
         freq = psd.freq
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))

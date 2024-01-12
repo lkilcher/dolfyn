@@ -623,7 +623,7 @@ class ADPBinner(VelBinner):
 
         return m, b
 
-    def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4]):
+    def calc_dissipation_LT83(self, psd, U_mag, freq_range=[0.2, 0.4], noise=None):
         """Calculate the TKE dissipation rate from the velocity spectra.
 
         Parameters
@@ -633,8 +633,11 @@ class ADPBinner(VelBinner):
         U_mag : xarray.DataArray (time)
           The bin-averaged horizontal velocity (a.k.a. speed) from a single depth bin (range)
         f_range : iterable(2)
-          The range over which to integrate/average the spectrum, in units 
+          The range over which to integrate/average the spectrum, in units
           of the psd frequency vector (Hz or rad/s)
+        noise : float or array-like
+          A vector of the noise levels of the velocity data with
+          the same first dimension as the velocity vector (time).
 
         Returns
         -------
@@ -669,6 +672,18 @@ class ADPBinner(VelBinner):
             raise Exception('PSD should be 2-dimensional (time, frequency)')
         if len(U_mag.shape) != 1:
             raise Exception('U_mag should be 1-dimensional (time)')
+        if noise is not None:
+            if np.shape(noise)[0] != np.shape(psd)[0]:
+                raise Exception(
+                    'Noise should have same first dimension as PSD')
+        else:
+            noise = np.array(0)
+
+        # Noise subtraction from binner.TimeBinner.calc_psd_base
+        psd = psd.copy()
+        if noise is not None:
+            psd -= noise**2 / (self.fs / 2)
+            psd = psd.where(psd > 0, np.min(np.abs(psd)) / 100)
 
         freq = psd.freq
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
