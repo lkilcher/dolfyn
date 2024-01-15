@@ -117,6 +117,7 @@ def read_example(name, **kwargs):
             vector_burst_mode01.VEC
             vector_data01.VEC
             vector_data_imu01.VEC
+            vectrino_data01.vno
             winriver01.PD0
             winriver02.PD0
 
