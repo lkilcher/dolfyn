@@ -26,6 +26,7 @@ Instrument Support
   * AWAC ADCP (current data only, waves in development)
   * Signature AD2CP (current and waves)
   * Vector ADV
+  * Vectrino ADV
 
 * TRDI:
 
