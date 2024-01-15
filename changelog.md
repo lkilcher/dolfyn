@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Updates to support python 3.10 and 3.11
 		- Added ability to read Nortek AWAC waves data
 
+	- Nortek Vectrino (.vno)
+		- Add support for Nortek Vectrino (.vno) files.
+
 ## Version 1.3.0
     - Bugfixes
 		- Added check to ensure `n_bin` is shorter than the total data length when calling
