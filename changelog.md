@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Retain prior netCDF4 variable encoding
 		- Fix bug in reading raw Nortek Signature altimeter data
 		- Fix bug where noise input wasn't being subtracted from auto-spectra
+		- Fix bug that would error out when entering custom FFT window
 
 	- API/Useability
 	    - Updates to support python 3.10 and 3.11
