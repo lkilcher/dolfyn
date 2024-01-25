@@ -13,10 +13,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 		- Fix netCDF4 compression encoding
 		- Retain prior netCDF4 variable encoding
 		- Fix bug in reading raw Nortek Signature altimeter data
+		- Fix bug where noise input wasn't being subtracted from auto-spectra
 
 	- API/Useability
 	    - Updates to support python 3.10 and 3.11
 		- Added ability to read Nortek AWAC waves data
+		- Added ability to subtract Doppler noise in TKE dissipation rate functions
+		- Added function to calculate turbulence intensity and remove noise 
 
 ## Version 1.3.0
     - Bugfixes
