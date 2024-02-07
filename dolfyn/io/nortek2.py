@@ -15,7 +15,7 @@ from ..time import epoch2dt64, _fill_time_gaps
 
 
 def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
-                   debug=False, **kwargs):
+                   debug=False, dual_profile=False, **kwargs):
     """Read a Nortek Signature (.ad2cp) datafile
 
     Parameters
@@ -25,12 +25,14 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
     userdata : bool
       To search for and use a .userdata.json or not
     nens : None, int or 2-element tuple (start, stop)
-      Number of pings or ensembles to read from the file. 
+      Number of pings or ensembles to read from the file.
       Default is None, read entire file
     rebuild_index : bool (default: False)
       Force rebuild of dolfyn-written datafile index. Useful for code updates.
     debug : bool (default: False)
       Logs debugger ouput if true
+    dual_profile : bool (default: True)
+      Set to true if instrument is running multiple profiles
 
     Returns
     -------
@@ -66,6 +68,8 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
     rdr = _Ad2cpReader(filename, rebuild_index=rebuild_index, debug=debug)
     d = rdr.readfile(nens[0], nens[1])
     rdr.sci_data(d)
+    if dual_profile:
+        _clean_dp(d)
     out = _reorg(d)
     _reduce(out)
 
@@ -216,14 +220,14 @@ class _Ad2cpReader():
     def init_data(self, ens_start, ens_stop):
         outdat = {}
         nens = int(ens_stop - ens_start)
-        
+
         # ID 26 usually only recorded in first ensemble
         n26 = ((self._index['ID'] == 26) &
                (self._index['ens'] >= ens_start) &
                (self._index['ens'] < ens_stop)).sum()
         if not n26 and 26 in self._burst_readers:
             self._burst_readers.pop(26)
-            
+
         for ky in self._burst_readers:
             if ky == 26:
                 n = n26
@@ -237,7 +241,7 @@ class _Ad2cpReader():
             outdat[ky]['units'] = self._burst_readers[ky].data_units()
             outdat[ky]['long_name'] = self._burst_readers[ky].data_longnames()
             outdat[ky]['standard_name'] = self._burst_readers[ky].data_stdnames()
-            
+
         return outdat
 
     def _read_hdr(self, do_cs=False):
@@ -277,11 +281,11 @@ class _Ad2cpReader():
             except IOError:
                 return outdat
             id = hdr['id']
-            if id in [21, 22, 23, 24, 28]:  # "burst data record" (vel + ast), 
+            if id in [21, 22, 23, 24, 28]:  # "burst data record" (vel + ast),
                 # "avg data record" (vel_avg + ast_avg), "bottom track data record" (bt),
                 # "interleaved burst data record" (vel_b5), "echosounder record" (echo)
                 self._read_burst(id, outdat[id], c)
-            elif id in [26]:  
+            elif id in [26]:
                 # "burst altimeter raw record" (alt_raw) - recorded on nens==0
                 rdr = self._burst_readers[26]
                 if not hasattr(rdr, '_nsamp_index'):
@@ -321,8 +325,8 @@ class _Ad2cpReader():
                 outdat[id]['ensemble'][c26] = c
                 c26 += 1
 
-            elif id in [27, 29, 30, 31, 35, 36]: # unknown how to handle
-                # "bottom track record", DVL, "altimeter record", "avg altimeter raw record", 
+            elif id in [27, 29, 30, 31, 35, 36]:  # unknown how to handle
+                # "bottom track record", DVL, "altimeter record", "avg altimeter raw record",
                 # "raw echosounder data record", "raw echosounder transmit data record"
                 if self.debug:
                     logging.debug(
@@ -408,7 +412,7 @@ def _reorg(dat):
     cfg['inst_make'] = 'Nortek'
     cfg['inst_type'] = 'ADCP'
 
-    for id, tag in [(21, ''), (22, '_avg'), (23, '_bt'), 
+    for id, tag in [(21, ''), (22, '_avg'), (23, '_bt'),
                     (24, '_b5'), (26, 'raw'), (28, '_echo')]:
         if id in [24, 26]:
             collapse_exclude = [0]
@@ -554,6 +558,15 @@ def _reorg(dat):
 
     return outdat
 
+def _clean_dp(data):
+    for id in data:
+        if id == 'filehead_config':
+            continue
+        # Check where 'ver' is zero (should be 1 (for bt) or 3 (everything else))
+        skips = np.where(data[id]['ver'] != 0)
+        for var in data[id]:
+            if var not in ['units', 'long_name', 'standard_name']:
+                data[id][var] = np.squeeze(data[id][var][..., skips])
 
 def _reduce(data):
     """This function takes the output from `reorg`, and further simplifies the
@@ -561,7 +574,7 @@ def _reduce(data):
     --- from different data structures within the same ensemble --- by
     averaging.
     """
-    
+
     dv = data['data_vars']
     dc = data['coords']
     da = data['attrs']
@@ -577,21 +590,23 @@ def _reduce(data):
 
     if 'vel' in dv:
         dc['range'] = ((np.arange(dv['vel'].shape[1])+1) *
-                    da['cell_size'] +
-                    da['blank_dist'])
+                       da['cell_size'] +
+                       da['blank_dist'])
         da['fs'] = da['filehead_config']['BURST']['SR']
         tmat = da['filehead_config']['XFBURST']
     if 'vel_avg' in dv:
         dc['range_avg'] = ((np.arange(dv['vel_avg'].shape[1])+1) *
-                    da['cell_size_avg'] +
-                    da['blank_dist_avg'])
-        dv['orientmat'] = dv.pop('orientmat_avg')
+                           da['cell_size_avg'] +
+                           da['blank_dist_avg'])
+        if 'orientmat' not in dv:
+            dv['orientmat'] = dv.pop('orientmat_avg')
         tmat = da['filehead_config']['XFAVG']
         da['fs'] = da['filehead_config']['PLAN']['MIAVG']
         da['avg_interval_sec'] = da['filehead_config']['AVG']['AI']
         da['bandwidth'] = da['filehead_config']['AVG']['BW']
     if 'vel_b5' in dv:
-        dc['range_b5'] = ((np.arange(dv['vel_b5'].shape[1])+1) *
+        # vel_b5 is sometimes shape 2 and sometimes shape 3
+        dc['range_b5'] = ((np.arange(dv['vel_b5'].shape[-2])+1) *
                           da['cell_size_b5'] +
                           da['blank_dist_b5'])
     if 'echo_echo' in dv:
@@ -611,7 +626,7 @@ def _reduce(data):
     theta = da['filehead_config']['BEAMCFGLIST'][0]
     if 'THETA=' in theta:
         da['beam_angle'] = int(theta[13:15])
-    
+
     tm = np.zeros((tmat['ROWS'], tmat['COLS']), dtype=np.float32)
     for irow in range(tmat['ROWS']):
         for icol in range(tmat['COLS']):

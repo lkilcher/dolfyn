@@ -101,8 +101,8 @@ def _create_index(infile, outfile, N_ens, debug):
     fout = open(_abspath(outfile), 'wb')
     fout.write(b'Index Ver:')
     fout.write(struct.pack('<H', _index_version))
-    ids = [21, 22, 23, 24, 26, 28, 
-           27, 29, 30, 31, 35, 36]  
+    ids = [21, 22, 23, 24, 26, 28,
+           27, 29, 30, 31, 35, 36]
     # Saved: burst, avg, bt, vel_b5, alt_raw, echo
     # Not saved: bt record, DVL, alt record, avg alt_raw record, raw echo, raw echo transmit
     ens = dict.fromkeys(ids, 0)
@@ -117,7 +117,7 @@ def _create_index(infile, outfile, N_ens, debug):
             dat = _hdr.unpack(fin.read(_hdr.size))
         except:
             break
-        if dat[2] in ids:  
+        if dat[2] in ids:
             idk = dat[2]
             d_ver, d_off, config = struct.unpack('<BBH', fin.read(4))
             fin.seek(4, 1)
@@ -127,9 +127,11 @@ def _create_index(infile, outfile, N_ens, debug):
             fin.seek(seek_2ens[dat[2]], 1)
             ens[idk] = struct.unpack('<I', fin.read(4))[0]
 
-            if ens[idk] == 1 and last_ens[idk] > 0:
-                # Covers all id keys saved in "burst mode"
-                ens[idk] = last_ens[idk]+1
+            if last_ens[idk] > 0:
+                if (ens[idk] == 1) or (ens[idk] < last_ens[idk]):
+                    # Covers all id keys saved in "burst mode"
+                    # Covers ID keys not saved in sequential order
+                    ens[idk] = last_ens[idk] + 1
 
             if last_ens[idk] > 0 and last_ens[idk] != ens[idk]:
                 N[idk] += 1
@@ -140,7 +142,8 @@ def _create_index(infile, outfile, N_ens, debug):
             fin.seek(dat[4] - (36 + seek_2ens[idk]), 1)
             last_ens[idk] = ens[idk]
 
-            if debug and N[idk] < 5:
+            if debug:
+                # File Position: Valid ID keys (1A, 10), Hex ID, Length in bytes, Ensemble #, Last Ensemble Found'
                 # hex: [18, 15, 1C, 17] = [vel_b5, vel, echo, bt]
                 logging.info('%10d: %02X, %d, %02X, %d, %d, %d, %d\n' %
                              (pos, dat[0], dat[1], dat[2], dat[4],
@@ -162,32 +165,43 @@ def _check_index(idx, infile, fix_hw_ens=False):
     ens = idx['ens']
     N_id = len(uid)
     FLAG = False
+
+    # Hack for estimating if dual profile exists, won't always work
+    # Should add as reader input
+    DP = False
+    max_skip = np.max(np.diff(idx['hw_ens'].astype(int)))
+    if (N_id > 5) and (max_skip > N_id):
+        warnings.warn("Dual Profile detected. Please set 'dual_profile=True' in dolfyn.read()")
+        DP = True
+
     # This loop fixes 'skips' inside the file
-    for id in uid:
-        # These are the indices for this ID
-        inds = np.nonzero(idx['ID'] == id)[0]
+    if not DP:
+        for id in uid:
+            # These are the indices for this ID
+            inds = np.nonzero(idx['ID'] == id)[0]
 
-        # These are bad steps in the indices for this ID
-        ibad = np.nonzero(np.diff(inds) > N_id)[0]
-        for ib in ibad:
-            FLAG = True
-            # The ping number reported here may not be quite right if
-            # the ensemble count is wrong.
-            warnings.warn("Skipped ping (ID: {}) in file {} at ensemble {}."
-                          .format(id, infile, idx['ens'][inds[ib + 1] - 1]))
-            hwe[inds[(ib + 1):]] += 1
-            ens[inds[(ib + 1):]] += 1
+            # These are bad steps in the indices for this ID
+            ibad = np.nonzero(np.diff(inds) > N_id)[0]
+            # Will need to fix for dual profile ADCPs
+            for ib in ibad:
+                FLAG = True
+                # The ping number reported here may not be quite right if
+                # the ensemble count is wrong.
+                warnings.warn("Skipped ping (ID: {}) in file {} at ensemble {}."
+                              .format(id, infile, idx['ens'][inds[ib + 1] - 1]))
+                hwe[inds[(ib + 1):]] += 1
+                ens[inds[(ib + 1):]] += 1
 
-    # This block fixes skips that originate from before this file.
-    delta = max(hwe[:N_id]) - hwe[:N_id]
-    for d, id in zip(delta, idx['ID'][:N_id]):
-        if d != 0:
-            FLAG = True
-            hwe[id == idx['ID']] += d
-            ens[id == idx['ID']] += d
+        # This block fixes skips that originate from before this file.
+        delta = max(hwe[:N_id]) - hwe[:N_id]
+        for d, id in zip(delta, idx['ID'][:N_id]):
+            if d != 0:
+                FLAG = True
+                hwe[id == idx['ID']] += d
+                ens[id == idx['ID']] += d
 
-    if np.any(np.diff(ens) > 1) and FLAG:
-        idx['ens'] = np.unwrap(hwe.astype(np.int64), period=period) - hwe[0]
+        if np.any(np.diff(ens) > 1) and FLAG:
+            idx['ens'] = np.unwrap(hwe.astype(np.int64), period=period) - hwe[0]
 
 
 def _boolarray_firstensemble_ping(index):

@@ -115,13 +115,16 @@ def _create_dataset(data):
     readers.
     Direction 'dir' coordinates are set in `set_coords`
     """
-    ds = xr.Dataset()
     tag = ['_avg', '_b5', '_echo', '_bt', '_gps', '_altraw', '_sl']
 
+    ds = xr.Dataset()
+    # for key in data['coords']:
+    #     ds[key] = xr.DataArray(data['coords'][key], dims=[key], coords={key: data['coords'][key]})
+
     FoR = {}
-    try:
+    if 'n_beams' in data['attrs']:
         beams = data['attrs']['n_beams']
-    except:
+    elif 'n_beams_avg' in data['attrs']:
         beams = data['attrs']['n_beams_avg']
     n_beams = max(min(beams, 4), 3)
     beams = np.arange(1, n_beams+1, dtype=np.int32)
@@ -234,6 +237,11 @@ def _create_dataset(data):
                     ds[key] = ds[key].rename({'dim_0': 'dirIMU',
                                               'dim_1': 'time'+tg})
                     ds[key] = ds[key].assign_coords({'dirIMU': dirIMU,
+                                                     'time'+tg: data['coords']['time'+tg]})
+                elif 'b5' in tg:
+                    ds[key] = ds[key].rename({'dim_0': 'range'+tg,
+                                              'dim_1': 'time'+tg})
+                    ds[key] = ds[key].assign_coords({'range'+tg: data['coords']['range'+tg],
                                                      'time'+tg: data['coords']['time'+tg]})
 
                 ds[key].attrs['coverage_content_type'] = 'physicalMeasurement'
