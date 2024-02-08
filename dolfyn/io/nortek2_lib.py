@@ -155,7 +155,7 @@ def _create_index(infile, outfile, N_ens, debug):
     print(" Done.")
 
 
-def _check_index(idx, infile, fix_hw_ens=False):
+def _check_index(idx, infile, fix_hw_ens=False, dp=False):
     uid = np.unique(idx['ID'])
     if fix_hw_ens:
         hwe = idx['hw_ens']
@@ -168,14 +168,12 @@ def _check_index(idx, infile, fix_hw_ens=False):
 
     # Hack for estimating if dual profile exists, won't always work
     # Should add as reader input
-    DP = False
-    max_skip = np.max(np.diff(idx['hw_ens'].astype(int)))
-    if (N_id > 5) and (max_skip > N_id):
-        warnings.warn("Dual Profile detected. Please set 'dual_profile=True' in dolfyn.read()")
-        DP = True
+    if (21 in uid) and (22 in uid):
+        warnings.warn("Dual Profile detected...")
+        dp = True
 
     # This loop fixes 'skips' inside the file
-    if not DP:
+    if not dp:
         for id in uid:
             # These are the indices for this ID
             inds = np.nonzero(idx['ID'] == id)[0]
@@ -203,6 +201,8 @@ def _check_index(idx, infile, fix_hw_ens=False):
         if np.any(np.diff(ens) > 1) and FLAG:
             idx['ens'] = np.unwrap(hwe.astype(np.int64), period=period) - hwe[0]
 
+    return dp
+
 
 def _boolarray_firstensemble_ping(index):
     """Return a boolean of the index that indicates only the first ping in 
@@ -213,7 +213,7 @@ def _boolarray_firstensemble_ping(index):
     return dens
 
 
-def get_index(infile, reload=False, debug=False):
+def get_index(infile, rebuild=False, debug=False, dp=False):
     """This function reads ad2cp.index files
 
     Parameters
@@ -232,7 +232,7 @@ def get_index(infile, reload=False, debug=False):
     """
 
     index_file = infile + '.index'
-    if not path.isfile(index_file) or reload:
+    if not path.isfile(index_file) or rebuild or debug:
         _create_index(infile, index_file, 2 ** 32, debug)
     f = open(_abspath(index_file), 'rb')
     file_head = f.read(12)
@@ -244,8 +244,8 @@ def get_index(infile, reload=False, debug=False):
         f.seek(0, 0)
     out = np.fromfile(f, dtype=_index_dtype[index_ver])
     f.close()
-    _check_index(out, infile)
-    return out
+    dp = _check_index(out, infile, dp=dp)
+    return out, dp
 
 
 def crop_ensembles(infile, outfile, range):
@@ -266,7 +266,7 @@ def crop_ensembles(infile, outfile, range):
       2 element list of start and end ensemble (or time index)
     """
 
-    idx = get_index(infile)
+    idx, dp = get_index(infile)
     with open(_abspath(infile), 'rb') as fin:
         with open(_abspath(outfile), 'wb') as fout:
             fout.write(fin.read(idx['pos'][0]))

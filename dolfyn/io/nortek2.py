@@ -65,11 +65,11 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
 
     userdata = _find_userdata(filename, userdata)
 
-    rdr = _Ad2cpReader(filename, rebuild_index=rebuild_index, debug=debug)
+    rdr = _Ad2cpReader(filename, rebuild_index=rebuild_index, debug=debug, dual_profile=dual_profile)
     d = rdr.readfile(nens[0], nens[1])
     rdr.sci_data(d)
-    if dual_profile:
-        _clean_dp(d)
+    if rdr._dp:
+        _clean_dp_skips(d)
     out = _reorg(d)
     _reduce(out)
 
@@ -116,20 +116,25 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
             logging.root.removeHandler(handler)
             handler.close()
 
-    return ds
+    # Return two datasets if dual profile
+    if rdr._dp:
+        return split_dp_datasets(ds)
+    else:
+        return ds
 
 
 class _Ad2cpReader():
     def __init__(self, fname, endian=None, bufsize=None, rebuild_index=False,
-                 debug=False):
+                 debug=False, dual_profile=False):
         self.fname = fname
         self.debug = debug
         self._check_nortek(endian)
         self.f.seek(0, 2)  # Seek to end
         self._eof = self.f.tell()
-        self._index = lib.get_index(fname,
-                                    reload=rebuild_index,
-                                    debug=debug)
+        self._index, self._dp = lib.get_index(fname,
+                                              rebuild=rebuild_index,
+                                              debug=debug,
+                                              dp=dual_profile)
         self._reopen(bufsize)
         self.filehead_config = self._read_filehead_config_string()
         self._ens_pos = self._index['pos'][lib._boolarray_firstensemble_ping(
@@ -479,9 +484,9 @@ def _reorg(dat):
     if 26 in dat:
         for ky in list(outdat['data_vars']):
             if ky.endswith('raw') and not ky.endswith('_altraw'):
-                 outdat['data_vars'].pop(ky)
+                outdat['data_vars'].pop(ky)
         outdat['coords']['time_altraw'] = outdat['coords'].pop('timeraw')
-        outdat['data_vars']['samp_altraw'] =  outdat['data_vars']['samp_altraw'].astype('float32') / 2**8  # convert "signed fractional" to float
+        outdat['data_vars']['samp_altraw'] = outdat['data_vars']['samp_altraw'].astype('float32') / 2**8  # convert "signed fractional" to float
 
         # Read altimeter status
         outdat['data_vars'].pop('status_altraw')
@@ -558,7 +563,9 @@ def _reorg(dat):
 
     return outdat
 
-def _clean_dp(data):
+def _clean_dp_skips(data):
+    """Removes zeros from interwoven measurements taken in a dual profile
+    configuration."""
     for id in data:
         if id == 'filehead_config':
             continue
@@ -639,3 +646,59 @@ def _reduce(data):
             if 'time' in val:
                 time = val
         dc['time'] = dc[time]
+
+def split_dp_datasets(ds):
+    """Splits a dataset containing dual profiles into individual profiles
+    """
+    # Figure out which variables belong to which profile based on time variables
+    t_dict = {}
+    for t in ds.coords:
+        if 'altraw' in t:
+            continue
+        elif 'time' in t:
+            t_dict[t] = ds[t].size
+    other_coords = []
+    for key, val in t_dict.items():
+        if val != t_dict['time']:
+            other_coords.append(key)
+
+    # Fetch variables, coordinates, and attrs for second profiling configuration
+    other_vars = [v for v in ds.data_vars if any(x in ds[v].coords for x in other_coords)]
+    other_tags = [s.split('_')[-1] for s in other_coords]
+    other_coords += [v for v in ds.coords if any(x in v for x in other_tags)]
+    other_attrs = [s for s in ds.attrs if any(x in s for x in other_tags)]
+    critical_attrs = ['inst_model',
+                      'inst_make',
+                      'inst_type',
+                      'fs',
+                      'orientation',
+                      'orient_status',
+                      'has_imu',
+                      'beam_angle']
+
+    # Create second dataset
+    ds2 = type(ds)()
+    for a in (other_attrs + critical_attrs):
+        ds2.attrs[a] = ds.attrs[a]
+    for v in other_vars:
+        ds2[v] = ds[v]
+    # Set rotate_vars
+    rotate_vars2 = [v for v in ds.attrs['rotate_vars'] if v in other_vars]
+    ds2.attrs['rotate_vars'] = rotate_vars2
+    # Set orientation matricies
+    ds2['beam2inst_orientmat'] = ds['beam2inst_orientmat']
+    ds2 = ds2.rename({'orientmat_' + other_tags[0]: 'orientmat'})
+    # Set original coordinate system
+    cy = ds2.attrs['coord_sys_axes_' + other_tags[0]]
+    ds2.attrs['coord_sys'] = {'XYZ': 'inst',
+                              'ENU': 'earth',
+                              'beam': 'beam'}[cy]
+    ds2 = _set_coords(ds2, ref_frame=ds2.coord_sys)
+
+    # Clean up first dataset
+    [ds.attrs.pop(ky) for ky in other_attrs]
+    ds = ds.drop_vars(other_vars + other_coords)
+    for itm in rotate_vars2:
+        ds.attrs['rotate_vars'].remove(itm)
+
+    return ds, ds2
