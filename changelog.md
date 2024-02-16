@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 	    - Updates to support python 3.10 and 3.11
 		- Added ability to read Nortek AWAC waves data
 		- Added ability to subtract Doppler noise in TKE dissipation rate functions
-		- Added function to calculate turbulence intensity and remove noise 
+		- Added function to calculate turbulence intensity and remove noise
+		- Add ability to read Nortek dual profiling instruments
+		- Add ability to read ID 31 (initial altimeter scan for averaged altimeter measurements)
 
 ## Version 1.3.0
     - Bugfixes
