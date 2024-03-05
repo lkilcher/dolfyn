@@ -140,13 +140,14 @@ def test_adcp_turbulence(make_data=False):
     bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs, diff_style='centered')
     tdat = bnr.do_avg(dat)
 
-    tdat['dudz'] = bnr.calc_dudz(tdat.vel)
-    tdat['dvdz'] = bnr.calc_dvdz(tdat.vel)
-    tdat['dwdz'] = bnr.calc_dwdz(tdat.vel)
-    tdat['tau2'] = bnr.calc_shear2(tdat.vel)
+    tdat['dudz'] = bnr.calc_dudz(tdat["vel"])
+    tdat['dvdz'] = bnr.calc_dvdz(tdat["vel"])
+    tdat['dwdz'] = bnr.calc_dwdz(tdat["vel"])
+    tdat['tau2'] = bnr.calc_shear2(tdat["vel"])
     tdat['I'] = tdat.velds.I
     tdat['ti'] = bnr.calc_ti(dat.velds.U_mag, detrend=False)
     dat.velds.rotate2('beam')
+
     tdat['psd'] = bnr.calc_psd(dat['vel'].isel(
         dir=2, range=len(dat.range)//2), freq_units='Hz')
     tdat['noise'] = bnr.calc_doppler_noise(tdat['psd'], pct_fN=0.8)
@@ -156,6 +157,7 @@ def test_adcp_turbulence(make_data=False):
         dat, noise=tdat['noise'], orientation='up', beam_angle=25, tke_only=False)
     tdat['tke'] = bnr.calc_total_tke(
         dat, noise=tdat['noise'], orientation='up', beam_angle=25)
+    tdat['ti_noise'] = bnr.calc_ti(dat.velds.U_mag, detrend=False, noise=tdat['noise'])
     # This is "negative" for this code check
     tdat['wpwp'] = bnr.calc_tke(dat['vel_b5'], noise=tdat['noise'])
     tdat['dissipation_rate_LT83'] = bnr.calc_dissipation_LT83(

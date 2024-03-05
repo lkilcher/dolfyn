@@ -938,6 +938,8 @@ class VelBinner(TimeBinner):
 
         if 'xarray' in type(U_mag).__module__:
             U = U_mag.values
+        if "xarray" in type(noise).__module__:
+            noise = noise.values
 
         if detrend:
             up = self.detrend(U)
@@ -1064,7 +1066,8 @@ class VelBinner(TimeBinner):
           Specify the window function.
           Options: 1, None, 'hann', 'hamm'
         noise : numeric
-          The noise level in the same units as velocity
+          Instrument noise level in same units as velocity. 
+          Default: 0 (ADCP) or [0, 0, 0] (ADV).
         n_bin : int (optional)
           The bin-size (default: from the binner).
         n_fft : int (optional)
@@ -1088,6 +1091,8 @@ class VelBinner(TimeBinner):
             vel = veldat.values
         if 'xarray' in type(noise).__module__:
             noise = noise.values
+        if ("rad" not in freq_units) and ("Hz" not in freq_units):
+            raise ValueError("`freq_units` should be one of 'Hz' or 'rad/s'")
 
         # Create frequency vector, also checks whether using f or omega
         if 'rad' in freq_units:

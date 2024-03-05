@@ -637,8 +637,9 @@ class ADPBinner(VelBinner):
           The range over which to integrate/average the spectrum, in units
           of the psd frequency vector (Hz or rad/s)
         noise : float or array-like
-          A vector of the noise levels of the velocity data with
-          the same first dimension as the velocity vector (time).
+          Instrument noise level in same units as velocity. Typically
+          found from `adp.turbulence.calc_doppler_noise`. 
+          Default: None.
 
         Returns
         -------
@@ -673,6 +674,8 @@ class ADPBinner(VelBinner):
             raise Exception('PSD should be 2-dimensional (time, frequency)')
         if len(U_mag.shape) != 1:
             raise Exception('U_mag should be 1-dimensional (time)')
+        if not hasattr(freq_range, "__iter__") or len(freq_range) != 2:
+            raise ValueError("`freq_range` must be an iterable of length 2.")
         if noise is not None:
             if np.shape(noise)[0] != np.shape(psd)[0]:
                 raise Exception(
