@@ -57,7 +57,7 @@ def _set_coords(ds, ref_frame, forced=False):
         princ = ['streamwise', 'x-stream', 'vert', 'err']
 
     elif 'nortek' in make:
-        if 'signature' in make or 'ad2cp' in make:
+        if 'signature' in make or 'ad2cp' in make or 'vectrino' in make:
             inst = ['X', 'Y', 'Z1', 'Z2']
             earth = ['E', 'N', 'U1', 'U2']
             princ = ['streamwise', 'x-stream', 'vert1', 'vert2']

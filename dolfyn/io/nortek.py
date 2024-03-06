@@ -16,7 +16,7 @@ from ..rotate import api as rot
 
 def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
                 nens=None, **kwargs):
-    """Read a classic Nortek (AWAC and Vector) datafile
+    """Read a classic Nortek (AWAC, Vector, and Vectrino) datafile
 
     Parameters
     ----------
@@ -91,7 +91,7 @@ def read_nortek(filename, userdata=True, debug=False, do_checksum=False,
     ds = _create_dataset(dat)
     ds = _set_coords(ds, ref_frame=ds.coord_sys)
 
-    if 'orientmat' not in ds:
+    if 'orientmat' not in ds and ds.attrs['inst_model'] != 'Vectrino':
         ds['orientmat'] = _calc_omat(ds['time'],
                                      ds['heading'],
                                      ds['pitch'],
@@ -160,6 +160,7 @@ class _NortekReader():
                '0x04': 'read_head_cfg',
                '0x05': 'read_hw_cfg',
                '0x07': 'read_vec_checkdata',
+               '0x0f': 'read_vno_event',
                '0x10': 'read_vec_data',
                '0x11': 'read_vec_sysdata',
                '0x12': 'read_vec_hdr',
@@ -167,6 +168,8 @@ class _NortekReader():
                '0x30': 'read_awac_waves',
                '0x31': 'read_awac_waves_hdr',
                '0x36': 'read_awac_waves',  # "SUV"
+               '0x50': 'read_vno_hdr',
+               '0x51': 'read_vno_data',
                '0x71': 'read_microstrain',
                }
 
@@ -228,6 +231,8 @@ class _NortekReader():
             self.config['config_type'] = 'AWAC'
         elif self.config['hdw']['serial_number'][0:3].upper() == 'VEC':
             self.config['config_type'] = 'ADV'
+        elif self.config['hdw']['serial_number'][0:3].upper() == 'VNO':
+            self.config['config_type'] = 'VNO'            
         # Initialize the instrument type:
         self._inst = self.config.pop('config_type')
         # This is the position after reading the 'hardware',
@@ -324,6 +329,29 @@ class _NortekReader():
         else:
             self.n_samp_guess = int(self.filesize / space + 1)
 
+    def init_VNO(self,):
+        dat = self.data = {'data_vars': {}, 'coords': {}, 'attrs': {},
+                           'units': {}, 'long_name': {}, 'standard_name': {},
+                           'sys': {}}
+        da = dat['attrs']
+        dv = dat['data_vars']
+        da['inst_make'] = 'Nortek'
+        da['inst_model'] = 'Vectrino'
+        da['inst_type'] = 'ADV'
+        da['rotate_vars'] = ['vel']
+        dv['beam2inst_orientmat'] = self.config.pop('beam2inst_orientmat')
+        self.config['fs'] = 50000 / self.config['awac']['avg_interval']
+        da.update(self.config['usr'])
+        da.update(self.config['adv'])
+        da.update(self.config['head'])
+        da.update(self.config['hdw'])
+
+        # No apparent way to determine how many samples are in a file
+        dlta = self.code_spacing('0x51') # page 49 from system integrator manual
+        self.n_samp_guess = int(self.filesize / dlta + 1)
+        self.n_samp_guess *= int(self.config['fs'])
+
+
     def read(self, nbyte):
         byts = self.f.read(nbyte)
         if not (len(byts) == nbyte):
@@ -407,6 +435,9 @@ class _NortekReader():
                 logging.info(' stopped at {} bytes.'.format(self.pos))
         self.c -= 1
         _crop_data(self.data, slice(0, self.c), self.n_samp_guess)
+        # add the start time to vectrino data coordinate time
+        if self.data['attrs']['inst_model'] == 'Vectrino':
+            self.data['coords']['time'] += self.config['start_time_VNO']
 
     def findnextid(self, id):
         if id.__class__ is str:
@@ -414,8 +445,10 @@ class _NortekReader():
         nowid = None
         while nowid != id:
             nowid = self.read_id()
-            if nowid == 16:
+            if nowid == 16: # vector velocity data
                 shift = 22
+            elif nowid == 81: # vectrino velocity data
+                shift = 20
             else:
                 sz = 2 * unpack(self.endian + 'H', self.read(2))[0]
                 shift = sz - 4
@@ -553,8 +586,13 @@ class _NortekReader():
         cfg['head']['compass'] = ['no', 'yes'][head_config[1]]
         cfg['head']['tilt_sensor'] = ['no', 'yes'][head_config[2]]
         cfg['head']['carrier_freq_kHz'] = tmp[1]
-        cfg['beam2inst_orientmat'] = np.array(
-            unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.
+        if cfg['hdw']['serial_number'].split()[0] != 'VNO': # not a Vectrino
+            cfg['beam2inst_orientmat'] = np.array(
+                unpack(self.endian + '9h', tmp[4][8:26])).reshape(3, 3) / 4096.
+        else:
+            nbeams =tmp[6]
+            cfg['beam2inst_orientmat'] = np.array(
+                unpack(self.endian + f'{nbeams**2}h', tmp[4][8:8+nbeams**2*2])).reshape(nbeams, nbeams) / 4096.
         self.checksum(byts)
 
     def read_hw_cfg(self,):
@@ -655,21 +693,47 @@ class _NortekReader():
     def read_vec_checkdata(self,):
         # ID: 0x07 = 07
         if self.debug:
-            logging.info('Reading vector check data (0x07) ping #{} @ {}...'
-                         .format(self.c, self.pos))
-        byts0 = self.read(6)
+            logging.info('Reading {} check data (0x07) ping #{} @ {}...'
+                         .format(self.data['attrs']['inst_model'],self.c, self.pos))
         checknow = {}
-        tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
+        if self.data['attrs']['inst_model'] == 'Vector':
+            byts0 = self.read(6)
+            tmp = unpack(self.endian + '2x2H', byts0)  # The first two are size.
+        elif self.data['attrs']['inst_model'] == 'Vectrino':
+            byts0 = self.read(12) # including unreported 6 bytes before amplitude data
+            tmp = unpack(self.endian + '2x5H', byts0)  # The first two are size.
         checknow['Samples'] = tmp[0]
         n = checknow['Samples']
         checknow['First_samp'] = tmp[1]
         checknow['Amp1'] = tbx._nans(n, dtype=np.uint8) + 8
         checknow['Amp2'] = tbx._nans(n, dtype=np.uint8) + 8
         checknow['Amp3'] = tbx._nans(n, dtype=np.uint8) + 8
-        byts1 = self.read(3 * n)
-        tmp = unpack(self.endian + (3 * n * 'B'), byts1)
+        if self.data['attrs']['inst_model'] == 'Vectrino':
+            checknow['Amp4'] = tbx._nans(n, dtype=np.uint8) + 8
+            nbeams=4
+        elif self.data['attrs']['inst_model'] == 'Vector':
+            nbeams=3
+        byts1 = self.read(nbeams * n)
+        tmp = unpack(self.endian + (nbeams * n * 'B'), byts1)
         for idx, nm in enumerate(['Amp1', 'Amp2', 'Amp3']):
             checknow[nm] = np.array(tmp[idx * n:(idx + 1) * n], dtype=np.uint8)
+        if self.data['attrs']['inst_model'] == 'Vectrino':
+            checknow['Amp4'] = np.array(tmp[3 * n:4 * n], dtype=np.uint8)
+            # calculate distance for Vectrino
+            # see https://github.com/NortekSupport/Nortek-Python/blob/master/nortek/structures.py        
+            checknow['Sample'] = np.arange(1,n+1,1)
+            checknow['Distance'] = tbx._nans(n, dtype=np.float64)
+            dvertdist, dhorzdist = 5.7, 24.3 # mm
+            dsoundspeed = 1500.0 # m/s
+            dcounttodist = dsoundspeed / 1000.0
+            ddist2 = dhorzdist * dhorzdist + dvertdist * dvertdist
+            dmindist = np.sqrt( ddist2 )
+            dtotaldist = dcounttodist * np.arange( 0, n, 1 )
+            checknow['Distance'] =  0.5 * (dtotaldist * dtotaldist - ddist2) / \
+                                (dtotaldist - dvertdist)
+            # remove invalid data
+            for value in ['Sample','Distance','Amp1', 'Amp2', 'Amp3', 'Amp4']:
+                checknow[value] = checknow[value][dtotaldist >= dmindist]
         self.checksum(byts0 + byts1)
         if 'checkdata' not in self.config:
             self.config['checkdata'] = checknow
@@ -712,6 +776,13 @@ class _NortekReader():
 
         dat['data_vars'].pop('PressureMSB')
         dat['data_vars'].pop('PressureLSW')
+
+        # Apply velocity scaling (1 or 0.1)
+        dat['data_vars']['vel'] *= self.config['vel_scale_mm']
+
+    def sci_vno_data(self,):
+        self._sci_data(nortek_defs.vno_data)
+        dat = self.data
 
         # Apply velocity scaling (1 or 0.1)
         dat['data_vars']['vel'] *= self.config['vel_scale_mm']
@@ -1096,6 +1167,101 @@ class _NortekReader():
         self.checksum(byts)
         self.c += 1
         
+    def read_vno_hdr(self,):
+        # ID: '0x50 = 80
+        if self.debug:
+            logging.info('Reading vectrino header data (0x50) ping #{} @ {}...'
+                         .format(self.c, self.pos))
+        byts = self.read(38)
+        # The first two are size, the next 6 are time.
+        tmp = unpack(self.endian + '2xHh2H8BhH16B', byts)
+        hdrnow = {}
+        hdrnow['Distance'] = tmp[0]
+        hdrnow['DistQuality'] = tmp[1]
+        hdrnow['Lag1'] = tmp[2]
+        hdrnow['Lag2'] = tmp[3]
+        hdrnow['Noise1'] = tmp[4]
+        hdrnow['Noise2'] = tmp[5]
+        hdrnow['Noise3'] = tmp[6]
+        hdrnow['Noise4'] = tmp[7]
+        hdrnow['Corr1'] = tmp[8]
+        hdrnow['Corr2'] = tmp[9]
+        hdrnow['Corr3'] = tmp[10]
+        hdrnow['Corr4'] = tmp[11]
+        hdrnow['Temperature'] = tmp[12]
+        hdrnow['SoundSpeed'] = tmp[13]
+        hdrnow['AmpZ0_B1'] = tmp[14]
+        hdrnow['AmpZ0_B2'] = tmp[15]
+        hdrnow['AmpZ0_B3'] = tmp[16]
+        hdrnow['AmpZ0_B4'] = tmp[17]
+        hdrnow['AmpX1_B1'] = tmp[18]
+        hdrnow['AmpX1_B2'] = tmp[19]
+        hdrnow['AmpX1_B3'] = tmp[20]
+        hdrnow['AmpX1_B4'] = tmp[21]
+        hdrnow['AmpZ0PLag1_B1'] = tmp[22]
+        hdrnow['AmpZ0PLag1_B2'] = tmp[23]
+        hdrnow['AmpZ0PLag1_B3'] = tmp[24]
+        hdrnow['AmpZ0PLag1_B4'] = tmp[25]
+        hdrnow['AmpZ0PLag2_B1'] = tmp[26]
+        hdrnow['AmpZ0PLag2_B2'] = tmp[27]
+        hdrnow['AmpZ0PLag2_B3'] = tmp[28]
+        hdrnow['AmpZ0PLag2_B4'] = tmp[29]
+        self.checksum(byts)
+        if 'data_header' not in self.config:
+            self.config['data_header'] = hdrnow
+        else:
+            if not isinstance(self.config['data_header'], list):
+                self.config['data_header'] = [self.config['data_header']]
+            self.config['data_header'] += [hdrnow]
+
+    def read_vno_event(self,):
+        # ID: '0x0f = 15
+        if self.debug:
+            logging.info('Reading vectrino event mark record (0x0f) ping #{} @ {}...'
+                         .format(self.c, self.pos))
+        byts = self.read(22)
+        # The first two are size, the next 6 are time.
+        self.config['start_time_VNO'] = self.rd_time(byts[2:8])
+        self.checksum(byts)
+
+    def read_vno_data(self,):
+        # ID: 0x51 = 33
+        c = self.c
+        dat = self.data
+        if self.debug:
+            logging.info('Reading vectrino velocity data (0x51) ping #{} @ {}...'
+                         .format(self.c, self.pos))
+
+        if 'vel' not in dat['data_vars']:
+            self._init_data(nortek_defs.vno_data)
+            self._dtypes += ['vno_data']
+
+        if c==0:
+            dat['coords']['time'][c] = 0
+        else:
+            dat['coords']['time'][c] = dat['coords']['time'][c-1] + 1./self.config['fs']
+
+        byts = self.read(18)
+        ds = dat['sys']
+        dv = dat['data_vars']
+        (dv['status'][c],
+         ds['Count'][c],
+         dv['vel'][0, c],
+         dv['vel'][1, c],
+         dv['vel'][2, c],
+         dv['vel'][3, c],
+         dv['amp'][0, c],
+         dv['amp'][1, c],
+         dv['amp'][2, c],
+         dv['amp'][3, c],
+         dv['corr'][0, c],
+         dv['corr'][1, c],
+         dv['corr'][2, c],
+         dv['corr'][3,c]) = unpack(self.endian + '2B4h8B', byts)
+
+        self.checksum(byts)
+        self.c += 1
+
     def dat2sci(self,):
         for nm in self._dtypes:
             getattr(self, 'sci_' + nm)()
