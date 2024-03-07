@@ -12,6 +12,7 @@ dat = load('vector_data01')
 dat_imu = load('vector_data_imu01')
 dat_imu_json = load('vector_data_imu01-json')
 dat_burst = load('vector_burst_mode01')
+dat_vno = load('vectrino_data01')
 
 
 def test_io_adv(make_data=False):
@@ -22,6 +23,7 @@ def test_io_adv(make_data=False):
     tdm2 = read('vector_data_imu01.VEC',
                 userdata=tb.exdt('vector_data_imu01.userdata.json'),
                 nens=nens)
+    td_vno = read('vectrino_data01.vno')
 
     # These values are not correct for this data but I'm adding them for
     # test purposes only.
@@ -33,9 +35,11 @@ def test_io_adv(make_data=False):
         save(tdm, 'vector_data_imu01.nc')
         save(tdb, 'vector_burst_mode01.nc')
         save(tdm2, 'vector_data_imu01-json.nc')
+        save(td_vno, 'vectrino_data01.nc')
         return
 
     assert_allclose(td, dat, atol=1e-6)
     assert_allclose(tdm, dat_imu, atol=1e-6)
     assert_allclose(tdb, dat_burst, atol=1e-6)
     assert_allclose(tdm2, dat_imu_json, atol=1e-6)
+    assert_allclose(td_vno, dat_vno, atol=1e-6)

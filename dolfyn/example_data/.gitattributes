@@ -4,4 +4,5 @@
 *.ad2cp filter=lfs diff=lfs merge=lfs -text
 *.000 filter=lfs diff=lfs merge=lfs -text
 *.ENX filter=lfs diff=lfs merge=lfs -text
+*.vno filter=lfs diff=lfs merge=lfs -text
 
