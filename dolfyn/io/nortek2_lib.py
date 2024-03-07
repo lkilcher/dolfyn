@@ -186,7 +186,7 @@ def _check_index(idx, infile, fix_hw_ens=False, dp=False):
                 if c > 1:
                     skip_size[skip_size == n] = 0
             # assume last "ibad" element is always good for dp's
-            mask = np.append(skip_size, 0).astype(bool)
+            mask = np.append(skip_size, 0).astype(bool) if any(skip_size) else []
             ibad = ibad[mask]
         for ib in ibad:
             FLAG = True
@@ -437,7 +437,8 @@ def _beams_cy_int2dict(val, id):
     """
     if id == 28:  # 0x1C (echosounder)
         return dict(n_cells=val)
-
+    elif id in [26, 31]:
+        return dict(n_cells=val & (2**10 - 1), cy="beam", n_beams=1)
     return dict(
         n_cells=val & (2 ** 10 - 1),
         cy=['ENU', 'XYZ', 'beam', None][val >> 10 & 3],

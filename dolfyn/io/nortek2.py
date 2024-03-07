@@ -472,7 +472,7 @@ def _reorg(dat):
             dnow['usec100'].astype('uint32') * 100)
         tmp = lib._beams_cy_int2dict(
             lib._collapse(dnow['beam_config'], exclude=collapse_exclude,
-                          name='beam_config'), 21)
+                          name='beam_config'), 21)  # always 21 here
         cfg['n_cells' + tag] = tmp['n_cells']
         cfg['coord_sys_axes' + tag] = tmp['cy']
         cfg['n_beams' + tag] = tmp['n_beams']
@@ -587,7 +587,7 @@ def _clean_dp_skips(data):
         skips = np.where(data[id]['ver'] != 0)
         for var in data[id]:
             if var not in ['units', 'long_name', 'standard_name']:
-                data[id][var] = np.squeeze(data[id][var][..., skips])
+                data[id][var] = np.squeeze(data[id][var][..., skips], axis=-2)
 
 
 def _reduce(data):
