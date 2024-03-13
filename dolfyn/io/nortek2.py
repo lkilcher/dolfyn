@@ -31,7 +31,7 @@ def read_signature(filename, userdata=True, nens=None, rebuild_index=False,
       Force rebuild of dolfyn-written datafile index. Useful for code updates.
     debug : bool (default: False)
       Logs debugger ouput if true
-    dual_profile : bool (default: True)
+    dual_profile : bool (default: False)
       Set to true if instrument is running multiple profiles
 
     Returns
