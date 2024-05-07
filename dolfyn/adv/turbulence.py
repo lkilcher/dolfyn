@@ -51,7 +51,7 @@ class ADVBinner(VelBinner):
 
     def calc_stress(self, veldat, detrend=True):
         """
-        Calculate the stresses (covariances of u,v,w)
+        Calculate the stresses (covariances of u,v,w in m^2/s^2)
 
         Parameters
         ----------

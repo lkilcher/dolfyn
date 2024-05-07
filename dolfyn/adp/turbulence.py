@@ -440,7 +440,7 @@ class ADPBinner(VelBinner):
         in pitch and roll. u'v'_ cannot be directly calculated by a 5-beam ADCP,
         so it is approximated by the covariance of `u` and `v`. The uncertainty
         introduced by using this approximation is small if deviations from pitch
-        and roll are small (< 10 degrees).
+        and roll are small (<= 5 degrees).
 
         Dewey, R., and S. Stringer. "Reynolds stresses and turbulent kinetic
         energy estimates from various ADCP beam configurations: Theory." J. of
@@ -456,7 +456,7 @@ class ADPBinner(VelBinner):
 
         # Run through warnings
         b_angle, noise = self._stress_func_warnings(
-            ds, beam_angle, noise, tilt_thresh=10)
+            ds, beam_angle, noise, tilt_thresh=5)
 
         # Fetch beam order
         beam_order, phi2, phi3 = self._check_orientation(
@@ -522,47 +522,6 @@ class ADPBinner(VelBinner):
                        'long_name': 'Specific Reynolds Stress Vector'})
 
             return tke_vec, stress_vec
-
-    def calc_total_tke(self, ds, noise=None, orientation=None, beam_angle=None):
-        """Calculate magnitude of turbulent kinetic energy from 5-beam ADCP. 
-
-        Parameters
-        ----------
-        ds : xarray.Dataset
-          Raw dataset in beam coordinates
-        ds_avg : xarray.Dataset
-          Binned dataset in final coordinate reference frame
-        noise : int or xarray.DataArray, default=0 (time)
-          Doppler noise level in units of m/s
-        orientation : str, default=ds.attrs['orientation']
-          Direction ADCP is facing ('up' or 'down')
-        beam_angle : int, default=ds.attrs['beam_angle']
-          ADCP beam angle in units of degrees
-
-        Returns
-        -------
-        tke : xarray.DataArray
-          Turbulent kinetic energy magnitude
-
-        Notes
-        -----
-        This function is a wrapper around 'calc_stress_5beam' that then
-        combines the TKE components.
-
-        Warning: the integral length scale of turbulence captured by the
-        ADCP measurements (i.e. the size of turbulent structures) increases 
-        with increasing range from the instrument.
-        """
-
-        tke_vec = self.calc_stress_5beam(
-            ds, noise, orientation, beam_angle, tke_only=True)
-
-        tke = tke_vec.sum('tke') / 2
-        tke.attrs['units'] = 'm2 s-2'
-        tke.attrs['long_name'] = 'TKE Magnitude',
-        tke.attrs['standard_name'] = 'specific_turbulent_kinetic_energy_of_sea_water'
-
-        return tke.astype('float32')
 
     def check_turbulence_cascade_slope(self, psd, freq_range=[0.2, 0.4]):
         """This function calculates the slope of the PSD, the power spectra 
@@ -872,7 +831,7 @@ class ADPBinner(VelBinner):
         """
 
         if not H:
-            H = ds_avg.depth.values
+            H = ds_avg["depth"].values
         z = ds_avg['range'].values
         upwp_ = upwp_.values
 
@@ -882,6 +841,6 @@ class ADPBinner(VelBinner):
 
         return xr.DataArray(
             u_star.astype('float32'),
-            coords={'time': ds_avg.time},
+            coords={'time': ds_avg["time"]},
             attrs={'units': 'm s-1',
                    'long_name': 'Friction Velocity'})

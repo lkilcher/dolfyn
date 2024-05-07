@@ -138,6 +138,8 @@ def test_adcp_turbulence(make_data=False):
     dat.velds.rotate2('earth')
     dat.attrs['principal_heading'] = apm.calc_principal_heading(dat.vel.mean('range'))
     bnr = apm.ADPBinner(n_bin=20.0, fs=dat.fs, diff_style='centered')
+    U_mag = dat.velds.U_mag
+    dat["U_mag"] = U_mag
     tdat = bnr.do_avg(dat)
 
     tdat['dudz'] = bnr.calc_dudz(tdat["vel"])
@@ -145,33 +147,37 @@ def test_adcp_turbulence(make_data=False):
     tdat['dwdz'] = bnr.calc_dwdz(tdat["vel"])
     tdat['tau2'] = bnr.calc_shear2(tdat["vel"])
     tdat['I'] = tdat.velds.I
-    tdat['ti'] = bnr.calc_ti(dat.velds.U_mag, detrend=False)
+    tdat['ti'] = bnr.calc_ti(U_mag, detrend=False)
     dat.velds.rotate2('beam')
 
     tdat['psd'] = bnr.calc_psd(dat['vel'].isel(
-        dir=2, range=len(dat.range)//2), freq_units='Hz')
+        dir=2, range=len(dat["range"])//2), freq_units='Hz')
     tdat['noise'] = bnr.calc_doppler_noise(tdat['psd'], pct_fN=0.8)
     tdat['stress_vec4'] = bnr.calc_stress_4beam(
         dat, noise=tdat['noise'], orientation='up', beam_angle=25)
     tdat['tke_vec5'], tdat['stress_vec5'] = bnr.calc_stress_5beam(
         dat, noise=tdat['noise'], orientation='up', beam_angle=25, tke_only=False)
-    tdat['tke'] = bnr.calc_total_tke(
-        dat, noise=tdat['noise'], orientation='up', beam_angle=25)
-    tdat['ti_noise'] = bnr.calc_ti(dat.velds.U_mag, detrend=False, noise=tdat['noise'])
+    # Back in "inst" coordinate frame now
+    dat.velds.rotate2("beam")
+
+    tdat['ti_noise'] = bnr.calc_ti(U_mag, detrend=False, noise=tdat['noise'])
     # This is "negative" for this code check
     tdat['wpwp'] = bnr.calc_tke(dat['vel_b5'], noise=tdat['noise'])
     tdat['dissipation_rate_LT83'] = bnr.calc_dissipation_LT83(
-        tdat['psd'], tdat.velds.U_mag.isel(range=len(dat.range)//2), freq_range=[0.2, 0.4])
+        tdat['psd'], tdat["U_mag"].isel(range=len(dat["range"])//2), freq_range=[0.2, 0.4])
     tdat['dissipation_rate_LT83_noise'] = bnr.calc_dissipation_LT83(
-        tdat['psd'], tdat.velds.U_mag.isel(range=len(dat.range)//2), freq_range=[0.2, 0.4], noise=tdat['noise'])
+        tdat['psd'], tdat["U_mag"].isel(range=len(dat["range"])//2), freq_range=[0.2, 0.4], noise=tdat['noise'])
     tdat['dissipation_rate_SF'], tdat['noise_SF'], tdat['D_SF'] = bnr.calc_dissipation_SF(
         dat.vel.isel(dir=2), r_range=[1, 5])
-    tdat['friction_vel'] = bnr.calc_ustar_fit(
-        tdat, upwp_=tdat['stress_vec5'].sel(tau='upwp_'), z_inds=slice(1, 5), H=50)
+
     slope_check = bnr.check_turbulence_cascade_slope(
         tdat['psd'].mean('time'), freq_range=[0.4, 4])
+    # Check noise subtraction in psd function
     tdat['psd_noise'] = bnr.calc_psd(dat['vel'].isel(
-        dir=2, range=len(dat.range)//2), freq_units='Hz', noise=0.01)
+        dir=2, range=len(dat["range"])//2), freq_units='Hz', noise=0.01)
+
+    tdat['friction_vel'] = bnr.calc_ustar_fit(
+        tdat, upwp_=tdat['stress_vec5'].sel(tau='upwp_'), z_inds=slice(1, 5), H=50)
 
     if make_data:
         save(tdat, 'Sig1000_tidal_bin.nc')
