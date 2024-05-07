@@ -65,7 +65,6 @@ Functions for analyzing ADCP data via the `ADPBinner` class, beyond those descri
 	~dolfyn.adp.turbulence.ADPBinner.calc_doppler_noise
 	~dolfyn.adp.turbulence.ADPBinner.calc_stress_4beam
 	~dolfyn.adp.turbulence.ADPBinner.calc_stress_5beam
-	~dolfyn.adp.turbulence.ADPBinner.calc_total_tke
 	~dolfyn.adp.turbulence.ADPBinner.check_turbulence_cascade_slope
 	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_LT83
 	~dolfyn.adp.turbulence.ADPBinner.calc_dissipation_SF

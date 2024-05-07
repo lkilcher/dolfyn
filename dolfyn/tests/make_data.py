@@ -49,6 +49,7 @@ print(__doc__)
 # ta.test_do_func(make_data=True)
 # ta.test_calc_func(make_data=True)
 # ta.test_adv_turbulence(make_data=True)
+# ta.test_adcp_turbulence(make_data=True)
 
 # ts.test_shortcuts(make_data=True)
 
