@@ -192,7 +192,7 @@ def save(ds, filename,
 
         if compression:
             # New netcdf4-c cannot compress variable length strings
-            if isinstance(ds[ky].data[0], str):
+            if ds[ky].size <= 1 or isinstance(ds[ky].data[0], str):
                 continue
             enc[ky].update(dict(zlib=True, complevel=1))
 
@@ -219,6 +219,12 @@ def load(filename):
     """
 
     filename = _check_file_ext(filename, 'nc')
+    
+    file_type = _get_filetype(filename)
+    if file_type == '<GIT-LFS pointer>':
+        raise IOError("File '{}' looks like a git-lfs pointer. You may need to "
+                      "install and initialize git-lfs. See https://git-lfs.github.com"
+                      " for details.".format(filename))
 
     ds = xr.load_dataset(filename, engine='netcdf4')
 

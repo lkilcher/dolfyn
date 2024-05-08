@@ -21,8 +21,10 @@ class ADVBinner(VelBinner):
       The length of the FFT for computing spectra (must be <= n_bin)
     n_fft_coh : int (optional, default: `n_fft_coh`=`n_fft`)
       Number of data points to use for coherence and cross-spectra ffts
-    noise : float, list or numpy.ndarray
-      Instrument's doppler noise in same units as velocity
+    noise : float or array-like
+      Instrument noise level in same units as velocity. Typically
+      found from `adv.turbulence.calc_doppler_noise`. 
+      Default: None.
     """
 
     def __call__(self, ds, freq_units='rad/s', window='hann'):
@@ -49,7 +51,7 @@ class ADVBinner(VelBinner):
 
     def calc_stress(self, veldat, detrend=True):
         """
-        Calculate the stresses (covariances of u,v,w)
+        Calculate the stresses (covariances of u,v,w in m^2/s^2)
 
         Parameters
         ----------
@@ -165,7 +167,7 @@ class ADVBinner(VelBinner):
                                    'time': time,
                                    'coh_freq': coh_freq},
                            dims=['C', 'time', 'coh_freq'],
-                           attrs={'units': units, 
+                           attrs={'units': units,
                                   'n_fft_coh': n_fft,
                                   'long_name': 'Cross Spectral Density'})
         csd['coh_freq'].attrs['units'] = freq_units
@@ -230,7 +232,7 @@ class ADVBinner(VelBinner):
 
         return xr.DataArray(
             noise_level.values.astype('float32'),
-            dims=['dir', 'time'],
+            coords={'S': psd['S'], 'time': psd['time']},
             attrs={'units': 'm/s',
                    'long_name': 'Doppler Noise Level',
                    'description': 'Doppler noise level calculated '
@@ -296,7 +298,7 @@ class ADVBinner(VelBinner):
 
         return m, b
 
-    def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57]):
+    def calc_epsilon_LT83(self, psd, U_mag, freq_range=[6.28, 12.57], noise=None):
         """Calculate the dissipation rate from the PSD
 
         Parameters
@@ -308,6 +310,10 @@ class ADVBinner(VelBinner):
         freq_range : iterable(2) (default: [6.28, 12.57])
           The range over which to integrate/average the spectrum, in units 
           of the psd frequency vector (Hz or rad/s)
+        noise : float or array-like
+          Instrument noise level in same units as velocity. Typically
+          found from `adv.turbulence.calc_doppler_noise`. 
+          Default: None.
 
         Returns
         -------
@@ -339,8 +345,23 @@ class ADVBinner(VelBinner):
         """
 
         # Ensure time has been averaged
-        if len(psd.time)!=len(U_mag.time):
+        if len(psd.time) != len(U_mag.time):
             raise Exception("`U_mag` should be from ensembled-averaged dataset")
+        if not hasattr(freq_range, "__iter__") or len(freq_range) != 2:
+            raise ValueError("`freq_range` must be an iterable of length 2.")
+
+        if noise is not None:
+            if np.shape(noise)[0] != 3:
+                raise Exception(
+                    'Noise should have same first dimension as velocity')
+        else:
+            noise = np.array([0, 0, 0])[:, None, None]
+
+        # Noise subtraction from binner.TimeBinner.calc_psd_base
+        psd = psd.copy()
+        if noise is not None:
+            psd -= (noise**2 / (self.fs / 2))
+            psd = psd.where(psd > 0, np.min(np.abs(psd)) / 100)
 
         freq = psd.freq
         idx = np.where((freq_range[0] < freq) & (freq < freq_range[1]))
