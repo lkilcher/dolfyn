@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unversioned
     - Bugfixes
+        - Replace pkg_resources usage for locating bundled example data
 	    - Correct CF convention "standard_names"
 		- Rename debugger log files from ".log" to ".dolfyn.log"
 		- Fix recording for instruments in "average" mode (vs "burst" mode)

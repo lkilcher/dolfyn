@@ -1,12 +1,9 @@
+from pathlib import Path
+
 import dolfyn.io.api as io
 from dolfyn import time
 from xarray.testing import assert_allclose as _assert_allclose
 import numpy as np
-import pkg_resources
-import atexit
-
-
-atexit.register(pkg_resources.cleanup_resources)
 
 
 def assert_allclose(dat0, dat1, *args, **kwargs):
@@ -32,11 +29,16 @@ def assert_allclose(dat0, dat1, *args, **kwargs):
 class ResourceFilename(object):
 
     def __init__(self, package_or_requirement, prefix=''):
-        self.pkg = package_or_requirement
-        self.prefix = prefix
+        if package_or_requirement == 'dolfyn':
+            self.pkg = Path(__file__).resolve().parents[1]
+        elif package_or_requirement == 'dolfyn.tests':
+            self.pkg = Path(__file__).resolve().parent
+        else:
+            raise ValueError("Unknown package: {}".format(package_or_requirement))
+        self.prefix = Path(prefix)
 
     def __call__(self, name):
-        return pkg_resources.resource_filename(self.pkg, self.prefix + name)
+        return str(self.pkg / self.prefix / name)
 
 
 rfnm = ResourceFilename('dolfyn.tests', prefix='data/')
