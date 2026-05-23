@@ -1,2 +1,2 @@
-import pkg_resources
+"""Example data files bundled with DOLfYN."""
 

@@ -1,13 +1,27 @@
+from contextlib import contextmanager
+from importlib import resources
+
 import numpy as np
 import scipy.io as sio
 import xarray as xr
-import pkg_resources
+
 from .nortek import read_nortek
 from .nortek2 import read_signature
 from .rdi import read_rdi
 from .base import _create_dataset, _get_filetype
 from ..rotate.base import _set_coords
 from ..time import date2matlab, matlab2date, date2dt64, dt642date, date2epoch, epoch2date
+
+
+@contextmanager
+def _example_data_path(name):
+    if hasattr(resources, "files"):
+        resource = resources.files("dolfyn.example_data").joinpath(name)
+        with resources.as_file(resource) as filename:
+            yield filename
+    else:
+        with resources.path("dolfyn.example_data", name) as filename:
+            yield filename
 
 
 def _check_file_ext(path, ext):
@@ -127,10 +141,8 @@ def read_example(name, **kwargs):
       An xarray dataset from the binary instrument data.
     """
 
-    filename = pkg_resources.resource_filename(
-        'dolfyn',
-        'example_data/' + name)
-    return read(filename, **kwargs)
+    with _example_data_path(name) as filename:
+        return read(str(filename), **kwargs)
 
 
 def save(ds, filename,
