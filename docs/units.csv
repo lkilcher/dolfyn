@@ -1,6 +1,6 @@
 ﻿Name,Units,Description/Notes
 time,sec since 1970/01/01 00:00:00,Time data (unaware of timezone)
-vel,m/s,Velocity vector data
+vel,m/s,"Velocity vector data. For TRDI 4-beam data, the fourth component is error velocity after beam-to-inst rotation."
 range,m,Distance from the instrument's transducer head(s)
 depth,m,Instrument depth
 c_sound,m/s,Speed of sound used in velocity calculations

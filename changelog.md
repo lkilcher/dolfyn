@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 	- API/Useability
 	    - Updates to support python 3.10 and 3.11
+		- Documented the TRDI 4-beam error velocity component
 		- Added ability to read Nortek AWAC waves data
 		- Added ability to subtract Doppler noise in TKE dissipation rate functions
 		- Added function to calculate turbulence intensity and remove noise
