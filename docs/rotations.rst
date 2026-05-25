@@ -42,6 +42,11 @@ directions, which are defined by the following coordinate systems:
   coordinate system changes relative to the earth. When the data
   object is in 'inst' coordinates, the first dimension of the vectors
   are: [X, Y, Z, ...].
+  For TRDI 4-beam ADCP data, the fourth component is the error
+  velocity. After beam-to-inst rotation, |dlfn| labels this component
+  ``err`` in the ``dir`` coordinate, so it can be accessed with
+  ``dat.vel.sel(dir='err')`` or ``dat.vel[3]``. It is carried with the
+  velocity array but is not itself rotated as an X/Y/Z component.
 
 - **Earth**: When the data object is in 'earth' coordinates, the first
   dimension of vectors are: [East, North, Up, ...]. This coordinate
